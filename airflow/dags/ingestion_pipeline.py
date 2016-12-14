@@ -51,7 +51,7 @@ t6 = BashOperator(
 
 t7 = BashOperator(
     task_id='cassandra2neo4j',
-    bash_command='spark.sh yarn cassandra2neo4j /home/hadoop/Cassandra2Neo4J/target/scala-2.10/cassandra2neo4j-assembly-1.0.jar',
+    bash_command='spark.sh yarn cassandra2neo4j /home/hadoop/Cassandra2Neo4J/target/scala-2.10/Cassandra2Neo4J-assembly-1.0.jar',
     dag=dag)
 
 t2.set_upstream(t1)
