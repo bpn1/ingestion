@@ -1,7 +1,3 @@
-"""
-Code that goes along with the Airflow tutorial located at:
-https://github.com/airbnb/airflow/blob/master/airflow/example_dags/tutorial.py
-"""
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from datetime import datetime, timedelta
@@ -35,27 +31,27 @@ t2 = BashOperator(
 
 t3 = BashOperator(
     task_id='ResolveEntities',
-    bash_command='spark.sh yarn ResolveEntities /home/hadoop/XXX/target/scala-2.10/ApplicationJoin-assembly-1.0.jar',
+    bash_command='spark.sh yarn ResolveEntities /home/hadoop/ApplicationJoin/target/scala-2.10/ApplicationJoin-assembly-1.0.jar',
     dag=dag)
 
 t4 = BashOperator(
-    task_id='DatalakeImport',
-    bash_command='spark.sh yarn DatalakeImport /home/hadoop/XXX/target/scala-2.10/DatalakeImport-assembly-1.0.jar',
+    task_id='DataLakeImport',
+    bash_command='spark.sh yarn DatalakeImport /home/hadoop/DataLakeImport/target/scala-2.10/DataLakeImport-assembly-1.0.jar',
     dag=dag)
 
 t5 = BashOperator(
     task_id='FindRelations',
-    bash_command='spark.sh yarn FindRelations /home/hadoop/XXX/target/scala-2.10/DatalakeImport-assembly-1.0.jar',
+    bash_command='spark.sh yarn FindRelations /home/hadoop/DataLakeImport/target/scala-2.10/DataLakeImport-assembly-1.0.jar',
     dag=dag)
 
 t6 = BashOperator(
     task_id='CSVExport',
-    bash_command='spark.sh yarn CSVExport /home/hadoop/XXX/target/scala-2.10/DatalakeImport-assembly-1.0.jar',
+    bash_command='spark.sh yarn CSVExport /home/hadoop/DataLakeImport/target/scala-2.10/DataLakeImport-assembly-1.0.jar',
     dag=dag)
 
 t7 = BashOperator(
     task_id='cassandra2neo4j',
-    bash_command='spark.sh yarn cassandra2neo4j /home/hadoop/Cassandra2Neo4J/target/scala-2.10/XXX-assembly-1.0.jar',
+    bash_command='spark.sh yarn cassandra2neo4j /home/hadoop/Cassandra2Neo4J/target/scala-2.10/cassandra2neo4j-assembly-1.0.jar',
     dag=dag)
 
 t2.set_upstream(t1)
@@ -64,3 +60,5 @@ t4.set_upstream(t3)
 t5.set_upstream(t4)
 t6.set_upstream(t5)
 t7.set_upstream(t6)
+
+print('End of DAG definition reached.')
