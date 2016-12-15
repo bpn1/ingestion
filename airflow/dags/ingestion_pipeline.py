@@ -49,16 +49,16 @@ t6 = BashOperator(
     bash_command='spark.sh yarn CSVExport /home/hadoop/DataLakeImport/target/scala-2.10/DataLakeImport-assembly-1.0.jar',
     dag=dag)
 
-t7 = BashOperator(
+'''t7 = BashOperator(
     task_id='cassandra2neo4j',
     bash_command='spark.sh yarn cassandra2neo4j /home/hadoop/Cassandra2Neo4J/target/scala-2.10/Cassandra2Neo4J-assembly-1.0.jar',
-    dag=dag)
+    dag=dag)'''
 
 t2.set_upstream(t1)
 t3.set_upstream(t2)
 t4.set_upstream(t3)
 t5.set_upstream(t4)
 t6.set_upstream(t5)
-t7.set_upstream(t6)
+#t7.set_upstream(t6)
 
-print('End of DAG definition reached.')
+print('ingestion_pipeline: End of DAG definition reached.')
