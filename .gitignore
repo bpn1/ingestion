@@ -1,0 +1,4 @@
+.remote-sync.json
+target/
+.idea/
+.DS_Store

@@ -2,10 +2,12 @@ from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from datetime import datetime, timedelta
 
+dag_name = 'ingestion_pipeline'
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2015, 6, 1),
+    'start_date': datetime(2016, 12, 1),
     'email': ['airflow@airflow.com'],
     'email_on_failure': False,
     'email_on_retry': False,
@@ -17,48 +19,28 @@ default_args = {
     # 'end_date': datetime(2016, 1, 1),
 }
 
-dag = DAG('ingestion_pipeline', default_args=default_args)
+wiki_jar = '/home/hadoop/WikiImport/target/scala-2.10/WikiImport-assembly-1.0.jar'
+datalake_jar = '/home/hadoop/DataLakeImport/target/scala-2.10/DataLakeImport-assembly-1.0.jar'
+programs = [
+    ('WikiDataRDD', wiki_jar),
+    ('TagEntities', wiki_jar),
+    ('ResolveEntities', wiki_jar),
+    ('DataLakeImport', datalake_jar),
+    ('FindRelations', datalake_jar),
+    ('CSVExport', datalake_jar)]
 
-t1 = BashOperator(
-    task_id='WikiDataRDD',
-    bash_command='spark.sh yarn WikiDataRDD /home/hadoop/WikiImport/target/scala-2.10/WikiImport-assembly-1.0.jar',
-    dag=dag)
+def make_operator_chain(programList, dag, parent_operator = None):
+    last_operator = parent_operator
+    for program, jar_path in programList:
+        operator = BashOperator(
+            task_id=program,
+            bash_command='spark.sh yarn '+program+' '+jar_path,
+            dag=dag)
+        if(last_operator != None):
+            operator.set_upstream(last_operator)
+        last_operator = operator
 
-t2 = BashOperator(
-    task_id='TagEntities',
-    bash_command='spark.sh yarn TagEntities /home/hadoop/WikiImport/target/scala-2.10/WikiImport-assembly-1.0.jar',
-    dag=dag)
-
-t3 = BashOperator(
-    task_id='ResolveEntities',
-    bash_command='spark.sh yarn ResolveEntities /home/hadoop/ApplicationJoin/target/scala-2.10/ApplicationJoin-assembly-1.0.jar',
-    dag=dag)
-
-t4 = BashOperator(
-    task_id='DataLakeImport',
-    bash_command='spark.sh yarn DatalakeImport /home/hadoop/DataLakeImport/target/scala-2.10/DataLakeImport-assembly-1.0.jar',
-    dag=dag)
-
-t5 = BashOperator(
-    task_id='FindRelations',
-    bash_command='spark.sh yarn FindRelations /home/hadoop/DataLakeImport/target/scala-2.10/DataLakeImport-assembly-1.0.jar',
-    dag=dag)
-
-t6 = BashOperator(
-    task_id='CSVExport',
-    bash_command='spark.sh yarn CSVExport /home/hadoop/DataLakeImport/target/scala-2.10/DataLakeImport-assembly-1.0.jar',
-    dag=dag)
-
-t7 = BashOperator(
-    task_id='cassandra2neo4j',
-    bash_command='spark.sh yarn cassandra2neo4j /home/hadoop/Cassandra2Neo4J/target/scala-2.10/Cassandra2Neo4J-assembly-1.0.jar',
-    dag=dag)
-
-t2.set_upstream(t1)
-t3.set_upstream(t2)
-t4.set_upstream(t3)
-t5.set_upstream(t4)
-t6.set_upstream(t5)
-t7.set_upstream(t6)
+dag = DAG(dag_name, default_args=default_args)
+make_operator_chain(programs, dag)
 
 print('End of DAG definition reached.')
