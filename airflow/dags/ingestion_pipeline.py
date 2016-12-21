@@ -43,4 +43,4 @@ def make_operator_chain(programList, dag, parent_operator = None):
 dag = DAG(dag_name, default_args=default_args)
 make_operator_chain(programs, dag)
 
-print('End of DAG definition reached.')
+print('ingestion_pipeline: End of DAG definition reached.')
