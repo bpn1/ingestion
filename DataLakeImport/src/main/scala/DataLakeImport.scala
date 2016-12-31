@@ -16,6 +16,7 @@ abstract class DataLakeImport (
 	type T
 
 	def translateToSubject(entity: T, version: Version): Subject
+
 	def makeTemplateVersion(): Version = {
 		// create timestamp and TimeUUID for versioning
 		val timestamp = new Date()

@@ -19,7 +19,7 @@ object DataLakeImportWikidata extends DataLakeImport(
 
 	override type T = WikiDataEntity
 
-	def translateToSubject(entity: WikiDataEntity, version: Version) : Subject = {
+	override def translateToSubject(entity: WikiDataEntity, version: Version) : Subject = {
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
