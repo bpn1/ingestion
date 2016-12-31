@@ -13,7 +13,7 @@ abstract class DataLakeImport (
 	val outputTable = "subject"
 	val versionTable = "version"
 
-	type T <: DataLakeImport
+	type T
 
 	def translateToSubject(entity: T, version: Version): Subject
 	def makeTemplateVersion(): Version = {

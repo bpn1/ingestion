@@ -39,4 +39,8 @@ object DataLakeImportWikidata extends DataLakeImport(
 		sm.addProperties(metadata.toMap)
 		subject
 	}
+
+	def main(args: Array[String]): Unit = {
+		importToCassandra()
+	}
 }
