@@ -1,3 +1,5 @@
+package DataLake
+
 import org.apache.spark.SparkContext
 import scala.collection.mutable
 import java.util.UUID

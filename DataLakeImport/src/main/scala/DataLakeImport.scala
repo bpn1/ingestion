@@ -1,3 +1,5 @@
+package DataLake
+
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import java.util.{Date, UUID}

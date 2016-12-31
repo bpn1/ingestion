@@ -1,3 +1,4 @@
+import DataLake.{DataLakeImport, Subject, SubjectManager, Version}
 import scala.collection.mutable
 
 object DataLakeImportDBpedia extends DataLakeImport(

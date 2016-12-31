@@ -1,3 +1,5 @@
+package DataLake
+
 import java.util.{UUID, Date}
 import com.datastax.spark.connector.types._
 import com.datastax.driver.core.utils.UUIDs
