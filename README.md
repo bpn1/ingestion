@@ -1,4 +1,4 @@
-# Ingestion [![Build Status](http://bpn-odin:4321/buildStatus/icon?job=Build Ingestion Repo)](http://bpn-odin:4321/job/Build Ingestion Repo)
+# Ingestion [![Build Status](http://bpn-odin:4321/job/Build%20Ingestion%20Repo/badge/icon)](http://bpn-odin:4321/job/Build%20Ingestion%20Repo/)
 Bachelor project at HPI Potsdam
 
 Topic: Business graph construction, large scale data analysis
