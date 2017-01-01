@@ -1,6 +1,6 @@
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
-import org.apache.spark.SparkConf
 import org.apache.spark.broadcast.Broadcast
 import scala.collection.mutable
 import play.api.libs.json._
@@ -172,6 +172,28 @@ object WikiDataRDD {
 		entity
 	}
 
+	// START OF MAIN PROGRAM
+
+	def parseDump(rdd: RDD[String]): RDD[WikiDataEntity] = {
+		rdd
+			.map(cleanJSON)
+			.filter(_ != "")
+			.map(parseEntity)
+	}
+
+	def buildPropertyMap(rdd: RDD[WikiDataEntity]): Map[String, String] = {
+		rdd
+			.filter(entity => entity.entitytype == "property" && entity.label != null)
+			.map(entity => (entity.id, entity.label))
+			.collect
+			.toMap
+	}
+
+	def translateProps(rdd: RDD[WikiDataEntity],
+		propertyBroadcast: Broadcast[Map[String, String]]): RDD[WikiDataEntity] = {
+		rdd.map(translatePropertyIDs(_, propertyBroadcast.value))
+	}
+
 	def main(args: Array[String]) {
 		var inputFile = defaultInputFile
 		if(args.length > 0)
@@ -183,22 +205,12 @@ object WikiDataRDD {
 
 		val sc = new SparkContext(conf)
 		val jsonFile = sc.textFile(inputFile)
-		val wikiData = jsonFile
-			.map(cleanJSON)
-			.filter(_ != "")
-			.map(parseEntity)
-			//.cache
+		val wikiData = parseDump(jsonFile) //.cache
 
-		val properties = wikiData
-			.filter(entity => entity.entitytype == "property" && entity.label != null)
-			.map(entity => (entity.id, entity.label))
-			.collect
-			.toMap
-
+		val properties = buildPropertyMap(wikiData)
 		var propertyBroadcast = sc.broadcast(properties)
 
-		wikiData
-			.map(translatePropertyIDs(_, propertyBroadcast.value))
+		translateProps(wikiData, propertyBroadcast)
 			.saveToCassandra("wikidumps", "wikidata", SomeColumns("id", "entitytype", "wikiname", "description", "label", "aliases", "data"))
 	}
 }
