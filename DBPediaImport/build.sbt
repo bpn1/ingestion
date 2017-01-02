@@ -15,15 +15,6 @@ libraryDependencies ++= Seq(
   "org.jsoup" % "jsoup" % "1.10.1",
   "org.apache.spark" %% "spark-core" % "1.6.2",
   "org.apache.spark" % "spark-sql_2.10" % "1.6.2",
-  // "org.apache.jena" % "jena-core" % "3.1.1",
-  // "org.apache.jena" % "jena" % "3.1.1",
-  // "org.apache.jena" % "jena-tdb" % "3.1.1",
-  // "org.apache.jena" % "jena-sdb" % "3.1.1",
-  // "org.apache.jena" % "apache-jena-libs" % "3.1.1",
-  // "org.apache.jena" % "jena-elephas-io" % "3.1.1",
-  // "org.apache.jena" % "jena-elephas-mapreduce" % "3.1.1",
-  // "org.apache.hadoop" % "hadoop-common" % "2.6.0",
-  // "org.apache.hadoop" % "hadoop-mapreduce-client-common" % "2.6.0",
   "com.datastax.spark" % "spark-cassandra-connector_2.10" % "1.6.1",
   "com.datastax.cassandra" % "cassandra-driver-core" % "3.1.2"
 )
