@@ -1,25 +1,12 @@
 import DataLake.{DataLakeImport, Subject, SubjectManager, Version}
 import scala.collection.mutable
 
-object DataLakeImportWikidata extends DataLakeImport(
+object DataLakeImportWikidata extends DataLakeImport[WikiDataEntity](
 	"DataLakeImportWikidata_v1.0",
 	List("wikidata_20161117"),
 	"wikidumps",
 	"wikidata"
 ){
-	case class WikiDataEntity(
-		var id: String = "",
-		var entitytype: Option[String] = None,
-		var instancetype: Option[String] = None,
-		var wikiname: Option[String] = None,
-		var description: Option[String] = None,
-		var label: Option[String] = None,
-		var aliases: List[String] = List[String](),
-		var data: Map[String, List[String]] = Map[String, List[String]]()
-	)
-
-	override type T = WikiDataEntity
-
 	override def translateToSubject(entity: WikiDataEntity, version: Version) : Subject = {
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)

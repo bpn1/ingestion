@@ -2,10 +2,11 @@ package DataLake
 
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
-import java.util.{Date, UUID}
+import java.util.Date
 import com.datastax.driver.core.utils.UUIDs
+import scala.reflect.ClassTag
 
-abstract class DataLakeImport (
+abstract class DataLakeImport[T : ClassTag](
 	val appName: String,
 	val dataSources: List[String],
 	val inputKeyspace: String,
@@ -15,11 +16,8 @@ abstract class DataLakeImport (
 	val outputTable = "subject"
 	val versionTable = "version"
 
-	type T
-
-	def translateToSubject(entity: T, version: Version): Subject
-
-	def makeTemplateVersion(): Version = {
+	protected def translateToSubject(entity: T, version: Version): Subject
+	protected def makeTemplateVersion(): Version = {
 		// create timestamp and TimeUUID for versioning
 		val timestamp = new Date()
 		val version = UUIDs.timeBased()
@@ -27,7 +25,7 @@ abstract class DataLakeImport (
 		Version(version, appName, null, null, dataSources, timestamp)
 	}
 
-	def importToCassandra(): Unit = {
+	protected def importToCassandra(): Unit = {
 		val conf = new SparkConf()
 			.setAppName(appName)
 			.set("spark.cassandra.connection.host", "172.20.21.11")
