@@ -1,8 +1,6 @@
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.SQLContext
 import com.datastax.spark.connector._
-import org.apache.spark.rdd.RDD
 
 object DBPediaImport {
 	val appName = "DBPediaImport_v1.0"
@@ -13,7 +11,7 @@ object DBPediaImport {
 	
 	case class DBPediaTriple (subject: String, predicate: String, property: String)
 
-	def tokenize(turtle: String) : Array[String] = {
+	def tokenize(turtle: String) : List[String] = {
 		turtle
 		  .split("> ")
 			.map(_.trim)
@@ -40,7 +38,7 @@ object DBPediaImport {
 
 	def parseLine(text: String) : DBPediaTriple = {
 		val triple = tokenize(text).map(cleanURL)
-		DBPediaTriple(triple(0), triple(1), triple(2))
+		DBPediaTriple(triple.head, triple(1), triple(2))
 	}
 
 	def extractProperties(group: Tuple2[String, Iterable[DBPediaTriple]]) : Iterable[Tuple2[String, String]] = group match {
