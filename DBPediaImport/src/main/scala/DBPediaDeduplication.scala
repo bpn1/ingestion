@@ -23,8 +23,8 @@ object DBPediaDeduplication {
 		val pairSubject = subjects
 		  .filter(subject => subject.properties.get("wikipageId").isDefined)
 		  .keyBy(_.properties.getOrElse("wikipageId", List("null")).head)
-		val joinedTable = pairDBpedia.leftOuterJoin(pairSubject)
-		joinedTable.takeSample(false, 10).foreach(println)
+		//val joinedTable = pairDBpedia.leftOuterJoin(pairSubject)
+		//joinedTable.takeSample(false, 10).foreach(println)
 
 		sc.stop()
 	}

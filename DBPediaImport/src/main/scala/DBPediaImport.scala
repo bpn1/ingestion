@@ -12,7 +12,7 @@ object DBPediaImport {
 	
 	case class DBPediaTriple (subject: String, predicate: String, property: String)
 
-	def tokenize(turtle: String) : List[String] = {
+	def tokenize(turtle: String) : Array[String] = {
 		turtle
 		  .split("> ")
 			.map(_.trim)
@@ -29,7 +29,7 @@ object DBPediaImport {
 
 	def parseLine(text: String) : DBPediaTriple = {
 		val triple = tokenize(text).map(cleanURL)
-		DBPediaTriple(triple.head, triple(1), triple(2))
+		DBPediaTriple(triple(0), triple(1), triple(2))
 	}
 
 	def parseTurtleFile(rdd: RDD[String]) : RDD[DBPediaTriple] = {
