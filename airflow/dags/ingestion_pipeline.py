@@ -28,16 +28,18 @@ programs = [
     ('DataLakeImport', wiki_jar),
     ('FindRelations', wiki_jar)]
 
-def make_operator_chain(programList, dag, parent_operator = None):
+
+def make_operator_chain(programList, dag, parent_operator=None):
     last_operator = parent_operator
     for program, jar_path in programList:
         operator = BashOperator(
             task_id=program,
-            bash_command='spark.sh yarn '+program+' '+jar_path,
+            bash_command='spark.sh yarn ' + program + ' ' + jar_path,
             dag=dag)
-        if(last_operator != None):
+        if last_operator is not None:
             operator.set_upstream(last_operator)
         last_operator = operator
+
 
 dag = DAG(dag_name, default_args=default_args)
 make_operator_chain(programs, dag)
