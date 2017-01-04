@@ -7,14 +7,16 @@ lazy val root = (project in file(".")).
   )
 
 resolvers ++= Seq(
-  "Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven"
+  "Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven",
+  "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"
 )
 
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % "1.6.2",
   "com.datastax.spark" %% "spark-cassandra-connector" % "1.6.1",
   "org.apache.spark" % "spark-sql_2.10" % "1.6.2",
-  "com.datastax.cassandra" % "cassandra-driver-core" % "3.1.2"
+  "com.datastax.cassandra" % "cassandra-driver-core" % "3.1.2",
+  "com.typesafe.play" %% "play-json" % "2.3.0"
 )
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {

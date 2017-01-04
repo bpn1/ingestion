@@ -1,12 +1,12 @@
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import java.util.{UUID, Date}
+import play.api.libs.json._
+import scala.collection.mutable
 
 object VersionDiff {
 	val keyspace = "datalake"
 	val tablename = "subject"
-	val csvSeparator = ","
-	val diffListSeparator = ";"
 	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
 
 	def timeFromUUID(uuid : UUID): Long = {
@@ -43,14 +43,24 @@ object VersionDiff {
 
 	// returns an empty string if there were no versions no compare and otherwise returns a string in the following format
 	// -oldValue1;oldValue2;oldValue3 +newValue1;newValue2;newValue3
-	def diffLists(valueList : List[List[String]]) : String = {
+	def diffLists(valueList : List[List[String]]) : JsValue = {
+		// if input does not exist
 		if(valueList == null)
-			return ""
+			return null
+
+		val result = mutable.Map[String, JsValue]()
 		val oldValueList = valueList(0)
 		val newValueList = valueList(1)
 		val oldValues = oldValueList.filterNot(newValueList.toSet)
 		val newValues = newValueList.filterNot(oldValueList.toSet)
-		"-" + oldValues.mkString(diffListSeparator) + " +" + newValues.mkString(diffListSeparator)
+		if(oldValues.length > 0)
+			result += Tuple2("-", Json.toJson(oldValues))
+		if(newValues.length > 0)
+			result += Tuple2("+", Json.toJson(newValues))
+
+		if(result.size == 0)
+			return null
+		Json.toJson(result.toMap)
 	}
 
 	def main(args : Array[String]): Unit = {
@@ -89,19 +99,23 @@ object VersionDiff {
 							createValueList(oldVersion, newVersion, versionList)))
 					(id, nameList, aliasesList, categoryList, properties, relations)
 				}
-			// diffs the value lists and parses them into strings
-			}.map { case (id, nameList, aliasesList, categoryList, properties, relations) => {
-					val nameDiff = diffLists(nameList)
-					val aliasesDiff = diffLists(aliasesList)
-					val categoryDiff = diffLists(categoryList)
-					val propertiesDiff = properties.mapValues(diffLists)
-					val relationsDiff = relations.mapValues(_.mapValues(diffLists))
-					(id, nameDiff, aliasesDiff, categoryDiff, propertiesDiff, relationsDiff)
-				}
-			// creates csv string with fields being encapsulated in quotation marks ("")
-			}.map { case (id, nameDiff, aliasesDiff, categoryDiff, propertiesDiff, relationsDiff) =>
-				List(id, nameDiff, aliasesDiff, categoryDiff,
-					propertiesDiff, relationsDiff).map("\"" + _ + "\"").mkString(csvSeparator)
-			}.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
+			// diffs the value lists and parses them into Json
+			}.map { case (id, nameList, aliasesList, categoryList, properties, relations) =>
+				Map(
+					"id" -> Json.toJson(id),
+					"name" -> diffLists(nameList),
+					"aliases" -> diffLists(aliasesList),
+					"category" -> diffLists(categoryList),
+					"properties" -> Json.toJson(properties
+						.mapValues(diffLists)
+						.filter(_._2 != null)),
+					"relations" -> Json.toJson(relations
+						.map { case (key, value) =>
+							(key.toString, value.mapValues(diffLists).filter(_._2 != null))
+						}.filter(_._2.size > 0)
+						.mapValues(propMap => Json.toJson(propMap)))
+				).filter(_._2 != null)
+			}.map(diffMap => Json.toJson(diffMap))
+			.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
     }
 }
