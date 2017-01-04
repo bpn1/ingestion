@@ -27,6 +27,7 @@ libraryDependencies ++= Seq(
 logBuffered in Test := false
 parallelExecution in Test := false
 fork in Test := true
+testOptions in Test := Seq(Tests.Argument(TestFrameworks.ScalaTest, "-oD"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"))
 javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
 
 // fat jar assembly settings
