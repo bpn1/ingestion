@@ -63,6 +63,66 @@ object VersionDiff {
 		Json.toJson(result.toMap)
 	}
 
+	// map version histories to list of old and new values in the following format
+	// List(List(oldValue1, oldValue2), List(newValue1, newValue2))
+	def retrieveVersions(
+		entry : Tuple6[UUID,
+			List[Version],
+			List[Version],
+			List[Version],
+			Map[String, List[Version]],
+			Map[UUID, Map[String, List[Version]]]],
+		oldVersion : UUID,
+		newVersion : UUID
+	) : Tuple6[UUID,
+		List[List[String]],
+		List[List[String]],
+		List[List[String]],
+		Map[String, List[List[String]]],
+		Map[UUID, Map[String, List[List[String]]]]]
+	= {
+		entry match {
+			case (id, name_h, aliases_h, category_h, properties_h, relations_h) => {
+					val nameList = createValueList(oldVersion, newVersion, name_h)
+					val aliasesList = createValueList(oldVersion, newVersion, aliases_h)
+					val categoryList = createValueList(oldVersion, newVersion, category_h)
+					val properties = properties_h.mapValues(versionList =>
+						createValueList(oldVersion, newVersion, versionList))
+					val relations = relations_h.mapValues(_.mapValues(versionList =>
+							createValueList(oldVersion, newVersion, versionList)))
+					(id, nameList, aliasesList, categoryList, properties, relations)
+			}
+		}
+	}
+
+	// diffs the value lists and parses them into Json
+	def diffToJson(
+		entry : Tuple6[UUID,
+			List[List[String]],
+			List[List[String]],
+			List[List[String]],
+			Map[String, List[List[String]]],
+			Map[UUID, Map[String, List[List[String]]]]]
+	) : Map[String, JsValue] = {
+		entry match {
+			case (id, nameList, aliasesList, categoryList, properties, relations) =>
+				Map(
+					"id" -> Json.toJson(id),
+					"name" -> diffLists(nameList),
+					"aliases" -> diffLists(aliasesList),
+					"category" -> diffLists(categoryList),
+					"properties" -> Json.toJson(properties
+						.mapValues(diffLists)
+						.filter(_._2 != null)),
+					"relations" -> Json.toJson(relations
+						.map { case (key, value) =>
+							(key.toString, value.mapValues(diffLists).filter(_._2 != null))
+						}.filter(_._2.size > 0)
+						.mapValues(propMap => Json.toJson(propMap)))
+				).filter(_._2 != null)
+		}
+	}
+
 	def main(args : Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("VersionDiff")
@@ -87,35 +147,10 @@ object VersionDiff {
 			.map(subject => (subject.id, subject.name_history,
 				subject.aliases_history, subject.category_history,
 				subject.properties_history, subject.relations_history))
-			// map version histories to list of old and new values in the following format
-			// List(List(oldValue1, oldValue2), List(newValue1, newValue2))
-			.map { case (id, name_h, aliases_h, category_h, properties_h, relations_h) => {
-					val nameList = createValueList(oldVersion, newVersion, name_h)
-					val aliasesList = createValueList(oldVersion, newVersion, aliases_h)
-					val categoryList = createValueList(oldVersion, newVersion, category_h)
-					val properties = properties_h.mapValues(versionList =>
-						createValueList(oldVersion, newVersion, versionList))
-					val relations = relations_h.mapValues(_.mapValues(versionList =>
-							createValueList(oldVersion, newVersion, versionList)))
-					(id, nameList, aliasesList, categoryList, properties, relations)
-				}
-			// diffs the value lists and parses them into Json
-			}.map { case (id, nameList, aliasesList, categoryList, properties, relations) =>
-				Map(
-					"id" -> Json.toJson(id),
-					"name" -> diffLists(nameList),
-					"aliases" -> diffLists(aliasesList),
-					"category" -> diffLists(categoryList),
-					"properties" -> Json.toJson(properties
-						.mapValues(diffLists)
-						.filter(_._2 != null)),
-					"relations" -> Json.toJson(relations
-						.map { case (key, value) =>
-							(key.toString, value.mapValues(diffLists).filter(_._2 != null))
-						}.filter(_._2.size > 0)
-						.mapValues(propMap => Json.toJson(propMap)))
-				).filter(_._2 != null)
-			}.map(diffMap => Json.toJson(diffMap))
+			.map(retrieveVersions(_, oldVersion, newVersion))
+			.map(diffToJson)
+			.map(diffMap => Json.toJson(diffMap))
 			.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
+		sc.stop
     }
 }
