@@ -1,6 +1,7 @@
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
 import com.datastax.spark.connector._
+import org.apache.spark.rdd.RDD
 
 object DBPediaImport {
 	val appName = "DBPediaImport_v1.0"
@@ -26,19 +27,13 @@ object DBPediaImport {
 		.replace("http://purl.org/dc/terms/","dc:")
 	}
 
-	def translateToDBPediaEntry(resource: Map[String, Iterable[String]]) : DBPediaEntity = {
-		val dBPediaEntity = DBPediaEntity()
-		dBPediaEntity.wikipageId = resource.getOrElse("dbo:wikiPageID", List("null")).head
-		dBPediaEntity.dbPediaName = resource.getOrElse("dbpedia-entity", List("null")).head
-		dBPediaEntity.label = resource.get("rdfs:label")
-		dBPediaEntity.description = resource.get("dbo:abstract")
-		dBPediaEntity.data = resource - ("dbo:wikiPageID", "dbpedia-entity", "rdfs:label", "dbo:abstract")
-		dBPediaEntity
-	}
-
 	def parseLine(text: String) : DBPediaTriple = {
 		val triple = tokenize(text).map(cleanURL)
 		DBPediaTriple(triple.head, triple(1), triple(2))
+	}
+
+	def parseTurtleFile(rdd: RDD[String]) : RDD[DBPediaTriple] = {
+		rdd.map(parseLine)
 	}
 
 	def extractProperties(group: Tuple2[String, Iterable[DBPediaTriple]]) : Iterable[Tuple2[String, String]] = group match {
@@ -58,6 +53,24 @@ object DBPediaImport {
 		  .map(identity)
 	}
 
+	def translateToDBPediaEntry(resource: Map[String, Iterable[String]]) : DBPediaEntity = {
+		val dBPediaEntity = DBPediaEntity()
+		dBPediaEntity.wikipageId = resource.getOrElse("dbo:wikiPageID", List("null")).head
+		dBPediaEntity.dbPediaName = resource.getOrElse("dbpedia-entity", List("null")).head
+		dBPediaEntity.label = resource.get("rdfs:label")
+		dBPediaEntity.description = resource.get("dbo:abstract")
+		dBPediaEntity.data = resource - ("dbo:wikiPageID", "dbpedia-entity", "rdfs:label", "dbo:abstract")
+		dBPediaEntity
+	}
+
+	def createDBpediaEntities(rdd: RDD[DBPediaTriple]) : RDD[DBPediaEntity] = {
+		rdd
+			.groupBy(_.subject)
+			.map(extractProperties)
+			.map(createMap)
+			.map(translateToDBPediaEntry)
+	}
+
 	def main(args: Array[String]) {
 		val conf = new SparkConf()
 			.setAppName(appName)
@@ -66,16 +79,11 @@ object DBPediaImport {
 		//val sql = new SQLContext(sc)
 
 		val ttl = sc.textFile("dbpedia_de_clean.ttl")  // original file
-
-		val triples = ttl.map(parseLine)
+		val triples = parseTurtleFile(ttl)
 
 		val dbpediaResources = triples.filter(_.subject.contains("dbr:"))
-		dbpediaResources
-			.groupBy(_.subject)
-			.map(extractProperties)
-			.map(createMap)
-		  .map(translateToDBPediaEntry)
-		  .saveToCassandra(keyspace, tablename)
+		val dbpediaEntities = createDBpediaEntities(dbpediaResources)
+		dbpediaEntities.saveToCassandra(keyspace, tablename)
 
 		sc.stop()
 	}

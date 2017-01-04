@@ -6,7 +6,7 @@ import DBPediaImport._
 abstract class DBpediaImport_Spec extends FunSpec {
 	describe("DBpediaImport") {
 
-		describe("when parsing a line of a turtle file") {
+		describe("when parsing turtle file") {
 			val line = "<http://dbpedia.org/resource/Spiderman> <http://www.perceive.net/schemas/relationship/enemyOf> <http://dbpedia.org/resource/Green_Goblin> ."
 			it("should extract the triple") {
 				val triple = List("http://dbpedia.org/resource/Spiderman", "http://www.perceive.net/schemas/relationship/enemyOf", "http://dbpedia.org/resource/Green_Goblin")
@@ -25,7 +25,7 @@ abstract class DBpediaImport_Spec extends FunSpec {
 				assert(parsedTriple.property == "http://example.org/#green-goblin")
 			}
 		}
-		describe("when creating Maps of triples") {
+		describe("when creating DBpediaEntities") {
 			val triples = List(
 				DBPediaTriple("dbr:Spiderman", "http://www.perceive.net/schemas/relationship/enemyOf", "dbr:Green_Goblin"),
 				DBPediaTriple("dbr:Spiderman", "http://www.perceive.net/schemas/relationship/enemyOf", "dbr:Red_Goblin"),
@@ -34,6 +34,7 @@ abstract class DBpediaImport_Spec extends FunSpec {
 			)
 			it("should extract properties") {
 				val group = Tuple2("dbr:Spiderman", List(DBPediaTriple("dbr:Spiderman", "http://www.perceive.net/schemas/relationship/enemyOf", "dbr:Green_Goblin"), DBPediaTriple("dbr:Spiderman", "http://www.perceive.net/schemas/relationship/enemyOf", "dbr:Red_Goblin"), DBPediaTriple("dbr:Spiderman", "rdfs:label", "Spiderman")))
+
 			}
 		}
 	}
