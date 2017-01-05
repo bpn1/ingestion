@@ -1,6 +1,7 @@
 import luigi
 import commands
 import os
+from __future__ import print_function
 
 wiki_jar = '/home/hadoop/WikiImport/target/scala-2.10/WikiImport-assembly-1.0.jar'
 programs = [
@@ -24,13 +25,8 @@ def make_operator_chain(programs):
     return last_task
 
 
-class TaskHelpers():
-    def execute_command(self, command):
-        return commands.getstatusoutput(command)
-
-    def x(self, command):
-        """ just a short alias """
-        return self.execute_command(command)
+def execute_command(command):
+    return commands.getstatusoutput(command)
 
 
 class ForceableTask(luigi.Task):
@@ -47,7 +43,7 @@ class ForceableTask(luigi.Task):
                     os.remove(self.output().path)
 
 
-class IngestionTask(ForceableTask, TaskHelpers):
+class IngestionTask(ForceableTask):
     name = luigi.Parameter()
     command = luigi.Parameter()
     upstream_task = luigi.Parameter(default=None)
@@ -65,16 +61,34 @@ class IngestionTask(ForceableTask, TaskHelpers):
             prefix = ''
         return prefix + self.name
 
-    def run(self):
-        print('---------------')
-        print(self.name)
-        print(self.command)
-        print(self.upstream_task)
-        print(self.output_path())
-        print(self.x(self.command))
-        print('---------------')
+    def has_upstream_completed(self):
+        if self.requires() is None:
+            return True
+        with self.input().open('r') as fin:
+            status = int(fin.readline())
+            return status == 0
+
+    def execute_command(self):
         with self.output().open('w') as outfile:
-            outfile.write(self.name + ' completed!')  # dummy file, see https://github.com/spotify/luigi/issues/848
+            status, output = commands.getstatusoutput(self.command)
+            outfile.write(str(status))
+            outfile.write('\n')
+            outfile.write(output)
+            print('status: \t' + status)
+
+    def run(self):
+        print('-----  Task started  -----')
+        print('name:     ' + self.name)
+        print('requires: ', end='')
+        print(self.upstream_task)
+        print('output:   ' + self.output_path())
+        print('command:  ' + self.command)
+        if self.has_upstream_completed():
+            self.execute_command()
+            print('----- Task completed -----')
+        else:
+            print('Error: upstream task ' + self.upstream_task + ' has not completed!')
+            print('-----  Task aborted  -----')
 
 
 class IngestionWorkflow(luigi.Task):
