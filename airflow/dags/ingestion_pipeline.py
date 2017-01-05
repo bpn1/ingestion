@@ -25,8 +25,8 @@ programs = [
     ('WikiDataRDD', wiki_jar),
     ('TagEntities', wiki_jar),
     ('ResolveEntities', wiki_jar),
-    ('DataLakeImport', wiki_jar),
-    ('FindRelations', wiki_jar)]
+    ('DataLakeImport', datalake_jar),
+    ('FindRelations', datalake_jar)]
 
 
 def make_operator_chain(programList, dag, parent_operator=None):

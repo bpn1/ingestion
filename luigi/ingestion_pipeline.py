@@ -4,24 +4,26 @@ import commands
 import os
 
 wiki_jar = '/home/hadoop/WikiImport/target/scala-2.10/WikiImport-assembly-1.0.jar'
+datalake_jar = '/home/hadoop/DataLakeImport/target/scala-2.10/DataLakeImport-assembly-1.0.jar'
+
 programs = [
     ('WikiDataRDD', wiki_jar),
     ('TagEntities', wiki_jar),
     ('ResolveEntities', wiki_jar),
-    ('DataLakeImport', wiki_jar),
-    ('FindRelations', wiki_jar)]
+    ('DataLakeImport', datalake_jar),
+    ('FindRelations', datalake_jar)]
 
 
 def create_command(program, jar_path):
     return './spark.sh yarn ' + program + ' ' + jar_path
 
 
-def make_operator_chain(programs):
+def make_operator_chain(programs, force_execution):
     last_task = None
     for i in range(len(programs)):
         program, jar_path = programs[i]
         last_task = IngestionTask(name=program, command=create_command(program, jar_path), upstream_task=last_task,
-                                  force=True)
+                                  force=force_execution)
     return last_task
 
 
@@ -59,7 +61,7 @@ class IngestionTask(ForceableTask):
             prefix = self.input().path + '.'
         else:
             prefix = ''
-        return prefix + self.name
+        return prefix + self.name + '.log'
 
     def has_upstream_completed(self):
         if self.requires() is None:
@@ -78,22 +80,25 @@ class IngestionTask(ForceableTask):
 
     def run(self):
         print('-----  Task started  -----')
-        print('name:     ' + self.name)
-        print('requires: ', end='')
-        print(self.upstream_task)
-        print('output:   ' + self.output_path())
-        print('command:  ' + self.command)
+        print('name:            ' + self.name)
+        print('force-execution: ' + str(self.force))
+        print('requires:        ' + str(self.upstream_task))
+        print('output:          ' + self.output_path())
+        print('command:         ' + self.command)
         if self.has_upstream_completed():
             self.execute_command()
             print('----- Task completed -----')
         else:
-            print('Error: upstream task ' + self.upstream_task + ' has not completed!')
+            print('Error: upstream task ' + str(self.upstream_task) + ' has not completed!')
             print('-----  Task aborted  -----')
 
 
 class IngestionWorkflow(luigi.Task):
     name = 'IngestionWorkflow'
-    upstream_task = make_operator_chain(programs)
+    force_execution = luigi.BoolParameter(default=False)
+    if force_execution is True:
+        print('##############')
+    upstream_task = make_operator_chain(programs, force_execution)
 
     def requires(self):
         return self.upstream_task
