@@ -74,7 +74,7 @@ class IngestionTask(ForceableTask):
             outfile.write(str(status))
             outfile.write('\n')
             outfile.write(output)
-            print('status: \t' + status)
+            print('status: \t' + str(status))
 
     def run(self):
         print('-----  Task started  -----')
