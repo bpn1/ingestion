@@ -3,10 +3,13 @@ package DataLake
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import java.util.Date
+
 import com.datastax.driver.core.utils.UUIDs
+import com.datastax.spark.connector.rdd.reader.RowReaderFactory
+
 import scala.reflect.ClassTag
 
-abstract class DataLakeImport[T : ClassTag](
+abstract class DataLakeImport[T <: Serializable : ClassTag : RowReaderFactory](
 	val appName: String,
 	val dataSources: List[String],
 	val inputKeyspace: String,
