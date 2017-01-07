@@ -6,6 +6,8 @@ lazy val root = (project in file(".")).
     mainClass in Compile := Some("DataLakeImport")
   )
 
+exportJars := true
+
 resolvers ++= Seq(
   "Spark Packages" at "https://dl.bintray.com/spark-packages/maven/"
 )
