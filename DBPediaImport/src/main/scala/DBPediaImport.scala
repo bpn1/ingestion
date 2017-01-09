@@ -2,6 +2,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.broadcast.Broadcast
 
 object DBPediaImport {
 	val appName = "DBPediaImport_v1.0"
@@ -9,7 +10,7 @@ object DBPediaImport {
 
 	val keyspace = "wikidumps"
 	val tablename = "dbpedia"
-	
+
 	case class DBPediaTriple (subject: String, predicate: String, property: String)
 
 	def tokenize(turtle: String) : Array[String] = {
@@ -19,21 +20,21 @@ object DBPediaImport {
 			.filter(_ != ".")
 	}
 
-	def cleanURL(str:String) : String = {
-		str.replaceAll("""[<>\"]""", "")
-		.replace("http://dbpedia.org/resource/","dbr:")
-		.replace("http://de.dbpedia.org/resource/","dbr:")
-		.replace("http://dbpedia.org/ontology/", "dbo:")
-		.replace("http://purl.org/dc/terms/","dc:")
+	def cleanURL(str:String, prefixesBroadcast: Broadcast[Array[Array[String]]]) : String = {
+		var res = str.replaceAll("""[<>\"]""", "")
+		for (pair <- prefixesBroadcast.value) {
+			res = res.replace(pair(0), pair(1))
+		}
+		res
 	}
 
-	def parseLine(text: String) : DBPediaTriple = {
-		val triple = tokenize(text).map(cleanURL)
+	def parseLine(text: String, prefixesBroadcast: Broadcast[Array[Array[String]]]) : DBPediaTriple = {
+		val triple = tokenize(text).map(cleanURL(_, prefixesBroadcast))
 		DBPediaTriple(triple(0), triple(1), triple(2))
 	}
 
-	def parseTurtleFile(rdd: RDD[String]) : RDD[DBPediaTriple] = {
-		rdd.map(parseLine)
+	def parseTurtleFile(rdd: RDD[String], prefixesBroadcast: Broadcast[Array[Array[String]]]) : RDD[DBPediaTriple] = {
+		rdd.map(parseLine(_, prefixesBroadcast))
 	}
 
 	def extractProperties(group: Tuple2[String, Iterable[DBPediaTriple]]) : Iterable[Tuple2[String, String]] = group match {
@@ -78,10 +79,17 @@ object DBPediaImport {
 		val sc = new SparkContext(conf)
 		//val sql = new SQLContext(sc)
 
-		val ttl = sc.textFile("dbpedia_de_clean.ttl")  // original file
-		val triples = parseTurtleFile(ttl)
+		val prefixes = sc
+			.textFile("prefixes.txt")
+			.map(_.trim.replaceAll("""[()]""", "").split(","))
+			.collect
 
-		val dbpediaResources = triples.filter(_.subject.contains("dbr:"))
+		val prefixesBroadcast = sc.broadcast(prefixes)
+
+		val ttl = sc.textFile("dbpedia_de_clean.ttl")  // original file
+		val triples = parseTurtleFile(ttl, prefixesBroadcast)
+
+		val dbpediaResources = triples.filter(x => (x.subject.contains("dbr:") || x.subject.contains("dbpedia-de:")))
 		val dbpediaEntities = createDBpediaEntities(dbpediaResources)
 		dbpediaEntities.saveToCassandra(keyspace, tablename)
 
