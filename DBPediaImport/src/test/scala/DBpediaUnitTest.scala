@@ -43,12 +43,12 @@ class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 
 	it should "have a wikipageID" in {
 		val entity = DBPediaImport.translateToDBPediaEntry(map)
-		assert(entity.wikipageId.nonEmpty)
+		assert(entity.wikipageid.nonEmpty)
 	}
 
 	it should "have a dbpediaName" in {
 		val entity = DBPediaImport.translateToDBPediaEntry(map)
-		assert(entity.dbPediaName.nonEmpty)
+		assert(entity.dbpedianame.nonEmpty)
 	}
 
 	it should "have a label optionally" in {

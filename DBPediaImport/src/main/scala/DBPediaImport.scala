@@ -56,11 +56,11 @@ object DBPediaImport {
 
 	def translateToDBPediaEntry(resource: Map[String, Iterable[String]]) : DBPediaEntity = {
 		val dBPediaEntity = DBPediaEntity()
-		dBPediaEntity.wikipageId = resource.getOrElse("dbo:wikiPageID", List("null")).head
-		dBPediaEntity.dbPediaName = resource.getOrElse("dbpedia-entity", List("null")).head
+		dBPediaEntity.wikipageid = resource.getOrElse("dbo:wikiPageID", List("null")).head
+		dBPediaEntity.dbpedianame = resource.getOrElse("dbpedia-entity", List("null")).head
 		dBPediaEntity.label = resource.get("rdfs:label")
 		dBPediaEntity.description = resource.get("dbo:abstract")
-		dBPediaEntity.instanceType = resource.get("rdf:type")
+		dBPediaEntity.instancetype = resource.get("rdf:type")
 		dBPediaEntity.data = resource - ("dbo:wikiPageID", "dbpedia-entity", "rdfs:label", "dbo:abstract")
 		dBPediaEntity
 	}
