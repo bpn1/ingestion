@@ -15,7 +15,7 @@ programs = [
 
 
 def create_command(program, jar_path):
-    return './spark.sh yarn ' + program + ' ' + jar_path
+    return '../scripts/spark.sh yarn ' + program + ' ' + jar_path
 
 
 def make_operator_chain(programs, force_execution):
