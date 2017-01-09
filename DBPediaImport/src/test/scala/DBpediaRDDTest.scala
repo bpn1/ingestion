@@ -1,21 +1,25 @@
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
 class DBpediaRDDTest extends FlatSpec with SharedSparkContext {
 
 	"DBpediaTriple store" should "not be empty" in {
-		val rdd = DBPediaImport.parseTurtleFile(TurtleRDD())
+		val prefixes = prefixesBroadcast()
+		val rdd = DBPediaImport.parseTurtleFile(TurtleRDD(), prefixes)
 		assert(rdd.count > 0)
 	}
 
 	they should "be instance of DBpediaTriple" in {
-		val rdd = DBPediaImport.parseTurtleFile(TurtleRDD())
+		val prefixes = prefixesBroadcast()
+		val rdd = DBPediaImport.parseTurtleFile(TurtleRDD(), prefixes)
 		assert(rdd.isInstanceOf[RDD[DBPediaImport.DBPediaTriple]])
 	}
 
 	they should "have namespaces prefixes" in {
-		val ttl = DBPediaImport.parseTurtleFile(TurtleRDD()).collect()
+		val prefixes = prefixesBroadcast()
+		val ttl = DBPediaImport.parseTurtleFile(TurtleRDD(),prefixes).collect()
 		val triple = DBpediaTripleRDD().collect()
 	}
 
@@ -37,6 +41,15 @@ class DBpediaRDDTest extends FlatSpec with SharedSparkContext {
 			"""<http://de.dbpedia.org/resource/Liste_von_Autoren/T> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Autor> .""",
 			"""<http://de.dbpedia.org/resource/Liste_von_Autoren/T> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Wikipedia:Liste> ."""
 		))
+	}
+
+	def prefixesBroadcast(): Broadcast[Array[Array[String]]] = {
+		val prefixes = sc
+			.textFile("prefixes.txt")
+			.map(_.trim.replaceAll("""[()]""", "").split(","))
+			.collect
+
+		sc.broadcast(prefixes)
 	}
 
 	def DBpediaTripleRDD(): RDD[DBPediaImport.DBPediaTriple] = {

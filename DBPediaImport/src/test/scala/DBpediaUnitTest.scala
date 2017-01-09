@@ -1,9 +1,12 @@
+import org.apache.spark.broadcast.Broadcast
+import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.FlatSpec
 
-class DBpediaUnitTest extends FlatSpec {
+class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 
 	"parseLine" should "return a DBpediaTriple" in {
-		val triple = DBPediaImport.parseLine(line)
+		val prefixes = prefixesBroadcast()
+		val triple = DBPediaImport.parseLine(line, prefixes)
 		assert(triple.isInstanceOf[DBPediaImport.DBPediaTriple])
 	}
 
@@ -65,6 +68,15 @@ class DBpediaUnitTest extends FlatSpec {
 	it should "have a data Map for other properties" in {
 		val entity = DBPediaImport.translateToDBPediaEntry(map)
 		assert(entity.data.size == 3)
+	}
+
+	def prefixesBroadcast(): Broadcast[Array[Array[String]]] = {
+		val prefixes = sc
+			.textFile("prefixes.txt")
+			.map(_.trim.replaceAll("""[()]""", "").split(","))
+			.collect
+
+		sc.broadcast(prefixes)
 	}
 
 	val line = """<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> ."""
