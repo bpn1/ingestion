@@ -60,6 +60,7 @@ object DBPediaImport {
 		dBPediaEntity.dbPediaName = resource.getOrElse("dbpedia-entity", List("null")).head
 		dBPediaEntity.label = resource.get("rdfs:label")
 		dBPediaEntity.description = resource.get("dbo:abstract")
+		dBPediaEntity.instanceType = resource.get("rdf:type")
 		dBPediaEntity.data = resource - ("dbo:wikiPageID", "dbpedia-entity", "rdfs:label", "dbo:abstract")
 		dBPediaEntity
 	}
@@ -89,7 +90,7 @@ object DBPediaImport {
 		val ttl = sc.textFile("dbpedia_de_clean.ttl")  // original file
 		val triples = parseTurtleFile(ttl, prefixesBroadcast)
 
-		val dbpediaResources = triples.filter(x => (x.subject.contains("dbr:") || x.subject.contains("dbpedia-de:")))
+		val dbpediaResources = triples.filter(resource => resource.subject.contains("dbr:") || resource.subject.contains("dbpedia-de:"))
 		val dbpediaEntities = createDBpediaEntities(dbpediaResources)
 		dbpediaEntities.saveToCassandra(keyspace, tablename)
 
