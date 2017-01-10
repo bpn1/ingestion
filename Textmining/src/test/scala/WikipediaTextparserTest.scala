@@ -3,7 +3,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
 
 class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
-    
+
     // Audi
     // Volkswagen => Volkswagen AG
     // NSU Motorenwerke => NSU Motorenwerke
@@ -17,7 +17,14 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
         val wikipediaRDD = wikipediaTestRDD()
             .map(WikipediaTextparser.parseWikipediaPage)
             .collect
-            .foreach(println)
+        assert(true)
+    }
+
+    "links" should "be correct" in {
+        val wikipediaRDD = wikipediaTestRDD()
+            .map(WikipediaTextparser.parseWikipediaPage)
+            .map(WikipediaTextparser.parseTree)
+            .collect
         assert(true)
     }
 
