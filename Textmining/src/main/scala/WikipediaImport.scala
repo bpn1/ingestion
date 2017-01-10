@@ -24,7 +24,7 @@ object WikipediaImport {
       .schema(wikiSchema)
       .load(inputFile)
 
-    df = df.withColumn("text", "revision.text").drop("revision")
+    df = df.withColumn("text", df("revision.text")).drop("revision")
     df
       .write
       .format("org.apache.spark.sql.cassandra")

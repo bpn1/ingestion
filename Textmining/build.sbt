@@ -20,7 +20,8 @@ libraryDependencies ++= Seq(
   "org.scalactic" %% "scalactic" % "3.0.1",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
   "com.holdenkarau" %% "spark-testing-base" % "1.6.1_0.3.3",
-  "com.databricks" % "spark-xml_2.10" % "0.4.1"
+  "com.databricks" % "spark-xml_2.10" % "0.4.1",
+  "org.sweble.wikitext" % "swc-engine" % "2.2.0"
 )
 
 // testing settings
