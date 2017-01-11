@@ -7,6 +7,7 @@ import org.sweble.wikitext.engine.nodes._
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import org.sweble.wikitext.parser.nodes._
+import scala.util.matching.Regex
 
 object WikipediaTextparser {
     val keyspace = "wikidumps"
@@ -14,7 +15,8 @@ object WikipediaTextparser {
 
     case class WikipediaEntry(
     	title: String,
-    	page: String
+    	var text: String,
+        var links: List[Map[String, String]]
     )
 
     def parseWikipediaPage(entry : WikipediaEntry): EngPage = {
@@ -22,14 +24,13 @@ object WikipediaTextparser {
 		val compiler = new WtEngineImpl(config)
 		val pageTitle = PageTitle.make(config, entry.title)
 		val pageId = new PageId(pageTitle, 0)
-		val page = compiler.postprocess(pageId, entry.page, null).getPage
+		val page = compiler.postprocess(pageId, entry.text, null).getPage
         page
     }
 
     def parseTree(page : EngPage): (String, List[Map[String,String]]) = {
-        var result = traversePageTree(page, 0)
-        result = (result._1.replaceAll("\n", ""), result._2)
-        println(result)
+        val result = traversePageTree(page, 0)
+        println(s"page: \n$result")
         result
     }
 
@@ -37,7 +38,6 @@ object WikipediaTextparser {
     def traverseChildren(node : WtNode, offset: Int): (String, List[Map[String,String]]) = {
         var text = ""
         val linkList = mutable.ListBuffer[Map[String, String]]()
-        //println(s"Node: $node")
         if(node.iterator == null)
             return (text, linkList.toList)
         for(element <- node.iterator.toList) {
@@ -49,19 +49,23 @@ object WikipediaTextparser {
     }
 
     def traversePageTree(node : WtNode, offset : Int): (String, List[Map[String,String]]) = {
+        val fileRegex = new Regex("^Datei:")
+        val wikimarkupRegex = new Regex("(^\\[\\[.*\\]\\]$|(\\[\\[|\\]\\]))")
         var text = ""
         val linkList = mutable.ListBuffer[Map[String, String]]()
         node match {
+            // try case t: EngPage | t: WtParagraph
             case t: EngPage => traverseChildren(t, offset)
             case t: WtParagraph => traverseChildren(t, offset)
             case t: WtTemplate =>
                 // check [0], if Infobox discard
                 // else ?
-                //println(t)
                 (text, linkList.toList)
             case t: WtText =>
                 // extract text
-                text += t.getContent
+                val tmpText = t.getContent.replaceAll("\\\\n", "")
+                if(wikimarkupRegex.findFirstIn(tmpText) == None && fileRegex.findFirstIn(tmpText) == None)
+                    text += tmpText
                 (text, linkList.toList)
             case t: WtBold => traverseChildren(t, offset)
             case t: WtItalics => traverseChildren(t, offset)
@@ -74,14 +78,14 @@ object WikipediaTextparser {
                 if(t.iterator != null) {
                     for(prop <- t.iterator.toList) {
                         prop match {
-                            case p: WtPageName => target = p(0).asInstanceOf[WtText].getContent
+                            case p: WtPageName =>
+                                target = p(0).asInstanceOf[WtText].getContent
+                                if(fileRegex.findFirstIn(target) != None)
+                                    return (text, linkList.toList)
                             case p: WtLinkTitle =>
                                 val contentList = p.iterator.toList
-                                if(contentList.length == 0) {
-                                    source = ""
-                                } else {
+                                if(contentList.length > 0)
                                     source = contentList(0).asInstanceOf[WtText].getContent
-                                }
                             case _ =>
                         }
                     }
@@ -96,7 +100,9 @@ object WikipediaTextparser {
                 linkList += link.toMap
                 text += source
                 (text, linkList.toList)
-            //case t: WtExternalLink
+            case t: WtExternalLink => (text, linkList.toList)
+            case t: WtXmlElement => (text, linkList.toList)
+            case t: WtTagExtension => (text, linkList.toList)
             case _ =>
                 println(s"\n\nfail: $node.iterator.toList \n\n")
                 (text, linkList.toList)
@@ -111,9 +117,14 @@ object WikipediaTextparser {
 
 
     	val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
-        wikipedia.map(parseWikipediaPage)
-
+        wikipedia
+            .map { case wikipediaEntry =>
+                val page = parseWikipediaPage(wikipediaEntry)
+                val parsedData = parseTree(page)
+                wikipediaEntry.text = parsedData._1
+                wikipediaEntry.links = parsedData._2
+                wikipediaEntry
+            }.saveToCassandra(keyspace, tablename)
 		sc.stop
     }
-
 }
