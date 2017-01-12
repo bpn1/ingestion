@@ -29,9 +29,8 @@ object WikipediaTextparser {
   }
 
   def parseTree(page: EngPage): (String, List[Map[String, String]]) = {
-    val result_raw = traversePageTree(page, 0)
-    val result = (cleanText(result_raw._1), result_raw._2)
-    println(s"\n\npage:\n") //$result")
+    val result = traversePageTree(page, 0)
+    println(s"\n\npage:\n")
     println(result._1)
     println()
     for (elem <- result._2) {
@@ -53,13 +52,6 @@ object WikipediaTextparser {
       linkList ++= resultList
     }
     (text, linkList.toList)
-  }
-
-  // remove surplus spaces
-  def cleanText(text: String): (String) = {
-    text
-      .replaceAll("^\\s+", "")
-      .replaceAll("\\s{2,}", " ")
   }
 
   def traversePageTree(node: WtNode, offset: Int): (String, List[Map[String, String]]) = {
@@ -91,7 +83,7 @@ object WikipediaTextparser {
 
       case t: WtText =>
         // extract text
-        var tmpText = t.getContent.replaceAll("\\\\n", " ")
+        val tmpText = t.getContent.replaceAll("\\\\n", "\n")
         if (wikimarkupRegex.findFirstIn(tmpText) == None && fileRegex.findFirstIn(tmpText) == None)
           text += tmpText
         text
@@ -112,8 +104,10 @@ object WikipediaTextparser {
                   return (text, linkList.toList)
               case p: WtLinkTitle =>
                 val contentList = p.iterator.toList
-                for (textElement <- contentList)
-                  source += textElement.asInstanceOf[WtText].getContent
+                for (textElement <- contentList) {
+                  val tmpText = textElement.asInstanceOf[WtText].getContent.replaceAll("\\\\n", "\n")
+                  source += tmpText
+                }
               case _ =>
             }
           }

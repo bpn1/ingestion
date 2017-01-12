@@ -25,10 +25,9 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
   }
 
   "Wikipedia article text" should "be complete" in {
-
-    // term "Aussprache" should not be parsed, beacause WtTemplateArguments also contain unimportant text
-    val audiAbstract = "Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein " +
-      "deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur " +
+    // term "Aussprache" should not be parsed, because WtTemplateArguments also contain unimportant text
+    val audiAbstract = "\n\n\n\n\n\n\n\nDie Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein " +
+      "deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört.\n\nDer Markenname ist ein Wortspiel zur " +
       "Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau."
 
     val wikipediaRDD = wikipediaAudiTestRDD()
@@ -56,6 +55,21 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
       .collect
       .foreach(linkMap =>
         assert(linkMap("source").length == linkMap("char_offset_end").toInt - linkMap("char_offset_begin").toInt))
+  }
+
+  "Wikipedia link offsets" should "be consistent with the text" in {
+    val wikipediaRDD = wikipediaTestRDD()
+      .map(WikipediaTextparser.parseWikipediaPage)
+      .map(WikipediaTextparser.parseTree)
+      .collect
+      .foreach { parsedArticle =>
+        val text = parsedArticle._1
+        val linkMaps = parsedArticle._2
+        linkMaps.foreach { linkMap =>
+          val substring = text.substring(linkMap("char_offset_begin").toInt, linkMap("char_offset_end").toInt)
+          assert(linkMap("source") == substring)
+        }
+      }
   }
 
   // extracted from Wikipedia
