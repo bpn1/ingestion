@@ -1,5 +1,5 @@
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.sql.{SQLContext,cassandra,SaveMode}
+import org.apache.spark.sql.{SQLContext, cassandra, SaveMode}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
