@@ -7,7 +7,7 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext {
 
     val oldVersion = UUID.fromString("fc2c5a40-c566-11e6-aee2-5f2c06e3b302")
     val newVersion = UUID.fromString("7ce032b0-c567-11e6-8252-5f2c06e3b302")
-
+/*
     "retrieved versions" should "contain exactly two elements" in {
         val versionRDD = subjectVersionRDD()
             .map(VersionDiff.retrieveVersions(_, oldVersion, newVersion))
@@ -56,7 +56,7 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext {
 
         assert(invalidVersions.count == 0 && versionRDD.count > 0)
     }
-
+*/
 
 
     // extracted from WikiData dump
