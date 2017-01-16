@@ -21,8 +21,8 @@ libraryDependencies ++= Seq(
 	"org.scalatest" %% "scalatest" % "3.0.1" % "test",
 	"com.holdenkarau" %% "spark-testing-base" % "1.6.1_0.3.3",
 	"com.databricks" % "spark-xml_2.10" % "0.4.1",
-	"org.sweble.wikitext" % "swc-engine" % "2.2.0",
-	"info.bliki.wiki" % "bliki-core" % "3.1.0"
+	"info.bliki.wiki" % "bliki-core" % "3.1.0",
+	"org.jsoup" % "jsoup" % "1.10.2"
 )
 
 // testing settings
