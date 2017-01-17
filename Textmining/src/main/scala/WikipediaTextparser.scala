@@ -30,11 +30,11 @@ object WikipediaTextparser {
 	}
 
 	def parseHtml(entry : (WikipediaEntry, String)): WikipediaEntry = {
-		val redirectRegex = new Regex("\\AWEITERLEITUNG")
+		val redirectRegex = new Regex("(\\AWEITERLEITUNG)|(\\AREDIRECT)")
 		if(redirectRegex.findFirstIn(Jsoup.parse(entry._2).body.text) != None) {
 			val wikiEntry = entry._1
 			wikiEntry.refs = getLinks(Jsoup.parse(entry._2))
-			wikiEntry.text = "WEITERLEITUNG"
+			wikiEntry.text = "REDIRECT"
 			return wikiEntry
 		}
 
@@ -42,7 +42,6 @@ object WikipediaTextparser {
 		val wikiEntry = entry._1
 		wikiEntry.refs = getLinks(document)
 		wikiEntry.text = document.toString
-		println(wikiEntry)
 		wikiEntry
 	}
 
@@ -102,6 +101,12 @@ object WikipediaTextparser {
 		links.toMap
 	}
 
+	def addHtmlEncodingLine(entry: WikipediaEntry): WikipediaEntry = {
+		val encodingLine = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />"
+		entry.text = encodingLine + "\n" + entry.text
+		entry
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Textparser")
@@ -118,9 +123,8 @@ object WikipediaTextparser {
 				WikipediaEntry(entry.title, text, entry.refs)
 			}.map(entry => (entry, wikipediaToHtml(entry.text)))
 			.map(parseHtml)
-			.take(10)
-			.foreach(println)
-			//.saveToCassandra(keyspace, tablename)
+			.map(addHtmlEncodingLine)
+			.saveToCassandra(keyspace, tablename)
 		sc.stop
 	}
 }
