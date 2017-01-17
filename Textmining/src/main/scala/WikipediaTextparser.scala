@@ -30,10 +30,19 @@ object WikipediaTextparser {
 	}
 
 	def parseHtml(entry : (WikipediaEntry, String)): WikipediaEntry = {
+		val redirectRegex = new Regex("\\AWEITERLEITUNG")
+		if(redirectRegex.findFirstIn(Jsoup.parse(entry._2).body.text) != None) {
+			val wikiEntry = entry._1
+			wikiEntry.refs = getLinks(Jsoup.parse(entry._2))
+			wikiEntry.text = "WEITERLEITUNG"
+			return wikiEntry
+		}
+
 		val document = removeTags(entry._2)
 		val wikiEntry = entry._1
 		wikiEntry.refs = getLinks(document)
 		wikiEntry.text = document.toString
+		println(wikiEntry)
 		wikiEntry
 	}
 
@@ -66,7 +75,7 @@ object WikipediaTextparser {
 		val htmltext = documentContent.map(_.toString).mkString("\n")
 			.replaceAll("&lt;(/|)gallery&gt;", "") // removes gallery tags
 			.replaceAll("<p></p>", "") // removes empty p tags
-		Jsoup.parse(s"<html>$htmltext</html>")
+		Jsoup.parse(htmltext)
 	}
 
 	def getLinks(html: Document): Map[String, String] = {
@@ -109,7 +118,9 @@ object WikipediaTextparser {
 				WikipediaEntry(entry.title, text, entry.refs)
 			}.map(entry => (entry, wikipediaToHtml(entry.text)))
 			.map(parseHtml)
-			.saveToCassandra(keyspace, tablename)
+			.take(10)
+			.foreach(println)
+			//.saveToCassandra(keyspace, tablename)
 		sc.stop
 	}
 }
