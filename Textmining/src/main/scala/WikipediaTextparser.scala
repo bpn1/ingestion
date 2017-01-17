@@ -41,7 +41,7 @@ object WikipediaTextparser {
 		val document = removeTags(entry._2)
 		val wikiEntry = entry._1
 		wikiEntry.refs = getLinks(document)
-		wikiEntry.text = document.toString
+		wikiEntry.text = addHtmlEncodingLine(document.toString)
 		wikiEntry
 	}
 
@@ -91,8 +91,11 @@ object WikipediaTextparser {
 			} catch {
 				case e: java.lang.IllegalArgumentException =>
 					println(s"IllegalArgumentException for: $target")
+					target = anchor.attr("href")
 			}
-			if(target.charAt(0) == '/') {
+			if(target.length == 0) {
+				println(s"target length ist 0: $target")
+			} else if(target.charAt(0) == '/') {
 				target = target.substring(1)
 			}
 			anchor.attr("href", target)
@@ -101,10 +104,9 @@ object WikipediaTextparser {
 		links.toMap
 	}
 
-	def addHtmlEncodingLine(entry: WikipediaEntry): WikipediaEntry = {
+	def addHtmlEncodingLine(html: String): String = {
 		val encodingLine = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />"
-		entry.text = encodingLine + "\n" + entry.text
-		entry
+		encodingLine + "\n" + html
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -123,7 +125,6 @@ object WikipediaTextparser {
 				WikipediaEntry(entry.title, text, entry.refs)
 			}.map(entry => (entry, wikipediaToHtml(entry.text)))
 			.map(parseHtml)
-			.map(addHtmlEncodingLine)
 			.saveToCassandra(keyspace, tablename)
 		sc.stop
 	}
