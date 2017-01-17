@@ -4,6 +4,12 @@ import org.apache.spark.rdd.RDD
 import scala.util.matching.Regex
 
 class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
+	"Wikipedia entry title" should "not change" in {
+		val wikipediaRDD = wikipediaTestRDD()
+			.map(entry => (entry.title, WikipediaTextparser.wikipediaToHtml(entry).title))
+			.collect
+			.foreach(entry => assert(entry._1 == entry._2))
+	}
 
 	"Wikipedia article text" should "not contain wikimarkup" in {
 		// matches [[...]] and {{...}} but not escaped '{', i.e. "\{"
@@ -13,76 +19,74 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.map(WikipediaTextparser.wikipediaToHtml)
 			.map(_.text)
 			.collect
-			.foreach(element => assert(wikimarkupRegex.findFirstIn(element) == None))
+			.foreach(element => assert(wikimarkupRegex.findFirstIn(element).isEmpty))
 	}
 
 	"Wikipedia article text" should "not contain tables" in {
-		val wikimarkupRegex = new Regex(("<table(.*\n)*?.*?</table>"))
+		val wikimarkupRegex = new Regex("<table(.*\n)*?.*?</table>")
 
 		val wikipediaRDD = wikipediaTestRDD()
 			.map(WikipediaTextparser.wikipediaToHtml)
 			.map(_.text)
 			.collect
-			.foreach(element => assert(wikimarkupRegex.findFirstIn(element) == None))
+			.foreach(element => assert(wikimarkupRegex.findFirstIn(element).isEmpty))
 	}
 
-	/*
-	"Wikipedia article text" should "not contain wikimarkup" in {
-		val wikimarkupRegex = new Regex("\\[.*\\]")
-		val wikipediaRDD = wikipediaTestRDD()
-			.map(WikipediaTextparser.parseWikipediaPage)
-			.map(WikipediaTextparser.parseTree)
-			.map(_._1)
-			.collect
-			.foreach(element => assert(wikimarkupRegex.findFirstIn(element) == None))
-	}
+	//	"Wikipedia article plain text" should "be complete" in {
+	//		// term "Aussprache" should not be parsed because we filter WtTemplates
+	//		val abstracts = Map(
+	//			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
+	//			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
+	//		val wikipediaRDD = wikipediaTestRDD()
+	//			.map(WikipediaTextparser.wikipediaToHtml)
+	//			.map(element => (element.title, getPlainText(element.text)))
+	//			.collect
+	//			.foreach(element => assert(element._2.startsWith(abstracts(element._1))))
+	//	}
 
-	"Wikipedia article text" should "be complete" in {
-		// term "Aussprache" should not be parsed because we filter WtTemplates
-		val abstracts = Map(
-			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
-			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
-	val wikipediaRDD = wikipediaTestRDD()
-		.map(element => (element.title, WikipediaTextparser.parseWikipediaPage(element)))
-		.map(element => (element._1, WikipediaTextparser.parseTree(element._2)._1))
-		.collect
-		.foreach(element => assert(element._2.startsWith(abstracts(element._1))))
-	}
+	//	"Wikipedia article text" should "be complete" in {
+	//		// term "Aussprache" should not be parsed because we filter WtTemplates
+	//		val abstracts = Map(
+	//			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
+	//			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
+	//		val wikipediaRDD = wikipediaTestRDD()
+	//			.map(element => (element.title, WikipediaTextparser.parseWikipediaPage(element)))
+	//			.map(element => (element._1, WikipediaTextparser.parseTree(element._2)._1))
+	//			.collect
+	//			.foreach(element => assert(element._2.startsWith(abstracts(element._1))))
+	//	}
 
-	"Wikipedia links" should "not be empty" in {
-	val wikipediaRDD = wikipediaTestRDD()
-		.map(WikipediaTextparser.parseWikipediaPage)
-		.map(WikipediaTextparser.parseTree)
-		.map(_._2)
-		.collect
-		.foreach(element => assert(element.length > 0))
-	}
+	//	"Wikipedia links" should "not be empty" in {
+	//		val wikipediaRDD = wikipediaTestRDD()
+	//			.map(WikipediaTextparser.wikipediaToHtml)
+	//			.map(_.links)
+	//			.collect
+	//			.foreach(element => assert(element.nonEmpty))
+	//	}
 
-	"Wikipedia link offsets" should "be as long as the string" in {
-	val wikipediaRDD = wikipediaTestRDD()
-		.map(WikipediaTextparser.parseWikipediaPage)
-		.map(WikipediaTextparser.parseTree)
-		.flatMap(_._2)
-		.collect
-		.foreach(linkMap =>
-			assert(linkMap("source").length == linkMap("char_offset_end").toInt - linkMap("char_offset_begin").toInt))
-	}
+	//	"Wikipedia link offsets" should "be as long as the string" in {
+	//		val wikipediaRDD = wikipediaTestRDD()
+	//			.map(WikipediaTextparser.wikipediaToHtml)
+	//			.flatMap(_.links)
+	//			.collect
+	//			.foreach(linkMap =>
+	//				assert(linkMap("source").length == linkMap("char_offset_end").toInt - linkMap("char_offset_begin").toInt))
+	//	}
+	//
+	//	"Wikipedia link offsets" should "be consistent with the text" in {
+	//		val wikipediaRDD = wikipediaTestRDD()
+	//			.map(WikipediaTextparser.wikipediaToHtml)
+	//			.collect
+	//			.foreach { parsedArticle =>
+	//				val text = parsedArticle.text
+	//				val linkMaps = parsedArticle.links
+	//				linkMaps.foreach { linkMap =>
+	//					val substring = text.substring(linkMap("char_offset_begin").toInt, linkMap("char_offset_end").toInt)
+	//					assert(linkMap("source") == substring)
+	//				}
+	//			}
+	//	}
 
-	"Wikipedia link offsets" should "be consistent with the text" in {
-		val wikipediaRDD = wikipediaTestRDD()
-			.map(WikipediaTextparser.parseWikipediaPage)
-			.map(WikipediaTextparser.parseTree)
-			.collect
-			.foreach { parsedArticle =>
-				val text = parsedArticle._1
-				val linkMaps = parsedArticle._2
-				linkMaps.foreach { linkMap =>
-					val substring = text.substring(linkMap("char_offset_begin").toInt, linkMap("char_offset_end").toInt)
-					assert(linkMap("source") == substring)
-				}
-			}
-	}
-	*/
 
 	// extracted from Wikipedia
 	def wikipediaTestRDD(): RDD[WikipediaTextparser.WikipediaEntry] = {
@@ -93,5 +97,4 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 
 		sc.textFile("testwiki.txt").map(data => WikipediaTextparser.WikipediaEntry("Audi", data, null))
 	}
-
 }

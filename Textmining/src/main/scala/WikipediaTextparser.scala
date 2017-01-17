@@ -23,11 +23,13 @@ object WikipediaTextparser {
 								 var links: List[Map[String, String]])
 
 	def wikipediaToHtml(entry: WikipediaEntry): WikipediaEntry = {
-		var cleanText = entry.text.replaceAll("\\\\n", "\n")
-		cleanText = removeWikiMarkup(cleanText)
-		cleanText = WikiModel.toHtml(cleanText)
-		cleanText = removeTables(cleanText)
-		entry.text = cleanText
+		var cleanHtml = entry.text.replaceAll("\\\\n", "\n")
+		cleanHtml = removeWikiMarkup(cleanHtml)
+		cleanHtml = WikiModel.toHtml(cleanHtml)
+		cleanHtml = removeTables(cleanHtml)
+
+		entry.text = cleanHtml
+		entry.links = getLinks(cleanHtml)
 		entry
 	}
 
@@ -55,9 +57,17 @@ object WikipediaTextparser {
 	def removeTables(html: String): String = {
 		val doc = Jsoup.parse(html)
 		doc.select("table").remove() // does not work with <div> tags, because there are tables outside them
-		doc.toString()
+		doc.toString
 	}
 
+	def getLinks(html: String): List[Map[String, String]] = {
+		val links = mutable.ListBuffer[Map[String, String]]()
+		links.toList
+	}
+
+	def getPlainText(html: String): String = {
+		html
+	}
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
