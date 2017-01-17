@@ -2,91 +2,107 @@ import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
 import scala.util.matching.Regex
+import org.jsoup.Jsoup
 
 class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 	"Wikipedia entry title" should "not change" in {
-		val wikipediaRDD = wikipediaTestRDD()
-			.map(entry => (entry.title, WikipediaTextparser.wikipediaToHtml(entry).title))
+		wikipediaTestRDD()
+			.map(entry => (entry.title, (entry, WikipediaTextparser.wikipediaToHtml(entry.text))))
+			.map(tuple => (tuple._1, WikipediaTextparser.parseHtml(tuple._2).title))
 			.collect
 			.foreach(entry => assert(entry._1 == entry._2))
 	}
 
 	"Wikipedia article text" should "not contain wikimarkup" in {
 		// matches [[...]] and {{...}} but not escaped '{', i.e. "\{"
-		val wikimarkupRegex = new Regex("(\\[\\[.*\\]\\])|([^\\\\]\\{\\{.*\\}\\})")
-
-		val wikipediaRDD = wikipediaTestRDD()
-			.map(WikipediaTextparser.wikipediaToHtml)
-			.map(_.text)
+		val wikimarkupRegex = new Regex("(\\[\\[.*?\\]\\])" + "|" + "([^\\\\]\\{\\{.*?\\}\\})")
+		wikipediaTestRDD()
+			.map(entry => WikipediaTextparser.wikipediaToHtml(entry.text))
 			.collect
 			.foreach(element => assert(wikimarkupRegex.findFirstIn(element).isEmpty))
 	}
 
-	"Wikipedia article text" should "not contain tables" in {
-		val wikimarkupRegex = new Regex("<table(.*\n)*?.*?</table>")
-
-		val wikipediaRDD = wikipediaTestRDD()
-			.map(WikipediaTextparser.wikipediaToHtml)
+	"Wikipedia article text" should "contain none of the tags: table, h[0-9], small" in {
+		val tagBlacklist = List[String]("table", "h[0-9]", "small")
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
+			.map(WikipediaTextparser.parseHtml)
 			.map(_.text)
 			.collect
-			.foreach(element => assert(wikimarkupRegex.findFirstIn(element).isEmpty))
+			.foreach { element =>
+				for(tag <- tagBlacklist) {
+					val tagRegex = new Regex("(</" + tag + ">)|(<" + tag + "(>| .*?>))")
+					assert(tagRegex.findFirstIn(element).isEmpty)
+				}
+			}
 	}
 
-	//	"Wikipedia article plain text" should "be complete" in {
-	//		// term "Aussprache" should not be parsed because we filter WtTemplates
-	//		val abstracts = Map(
-	//			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
-	//			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
-	//		val wikipediaRDD = wikipediaTestRDD()
-	//			.map(WikipediaTextparser.wikipediaToHtml)
-	//			.map(element => (element.title, getPlainText(element.text)))
-	//			.collect
-	//			.foreach(element => assert(element._2.startsWith(abstracts(element._1))))
-	//	}
 
-	//	"Wikipedia article text" should "be complete" in {
-	//		// term "Aussprache" should not be parsed because we filter WtTemplates
-	//		val abstracts = Map(
-	//			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
-	//			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
-	//		val wikipediaRDD = wikipediaTestRDD()
-	//			.map(element => (element.title, WikipediaTextparser.parseWikipediaPage(element)))
-	//			.map(element => (element._1, WikipediaTextparser.parseTree(element._2)._1))
-	//			.collect
-	//			.foreach(element => assert(element._2.startsWith(abstracts(element._1))))
-	//	}
+	"Wikipedia article plain text" should "be complete" in {
+		// term "Aussprache" should not be parsed because we filter WtTemplates
+		val abstracts = Map(
+			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
+			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
+			.map(WikipediaTextparser.parseHtml)
+			.map(element => (Jsoup.parse(element.text).body.text, abstracts(element.title)) )
+			.collect
+			.foreach(element => assert(element._1.startsWith(element._2)))
+	}
 
-	//	"Wikipedia links" should "not be empty" in {
-	//		val wikipediaRDD = wikipediaTestRDD()
-	//			.map(WikipediaTextparser.wikipediaToHtml)
-	//			.map(_.links)
-	//			.collect
-	//			.foreach(element => assert(element.nonEmpty))
-	//	}
+	"Wikipedia links" should "not be empty" in {
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
+			.map(WikipediaTextparser.parseHtml)
+			.map(_.refs)
+			.collect
+			.foreach(element => assert(element.nonEmpty))
+	}
 
-	//	"Wikipedia link offsets" should "be as long as the string" in {
-	//		val wikipediaRDD = wikipediaTestRDD()
-	//			.map(WikipediaTextparser.wikipediaToHtml)
-	//			.flatMap(_.links)
-	//			.collect
-	//			.foreach(linkMap =>
-	//				assert(linkMap("source").length == linkMap("char_offset_end").toInt - linkMap("char_offset_begin").toInt))
-	//	}
-	//
-	//	"Wikipedia link offsets" should "be consistent with the text" in {
-	//		val wikipediaRDD = wikipediaTestRDD()
-	//			.map(WikipediaTextparser.wikipediaToHtml)
-	//			.collect
-	//			.foreach { parsedArticle =>
-	//				val text = parsedArticle.text
-	//				val linkMaps = parsedArticle.links
-	//				linkMaps.foreach { linkMap =>
-	//					val substring = text.substring(linkMap("char_offset_begin").toInt, linkMap("char_offset_end").toInt)
-	//					assert(linkMap("source") == substring)
-	//				}
-	//			}
-	//	}
+	"Wikipedia text" should "contain exactly these links" in {
+		val links = wikipediaTestReferences()
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
+			.map(WikipediaTextparser.parseHtml)
+			.collect
+			.foreach(entry =>
+				assert(entry.refs == links(entry.title)))
+	}
 
+	// extracted links from Article abstracts
+	def wikipediaTestReferences(): Map[String, Map[String, String]] = {
+        Map(
+			"Audi" -> Map("Ingolstadt" -> "Ingolstadt",
+	            "Bayern" -> "Bayern",
+	            "Automobilhersteller" -> "Automobilhersteller",
+	            "Volkswagen" -> "Volkswagen AG",
+	            "Wortspiel" -> "Wortspiel",
+	            "Namensrechte" -> "Marke (Recht)",
+	            "A. Horch & Cie. Motorwagenwerke Zwickau" -> "Horch",
+	            "August Horch" -> "August Horch",
+	            "Lateinische" -> "Latein",
+	            "Imperativ" -> "Imperativ (Modus)",
+	            "Zwickau" -> "Zwickau",
+	            "Zschopauer" -> "Zschopau",
+	            "DKW" -> "DKW",
+	            "Wanderer" -> "Wanderer (Unternehmen)",
+	            "Auto Union AG" -> "Auto Union",
+	            "Chemnitz" -> "Chemnitz",
+	            "Zweiten Weltkrieg" -> "Zweiter Weltkrieg",
+	            "NSU Motorenwerke AG" -> "NSU Motorenwerke",
+	            "Neckarsulm" -> "Neckarsulm"),
+
+            "Electronic Arts" -> Map("Publisher" -> "Publisher",
+                "Computer- und Videospielen" -> "Computerspiel",
+                "Madden NFL" -> "Madden NFL",
+                "FIFA" -> "FIFA (Spieleserie)",
+                "Vivendi Games" -> "Vivendi Games",
+                "Activision" -> "Activision",
+                "Activision Blizzard" -> "Activision Blizzard",
+                "Nasdaq Composite" -> "Nasdaq Composite",
+                "S&P 500" -> "S&P 500"))
+    }
 
 	// extracted from Wikipedia
 	def wikipediaTestRDD(): RDD[WikipediaTextparser.WikipediaEntry] = {
@@ -95,6 +111,6 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			WikipediaTextparser.WikipediaEntry("Electronic Arts", """{{Infobox Unternehmen\n| Name             = Electronic Arts, Inc.\n| Logo             = [[Datei:Electronic-Arts-Logo.svg|200px]]\n| Unternehmensform = [[Gesellschaftsrecht der Vereinigten Staaten#Corporation|Corporation]]\n| ISIN             = US2855121099\n| Gründungsdatum   = 1982\n| Sitz             = [[Redwood City]], [[Vereinigte Staaten|USA]]\n| Leitung          = Andrew Wilson (CEO)<br />[[Larry Probst]] (Chairman)\n| Mitarbeiterzahl  = 9.300 (2013)<ref>Electronic Arts: [http://www.ea.com/about About EA]. Offizielle Unternehmenswebseite, zuletzt abgerufen am 31. Dezember 2013</ref>\n| Umsatz           = 3,575 Milliarden [[US-Dollar|USD]] <small>([[Geschäftsjahr|Fiskaljahr]] 2014)</small>\n| Branche          = [[Softwareentwicklung]]\n| Homepage         = [http://www.ea.com/de/ www.ea.com/de]\n}}\n'''Electronic Arts''' ('''EA''') ist ein börsennotierter, weltweit operierender Hersteller und [[Publisher]] von [[Computerspiel|Computer- und Videospielen]]. Das Unternehmen wurde vor allem für seine Sportspiele (''[[Madden NFL]]'', ''[[FIFA (Spieleserie)|FIFA]]'') bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von [[Vivendi Games]] und [[Activision]] zu [[Activision Blizzard]], war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt.<ref name="economist">''Looking forward to the next level. The world’s biggest games publisher sees good times ahead.'' In: ''The Economist.'' 8. Februar 2007, S.&nbsp;66.</ref> Die Aktien des Unternehmens sind im [[Nasdaq Composite]] und im [[S&P 500]] gelistet.""", null)
 		))
 
-		sc.textFile("testwiki.txt").map(data => WikipediaTextparser.WikipediaEntry("Audi", data, null))
+		//sc.textFile("testwiki.txt").map(data => WikipediaTextparser.WikipediaEntry("Audi", data, null))
 	}
 }

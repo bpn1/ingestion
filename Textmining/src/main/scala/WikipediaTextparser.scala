@@ -1,9 +1,5 @@
-import org.sweble.wikitext._
-import org.sweble.wikitext.engine._
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
-import org.sweble.wikitext.engine.utils._
-import org.sweble.wikitext.engine.nodes._
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.util.matching.Regex
@@ -12,32 +8,39 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
+import java.net.URLDecoder
 
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 
+	case class WikipediaReadEntry(
+		title: String,
+		var text: Option[String],
+		var refs: Map[String, String])
+
 	case class WikipediaEntry(
-								 title: String,
-								 var text: String,
-								 var links: List[Map[String, String]])
+		title: String,
+		var text: String,
+		var refs: Map[String, String])
 
-	def wikipediaToHtml(entry: WikipediaEntry): WikipediaEntry = {
-		var cleanHtml = entry.text.replaceAll("\\\\n", "\n")
-		cleanHtml = removeWikiMarkup(cleanHtml)
-		cleanHtml = WikiModel.toHtml(cleanHtml)
-		cleanHtml = removeTables(cleanHtml)
+	def wikipediaToHtml(wikipediaMarkup: String): String = {
+		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
+		WikiModel.toHtml(removeWikiMarkup(html))
+	}
 
-		entry.text = cleanHtml
-		entry.links = getLinks(cleanHtml)
-		entry
+	def parseHtml(entry : (WikipediaEntry, String)): WikipediaEntry = {
+		val document = removeTags(entry._2)
+		val wikiEntry = entry._1
+		wikiEntry.refs = getLinks(document)
+		wikiEntry.text = document.toString
+		wikiEntry
 	}
 
 	def removeWikiMarkup(text: String): String = {
 		var cleanText = ""
 		var depth = 0
 		var escaped = false
-
 		for (character <- text) {
 			if (!escaped && character == '{')
 				depth += 1
@@ -45,42 +48,68 @@ object WikipediaTextparser {
 				depth -= 1
 			else if (depth == 0)
 				cleanText += character
-
-			if (character == '\\')
-				escaped = true
-			else
-				escaped = false
+			escaped = character == '\\'
 		}
 		cleanText
 	}
 
-	def removeTables(html: String): String = {
+	def removeTags(html: String): Document = {
 		val doc = Jsoup.parse(html)
-		doc.select("table").remove() // does not work with <div> tags, because there are tables outside them
-		doc.toString
+		val documentContent = doc
+			.select("p")
+			.filter(_.getElementsByAttributeValueStarting("title", "Datei:").size == 0)
+			.map { element =>
+				element.getElementsByClass("reference").remove
+				element.select("small").remove
+				element
+			}
+		val htmltext = documentContent.map(_.toString).mkString("\n")
+			.replaceAll("&lt;(/|)gallery&gt;", "") // removes gallery tags
+			.replaceAll("<p></p>", "") // removes empty p tags
+		Jsoup.parse(s"<html>$htmltext</html>")
 	}
 
-	def getLinks(html: String): List[Map[String, String]] = {
-		val links = mutable.ListBuffer[Map[String, String]]()
-		links.toList
-	}
-
-	def getPlainText(html: String): String = {
-		html
+	def getLinks(html: Document): Map[String, String] = {
+		val links = mutable.ListBuffer[(String, String)]()
+		for(anchor <- html.select("a")) {
+			val source = anchor.text
+			var target = anchor.attr("href")
+			target = target
+				.replaceAll("%(?![0-9a-fA-F]{2})", "%25")
+         		.replaceAll("\\+", "%2B")
+			try {
+				target = URLDecoder.decode(target, "UTF-8")
+					.replaceAll("_", " ")
+			} catch {
+				case e: java.lang.IllegalArgumentException =>
+					println(s"IllegalArgumentException for: $target")
+			}
+			if(target.charAt(0) == '/') {
+				target = target.substring(1)
+			}
+			anchor.attr("href", target)
+			links += Tuple2[String,String](source, target)
+		}
+		links.toMap
 	}
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("VersionDiff")
+			.setAppName("Wikipedia Textparser")
 			.set("spark.cassandra.connection.host", "172.20.21.11")
 		val sc = new SparkContext(conf)
 
-		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
-		/*
+		val wikipedia = sc.cassandraTable[WikipediaReadEntry](keyspace, tablename)
 		wikipedia
-            .map(wikipediaToHtml)
+			.map { entry =>
+				val text = entry.text match {
+					case Some(string) => string
+					case None => ""
+				}
+				WikipediaEntry(entry.title, text, entry.refs)
+			}.map(entry => (entry, wikipediaToHtml(entry.text)))
+			.map(parseHtml)
 			.saveToCassandra(keyspace, tablename)
-		*/
 		sc.stop
 	}
 }
