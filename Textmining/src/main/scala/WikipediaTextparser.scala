@@ -93,11 +93,7 @@ object WikipediaTextparser {
 					println(s"IllegalArgumentException for: $target")
 					target = anchor.attr("href")
 			}
-			if(target.length == 0) {
-				println(s"target length ist 0: $target")
-			} else if(target.charAt(0) == '/') {
-				target = target.substring(1)
-			}
+			target = target.replaceAll("\\A/", "")
 			anchor.attr("href", target)
 			links += Tuple2[String,String](source, target)
 		}
