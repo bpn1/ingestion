@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
 	"com.holdenkarau" %% "spark-testing-base" % "1.6.1_0.3.3",
 	"com.databricks" % "spark-xml_2.10" % "0.4.1",
 	"info.bliki.wiki" % "bliki-core" % "3.1.0",
-	"org.jsoup" % "jsoup" % "1.10.2"
+	"org.jsoup" % "jsoup" % "1.10.1"
 )
 
 // testing settings
@@ -33,7 +33,7 @@ testOptions in Test := Seq(Tests.Argument(TestFrameworks.ScalaTest, "-oD"), Test
 javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
 
 // fat jar assembly settings
-assemblyMergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
+mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
 		case PathList("META-INF", xs @ _*) => MergeStrategy.discard
 		case PathList(ps @ _*) if ps.last endsWith "pom.properties" => MergeStrategy.discard
 		case x => MergeStrategy.first
@@ -43,3 +43,7 @@ assemblyMergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
 assemblyShadeRules in assembly := Seq(
 	ShadeRule.rename("com.google.**" -> "shadeio.@1").inAll
 )
+
+// to suppress include info and merge warnings
+logLevel in assembly := Level.Error
+

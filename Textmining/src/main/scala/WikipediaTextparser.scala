@@ -65,6 +65,7 @@ object WikipediaTextparser {
 		val doc = Jsoup.parse(html)
 		val documentContent = doc
 			.select("p")
+			// this filter might not work
 			.filter(_.getElementsByAttributeValueStarting("title", "Datei:").size == 0)
 			.map { element =>
 				element.getElementsByClass("reference").remove
