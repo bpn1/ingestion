@@ -33,11 +33,10 @@ testOptions in Test := Seq(Tests.Argument(TestFrameworks.ScalaTest, "-oD"), Test
 javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
 
 // fat jar assembly settings
-assemblyMergeStrategy in assembly <<= (assemblyMergeStrategy in assembly) { (old) => {
-		case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-		case PathList(ps @ _*) if ps.last endsWith "pom.properties" => MergeStrategy.discard
-		case x => MergeStrategy.first
-	}
+assemblyMergeStrategy in assembly := {
+	case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+	case PathList(ps @ _*) if ps.last endsWith "pom.properties" => MergeStrategy.discard
+	case x => MergeStrategy.first
 }
 
 assemblyShadeRules in assembly := Seq(
