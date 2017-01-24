@@ -152,7 +152,9 @@ object WikipediaTextparser {
 		for(element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
-					val link = Link(t.text, parseUrl(t.attr("href")), offset)
+					val target = parseUrl(t.attr("href"))
+					val source = if(t.text == "") target else t.text
+					val link = Link(source, target, offset)
 					linksList += link
 					offset += t.text.length
 				case t: TextNode =>
