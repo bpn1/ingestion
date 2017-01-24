@@ -7,42 +7,51 @@ import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.nodes.TextNode
 import org.jsoup.select.Elements
 import java.net.URLDecoder
 
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
-
+	val outputTablename = "parsedwikipedia"
 	case class WikipediaReadEntry(
 		title: String,
 		var text: Option[String],
-		var refs: Map[String, String])
+		var references: Map[String, List[String]])
 
 	case class WikipediaEntry(
 		title: String,
 		var text: String,
-		var refs: Map[String, String])
+		var references: Map[String, List[String]])
+
+	case class ParsedWikipediaEntry(
+		title: String,
+		var text: String,
+		var links: List[Link])
+
+	case class Link(
+		alias: String,
+		var page: String,
+		offset: Int
+	)
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
 		WikiModel.toHtml(removeWikiMarkup(html))
 	}
 
-	def parseHtml(entry : (WikipediaEntry, String)): WikipediaEntry = {
+	def parseHtml(entry : (WikipediaEntry, String)): ParsedWikipediaEntry = {
 		val redirectRegex = new Regex("(\\AWEITERLEITUNG)|(\\AREDIRECT)")
-		if(redirectRegex.findFirstIn(Jsoup.parse(entry._2).body.text) != None) {
-			val wikiEntry = entry._1
-			wikiEntry.refs = getLinks(Jsoup.parse(entry._2))
-			wikiEntry.text = "REDIRECT"
-			return wikiEntry
-		}
-
+		val parsedEntry = ParsedWikipediaEntry(entry._1.title, "", null)
 		val document = removeTags(entry._2)
-		val wikiEntry = entry._1
-		wikiEntry.refs = getLinks(document)
-		wikiEntry.text = addHtmlEncodingLine(document.toString)
-		wikiEntry
+		val outputTuple = extractLinks(document.body)
+		parsedEntry.text = outputTuple._1
+		parsedEntry.links = outputTuple._2
+		if(redirectRegex.findFirstIn(parsedEntry.text) != None) {
+			parsedEntry.text = "REDIRECT"
+		}
+		parsedEntry
 	}
 
 	def removeWikiMarkup(text: String): String = {
@@ -65,45 +74,51 @@ object WikipediaTextparser {
 		val doc = Jsoup.parse(html)
 		val documentContent = doc
 			.select("p")
-			// this filter might not work
-			.filter(_.getElementsByAttributeValueStarting("title", "Datei:").size == 0)
 			.map { element =>
 				element.getElementsByClass("reference").remove
 				element.select("small").remove
+				element.getElementsByAttributeValueStarting("title", "Datei:").remove
 				element
 			}
-		val htmltext = documentContent.map(_.toString).mkString("\n")
+		val htmltext = documentContent
+			.map(_.toString)
+			.mkString("\n")
 			.replaceAll("&lt;(/|)gallery&gt;", "") // removes gallery tags
-			.replaceAll("<p></p>", "") // removes empty p tags
+			.replaceAll("<(|/)([^a])>", "") // remove every tag other than anchors
+			.replaceAll("<(|/)([^a])>", "")
 		Jsoup.parse(htmltext)
 	}
 
-	def getLinks(html: Document): Map[String, String] = {
-		val links = mutable.ListBuffer[(String, String)]()
-		for(anchor <- html.select("a")) {
-			val source = anchor.text
-			var target = anchor.attr("href")
-			target = target
-				.replaceAll("%(?![0-9a-fA-F]{2})", "%25")
-         		.replaceAll("\\+", "%2B")
-			try {
-				target = URLDecoder.decode(target, "UTF-8")
-					.replaceAll("_", " ")
-			} catch {
-				case e: java.lang.IllegalArgumentException =>
-					println(s"IllegalArgumentException for: $target")
-					target = anchor.attr("href")
-			}
-			target = target.replaceAll("\\A/", "")
-			anchor.attr("href", target)
-			links += Tuple2[String,String](source, target)
+	def parseUrl(url: String): String = {
+		var cleanedUrl = url
+			.replaceAll("%(?![0-9a-fA-F]{2})", "%25")
+			.replaceAll("\\+", "%2B")
+		try {
+			cleanedUrl = URLDecoder.decode(cleanedUrl, "UTF-8")
+				.replaceAll("_", " ")
+		} catch {
+			case e: java.lang.IllegalArgumentException =>
+				println(s"IllegalArgumentException for: $cleanedUrl")
+				cleanedUrl = url
 		}
-		links.toMap
+		cleanedUrl.replaceAll("\\A/", "")
 	}
 
-	def addHtmlEncodingLine(html: String): String = {
-		val encodingLine = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />"
-		encodingLine + "\n" + html
+	def extractLinks(body: Element): Tuple2[String, List[Link]] = {
+		val linksList = mutable.ListBuffer[Link]()
+		var offset = 0
+		for(element <- body.childNodes) {
+			element match {
+				case t: Element =>
+					val link = Link(t.text, parseUrl(t.attr("href")) ,offset)
+					linksList += link
+					offset += t.text.length
+				case t: TextNode =>
+					offset += t.text.length
+				case _ =>
+			}
+		}
+		(body.text, linksList.toList)
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -119,10 +134,10 @@ object WikipediaTextparser {
 					case Some(string) => string
 					case None => ""
 				}
-				WikipediaEntry(entry.title, text, entry.refs)
+				WikipediaEntry(entry.title, text, entry.references)
 			}.map(entry => (entry, wikipediaToHtml(entry.text)))
 			.map(parseHtml)
-			.saveToCassandra(keyspace, tablename)
+			.saveToCassandra(keyspace, outputTablename)
 		sc.stop
 	}
 }
