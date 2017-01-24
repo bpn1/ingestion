@@ -14,29 +14,42 @@ import java.net.URLDecoder
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
-	val infoboxOffset = -1
+	val infoboxOffset: Int = -1
 
 	val outputTablename = "parsedwikipedia"
-	case class WikipediaReadEntry(
-		title: String,
-		var text: Option[String],
-		var references: Map[String, List[String]])
 
-	case class WikipediaEntry(
-		title: String,
-		var text: String,
-		var references: Map[String, List[String]])
+	case class WikipediaReadEntry(title: String,
+								  var text: Option[String],
+								  var references: Map[String, List[String]])
 
-	case class ParsedWikipediaEntry(
-		title: String,
-		var text: String,
-		var links: List[Link])
+	case class WikipediaEntry(title: String,
+							  var text: String,
+							  var references: Map[String, List[String]])
 
-	case class Link(
-		alias: String,
-		var page: String,
-		offset: Int
-	)
+	case class ParsedWikipediaEntry(title: String,
+									var text: String,
+									var links: List[Link])
+
+	case class Link(alias: String,
+					var page: String,
+					offset: Int
+				   )
+
+	def removeWikiMarkup(text: String): String = {
+		var cleanText = ""
+		var depth = 0
+		var escaped = false
+		for (character <- text) {
+			if (!escaped && character == '{')
+				depth += 1
+			else if (!escaped && character == '}' && depth > 0)
+				depth -= 1
+			else if (depth == 0)
+				cleanText += character
+			escaped = character == '\\'
+		}
+		cleanText
+	}
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
@@ -52,15 +65,15 @@ object WikipediaTextparser {
 	def extractRedirect(html: String): List[Link] = {
 		val anchorList = Jsoup.parse(html).select("a")
 		val linksList = mutable.ListBuffer[Link]()
-		for(anchor <- anchorList) {
+		for (anchor <- anchorList) {
 			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), "REDIRECT ".length)
 		}
 		linksList.toList
 	}
 
-	def parseHtml(entry : (WikipediaEntry, String)): ParsedWikipediaEntry = {
+	def parseHtml(entry: (WikipediaEntry, String)): ParsedWikipediaEntry = {
 		val parsedEntry = ParsedWikipediaEntry(entry._1.title, "", null)
-		if(checkRedirect(entry._2)) {
+		if (checkRedirect(entry._2)) {
 			val doc = Jsoup.parse(entry._2)
 			val text = doc.body.text.replaceAll("(\\AWEITERLEITUNG)|(\\AREDIRECT)", "REDIRECT")
 			parsedEntry.text = text
@@ -78,25 +91,14 @@ object WikipediaTextparser {
 		parsedEntry
 	}
 
+	def combineLinks(entry: ParsedWikipediaEntry, links: List[Link]): ParsedWikipediaEntry = {
+		entry.links ++= links
+		entry
+	}
+
 	def abcd(a: ParsedWikipediaEntry): ParsedWikipediaEntry = {
 		println(a)
 		a
-	}
-
-	def removeWikiMarkup(text: String): String = {
-		var cleanText = ""
-		var depth = 0
-		var escaped = false
-		for (character <- text) {
-			if (!escaped && character == '{')
-				depth += 1
-			else if (!escaped && character == '}' && depth > 0)
-				depth -= 1
-			else if (depth == 0)
-				cleanText += character
-			escaped = character == '\\'
-		}
-		cleanText
 	}
 
 	def removeTags(html: String): Document = {
@@ -136,7 +138,7 @@ object WikipediaTextparser {
 	def extractLinks(body: Element): Tuple2[String, List[Link]] = {
 		val linksList = mutable.ListBuffer[Link]()
 		var offset = 0
-		for(element <- body.childNodes) {
+		for (element <- body.childNodes) {
 			element match {
 				case t: Element =>
 					val link = Link(t.text, parseUrl(t.attr("href")), offset)
@@ -148,6 +150,11 @@ object WikipediaTextparser {
 			}
 		}
 		(body.text, linksList.toList)
+	}
+
+	def extractInfoboxLinks(wikitext: String): List[Link] = {
+		val linkList = mutable.ListBuffer[Link]()
+		linkList.toList
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -164,8 +171,9 @@ object WikipediaTextparser {
 					case None => ""
 				}
 				WikipediaEntry(entry.title, text, entry.references)
-			}.map(entry => (entry, wikipediaToHtml(entry.text)))
-			.map(parseHtml)
+			}.map(entry => (entry, wikipediaToHtml(entry.text), extractInfoboxLinks(entry.text)))
+			.map(element => (parseHtml(element._1, element._2), element._3))
+			.map(element => combineLinks(element._1, element._2))
 			.saveToCassandra(keyspace, outputTablename)
 		sc.stop
 	}
