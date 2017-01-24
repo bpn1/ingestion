@@ -14,29 +14,41 @@ import java.net.URLDecoder
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
-	val infoboxOffset = -1
+	val infoboxOffset: Int = -1
 
 	val outputTablename = "parsedwikipedia"
-	case class WikipediaReadEntry(
-		title: String,
+
+	case class WikipediaReadEntry(title: String,
 		var text: Option[String],
 		var references: Map[String, List[String]])
 
-	case class WikipediaEntry(
-		title: String,
+	case class WikipediaEntry(title: String,
 		var text: String,
 		var references: Map[String, List[String]])
 
-	case class ParsedWikipediaEntry(
-		title: String,
+	case class ParsedWikipediaEntry(title: String,
 		var text: String,
 		var links: List[Link])
 
-	case class Link(
-		alias: String,
+	case class Link(alias: String,
 		var page: String,
-		offset: Int
-	)
+		offset: Int)
+
+	def removeWikiMarkup(text: String): String = {
+		var cleanText = ""
+		var depth = 0
+		var escaped = false
+		for (character <- text) {
+			if (!escaped && character == '{')
+				depth += 1
+			else if (!escaped && character == '}' && depth > 0)
+				depth -= 1
+			else if (depth == 0)
+				cleanText += character
+			escaped = character == '\\'
+		}
+		cleanText
+	}
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
@@ -52,15 +64,15 @@ object WikipediaTextparser {
 	def extractRedirect(html: String): List[Link] = {
 		val anchorList = Jsoup.parse(html).select("a")
 		val linksList = mutable.ListBuffer[Link]()
-		for(anchor <- anchorList) {
+		for (anchor <- anchorList) {
 			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), "REDIRECT ".length)
 		}
 		linksList.toList
 	}
 
-	def parseHtml(entry : (WikipediaEntry, String)): ParsedWikipediaEntry = {
+	def parseHtml(entry: (WikipediaEntry, String)): ParsedWikipediaEntry = {
 		val parsedEntry = ParsedWikipediaEntry(entry._1.title, "", null)
-		if(checkRedirect(entry._2)) {
+		if (checkRedirect(entry._2)) {
 			val doc = Jsoup.parse(entry._2)
 			val text = doc.body.text.replaceAll("(\\AWEITERLEITUNG)|(\\AREDIRECT)", "REDIRECT")
 			parsedEntry.text = text
@@ -71,9 +83,6 @@ object WikipediaTextparser {
 		val outputTuple = extractLinks(document.body)
 		parsedEntry.text = outputTuple._1
 		parsedEntry.links = outputTuple._2
-		//println(parsedEntry.title)
-		//println(parsedEntry.text)
-		//println(parsedEntry.links.mkString("\n"))
 		parsedEntry
 	}
 
@@ -91,7 +100,6 @@ object WikipediaTextparser {
 			escaped = character == '\\'
 		}
 		cleanText
-	}
 
 	def removeTags(html: String): Document = {
 		val doc = Jsoup.parse(html)
@@ -165,6 +173,11 @@ object WikipediaTextparser {
 		(body.text, linksList.toList)
 	}
 
+	def extractInfoboxLinks(wikitext: String): List[Link] = {
+		val linkList = mutable.ListBuffer[Link]()
+		linkList.toList
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Textparser")
@@ -179,9 +192,12 @@ object WikipediaTextparser {
 					case None => ""
 				}
 				WikipediaEntry(entry.title, text, entry.references)
-			}.map(entry => (entry, wikipediaToHtml(entry.text)))
-			.map(parseHtml)
-			.saveToCassandra(keyspace, outputTablename)
+			}.map(entry => (entry, wikipediaToHtml(entry.text), extractInfoboxLinks(entry.text)))
+			.map { case (entry, html, infoboxLinks) =>
+				val entry = parseHtml((entry, html))
+				entry.links = entry.links ++ infoboxLinks
+				entry
+			}.saveToCassandra(keyspace, outputTablename)
 		sc.stop
 	}
 }
