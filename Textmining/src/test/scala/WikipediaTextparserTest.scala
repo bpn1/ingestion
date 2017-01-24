@@ -2,7 +2,6 @@ import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
 import scala.util.matching.Regex
-import org.jsoup.Jsoup
 
 class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 	"Wikipedia entry title" should "not change" in {
@@ -54,9 +53,8 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
 			.map(WikipediaTextparser.parseHtml)
 			.filter(entry => abstracts.contains(entry.title))
-			.map(element => (Jsoup.parse(element.text).body.text, abstracts(element.title)))
 			.collect
-			.foreach(element => assert(element._1.startsWith(element._2)))
+			.foreach(element => assert(element.text.startsWith(abstracts(element.title))))
 	}
 
 	"Wikipedia links" should "not be empty" in {
@@ -69,17 +67,60 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.foreach(element => assert(element.nonEmpty))
 	}
 
-	"Wikipedia links" should "be consistent with text" in {
+	"Wikipedia links" should "contain links from infobox" in {
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
+			.map(WikipediaTextparser.parseHtml)
+			.map(_.links)
+			.collect
+			.foreach(links => assert(links.exists(link => link.offset == WikipediaTextparser.infoboxOffset)))
+	}
+
+	def isTextLinkValid(link: WikipediaTextparser.Link): Boolean = {
+		!isInfoboxLink(link) && link.alias.nonEmpty && link.page.nonEmpty
+	}
+
+	def isTextLinkConsistent(link: WikipediaTextparser.Link, text: String): Boolean = {
+		val substring = text.substring(link.offset, link.offset + link.alias.length)
+		substring == link.alias
+	}
+
+	def isInfoboxLinkValid(link: WikipediaTextparser.Link): Boolean = {
+		isInfoboxLink(link) && link.page.nonEmpty
+	}
+
+	def isInfoboxLink(link: WikipediaTextparser.Link): Boolean = {
+		link.offset == WikipediaTextparser.infoboxOffset
+	}
+
+	def isLinkValid(link: WikipediaTextparser.Link): Boolean = {
+		if (isInfoboxLink(link)) {
+			isInfoboxLinkValid(link)
+		}
+		else {
+			isTextLinkValid(link)
+		}
+	}
+
+	"Wikipedia links" should "be valid" in {
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
+			.map(WikipediaTextparser.parseHtml)
+			.flatMap(_.links)
+			.collect
+			.foreach(link => assert(isLinkValid(link)))
+	}
+
+	"Wikipedia text links" should "be consistent with text" in {
 		wikipediaTestRDD()
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
 			.map(WikipediaTextparser.parseHtml)
 			.collect
 			.foreach { element =>
 				element.links.foreach { link =>
-					assert(link.alias.nonEmpty)
-					assert(link.page.nonEmpty)
-					val substring = element.text.substring(link.offset, link.offset + link.alias.length)
-					assert(substring == link.alias)
+					if(!isInfoboxLink(link)) {
+						assert(isTextLinkConsistent(link, element.text))
+					}
 				}
 			}
 	}
@@ -100,25 +141,25 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 		Map(
 			"Audi" -> List(
 				WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", 55),
-                WikipediaTextparser.Link("Bayern", "Bayern", 69),
-                WikipediaTextparser.Link("Automobilhersteller", "Automobilhersteller", 94),
-                WikipediaTextparser.Link("Volkswagen", "Volkswagen AG", 123),
-                WikipediaTextparser.Link("Wortspiel", "Wortspiel", 175),
-                WikipediaTextparser.Link("Namensrechte", "Marke (Recht)", 202),
-                WikipediaTextparser.Link("A. Horch & Cie. Motorwagen    werke Zwickau", "Horch", 255),
-                WikipediaTextparser.Link("August Horch", "August Horch", 316),
-                WikipediaTextparser.Link("Lateinische", "Latein", 599),
-                WikipediaTextparser.Link("Imperativ", "Imperativ (Modus)", 636),
-                WikipediaTextparser.Link("Zwickau", "Zwickau", 829),
-                WikipediaTextparser.Link("Zschopauer", "Zschopau", 868),
-                WikipediaTextparser.Link("DKW", "DKW", 937),
-                WikipediaTextparser.Link("Wanderer", "Wanderer (Unternehmen)", 1071),
-                WikipediaTextparser.Link("Auto Union AG", "Auto Union", 1105),
-                WikipediaTextparser.Link("Chemnitz", "Chemnitz", 1131),
-                WikipediaTextparser.Link("Zweiten Weltkrieg", "Zweiter Weltkrieg", 1358),
-                WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", 1423),
-                WikipediaTextparser.Link("NSU Motorenwerke AG", "NSU Motorenwerke", 1599),
-                WikipediaTextparser.Link("Neckarsulm", "Neckarsulm", 1830)),
+				WikipediaTextparser.Link("Bayern", "Bayern", 69),
+				WikipediaTextparser.Link("Automobilhersteller", "Automobilhersteller", 94),
+				WikipediaTextparser.Link("Volkswagen", "Volkswagen AG", 123),
+				WikipediaTextparser.Link("Wortspiel", "Wortspiel", 175),
+				WikipediaTextparser.Link("Namensrechte", "Marke (Recht)", 202),
+				WikipediaTextparser.Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", 255),
+				WikipediaTextparser.Link("August Horch", "August Horch", 316),
+				WikipediaTextparser.Link("Lateinische", "Latein", 599),
+				WikipediaTextparser.Link("Imperativ", "Imperativ (Modus)", 636),
+				WikipediaTextparser.Link("Zwickau", "Zwickau", 829),
+				WikipediaTextparser.Link("Zschopauer", "Zschopau", 868),
+				WikipediaTextparser.Link("DKW", "DKW", 937),
+				WikipediaTextparser.Link("Wanderer", "Wanderer (Unternehmen)", 1071),
+				WikipediaTextparser.Link("Auto Union AG", "Auto Union", 1105),
+				WikipediaTextparser.Link("Chemnitz", "Chemnitz", 1131),
+				WikipediaTextparser.Link("Zweiten Weltkrieg", "Zweiter Weltkrieg", 1358),
+				WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", 1423),
+				WikipediaTextparser.Link("NSU Motorenwerke AG", "NSU Motorenwerke", 1599),
+				WikipediaTextparser.Link("Neckarsulm", "Neckarsulm", 1830)),
 
 			"Electronic Arts" -> List(
 				WikipediaTextparser.Link("Publisher", "Publisher", 83),
