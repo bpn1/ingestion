@@ -2,7 +2,6 @@ import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
 import scala.util.matching.Regex
-import org.jsoup.Jsoup
 
 class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 	"Wikipedia entry title" should "not change" in {
@@ -53,9 +52,8 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
 			.map(WikipediaTextparser.parseHtml)
 			.filter(entry => abstracts.contains(entry.title))
-			.map(element => (Jsoup.parse(element.text).body.text, abstracts(element.title)))
 			.collect
-			.foreach(element => assert(element._1.startsWith(element._2)))
+			.foreach(element => assert(element.text.startsWith(abstracts(element.title))))
 	}
 
 	"Wikipedia links" should "not be empty" in {
@@ -67,6 +65,15 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.foreach(element => assert(element.nonEmpty))
 	}
 
+	"Wikipedia links" should "contain links from infobox" in {
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
+			.map(WikipediaTextparser.parseHtml)
+			.map(_.links)
+			.collect
+			.foreach(links => assert(links.exists(link => link.offset == WikipediaTextparser.infoboxOffset)))
+	}
+
 	"Wikipedia links" should "be consistent with text" in {
 		wikipediaTestRDD()
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
@@ -76,8 +83,10 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 				element.links.foreach { link =>
 					assert(link.alias.nonEmpty)
 					assert(link.page.nonEmpty)
-					val substring = element.text.substring(link.offset, link.offset + link.alias.length)
-					assert(substring == link.alias)
+					if (link.offset != WikipediaTextparser.infoboxOffset) {
+						val substring = element.text.substring(link.offset, link.offset + link.alias.length)
+						assert(substring == link.alias)
+					}
 				}
 			}
 	}
@@ -103,7 +112,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 				WikipediaTextparser.Link("Volkswagen", "Volkswagen AG", 0),
 				WikipediaTextparser.Link("Wortspiel", "Wortspiel", 0),
 				WikipediaTextparser.Link("Namensrechte", "Marke (Recht)", 0),
-				WikipediaTextparser.Link("A. Horch & Cie. Motorwagen	werke Zwickau", "Horch", 0),
+				WikipediaTextparser.Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", 0),
 				WikipediaTextparser.Link("August Horch", "August Horch", 0),
 				WikipediaTextparser.Link("Lateinische", "Latein", 0),
 				WikipediaTextparser.Link("Imperativ", "Imperativ (Modus)", 0),
