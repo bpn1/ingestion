@@ -43,17 +43,44 @@ object WikipediaTextparser {
 		WikiModel.toHtml(removeWikiMarkup(html))
 	}
 
-	def parseHtml(entry : (WikipediaEntry, String)): ParsedWikipediaEntry = {
+	def checkRedirect(html: String): Boolean = {
 		val redirectRegex = new Regex("(\\AWEITERLEITUNG)|(\\AREDIRECT)")
+		val searchText = Jsoup.parse(html).body.text
+		redirectRegex.findFirstIn(searchText) != None
+	}
+
+	def extractRedirect(html: String): List[Link] = {
+		val anchorList = Jsoup.parse(html).select("a")
+		val linksList = mutable.ListBuffer[Link]()
+		for(anchor <- anchorList) {
+			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), "REDIRECT ".length)
+		}
+		linksList.toList
+	}
+
+	def parseHtml(entry : (WikipediaEntry, String)): ParsedWikipediaEntry = {
 		val parsedEntry = ParsedWikipediaEntry(entry._1.title, "", null)
+		if(checkRedirect(entry._2)) {
+			val doc = Jsoup.parse(entry._2)
+			val text = doc.body.text.replaceAll("(\\AWEITERLEITUNG)|(\\AREDIRECT)", "REDIRECT")
+			parsedEntry.text = text
+			parsedEntry.links = extractRedirect(entry._2)
+			return parsedEntry
+		}
 		val document = removeTags(entry._2)
+		//println(document)
 		val outputTuple = extractLinks(document.body)
 		parsedEntry.text = outputTuple._1
 		parsedEntry.links = outputTuple._2
-		if(redirectRegex.findFirstIn(parsedEntry.text) != None) {
-			parsedEntry.text = "REDIRECT"
-		}
+		//println(parsedEntry.title)
+		//println(parsedEntry.text)
+		//println(parsedEntry.links.mkString("\n"))
 		parsedEntry
+	}
+
+	def abcd(a: ParsedWikipediaEntry): ParsedWikipediaEntry = {
+		println(a)
+		a
 	}
 
 	def removeWikiMarkup(text: String): String = {
@@ -112,7 +139,7 @@ object WikipediaTextparser {
 		for(element <- body.childNodes) {
 			element match {
 				case t: Element =>
-					val link = Link(t.text, parseUrl(t.attr("href")) ,offset)
+					val link = Link(t.text, parseUrl(t.attr("href")), offset)
 					linksList += link
 					offset += t.text.length
 				case t: TextNode =>
