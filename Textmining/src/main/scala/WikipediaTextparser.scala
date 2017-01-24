@@ -14,24 +14,26 @@ object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 
-	case class WikipediaReadEntry(
-		title: String,
-		var text: Option[String],
-		var refs: Map[String, String])
+	case class WikipediaReadEntry(title: String,
+								  var text: Option[String],
+								  var refs: List[WikipediaLink])
 
-	case class WikipediaEntry(
-		title: String,
-		var text: String,
-		var refs: Map[String, String])
+	case class WikipediaLink(alias: String,
+							 pageName: String,
+							 offset: Int)
+
+	case class WikipediaEntry(title: String,
+							  var text: String,
+							  var refs: List[WikipediaLink])
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
 		WikiModel.toHtml(removeWikiMarkup(html))
 	}
 
-	def parseHtml(entry : (WikipediaEntry, String)): WikipediaEntry = {
+	def parseHtml(entry: (WikipediaEntry, String)): WikipediaEntry = {
 		val redirectRegex = new Regex("(\\AWEITERLEITUNG)|(\\AREDIRECT)")
-		if(redirectRegex.findFirstIn(Jsoup.parse(entry._2).body.text) != None) {
+		if (redirectRegex.findFirstIn(Jsoup.parse(entry._2).body.text) != None) {
 			val wikiEntry = entry._1
 			wikiEntry.refs = getLinks(Jsoup.parse(entry._2))
 			wikiEntry.text = "REDIRECT"
@@ -78,27 +80,10 @@ object WikipediaTextparser {
 		Jsoup.parse(htmltext)
 	}
 
-	def getLinks(html: Document): Map[String, String] = {
-		val links = mutable.ListBuffer[(String, String)]()
-		for(anchor <- html.select("a")) {
-			val source = anchor.text
-			var target = anchor.attr("href")
-			target = target
-				.replaceAll("%(?![0-9a-fA-F]{2})", "%25")
-         		.replaceAll("\\+", "%2B")
-			try {
-				target = URLDecoder.decode(target, "UTF-8")
-					.replaceAll("_", " ")
-			} catch {
-				case e: java.lang.IllegalArgumentException =>
-					println(s"IllegalArgumentException for: $target")
-					target = anchor.attr("href")
-			}
-			target = target.replaceAll("\\A/", "")
-			anchor.attr("href", target)
-			links += Tuple2[String,String](source, target)
-		}
-		links.toMap
+	def getLinks(plainText: String, linkPositions: List[WikipediaLinkPosition]): List[WikipediaLink] = {
+		// dummy
+		val links = mutable.ListBuffer[WikipediaLink]()
+		links.toList
 	}
 
 	def addHtmlEncodingLine(html: String): String = {

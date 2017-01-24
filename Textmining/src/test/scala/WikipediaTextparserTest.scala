@@ -13,7 +13,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.foreach(entry => assert(entry._1 == entry._2))
 	}
 
-	"Wikipedia article text" should "not contain wikimarkup" in {
+	"Wikipedia article text" should "not contain Wikimarkup" in {
 		// matches [[...]] and {{...}} but not escaped '{', i.e. "\{"
 		val wikimarkupRegex = new Regex("(\\[\\[.*?\\]\\])" + "|" + "([^\\\\]\\{\\{.*?\\}\\})")
 		wikipediaTestRDD()
@@ -60,7 +60,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.foreach(element => assert(element.nonEmpty))
 	}
 
-	"Wikipedia text" should "contain exactly these links" in {
+	"Wikipedia links" should "be exactly these links" in {
 		val links = wikipediaTestReferences()
 		wikipediaTestRDD()
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
@@ -80,7 +80,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 	            "Volkswagen" -> "Volkswagen AG",
 	            "Wortspiel" -> "Wortspiel",
 	            "Namensrechte" -> "Marke (Recht)",
-	            "A. Horch & Cie. Motorwagenwerke Zwickau" -> "Horch",
+	            "A. Horch & Cie. Motorwagen	werke Zwickau" -> "Horch",
 	            "August Horch" -> "August Horch",
 	            "Lateinische" -> "Latein",
 	            "Imperativ" -> "Imperativ (Modus)",
