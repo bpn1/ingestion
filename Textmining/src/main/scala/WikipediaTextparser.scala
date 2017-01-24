@@ -67,7 +67,6 @@ object WikipediaTextparser {
 			return parsedEntry
 		}
 		val document = removeTags(entry._2)
-		//println(document)
 		val outputTuple = extractLinks(document.body)
 		parsedEntry.text = outputTuple._1
 		parsedEntry.links = outputTuple._2
@@ -75,11 +74,6 @@ object WikipediaTextparser {
 		//println(parsedEntry.text)
 		//println(parsedEntry.links.mkString("\n"))
 		parsedEntry
-	}
-
-	def abcd(a: ParsedWikipediaEntry): ParsedWikipediaEntry = {
-		println(a)
-		a
 	}
 
 	def removeWikiMarkup(text: String): String = {
@@ -135,7 +129,26 @@ object WikipediaTextparser {
 	def extractLinks(body: Element): Tuple2[String, List[Link]] = {
 		val linksList = mutable.ListBuffer[Link]()
 		var offset = 0
-		for(element <- body.childNodes) {
+		var startIndex = 0
+		val children = body.childNodes
+
+		if(children.isEmpty) {
+			return ("", linksList.toList)
+		}
+
+		if(children(0).isInstanceOf[TextNode]) {
+			startIndex = 1
+			var firstChildText = children(0).asInstanceOf[TextNode].text
+			while(firstChildText.charAt(0) != body.text.charAt(0)) {
+				firstChildText = firstChildText.substring(1)
+				if(firstChildText.length == 0) {
+					return ("", linksList.toList)
+				}
+			}
+			offset += firstChildText.length
+		}
+
+		for(element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
 					val link = Link(t.text, parseUrl(t.attr("href")), offset)
