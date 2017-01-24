@@ -25,9 +25,10 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 	"Wikipedia article text" should "not contain escaped HTML characters" in {
 		val wikimarkupRegex = new Regex("&\\S*?;")
 		wikipediaTestRDD()
-			.map(entry => WikipediaTextparser.wikipediaToHtml(entry.text))
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
+			.map(WikipediaTextparser.parseHtml)
 			.collect
-			.foreach(element => assert(wikimarkupRegex.findFirstIn(element).isEmpty))
+			.foreach(element => assert(wikimarkupRegex.findFirstIn(element.text).isEmpty))
 	}
 
 	"Wikipedia article text" should "contain none of the tags: table, h[0-9], small" in {
@@ -62,6 +63,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 		wikipediaTestRDD()
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
 			.map(WikipediaTextparser.parseHtml)
+			//.map(WikipediaTextparser.abcd)
 			.map(_.links)
 			.collect
 			.foreach(element => assert(element.nonEmpty))
