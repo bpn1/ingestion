@@ -22,6 +22,14 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.foreach(element => assert(wikimarkupRegex.findFirstIn(element).isEmpty))
 	}
 
+	"Wikipedia article text" should "not contain escaped HTML characters" in {
+		val wikimarkupRegex = new Regex("&\\S*?;")
+		wikipediaTestRDD()
+			.map(entry => WikipediaTextparser.wikipediaToHtml(entry.text))
+			.collect
+			.foreach(element => assert(wikimarkupRegex.findFirstIn(element).isEmpty))
+	}
+
 	"Wikipedia article text" should "contain none of the tags: table, h[0-9], small" in {
 		val tagBlacklist = List[String]("table", "h[0-9]", "small")
 		wikipediaTestRDD()
@@ -30,7 +38,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.map(_.text)
 			.collect
 			.foreach { element =>
-				for(tag <- tagBlacklist) {
+				for (tag <- tagBlacklist) {
 					val tagRegex = new Regex("(</" + tag + ">)|(<" + tag + "(>| .*?>))")
 					assert(tagRegex.findFirstIn(element).isEmpty)
 				}
@@ -38,7 +46,6 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 	}
 
 	"Wikipedia article plain text" should "be complete" in {
-		// term "Aussprache" should not be parsed because we filter WtTemplates
 		val abstracts = Map(
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
 			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
@@ -46,7 +53,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
 			.map(WikipediaTextparser.parseHtml)
 			.filter(entry => abstracts.contains(entry.title))
-			.map(element => (Jsoup.parse(element.text).body.text, abstracts(element.title)) )
+			.map(element => (Jsoup.parse(element.text).body.text, abstracts(element.title)))
 			.collect
 			.foreach(element => assert(element._1.startsWith(element._2)))
 	}
@@ -58,6 +65,21 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.map(_.refs)
 			.collect
 			.foreach(element => assert(element.nonEmpty))
+	}
+
+	"Wikipedia links" should "be consistent with text" in {
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
+			.map(WikipediaTextparser.parseHtml)
+			.collect
+			.foreach { element =>
+				element.refs.foreach { link =>
+					assert(link.alias.nonEmpty)
+					assert(link.pageName.nonEmpty)
+					val substring = element.text.substring(link.offset, link.offset + link.alias.length)
+					assert(substring == link.alias)
+				}
+			}
 	}
 
 	"Wikipedia links" should "be exactly these links" in {
@@ -73,37 +95,37 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 
 	// extracted links from Article abstracts
 	def wikipediaTestReferences(): Map[String, Map[String, String]] = {
-        Map(
+		Map(
 			"Audi" -> Map("Ingolstadt" -> "Ingolstadt",
-	            "Bayern" -> "Bayern",
-	            "Automobilhersteller" -> "Automobilhersteller",
-	            "Volkswagen" -> "Volkswagen AG",
-	            "Wortspiel" -> "Wortspiel",
-	            "Namensrechte" -> "Marke (Recht)",
-	            "A. Horch & Cie. Motorwagen	werke Zwickau" -> "Horch",
-	            "August Horch" -> "August Horch",
-	            "Lateinische" -> "Latein",
-	            "Imperativ" -> "Imperativ (Modus)",
-	            "Zwickau" -> "Zwickau",
-	            "Zschopauer" -> "Zschopau",
-	            "DKW" -> "DKW",
-	            "Wanderer" -> "Wanderer (Unternehmen)",
-	            "Auto Union AG" -> "Auto Union",
-	            "Chemnitz" -> "Chemnitz",
-	            "Zweiten Weltkrieg" -> "Zweiter Weltkrieg",
-	            "NSU Motorenwerke AG" -> "NSU Motorenwerke",
-	            "Neckarsulm" -> "Neckarsulm"),
+				"Bayern" -> "Bayern",
+				"Automobilhersteller" -> "Automobilhersteller",
+				"Volkswagen" -> "Volkswagen AG",
+				"Wortspiel" -> "Wortspiel",
+				"Namensrechte" -> "Marke (Recht)",
+				"A. Horch & Cie. Motorwagen	werke Zwickau" -> "Horch",
+				"August Horch" -> "August Horch",
+				"Lateinische" -> "Latein",
+				"Imperativ" -> "Imperativ (Modus)",
+				"Zwickau" -> "Zwickau",
+				"Zschopauer" -> "Zschopau",
+				"DKW" -> "DKW",
+				"Wanderer" -> "Wanderer (Unternehmen)",
+				"Auto Union AG" -> "Auto Union",
+				"Chemnitz" -> "Chemnitz",
+				"Zweiten Weltkrieg" -> "Zweiter Weltkrieg",
+				"NSU Motorenwerke AG" -> "NSU Motorenwerke",
+				"Neckarsulm" -> "Neckarsulm"),
 
-            "Electronic Arts" -> Map("Publisher" -> "Publisher",
-                "Computer- und Videospielen" -> "Computerspiel",
-                "Madden NFL" -> "Madden NFL",
-                "FIFA" -> "FIFA (Spieleserie)",
-                "Vivendi Games" -> "Vivendi Games",
-                "Activision" -> "Activision",
-                "Activision Blizzard" -> "Activision Blizzard",
-                "Nasdaq Composite" -> "Nasdaq Composite",
-                "S&P 500" -> "S&P 500"))
-    }
+			"Electronic Arts" -> Map("Publisher" -> "Publisher",
+				"Computer- und Videospielen" -> "Computerspiel",
+				"Madden NFL" -> "Madden NFL",
+				"FIFA" -> "FIFA (Spieleserie)",
+				"Vivendi Games" -> "Vivendi Games",
+				"Activision" -> "Activision",
+				"Activision Blizzard" -> "Activision Blizzard",
+				"Nasdaq Composite" -> "Nasdaq Composite",
+				"S&P 500" -> "S&P 500"))
+	}
 
 	// extracted from Wikipedia
 	def wikipediaTestRDD(): RDD[WikipediaTextparser.WikipediaEntry] = {
