@@ -14,6 +14,7 @@ import java.net.URLDecoder
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
+
 	val outputTablename = "parsedwikipedia"
 	case class WikipediaReadEntry(
 		title: String,
