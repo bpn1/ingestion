@@ -62,7 +62,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 		wikipediaTestRDD()
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
 			.map(WikipediaTextparser.parseHtml)
-			.map(_.refs)
+			.map(_.links)
 			.collect
 			.foreach(element => assert(element.nonEmpty))
 	}
@@ -73,9 +73,9 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.map(WikipediaTextparser.parseHtml)
 			.collect
 			.foreach { element =>
-				element.refs.foreach { link =>
+				element.links.foreach { link =>
 					assert(link.alias.nonEmpty)
-					assert(link.pageName.nonEmpty)
+					assert(link.page.nonEmpty)
 					val substring = element.text.substring(link.offset, link.offset + link.alias.length)
 					assert(substring == link.alias)
 				}
@@ -90,41 +90,43 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.filter(entry => links.contains(entry.title))
 			.collect
 			.foreach(entry =>
-				assert(entry.refs == links(entry.title)))
+				assert(entry.links == links(entry.title)))
 	}
 
 	// extracted links from Article abstracts
-	def wikipediaTestReferences(): Map[String, Map[String, String]] = {
+	def wikipediaTestReferences(): Map[String, List[WikipediaTextparser.Link]] = {
 		Map(
-			"Audi" -> Map("Ingolstadt" -> "Ingolstadt",
-				"Bayern" -> "Bayern",
-				"Automobilhersteller" -> "Automobilhersteller",
-				"Volkswagen" -> "Volkswagen AG",
-				"Wortspiel" -> "Wortspiel",
-				"Namensrechte" -> "Marke (Recht)",
-				"A. Horch & Cie. Motorwagen	werke Zwickau" -> "Horch",
-				"August Horch" -> "August Horch",
-				"Lateinische" -> "Latein",
-				"Imperativ" -> "Imperativ (Modus)",
-				"Zwickau" -> "Zwickau",
-				"Zschopauer" -> "Zschopau",
-				"DKW" -> "DKW",
-				"Wanderer" -> "Wanderer (Unternehmen)",
-				"Auto Union AG" -> "Auto Union",
-				"Chemnitz" -> "Chemnitz",
-				"Zweiten Weltkrieg" -> "Zweiter Weltkrieg",
-				"NSU Motorenwerke AG" -> "NSU Motorenwerke",
-				"Neckarsulm" -> "Neckarsulm"),
+			"Audi" -> List(
+				WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", 0),
+				WikipediaTextparser.Link("Bayern", "Bayern", 0),
+				WikipediaTextparser.Link("Automobilhersteller", "Automobilhersteller", 0),
+				WikipediaTextparser.Link("Volkswagen", "Volkswagen AG", 0),
+				WikipediaTextparser.Link("Wortspiel", "Wortspiel", 0),
+				WikipediaTextparser.Link("Namensrechte", "Marke (Recht)", 0),
+				WikipediaTextparser.Link("A. Horch & Cie. Motorwagen	werke Zwickau", "Horch", 0),
+				WikipediaTextparser.Link("August Horch", "August Horch", 0),
+				WikipediaTextparser.Link("Lateinische", "Latein", 0),
+				WikipediaTextparser.Link("Imperativ", "Imperativ (Modus)", 0),
+				WikipediaTextparser.Link("Zwickau", "Zwickau", 0),
+				WikipediaTextparser.Link("Zschopauer", "Zschopau", 0),
+				WikipediaTextparser.Link("DKW", "DKW", 0),
+				WikipediaTextparser.Link("Wanderer", "Wanderer (Unternehmen)", 0),
+				WikipediaTextparser.Link("Auto Union AG", "Auto Union", 0),
+				WikipediaTextparser.Link("Chemnitz", "Chemnitz", 0),
+				WikipediaTextparser.Link("Zweiten Weltkrieg", "Zweiter Weltkrieg", 0),
+				WikipediaTextparser.Link("NSU Motorenwerke AG", "NSU Motorenwerke", 0),
+				WikipediaTextparser.Link("Neckarsulm", "Neckarsulm", 0)),
 
-			"Electronic Arts" -> Map("Publisher" -> "Publisher",
-				"Computer- und Videospielen" -> "Computerspiel",
-				"Madden NFL" -> "Madden NFL",
-				"FIFA" -> "FIFA (Spieleserie)",
-				"Vivendi Games" -> "Vivendi Games",
-				"Activision" -> "Activision",
-				"Activision Blizzard" -> "Activision Blizzard",
-				"Nasdaq Composite" -> "Nasdaq Composite",
-				"S&P 500" -> "S&P 500"))
+			"Electronic Arts" -> List(
+				WikipediaTextparser.Link("Publisher", "Publisher", 0),
+				WikipediaTextparser.Link("Computer- und Videospielen", "Computerspiel", 0),
+				WikipediaTextparser.Link("Madden NFL", "Madden NFL", 0),
+				WikipediaTextparser.Link("FIFA", "FIFA (Spieleserie)", 0),
+				WikipediaTextparser.Link("Vivendi Games", "Vivendi Games", 0),
+				WikipediaTextparser.Link("Activision", "Activision", 0),
+				WikipediaTextparser.Link("Activision Blizzard", "Activision Blizzard", 0),
+				WikipediaTextparser.Link("Nasdaq Composite", "Nasdaq Composite", 0),
+				WikipediaTextparser.Link("S&P 500", "S&P 500", 0)))
 	}
 
 	// extracted from Wikipedia
