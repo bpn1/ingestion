@@ -205,7 +205,7 @@ object WikipediaTextparser {
 			alias = alias.stripPrefix("|")
 		if (alias == null || alias.isEmpty)
 			alias = page
-		
+
 		Link(alias, page, WikipediaTextparser.infoboxOffset)
 	}
 
