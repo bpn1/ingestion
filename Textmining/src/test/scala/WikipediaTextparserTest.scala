@@ -67,10 +67,11 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.foreach(element => assert(element.nonEmpty))
 	}
 
-	"Wikipedia links" should "contain links from infobox" in {
+	"Wikipedia links" should "contain links from infobox if in article" in {
+		val infoboxArticles = wikipediaTestInfoboxArticles()
 		wikipediaTestRDD()
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
-			.map(WikipediaTextparser.parseHtml)
+			.filter(entry => infoboxArticles.contains(entry.title))
+			.map(WikipediaTextparser.parseWikipediaEntry)
 			.map(_.links)
 			.collect
 			.foreach(links => assert(links.exists(link => link.offset == WikipediaTextparser.infoboxOffset)))
@@ -118,7 +119,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.collect
 			.foreach { element =>
 				element.links.foreach { link =>
-					if(!isInfoboxLink(link)) {
+					if (!isInfoboxLink(link)) {
 						assert(isTextLinkConsistent(link, element.text))
 					}
 				}
@@ -128,18 +129,20 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 	"Wikipedia links" should "be exactly these links" in {
 		val links = wikipediaTestReferences()
 		wikipediaTestRDD()
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.text)))
-			.map(WikipediaTextparser.parseHtml)
+			.map(WikipediaTextparser.parseWikipediaEntry)
 			.filter(entry => links.contains(entry.title))
 			.collect
-			.foreach(entry =>
-				assert(entry.links == links(entry.title)))
+			.foreach{entry =>
+				for (i <- entry.links.indices)
+					assert(entry.links(i) == links(entry.title)(i)) // elementwise comparision shows where it fails
+			}
 	}
 
 	// extracted links from Article abstracts
 	def wikipediaTestReferences(): Map[String, List[WikipediaTextparser.Link]] = {
 		Map(
 			"Audi" -> List(
+				// Article text links
 				WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", 55),
 				WikipediaTextparser.Link("Bayern", "Bayern", 69),
 				WikipediaTextparser.Link("Automobilhersteller", "Automobilhersteller", 94),
@@ -159,9 +162,26 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 				WikipediaTextparser.Link("Zweiten Weltkrieg", "Zweiter Weltkrieg", 1358),
 				WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", 1423),
 				WikipediaTextparser.Link("NSU Motorenwerke AG", "NSU Motorenwerke", 1599),
-				WikipediaTextparser.Link("Neckarsulm", "Neckarsulm", 1830)),
+				WikipediaTextparser.Link("Neckarsulm", "Neckarsulm", 1830),
+
+				// Infobox links
+				WikipediaTextparser.Link("Aktiengesellschaft", "Aktiengesellschaft", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Zwickau", "Zwickau", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Chemnitz", "Chemnitz", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Neckarsulm", "Neckarsulm", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Deutschland", "Deutschland", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Rupert Stadler", "Rupert Stadler", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Vorstand", "Vorstand", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Matthias Müller", "Matthias Müller (Manager)", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Aufsichtsrat", "Aufsichtsrat", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Mrd.", "Milliarde", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("EUR", "Euro", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Automobilhersteller", "Automobilhersteller", WikipediaTextparser.infoboxOffset)),
 
 			"Electronic Arts" -> List(
+				// Article text links
 				WikipediaTextparser.Link("Publisher", "Publisher", 83),
 				WikipediaTextparser.Link("Computer- und Videospielen", "Computerspiel", 97),
 				WikipediaTextparser.Link("Madden NFL", "Madden NFL", 180),
@@ -170,7 +190,20 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 				WikipediaTextparser.Link("Activision", "Activision", 364),
 				WikipediaTextparser.Link("Activision Blizzard", "Activision Blizzard", 378),
 				WikipediaTextparser.Link("Nasdaq Composite", "Nasdaq Composite", 675),
-				WikipediaTextparser.Link("S&P 500", "S&P 500", 699)))
+				WikipediaTextparser.Link("S&P 500", "S&P 500", 699),
+
+				// Infobox links
+				WikipediaTextparser.Link("Corporation", "Gesellschaftsrecht der Vereinigten Staaten#Corporation", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Redwood City", "Redwood City", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("USA", "Vereinigte Staaten", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Larry Probst", "Larry Probst", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("USD", "US-Dollar", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Fiskaljahr", "Geschäftsjahr", WikipediaTextparser.infoboxOffset),
+				WikipediaTextparser.Link("Softwareentwicklung", "Softwareentwicklung", WikipediaTextparser.infoboxOffset)))
+	}
+
+	def wikipediaTestInfoboxArticles(): Set[String] = {
+		Set("Audi", "Electronic Arts", "Postbank-Hochhaus (Berlin)")
 	}
 
 	// extracted from Wikipedia

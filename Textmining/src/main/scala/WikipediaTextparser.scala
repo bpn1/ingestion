@@ -18,38 +18,13 @@ object WikipediaTextparser {
 
 	val outputTablename = "parsedwikipedia"
 
-	case class WikipediaReadEntry(title: String,
-								  var text: Option[String],
-								  var references: Map[String, List[String]])
+	case class WikipediaReadEntry(title: String, var text: Option[String], var references: Map[String, List[String]])
 
-	case class WikipediaEntry(title: String,
-							  var text: String,
-							  var references: Map[String, List[String]])
+	case class WikipediaEntry(title: String, var text: String, var references: Map[String, List[String]])
 
-	case class ParsedWikipediaEntry(title: String,
-									var text: String,
-									var links: List[Link])
+	case class ParsedWikipediaEntry(title: String, var text: String, var links: List[Link])
 
-	case class Link(alias: String,
-					var page: String,
-					offset: Int
-				   )
-
-	def removeWikiMarkup(text: String): String = {
-		var cleanText = ""
-		var depth = 0
-		var escaped = false
-		for (character <- text) {
-			if (!escaped && character == '{')
-				depth += 1
-			else if (!escaped && character == '}' && depth > 0)
-				depth -= 1
-			else if (depth == 0)
-				cleanText += character
-			escaped = character == '\\'
-		}
-		cleanText
-	}
+	case class Link(alias: String, var page: String, offset: Int)
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
@@ -89,11 +64,6 @@ object WikipediaTextparser {
 		//println(parsedEntry.text)
 		//println(parsedEntry.links.mkString("\n"))
 		parsedEntry
-	}
-
-	def combineLinks(entry: ParsedWikipediaEntry, links: List[Link]): ParsedWikipediaEntry = {
-		entry.links ++= links
-		entry
 	}
 
 	def abcd(a: ParsedWikipediaEntry): ParsedWikipediaEntry = {
@@ -152,9 +122,84 @@ object WikipediaTextparser {
 		(body.text, linksList.toList)
 	}
 
+	def removeWikiMarkup(wikitext: String): String = {
+		var cleanText = ""
+		var depth = 0
+		var escaped = false
+		for (character <- wikitext) {
+			if (!escaped && character == '{')
+				depth += 1
+			else if (!escaped && character == '}' && depth > 0)
+				depth -= 1
+			else if (depth == 0)
+				cleanText += character
+			escaped = character == '\\'
+		}
+		cleanText
+	}
+
+	def extractInfobox(wikitext: String): String = {
+		var infoboxText = ""
+		var infoboxRegex = new Regex("\\{\\{Infobox ")
+		// cannot check if first '{' is escaped because page may begin with infobox
+		var startIndex = -1
+
+		infoboxRegex
+			.findAllIn(wikitext)
+			.matchData
+			.foreach { regexMatch =>
+				assert(startIndex == -1) // there must not be more than one infobox
+				startIndex = regexMatch.start
+			}
+		if (startIndex == -1) {
+			return infoboxText
+		}
+
+		var depth = 0
+		var escaped = false
+		for (i <- startIndex until wikitext.length) {
+			val character = wikitext(i)
+			if (!escaped && character == '{')
+				depth += 1
+			else if (!escaped && character == '}' && depth > 0)
+				depth -= 1
+			infoboxText += character
+			if (depth == 0)
+				return infoboxText
+			escaped = character == '\\'
+		}
+
+		assert(false) // infobox should end earlier
+		infoboxText
+	}
+
 	def extractInfoboxLinks(wikitext: String): List[Link] = {
 		val linkList = mutable.ListBuffer[Link]()
+		val infoboxText = extractInfobox(wikitext)
+		val linkRegex = new Regex("\\[\\[(.*?)(\\|(.*?))?\\]\\]")
+		linkRegex
+			.findAllIn(infoboxText)
+			.matchData
+			.foreach { regexMatch =>
+				val page = regexMatch.group(1)
+				var alias = ""
+				if (regexMatch.groupCount > 2)
+					alias = regexMatch.group(2)
+					if (alias != null)
+						alias = alias.stripPrefix("|")
+				if (alias == null || alias.isEmpty)
+					alias = page
+				linkList += Link(alias, page, WikipediaTextparser.infoboxOffset)
+			}
 		linkList.toList
+	}
+
+	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
+		val html = wikipediaToHtml(entry.text)
+		var parsedEntry = parseHtml(entry, html)
+		val infoboxLinks = extractInfoboxLinks(entry.text)
+		parsedEntry.links ++= infoboxLinks
+		parsedEntry
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -171,9 +216,7 @@ object WikipediaTextparser {
 					case None => ""
 				}
 				WikipediaEntry(entry.title, text, entry.references)
-			}.map(entry => (entry, wikipediaToHtml(entry.text), extractInfoboxLinks(entry.text)))
-			.map(element => (parseHtml(element._1, element._2), element._3))
-			.map(element => combineLinks(element._1, element._2))
+			}.map(parseWikipediaEntry)
 			.saveToCassandra(keyspace, outputTablename)
 		sc.stop
 	}
