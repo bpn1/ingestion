@@ -18,13 +18,21 @@ object WikipediaTextparser {
 
 	val outputTablename = "parsedwikipedia"
 
-	case class WikipediaReadEntry(title: String, var text: Option[String], var references: Map[String, List[String]])
+	case class WikipediaReadEntry(title: String,
+		var text: Option[String],
+		var references: Map[String, List[String]])
 
-	case class WikipediaEntry(title: String, var text: String, var references: Map[String, List[String]])
+	case class WikipediaEntry(title: String,
+		var text: String,
+		var references: Map[String, List[String]])
 
-	case class ParsedWikipediaEntry(title: String, var text: String, var links: List[Link])
+	case class ParsedWikipediaEntry(title: String,
+		var text: String,
+		var links: List[Link])
 
-	case class Link(alias: String, var page: String, offset: Int)
+	case class Link(alias: String,
+		var page: String,
+		offset: Int)
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
@@ -56,19 +64,10 @@ object WikipediaTextparser {
 			return parsedEntry
 		}
 		val document = removeTags(entry._2)
-		//println(document)
 		val outputTuple = extractLinks(document.body)
 		parsedEntry.text = outputTuple._1
 		parsedEntry.links = outputTuple._2
-		//println(parsedEntry.title)
-		//println(parsedEntry.text)
-		//println(parsedEntry.links.mkString("\n"))
 		parsedEntry
-	}
-
-	def abcd(a: ParsedWikipediaEntry): ParsedWikipediaEntry = {
-		println(a)
-		a
 	}
 
 	def removeTags(html: String): Document = {
@@ -108,10 +107,31 @@ object WikipediaTextparser {
 	def extractLinks(body: Element): Tuple2[String, List[Link]] = {
 		val linksList = mutable.ListBuffer[Link]()
 		var offset = 0
-		for (element <- body.childNodes) {
+		var startIndex = 0
+		val children = body.childNodes
+
+		if(children.isEmpty) {
+			return ("", linksList.toList)
+		}
+
+		if(children(0).isInstanceOf[TextNode]) {
+			startIndex = 1
+			var firstChildText = children(0).asInstanceOf[TextNode].text
+			while(firstChildText.charAt(0) != body.text.charAt(0)) {
+				firstChildText = firstChildText.substring(1)
+				if(firstChildText.length == 0) {
+					return ("", linksList.toList)
+				}
+			}
+			offset += firstChildText.length
+		}
+
+		for(element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
-					val link = Link(t.text, parseUrl(t.attr("href")), offset)
+					val target = parseUrl(t.attr("href"))
+					val source = if(t.text == "") target else t.text
+					val link = Link(source, target, offset)
 					linksList += link
 					offset += t.text.length
 				case t: TextNode =>
@@ -173,6 +193,22 @@ object WikipediaTextparser {
 		infoboxText
 	}
 
+	def linkMatchToLink(linkMatch: scala.util.matching.Regex.Match): Link = {
+		val page = linkMatch.group(1)
+		if(page.startsWith("Datei:"))
+			return null
+
+		var alias = ""
+		if (linkMatch.groupCount > 2)
+			alias = linkMatch.group(2)
+		if (alias != null)
+			alias = alias.stripPrefix("|")
+		if (alias == null || alias.isEmpty)
+			alias = page
+		
+		Link(alias, page, WikipediaTextparser.infoboxOffset)
+	}
+
 	def extractInfoboxLinks(wikitext: String): List[Link] = {
 		val linkList = mutable.ListBuffer[Link]()
 		val infoboxText = extractInfobox(wikitext)
@@ -180,16 +216,10 @@ object WikipediaTextparser {
 		linkRegex
 			.findAllIn(infoboxText)
 			.matchData
-			.foreach { regexMatch =>
-				val page = regexMatch.group(1)
-				var alias = ""
-				if (regexMatch.groupCount > 2)
-					alias = regexMatch.group(2)
-					if (alias != null)
-						alias = alias.stripPrefix("|")
-				if (alias == null || alias.isEmpty)
-					alias = page
-				linkList += Link(alias, page, WikipediaTextparser.infoboxOffset)
+			.foreach { linkMatch =>
+				val link = linkMatchToLink(linkMatch)
+				if(link != null)
+					linkList += link
 			}
 		linkList.toList
 	}
