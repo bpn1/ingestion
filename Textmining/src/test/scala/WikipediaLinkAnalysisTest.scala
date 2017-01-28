@@ -4,13 +4,13 @@ import org.apache.spark.rdd.RDD
 
 class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 	"Grouped aliases" should "not be empty" in {
-		val groupedAliases = WikipediaLinkAnalysis.groupAliasesByPageNames(ParsedWikipediaTestRDD())
+		val groupedAliases = WikipediaLinkAnalysis.groupAliasesByPageNames(parsedWikipediaTestRDD())
 		assert(groupedAliases.count > 0)
 	}
 
-	def ParsedWikipediaTestRDD() : RDD[WikipediaTextparser.ParsedWikipediaEntry] = {
+	def parsedWikipediaTestRDD() : RDD[WikipediaTextparser.ParsedWikipediaEntry] = {
 		sc.parallelize(List(
-			WikipediaTextparser.ParsedWikipediaEntry("Audi", "dummy text", List(
+			new WikipediaTextparser.ParsedWikipediaEntry("Audi", "dummy text", List(
 				WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", 55),
 				WikipediaTextparser.Link("Bayern", "Bayern", 69),
 				WikipediaTextparser.Link("Automobilhersteller", "Automobilhersteller", 94)
