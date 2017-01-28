@@ -34,22 +34,6 @@ object WikipediaTextparser {
 		var page: String,
 		offset: Int)
 
-	def removeWikiMarkup(text: String): String = {
-		var cleanText = ""
-		var depth = 0
-		var escaped = false
-		for (character <- text) {
-			if (!escaped && character == '{')
-				depth += 1
-			else if (!escaped && character == '}' && depth > 0)
-				depth -= 1
-			else if (depth == 0)
-				cleanText += character
-			escaped = character == '\\'
-		}
-		cleanText
-	}
-
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
 		WikiModel.toHtml(removeWikiMarkup(html))
@@ -85,21 +69,6 @@ object WikipediaTextparser {
 		parsedEntry.links = outputTuple._2
 		parsedEntry
 	}
-
-	def removeWikiMarkup(text: String): String = {
-		var cleanText = ""
-		var depth = 0
-		var escaped = false
-		for (character <- text) {
-			if (!escaped && character == '{')
-				depth += 1
-			else if (!escaped && character == '}' && depth > 0)
-				depth -= 1
-			else if (depth == 0)
-				cleanText += character
-			escaped = character == '\\'
-		}
-		cleanText
 
 	def removeTags(html: String): Document = {
 		val doc = Jsoup.parse(html)
@@ -173,9 +142,94 @@ object WikipediaTextparser {
 		(body.text, linksList.toList)
 	}
 
+	def removeWikiMarkup(wikitext: String): String = {
+		var cleanText = ""
+		var depth = 0
+		var escaped = false
+		for (character <- wikitext) {
+			if (!escaped && character == '{')
+				depth += 1
+			else if (!escaped && character == '}' && depth > 0)
+				depth -= 1
+			else if (depth == 0)
+				cleanText += character
+			escaped = character == '\\'
+		}
+		cleanText
+	}
+
+	def extractInfobox(wikitext: String): String = {
+		var infoboxText = ""
+		var infoboxRegex = new Regex("\\{\\{Infobox ")
+		// cannot check if first '{' is escaped because page may begin with infobox
+		var startIndex = -1
+
+		infoboxRegex
+			.findAllIn(wikitext)
+			.matchData
+			.foreach { regexMatch =>
+				assert(startIndex == -1) // there must not be more than one infobox
+				startIndex = regexMatch.start
+			}
+		if (startIndex == -1) {
+			return infoboxText
+		}
+
+		var depth = 0
+		var escaped = false
+		for (i <- startIndex until wikitext.length) {
+			val character = wikitext(i)
+			if (!escaped && character == '{')
+				depth += 1
+			else if (!escaped && character == '}' && depth > 0)
+				depth -= 1
+			infoboxText += character
+			if (depth == 0)
+				return infoboxText
+			escaped = character == '\\'
+		}
+
+		assert(false) // infobox should end earlier
+		infoboxText
+	}
+
+	def linkMatchToLink(linkMatch: scala.util.matching.Regex.Match): Link = {
+		val page = linkMatch.group(1)
+		if(page.startsWith("Datei:"))
+			return null
+
+		var alias = ""
+		if (linkMatch.groupCount > 2)
+			alias = linkMatch.group(2)
+		if (alias != null)
+			alias = alias.stripPrefix("|")
+		if (alias == null || alias.isEmpty)
+			alias = page
+
+		Link(alias, page, WikipediaTextparser.infoboxOffset)
+	}
+
 	def extractInfoboxLinks(wikitext: String): List[Link] = {
 		val linkList = mutable.ListBuffer[Link]()
+		val infoboxText = extractInfobox(wikitext)
+		val linkRegex = new Regex("\\[\\[(.*?)(\\|(.*?))?\\]\\]")
+		linkRegex
+			.findAllIn(infoboxText)
+			.matchData
+			.foreach { linkMatch =>
+				val link = linkMatchToLink(linkMatch)
+				if(link != null)
+					linkList += link
+			}
 		linkList.toList
+	}
+
+	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
+		val html = wikipediaToHtml(entry.text)
+		var parsedEntry = parseHtml(entry, html)
+		val infoboxLinks = extractInfoboxLinks(entry.text)
+		parsedEntry.links ++= infoboxLinks
+		parsedEntry
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -192,12 +246,8 @@ object WikipediaTextparser {
 					case None => ""
 				}
 				WikipediaEntry(entry.title, text, entry.references)
-			}.map(entry => (entry, wikipediaToHtml(entry.text), extractInfoboxLinks(entry.text)))
-			.map { case (entry, html, infoboxLinks) =>
-				val entry = parseHtml((entry, html))
-				entry.links = entry.links ++ infoboxLinks
-				entry
-			}.saveToCassandra(keyspace, outputTablename)
+			}.map(parseWikipediaEntry)
+			.saveToCassandra(keyspace, outputTablename)
 		sc.stop
 	}
 }
