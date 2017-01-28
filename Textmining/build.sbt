@@ -21,8 +21,9 @@ libraryDependencies ++= Seq(
 	"org.scalatest" %% "scalatest" % "3.0.1" % "test",
 	"com.holdenkarau" %% "spark-testing-base" % "1.6.1_0.3.3",
 	"com.databricks" % "spark-xml_2.10" % "0.4.1",
-	"info.bliki.wiki" % "bliki-core" % "3.1.0",
-	"org.jsoup" % "jsoup" % "1.10.1"
+	"info.bliki.wiki" % "bliki-core" % "3.1.0" exclude("ch.qos.logback", "logback-classic"),
+	"org.jsoup" % "jsoup" % "1.10.1",
+	"com.google.protobuf" % "protobuf-java" % "2.5.0"
 )
 
 // testing settings
@@ -30,7 +31,7 @@ logBuffered in Test := false
 parallelExecution in Test := false
 fork in Test := true
 testOptions in Test := Seq(Tests.Argument(TestFrameworks.ScalaTest, "-oD"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"))
-javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
+javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:+CMSClassUnloadingEnabled")
 
 // fat jar assembly settings
 assemblyMergeStrategy in assembly := {
