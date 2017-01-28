@@ -1,13 +1,14 @@
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
+import WikipediaTextparser.ParsedWikipediaEntry
 
 object WikipediaLinkAnalysis {
 	val keyspace = "wikidumps"
 	val inputTablename = "parsedwikipedia"
 	val outputTablename = "wikipedialinks"
 
-	def groupAliasesByPageNames(parsedWikipedia: RDD[WikipediaTextparser.ParsedWikipediaEntry]): RDD[(String, Iterable[(String, String)])] = {
+	def groupAliasesByPageNames(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[(String, Iterable[(String, String)])] = {
 		parsedWikipedia
 			.flatMap(_.links)
 			.map(link => (link.alias, link.page))
@@ -20,7 +21,7 @@ object WikipediaLinkAnalysis {
 			.set("spark.cassandra.connection.host", "172.20.21.11")
 		val sc = new SparkContext(conf)
 
-		val parsedWikipedia = sc.cassandraTable[WikipediaTextparser.ParsedWikipediaEntry](keyspace, inputTablename)
+		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputTablename)
 		groupAliasesByPageNames(parsedWikipedia)
 			.saveToCassandra(keyspace, outputTablename)
 		sc.stop
