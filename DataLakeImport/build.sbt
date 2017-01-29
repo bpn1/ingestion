@@ -17,6 +17,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" % "spark-sql_2.10" % "1.6.2",
   "com.datastax.spark" % "spark-cassandra-connector_2.10" % "1.6.1",
   "com.datastax.cassandra" % "cassandra-driver-core" % "3.1.2",
+  "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.3",
   "org.scalactic" %% "scalactic" % "3.0.1",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
   "com.holdenkarau" %% "spark-testing-base" % "1.6.1_0.3.3"
