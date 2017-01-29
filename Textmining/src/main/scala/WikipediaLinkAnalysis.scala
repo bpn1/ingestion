@@ -6,13 +6,29 @@ import WikipediaTextparser.ParsedWikipediaEntry
 object WikipediaLinkAnalysis {
 	val keyspace = "wikidumps"
 	val inputTablename = "parsedwikipedia"
-	val outputTablename = "wikipedialinks"
+	val outputLinksTablename = "wikipedialinks"
+	val outputPagesTablename = "wikipediapages"
+
+	case class Link(alias: String,
+					pages: String)
+
+	def groupPageNamesByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[(String, Iterable[(String, String)])] = {
+		parsedWikipedia
+			.flatMap(_.links)
+			.map(link => (link.alias, link.page))
+			.groupBy(_._1)
+	}
 
 	def groupAliasesByPageNames(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[(String, Iterable[(String, String)])] = {
 		parsedWikipedia
 			.flatMap(_.links)
 			.map(link => (link.alias, link.page))
 			.groupBy(_._2)
+	}
+
+	def probabilityLinkDirectsToPage(link: String, pageName: String): Double = {
+		val dummy = -1.0
+		dummy
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -22,8 +38,8 @@ object WikipediaLinkAnalysis {
 		val sc = new SparkContext(conf)
 
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputTablename)
-		groupAliasesByPageNames(parsedWikipedia)
-			.saveToCassandra(keyspace, outputTablename)
+		groupPageNamesByAliases(parsedWikipedia)
+			.saveToCassandra(keyspace, outputLinksTablename)
 		sc.stop
 	}
 }
