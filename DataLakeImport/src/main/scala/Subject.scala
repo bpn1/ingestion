@@ -28,4 +28,13 @@ case class Subject(
 	var category_history: List[Version] = List[Version](),
 	var properties_history: Map[String, List[Version]] = Map[String, List[Version]](),
 	var relations_history: Map[UUID, Map[String, List[Version]]]  = Map[UUID, Map[String, List[Version]]]()
-)
+){
+	def toMap: Map[String, Any] = Map(
+		"id" -> id,
+		"name" -> name,
+		"aliases" -> aliases,
+		"category" -> category,
+		"properties" -> properties,
+		"relations" -> relations
+	)
+}
