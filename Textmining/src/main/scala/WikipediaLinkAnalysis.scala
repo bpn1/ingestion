@@ -9,20 +9,26 @@ object WikipediaLinkAnalysis {
 	val outputLinksTablename = "wikipedialinks"
 	val outputPagesTablename = "wikipediapages"
 
-	case class Link(alias: String, pages: String)
+	case class Link(alias: String, pages: Map[String, Int])
 
-	def groupPageNamesByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[(String, Iterable[(String, String)])] = {
+	def groupPageNamesByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Link] = {
 		parsedWikipedia
 			.flatMap(_.links)
 			.map(link => (link.alias, link.page))
-			.groupBy(_._1)
+			.groupByKey
+			.map { case (alias, pageList) =>
+				Link(alias, pageList.groupBy(identity).mapValues(_.size))
+			}
 	}
 
-	def groupAliasesByPageNames(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[(String, Iterable[(String, String)])] = {
+	def groupAliasesByPageNames(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Link] = {
 		parsedWikipedia
 			.flatMap(_.links)
-			.map(link => (link.alias, link.page))
-			.groupBy(_._2)
+			.map(link => (link.page, link.alias))
+			.groupByKey
+			.map { case (page, aliasList) =>
+				Link(page, aliasList.groupBy(identity).mapValues(_.size))
+			}
 	}
 
 	def probabilityLinkDirectsToPage(link: String, pageName: String, ): Double = {
