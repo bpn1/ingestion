@@ -2,7 +2,7 @@ package DataLake
 
 import com.rockymadden.stringmetric.similarity.JaroWinklerMetric
 
-object MongeElkan extends Classifier {
+object MongeElkan extends SimilarityMeasure[String] {
 
 	def max_acc(list: List[Double], acc: Double) : Double = list match {
 		case Nil => acc
@@ -22,9 +22,5 @@ object MongeElkan extends Classifier {
 		  .map(maxSim(_, y))
 		  .foldLeft(0.0)((b, a) => b+a)
 		sum / y.length
-	}
-
-	override def execute(subject1: Subject, subject2: Subject) : Double = {
-		score(subject1.name.get, subject2.name.get)
 	}
 }

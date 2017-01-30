@@ -1,11 +1,13 @@
 package DataLake
 
 import java.util.{Date, UUID}
+
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-
 import com.datastax.driver.core.utils.UUIDs
+
+import scala.collection.mutable.ListBuffer
 
 class TestClassifier extends Classifier {
 	override def execute(subject1: Subject, subject2: Subject): Double = {
@@ -16,8 +18,17 @@ class TestClassifier extends Classifier {
 	}
 }
 
+object TestSimilarityMeasure extends SimilarityMeasure[String] {
+	def score(string1: String, string2: String): Double = {
+		if(string1 == string2) 1.0 else 0.0
+	}
+}
+
+case class scoreConfig [A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double )
+
 object Deduplication {
 	val confidenceThreshold = 0.7
+	val config = List(scoreConfig("name", TestSimilarityMeasure, 1.0))
 	val classifiers = List((new TestClassifier(), 1.0))
 
 	val appName = "Deduplication"
@@ -65,17 +76,12 @@ object Deduplication {
 		Version(version, appName, null, null, dataSources, timestamp)
 	}
 
-	def findDuplicates(joinedSubjects: RDD[(String, (Subject, Subject))]): RDD[(UUID, String, UUID, String)] = {
+	def findDuplicates(joinedSubjects: RDD[(String, (Subject, Subject))]): RDD[(UUID, String, UUID, String, Double)] = {
 		joinedSubjects
-			.map { case (key, (subject1, subject2)) =>
-				val confidence = executeClassifiers(subject1, subject2)
-				if(confidence > confidenceThreshold) {
-					(subject1.id, subject1.name.getOrElse(""),
-					subject2.id, subject2.name.getOrElse(""))
-				} else {
-					null
-				}
-			}.filter(_ != null)
+		  .map { case (key, (subject1, subject2)) =>
+				Tuple5(subject1.id, subject1.name.getOrElse(""), subject2.id, subject2.name.getOrElse(""), score(subject1.toMap, subject2.toMap))
+			}
+		  .filter(x => x._5 > confidenceThreshold)
 	}
 
 	def joinForMerge(newSubjects: RDD[Subject], subjects: RDD[Subject]): RDD[(String, (Subject, Subject))] = {
@@ -111,5 +117,13 @@ object Deduplication {
 
 		confidenceSum /= weightSum
 		confidenceSum
+	}
+
+	def score(subject1: Map[String, Any], subject2: Map[String, Any]): Double = {
+		val list = ListBuffer.empty[Double]
+		for(item <- config) {
+			list += item.similarityMeasure.score(subject1.getOrElse(item.key, "").toString, subject2.getOrElse(item.key, "").toString) * item.weight
+		}
+		list.foldLeft(0.0)((b, a) => b+a) / config.length
 	}
 }
