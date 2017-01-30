@@ -13,6 +13,10 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 		assert(groupedPageNames.count > 0)
 	}
 
+	"Grouped aliases" should "be exactly these aliases" in {
+
+	}
+
 	def parsedWikipediaTestRDD() : RDD[WikipediaTextparser.ParsedWikipediaEntry] = {
 		sc.parallelize(List(
 			new WikipediaTextparser.ParsedWikipediaEntry("Audi", "dummy text", List(
@@ -20,5 +24,11 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 				WikipediaTextparser.Link("Bayern", "Bayern", 69),
 				WikipediaTextparser.Link("Automobilhersteller", "Automobilhersteller", 94)
 		))))
+	}
+
+	def groupedAliasesTestRDD() : RDD[WikipediaLinkAnalysis.Link] = {
+		sc.parallelize(List(
+			new WikipediaLinkAnalysis.Link()
+		))
 	}
 }

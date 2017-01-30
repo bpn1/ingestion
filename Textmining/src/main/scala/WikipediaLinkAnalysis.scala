@@ -9,8 +9,7 @@ object WikipediaLinkAnalysis {
 	val outputLinksTablename = "wikipedialinks"
 	val outputPagesTablename = "wikipediapages"
 
-	case class Link(alias: String,
-					pages: String)
+	case class Link(alias: String, pages: String)
 
 	def groupPageNamesByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[(String, Iterable[(String, String)])] = {
 		parsedWikipedia
@@ -26,7 +25,7 @@ object WikipediaLinkAnalysis {
 			.groupBy(_._2)
 	}
 
-	def probabilityLinkDirectsToPage(link: String, pageName: String): Double = {
+	def probabilityLinkDirectsToPage(link: String, pageName: String, ): Double = {
 		val dummy = -1.0
 		dummy
 	}
