@@ -29,12 +29,11 @@ case class Subject(
 	var properties_history: Map[String, List[Version]] = Map[String, List[Version]](),
 	var relations_history: Map[UUID, Map[String, List[Version]]]  = Map[UUID, Map[String, List[Version]]]()
 ){
-	def toMap: Map[String, Any] = Map(
-		"id" -> id,
-		"name" -> name,
-		"aliases" -> aliases,
-		"category" -> category,
-		"properties" -> properties,
-		"relations" -> relations
-	)
+	def get[T](key: String): T = key match {
+		case "id" => id.asInstanceOf[T]
+		case "name" => name.get.asInstanceOf[T]
+		case "aliases" => aliases.asInstanceOf[T]
+		case "category" => category.get.asInstanceOf[T]
+		case x => properties(x).asInstanceOf[T]
+	}
 }
