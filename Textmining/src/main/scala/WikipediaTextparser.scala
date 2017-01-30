@@ -19,7 +19,7 @@ object WikipediaTextparser {
 	val outputTablename = "parsedwikipedia"
 
 	case class WikipediaEntry(title: String, var text: Option[String], var references: Map[String, List[String]]) {
-		def this(title: String, text: String, refs: Map[String, List[String]]) = this(title, Option(text), refs)
+		//def this(title: String, text: String, refs: Map[String, List[String]]) = this(title, Option(text), refs)
 		def setText(t: String): Unit = { text = Option(t) }
 		def getText(): String = text match {
 			case Some(t) => t
@@ -28,7 +28,7 @@ object WikipediaTextparser {
 	}
 
 	case class ParsedWikipediaEntry(title: String, var text: Option[String], var links: List[Link]) {
-		def this(title: String, text: String, links: List[Link]) = this(title, Option(text), links)
+		//def this(title: String, text: String) = this(title, Option(text), null)
 		def setText(t: String): Unit = { text = Option(t) }
 		def getText(): String = text match {
 			case Some(t) => t
@@ -61,7 +61,7 @@ object WikipediaTextparser {
 	}
 
 	def parseHtml(entry: (WikipediaEntry, String)): ParsedWikipediaEntry = {
-		val parsedEntry = new ParsedWikipediaEntry(entry._1.title, "", null)
+		val parsedEntry = new ParsedWikipediaEntry(entry._1.title, Option(""), null)
 		if (checkRedirect(entry._2)) {
 			val doc = Jsoup.parse(entry._2)
 			val text = doc.body.text.replaceAll("(\\AWEITERLEITUNG)|(\\AREDIRECT)", "REDIRECT")
