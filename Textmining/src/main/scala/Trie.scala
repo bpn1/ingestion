@@ -6,21 +6,19 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 object Trie {
-	def apply() : Trie = new TrieNode()
+	def apply(): Trie = new TrieNode()
 }
 
 sealed trait Trie extends Traversable[List[String]] {
 	def append(key : List[String])
 	def findByPrefix(prefix: List[String]): scala.collection.Seq[List[String]]
 	def contains(word: List[String]): Boolean
-	def remove(word : List[String]) : Boolean
+	def remove(word : List[String]): Boolean
 
 }
 
-//private[trie]
 class TrieNode(val token : Option[String] = None, var word: Option[List[String]] = None) extends Trie {
 
-	//private[trie]
 	val children: mutable.Map[String, TrieNode] = new java.util.TreeMap[String, TrieNode]().asScala
 
 	override def append(key: List[String]) = {
@@ -28,7 +26,7 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 			if (currentIndex == key.length) {
 				node.word = Some(key)
 			} else {
-				val token = key(currentIndex).toLowerCase
+				val token = key(currentIndex)
 				val result = node.children.getOrElseUpdate(token, {
 					new TrieNode(Some(token))
 				})
@@ -56,7 +54,7 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 			if (currentIndex == prefix.length) {
 				items ++ node
 			} else {
-				node.children.get(prefix(currentIndex).toLowerCase) match {
+				node.children.get(prefix(currentIndex)) match {
 					case Some(child) => helper(currentIndex + 1, child, items)
 					case None => items
 				}
@@ -72,7 +70,7 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 			if (currentIndex == word.length) {
 				node.word.isDefined
 			} else {
-				node.children.get(word(currentIndex).toLowerCase) match {
+				node.children.get(word(currentIndex)) match {
 					case Some(child) => helper(currentIndex + 1, child)
 					case None => false
 				}
@@ -82,7 +80,7 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 		helper(0, this)
 	}
 
-	override def remove(word : List[String]) : Boolean = {
+	override def remove(word : List[String]): Boolean = {
 		pathTo(word) match {
 			case Some(path) => {
 				var index = path.length - 1
@@ -96,7 +94,7 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 					} else {
 						val parent = path(index - 1)
 						if (current.children.isEmpty) {
-							parent.children.remove(word(index - 1).toLowerCase)
+							parent.children.remove(word(index - 1))
 						}
 						index -= 1
 					}
@@ -107,14 +105,13 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 		}
 	}
 
-	//private[trie]
-	def pathTo(word : List[String]) : Option[ListBuffer[TrieNode]] = {
+	def pathTo(word : List[String]): Option[ListBuffer[TrieNode]] = {
 
-		def helper(buffer : ListBuffer[TrieNode], currentIndex : Int, node : TrieNode) : Option[ListBuffer[TrieNode]] = {
+		def helper(buffer : ListBuffer[TrieNode], currentIndex : Int, node : TrieNode): Option[ListBuffer[TrieNode]] = {
 			if (currentIndex == word.length) {
 				node.word.map(word => buffer += node)
 			} else {
-				node.children.get(word(currentIndex).toLowerCase) match {
+				node.children.get(word(currentIndex)) match {
 					case Some(found) => {
 						buffer += node
 						helper(buffer, currentIndex + 1, found)
@@ -127,5 +124,19 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 		helper(new ListBuffer[TrieNode](), 0, this)
 	}
 
-	override def toString() : String = s"Trie(token=${token},word=${word})"
+	def matchTokens(tokens: List[String]): ListBuffer[List[String]] = {
+		@tailrec def helper(currentIndex: Int, node: TrieNode, items: ListBuffer[List[String]]): ListBuffer[List[String]] = {
+			if(node.word != None) {
+				items += node.word.get
+			}
+			node.children.get(tokens(currentIndex)) match {
+				case Some(child) => helper(currentIndex + 1, child, items)
+				case None => items
+			}
+		}
+
+		helper(0, this, new ListBuffer[List[String]]())
+	}
+
+	override def toString(): String = s"Trie(token=${token},word=${word})"
 }
