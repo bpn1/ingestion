@@ -36,13 +36,17 @@ object WikipediaLinkAnalysis {
 				Link(page, aliasList
 					.groupBy(identity)
 					.mapValues(_.size)
-				    .toSeq)
+					.toSeq)
 			}
 	}
 
-	def probabilityLinkDirectsToPage(link: String, pageName: String, sc: SharedSparkContext): Double = {
-		val dummy = -1.0
-		dummy
+	def probabilityLinkDirectsToPage(link: Link, pageName: String): Double = {
+		val totalReferences = link
+			.pages
+			.toMap
+			.foldLeft(0)(_ + _._2)
+		val references = link.pages.toMap.getOrElse(pageName, 0)
+		references / totalReferences
 	}
 
 	def main(args: Array[String]): Unit = {

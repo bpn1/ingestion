@@ -19,6 +19,14 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 		assert(areRDDsEqual(groupedAliases, groupedAliasesTest))
 	}
 
+	"Probability that link directs to page" should "be computed correctly" in {
+		val references = probabilityReferences()
+		val probabilities = WikipediaLinkAnalysis.groupAliasesByPageNames(parsedWikipediaTestRDD())
+			.map(link => (link.alias, WikipediaLinkAnalysis.probabilityLinkDirectsToPage(link, "Bayern")))
+			.collect
+			.foreach { case (alias, probability) => assert(probability == references(alias)) }
+	}
+
 	def areRDDsEqual(left: RDD[WikipediaLinkAnalysis.Link], right: RDD[WikipediaLinkAnalysis.Link]): Boolean = {
 		val sizeLeft = left.count
 		val sizeRight = right.count
@@ -48,5 +56,13 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 			WikipediaLinkAnalysis.Link("Bayern", Map("Bayern" -> 1).toSeq),
 			WikipediaLinkAnalysis.Link("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq)
 		))
+	}
+
+	def probabilityReferences(): Map[String, Double] = {
+		Map(
+			"Ingolstadt" -> 0.0,
+			"Bayern" -> 1.0,
+			"Automobilhersteller" -> 0.0
+		)
 	}
 }
