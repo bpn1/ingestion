@@ -17,7 +17,7 @@ class TrieTest extends FlatSpec {
 		trie.append(List[String]("San", "to", "Domingo"))
 		trie.append(List[String]("São", "Paulo"))
 
-		val result = trie.findByPrefix(List[String]("san"))
+		val result = trie.findByPrefix(List[String]("San"))
 
 		assert(result.length == 3)
 		assert(result.contains(List[String]("San", "Francisco")))
@@ -58,7 +58,7 @@ class TrieTest extends FlatSpec {
 		val list = trie.pathTo(word).get
 		assert(list.length == 3) // includes empty word
 		(0 until 2).map { index =>
-			assert(list(index).children.get(word(index).toLowerCase).isDefined)
+			assert(list(index).children.get(word(index)).isDefined)
 		}
 	}
 
@@ -110,5 +110,16 @@ class TrieTest extends FlatSpec {
 
 		assert(!trie.remove(List[String]("New")))
 	}
+
+	"trie" should "find matching words" in {
+		val trie = new TrieNode()
+		trie.append(List[String]("This", "is"))
+		trie.append(List[String]("This", "is", "a", "good", "day"))
+		trie.append(List[String]("That", "test", "sucks", "a", "lot"))
+		val matchingWords = trie.matchTokens(List[String]("This", "is", "a", "good", "day", "to", "do", "shit"))
+		assert(matchingWords.length == 2)
+		assert(matchingWords(0).length <= matchingWords(1).length)
+	}
+
 
 }
