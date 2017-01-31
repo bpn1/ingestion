@@ -1,6 +1,6 @@
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.FlatSpec
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd._
 
 class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 	"Grouped aliases" should "not be empty" in {
@@ -14,21 +14,39 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 	}
 
 	"Grouped aliases" should "be exactly these aliases" in {
-
+		val groupedAliases = WikipediaLinkAnalysis.groupAliasesByPageNames(parsedWikipediaTestRDD())
+		val groupedAliasesTest = groupedAliasesTestRDD()
+		assert(areRDDsEqual(groupedAliases, groupedAliasesTest))
 	}
 
-	def parsedWikipediaTestRDD() : RDD[WikipediaTextparser.ParsedWikipediaEntry] = {
+	def areRDDsEqual(left: RDD[WikipediaLinkAnalysis.Link], right: RDD[WikipediaLinkAnalysis.Link]): Boolean = {
+		val sizeLeft = left.count
+		val sizeRight = right.count
+		if (sizeLeft != sizeRight) return false
+		val rdd1 = left
+			.keyBy(_.alias)
+			.join(right.keyBy(_.alias))
+		if (rdd1.count != sizeLeft) return false
+		rdd1
+			.collect
+			.foreach { case (alias, (leftLink, rightLink)) => if (leftLink.pages != rightLink.pages) return false }
+		true
+	}
+
+	def parsedWikipediaTestRDD(): RDD[WikipediaTextparser.ParsedWikipediaEntry] = {
 		sc.parallelize(List(
 			new WikipediaTextparser.ParsedWikipediaEntry("Audi", Option("dummy text"), List(
 				WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", 55),
 				WikipediaTextparser.Link("Bayern", "Bayern", 69),
 				WikipediaTextparser.Link("Automobilhersteller", "Automobilhersteller", 94)
-		))))
+			))))
 	}
 
-	def groupedAliasesTestRDD() : RDD[WikipediaLinkAnalysis.Link] = {
+	def groupedAliasesTestRDD(): RDD[WikipediaLinkAnalysis.Link] = {
 		sc.parallelize(List(
-			new WikipediaLinkAnalysis.Link()
+			WikipediaLinkAnalysis.Link("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
+			WikipediaLinkAnalysis.Link("Bayern", Map("Bayern" -> 1).toSeq),
+			WikipediaLinkAnalysis.Link("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq)
 		))
 	}
 }
