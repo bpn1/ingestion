@@ -22,6 +22,7 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
   "com.holdenkarau" %% "spark-testing-base" % "1.6.1_0.3.3"
 )
+
 // testing settings
 logBuffered in Test := false
 parallelExecution in Test := false

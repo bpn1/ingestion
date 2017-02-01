@@ -6,7 +6,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import com.datastax.driver.core.utils.UUIDs
-
+import scala.xml.XML
 import scala.collection.mutable.ListBuffer
 
 class TestClassifier extends Classifier {
@@ -18,19 +18,17 @@ class TestClassifier extends Classifier {
 	}
 }
 
-object TestSimilarityMeasure extends SimilarityMeasure[String] {
-	def score(string1: String, string2: String): Double = {
-		if(string1 == string2) 1.0 else 0.0
+case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double) {
+	override def equals(x: Any) = x match {
+		case that: scoreConfig[A, B] => that.key == this.key && that.similarityMeasure.equals(this.similarityMeasure) && that.weight == this.weight
+		case _ => false
 	}
 }
 
-case class scoreConfig [A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double )
-
 object Deduplication {
 	val confidenceThreshold = 0.7
-	val config = List(scoreConfig[String, TestSimilarityMeasure.type]("name", TestSimilarityMeasure, 1.0))
 	val classifiers = List((new TestClassifier(), 1.0))
-
+	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
 	val appName = "Deduplication"
 	val dataSources = List("") // TODO
 	val keyspace = "datalake"
@@ -41,7 +39,11 @@ object Deduplication {
 	def main(args: Array[String]): Unit = {
 		var doMerge = false
 		if(args.length > 0)
-			doMerge = args(0) == "merge"
+			config = parseConfig(args(0))
+		else
+			println("Usage config_path doMerge")
+		if(args.length > 1)
+			doMerge = args(1) == "merge"
 
 		val conf = new SparkConf()
 			.setAppName(appName)
@@ -125,5 +127,19 @@ object Deduplication {
 			list += item.similarityMeasure.score(subject1.get(item.key), subject2.get(item.key)) * item.weight
 		}
 		list.foldLeft(0.0)((b, a) => b+a) / config.length
+	}
+
+	def parseConfig(path: String): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
+		val xml = XML.loadFile(path)
+		val config = (xml \\ "items" \ "item" ).toList
+
+		config
+		  .map(node => Tuple3((node \ "key").text, (node \ "similartyMeasure").text, (node \ "weight").text))
+		  .map{
+				case (key, similarityMeasure, weight) => similarityMeasure match {
+					case "ExactMathString" => scoreConfig[String, ExactMatchString.type](key, ExactMatchString, weight.toDouble)
+					case "MongeElkan" => scoreConfig[String, MongeElkan.type](key, MongeElkan, weight.toDouble)
+					case _ => scoreConfig[String, ExactMatchString.type](key, ExactMatchString, weight.toDouble)
+			}}
 	}
 }

@@ -15,7 +15,7 @@ object MongeElkan extends SimilarityMeasure[String] {
 		max(list.map(x => JaroWinklerMetric.compare(token, x).getOrElse(0.0)))
 	}
 
-	def score(s: String, t: String) : Double = {
+	override def score(s: String, t: String) : Double = {
 		val x = s.split(" ").toList
 		val y = t.split(" ").toList
 		val sum = x
