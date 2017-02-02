@@ -8,13 +8,12 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
-import org.jsoup.select.Elements
 import java.net.URLDecoder
 
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
-	val infoboxOffset = -1
+	val infoboxOffset: Int = -1
 
 	val outputTablename = "parsedwikipedia"
 
@@ -48,7 +47,7 @@ object WikipediaTextparser {
 	def checkRedirect(html: String): Boolean = {
 		val redirectRegex = new Regex("(\\AWEITERLEITUNG)|(\\AREDIRECT)")
 		val searchText = Jsoup.parse(html).body.text
-		redirectRegex.findFirstIn(searchText) != None
+		redirectRegex.findFirstIn(searchText).isDefined
 	}
 
 	def extractRedirect(html: String): List[Link] = {
@@ -61,7 +60,7 @@ object WikipediaTextparser {
 	}
 
 	def parseHtml(entry: (WikipediaEntry, String)): ParsedWikipediaEntry = {
-		val parsedEntry = new ParsedWikipediaEntry(entry._1.title, Option(""), null)
+		val parsedEntry = ParsedWikipediaEntry(entry._1.title, Option(""), null)
 		if (checkRedirect(entry._2)) {
 			val doc = Jsoup.parse(entry._2)
 			val text = doc.body.text.replaceAll("(\\AWEITERLEITUNG)|(\\AREDIRECT)", "REDIRECT")

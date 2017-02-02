@@ -6,13 +6,32 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 
 object WikipediaLinkAnalysis {
 	val keyspace = "wikidumps"
+	val rawInputTablename = "wikipedia"
 	val inputTablename = "parsedwikipedia"
 	val outputLinksTablename = "wikipedialinks"
 	val outputPagesTablename = "wikipediapages"
 
 	case class Link(alias: String, pages: Seq[(String, Int)])
 
-	// is Seq instead of Map according to http://stackoverflow.com/questions/17709995/notserializableexception-for-mapstring-string-alias
+	// Seq instead of Map according to http://stackoverflow.com/questions/17709995/notserializableexception-for-mapstring-string-alias
+
+	def getAllPages(sc: SparkContext): RDD[String] = {
+		sc.cassandraTable[WikipediaTextparser.WikipediaEntry](keyspace, rawInputTablename)
+			.map(_.title)
+	}
+
+	def removeDeadLinks(links: RDD[Link], allPages: RDD[String]): RDD[Link] = {
+		links
+			.flatMap(link => link.pages.map(page => (link.alias, page._1, page._2)))
+			.keyBy { case (alias, pageName, count) => pageName }
+			.join(allPages.map(entry => (entry, entry)).keyBy(_._1)) // kill somebody for this
+			.map { case (pageName, (link, doublePageName)) => link }
+			.groupBy { case (alias, pageName, count) => alias }
+			.map { case (alias, rawLinks) =>
+				val links = rawLinks.map{case(alias, pageName, count) => (pageName, count)}.toSeq
+				Link(alias, links)
+			}
+	}
 
 	def groupPageNamesByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Link] = {
 		parsedWikipedia
