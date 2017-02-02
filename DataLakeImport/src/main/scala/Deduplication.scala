@@ -9,15 +9,6 @@ import com.datastax.driver.core.utils.UUIDs
 import scala.xml.XML
 import scala.collection.mutable.ListBuffer
 
-class TestClassifier extends Classifier {
-	override def execute(subject1: Subject, subject2: Subject): Double = {
-		if(subject1.name.getOrElse("") == subject2.name.getOrElse(""))
-			1.0
-		else
-			0.0
-	}
-}
-
 case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double) {
 	override def equals(x: Any) = x match {
 		case that: scoreConfig[A, B] => that.key == this.key && that.similarityMeasure.equals(this.similarityMeasure) && that.weight == this.weight
@@ -27,7 +18,6 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeas
 
 object Deduplication {
 	val confidenceThreshold = 0.7
-	val classifiers = List((new TestClassifier(), 1.0))
 	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
 	val appName = "Deduplication"
 	val dataSources = List("") // TODO
@@ -105,20 +95,6 @@ object Deduplication {
 	// TODO better partition key
 	def makePartitionKey(subject: Subject): String = {
 		subject.name.getOrElse("")
-	}
-
-	def executeClassifiers(subject1: Subject, subject2: Subject): Double = {
-		var confidenceSum = 0.0
-		var weightSum = 0.0
-		for((classifier, weight) <- classifiers) {
-			val confidence = classifier.execute(subject1, subject2)
-
-			confidenceSum += confidence * weight
-			weightSum += weight
-		}
-
-		confidenceSum /= weightSum
-		confidenceSum
 	}
 
 	def score(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): Double = {
