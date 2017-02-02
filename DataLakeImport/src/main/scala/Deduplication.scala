@@ -9,6 +9,14 @@ import com.datastax.driver.core.utils.UUIDs
 import scala.xml.XML
 import scala.collection.mutable.ListBuffer
 
+/**
+	* Reproduces a configuration for a comparison of two Subjects
+	* @param key the attribute of a Subject to be compared
+	* @param similarityMeasure the type of similarity measure for the comparing
+	* @param weight the weight of the calculation
+	* @tparam A type of the key
+	* @tparam B type of the similarity measure
+	*/
 case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double) {
 	override def equals(x: Any) = x match {
 		case that: scoreConfig[A, B] => that.key == this.key && that.similarityMeasure.equals(this.similarityMeasure) && that.weight == this.weight
@@ -16,6 +24,9 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeas
 	}
 }
 
+/**
+	* Deduplikation object for finding an handling duplicates in the database
+	*/
 object Deduplication {
 	val confidenceThreshold = 0.7
 	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
@@ -60,6 +71,10 @@ object Deduplication {
 			.saveToCassandra(keyspace, versionTable, SomeColumns("version", "timestamp", "datasources", "program"))
 	}
 
+	/**
+		* Createds a new version for the import
+		* @return a version reproducing to the details of the import
+		*/
 	def makeTemplateVersion(): Version = {
 		// create timestamp and TimeUUID for versioning
 		val timestamp = new Date()
@@ -68,10 +83,16 @@ object Deduplication {
 		Version(version, appName, null, null, dataSources, timestamp)
 	}
 
+	/**
+		* Findes all duplicates with a similarity score higher than the confidence threshold
+		* @param joinedSubjects a rdd containing all Subjects to be compared
+		* @param config the configuration of similarity measures algorithm for comparing
+		* @return all pairs of Subjects with a similarity score higher than the confidence threshold with the score
+		*/
 	def findDuplicates(joinedSubjects: RDD[(String, (Subject, Subject))], config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): RDD[(UUID, String, UUID, String, Double)] = {
 		joinedSubjects
 		  .map { case (key, (subject1, subject2)) =>
-				Tuple5(subject1.id, subject1.name.getOrElse(""), subject2.id, subject2.name.getOrElse(""), score(subject1, subject2, config))
+				Tuple5(subject1.id, subject1.name.getOrElse(""), subject2.id, subject2.name.getOrElse(""), compare(subject1, subject2, config))
 			}
 		  .filter(x => x._5 > confidenceThreshold)
 	}
@@ -97,14 +118,26 @@ object Deduplication {
 		subject.name.getOrElse("")
 	}
 
-	def score(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): Double = {
+	/**
+		* Compares to subjects regarding the configuration
+		* @param subject1 subjects to be compared to subject2
+		* @param subject2 subjects to be compared to subject2
+		* @param config configuration of the similarity measures for the comparison
+		* @return the similarity score of the subjects
+		*/
+	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): Double = {
 		val list = ListBuffer.empty[Double]
 		for(item <- config) {
-			list += item.similarityMeasure.score(subject1.get(item.key), subject2.get(item.key)) * item.weight
+			list += item.similarityMeasure.compare(subject1.get(item.key), subject2.get(item.key)) * item.weight
 		}
 		list.foldLeft(0.0)((b, a) => b+a) / config.length
 	}
 
+	/**
+		* Reads the configuration from a xml file
+		* @param path the path where the config.xml is located
+		* @return a list containing scoreConfig entities parsed from the xml file
+		*/
 	def parseConfig(path: String): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
 		val xml = XML.loadFile(path)
 		val config = (xml \\ "items" \ "item" ).toList
