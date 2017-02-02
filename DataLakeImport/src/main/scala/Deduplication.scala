@@ -61,7 +61,7 @@ object Deduplication {
 			joined = joinForLink(subjects)
 		}
 
-		val duplicates = findDuplicates(joined)
+		val duplicates = findDuplicates(joined, config)
 			.map(_.productIterator.mkString(","))
 			.saveAsTextFile(appName + "_" + System.currentTimeMillis / 1000)
 
@@ -78,10 +78,10 @@ object Deduplication {
 		Version(version, appName, null, null, dataSources, timestamp)
 	}
 
-	def findDuplicates(joinedSubjects: RDD[(String, (Subject, Subject))]): RDD[(UUID, String, UUID, String, Double)] = {
+	def findDuplicates(joinedSubjects: RDD[(String, (Subject, Subject))], config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): RDD[(UUID, String, UUID, String, Double)] = {
 		joinedSubjects
 		  .map { case (key, (subject1, subject2)) =>
-				Tuple5(subject1.id, subject1.name.getOrElse(""), subject2.id, subject2.name.getOrElse(""), score(subject1, subject2))
+				Tuple5(subject1.id, subject1.name.getOrElse(""), subject2.id, subject2.name.getOrElse(""), score(subject1, subject2, config))
 			}
 		  .filter(x => x._5 > confidenceThreshold)
 	}
@@ -121,7 +121,7 @@ object Deduplication {
 		confidenceSum
 	}
 
-	def score(subject1: Subject, subject2: Subject): Double = {
+	def score(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): Double = {
 		val list = ListBuffer.empty[Double]
 		for(item <- config) {
 			list += item.similarityMeasure.score(subject1.get(item.key), subject2.get(item.key)) * item.weight
