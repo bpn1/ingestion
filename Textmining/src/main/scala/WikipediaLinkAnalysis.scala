@@ -95,8 +95,8 @@ object WikipediaLinkAnalysis {
 		val sc = new SparkContext(conf)
 
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
-		fillAliasToPagesTable(parsedWikipedia, sc)
 		fillPageToAliasesTable(parsedWikipedia, sc)
+		fillAliasToPagesTable(parsedWikipedia, sc)
 		sc.stop
 	}
 }

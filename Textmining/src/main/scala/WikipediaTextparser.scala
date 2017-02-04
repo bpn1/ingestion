@@ -13,12 +13,11 @@ import java.net.URLDecoder
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
+	val outputTablename = "parsedwikipedia"
 	val infoboxOffset: Int = -1
 
-	val outputTablename = "parsedwikipedia"
-
-	case class WikipediaEntry(title: String, var text: Option[String], var references: Map[String, List[String]]) {
-		//def this(title: String, text: String, refs: Map[String, List[String]]) = this(title, Option(text), refs)
+	case class WikipediaEntry(title: String, var text: Option[String]) {
+		//def this(title: String, text: String) = this(title, Option(text))
 		def setText(t: String): Unit = { text = Option(t) }
 		def getText(): String = text match {
 			case Some(t) => t
@@ -28,7 +27,10 @@ object WikipediaTextparser {
 
 	case class ParsedWikipediaEntry(title: String, var text: Option[String], var links: List[Link]) {
 		//def this(title: String, text: String) = this(title, Option(text), null)
-		def setText(t: String): Unit = { text = Option(t) }
+		def setText(t: String): Unit = {
+			text = Option(t)
+		}
+
 		def getText(): String = text match {
 			case Some(t) => t
 			case None => ""
@@ -36,8 +38,8 @@ object WikipediaTextparser {
 	}
 
 	case class Link(alias: String,
-		var page: String,
-		offset: Int)
+					var page: String,
+					offset: Int)
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
@@ -115,27 +117,27 @@ object WikipediaTextparser {
 		var startIndex = 0
 		val children = body.childNodes
 
-		if(children.isEmpty) {
+		if (children.isEmpty) {
 			return ("", linksList.toList)
 		}
 
-		if(children(0).isInstanceOf[TextNode]) {
+		if (children(0).isInstanceOf[TextNode]) {
 			startIndex = 1
 			var firstChildText = children(0).asInstanceOf[TextNode].text
-			while(firstChildText.charAt(0) != body.text.charAt(0)) {
+			while (firstChildText.charAt(0) != body.text.charAt(0)) {
 				firstChildText = firstChildText.substring(1)
-				if(firstChildText.length == 0) {
+				if (firstChildText.length == 0) {
 					return ("", linksList.toList)
 				}
 			}
 			offset += firstChildText.length
 		}
 
-		for(element <- children.slice(startIndex, children.length)) {
+		for (element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
 					val target = parseUrl(t.attr("href"))
-					val source = if(t.text == "") target else t.text
+					val source = if (t.text == "") target else t.text
 					val link = Link(source, target, offset)
 					linksList += link
 					offset += t.text.length
@@ -200,7 +202,7 @@ object WikipediaTextparser {
 
 	def linkMatchToLink(linkMatch: scala.util.matching.Regex.Match): Link = {
 		val page = linkMatch.group(1)
-		if(page.startsWith("Datei:"))
+		if (page.startsWith("Datei:"))
 			return null
 
 		var alias = ""
@@ -223,7 +225,7 @@ object WikipediaTextparser {
 			.matchData
 			.foreach { linkMatch =>
 				val link = linkMatchToLink(linkMatch)
-				if(link != null)
+				if (link != null)
 					linkList += link
 			}
 		linkList.toList
