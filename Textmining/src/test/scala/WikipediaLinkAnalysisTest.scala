@@ -34,9 +34,15 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 	}
 
 	"Dead links and only dead links" should "be removed" in {
-		val cleanedGroupedAliases = WikipediaLinkAnalysis.removeDeadLinks(groupedAliasesTestRDD, allPagesTestRDD)
+		val cleanedGroupedAliases = WikipediaLinkAnalysis.removeDeadLinks(groupedAliasesTestRDD(), allPagesTestRDD())
 		val cleanedGroupedAliasesTest = cleanedGroupedAliasesTestRDD()
 		assert(areRDDsEqual(cleanedGroupedAliases.asInstanceOf[RDD[Any]], cleanedGroupedAliasesTest.asInstanceOf[RDD[Any]]))
+	}
+
+	"Dead pages and only dead pages" should "be removed" in {
+		val cleanedGroupedPages = WikipediaLinkAnalysis.removeDeadPages(groupedPagesTestRDD(), allPagesTestRDD())
+		val cleanedGroupedPagesTest = cleanedGroupedPagesTestRDD()
+		assert(areRDDsEqual(cleanedGroupedPages.asInstanceOf[RDD[Any]], cleanedGroupedPagesTest.asInstanceOf[RDD[Any]]))
 	}
 
 	def areRDDsEqual(left: RDD[Any], right: RDD[Any]): Boolean = {
@@ -112,6 +118,15 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 			WikipediaLinkAnalysis.Link("Bayern", Map("Bayern" -> 1).toSeq),
 			WikipediaLinkAnalysis.Link("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
 			WikipediaLinkAnalysis.Link("Zerfall", Map("Zerfall (Album)" -> 1).toSeq)
+		))
+	}
+
+	def cleanedGroupedPagesTestRDD(): RDD[WikipediaLinkAnalysis.Page] = {
+		sc.parallelize(List(
+			WikipediaLinkAnalysis.Page("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
+			WikipediaLinkAnalysis.Page("Bayern", Map("Bayern" -> 1).toSeq),
+			WikipediaLinkAnalysis.Page("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
+			WikipediaLinkAnalysis.Page("Zerfall (Album)", Map("Zerfall" -> 1).toSeq)
 		))
 	}
 
