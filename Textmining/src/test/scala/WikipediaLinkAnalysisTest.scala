@@ -4,19 +4,25 @@ import org.apache.spark.rdd._
 
 class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 	"Grouped aliases" should "not be empty" in {
-		val groupedAliases = WikipediaLinkAnalysis.groupPageNamesByAliases(parsedWikipediaTestRDD())
+		val groupedAliases = WikipediaLinkAnalysis.groupByAliases(parsedWikipediaTestRDD())
 		assert(groupedAliases.count > 0)
 	}
 
 	"Grouped page names" should "not be empty" in {
-		val groupedPageNames = WikipediaLinkAnalysis.groupPageNamesByAliases(parsedWikipediaTestRDD())
+		val groupedPageNames = WikipediaLinkAnalysis.groupByPageNames(parsedWikipediaTestRDD())
 		assert(groupedPageNames.count > 0)
 	}
 
 	"Grouped aliases" should "be exactly these aliases" in {
-		val groupedAliases = WikipediaLinkAnalysis.groupPageNamesByAliases(parsedWikipediaTestRDD())
+		val groupedAliases = WikipediaLinkAnalysis.groupByAliases(parsedWikipediaTestRDD())
 		val groupedAliasesTest = groupedAliasesTestRDD()
-		assert(areRDDsEqual(groupedAliases, groupedAliasesTest))
+		assert(areRDDsEqual(groupedAliases.asInstanceOf[RDD[Any]], groupedAliasesTest.asInstanceOf[RDD[Any]]))
+	}
+
+	"Grouped page names" should "be exactly these page names" in {
+		val groupedPages = WikipediaLinkAnalysis.groupByPageNames(parsedWikipediaTestRDD())
+		val groupedPagesTest = groupedPagesTestRDD()
+		assert(areRDDsEqual(groupedPages.asInstanceOf[RDD[Any]], groupedPagesTest.asInstanceOf[RDD[Any]]))
 	}
 
 	"Probability that link directs to page" should "be computed correctly" in {
@@ -30,20 +36,43 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 	"Dead links and only dead links" should "be removed" in {
 		val cleanedGroupedAliases = WikipediaLinkAnalysis.removeDeadLinks(groupedAliasesTestRDD, allPagesTestRDD)
 		val cleanedGroupedAliasesTest = cleanedGroupedAliasesTestRDD()
-		assert(areRDDsEqual(cleanedGroupedAliases, cleanedGroupedAliasesTest))
+		assert(areRDDsEqual(cleanedGroupedAliases.asInstanceOf[RDD[Any]], cleanedGroupedAliasesTest.asInstanceOf[RDD[Any]]))
 	}
 
-	def areRDDsEqual(left: RDD[WikipediaLinkAnalysis.Link], right: RDD[WikipediaLinkAnalysis.Link]): Boolean = {
+	def areRDDsEqual(left: RDD[Any], right: RDD[Any]): Boolean = {
+		// This function is not very pretty but takes Links and Pages.
 		val sizeLeft = left.count
 		val sizeRight = right.count
 		if (sizeLeft != sizeRight) return false
+
+		val rdd2 = right
+			.keyBy {
+				case l: WikipediaLinkAnalysis.Link => l.alias
+				case p: WikipediaLinkAnalysis.Page => p.page
+			}
+
 		val rdd1 = left
-			.keyBy(_.alias)
-			.join(right.keyBy(_.alias))
+			.keyBy {
+				case l: WikipediaLinkAnalysis.Link => l.alias
+				case p: WikipediaLinkAnalysis.Page => p.page
+			}
+			.join(rdd2)
+
 		if (rdd1.count != sizeLeft) return false
 		rdd1
+			.map {
+				case (key, (leftLink: WikipediaLinkAnalysis.Link, rightLink: WikipediaLinkAnalysis.Link)) =>
+					(key, leftLink.pages, rightLink.pages)
+				case (key, (leftLink: WikipediaLinkAnalysis.Page, rightLink: WikipediaLinkAnalysis.Page)) =>
+					(key, leftLink.aliases, rightLink.aliases)
+			}
 			.collect
-			.foreach { case (alias, (leftLink, rightLink)) => if (leftLink.pages.toMap != rightLink.pages.toMap) return false }
+			.foreach { case (key, leftSequence, rightSequence) =>
+				val map1 = leftSequence.asInstanceOf[Seq[(String, Int)]].toMap
+				val map2 = rightSequence.asInstanceOf[Seq[(String, Int)]].toMap
+				if (map1 != map2)
+					return false
+			}
 		true
 	}
 
@@ -64,6 +93,16 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 			WikipediaLinkAnalysis.Link("Bayern", Map("Bayern" -> 1).toSeq),
 			WikipediaLinkAnalysis.Link("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
 			WikipediaLinkAnalysis.Link("Zerfall", Map("Zerfall (Album)" -> 1, "Zerfall (Soziologie)" -> 1).toSeq)
+		))
+	}
+
+	def groupedPagesTestRDD(): RDD[WikipediaLinkAnalysis.Page] = {
+		sc.parallelize(List(
+			WikipediaLinkAnalysis.Page("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
+			WikipediaLinkAnalysis.Page("Bayern", Map("Bayern" -> 1).toSeq),
+			WikipediaLinkAnalysis.Page("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
+			WikipediaLinkAnalysis.Page("Zerfall (Album)", Map("Zerfall" -> 1).toSeq),
+			WikipediaLinkAnalysis.Page("Zerfall (Soziologie)", Map("Zerfall" -> 1).toSeq)
 		))
 	}
 
