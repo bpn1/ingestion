@@ -18,7 +18,6 @@ class MongeElkanUnitTest extends FlatSpec {
     val maximum = MongeElkan.maxSim("henka", List("henkan", "123", "xyz"))
     assert(maximum == JaroWinklerMetric.compare("henka", "henkan").get)
   }
-
   "score" should "return the MongeElkan score for given strings" in {
     val score = MongeElkan.compare("henka", "henkan")
     assert(score == JaroWinklerMetric.compare("henka", "henkan").get)
