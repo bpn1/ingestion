@@ -18,7 +18,7 @@ import scala.collection.mutable.ListBuffer
 	* @tparam B type of the similarity measure
 	*/
 case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double) {
-	override def equals(x: Any) = x match {
+	override def equals(obj: Any): Boolean = obj match {
 		case that: scoreConfig[A, B] => that.key == this.key && that.similarityMeasure.equals(this.similarityMeasure) && that.weight == this.weight
 		case _ => false
 	}
@@ -150,5 +150,30 @@ object Deduplication {
 					case "MongeElkan" => scoreConfig[String, MongeElkan.type](key, MongeElkan, weight.toDouble)
 					case _ => scoreConfig[String, ExactMatchString.type](key, ExactMatchString, weight.toDouble)
 			}}
+	}
+
+	/**
+		* Creates blocks for the different industries
+		* @param subjects RDD to peform the blocking on
+		* @return RDD of blocks. One block for each industry containing the Subjects categorized as this industry
+		*/
+	def generateBlocks(subjects: RDD[Subject]): RDD[(String, Iterable[Subject])] = {
+		subjects.groupBy(x => x.properties.getOrElse("branche", List("uncategorized")).head)
+	}
+
+	/**
+		* Creates blocks for the different industries
+		* @param subjects RDD to peform the blocking on
+		* @param stagingSubjects RDD to peform the blocking on
+		* @return RDD of blocks. One block for each industry containing the Subjects categorized as this industry
+		*/
+	def generateBlocks(subjects: RDD[Subject], stagingSubjects: RDD[Subject]): RDD[(String, Iterable[Subject])] = {
+		val subjectBlocks = subjects.groupBy(x => x.properties.getOrElse("branche", List("uncategorized")).head)
+		val stagingBlocks = stagingSubjects.groupBy(x => x.properties.getOrElse("branche", List("uncategorized")).head)
+		subjectBlocks
+			.fullOuterJoin(stagingBlocks)
+		  .map{
+				case (branche, (x, y)) => (branche, x.getOrElse(Iterable())++y.getOrElse(Iterable()))
+			}
 	}
 }

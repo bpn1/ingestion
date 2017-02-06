@@ -20,7 +20,7 @@ libraryDependencies ++= Seq(
   "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.3",
   "org.scalactic" %% "scalactic" % "3.0.1",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-  "com.holdenkarau" %% "spark-testing-base" % "1.6.1_0.3.3"
+  "com.holdenkarau" %% "spark-testing-base" % "1.6.1_0.4.4"
 )
 
 // testing settings

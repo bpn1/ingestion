@@ -36,4 +36,9 @@ case class Subject(
 		case "category" => category.get.asInstanceOf[T]
 		case x => properties(x).asInstanceOf[T]
 	}
+
+	override def equals(obj: Any): Boolean = obj match {
+		case that: Subject => that.id == this.id
+		case _ => false
+	}
 }
