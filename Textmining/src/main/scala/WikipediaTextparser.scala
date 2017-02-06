@@ -9,6 +9,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
 import java.net.URLDecoder
+import scala.collection.mutable.ListBuffer
 
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
@@ -18,7 +19,10 @@ object WikipediaTextparser {
 
 	case class WikipediaEntry(title: String, var text: Option[String]) {
 		//def this(title: String, text: String) = this(title, Option(text))
-		def setText(t: String): Unit = { text = Option(t) }
+		def setText(t: String): Unit = {
+			text = Option(t)
+		}
+
 		def getText(): String = text match {
 			case Some(t) => t
 			case None => ""
@@ -165,23 +169,8 @@ object WikipediaTextparser {
 		cleanText
 	}
 
-	def extractInfobox(wikitext: String): String = {
+	def extractInfobox(wikitext: String, startIndex: Int): String = {
 		var infoboxText = ""
-		var infoboxRegex = new Regex("\\{\\{Infobox ")
-		// cannot check if first '{' is escaped because page may begin with infobox
-		var startIndex = -1
-
-		infoboxRegex
-			.findAllIn(wikitext)
-			.matchData
-			.foreach { regexMatch =>
-				assert(startIndex == -1) // there must not be more than one infobox
-				startIndex = regexMatch.start
-			}
-		if (startIndex == -1) {
-			return infoboxText
-		}
-
 		var depth = 0
 		var escaped = false
 		for (i <- startIndex until wikitext.length) {
@@ -196,7 +185,26 @@ object WikipediaTextparser {
 			escaped = character == '\\'
 		}
 
-		assert(false) // infobox should end earlier
+		println("[Textparser WARN]	Infobox has no end!")
+		infoboxText
+	}
+
+	def extractAllInfoboxes(wikitext: String): String = {
+		var infoboxText = ""
+		var infoboxRegex = new Regex("\\{\\{Infobox ")
+		// cannot check if first '{' is escaped because page may begin with infobox
+		var startIndices = new ListBuffer[Int]()
+
+		infoboxRegex
+			.findAllIn(wikitext)
+			.matchData
+			.foreach { regexMatch =>
+				startIndices += regexMatch.start
+			}
+
+		for (startIndex <- startIndices) {
+			infoboxText += extractInfobox(wikitext, startIndex)
+		}
 		infoboxText
 	}
 
@@ -218,7 +226,7 @@ object WikipediaTextparser {
 
 	def extractInfoboxLinks(wikitext: String): List[Link] = {
 		val linkList = mutable.ListBuffer[Link]()
-		val infoboxText = extractInfobox(wikitext)
+		val infoboxText = extractAllInfoboxes(wikitext)
 		val linkRegex = new Regex("\\[\\[(.*?)(\\|(.*?))?\\]\\]")
 		linkRegex
 			.findAllIn(infoboxText)
