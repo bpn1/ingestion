@@ -6,31 +6,30 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import com.datastax.driver.core.utils.UUIDs
-
+import scala.xml.XML
 import scala.collection.mutable.ListBuffer
 
-class TestClassifier extends Classifier {
-	override def execute(subject1: Subject, subject2: Subject): Double = {
-		if(subject1.name.getOrElse("") == subject2.name.getOrElse(""))
-			1.0
-		else
-			0.0
+/**
+	* Reproduces a configuration for a comparison of two Subjects
+	* @param key the attribute of a Subject to be compared
+	* @param similarityMeasure the type of similarity measure for the comparing
+	* @param weight the weight of the calculation
+	* @tparam A type of the key
+	* @tparam B type of the similarity measure
+	*/
+case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double) {
+	override def equals(x: Any) = x match {
+		case that: scoreConfig[A, B] => that.key == this.key && that.similarityMeasure.equals(this.similarityMeasure) && that.weight == this.weight
+		case _ => false
 	}
 }
 
-object TestSimilarityMeasure extends SimilarityMeasure[String] {
-	def score(string1: String, string2: String): Double = {
-		if(string1 == string2) 1.0 else 0.0
-	}
-}
-
-case class scoreConfig [A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double )
-
+/**
+	* Deduplikation object for finding an handling duplicates in the database
+	*/
 object Deduplication {
 	val confidenceThreshold = 0.7
-	val config = List(scoreConfig[String, TestSimilarityMeasure.type]("name", TestSimilarityMeasure, 1.0))
-	val classifiers = List((new TestClassifier(), 1.0))
-
+	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
 	val appName = "Deduplication"
 	val dataSources = List("") // TODO
 	val keyspace = "datalake"
@@ -41,7 +40,11 @@ object Deduplication {
 	def main(args: Array[String]): Unit = {
 		var doMerge = false
 		if(args.length > 0)
-			doMerge = args(0) == "merge"
+			config = parseConfig(args(0))
+		else
+			println("Usage config_path doMerge")
+		if(args.length > 1)
+			doMerge = args(1) == "merge"
 
 		val conf = new SparkConf()
 			.setAppName(appName)
@@ -59,7 +62,7 @@ object Deduplication {
 			joined = joinForLink(subjects)
 		}
 
-		val duplicates = findDuplicates(joined)
+		val duplicates = findDuplicates(joined, config)
 			.map(_.productIterator.mkString(","))
 			.saveAsTextFile(appName + "_" + System.currentTimeMillis / 1000)
 
@@ -68,6 +71,10 @@ object Deduplication {
 			.saveToCassandra(keyspace, versionTable, SomeColumns("version", "timestamp", "datasources", "program"))
 	}
 
+	/**
+		* Createds a new version for the import
+		* @return a version reproducing to the details of the import
+		*/
 	def makeTemplateVersion(): Version = {
 		// create timestamp and TimeUUID for versioning
 		val timestamp = new Date()
@@ -76,10 +83,16 @@ object Deduplication {
 		Version(version, appName, null, null, dataSources, timestamp)
 	}
 
-	def findDuplicates(joinedSubjects: RDD[(String, (Subject, Subject))]): RDD[(UUID, String, UUID, String, Double)] = {
+	/**
+		* Findes all duplicates with a similarity score higher than the confidence threshold
+		* @param joinedSubjects a rdd containing all Subjects to be compared
+		* @param config the configuration of similarity measures algorithm for comparing
+		* @return all pairs of Subjects with a similarity score higher than the confidence threshold with the score
+		*/
+	def findDuplicates(joinedSubjects: RDD[(String, (Subject, Subject))], config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): RDD[(UUID, String, UUID, String, Double)] = {
 		joinedSubjects
 		  .map { case (key, (subject1, subject2)) =>
-				Tuple5(subject1.id, subject1.name.getOrElse(""), subject2.id, subject2.name.getOrElse(""), score(subject1, subject2))
+				Tuple5(subject1.id, subject1.name.getOrElse(""), subject2.id, subject2.name.getOrElse(""), compare(subject1, subject2, config))
 			}
 		  .filter(x => x._5 > confidenceThreshold)
 	}
@@ -105,25 +118,37 @@ object Deduplication {
 		subject.name.getOrElse("")
 	}
 
-	def executeClassifiers(subject1: Subject, subject2: Subject): Double = {
-		var confidenceSum = 0.0
-		var weightSum = 0.0
-		for((classifier, weight) <- classifiers) {
-			val confidence = classifier.execute(subject1, subject2)
-
-			confidenceSum += confidence * weight
-			weightSum += weight
-		}
-
-		confidenceSum /= weightSum
-		confidenceSum
-	}
-
-	def score(subject1: Subject, subject2: Subject): Double = {
+	/**
+		* Compares to subjects regarding the configuration
+		* @param subject1 subjects to be compared to subject2
+		* @param subject2 subjects to be compared to subject2
+		* @param config configuration of the similarity measures for the comparison
+		* @return the similarity score of the subjects
+		*/
+	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): Double = {
 		val list = ListBuffer.empty[Double]
 		for(item <- config) {
-			list += item.similarityMeasure.score(subject1.get(item.key), subject2.get(item.key)) * item.weight
+			list += item.similarityMeasure.compare(subject1.get(item.key), subject2.get(item.key)) * item.weight
 		}
 		list.foldLeft(0.0)((b, a) => b+a) / config.length
+	}
+
+	/**
+		* Reads the configuration from a xml file
+		* @param path the path where the config.xml is located
+		* @return a list containing scoreConfig entities parsed from the xml file
+		*/
+	def parseConfig(path: String): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
+		val xml = XML.loadFile(path)
+		val config = (xml \\ "items" \ "item" ).toList
+
+		config
+		  .map(node => Tuple3((node \ "key").text, (node \ "similartyMeasure").text, (node \ "weight").text))
+		  .map{
+				case (key, similarityMeasure, weight) => similarityMeasure match {
+					case "ExactMathString" => scoreConfig[String, ExactMatchString.type](key, ExactMatchString, weight.toDouble)
+					case "MongeElkan" => scoreConfig[String, MongeElkan.type](key, MongeElkan, weight.toDouble)
+					case _ => scoreConfig[String, ExactMatchString.type](key, ExactMatchString, weight.toDouble)
+			}}
 	}
 }
