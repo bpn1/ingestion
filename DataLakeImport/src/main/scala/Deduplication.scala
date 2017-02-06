@@ -11,15 +11,15 @@ import scala.collection.mutable.ListBuffer
 
 /**
 	* Reproduces a configuration for a comparison of two Subjects
-	* @param key the attribute of a Subject to be compared
+	* @param attribute the attribute of a Subject to be compared
 	* @param similarityMeasure the type of similarity measure for the comparing
 	* @param weight the weight of the calculation
-	* @tparam A type of the key
+	* @tparam A type of the attribute
 	* @tparam B type of the similarity measure
 	*/
-case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double) {
+case class scoreConfig[A, B <: SimilarityMeasure[A]](attribute: String, similarityMeasure: B, weight: Double) {
 	override def equals(x: Any) = x match {
-		case that: scoreConfig[A, B] => that.key == this.key && that.similarityMeasure.equals(this.similarityMeasure) && that.weight == this.weight
+		case that: scoreConfig[A, B] => that.attribute == this.attribute && that.similarityMeasure.equals(this.similarityMeasure) && that.weight == this.weight
 		case _ => false
 	}
 }
@@ -128,7 +128,7 @@ object Deduplication {
 	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): Double = {
 		val list = ListBuffer.empty[Double]
 		for(item <- config) {
-			list += item.similarityMeasure.compare(subject1.get(item.key), subject2.get(item.key)) * item.weight
+			list += item.similarityMeasure.compare(subject1.get(item.attribute), subject2.get(item.attribute)) * item.weight
 		}
 		list.foldLeft(0.0)((b, a) => b+a) / config.length
 	}
@@ -143,12 +143,12 @@ object Deduplication {
 		val config = (xml \\ "items" \ "item" ).toList
 
 		config
-		  .map(node => Tuple3((node \ "key").text, (node \ "similartyMeasure").text, (node \ "weight").text))
+		  .map(item => Tuple3((item \ "attribute").text, (item \ "similartyMeasure").text, (item \ "weight").text))
 		  .map{
-				case (key, similarityMeasure, weight) => similarityMeasure match {
-					case "ExactMathString" => scoreConfig[String, ExactMatchString.type](key, ExactMatchString, weight.toDouble)
-					case "MongeElkan" => scoreConfig[String, MongeElkan.type](key, MongeElkan, weight.toDouble)
-					case _ => scoreConfig[String, ExactMatchString.type](key, ExactMatchString, weight.toDouble)
+				case (attribute, similarityMeasure, weight) => similarityMeasure match {
+					case "ExactMathString" => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
+					case "MongeElkan" => scoreConfig[String, MongeElkan.type](attribute, MongeElkan, weight.toDouble)
+					case _ => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
 			}}
 	}
 }
