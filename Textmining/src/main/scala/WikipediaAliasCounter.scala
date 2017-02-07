@@ -2,9 +2,6 @@ import WikipediaTextparser.ParsedWikipediaEntry
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
-import org.scalacheck.Prop.True
-
-import scala.collection.mutable.ListBuffer
 
 object WikipediaAliasCounter {
 	val keyspace = "wikidumps"
@@ -14,11 +11,11 @@ object WikipediaAliasCounter {
 
 	case class AliasCounter(alias: String, var linkOccurrences: Int = 0, var totalOccurrences: Int = 0)
 
-	case class AliasOccurrencesInArticle(links: List[String], noLinks: List[String])
+	case class AliasOccurrencesInArticle(links: scala.collection.mutable.Set[String], noLinks: scala.collection.mutable.Set[String])
 
 	def identifyAliasOccurrencesInArticle(article: ParsedWikipediaEntry, allAliases: List[String]): AliasOccurrencesInArticle = {
-		val links = ListBuffer[String]()
-		val noLinks = ListBuffer[String]()
+		val links = scala.collection.mutable.Set[String]()
+		val noLinks = scala.collection.mutable.Set[String]()
 		allAliases
 			.foreach { alias =>
 				if (article.links.exists(link => link.alias == alias))
@@ -26,7 +23,7 @@ object WikipediaAliasCounter {
 				else if (article.text.get contains alias)
 					noLinks += alias
 			}
-		AliasOccurrencesInArticle(links.toList, noLinks.toList)
+		AliasOccurrencesInArticle(links, noLinks)
 	}
 
 	def countAllAliasOccurrences(articles: RDD[ParsedWikipediaEntry], aliases: RDD[String], sc: SparkContext): RDD[AliasCounter] = {

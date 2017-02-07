@@ -1,4 +1,3 @@
-import WikipediaTextparser.ParsedWikipediaEntry
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
@@ -31,6 +30,11 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 			}
 	}
 
+	"Counted aliases" should "be exactly these counted aliases" in {
+		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD(), allAliasesTestRDD(), sc)
+		assert(areRDDsEqual(countedAliases.asInstanceOf[RDD[Any]], countedAliasesTestRDD().asInstanceOf[RDD[Any]]))
+	}
+
 	"Alias occurrences" should "be correct identified as link or no link" in {
 		val allAliasesList = allAliasesTestRDD().collect.toList
 		val aliasOccurrencesInArticles = parsedWikipediaTestRDD()
@@ -38,9 +42,12 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 		assert(areRDDsEqual(aliasOccurrencesInArticles.asInstanceOf[RDD[Any]], aliasOccurrencesInArticlesTestRDD().asInstanceOf[RDD[Any]]))
 	}
 
-	"Counted aliases" should "be exactly these counted aliases" in {
-		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD(), allAliasesTestRDD(), sc)
-		assert(areRDDsEqual(countedAliases.asInstanceOf[RDD[Any]], countedAliasesTestRDD().asInstanceOf[RDD[Any]]))
+	"Identified aliases" should "not be link and no link in the same article" in {
+		val allAliasesList = allAliasesTestRDD().collect.toList
+		val aliasOccurrencesInArticles = parsedWikipediaTestRDD()
+			.map(article => WikipediaAliasCounter.identifyAliasOccurrencesInArticle(article, allAliasesList))
+			.collect
+			.foreach(occurrences => assert(occurrences.links.intersect(occurrences.noLinks).isEmpty))
 	}
 
 	def printRDDs(is: RDD[Any], should: RDD[Any]): Unit = {
@@ -49,7 +56,7 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 			.collect
 			.foreach(println)
 
-		println("\n Should be: ")
+		println("\nShould be: ")
 		should
 			.collect
 			.foreach(println)
@@ -72,7 +79,8 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 			"Main-Kinzig-Kreis",
 			"Hessen",
 			"1377",
-			"Büdinger Wald"
+			"Büdinger Wald",
+			"Backfisch"
 		))
 	}
 
@@ -91,25 +99,33 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 					WikipediaTextparser.Link("Hessen", "Hessen", 87),
 					WikipediaTextparser.Link("1377", "1377", 225),
 					WikipediaTextparser.Link("Büdinger Wald", "Büdinger Wald", 546)
+				)),
+			WikipediaTextparser.ParsedWikipediaEntry("Testartikel", Option("""Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."""),
+				List(
+					WikipediaTextparser.Link("Audi", "Audi", 7),
+					WikipediaTextparser.Link("Brachttal", "Brachttal", 13),
+					WikipediaTextparser.Link("historisches Jahr", "1377", 24)
 				))))
 	}
 
 	def aliasOccurrencesInArticlesTestRDD(): RDD[WikipediaAliasCounter.AliasOccurrencesInArticle] = {
 		sc.parallelize(List(
-			WikipediaAliasCounter.AliasOccurrencesInArticle(List("Audi"), List()),
-			WikipediaAliasCounter.AliasOccurrencesInArticle(List(), List("Audi")),
-			WikipediaAliasCounter.AliasOccurrencesInArticle(List("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), List())
+			WikipediaAliasCounter.AliasOccurrencesInArticle(scala.collection.mutable.Set("Audi"), scala.collection.mutable.Set()),
+			WikipediaAliasCounter.AliasOccurrencesInArticle(scala.collection.mutable.Set(), scala.collection.mutable.Set("Audi")),
+			WikipediaAliasCounter.AliasOccurrencesInArticle(scala.collection.mutable.Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), scala.collection.mutable.Set()),
+			WikipediaAliasCounter.AliasOccurrencesInArticle(scala.collection.mutable.Set("Audi", "Brachttal"), scala.collection.mutable.Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
 		))
 	}
 
 	def countedAliasesTestRDD(): RDD[WikipediaAliasCounter.AliasCounter] = {
 		sc.parallelize(List(
-			WikipediaAliasCounter.AliasCounter("Audi", 1, 2),
-			WikipediaAliasCounter.AliasCounter("Brachttal", 1, 1),
-			WikipediaAliasCounter.AliasCounter("Main-Kinzig-Kreis", 1, 1),
-			WikipediaAliasCounter.AliasCounter("Hessen", 1, 1),
+			WikipediaAliasCounter.AliasCounter("Audi", 2, 3),
+			WikipediaAliasCounter.AliasCounter("Brachttal", 2, 2),
+			WikipediaAliasCounter.AliasCounter("Main-Kinzig-Kreis", 1, 2),
+			WikipediaAliasCounter.AliasCounter("Hessen", 1, 2),
 			WikipediaAliasCounter.AliasCounter("1377", 1, 1),
-			WikipediaAliasCounter.AliasCounter("Büdinger Wald", 1, 1)
+			WikipediaAliasCounter.AliasCounter("Büdinger Wald", 1, 2),
+			WikipediaAliasCounter.AliasCounter("Backfisch", 0, 1)
 		))
 	}
 }
