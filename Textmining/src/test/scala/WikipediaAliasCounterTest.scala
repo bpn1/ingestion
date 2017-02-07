@@ -1,57 +1,79 @@
+import WikipediaTextparser.ParsedWikipediaEntry
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
 
 class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
-	"Counted aliases" should "keep the right alias name" in {
-		cleanedGroupedAliasesTestRDD()
-			.map(link => (WikipediaAliasCounter.countAliasOccurrences(link.alias), link.alias))
+	"Counted aliases" should "have the same size as all links" in {
+		val allAliases = allAliasesTestRDD()
+		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD(), allAliases, sc)
+		assert(countedAliases.count() == allAliases.count)
+	}
+
+	"Counted aliases" should "have the same aliases as all links" in {
+		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD(), allAliasesTestRDD(), sc)
+			.map(_.alias)
+		assert(areRDDsEqual(countedAliases.asInstanceOf[RDD[Any]], allAliasesTestRDD().asInstanceOf[RDD[Any]]))
+	}
+
+	"Counted aliases" should "have counted any occurrence" in {
+		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD(), allAliasesTestRDD(), sc)
 			.collect
-			.foreach { case (aliasCounter, originalAlias) => assert(aliasCounter.alias == originalAlias) }
+			.foreach(aliasCounter => assert(aliasCounter.totalOccurrences > 0))
+	}
+
+	"Counted aliases" should "have consistent counts" in {
+		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD(), allAliasesTestRDD(), sc)
+			.collect
+			.foreach { aliasCounter =>
+				assert(aliasCounter.linkOccurrences <= aliasCounter.totalOccurrences)
+				assert(aliasCounter.linkOccurrences >= 0 && aliasCounter.totalOccurrences >= 0)
+			}
 	}
 
 	"Alias occurrences" should "be correct identified as link or no link" in {
-		val allAliases = allAliasesTestRDD()
+		val allAliasesList = allAliasesTestRDD().collect.toList
 		val aliasOccurrencesInArticles = parsedWikipediaTestRDD()
-			.map(article => WikipediaAliasCounter.identifyAliasOccurrencesInArticle(article, allAliases))
+			.map(article => WikipediaAliasCounter.identifyAliasOccurrencesInArticle(article, allAliasesList))
 		assert(areRDDsEqual(aliasOccurrencesInArticles.asInstanceOf[RDD[Any]], aliasOccurrencesInArticlesTestRDD().asInstanceOf[RDD[Any]]))
 	}
 
-	def areRDDsEqual(rdd1: RDD[Any], rdd2: RDD[Any]): Boolean = {
-		//		rdd1
-		//			.collect
-		//			.foreach(println)
-		//		println("--------")
-		//		rdd2
-		//			.collect
-		//			.foreach(println)
+	"Counted aliases" should "be exactly these counted aliases" in {
+		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD(), allAliasesTestRDD(), sc)
+		assert(areRDDsEqual(countedAliases.asInstanceOf[RDD[Any]], countedAliasesTestRDD().asInstanceOf[RDD[Any]]))
+	}
 
-		val size1 = rdd1.count
-		val size2 = rdd2.count
-		if (size1 != size2)
+	def printRDDs(is: RDD[Any], should: RDD[Any]): Unit = {
+		println("\nRDD: ")
+		is
+			.collect
+			.foreach(println)
+
+		println("\n Should be: ")
+		should
+			.collect
+			.foreach(println)
+	}
+
+	def areRDDsEqual(is: RDD[Any], should: RDD[Any]): Boolean = {
+		//		printRDDs(is, should)
+		val sizeIs = is.count
+		val sizeShould = should.count
+		if (sizeIs != sizeShould)
 			return false
-		val intersectionCount = rdd1.intersection(rdd2).count
-		intersectionCount == size1
+		val intersectionCount = is.intersection(should).count
+		intersectionCount == sizeIs
 	}
 
-	def cleanedGroupedAliasesTestRDD(): RDD[WikipediaLinkAnalysis.Link] = {
+	def allAliasesTestRDD(): RDD[String] = {
 		sc.parallelize(List(
-			WikipediaLinkAnalysis.Link("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
-			WikipediaLinkAnalysis.Link("Bayern", Map("Bayern" -> 1).toSeq),
-			WikipediaLinkAnalysis.Link("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
-			WikipediaLinkAnalysis.Link("Zerfall", Map("Zerfall (Album)" -> 1).toSeq)
-		))
-	}
-
-	def allAliasesTestRDD(): List[String] = {
-		List(
 			"Audi",
 			"Brachttal",
 			"Main-Kinzig-Kreis",
 			"Hessen",
 			"1377",
 			"Büdinger Wald"
-		)
+		))
 	}
 
 	def parsedWikipediaTestRDD(): RDD[WikipediaTextparser.ParsedWikipediaEntry] = {
@@ -80,9 +102,14 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 		))
 	}
 
-	def aliasCounterTestRDD(): RDD[WikipediaAliasCounter.AliasCounter] = {
+	def countedAliasesTestRDD(): RDD[WikipediaAliasCounter.AliasCounter] = {
 		sc.parallelize(List(
-			WikipediaAliasCounter.AliasCounter("lorem ipsum")
+			WikipediaAliasCounter.AliasCounter("Audi", 1, 2),
+			WikipediaAliasCounter.AliasCounter("Brachttal", 1, 1),
+			WikipediaAliasCounter.AliasCounter("Main-Kinzig-Kreis", 1, 1),
+			WikipediaAliasCounter.AliasCounter("Hessen", 1, 1),
+			WikipediaAliasCounter.AliasCounter("1377", 1, 1),
+			WikipediaAliasCounter.AliasCounter("Büdinger Wald", 1, 1)
 		))
 	}
 }
