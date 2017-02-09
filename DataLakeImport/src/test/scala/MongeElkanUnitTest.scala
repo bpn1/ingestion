@@ -4,7 +4,6 @@ import com.rockymadden.stringmetric.similarity.JaroWinklerMetric
 import org.scalatest.FlatSpec
 
 class MongeElkanUnitTest extends FlatSpec {
-
 	"max" should "return 0.0 if given list is empty" in {
 			val maximum = MongeElkan.max(List())
 			assert(maximum === 0.0)
