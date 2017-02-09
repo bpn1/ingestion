@@ -19,6 +19,8 @@ class DeduplicationRDDTest extends FlatSpec with SharedSparkContext with RDDComp
 		val stagings = StagingSubjectsRDD()
 		val blocks = Deduplication.generateBlocks(subjects, stagings)
 		val expected = SubjectAndStagingRDD()
+		blocks.collect.foreach(println)
+		expected.collect.foreach(println)
 		assertRDDEquals(expected, blocks)
 	}
 

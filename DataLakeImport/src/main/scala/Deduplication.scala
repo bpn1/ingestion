@@ -173,7 +173,10 @@ object Deduplication {
 		subjectBlocks
 			.fullOuterJoin(stagingBlocks)
 		  .map{
-				case (branche, (x, y)) => (branche, x.getOrElse(Iterable())++y.getOrElse(Iterable()))
+				case (branche, (None, None)) => (branche, List())
+				case (branche, (x, None)) => (branche, x.get.toList)
+				case (branche, (None, x)) => (branche, x.get.toList)
+				case (branche, (x, y)) => (branche, x.get.toSet.++(y.get.toSet).toList)
 			}
 	}
 }
