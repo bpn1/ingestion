@@ -2,7 +2,7 @@ lazy val root = (project in file(".")).
   settings(
     name := "DataLakeImport",
     version := "1.0",
-    scalaVersion := "2.10.5",
+    scalaVersion := "2.11.8",
     mainClass in Compile := Some("DataLakeImport")
   )
 
@@ -13,14 +13,14 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core" % "1.6.2",
-  "org.apache.spark" % "spark-sql_2.10" % "1.6.2",
-  "com.datastax.spark" % "spark-cassandra-connector_2.10" % "1.6.1",
-  "com.datastax.cassandra" % "cassandra-driver-core" % "3.1.2",
-  "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.3",
+  "org.apache.spark" %% "spark-core" % "2.1.0",
+  "org.apache.spark" % "spark-sql_2.11" % "2.1.0",
+  "com.datastax.spark" % "spark-cassandra-connector_2.10" % "2.0.0-M3",
+  "com.datastax.cassandra" % "cassandra-driver-core" % "3.1.3",
+  "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4",
   "org.scalactic" %% "scalactic" % "3.0.1",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-  "com.holdenkarau" %% "spark-testing-base" % "1.6.1_0.4.4"
+  "com.holdenkarau" %% "spark-testing-base" % "2.1.0_0.6.0"
 )
 
 // testing settings
