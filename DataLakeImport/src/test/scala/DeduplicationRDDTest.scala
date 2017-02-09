@@ -17,10 +17,9 @@ class DeduplicationRDDTest extends FlatSpec with SharedSparkContext with RDDComp
 	it should "merge the blocks if two subject RDDs are given" in {
 		val subjects = SubjectRDD()
 		val stagings = StagingSubjectsRDD()
-		val blocks = Deduplication.generateBlocks(subjects, stagings)
-		val expected = SubjectAndStagingRDD()
-		blocks.collect.foreach(println)
-		expected.collect.foreach(println)
+		// Conversion from list to set because of the need of an unordered comparison
+		val blocks = Deduplication.generateBlocks(subjects, stagings).map(x => Tuple2(x._1, x._2.toSet))
+		val expected = SubjectAndStagingRDD().map(x => Tuple2(x._1, x._2.toSet))
 		assertRDDEquals(expected, blocks)
 	}
 
