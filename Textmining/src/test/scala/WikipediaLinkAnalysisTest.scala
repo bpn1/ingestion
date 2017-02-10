@@ -84,13 +84,15 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 
 	def parsedWikipediaTestRDD(): RDD[WikipediaTextparser.ParsedWikipediaEntry] = {
 		sc.parallelize(List(
-			WikipediaTextparser.ParsedWikipediaEntry("Audi", Option("dummy text"), List(
-				WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", 55),
-				WikipediaTextparser.Link("Bayern", "Bayern", 69),
-				WikipediaTextparser.Link("Automobilhersteller", "Automobilhersteller", 94),
-				WikipediaTextparser.Link("Zerfall", "Zerfall (Album)", 4711),
-				WikipediaTextparser.Link("Zerfall", "Zerfall (Soziologie)", 4711) // dead link
-			))))
+			WikipediaTextparser.ParsedWikipediaEntry("Audi", Option("dummy text"),
+				List(
+					WikipediaTextparser.Link("Ingolstadt", "Ingolstadt", 55),
+					WikipediaTextparser.Link("Bayern", "Bayern", 69),
+					WikipediaTextparser.Link("Automobilhersteller", "Automobilhersteller", 94),
+					WikipediaTextparser.Link("Zerfall", "Zerfall (Album)", 4711),
+					WikipediaTextparser.Link("Zerfall", "Zerfall (Soziologie)", 4711) // dead link
+				),
+				List[String]())))
 	}
 
 	def groupedAliasesTestRDD(): RDD[WikipediaLinkAnalysis.Link] = {

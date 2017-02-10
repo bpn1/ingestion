@@ -6,33 +6,24 @@ import org.apache.spark.rdd.RDD
 object WikipediaAliasCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
-	val inputAliasesTablename = "wikipedialinks"
 	val outputTablename = "wikipediaaliases"
 
 	case class AliasCounter(alias: String, var linkOccurrences: Int = 0, var totalOccurrences: Int = 0)
 
-	case class AliasOccurrencesInArticle(links: scala.collection.mutable.Set[String], noLinks: scala.collection.mutable.Set[String])
+	case class AliasOccurrencesInArticle(links: Set[String], noLinks: Set[String])
 
-	def identifyAliasOccurrencesInArticle(article: ParsedWikipediaEntry, allAliases: List[String]): AliasOccurrencesInArticle = {
-		val links = scala.collection.mutable.Set[String]()
-		val noLinks = scala.collection.mutable.Set[String]()
-		allAliases
-			.foreach { alias =>
-				if (article.links.exists(link => link.alias == alias))
-					links += alias
-				else if (article.text.get contains alias)
-					noLinks += alias
-			}
+	def identifyAliasOccurrencesInArticle(article: ParsedWikipediaEntry): AliasOccurrencesInArticle = {
+		val links = article.links
+			.map(_.alias)
+			.toSet
+		val noLinks = article.foundAliases.toSet
+			.filterNot(links)
 		AliasOccurrencesInArticle(links, noLinks)
 	}
 
-	def countAllAliasOccurrences(articles: RDD[ParsedWikipediaEntry], aliases: RDD[String], sc: SparkContext): RDD[AliasCounter] = {
-		val aliasesList = aliases
-			.collect
-			.toList
-
+	def countAllAliasOccurrences(articles: RDD[ParsedWikipediaEntry]): RDD[AliasCounter] = {
 		articles
-			.map(article => identifyAliasOccurrencesInArticle(article, aliasesList))
+			.map(article => identifyAliasOccurrencesInArticle(article))
 			.flatMap { occurrences =>
 				val links = occurrences.links
 					.map(alias => (alias, true))
@@ -67,10 +58,8 @@ object WikipediaAliasCounter {
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val allAliases = sc.cassandraTable[WikipediaLinkAnalysis.Link](keyspace, inputAliasesTablename)
-			.map(_.alias)
 
-		countAllAliasOccurrences(allArticles, allAliases, sc)
+		countAllAliasOccurrences(allArticles)
 			.saveToCassandra(keyspace, outputTablename)
 
 		sc.stop()
