@@ -20,7 +20,9 @@ libraryDependencies ++= Seq(
   "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4",
   "org.scalactic" %% "scalactic" % "3.0.1",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-  "com.holdenkarau" %% "spark-testing-base" % "2.1.0_0.6.0"
+  "com.holdenkarau" %% "spark-testing-base" % "2.1.0_0.6.0",
+  "org.simmetrics.StringMetric" %% "simmetrics-stringmetric" % "4.1.1",
+  "org.simmetrics.metrics.Jaccard" %% "simmetrics-jaccard" % "4.1.1"
 )
 
 // testing settings
