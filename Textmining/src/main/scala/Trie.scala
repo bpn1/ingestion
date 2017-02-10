@@ -9,7 +9,7 @@ object Trie {
 	def apply(): Trie = new TrieNode()
 }
 
-sealed trait Trie extends Traversable[List[String]] {
+sealed trait Trie extends Traversable[List[String]] with Serializable {
 	def append(key : List[String])
 	def findByPrefix(prefix: List[String]): scala.collection.Seq[List[String]]
 	def contains(word: List[String]): Boolean
@@ -19,7 +19,7 @@ sealed trait Trie extends Traversable[List[String]] {
 
 class TrieNode(val token : Option[String] = None, var word: Option[List[String]] = None) extends Trie {
 
-	val children: mutable.Map[String, TrieNode] = new java.util.TreeMap[String, TrieNode]().asScala
+	val children: mutable.Map[String, TrieNode] = mutable.Map[String, TrieNode]()
 
 	override def append(key: List[String]) = {
 		@tailrec def appendHelper(node: TrieNode, currentIndex: Int): Unit = {
@@ -139,4 +139,13 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 	}
 
 	override def toString(): String = s"Trie(token=${token},word=${word})"
+
+	def printableString(level: Int): String = {
+		val nodeDesc = s"Trie(token=${token},word=${word})"
+		val indent = "\t" * level
+		val childrenDesc = children.mkString("\n" + indent)
+		val desc = indent + nodeDesc + "\n" + indent + childrenDesc
+		val newIndent = indent + "\t"
+		return desc + "\n" + newIndent + children.map(child => child._2.printableString(level + 1)).mkString("\n")
+	}
 }
