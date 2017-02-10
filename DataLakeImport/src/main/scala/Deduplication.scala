@@ -148,7 +148,7 @@ object Deduplication {
 				case (attribute, similarityMeasure, weight) => similarityMeasure match {
 					case "ExactMathString" => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
 					case "MongeElkan" => scoreConfig[String, MongeElkan.type](attribute, MongeElkan, weight.toDouble)
-          case "Jaccard" => scoreConfig[String, Jaccard.type](attribute, Jaccard, weight.toDouble)
+          case "SimMeasureJaccard" => scoreConfig[String, SimMeasureJaccard.type](attribute, SimMeasureJaccard, weight.toDouble)
 					case _ => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
 			}}
 	}
