@@ -153,12 +153,24 @@ object Deduplication {
 	}
 
 	/**
+		* Collects all different industries of the subjects given
+		* @param subjects Subjects from whom to collect the industries
+		* @return List of all the industries the subjects work in
+		*/
+	def collectIndustries(subjects: RDD[Subject]): List[String] = {
+		subjects
+			.map(x => x.properties.getOrElse("branche", List("uncategorized")))
+			.reduce((x,y) => x.:::(y).distinct)
+	}
+
+	/**
 		* Creates blocks for the different industries
 		* @param subjects RDD to peform the blocking on
 		* @return RDD of blocks. One block for each industry containing the Subjects categorized as this industry
 		*/
-	def generateBlocks(subjects: RDD[Subject]): RDD[(String, Iterable[Subject])] = {
-		subjects.groupBy(x => x.properties.getOrElse("branche", List("uncategorized")).head)
+	def generateBlocks(subjects: RDD[Subject], sc: SparkContext): RDD[(String, Iterable[Subject])] = {
+		val industries = collectIndustries(subjects)
+		sc.parallelize(industries.map(x => (x, subjects.filter(subject => subject.properties.getOrElse("branche", List("uncategorized")).contains(x)).collect.toList)))
 	}
 
 	/**
@@ -167,9 +179,9 @@ object Deduplication {
 		* @param stagingSubjects RDD to peform the blocking on
 		* @return RDD of blocks. One block for each industry containing the Subjects categorized as this industry
 		*/
-	def generateBlocks(subjects: RDD[Subject], stagingSubjects: RDD[Subject]): RDD[(String, Iterable[Subject])] = {
-		val subjectBlocks = subjects.groupBy(x => x.properties.getOrElse("branche", List("uncategorized")).head)
-		val stagingBlocks = stagingSubjects.groupBy(x => x.properties.getOrElse("branche", List("uncategorized")).head)
+	def generateBlocks(subjects: RDD[Subject], stagingSubjects: RDD[Subject], sc: SparkContext): RDD[(String, Iterable[Subject])] = {
+		val subjectBlocks = generateBlocks(subjects, sc)
+		val stagingBlocks = generateBlocks(stagingSubjects, sc)
 		subjectBlocks
 			.fullOuterJoin(stagingBlocks)
 		  .map{
