@@ -1,7 +1,7 @@
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
-import WikipediaTextparser.ParsedWikipediaEntry
+import WikiClasses._
 
 object WikipediaLinkAnalysis {
 	val keyspace = "wikidumps"
@@ -10,18 +10,12 @@ object WikipediaLinkAnalysis {
 	val outputAliasToPagesTablename = "wikipedialinks"
 	val outputPageToAliasesTablename = "wikipediapages"
 
-	case class Link(alias: String, pages: Seq[(String, Int)])
-
-	case class Page(page: String, aliases: Seq[(String, Int)])
-
-	// Seq instead of Map according to http://stackoverflow.com/questions/17709995/notserializableexception-for-mapstring-string-alias
-
 	def getAllPages(sc: SparkContext): RDD[String] = {
-		sc.cassandraTable[WikipediaTextparser.WikipediaEntry](keyspace, inputRawTablename)
+		sc.cassandraTable[WikipediaEntry](keyspace, inputRawTablename)
 			.map(_.title)
 	}
 
-	def removeDeadLinks(links: RDD[Link], allPages: RDD[String]): RDD[Link] = {
+	def removeDeadLinks(links: RDD[Alias], allPages: RDD[String]): RDD[Alias] = {
 		links
 			.flatMap{link => link.pages
 				.map(page => (link.alias, page._1, page._2))}
@@ -31,7 +25,7 @@ object WikipediaLinkAnalysis {
 			.groupBy { case (alias, pageName, count) => alias }
 			.map { case (alias, rawLinks) =>
 				val links = rawLinks.map { case (alias, pageName, count) => (pageName, count) }.toSeq
-				Link(alias, links)
+				Alias(alias, links)
 			}
 	}
 
@@ -42,7 +36,7 @@ object WikipediaLinkAnalysis {
 			.map { case (pageName, (page, doublePageName)) => page }
 	}
 
-	def groupByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Link] = {
+	def groupByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Alias] = {
 		parsedWikipedia
 			.flatMap(_.links)
 			.map(link => (link.alias, link.page))
@@ -52,7 +46,7 @@ object WikipediaLinkAnalysis {
 					.groupBy(identity)
 					.mapValues(_.size)
 					.toSeq
-				Link(alias, pages)
+				Alias(alias, pages)
 			}
 	}
 
@@ -70,7 +64,7 @@ object WikipediaLinkAnalysis {
 			}
 	}
 
-	def probabilityLinkDirectsToPage(link: Link, pageName: String): Double = {
+	def probabilityLinkDirectsToPage(link: Alias, pageName: String): Double = {
 		val totalReferences = link
 			.pages
 			.toMap

@@ -1,17 +1,13 @@
-import WikipediaTextparser.ParsedWikipediaEntry
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
+import WikiClasses._
 
 object WikipediaAliasCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputAliasesTablename = "wikipedialinks"
 	val outputTablename = "wikipediaaliases"
-
-	case class AliasCounter(alias: String, var linkOccurrences: Int = 0, var totalOccurrences: Int = 0)
-
-	case class AliasOccurrencesInArticle(links: scala.collection.mutable.Set[String], noLinks: scala.collection.mutable.Set[String])
 
 	def identifyAliasOccurrencesInArticle(article: ParsedWikipediaEntry, allAliases: List[String]): AliasOccurrencesInArticle = {
 		val links = scala.collection.mutable.Set[String]()
@@ -67,7 +63,7 @@ object WikipediaAliasCounter {
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val allAliases = sc.cassandraTable[WikipediaLinkAnalysis.Link](keyspace, inputAliasesTablename)
+		val allAliases = sc.cassandraTable[Alias](keyspace, inputAliasesTablename)
 			.map(_.alias)
 
 		countAllAliasOccurrences(allArticles, allAliases, sc)

@@ -84,48 +84,48 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 		))
 	}
 
-	def parsedWikipediaTestRDD(): RDD[WikipediaTextparser.ParsedWikipediaEntry] = {
+	def parsedWikipediaTestRDD(): RDD[WikiClasses.ParsedWikipediaEntry] = {
 		sc.parallelize(List(
-			WikipediaTextparser.ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
+			WikiClasses.ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
-					WikipediaTextparser.Link("Audi", "Audi", 9)
+					WikiClasses.Link("Audi", "Audi", 9)
 				)),
-			WikipediaTextparser.ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
+			WikiClasses.ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List()),
-			WikipediaTextparser.ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			WikiClasses.ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
-					WikipediaTextparser.Link("Brachttal", "Brachttal", 55),
-					WikipediaTextparser.Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
-					WikipediaTextparser.Link("Hessen", "Hessen", 87),
-					WikipediaTextparser.Link("1377", "1377", 225),
-					WikipediaTextparser.Link("Büdinger Wald", "Büdinger Wald", 546)
+					WikiClasses.Link("Brachttal", "Brachttal", 55),
+					WikiClasses.Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
+					WikiClasses.Link("Hessen", "Hessen", 87),
+					WikiClasses.Link("1377", "1377", 225),
+					WikiClasses.Link("Büdinger Wald", "Büdinger Wald", 546)
 				)),
-			WikipediaTextparser.ParsedWikipediaEntry("Testartikel", Option("""Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."""),
+			WikiClasses.ParsedWikipediaEntry("Testartikel", Option("""Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."""),
 				List(
-					WikipediaTextparser.Link("Audi", "Audi", 7),
-					WikipediaTextparser.Link("Brachttal", "Brachttal", 13),
-					WikipediaTextparser.Link("historisches Jahr", "1377", 24)
+					WikiClasses.Link("Audi", "Audi", 7),
+					WikiClasses.Link("Brachttal", "Brachttal", 13),
+					WikiClasses.Link("historisches Jahr", "1377", 24)
 				))))
 	}
 
-	def aliasOccurrencesInArticlesTestRDD(): RDD[WikipediaAliasCounter.AliasOccurrencesInArticle] = {
+	def aliasOccurrencesInArticlesTestRDD(): RDD[WikiClasses.AliasOccurrencesInArticle] = {
 		sc.parallelize(List(
-			WikipediaAliasCounter.AliasOccurrencesInArticle(scala.collection.mutable.Set("Audi"), scala.collection.mutable.Set()),
-			WikipediaAliasCounter.AliasOccurrencesInArticle(scala.collection.mutable.Set(), scala.collection.mutable.Set("Audi")),
-			WikipediaAliasCounter.AliasOccurrencesInArticle(scala.collection.mutable.Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), scala.collection.mutable.Set()),
-			WikipediaAliasCounter.AliasOccurrencesInArticle(scala.collection.mutable.Set("Audi", "Brachttal"), scala.collection.mutable.Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
+			WikiClasses.AliasOccurrencesInArticle(scala.collection.mutable.Set("Audi"), scala.collection.mutable.Set()),
+			WikiClasses.AliasOccurrencesInArticle(scala.collection.mutable.Set(), scala.collection.mutable.Set("Audi")),
+			WikiClasses.AliasOccurrencesInArticle(scala.collection.mutable.Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), scala.collection.mutable.Set()),
+			WikiClasses.AliasOccurrencesInArticle(scala.collection.mutable.Set("Audi", "Brachttal"), scala.collection.mutable.Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
 		))
 	}
 
-	def countedAliasesTestRDD(): RDD[WikipediaAliasCounter.AliasCounter] = {
+	def countedAliasesTestRDD(): RDD[WikiClasses.AliasCounter] = {
 		sc.parallelize(List(
-			WikipediaAliasCounter.AliasCounter("Audi", 2, 3),
-			WikipediaAliasCounter.AliasCounter("Brachttal", 2, 2),
-			WikipediaAliasCounter.AliasCounter("Main-Kinzig-Kreis", 1, 2),
-			WikipediaAliasCounter.AliasCounter("Hessen", 1, 2),
-			WikipediaAliasCounter.AliasCounter("1377", 1, 1),
-			WikipediaAliasCounter.AliasCounter("Büdinger Wald", 1, 2),
-			WikipediaAliasCounter.AliasCounter("Backfisch", 0, 1)
+			WikiClasses.AliasCounter("Audi", 2, 3),
+			WikiClasses.AliasCounter("Brachttal", 2, 2),
+			WikiClasses.AliasCounter("Main-Kinzig-Kreis", 1, 2),
+			WikiClasses.AliasCounter("Hessen", 1, 2),
+			WikiClasses.AliasCounter("1377", 1, 1),
+			WikiClasses.AliasCounter("Büdinger Wald", 1, 2),
+			WikiClasses.AliasCounter("Backfisch", 0, 1)
 		))
 	}
 }
