@@ -5,7 +5,7 @@ import org.scalatest.FlatSpec
 
 class SimMeasureJaccardUnitTest extends FlatSpec {
 
-  "score" should "return the Jaccard score for given given strings" in {
+  "score" should "return the Jaccard score for given strings" in {
     val s = "Chilpéric II son of Childeric II"
     val t = "chilperic ii son of childeric ii"
     val score = SimMeasureJaccard.compare(s,t)
