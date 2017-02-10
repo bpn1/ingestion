@@ -10,4 +10,9 @@
         <similartyMeasure>MongeElkan</similartyMeasure>
         <weight>0.8</weight>
     </item>
+    <item>
+        <attribute>name</attribute>
+        <similartyMeasure>SimMeasureJaccard</similartyMeasure>
+        <weight>0.6</weight>
+    </item>
 </items>
