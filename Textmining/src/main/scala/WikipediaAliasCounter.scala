@@ -12,7 +12,7 @@ object WikipediaAliasCounter {
 		val links = article.links
 			.map(_.alias)
 			.toSet
-		val noLinks = article.foundAliases.toSet
+		val noLinks = article.foundaliases.toSet
 			.filterNot(links)
 		AliasOccurrencesInArticle(links, noLinks)
 	}
