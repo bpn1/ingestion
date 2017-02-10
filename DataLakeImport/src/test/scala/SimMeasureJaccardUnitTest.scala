@@ -3,7 +3,7 @@ package DataLake
 import com.rockymadden.stringmetric.similarity.JaccardMetric
 import org.scalatest.FlatSpec
 
-class MongeElkanUnitTest extends FlatSpec {
+class SimMeasureJaccardUnitTest extends FlatSpec {
 
   "score" should "return the Jaccard score for given given strings" in {
     val s = "Chilpéric II son of Childeric II"
