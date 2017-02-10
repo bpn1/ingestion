@@ -84,6 +84,7 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 
 	def parsedWikipediaTestRDD(): RDD[WikiClasses.ParsedWikipediaEntry] = {
 		sc.parallelize(List(
+
 			WikiClasses.ParsedWikipediaEntry("Audi", Option("dummy text"), List(
 				WikiClasses.Link("Ingolstadt", "Ingolstadt", 55),
 				WikiClasses.Link("Bayern", "Bayern", 69),

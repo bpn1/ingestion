@@ -23,8 +23,8 @@ object WikiClasses {
 	}
 
 	case class AliasCounter(alias: String, var linkOccurrences: Int = 0, var totalOccurrences: Int = 0)
-	case class AliasOccurrencesInArticle(links: mutable.Set[String], noLinks: mutable.Set[String])
-
+	case class AliasOccurrencesInArticle(links: Set[String], noLinks: Set[String])
+	
 	// Seq is Serializable, Map isn't
 	case class Alias(alias: String, pages: Seq[(String, Int)])
 	case class Page(page: String, aliases: Seq[(String, Int)])
