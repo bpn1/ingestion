@@ -65,7 +65,7 @@ object FindRelations {
 	def main(args : Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName(appname)
-			.set("spark.cassandra.connection.host", "172.20.21.11")
+			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
 		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
