@@ -1,11 +1,12 @@
 import org.apache.spark.broadcast.Broadcast
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.FlatSpec
+import scala.io.Source
 
 class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 
 	"parseLine" should "return a DBpediaTriple" in {
-		val prefixes = prefixesBroadcast()
+		val prefixes = prefixesList()
 		val triple = DBPediaImport.parseLine(line, prefixes)
 		assert(triple.isInstanceOf[DBPediaImport.DBPediaTriple])
 	}
@@ -17,7 +18,7 @@ class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 
 	"extractProperties" should "return a List of Tuples" in {
 		val properties = DBPediaImport.extractProperties(group)
-		assert(properties.isInstanceOf[List[Tuple2[String, String]]])
+		assert(properties.isInstanceOf[List[(String, String)]])
 	}
 
 	it should "contain the subject as property" in {
@@ -41,14 +42,14 @@ class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 		assert(entity.isInstanceOf[DBPediaEntity])
 	}
 
-	it should "have a wikipageID" in {
+	it should "have a wikipageId" in {
 		val entity = DBPediaImport.translateToDBPediaEntry(map)
-		assert(entity.wikipageid.nonEmpty)
+		assert(entity.wikipageId.nonEmpty)
 	}
 
-	it should "have a dbpediaName" in {
+	it should "have a dbPediaName" in {
 		val entity = DBPediaImport.translateToDBPediaEntry(map)
-		assert(entity.dbpedianame.nonEmpty)
+		assert(entity.dbPediaName.nonEmpty)
 	}
 
 	it should "have a label optionally" in {
@@ -70,13 +71,12 @@ class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 		assert(entity.data.size == 3)
 	}
 
-	def prefixesBroadcast(): Broadcast[Array[Array[String]]] = {
-		val prefixes = sc
-			.textFile("prefixes.txt")
+	def prefixesList(): List[(String,String)] = {
+		val prefixFile = Source.fromURL(getClass.getResource("/prefixes.txt"))
+		val prefixes = prefixFile.getLines.toList
 			.map(_.trim.replaceAll("""[()]""", "").split(","))
-			.collect
-
-		sc.broadcast(prefixes)
+			.map(pair => (pair(0), pair(1)))
+		prefixes
 	}
 
 	val line = """<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> ."""

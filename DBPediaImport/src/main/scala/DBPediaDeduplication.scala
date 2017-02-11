@@ -2,6 +2,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
 import com.datastax.spark.connector._
 import org.apache.spark.sql.SQLContext
+import DataLake.Subject
 
 object DBPediaDeduplication {
 
@@ -11,7 +12,7 @@ object DBPediaDeduplication {
 	def main(args: Array[String]) {
 		val conf = new SparkConf()
 			.setAppName(appname)
-			.set("spark.cassandra.connection.host", "172.20.21.11")
+			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
 		val sql = new SQLContext(sc)
@@ -19,7 +20,7 @@ object DBPediaDeduplication {
 		val dbpedia = sc.cassandraTable[DBPediaEntity]("wikidumps", "dbpeidadata")
 		val subjects = sc.cassandraTable[Subject]("datalake", "subject")
 
-		val pairDBpedia = dbpedia.keyBy(_.wikipageid)
+		val pairDBpedia = dbpedia.keyBy(_.wikipageId)
 		val pairSubject = subjects
 		  .filter(subject => subject.properties.get("wikipageId").isDefined)
 		  .keyBy(_.properties.getOrElse("wikipageId", List("null")).head)
@@ -29,4 +30,3 @@ object DBPediaDeduplication {
 		sc.stop()
 	}
 }
-

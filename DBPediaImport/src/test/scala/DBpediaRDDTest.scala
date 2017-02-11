@@ -2,23 +2,24 @@ import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
+import scala.io.Source
 
 class DBpediaRDDTest extends FlatSpec with SharedSparkContext {
 
 	"DBpediaTriple store" should "not be empty" in {
-		val prefixes = prefixesBroadcast()
+		val prefixes = prefixesList()
 		val rdd = DBPediaImport.parseTurtleFile(TurtleRDD(), prefixes)
 		assert(rdd.count > 0)
 	}
 
 	they should "be instance of DBpediaTriple" in {
-		val prefixes = prefixesBroadcast()
+		val prefixes = prefixesList()
 		val rdd = DBPediaImport.parseTurtleFile(TurtleRDD(), prefixes)
 		assert(rdd.isInstanceOf[RDD[DBPediaImport.DBPediaTriple]])
 	}
 
 	they should "have namespaces prefixes" in {
-		val prefixes = prefixesBroadcast()
+		val prefixes = prefixesList()
 		val ttl = DBPediaImport.parseTurtleFile(TurtleRDD(),prefixes).collect()
 		val triple = DBpediaTripleRDD().collect()
 	}
@@ -43,13 +44,12 @@ class DBpediaRDDTest extends FlatSpec with SharedSparkContext {
 		))
 	}
 
-	def prefixesBroadcast(): Broadcast[Array[Array[String]]] = {
-		val prefixes = sc
-			.textFile("prefixes.txt")
+	def prefixesList(): List[(String,String)] = {
+		val prefixFile = Source.fromURL(getClass.getResource("/prefixes.txt"))
+		val prefixes = prefixFile.getLines.toList
 			.map(_.trim.replaceAll("""[()]""", "").split(","))
-			.collect
-
-		sc.broadcast(prefixes)
+			.map(pair => (pair(0), pair(1)))
+		prefixes
 	}
 
 	def DBpediaTripleRDD(): RDD[DBPediaImport.DBPediaTriple] = {

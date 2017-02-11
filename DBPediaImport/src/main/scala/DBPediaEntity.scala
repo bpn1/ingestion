@@ -1,9 +1,6 @@
-/**
-	* Created by Lando on 20.12.16.
-	*/
 case class DBPediaEntity (
-	var wikipageid: String = "null",
-	var dbpedianame: String = "null",
+	var wikipageId: String = "",
+	var dbPediaName: String = "",
 	var label: Option[Iterable[String]] = None,
 	var description: Option[Iterable[String]] = None,
 	var instancetype: Option[Iterable[String]] = None,

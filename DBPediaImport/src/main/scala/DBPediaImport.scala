@@ -15,26 +15,26 @@ object DBPediaImport {
 
 	def tokenize(turtle: String) : Array[String] = {
 		turtle
-		  .split("> ")
+			.split("> ")
 			.map(_.trim)
 			.filter(_ != ".")
 	}
 
-	def cleanURL(str:String, prefixesBroadcast: Broadcast[Array[Array[String]]]) : String = {
+	def cleanURL(str:String, prefixes: List[(String,String)]) : String = {
 		var res = str.replaceAll("""[<>\"]""", "")
-		for (pair <- prefixesBroadcast.value) {
-			res = res.replace(pair(0), pair(1))
+		for (pair <- prefixes) {
+			res = res.replace(pair._1, pair._2)
 		}
 		res
 	}
 
-	def parseLine(text: String, prefixesBroadcast: Broadcast[Array[Array[String]]]) : DBPediaTriple = {
-		val triple = tokenize(text).map(cleanURL(_, prefixesBroadcast))
+	def parseLine(text: String, prefixes: List[(String,String)]) : DBPediaTriple = {
+		val triple = tokenize(text).map(cleanURL(_, prefixes))
 		DBPediaTriple(triple(0), triple(1), triple(2))
 	}
 
-	def parseTurtleFile(rdd: RDD[String], prefixesBroadcast: Broadcast[Array[Array[String]]]) : RDD[DBPediaTriple] = {
-		rdd.map(parseLine(_, prefixesBroadcast))
+	def parseTurtleFile(rdd: RDD[String], prefixes: List[(String,String)]) : RDD[DBPediaTriple] = {
+		rdd.map(parseLine(_, prefixes))
 	}
 
 	def extractProperties(group: Tuple2[String, Iterable[DBPediaTriple]]) : Iterable[Tuple2[String, String]] = group match {
@@ -56,8 +56,8 @@ object DBPediaImport {
 
 	def translateToDBPediaEntry(resource: Map[String, Iterable[String]]) : DBPediaEntity = {
 		val dBPediaEntity = DBPediaEntity()
-		dBPediaEntity.wikipageid = resource.getOrElse("dbo:wikiPageID", List("null")).head
-		dBPediaEntity.dbpedianame = resource.getOrElse("dbpedia-entity", List("null")).head
+		dBPediaEntity.wikipageId = resource.getOrElse("dbo:wikiPageID", List("null")).head
+		dBPediaEntity.dbPediaName = resource.getOrElse("dbpedia-entity", List("null")).head
 		dBPediaEntity.label = resource.get("rdfs:label")
 		dBPediaEntity.description = resource.get("dbo:abstract")
 		dBPediaEntity.instancetype = resource.get("rdf:type")
@@ -76,19 +76,20 @@ object DBPediaImport {
 	def main(args: Array[String]) {
 		val conf = new SparkConf()
 			.setAppName(appName)
-			.set("spark.cassandra.connection.host", "172.20.21.11")
+			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
-		//val sql = new SQLContext(sc)
 
 		val prefixes = sc
 			.textFile("prefixes.txt")
 			.map(_.trim.replaceAll("""[()]""", "").split(","))
+			.map(pair => (pair(0), pair(1)))
 			.collect
+			.toList
 
 		val prefixesBroadcast = sc.broadcast(prefixes)
 
 		val ttl = sc.textFile("dbpedia_de_clean.ttl")  // original file
-		val triples = parseTurtleFile(ttl, prefixesBroadcast)
+		val triples = parseTurtleFile(ttl, prefixesBroadcast.value)
 
 		val dbpediaResources = triples.filter(resource => resource.subject.contains("dbr:") || resource.subject.contains("dbpedia-de:"))
 		val dbpediaEntities = createDBpediaEntities(dbpediaResources)

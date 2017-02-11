@@ -18,7 +18,7 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 		if(entity.description.isDefined)
 			metadata += "description" -> List(entity.description.get.head)
 		if(entity.data.nonEmpty)
-			metadata ++= entity.data
+			metadata ++= entity.data.mapValues(_.toList)
 
 		sm.addProperties(metadata.toMap)
 		subject
