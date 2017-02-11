@@ -36,7 +36,7 @@ javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:+CMSClassUnloadingEnabled")
 assemblyMergeStrategy in assembly := {
 	case PathList("META-INF", xs @ _*) => MergeStrategy.discard
 	case PathList(ps @ _*) if ps.last endsWith "pom.properties" => MergeStrategy.discard
-	case x => MergeStrategy.first
+	case _ => MergeStrategy.first
 }
 
 assemblyShadeRules in assembly := Seq(
