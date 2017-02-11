@@ -31,15 +31,15 @@ abstract class DataLakeImport[T <: Serializable : ClassTag : RowReaderFactory](
 	protected def importToCassandra(): Unit = {
 		val conf = new SparkConf()
 			.setAppName(appName)
-			.set("spark.cassandra.connection.host", "172.20.21.11")
+			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
 
 		val data = sc.cassandraTable[T](inputKeyspace, inputTable)
 		val version = makeTemplateVersion()
 
 		data
-		  .map(translateToSubject(_, version))
-		  .saveToCassandra(outputKeyspace, outputTable)
+			.map(translateToSubject(_, version))
+			.saveToCassandra(outputKeyspace, outputTable)
 
 		sc
 			.parallelize(List((version.version, version.timestamp, version.datasources, version.program)))
