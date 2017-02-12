@@ -18,7 +18,7 @@ object WikipediaAliasCounter {
 	}
 
 	def countAllAliasOccurrences(articles: RDD[ParsedWikipediaEntry]): RDD[AliasCounter] = {
-		articles
+		val allAliasOccurrences = articles
 			.map(article => identifyAliasOccurrencesInArticle(article))
 			.flatMap { occurrences =>
 				val links = occurrences.links
@@ -27,6 +27,15 @@ object WikipediaAliasCounter {
 					.map(alias => (alias, false))
 				links ++ noLinks
 			}
+
+		allAliasOccurrences
+			.map(_._1)
+			.filter(alias => alias.length > 100)
+			.collect
+			.foreach(alias => println("[WikipediaAliasCounter ERROR]    Very long alias: " + alias.take(100)))
+
+		allAliasOccurrences
+			.filter { case (alias, isLink) => alias.nonEmpty && alias.length < 100 }
 			.groupBy(identity)
 			.map { case ((alias, isLink), occurrences) => (alias, isLink, occurrences.size) }
 			.groupBy { case (alias, isLink, count) => alias }
@@ -48,7 +57,7 @@ object WikipediaAliasCounter {
 	}
 
 	def probabilityIsLink(aliasCounter: WikiClasses.AliasCounter): Double = {
-		aliasCounter.linkOccurrences.toDouble / aliasCounter.totalOccurrences
+		aliasCounter.linkoccurrences.toDouble / aliasCounter.totaloccurrences
 	}
 
 	def main(args: Array[String]): Unit = {
