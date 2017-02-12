@@ -47,6 +47,10 @@ object WikipediaAliasCounter {
 			}
 	}
 
+	def probabilityIsLink(aliasCounter: WikiClasses.AliasCounter): Double = {
+		aliasCounter.linkOccurrences.toDouble / aliasCounter.totalOccurrences
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Alias Counter")

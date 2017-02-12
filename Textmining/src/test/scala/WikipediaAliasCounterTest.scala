@@ -12,6 +12,7 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 	"Counted aliases" should "have the same aliases as all links" in {
 		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.map(_.alias)
+			.sortBy(identity)
 		assert(areRDDsEqual(countedAliases.asInstanceOf[RDD[Any]], allAliasesTestRDD().asInstanceOf[RDD[Any]]))
 	}
 
@@ -31,7 +32,9 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 	}
 
 	"Counted aliases" should "be exactly these counted aliases" in {
-		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
+		val countedAliases = WikipediaAliasCounter
+			.countAllAliasOccurrences(parsedWikipediaTestRDD())
+			.sortBy(_.alias)
 		assert(areRDDsEqual(countedAliases.asInstanceOf[RDD[Any]], countedAliasesTestRDD().asInstanceOf[RDD[Any]]))
 	}
 
@@ -42,32 +45,37 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 	}
 
 	"Identified aliases" should "not be link and no link in the same article" in {
-		val aliasOccurrencesInArticles = parsedWikipediaTestRDD()
+		parsedWikipediaTestRDD()
 			.map(article => WikipediaAliasCounter.identifyAliasOccurrencesInArticle(article))
 			.collect
 			.foreach(occurrences => assert(occurrences.links.intersect(occurrences.noLinks).isEmpty))
 	}
 
-	def printRDDs(is: RDD[Any], should: RDD[Any]): Unit = {
-		println("\nRDD: ")
-		is
-			.collect
-			.foreach(println)
+	"Probability that word is link" should "be calculated correctly" in {
+		val linkProbabilities = countedAliasesTestRDD()
+			.map(countedAlias => (countedAlias.alias, WikipediaAliasCounter.probabilityIsLink(countedAlias)))
+		assert(areRDDsEqual(linkProbabilities.asInstanceOf[RDD[Any]], linkProbabilitiesTestRDD().asInstanceOf[RDD[Any]]))
+	}
 
-		println("\nShould be: ")
-		should
+	def printRDD(rdd: RDD[Any], title: String = ""): Unit = {
+		println(title)
+		rdd
 			.collect
 			.foreach(println)
 	}
 
 	def areRDDsEqual(is: RDD[Any], should: RDD[Any]): Boolean = {
-		//		printRDDs(is, should)
+		//		printRDD(is, "\nRDD:")
+		//		printRDD(should, "\nShould be:")
 		val sizeIs = is.count
 		val sizeShould = should.count
 		if (sizeIs != sizeShould)
 			return false
-		val intersectionCount = is.intersection(should).count
-		intersectionCount == sizeIs
+		val diff = is
+			.collect
+			.zip(should.collect)
+			.collect { case (a, b) if a != b => a -> b }
+		diff.isEmpty
 	}
 
 	def allAliasesTestRDD(): RDD[String] = {
@@ -82,6 +90,7 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 			"Streitberg",
 			"historisches Jahr"
 		))
+			.sortBy(identity)
 	}
 
 	def parsedWikipediaTestRDD(): RDD[WikiClasses.ParsedWikipediaEntry] = {
@@ -133,5 +142,21 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 			WikiClasses.AliasCounter("Streitberg", 0, 1),
 			WikiClasses.AliasCounter("historisches Jahr", 1, 1)
 		))
+			.sortBy(_.alias)
+	}
+
+	def linkProbabilitiesTestRDD(): RDD[Tuple2[String, Double]] = {
+		sc.parallelize(List(
+			("Audi", 2.0 / 3),
+			("Brachttal", 1.0),
+			("Main-Kinzig-Kreis", 1.0 / 2),
+			("Hessen", 1.0 / 2),
+			("1377", 1.0),
+			("Büdinger Wald", 1.0 / 2),
+			("Backfisch", 0.0),
+			("Streitberg", 0.0),
+			("historisches Jahr", 1.0)
+		))
+			.sortBy(_._1)
 	}
 }
