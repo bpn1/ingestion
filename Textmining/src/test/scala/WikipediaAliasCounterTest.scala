@@ -19,15 +19,15 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 	"Counted aliases" should "have counted any occurrence" in {
 		WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.collect
-			.foreach(aliasCounter => assert(aliasCounter.totalOccurrences > 0))
+			.foreach(aliasCounter => assert(aliasCounter.totaloccurrences > 0))
 	}
 
 	"Counted aliases" should "have consistent counts" in {
 		WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.collect
 			.foreach { aliasCounter =>
-				assert(aliasCounter.linkOccurrences <= aliasCounter.totalOccurrences)
-				assert(aliasCounter.linkOccurrences >= 0 && aliasCounter.totalOccurrences >= 0)
+				assert(aliasCounter.linkoccurrences <= aliasCounter.totaloccurrences)
+				assert(aliasCounter.linkoccurrences >= 0 && aliasCounter.totaloccurrences >= 0)
 			}
 	}
 
@@ -145,7 +145,7 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 			.sortBy(_.alias)
 	}
 
-	def linkProbabilitiesTestRDD(): RDD[Tuple2[String, Double]] = {
+	def linkProbabilitiesTestRDD(): RDD[(String, Double)] = {
 		sc.parallelize(List(
 			("Audi", 2.0 / 3),
 			("Brachttal", 1.0),

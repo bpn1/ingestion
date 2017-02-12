@@ -231,7 +231,7 @@ object WikipediaTextparser {
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Textparser")
+			.setAppName("Wikipedia Text Parser")
 			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
 

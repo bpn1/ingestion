@@ -1,5 +1,3 @@
-import scala.collection.mutable
-
 object WikiClasses {
 
 	case class Link(alias: String, var page: String, offset: Int)
@@ -22,7 +20,7 @@ object WikiClasses {
 		}
 	}
 
-	case class AliasCounter(alias: String, var linkOccurrences: Int = 0, var totalOccurrences: Int = 0)
+	case class AliasCounter(alias: String, var linkoccurrences: Int = 0, var totaloccurrences: Int = 0)
 	case class AliasOccurrencesInArticle(links: Set[String], noLinks: Set[String])
 	
 	// Seq is Serializable, Map isn't
