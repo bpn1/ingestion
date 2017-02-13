@@ -9,7 +9,7 @@ class MongeElkanUnitTest extends FlatSpec {
 		assert(maximum === JaroWinklerMetric.compare("henka", "henkan").get)
 	}
 
-	"score" should "return the MongeElkan score for given strings" in {
+	"compare" should "return the MongeElkan score for given strings" in {
 		val score = MongeElkan.compare("henka", "henkan")
 		assert(score === JaroWinklerMetric.compare("henka", "henkan").get)
 	}
