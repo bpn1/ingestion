@@ -12,7 +12,7 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-	"org.apache.spark" % "spark-core_2.11" % "2.1.0",
+	"org.apache.spark" % "spark-core_2.11" % "2.1.0" exclude("org.scalatest", "scalatest_2.11"),
 	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.0-M3",
 	"org.apache.spark" % "spark-sql_2.11" % "2.1.0",
 	"com.datastax.cassandra" % "cassandra-driver-core" % "3.1.3",
@@ -37,10 +37,6 @@ assemblyMergeStrategy in assembly := {
 	case PathList(ps @ _*) if ps.last endsWith "pom.properties" => MergeStrategy.discard
 	case _ => MergeStrategy.first
 }
-
-assemblyShadeRules in assembly := Seq(
-	ShadeRule.rename("com.google.**" -> "shadeio.@1").inAll
-)
 
 // to suppress include info and merge warnings
 logLevel in assembly := Level.Error
