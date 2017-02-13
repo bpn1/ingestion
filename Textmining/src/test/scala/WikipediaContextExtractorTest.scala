@@ -18,6 +18,13 @@ class WikipediaContextExtractorTest extends FlatSpec with SharedSparkContext {
 			.foreach(context => assert(context.words.nonEmpty))
 	}
 
+	"Link contexts" should "contain all occuring page names of links in one article" in {
+		val pageNames = WikipediaContextExtractor.extractLinkContextsFromArticle(parsedWikipediaTestArticle())
+			.map(_.pagename)
+			.sortBy(identity)
+		assert(pageNames == allPageNamesOfTestArticleList())
+	}
+
 	def printRDD(rdd: RDD[Any], title: String = ""): Unit = {
 		println(title)
 		rdd
@@ -76,6 +83,25 @@ class WikipediaContextExtractorTest extends FlatSpec with SharedSparkContext {
 			"Büdinger Wald",
 			"Audi"
 		))
+			.sortBy(identity)
+	}
+
+	def parsedWikipediaTestArticle(): WikiClasses.ParsedWikipediaEntry = {
+		WikiClasses.ParsedWikipediaEntry("Testartikel", Option("""Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."""),
+			List(
+				WikiClasses.Link("Audi", "Audi", 7),
+				WikiClasses.Link("Brachttal", "Brachttal", 13),
+				WikiClasses.Link("historisches Jahr", "1377", 24)
+			),
+			List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
+	}
+
+	def allPageNamesOfTestArticleList(): List[String] = {
+		List(
+			"Audi",
+			"Brachttal",
+			"1377"
+		)
 			.sortBy(identity)
 	}
 }
