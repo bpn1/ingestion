@@ -22,6 +22,8 @@ object WikiClasses {
 
 	case class AliasCounter(alias: String, var linkoccurrences: Int = 0, var totaloccurrences: Int = 0)
 	case class AliasOccurrencesInArticle(links: Set[String], noLinks: Set[String])
+
+	case class LinkContext(pagename: String, words: Set[String]) // TODO: make it to a Bag of words
 	
 	// Seq is Serializable, Map isn't
 	case class Alias(alias: String, pages: Seq[(String, Int)])
