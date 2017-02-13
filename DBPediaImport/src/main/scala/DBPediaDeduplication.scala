@@ -20,7 +20,7 @@ object DBPediaDeduplication {
 		val dbpedia = sc.cassandraTable[DBPediaEntity]("wikidumps", "dbpeidadata")
 		val subjects = sc.cassandraTable[Subject]("datalake", "subject")
 
-		val pairDBpedia = dbpedia.keyBy(_.wikipageId)
+		val pairDBpedia = dbpedia.keyBy(_.wikipageid)
 		val pairSubject = subjects
 		  .filter(subject => subject.properties.get("wikipageId").isDefined)
 		  .keyBy(_.properties.getOrElse("wikipageId", List("null")).head)

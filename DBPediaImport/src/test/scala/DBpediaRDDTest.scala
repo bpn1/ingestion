@@ -6,35 +6,43 @@ import scala.io.Source
 
 class DBpediaRDDTest extends FlatSpec with SharedSparkContext {
 
-	"DBpediaTriple store" should "not be empty" in {
-		val prefixes = prefixesList()
-		val rdd = DBPediaImport.parseTurtleFile(TurtleRDD(), prefixes)
-		assert(rdd.count > 0)
+	"Triples" should "be tokenized into three elements" in {
+		turtleRDD
+		    .map(DBPediaImport.tokenize)
+		    .collect
+		    .foreach(tripleList => assert(tripleList.size == 3))
 	}
 
-	they should "be instance of DBpediaTriple" in {
-		val prefixes = prefixesList()
-		val rdd = DBPediaImport.parseTurtleFile(TurtleRDD(), prefixes)
-		assert(rdd.isInstanceOf[RDD[DBPediaImport.DBPediaTriple]])
-	}
-
-	they should "have namespaces prefixes" in {
-		val prefixes = prefixesList()
-		val ttl = DBPediaImport.parseTurtleFile(TurtleRDD(),prefixes).collect()
-		val triple = DBpediaTripleRDD().collect()
+	they should "have namespace prefixes after cleaning" in {
+		val parsed = turtleRDD()
+			.map(DBPediaImport.tokenize)
+			.collect
+		    .map(tripleList => tripleList.map(el => DBPediaImport.cleanURL(el, prefixesList)))
+			.map { case List(a, b, c) => (a, b, c) }
+		    .toList
+		val triples = tripleRDD()
+			.map(el => (el._1, el._2._1, el._2._2))
+			.collect
+			.toList
+		assert(parsed == triples)
 	}
 
 	"DBpediaEntities" should "not be empty" in {
-		val rdd = DBPediaImport.createDBpediaEntities(DBpediaTripleRDD())
+		val rdd = tripleRDD.groupByKey
+			.map(tuple => DBPediaImport.extractProperties(tuple._1, tuple._2.toList))
 		assert(rdd.count > 0)
 	}
 
-	they should "be instance of DBpediaEntities" in {
-		val rdd = DBPediaImport.createDBpediaEntities(DBpediaTripleRDD())
-		assert(rdd.isInstanceOf[RDD[DBPediaEntity]])
+	they should "be instances of DBpediaEntitiy" in {
+		tripleRDD.groupByKey
+			.map(tuple => DBPediaImport.extractProperties(tuple._1, tuple._2.toList))
+		    .collect
+		    .foreach(entity => assert(entity.isInstanceOf[DBPediaEntity]))
 	}
 
-	def TurtleRDD(): RDD[String] = {
+	// TODO test extractProperties()
+
+	def turtleRDD(): RDD[String] = {
 		sc.parallelize(List(
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> .""",
 			"""<http://de.dbpedia.org/resource/Liste_von_Autoren/V> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Autor> .""",
@@ -52,13 +60,13 @@ class DBpediaRDDTest extends FlatSpec with SharedSparkContext {
 		prefixes
 	}
 
-	def DBpediaTripleRDD(): RDD[DBPediaImport.DBPediaTriple] = {
+	def tripleRDD(): RDD[(String, (String, String))] = {
 		sc.parallelize(List(
-			DBPediaImport.DBPediaTriple("dbr:Anschluss_(Soziologie)","dc:subject","dbr:Kategorie:Soziologische_Systemtheorie"),
-			DBPediaImport.DBPediaTriple("dbr:Liste_von_Autoren/V","dc:subject","dbr:Kategorie:Autor"),
-			DBPediaImport.DBPediaTriple("dbr:Liste_von_Autoren/V","dc:subject","dbr:Kategorie:Wikipedia:Liste"),
-			DBPediaImport.DBPediaTriple("dbr:Liste_von_Autoren/T","dc:subject","dbr:Kategorie:Autor"),
-			DBPediaImport.DBPediaTriple("dbr:Liste_von_Autoren/T","dc:subject","dbr:Kategorie:Wikipedia:Liste")
+			("dbpedia-de:Anschluss_(Soziologie)", ("dct:subject", "dbpedia-de:Kategorie:Soziologische_Systemtheorie")),
+			("dbpedia-de:Liste_von_Autoren/V", ("dct:subject", "dbpedia-de:Kategorie:Autor")),
+			("dbpedia-de:Liste_von_Autoren/V", ("dct:subject", "dbpedia-de:Kategorie:Wikipedia:Liste")),
+			("dbpedia-de:Liste_von_Autoren/T", ("dct:subject", "dbpedia-de:Kategorie:Autor")),
+			("dbpedia-de:Liste_von_Autoren/T", ("dct:subject", "dbpedia-de:Kategorie:Wikipedia:Liste"))
 		))
 	}
 }

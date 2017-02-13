@@ -7,5 +7,5 @@ object DBPediaDumpURLs {
 		val html = Source.fromFile("dbpedia2016.html").getLines.mkString
 		val doc = Jsoup.parse(html)
 		val links = doc.select("a:contains(ttl)").asScala.map(_.attr("href")).filter(!_.contains("en_uris")).foreach(println)
-		}
+	}
 }
