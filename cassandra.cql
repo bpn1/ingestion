@@ -1,0 +1,107 @@
+-- Wikidumps
+CREATE KEYSPACE wikidumps WITH REPLICATION = {
+	'class' : 'SimpleStrategy',
+	'replication_factor' : 3
+};
+
+-- Wikidumps.Wikipedia
+CREATE TYPE wikidumps.link (
+    alias text,
+    page text,
+    offset int
+);
+
+CREATE TABLE wikidumps.parsedwikipedia (
+    title text PRIMARY KEY,
+    links frozen<list<frozen<link>>>,
+    text text
+);
+
+CREATE TABLE wikidumps.wikipedia (
+    title text PRIMARY KEY,
+    text text
+);
+
+CREATE TABLE wikidumps.wikipediaaliases (
+    alias text PRIMARY KEY,
+    link_occurences int,
+    total_occurences int
+);
+
+CREATE TABLE wikidumps.wikipedialinks (
+    alias text PRIMARY KEY,
+    pages map<text, int>
+);
+
+CREATE TABLE wikidumps.wikipediapages (
+    page text PRIMARY KEY,
+    aliases map<text, int>
+);
+
+-- Wikidumps.Wikidata
+CREATE TABLE wikidumps.wikidata (
+    id text PRIMARY KEY,
+    aliases list<text>,
+    data map<text, frozen<list<text>>>,
+    description text,
+    entitytype text,
+    enwikiname text,
+    instancetype text,
+    label text,
+    wikiname text
+);
+
+-- Wikidumps.DBpedia
+CREATE TABLE wikidumps.dbpedia (
+    dbpedianame text PRIMARY KEY,
+    data map<text, frozen<list<text>>>,
+    description text,
+    instancetype text,
+    label text,
+    wikipageid text
+);
+
+-- Datalake
+CREATE KEYSPACE datalake WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
+
+CREATE TYPE datalake.version (
+    version timeuuid,
+    value frozen<list<text>>,
+    validity frozen<map<text, text>>,
+    datasources frozen<list<text>>,
+    timestamp timestamp,
+    program text
+);
+
+CREATE TABLE datalake.subject (
+    id uuid PRIMARY KEY,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+CREATE TABLE datalake.version (
+    version timeuuid PRIMARY KEY,
+    datasources list<text>,
+    program text,
+    timestamp timestamp
+);
+
+CREATE TABLE datalake.object (
+    id uuid PRIMARY KEY,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>
+);
