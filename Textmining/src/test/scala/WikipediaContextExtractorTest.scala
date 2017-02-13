@@ -18,23 +18,34 @@ class WikipediaContextExtractorTest extends FlatSpec with SharedSparkContext {
 			.foreach(context => assert(context.words.nonEmpty))
 	}
 
-	"Link contexts" should "contain all occuring page names of links in one article" in {
-		val pageNames = WikipediaContextExtractor.extractLinkContextsFromArticle(parsedWikipediaTestArticle())
+	"Link contexts of one article" should "contain all occurring page names of links" in {
+		val testArticle = parsedWikipediaTestRDD()
+			.filter(_.title == "Testartikel")
+			.collect
+			.head
+		val pageNames = WikipediaContextExtractor.extractLinkContextsFromArticle(testArticle)
 			.map(_.pagename)
-			.sortBy(identity)
 		assert(pageNames == allPageNamesOfTestArticleList())
 	}
 
-	def printRDD(rdd: RDD[Any], title: String = ""): Unit = {
-		println(title)
-		rdd
+	"Link contexts of one article" should "contain at least these words" in {
+		val testArticle = parsedWikipediaTestRDD()
+			.filter(_.title == "Streitberg (Brachttal)")
 			.collect
+			.head
+		WikipediaContextExtractor.extractLinkContextsFromArticle(testArticle)
+			.foreach(context => assert(isSubset(articleContextWords().asInstanceOf[Set[Any]], context.words.asInstanceOf[Set[Any]])))
+	}
+
+	def printSequence(sequence: Seq[Any], title: String = ""): Unit = {
+		println(title)
+		sequence
 			.foreach(println)
 	}
 
 	def areRDDsEqual(is: RDD[Any], should: RDD[Any]): Boolean = {
-		//		printRDD(is, "\nRDD:")
-		//		printRDD(should, "\nShould be:")
+		//		printSequence(is.collect, "\nRDD:")
+		//		printSequence(should.collect, "\nShould be:")
 		val sizeIs = is.count
 		val sizeShould = should.count
 		if (sizeIs != sizeShould)
@@ -44,6 +55,12 @@ class WikipediaContextExtractorTest extends FlatSpec with SharedSparkContext {
 			.zip(should.collect)
 			.collect { case (a, b) if a != b => a -> b }
 		diff.isEmpty
+	}
+
+	def isSubset(subset: Set[Any], set: Set[Any]): Boolean = {
+		//		printSequence(subset.toSeq, "\nSet:")
+		//		printSequence(set.toSeq, "\nShould be subset of:")
+		subset.subsetOf(set)
 	}
 
 	def parsedWikipediaTestRDD(): RDD[WikiClasses.ParsedWikipediaEntry] = {
@@ -61,7 +78,7 @@ class WikipediaContextExtractorTest extends FlatSpec with SharedSparkContext {
 					WikiClasses.Link("Brachttal", "Brachttal", 55),
 					WikiClasses.Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
 					WikiClasses.Link("Hessen", "Hessen", 87),
-					WikiClasses.Link("Hessen", "1377", 225),
+					WikiClasses.Link("1377", "1377", 225),
 					WikiClasses.Link("Büdinger Wald", "Büdinger Wald", 546)
 				),
 				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald")),
@@ -86,22 +103,17 @@ class WikipediaContextExtractorTest extends FlatSpec with SharedSparkContext {
 			.sortBy(identity)
 	}
 
-	def parsedWikipediaTestArticle(): WikiClasses.ParsedWikipediaEntry = {
-		WikiClasses.ParsedWikipediaEntry("Testartikel", Option("""Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."""),
-			List(
-				WikiClasses.Link("Audi", "Audi", 7),
-				WikiClasses.Link("Brachttal", "Brachttal", 13),
-				WikiClasses.Link("historisches Jahr", "1377", 24)
-			),
-			List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
-	}
-
-	def allPageNamesOfTestArticleList(): List[String] = {
-		List(
+	def allPageNamesOfTestArticleList(): Set[String] = {
+		Set(
 			"Audi",
 			"Brachttal",
 			"1377"
 		)
-			.sortBy(identity)
+	}
+
+	def articleContextWords(): Set[String] = {
+		Set("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde",
+			"Im", "Jahre", "1500", "ist", "von", "Stridberg", "die",
+			"Vom", "Mittelalter", "bis", "ins", "19.", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte")
 	}
 }

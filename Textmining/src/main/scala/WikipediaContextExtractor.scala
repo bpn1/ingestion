@@ -9,9 +9,12 @@ object WikipediaContextExtractor {
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputTablename = "wikipediacontexts"
 
-	def extractLinkContextsFromArticle(article: ParsedWikipediaEntry): List[LinkContext] = {
+	def extractLinkContextsFromArticle(article: ParsedWikipediaEntry): Set[LinkContext] = {
+		val tokenizer = new WhitespaceTokenizer
+		val words = tokenizer.tokenize(article.text.get).toSet
 		article.links
-			.map(link => LinkContext(link.page, Set[String]("lorem ipsum")))
+			.map(link => LinkContext(link.page, words))
+		    .toSet
 	}
 
 	def extractAllContexts(articles: RDD[ParsedWikipediaEntry]): RDD[LinkContext] = {
