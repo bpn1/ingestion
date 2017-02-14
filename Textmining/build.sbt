@@ -2,7 +2,7 @@ lazy val root = (project in file(".")).
 	settings(
 		name := "Textmining",
 		version := "1.0",
-		scalaVersion := "2.10.5",
+		scalaVersion := "2.11.8",
 		mainClass in Compile := Some("Textmining")
 	)
 
@@ -12,16 +12,16 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-	"org.apache.spark" %% "spark-core" % "1.6.2",
-	"com.datastax.spark" %% "spark-cassandra-connector" % "1.6.1",
-	"org.apache.spark" % "spark-sql_2.10" % "1.6.2",
-	"com.datastax.cassandra" % "cassandra-driver-core" % "3.1.2",
+	"org.apache.spark" % "spark-core_2.11" % "2.1.0",
+	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.0-M3",
+	"org.apache.spark" % "spark-sql_2.11" % "2.1.0",
+	"com.datastax.cassandra" % "cassandra-driver-core" % "3.1.3",
 	"com.typesafe.play" %% "play-json" % "2.3.0",
-	"org.scalactic" %% "scalactic" % "3.0.1",
-	"org.scalatest" %% "scalatest" % "3.0.1" % "test",
-	"com.holdenkarau" %% "spark-testing-base" % "1.6.1_0.3.3",
-	"com.databricks" % "spark-xml_2.10" % "0.4.1",
-	"info.bliki.wiki" % "bliki-core" % "3.1.0",
+	"org.scalactic" % "scalactic_2.11" % "3.0.1",
+	"org.scalatest" % "scalatest_2.11" % "3.0.1" % "test",
+	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0",
+	"com.databricks" % "spark-xml_2.11" % "0.4.1",
+	"info.bliki.wiki" % "bliki-core" % "3.1.0" exclude("ch.qos.logback", "logback-classic"),
 	"org.jsoup" % "jsoup" % "1.10.1"
 )
 
@@ -30,7 +30,7 @@ logBuffered in Test := false
 parallelExecution in Test := false
 fork in Test := true
 testOptions in Test := Seq(Tests.Argument(TestFrameworks.ScalaTest, "-oD"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"))
-javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
+javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:+CMSClassUnloadingEnabled")
 
 // fat jar assembly settings
 assemblyMergeStrategy in assembly := {
