@@ -15,6 +15,7 @@ object Jaccard extends SimilarityMeasure[String] {
 
   override def compare(s: String, t: String) : Double = {
     val score = JaccardMetric(1).compare(s,t)
+    println(score)
     return score.getOrElse(0.0)
   }
 }
