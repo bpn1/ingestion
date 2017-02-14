@@ -11,7 +11,7 @@ object WikipediaContextExtractor {
 	val outputContextsTablename = "wikipediacontexts"
 
 	def countDocumentFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[DocumentFrequency] = {
-		val tokenizer = new WhitespaceTokenizer
+		val tokenizer = new CleanWhitespaceTokenizer
 		articles
 			.flatMap(article => textToWordSet(article.text.get, tokenizer))
 			.map(word => (word, 1))
@@ -32,7 +32,7 @@ object WikipediaContextExtractor {
 	}
 
 	def extractAllContexts(articles: RDD[ParsedWikipediaEntry]): RDD[LinkContext] = {
-		val tokenizer = new WhitespaceTokenizer
+		val tokenizer = new CleanWhitespaceTokenizer
 		articles
 			.map(article => extractLinkContextsFromArticle(article, tokenizer))
 			.flatMap(contexts => contexts)
@@ -48,15 +48,15 @@ object WikipediaContextExtractor {
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Alias Counter")
+			.setAppName("Wikipedia Context Extractor")
 			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		countDocumentFrequencies(allArticles)
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
-		extractAllContexts(allArticles)
-			.saveToCassandra(keyspace, outputContextsTablename)
+		//		extractAllContexts(allArticles)
+		//			.saveToCassandra(keyspace, outputContextsTablename)
 
 		sc.stop()
 	}
