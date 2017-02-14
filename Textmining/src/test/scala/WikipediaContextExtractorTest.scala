@@ -6,12 +6,12 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 		val pageNames = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
 			.map(_.pagename)
 			.sortBy(identity)
-		assert(areRDDsEqual(pageNames.asInstanceOf[RDD[Any]], allPageNamesTestRDD().asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(pageNames, allPageNamesTestRDD()))
 	}
 
 	"Link contexts" should "not be empty" in {
 		val contexts = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
-		assert(!contexts.isEmpty())
+		assert(!contexts.isEmpty)
 	}
 
 	"Link contexts" should "contain any words" in {
@@ -33,7 +33,7 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 		val testWords = articleContextwordSets()(articleTitle)
 		val article = getArticle(articleTitle)
 		WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanCoreNLPTokenizer)
-			.foreach(context => assert(isSubset(testWords.asInstanceOf[Set[Any]], context.words.asInstanceOf[Set[Any]])))
+			.foreach(context => assert(isSubset(testWords, context.words)))
 	}
 
 	"Document frequencies" should "not be empty" in {
@@ -49,10 +49,10 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 
 	"Word set from one article" should "be exactly this word set" in {
 		val articleTitle = "Testartikel"
-		val testWords: Set[String] = articleContextwordSets()(articleTitle)
+		val testWords = articleContextwordSets()(articleTitle)
 		val article = getArticle(articleTitle)
-		val wordSet: Set[String] = WikipediaContextExtractor.textToWordSet(article.text.get, new CleanCoreNLPTokenizer)
-		assert(areSetsEqual(wordSet.asInstanceOf[Set[Any]], testWords.asInstanceOf[Set[Any]]))
+		val wordSet = WikipediaContextExtractor.textToWordSet(article.text.get, new CleanCoreNLPTokenizer)
+		assert(areSetsEqual(wordSet, testWords))
 	}
 
 	"Document frequencies" should "contain these document frequencies" in {
@@ -62,14 +62,13 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 		val testDocumentFrequencies = documentFrequenciesTestRDD()
 			.collect
 			.toSet
-		assert(isSubset(testDocumentFrequencies.asInstanceOf[Set[Any]], documentFrequencies.asInstanceOf[Set[Any]]))
+		assert(isSubset(testDocumentFrequencies, documentFrequencies))
 	}
 
 	def getArticle(title: String): WikiClasses.ParsedWikipediaEntry = {
 		parsedWikipediaTestRDD()
 			.filter(_.title == title)
-			.collect
-			.head
+			.first
 	}
 
 	def parsedWikipediaTestRDD(): RDD[WikiClasses.ParsedWikipediaEntry] = {

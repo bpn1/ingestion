@@ -11,10 +11,6 @@ object TrieBuilder {
 		val conf = new SparkConf()
 			.setAppName("TrieBuilder")
 			.set("spark.cassandra.connection.host", "odin01")
-		// 	.set("spark.kryo.registrationRequired", "true")
-		// 	.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-		// 	.set("spark.kryo.classesToRegister", "Trie,TrieNode")
-		// conf.registerKryoClasses(Array(classOf[Seq[String]], classOf[List[String]], classOf[Array[String]]))
 		val sc = new SparkContext(conf)
 
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
@@ -40,7 +36,7 @@ object TrieBuilder {
 
 				for(sentence <- sentenceList) {
 					val tokens = tokenizer.tokenize(sentence)
-					for(i <- 0 until tokens.length) {
+					for(i <- tokens.indices) {
 						val aliasMatches = localTrie.matchTokens(tokens.slice(i, tokens.length))
 						resultList ++= aliasMatches.map(tokenizer.reverse)
 					}

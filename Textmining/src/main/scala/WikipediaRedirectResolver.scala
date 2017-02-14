@@ -30,12 +30,12 @@ object WikipediaRedirectResolver {
 				(entry.title, entry.links, text)
 			}
 			.filter{ case (title, links, text: String) =>
-				redirectRegex.findFirstIn(text) != None
+				redirectRegex.findFirstIn(text).isDefined
 			}
 			.collect()
 			.foreach{ case (title, links, text) =>
 				if (links.size == 1) {
-					dict(title) = links(0).page
+					dict(title) = links.head.page
 				}
 			}
 			// .saveToCassandra(keyspace, tablename)

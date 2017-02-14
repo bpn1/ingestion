@@ -2,7 +2,7 @@ import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
 
-class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
+class WikipediaAliasCounterTest extends PrettyTester with SharedSparkContext {
 	"Counted aliases" should "have the same size as all links" in {
 		val allAliases = allAliasesTestRDD()
 		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
@@ -13,7 +13,7 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.map(_.alias)
 			.sortBy(identity)
-		assert(areRDDsEqual(countedAliases.asInstanceOf[RDD[Any]], allAliasesTestRDD().asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(countedAliases, allAliasesTestRDD()))
 	}
 
 	"Counted aliases" should "have counted any occurrence" in {
@@ -35,13 +35,13 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 		val countedAliases = WikipediaAliasCounter
 			.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.sortBy(_.alias)
-		assert(areRDDsEqual(countedAliases.asInstanceOf[RDD[Any]], countedAliasesTestRDD().asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(countedAliases, countedAliasesTestRDD()))
 	}
 
 	"Alias occurrences" should "be correct identified as link or no link" in {
 		val aliasOccurrencesInArticles = parsedWikipediaTestRDD()
 			.map(article => WikipediaAliasCounter.identifyAliasOccurrencesInArticle(article))
-		assert(areRDDsEqual(aliasOccurrencesInArticles.asInstanceOf[RDD[Any]], aliasOccurrencesInArticlesTestRDD().asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(aliasOccurrencesInArticles, aliasOccurrencesInArticlesTestRDD()))
 	}
 
 	"Identified aliases" should "not be link and no link in the same article" in {
@@ -54,28 +54,7 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 	"Probability that word is link" should "be calculated correctly" in {
 		val linkProbabilities = countedAliasesTestRDD()
 			.map(countedAlias => (countedAlias.alias, WikipediaAliasCounter.probabilityIsLink(countedAlias)))
-		assert(areRDDsEqual(linkProbabilities.asInstanceOf[RDD[Any]], linkProbabilitiesTestRDD().asInstanceOf[RDD[Any]]))
-	}
-
-	def printRDD(rdd: RDD[Any], title: String = ""): Unit = {
-		println(title)
-		rdd
-			.collect
-			.foreach(println)
-	}
-
-	def areRDDsEqual(is: RDD[Any], should: RDD[Any]): Boolean = {
-		//		printRDD(is, "\nRDD:")
-		//		printRDD(should, "\nShould be:")
-		val sizeIs = is.count
-		val sizeShould = should.count
-		if (sizeIs != sizeShould)
-			return false
-		val diff = is
-			.collect
-			.zip(should.collect)
-			.collect { case (a, b) if a != b => a -> b }
-		diff.isEmpty
+		assert(areRDDsEqual(linkProbabilities, linkProbabilitiesTestRDD()))
 	}
 
 	def allAliasesTestRDD(): RDD[String] = {

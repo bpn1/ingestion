@@ -42,7 +42,7 @@ object WikipediaTextparser {
 	}
 
 	def parseHtml(entry: (WikipediaEntry, String)): ParsedWikipediaEntry = {
-		val parsedEntry = ParsedWikipediaEntry(entry._1.title, Option(""), null, List[String]())
+		val parsedEntry = ParsedWikipediaEntry(entry._1.title, Option(""), null)
 		if (checkRedirect(entry._2)) {
 			val doc = Jsoup.parse(entry._2)
 			val text = doc.body.text.replaceAll("\\AWEITERLEITUNG", "REDIRECT")

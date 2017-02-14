@@ -2,6 +2,7 @@ import java.util.StringTokenizer
 import edu.stanford.nlp.simple.{GermanDocument, GermanSentence}
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
+import scala.annotation.tailrec
 
 trait Tokenizer extends Serializable {
 	def tokenize(x: String): List[String]
@@ -18,15 +19,27 @@ class WhitespaceTokenizer() extends Tokenizer {
 class CleanWhitespaceTokenizer() extends Tokenizer {
 	def stripAll(s: String, bad: String): String = {
 		// http://stackoverflow.com/questions/17995260/trimming-strings-in-scala
-		@scala.annotation.tailrec def start(n: Int): String =
-		if (n == s.length) ""
-		else if (bad.indexOf(s.charAt(n)) < 0) end(n, s.length)
-		else start(1 + n)
+		@tailrec def start(n: Int): String = {
+			if (n == s.length) {
+				""
+			} else if (bad.indexOf(s.charAt(n)) < 0) {
+				end(n, s.length)
+			} else {
+				start(1 + n)
+			}
+		}
 
-		@scala.annotation.tailrec def end(a: Int, n: Int): String =
-			if (n <= a) s.substring(a, n)
-			else if (bad.indexOf(s.charAt(n - 1)) < 0) s.substring(a, n)
-			else end(a, n - 1)
+		@tailrec def end(a: Int, n: Int): String = {
+			if (n <= a) {
+				s.substring(a, n)
+			}
+			else if (bad.indexOf(s.charAt(n - 1)) < 0) {
+				s.substring(a, n)
+			}
+			else {
+				end(a, n - 1)
+			}
+		}
 
 		start(0)
 	}
@@ -37,8 +50,9 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 		val stringTokenizer = new StringTokenizer(txt, delimiters)
 		val tokens = new ListBuffer[String]()
 
-		while (stringTokenizer.hasMoreTokens)
+		while (stringTokenizer.hasMoreTokens) {
 			tokens += stringTokenizer.nextToken()
+		}
 
 		tokens
 			.map(token => stripAll(token, badCharacters))
@@ -62,7 +76,7 @@ class CoreNLPTokenizer() extends Tokenizer {
 			.sentences
 			.asScala
 			.toList
-			.flatMap(sentence => sentence.words.asScala.toList)
+			.flatMap(_.words.asScala.toList)
 	}
 
 	def reverse(tokens: List[String]) = tokens.mkString(" ")

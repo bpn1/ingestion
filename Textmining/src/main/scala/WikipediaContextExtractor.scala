@@ -26,7 +26,7 @@ object WikipediaContextExtractor {
 	def extractLinkContextsFromArticle(article: ParsedWikipediaEntry, tokenizer: Tokenizer): Set[LinkContext] = {
 		// Do not initialize tokenizer here so it is initialized only once.
 		// (probably important for good performance of CoreNLP)
-		val wordSet = textToWordSet(article.text.get, tokenizer)
+		val wordSet = textToWordSet(article.getText, tokenizer)
 		article.links
 			.map(link => LinkContext(link.page, wordSet))
 			.toSet
@@ -35,8 +35,7 @@ object WikipediaContextExtractor {
 	def extractAllContexts(articles: RDD[ParsedWikipediaEntry]): RDD[LinkContext] = {
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
-			.map(article => extractLinkContextsFromArticle(article, tokenizer))
-			.flatMap(contexts => contexts)
+			.flatMap(article => extractLinkContextsFromArticle(article, tokenizer))
 			.groupBy(_.pagename)
 			.map { case (pagename, contexts) =>
 				val contextSum = contexts

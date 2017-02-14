@@ -10,7 +10,7 @@ class CleanWhitespaceTokenizerTest extends PrettyTester {
 		val tokenizer = new CleanWhitespaceTokenizer
 		val tokenizedSentences = testSentences()
 			.map(tokenizer.tokenize)
-		assert(areListsEqual(tokenizedSentences.asInstanceOf[List[Any]], tokenizedTestSentences().asInstanceOf[List[Any]]))
+		assert(areListsEqual(tokenizedSentences, tokenizedTestSentences()))
 	}
 
 	def testSentences(): List[String] = {

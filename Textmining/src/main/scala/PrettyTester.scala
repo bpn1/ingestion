@@ -2,24 +2,18 @@ import org.apache.spark.rdd.RDD
 import org.scalatest.FlatSpec
 
 class PrettyTester extends FlatSpec {
-	def printSequence(sequence: Seq[Any], title: String = ""): Unit = {
-		println(title)
-		sequence
-			.foreach(println)
+	def printSequence[T](sequence: Seq[T], title: String = ""): Unit = {
+		println(s"$title\n${sequence.mkString("\n")}")
 	}
 
-	def areRDDsEqual(is: RDD[Any], should: RDD[Any]): Boolean = {
-		var areEqual = true
-		val sizeIs = is.count
-		val sizeShould = should.count
-		if (sizeIs != sizeShould)
-			areEqual = false
+	def areRDDsEqual[T](is: RDD[T], should: RDD[T]): Boolean = {
+		var areEqual = is.count == should.count
 		if (areEqual) {
-			val diff = is
+			areEqual = is
 				.collect
 				.zip(should.collect)
 				.collect { case (a, b) if a != b => a -> b }
-			areEqual = diff.isEmpty
+				.isEmpty
 		}
 
 		if (!areEqual) {
@@ -29,7 +23,7 @@ class PrettyTester extends FlatSpec {
 		areEqual
 	}
 
-	def isSubset(subset: Set[Any], set: Set[Any]): Boolean = {
+	def isSubset[T](subset: Set[T], set: Set[T]): Boolean = {
 		val isSubset = subset.subsetOf(set)
 
 		if (!isSubset) {
@@ -39,7 +33,7 @@ class PrettyTester extends FlatSpec {
 		isSubset
 	}
 
-	def areSetsEqual(is: Set[Any], should: Set[Any]): Boolean = {
+	def areSetsEqual[T](is: Set[T], should: Set[T]): Boolean = {
 		val areEqual = is == should
 
 		if (!areEqual) {
@@ -49,7 +43,7 @@ class PrettyTester extends FlatSpec {
 		areEqual
 	}
 
-	def areListsEqual(is: List[Any], should: List[Any]): Boolean = {
+	def areListsEqual[T](is: List[T], should: List[T]): Boolean = {
 		val areEqual = is == should
 
 		if (!areEqual) {
