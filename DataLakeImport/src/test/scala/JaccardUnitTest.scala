@@ -6,13 +6,11 @@ import org.scalatest.FlatSpec
 class JaccardUnitTest extends FlatSpec {
 
   "score" should "return the Jaccard score for given strings" in {
-    var s = "Chilpéric II son of Childeric II"
-    var t = "chilperic ii son of childeric ii"
 
-    var s = "night"
-    var t = "nacht"
+    val s = "night"
+    val t = "nacht"
 
-    var score = {
+    val score = {
       Jaccard.compare(s, t)
     }
 

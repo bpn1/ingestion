@@ -13,5 +13,8 @@ object Jaccard extends SimilarityMeasure[String] {
     * @return a normalized similarity score between 1.0 and 0.0
     */
 
-  override def compare(s: String, t: String) : Option[Double] = JaccardMetric(1).compare(s,t)
+  override def compare(s: String, t: String) : Double = {
+    val score = JaccardMetric(1).compare(s,t)
+    return score.getOrElse(0.0)
+  }
 }
