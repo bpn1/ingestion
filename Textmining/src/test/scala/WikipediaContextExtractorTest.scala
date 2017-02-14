@@ -1,4 +1,3 @@
-import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
 
@@ -24,7 +23,7 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 	"Link contexts of one article" should "contain all occurring page names of links" in {
 		val articleTitle = "Testartikel"
 		val article = getArticle(articleTitle)
-		val pageNames = WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanWhitespaceTokenizer)
+		val pageNames = WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanCoreNLPTokenizer)
 			.map(_.pagename)
 		assert(pageNames == allPageNamesOfTestArticleList())
 	}
@@ -33,7 +32,7 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 		val articleTitle = "Streitberg (Brachttal)"
 		val testWords = articleContextwordSets()(articleTitle)
 		val article = getArticle(articleTitle)
-		WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanWhitespaceTokenizer)
+		WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanCoreNLPTokenizer)
 			.foreach(context => assert(isSubset(testWords.asInstanceOf[Set[Any]], context.words.asInstanceOf[Set[Any]])))
 	}
 
@@ -52,7 +51,7 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 		val articleTitle = "Testartikel"
 		val testWords: Set[String] = articleContextwordSets()(articleTitle)
 		val article = getArticle(articleTitle)
-		val wordSet: Set[String] = WikipediaContextExtractor.textToWordSet(article.text.get, new CleanWhitespaceTokenizer)
+		val wordSet: Set[String] = WikipediaContextExtractor.textToWordSet(article.text.get, new CleanCoreNLPTokenizer)
 		assert(areSetsEqual(wordSet.asInstanceOf[Set[Any]], testWords.asInstanceOf[Set[Any]]))
 	}
 

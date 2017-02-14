@@ -1,5 +1,3 @@
-import org.scalatest.FlatSpec
-
 class CleanWhitespaceTokenizerTest extends PrettyTester {
 	"Cleaned tokenized sentence" should "contain multiple tokens" in {
 		val tokenizer = new CleanWhitespaceTokenizer

@@ -1,7 +1,7 @@
 import java.util.StringTokenizer
-import edu.stanford.nlp.simple.GermanSentence
-import scala.collection.JavaConverters._
+import edu.stanford.nlp.simple.{GermanDocument, GermanSentence}
 import scala.collection.mutable.ListBuffer
+import scala.collection.JavaConverters._
 
 trait Tokenizer extends Serializable {
 	def tokenize(x: String): List[String]
@@ -33,7 +33,7 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 
 	def tokenize(txt: String) = {
 		val delimiters = " \n"
-		val badCharacters = "().,;:'`\"„“"
+		val badCharacters = "().!?,;:'`\"„“"
 		val stringTokenizer = new StringTokenizer(txt, delimiters)
 		val tokens = new ListBuffer[String]()
 
@@ -48,8 +48,22 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 	def reverse(tokens: List[String]) = tokens.mkString(" ")
 }
 
+class CleanCoreNLPTokenizer() extends CoreNLPTokenizer {
+	override def tokenize(txt: String) = {
+		val tokens = super.tokenize(txt)
+		val badTokens = Set[String](".", "!", "?", ",", ";", ":")
+		tokens.filter(token => !badTokens.contains(token))
+	}
+}
+
 class CoreNLPTokenizer() extends Tokenizer {
-	def tokenize(txt: String) = new GermanSentence(txt).words().asScala.toList
+	def tokenize(txt: String) = {
+		new GermanDocument(txt)
+			.sentences
+			.asScala
+			.toList
+			.flatMap(sentence => sentence.words.asScala.toList)
+	}
 
 	def reverse(tokens: List[String]) = tokens.mkString(" ")
 }
