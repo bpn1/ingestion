@@ -22,11 +22,9 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 		@tailrec def start(n: Int): String = {
 			if (n == s.length) {
 				""
-			}
-			else if (bad.indexOf(s.charAt(n)) < 0) {
+			} else if (bad.indexOf(s.charAt(n)) < 0) {
 				end(n, s.length)
-			}
-			else {
+			} else {
 				start(1 + n)
 			}
 		}
@@ -52,8 +50,9 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 		val stringTokenizer = new StringTokenizer(txt, delimiters)
 		val tokens = new ListBuffer[String]()
 
-		while (stringTokenizer.hasMoreTokens)
+		while (stringTokenizer.hasMoreTokens) {
 			tokens += stringTokenizer.nextToken()
+		}
 
 		tokens
 			.map(token => stripAll(token, badCharacters))

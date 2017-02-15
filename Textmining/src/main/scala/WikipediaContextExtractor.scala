@@ -35,8 +35,7 @@ object WikipediaContextExtractor {
 	def extractAllContexts(articles: RDD[ParsedWikipediaEntry]): RDD[LinkContext] = {
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
-			.map(article => extractLinkContextsFromArticle(article, tokenizer))
-			.flatMap(contexts => contexts)
+			.flatMap(article => extractLinkContextsFromArticle(article, tokenizer))
 			.groupBy(_.pagename)
 			.map { case (pagename, contexts) =>
 				val contextSum = contexts

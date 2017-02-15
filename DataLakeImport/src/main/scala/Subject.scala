@@ -36,6 +36,11 @@ case class Subject(
 		case _ => false
 	}
 
+	// For debugging
+	/*override def toString(): String = {
+		"Subject(" + this.id + ", " + this.name.get + ")"
+	}*/
+
   // use reflection to get attribute from a string
   def get[T](attribute: String): T = {
     val field: Field = this.getClass().getDeclaredField(attribute)

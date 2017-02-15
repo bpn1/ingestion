@@ -13,7 +13,7 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 
 	"Link contexts" should "not be empty" in {
 		val contexts = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
-		assert(!contexts.isEmpty())
+		assert(!contexts.isEmpty)
 	}
 
 	"Link contexts" should "contain any words" in {
