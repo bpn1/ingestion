@@ -1,7 +1,5 @@
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.rdd._
 import scala.util.matching.Regex
-import info.bliki.wiki.model.WikiModel
 import WikipediaTextparser._
 import org.jsoup.Jsoup
 import com.datastax.spark.connector._
@@ -13,7 +11,7 @@ object WikipediaRedirectParser {
 	val keyspace = "wikidumps"
 
 	def parseRedirect(title: String, html: String): ParsedWikipediaEntry = {
-		val parsedEntry = new ParsedWikipediaEntry(title, Option(""), null, List[String]())
+		val parsedEntry = ParsedWikipediaEntry(title, Option(""), null)
 		val doc = Jsoup.parse(html)
 		val text = doc.body.text.replaceAll("(?i)((\\AWEITERLEITUNG)|(\\AREDIRECT))", "REDIRECT")
 		parsedEntry.setText(text)
@@ -32,7 +30,7 @@ object WikipediaRedirectParser {
 		val wikiRDD = sc.cassandraTable[WikipediaEntry](keyspace, inputTablename)
 			.map(entry => (entry.title, entry.getText))
 			.filter { case (title, text) =>
-				redirectRegex.findFirstIn(text) != None
+				redirectRegex.findFirstIn(text).isDefined
 			}
 			.map(entry => (entry._1, replaceRegex.replaceAllIn(entry._2, "WEITERLEITUNG")))
 			.map(entry => (entry._1, wikipediaToHtml(entry._2)))

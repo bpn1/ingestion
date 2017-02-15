@@ -1,8 +1,9 @@
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
+import WikiClasses._
 
-class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
+class WikipediaAliasCounterTest extends FlatSpec with PrettyTester with SharedSparkContext {
 	"Counted aliases" should "have the same size as all links" in {
 		val allAliases = allAliasesTestRDD()
 		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
@@ -13,7 +14,7 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.map(_.alias)
 			.sortBy(identity)
-		assert(areRDDsEqual(countedAliases.asInstanceOf[RDD[Any]], allAliasesTestRDD().asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(countedAliases, allAliasesTestRDD()))
 	}
 
 	"Counted aliases" should "have counted any occurrence" in {
@@ -35,13 +36,13 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 		val countedAliases = WikipediaAliasCounter
 			.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.sortBy(_.alias)
-		assert(areRDDsEqual(countedAliases.asInstanceOf[RDD[Any]], countedAliasesTestRDD().asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(countedAliases, countedAliasesTestRDD()))
 	}
 
 	"Alias occurrences" should "be correct identified as link or no link" in {
 		val aliasOccurrencesInArticles = parsedWikipediaTestRDD()
 			.map(article => WikipediaAliasCounter.identifyAliasOccurrencesInArticle(article))
-		assert(areRDDsEqual(aliasOccurrencesInArticles.asInstanceOf[RDD[Any]], aliasOccurrencesInArticlesTestRDD().asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(aliasOccurrencesInArticles, aliasOccurrencesInArticlesTestRDD()))
 	}
 
 	"Identified aliases" should "not be link and no link in the same article" in {
@@ -54,28 +55,7 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 	"Probability that word is link" should "be calculated correctly" in {
 		val linkProbabilities = countedAliasesTestRDD()
 			.map(countedAlias => (countedAlias.alias, WikipediaAliasCounter.probabilityIsLink(countedAlias)))
-		assert(areRDDsEqual(linkProbabilities.asInstanceOf[RDD[Any]], linkProbabilitiesTestRDD().asInstanceOf[RDD[Any]]))
-	}
-
-	def printRDD(rdd: RDD[Any], title: String = ""): Unit = {
-		println(title)
-		rdd
-			.collect
-			.foreach(println)
-	}
-
-	def areRDDsEqual(is: RDD[Any], should: RDD[Any]): Boolean = {
-		//		printRDD(is, "\nRDD:")
-		//		printRDD(should, "\nShould be:")
-		val sizeIs = is.count
-		val sizeShould = should.count
-		if (sizeIs != sizeShould)
-			return false
-		val diff = is
-			.collect
-			.zip(should.collect)
-			.collect { case (a, b) if a != b => a -> b }
-		diff.isEmpty
+		assert(areRDDsEqual(linkProbabilities, linkProbabilitiesTestRDD()))
 	}
 
 	def allAliasesTestRDD(): RDD[String] = {
@@ -93,54 +73,54 @@ class WikipediaAliasCounterTest extends FlatSpec with SharedSparkContext {
 			.sortBy(identity)
 	}
 
-	def parsedWikipediaTestRDD(): RDD[WikiClasses.ParsedWikipediaEntry] = {
+	def parsedWikipediaTestRDD(): RDD[ParsedWikipediaEntry] = {
 		sc.parallelize(List(
-			WikiClasses.ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
-					WikiClasses.Link("Audi", "Audi", 9)
+					Link("Audi", "Audi", 9)
 				),
 				List("Audi")),
-			WikiClasses.ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
+			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
 				List("Audi")),
-			WikiClasses.ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
-					WikiClasses.Link("Brachttal", "Brachttal", 55),
-					WikiClasses.Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
-					WikiClasses.Link("Hessen", "Hessen", 87),
-					WikiClasses.Link("1377", "1377", 225),
-					WikiClasses.Link("Büdinger Wald", "Büdinger Wald", 546)
+					Link("Brachttal", "Brachttal", 55),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
+					Link("Hessen", "Hessen", 87),
+					Link("1377", "1377", 225),
+					Link("Büdinger Wald", "Büdinger Wald", 546)
 				),
 				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald")),
-			WikiClasses.ParsedWikipediaEntry("Testartikel", Option("""Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."""),
+			ParsedWikipediaEntry("Testartikel", Option("""Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."""),
 				List(
-					WikiClasses.Link("Audi", "Audi", 7),
-					WikiClasses.Link("Brachttal", "Brachttal", 13),
-					WikiClasses.Link("historisches Jahr", "1377", 24)
+					Link("Audi", "Audi", 7),
+					Link("Brachttal", "Brachttal", 13),
+					Link("historisches Jahr", "1377", 24)
 				),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
 	}
 
-	def aliasOccurrencesInArticlesTestRDD(): RDD[WikiClasses.AliasOccurrencesInArticle] = {
+	def aliasOccurrencesInArticlesTestRDD(): RDD[AliasOccurrencesInArticle] = {
 		sc.parallelize(List(
-			WikiClasses.AliasOccurrencesInArticle(Set("Audi"), Set()),
-			WikiClasses.AliasOccurrencesInArticle(Set(), Set("Audi")),
-			WikiClasses.AliasOccurrencesInArticle(Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), Set("Streitberg")),
-			WikiClasses.AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
+			AliasOccurrencesInArticle(Set("Audi"), Set()),
+			AliasOccurrencesInArticle(Set(), Set("Audi")),
+			AliasOccurrencesInArticle(Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), Set("Streitberg")),
+			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
 		))
 	}
 
-	def countedAliasesTestRDD(): RDD[WikiClasses.AliasCounter] = {
+	def countedAliasesTestRDD(): RDD[AliasCounter] = {
 		sc.parallelize(List(
-			WikiClasses.AliasCounter("Audi", 2, 3),
-			WikiClasses.AliasCounter("Brachttal", 2, 2),
-			WikiClasses.AliasCounter("Main-Kinzig-Kreis", 1, 2),
-			WikiClasses.AliasCounter("Hessen", 1, 2),
-			WikiClasses.AliasCounter("1377", 1, 1),
-			WikiClasses.AliasCounter("Büdinger Wald", 1, 2),
-			WikiClasses.AliasCounter("Backfisch", 0, 1),
-			WikiClasses.AliasCounter("Streitberg", 0, 1),
-			WikiClasses.AliasCounter("historisches Jahr", 1, 1)
+			AliasCounter("Audi", 2, 3),
+			AliasCounter("Brachttal", 2, 2),
+			AliasCounter("Main-Kinzig-Kreis", 1, 2),
+			AliasCounter("Hessen", 1, 2),
+			AliasCounter("1377", 1, 1),
+			AliasCounter("Büdinger Wald", 1, 2),
+			AliasCounter("Backfisch", 0, 1),
+			AliasCounter("Streitberg", 0, 1),
+			AliasCounter("historisches Jahr", 1, 1)
 		))
 			.sortBy(_.alias)
 	}

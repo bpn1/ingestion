@@ -1,6 +1,7 @@
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.FlatSpec
 import org.apache.spark.rdd._
+import WikiClasses._
 
 class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 	"Grouped aliases" should "not be empty" in {
@@ -53,23 +54,23 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 
 		val rdd2 = right
 			.keyBy {
-				case l: WikiClasses.Alias => l.alias
-				case p: WikiClasses.Page => p.page
+				case l: Alias => l.alias
+				case p: Page => p.page
 			}
 
 		val rdd1 = left
 			.keyBy {
-				case l: WikiClasses.Alias => l.alias
-				case p: WikiClasses.Page => p.page
+				case l: Alias => l.alias
+				case p: Page => p.page
 			}
 			.join(rdd2)
 
 		if (rdd1.count != sizeLeft) return false
 		rdd1
 			.map {
-				case (key, (leftLink: WikiClasses.Alias, rightLink: WikiClasses.Alias)) =>
+				case (key, (leftLink: Alias, rightLink: Alias)) =>
 					(key, leftLink.pages, rightLink.pages)
-				case (key, (leftLink: WikiClasses.Page, rightLink: WikiClasses.Page)) =>
+				case (key, (leftLink: Page, rightLink: Page)) =>
 					(key, leftLink.aliases, rightLink.aliases)
 			}
 			.collect
@@ -82,52 +83,52 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 		true
 	}
 
-	def parsedWikipediaTestRDD(): RDD[WikiClasses.ParsedWikipediaEntry] = {
+	def parsedWikipediaTestRDD(): RDD[ParsedWikipediaEntry] = {
 		sc.parallelize(List(
 
-			WikiClasses.ParsedWikipediaEntry("Audi", Option("dummy text"), List(
-				WikiClasses.Link("Ingolstadt", "Ingolstadt", 55),
-				WikiClasses.Link("Bayern", "Bayern", 69),
-				WikiClasses.Link("Automobilhersteller", "Automobilhersteller", 94),
-				WikiClasses.Link("Zerfall", "Zerfall (Album)", 4711),
-				WikiClasses.Link("Zerfall", "Zerfall (Soziologie)", 4711) // dead link
+			ParsedWikipediaEntry("Audi", Option("dummy text"), List(
+				Link("Ingolstadt", "Ingolstadt", 55),
+				Link("Bayern", "Bayern", 69),
+				Link("Automobilhersteller", "Automobilhersteller", 94),
+				Link("Zerfall", "Zerfall (Album)", 4711),
+				Link("Zerfall", "Zerfall (Soziologie)", 4711) // dead link
 			))))
 	}
 
-	def groupedAliasesTestRDD(): RDD[WikiClasses.Alias] = {
+	def groupedAliasesTestRDD(): RDD[Alias] = {
 		sc.parallelize(List(
-			WikiClasses.Alias("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
-			WikiClasses.Alias("Bayern", Map("Bayern" -> 1).toSeq),
-			WikiClasses.Alias("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
-			WikiClasses.Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Zerfall (Soziologie)" -> 1).toSeq)
+			Alias("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
+			Alias("Bayern", Map("Bayern" -> 1).toSeq),
+			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Zerfall (Soziologie)" -> 1).toSeq)
 		))
 	}
 
-	def groupedPagesTestRDD(): RDD[WikiClasses.Page] = {
+	def groupedPagesTestRDD(): RDD[Page] = {
 		sc.parallelize(List(
-			WikiClasses.Page("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
-			WikiClasses.Page("Bayern", Map("Bayern" -> 1).toSeq),
-			WikiClasses.Page("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
-			WikiClasses.Page("Zerfall (Album)", Map("Zerfall" -> 1).toSeq),
-			WikiClasses.Page("Zerfall (Soziologie)", Map("Zerfall" -> 1).toSeq)
+			Page("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
+			Page("Bayern", Map("Bayern" -> 1).toSeq),
+			Page("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
+			Page("Zerfall (Album)", Map("Zerfall" -> 1).toSeq),
+			Page("Zerfall (Soziologie)", Map("Zerfall" -> 1).toSeq)
 		))
 	}
 
-	def cleanedGroupedAliasesTestRDD(): RDD[WikiClasses.Alias] = {
+	def cleanedGroupedAliasesTestRDD(): RDD[Alias] = {
 		sc.parallelize(List(
-			WikiClasses.Alias("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
-			WikiClasses.Alias("Bayern", Map("Bayern" -> 1).toSeq),
-			WikiClasses.Alias("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
-			WikiClasses.Alias("Zerfall", Map("Zerfall (Album)" -> 1).toSeq)
+			Alias("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
+			Alias("Bayern", Map("Bayern" -> 1).toSeq),
+			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1).toSeq)
 		))
 	}
 
-	def cleanedGroupedPagesTestRDD(): RDD[WikiClasses.Page] = {
+	def cleanedGroupedPagesTestRDD(): RDD[Page] = {
 		sc.parallelize(List(
-			WikiClasses.Page("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
-			WikiClasses.Page("Bayern", Map("Bayern" -> 1).toSeq),
-			WikiClasses.Page("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
-			WikiClasses.Page("Zerfall (Album)", Map("Zerfall" -> 1).toSeq)
+			Page("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
+			Page("Bayern", Map("Bayern" -> 1).toSeq),
+			Page("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
+			Page("Zerfall (Album)", Map("Zerfall" -> 1).toSeq)
 		))
 	}
 

@@ -1,12 +1,14 @@
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
+import org.scalatest.FlatSpec
+import WikiClasses._
 
-class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext {
+class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with SharedSparkContext {
 	"Link contexts" should "contain all occurring page names of links and only once" in {
 		val pageNames = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
 			.map(_.pagename)
 			.sortBy(identity)
-		assert(areRDDsEqual(pageNames.asInstanceOf[RDD[Any]], allPageNamesTestRDD().asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(pageNames, allPageNamesTestRDD()))
 	}
 
 	"Link contexts" should "not be empty" in {
@@ -33,7 +35,7 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 		val testWords = articleContextwordSets()(articleTitle)
 		val article = getArticle(articleTitle)
 		WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanCoreNLPTokenizer)
-			.foreach(context => assert(isSubset(testWords.asInstanceOf[Set[Any]], context.words.asInstanceOf[Set[Any]])))
+			.foreach(context => assert(isSubset(testWords, context.words)))
 	}
 
 	"Document frequencies" should "not be empty" in {
@@ -49,10 +51,10 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 
 	"Word set from one article" should "be exactly this word set" in {
 		val articleTitle = "Testartikel"
-		val testWords: Set[String] = articleContextwordSets()(articleTitle)
+		val testWords = articleContextwordSets()(articleTitle)
 		val article = getArticle(articleTitle)
-		val wordSet: Set[String] = WikipediaContextExtractor.textToWordSet(article.text.get, new CleanCoreNLPTokenizer)
-		assert(areSetsEqual(wordSet.asInstanceOf[Set[Any]], testWords.asInstanceOf[Set[Any]]))
+		val wordSet = WikipediaContextExtractor.textToWordSet(article.text.get, new CleanCoreNLPTokenizer)
+		assert(areSetsEqual(wordSet, testWords))
 	}
 
 	"Document frequencies" should "contain these document frequencies" in {
@@ -62,40 +64,39 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 		val testDocumentFrequencies = documentFrequenciesTestRDD()
 			.collect
 			.toSet
-		assert(isSubset(testDocumentFrequencies.asInstanceOf[Set[Any]], documentFrequencies.asInstanceOf[Set[Any]]))
+		assert(isSubset(testDocumentFrequencies, documentFrequencies))
 	}
 
-	def getArticle(title: String): WikiClasses.ParsedWikipediaEntry = {
+	def getArticle(title: String): ParsedWikipediaEntry = {
 		parsedWikipediaTestRDD()
 			.filter(_.title == title)
-			.collect
-			.head
+		    .first
 	}
 
-	def parsedWikipediaTestRDD(): RDD[WikiClasses.ParsedWikipediaEntry] = {
+	def parsedWikipediaTestRDD(): RDD[ParsedWikipediaEntry] = {
 		sc.parallelize(List(
-			WikiClasses.ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
-					WikiClasses.Link("Audi", "Audi", 9)
+					Link("Audi", "Audi", 9)
 				),
 				List("Audi")),
-			WikiClasses.ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
+			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
 				List("Audi")),
-			WikiClasses.ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
-					WikiClasses.Link("Brachttal", "Brachttal", 55),
-					WikiClasses.Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
-					WikiClasses.Link("Hessen", "Hessen", 87),
-					WikiClasses.Link("1377", "1377", 225),
-					WikiClasses.Link("Büdinger Wald", "Büdinger Wald", 546)
+					Link("Brachttal", "Brachttal", 55),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
+					Link("Hessen", "Hessen", 87),
+					Link("1377", "1377", 225),
+					Link("Büdinger Wald", "Büdinger Wald", 546)
 				),
 				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald")),
-			WikiClasses.ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
+			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
-					WikiClasses.Link("Audi", "Audi", 7),
-					WikiClasses.Link("Brachttal", "Brachttal", 13),
-					WikiClasses.Link("historisches Jahr", "1377", 24)
+					Link("Audi", "Audi", 7),
+					Link("Brachttal", "Brachttal", 13),
+					Link("historisches Jahr", "1377", 24)
 				),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
 	}
@@ -131,13 +132,13 @@ class WikipediaContextExtractorTest extends PrettyTester with SharedSparkContext
 				))
 	}
 
-	def documentFrequenciesTestRDD(): RDD[WikiClasses.DocumentFrequency] = {
+	def documentFrequenciesTestRDD(): RDD[DocumentFrequency] = {
 		sc.parallelize(List(
-			WikiClasses.DocumentFrequency("Audi", 3),
-			WikiClasses.DocumentFrequency("Backfisch", 1),
-			WikiClasses.DocumentFrequency("ist", 3),
-			WikiClasses.DocumentFrequency("und", 2),
-			WikiClasses.DocumentFrequency("zugleich", 1)
+			DocumentFrequency("Audi", 3),
+			DocumentFrequency("Backfisch", 1),
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 2),
+			DocumentFrequency("zugleich", 1)
 		))
 	}
 }

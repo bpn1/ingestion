@@ -1,4 +1,6 @@
-class CleanWhitespaceTokenizerTest extends PrettyTester {
+import org.scalatest.FlatSpec
+
+class CleanWhitespaceTokenizerTest extends FlatSpec with PrettyTester {
 	"Cleaned tokenized sentence" should "contain multiple tokens" in {
 		val tokenizer = new CleanWhitespaceTokenizer
 		testSentences()
@@ -10,7 +12,7 @@ class CleanWhitespaceTokenizerTest extends PrettyTester {
 		val tokenizer = new CleanWhitespaceTokenizer
 		val tokenizedSentences = testSentences()
 			.map(tokenizer.tokenize)
-		assert(areListsEqual(tokenizedSentences.asInstanceOf[List[Any]], tokenizedTestSentences().asInstanceOf[List[Any]]))
+		assert(areListsEqual(tokenizedSentences, tokenizedTestSentences()))
 	}
 
 	def testSentences(): List[String] = {

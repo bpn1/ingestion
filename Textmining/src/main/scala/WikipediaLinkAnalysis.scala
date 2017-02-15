@@ -17,8 +17,10 @@ object WikipediaLinkAnalysis {
 
 	def removeDeadLinks(links: RDD[Alias], allPages: RDD[String]): RDD[Alias] = {
 		links
-			.flatMap{link => link.pages
-				.map(page => (link.alias, page._1, page._2))}
+			.flatMap { link =>
+				link.pages
+					.map(page => (link.alias, page._1, page._2))
+			}
 			.keyBy { case (alias, pageName, count) => pageName }
 			.join(allPages.map(entry => (entry, entry)).keyBy(_._1)) // ugly, but working
 			.map { case (pageName, (link, doublePageName)) => link }
@@ -64,12 +66,12 @@ object WikipediaLinkAnalysis {
 			}
 	}
 
-	def probabilityLinkDirectsToPage(link: Alias, pageName: String): Double = {
-		val totalReferences = link
+	def probabilityLinkDirectsToPage(alias: Alias, pageName: String): Double = {
+		val totalReferences = alias
 			.pages
 			.toMap
 			.foldLeft(0)(_ + _._2)
-		val references = link.pages.toMap.getOrElse(pageName, 0)
+		val references = alias.pages.toMap.getOrElse(pageName, 0)
 		references / totalReferences
 	}
 

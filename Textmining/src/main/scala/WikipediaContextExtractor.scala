@@ -13,7 +13,7 @@ object WikipediaContextExtractor {
 	def countDocumentFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[DocumentFrequency] = {
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
-			.flatMap(article => textToWordSet(article.text.get, tokenizer))
+			.flatMap(article => textToWordSet(article.getText, tokenizer))
 			.map(word => (word, 1))
 			.reduceByKey(_ + _)
 			.map { case (word, count) => DocumentFrequency(word, count) }
@@ -26,7 +26,7 @@ object WikipediaContextExtractor {
 	def extractLinkContextsFromArticle(article: ParsedWikipediaEntry, tokenizer: Tokenizer): Set[LinkContext] = {
 		// Do not initialize tokenizer here so it is initialized only once.
 		// (probably important for good performance of CoreNLP)
-		val wordSet = textToWordSet(article.text.get, tokenizer)
+		val wordSet = textToWordSet(article.getText, tokenizer)
 		article.links
 			.map(link => LinkContext(link.page, wordSet))
 			.toSet
@@ -40,8 +40,7 @@ object WikipediaContextExtractor {
 			.groupBy(_.pagename)
 			.map { case (pagename, contexts) =>
 				val contextSum = contexts
-					.map(context => mutable.Set(context.words.toSeq: _*))
-					.reduceLeft((a, b) => a.union(b))
+					.flatMap(context => mutable.Set(context.words.toSeq: _*))
 					.toSet
 				LinkContext(pagename, contextSum)
 			}
