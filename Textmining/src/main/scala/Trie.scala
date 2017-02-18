@@ -19,7 +19,9 @@ sealed trait Trie extends Traversable[List[String]] with Serializable {
 
 class TrieNode(val token : Option[String] = None, var word: Option[List[String]] = None) extends Trie {
 
-	val children: mutable.Map[String, TrieNode] = mutable.Map[String, TrieNode]()
+	def this() = this(None, None)
+
+	val children: mutable.Map[String, TrieNode] = new java.util.TreeMap[String, TrieNode]().asScala
 
 	override def append(key: List[String]) = {
 		@tailrec def appendHelper(node: TrieNode, currentIndex: Int): Unit = {
@@ -39,7 +41,7 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 
 	override def foreach[U](f: List[String] => U): Unit = {
 		@tailrec def foreachHelper(nodes: TrieNode*): Unit = {
-			if (nodes.size != 0) {
+			if (nodes.nonEmpty) {
 				nodes.foreach(node => node.word.foreach(f))
 				foreachHelper(nodes.flatMap(node => node.children.values): _*)
 			}
@@ -126,8 +128,11 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 
 	def matchTokens(tokens: List[String]): ListBuffer[List[String]] = {
 		@tailrec def helper(currentIndex: Int, node: TrieNode, items: ListBuffer[List[String]]): ListBuffer[List[String]] = {
-			if(node.word != None) {
+			if(node.word.isDefined) {
 				items += node.word.get
+			}
+			if(currentIndex >= tokens.length) {
+				return items
 			}
 			node.children.get(tokens(currentIndex)) match {
 				case Some(child) => helper(currentIndex + 1, child, items)
@@ -138,14 +143,20 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 		helper(0, this, new ListBuffer[List[String]]())
 	}
 
-	override def toString(): String = s"Trie(token=${token},word=${word})"
+	override def toString(): String = s"Trie(token=$token,word=$word)"
 
 	def printableString(level: Int): String = {
-		val nodeDesc = s"Trie(token=${token},word=${word})"
-		val indent = "\t" * level
-		val childrenDesc = children.mkString("\n" + indent)
-		val desc = indent + nodeDesc + "\n" + indent + childrenDesc
-		val newIndent = indent + "\t"
-		return desc + "\n" + newIndent + children.map(child => child._2.printableString(level + 1)).mkString("\n")
+		def helper(currentIndex: Int, node: TrieNode, outputStringBuffer: ListBuffer[String]): Unit = {
+			val nodeDesc = s"Trie(token=$token,word=$word)"
+			val indent = "\t" * currentIndex
+			outputStringBuffer += indent + nodeDesc
+			for(child <- node.children) {
+				helper(currentIndex + 1, child._2, outputStringBuffer)
+			}
+		}
+		val output = ListBuffer[String]()
+		helper(0, this, output)
+		output.mkString("\n")
 	}
+
 }

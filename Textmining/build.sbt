@@ -21,7 +21,8 @@ libraryDependencies ++= Seq(
 	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0",
 	"com.databricks" % "spark-xml_2.11" % "0.4.1",
 	"info.bliki.wiki" % "bliki-core" % "3.1.0" exclude("ch.qos.logback", "logback-classic"),
-	"org.jsoup" % "jsoup" % "1.10.1"
+	"org.jsoup" % "jsoup" % "1.10.1",
+	"com.esotericsoftware" % "kryo" % "4.0.0"
 )
 
 // testing settings
