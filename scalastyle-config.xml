@@ -94,7 +94,7 @@
 	<check level="warning" class="org.scalastyle.scalariform.PublicMethodsHaveTypeChecker" enabled="false"/>
 	<check level="warning" class="org.scalastyle.file.NewLineAtEofChecker" enabled="true"/>
 	<check level="warning" class="org.scalastyle.file.NoNewLineAtEofChecker" enabled="false"/>
-	<check level="warning" class="org.scalastyle.file.IndentationChecker" enabled="true">
+	<check level="warning" class="org.scalastyle.file.IndentationChecker" enabled="false">
 		<parameters>
 			<parameter name="tabSize">4</parameter>
 			<parameter name="methodParamIndentSize">4</parameter>

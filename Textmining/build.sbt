@@ -45,3 +45,6 @@ assemblyShadeRules in assembly := Seq(
 
 // to suppress include info and merge warnings
 logLevel in assembly := Level.Error
+
+// scalastyle config file
+scalastyleConfig := new File("../scalastyle-config.xml")
