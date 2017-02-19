@@ -1,4 +1,15 @@
+# Atom remote sync plugin
 .remote-sync.json
+
+# Atom ensime plugin
+.ensime
+.ensime_cache
+
+# sbt
 target/
+
+# IntelliJ
 .idea/
+
+# macOS files
 .DS_Store
