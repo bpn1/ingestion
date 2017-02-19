@@ -66,21 +66,21 @@ object VersionDiff {
 	// map version histories to list of old and new values in the following format
 	// List(List(oldValue1, oldValue2), List(newValue1, newValue2))
 	def retrieveVersions(
-		entry : Tuple6[UUID,
+		entry : (UUID,
 			List[Version],
 			List[Version],
 			List[Version],
 			Map[String, List[Version]],
-			Map[UUID, Map[String, List[Version]]]],
+			Map[UUID, Map[String, List[Version]]]),
 		oldVersion : UUID,
 		newVersion : UUID
-	) : Tuple6[UUID,
+	) : (UUID,
 		List[List[String]],
 		List[List[String]],
 		List[List[String]],
 		Map[String, List[List[String]]],
-		Map[UUID, Map[String, List[List[String]]]]]
-	= {
+		Map[UUID, Map[String, List[List[String]]]]) =
+	{
 		entry match {
 			case (id, name_h, aliases_h, category_h, properties_h, relations_h) => {
 					val nameList = createValueList(oldVersion, newVersion, name_h)
@@ -97,12 +97,12 @@ object VersionDiff {
 
 	// diffs the value lists and parses them into Json
 	def diffToJson(
-		entry : Tuple6[UUID,
+		entry : (UUID,
 			List[List[String]],
 			List[List[String]],
 			List[List[String]],
 			Map[String, List[List[String]]],
-			Map[UUID, Map[String, List[List[String]]]]]
+			Map[UUID, Map[String, List[List[String]]]])
 	) : Map[String, JsValue] = {
 		entry match {
 			case (id, nameList, aliasesList, categoryList, properties, relations) =>

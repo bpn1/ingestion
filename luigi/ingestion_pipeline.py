@@ -15,7 +15,7 @@ programs = [
 
 
 def create_command(program, jar_path):
-    return './spark.sh yarn ' + program + ' ' + jar_path
+    return '/home/hadoop/scripts/spark.sh yarn ' + program + ' ' + jar_path
 
 
 def make_operator_chain(programs, force_execution):
@@ -60,7 +60,7 @@ class IngestionTask(ForceableTask):
         if self.requires() is not None:
             prefix = self.input().path + '.'
         else:
-            prefix = ''
+            prefix = '/home/hadoop/luigi/'
         return prefix + self.name + '.log'
 
     def has_upstream_completed(self):
@@ -96,8 +96,6 @@ class IngestionTask(ForceableTask):
 class IngestionWorkflow(luigi.Task):
     name = 'IngestionWorkflow'
     force_execution = luigi.BoolParameter(default=False)
-    if force_execution is True:
-        print('##############')
     upstream_task = make_operator_chain(programs, force_execution)
 
     def requires(self):
