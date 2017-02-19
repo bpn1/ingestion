@@ -18,12 +18,12 @@ trait DLImport[T] extends Serializable {
 	protected def importToCassandra(): Unit
 }
 
-abstract case class DataLakeImport[T <: Serializable : ClassTag : RowReaderFactory](
+abstract case class DataLakeImport[T](
 	appName: String,
 	dataSources: List[String],
 	inputKeyspace: String,
 	inputTable: String
-) extends DLImport[T] with Serializable {
+) extends DLImport[T] {
 	protected def makeTemplateVersion(): Version = {
 		// create timestamp and TimeUUID for versioning
 		val timestamp = new Date()
