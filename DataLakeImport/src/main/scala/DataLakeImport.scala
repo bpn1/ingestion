@@ -10,7 +10,7 @@ import scala.reflect.ClassTag
 
 trait DLImport[T] extends Serializable {
 	val outputKeyspace = "datalake"
-	val outputTable = "subject"
+	val outputTable = "subject_temp"
 	val versionTable = "version"
 	protected def translateToSubject(entity: T, version: Version): Subject
 	protected def makeTemplateVersion(): Version
@@ -22,7 +22,7 @@ abstract case class DataLakeImport[T <: Serializable : ClassTag : RowReaderFacto
 	dataSources: List[String],
 	inputKeyspace: String,
 	inputTable: String
-) extends DLImport[T] {
+) extends DLImport[T] with Serializable {
 	protected def makeTemplateVersion(): Version = {
 		// create timestamp and TimeUUID for versioning
 		val timestamp = new Date()
