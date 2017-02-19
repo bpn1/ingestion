@@ -19,7 +19,8 @@ libraryDependencies ++= Seq(
 	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.0-M3",
 	"org.scalactic" % "scalactic_2.11" % "3.0.1",
 	"org.scalatest" % "scalatest_2.11" % "3.0.1" % "test",
-	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0"
+	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0",
+	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4"
 )
 
 // testing settings
@@ -27,7 +28,7 @@ logBuffered in Test := false
 parallelExecution in Test := false
 fork in Test := true
 testOptions in Test := Seq(Tests.Argument(TestFrameworks.ScalaTest, "-oD"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"))
-javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
+javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:+CMSClassUnloadingEnabled")
 
 // fat jar assembly settings
 assemblyMergeStrategy in assembly := {
