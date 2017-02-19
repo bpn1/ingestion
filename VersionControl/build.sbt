@@ -43,4 +43,3 @@ assemblyShadeRules in assembly := Seq(
 
 // scalastyle config file
 scalastyleConfig := new File("../scalastyle-config.xml")
-
