@@ -36,13 +36,9 @@ object WikipediaContextExtractor {
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
 			.flatMap(article => extractLinkContextsFromArticle(article, tokenizer))
-			.groupBy(_.pagename)
-			.map { case (pagename, contexts) =>
-				val contextSum = contexts
-					.flatMap(context => mutable.Set(context.words.toSeq: _*))
-					.toSet
-				LinkContext(pagename, contextSum)
-			}
+			.map(linkContext => (linkContext.pagename, linkContext.words))
+			.reduceByKey(_ ++ _)			
+			.map { case (pagename, contextSum) => LinkContext(pagename, contextSum) }
 	}
 
 	def main(args: Array[String]): Unit = {

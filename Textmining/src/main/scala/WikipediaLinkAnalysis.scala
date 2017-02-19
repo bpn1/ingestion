@@ -24,11 +24,9 @@ object WikipediaLinkAnalysis {
 			.keyBy { case (alias, pageName, count) => pageName }
 			.join(allPages.map(entry => (entry, entry)).keyBy(_._1)) // ugly, but working
 			.map { case (pageName, (link, doublePageName)) => link }
-			.groupBy { case (alias, pageName, count) => alias }
-			.map { case (alias, rawLinks) =>
-				val links = rawLinks.map { case (alias, pageName, count) => (pageName, count) }.toSeq
-				Alias(alias, links)
-			}
+			.map { case (alias, pageName, count) => (alias, Seq((pageName, count))) }
+			.reduceByKey(_ ++ _)
+			.map { case (alias, links) => Alias(alias, links) }
 	}
 
 	def removeDeadPages(pages: RDD[Page], allPages: RDD[String]): RDD[Page] = {
