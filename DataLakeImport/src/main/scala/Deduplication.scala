@@ -183,7 +183,7 @@ object Deduplication {
 	def findDuplicates(blocks: RDD[(String, Iterable[Subject])], config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): RDD[(String, Iterable[possibleDuplicate])] = {
 		blocks
 		  .map{
-				case (industry, subjects) => (industry, makePairs[Subject](subjects.toList))
+				case (industry, subjects) => (industry, makePairs(subjects.toList))
 			}
 		  .map {
 				case (industry, subjectPairs) => (industry, subjectPairs.map(pair => possibleDuplicate(pair._1.id, pair._2.id, compare(pair._1, pair._2, config))))
