@@ -40,3 +40,6 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
 assemblyShadeRules in assembly := Seq(
   ShadeRule.rename("com.google.**" -> "shadeio.@1").inAll
 )
+
+// scalastyle config file
+scalastyleConfig := new File("../scalastyle-config.xml")
