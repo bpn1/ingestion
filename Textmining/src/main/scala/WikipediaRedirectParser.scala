@@ -48,7 +48,7 @@ object WikipediaRedirectParser {
 			.map(entry => (entry._1, wikipediaToHtml(entry._2)))
 			.map(entry => parseRedirect(entry._1, entry._2))
 			.saveToCassandra(keyspace, tablename)
-		// 	.keyBy(_.title)
+			// .keyBy(_.title)
 		//
 		// val badLinks = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 		// 	.filter(_.links.isEmpty)
