@@ -10,6 +10,8 @@ object WikiDataRDD {
 	val defaultInputFile = "wikidata.json"
 	val language = "de"
 	val fallbackLanguage = "en"
+	val keyspace = "wikidumps"
+	val tablename = "wikidata"
 
 	case class WikiDataEntity(var id: String = null, var entitytype: String = null,
 		var wikiname: String = null, var description: String = null, var label: String = null,
@@ -201,7 +203,7 @@ object WikiDataRDD {
 
 		val conf = new SparkConf()
 			.setAppName("WikiDataRDD")
-			.set("spark.cassandra.connection.host", "172.20.21.11")
+			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
 		val jsonFile = sc.textFile(inputFile)
@@ -211,6 +213,6 @@ object WikiDataRDD {
 		var propertyBroadcast = sc.broadcast(properties)
 
 		translateProps(wikiData, propertyBroadcast)
-			.saveToCassandra("wikidumps", "wikidata", SomeColumns("id", "entitytype", "wikiname", "description", "label", "aliases", "data"))
+			.saveToCassandra(keyspace, tablename, SomeColumns("id", "entitytype", "wikiname", "description", "label", "aliases", "data"))
 	}
 }
