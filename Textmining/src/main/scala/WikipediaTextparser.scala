@@ -5,45 +5,16 @@ import scala.collection.mutable
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
-import org.jsoup.nodes.TextNode
+import org.jsoup.nodes.{Document, Element, Node, TextNode}
 import java.net.URLDecoder
 import scala.collection.mutable.ListBuffer
+import WikiClasses._
 
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
-	val infoboxOffset: Int = -1
-
-	case class WikipediaEntry(title: String, var text: Option[String]) {
-		//def this(title: String, text: String) = this(title, Option(text))
-		def setText(t: String): Unit = {
-			text = Option(t)
-		}
-
-		def getText(): String = text match {
-			case Some(t) => t
-			case None => ""
-		}
-	}
-
-	case class ParsedWikipediaEntry(title: String, var text: Option[String], var links: List[Link]) {
-		//def this(title: String, text: String) = this(title, Option(text), null)
-		def setText(t: String): Unit = {
-			text = Option(t)
-		}
-
-		def getText(): String = text match {
-			case Some(t) => t
-			case None => ""
-		}
-	}
-
-	case class Link(alias: String,
-					var page: String,
-					offset: Int)
+	val infoboxOffset = -1
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
@@ -51,16 +22,21 @@ object WikipediaTextparser {
 	}
 
 	def checkRedirect(html: String): Boolean = {
-		val redirectRegex = new Regex("(\\AWEITERLEITUNG)|(\\AREDIRECT)")
+		val redirectRegex = new Regex("\\AWEITERLEITUNG")
 		val searchText = Jsoup.parse(html).body.text
 		redirectRegex.findFirstIn(searchText).isDefined
 	}
 
-	def extractRedirect(html: String): List[Link] = {
+	def extractRedirect(html: String, text: String): List[Link] = {
 		val anchorList = Jsoup.parse(html).select("a")
 		val linksList = mutable.ListBuffer[Link]()
+		val redirectRegex = new Regex("REDIRECT( )*")
+		val redirectOffset = (redirectRegex.findFirstIn(text) match {
+			case Some(x) => x
+			case None => "REDIRECT"
+		}).length
 		for (anchor <- anchorList) {
-			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), "REDIRECT ".length)
+			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), redirectOffset)
 		}
 		linksList.toList
 	}
@@ -69,9 +45,9 @@ object WikipediaTextparser {
 		val parsedEntry = ParsedWikipediaEntry(entry._1.title, Option(""), null)
 		if (checkRedirect(entry._2)) {
 			val doc = Jsoup.parse(entry._2)
-			val text = doc.body.text.replaceAll("(\\AWEITERLEITUNG)|(\\AREDIRECT)", "REDIRECT")
+			val text = doc.body.text.replaceAll("\\AWEITERLEITUNG", "REDIRECT")
 			parsedEntry.setText(text)
-			parsedEntry.links = extractRedirect(entry._2)
+			parsedEntry.links = extractRedirect(entry._2, text)
 			return parsedEntry
 		}
 
@@ -247,14 +223,21 @@ object WikipediaTextparser {
 		parsedEntry
 	}
 
+	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
+		val redirectRegex = "(?i)#(weiterleitung|redirect) ?(: ?)?"
+		entry.setText(entry.getText.replaceAll(redirectRegex, "WEITERLEITUNG"))
+		entry
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Textparser")
+			.setAppName("Wikipedia Text Parser")
 			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
 
 		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
 		wikipedia
+			.map(cleanRedirects)
 			.map(parseWikipediaEntry)
 			.saveToCassandra(keyspace, outputTablename)
 		sc.stop

@@ -12,17 +12,17 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-	"org.apache.spark" % "spark-core_2.11" % "2.1.0",
+	"org.apache.spark" % "spark-core_2.11" % "2.1.0" exclude("org.scalatest", "scalatest_2.11"),
 	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.0-M3",
 	"org.apache.spark" % "spark-sql_2.11" % "2.1.0",
 	"com.datastax.cassandra" % "cassandra-driver-core" % "3.1.3",
-	"com.typesafe.play" %% "play-json" % "2.3.0",
 	"org.scalactic" % "scalactic_2.11" % "3.0.1",
 	"org.scalatest" % "scalatest_2.11" % "3.0.1" % "test",
 	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0",
 	"com.databricks" % "spark-xml_2.11" % "0.4.1",
 	"info.bliki.wiki" % "bliki-core" % "3.1.0" exclude("ch.qos.logback", "logback-classic"),
-	"org.jsoup" % "jsoup" % "1.10.1"
+	"org.jsoup" % "jsoup" % "1.10.1",
+	"com.google.protobuf" % "protobuf-java" % "2.6.1"
 )
 
 // testing settings
@@ -36,12 +36,8 @@ javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:+CMSClassUnloadingEnabled")
 assemblyMergeStrategy in assembly := {
 	case PathList("META-INF", xs @ _*) => MergeStrategy.discard
 	case PathList(ps @ _*) if ps.last endsWith "pom.properties" => MergeStrategy.discard
-	case x => MergeStrategy.first
+	case _ => MergeStrategy.first
 }
-
-assemblyShadeRules in assembly := Seq(
-	ShadeRule.rename("com.google.**" -> "shadeio.@1").inAll
-)
 
 // to suppress include info and merge warnings
 logLevel in assembly := Level.Error
