@@ -39,6 +39,9 @@ assemblyMergeStrategy in assembly := {
 	case _ => MergeStrategy.first
 }
 
+// disables testing for assembly
+test in assembly := {}
+
 // to suppress include info and merge warnings
 logLevel in assembly := Level.Error
 
