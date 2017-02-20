@@ -1,22 +1,20 @@
 lazy val root = (project in file(".")).
 	settings(
-		name := "WikiImport",
-		version := "1.0",
-		scalaVersion := "2.11.8",
-		mainClass in Compile := Some("WikipediaImport")
+		name := "DBPediaImport",
+		version := "1.1",
+		scalaVersion := "2.11.8"
 	)
 
 resolvers ++= Seq(
 	"Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/",
-	"Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven"
+	"Spark Packages" at "https://dl.bintray.com/spark-packages/maven/"
 )
 
 libraryDependencies ++= Seq(
+	"org.jsoup" % "jsoup" % "1.10.1",
 	"org.apache.spark" % "spark-core_2.11" % "2.1.0",
-	"org.apache.spark" % "spark-sql_2.11" % "2.1.0",
-	"com.typesafe.play" %% "play-json" % "2.3.0",
-	"com.databricks" % "spark-xml_2.11" % "0.4.1",
 	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.0-M3",
+	"org.apache.spark" % "spark-sql_2.11" % "2.1.0",
 	"com.datastax.cassandra" % "cassandra-driver-core" % "3.1.3",
 	"org.scalactic" % "scalactic_2.11" % "3.0.1",
 	"org.scalatest" % "scalatest_2.11" % "3.0.1" % "test",

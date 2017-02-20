@@ -10,7 +10,7 @@ object ResolveEntities {
 	def main(args : Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("ResolveEntities")
-			.set("spark.cassandra.connection.host", "172.20.21.11")
+			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
 		val wikidata = sc.cassandraTable(keyspace, tablename)
@@ -28,7 +28,7 @@ object ResolveEntities {
 					.map(tuple => (id, tuple._1, tuple._2))
 			}
 			.flatMap(tuple => tuple)
-			//.cache
+			.cache
 
 		// filter all entries not having a wikidata entity as value
 		val regex = new Regex("^(P|Q)[0-9]+$")
