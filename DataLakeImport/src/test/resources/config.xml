@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
     <item>
-        <key>name</key>
+        <attribute>name</attribute>
         <similartyMeasure>ExactMatchString</similartyMeasure>
         <weight>1.0</weight>
     </item>
     <item>
-        <key>name</key>
+        <attribute>name</attribute>
         <similartyMeasure>MongeElkan</similartyMeasure>
         <weight>0.8</weight>
     </item>

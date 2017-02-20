@@ -1,6 +1,8 @@
 package DataLake
 
-import java.util.{UUID, Date}
+import java.lang.reflect.Field
+import java.util.{Date, UUID}
+
 import com.datastax.spark.connector.types._
 import com.datastax.driver.core.utils.UUIDs
 
@@ -29,11 +31,22 @@ case class Subject(
 	var properties_history: Map[String, List[Version]] = Map[String, List[Version]](),
 	var relations_history: Map[UUID, Map[String, List[Version]]]  = Map[UUID, Map[String, List[Version]]]()
 ){
-	def get[T](key: String): T = key match {
-		case "id" => id.asInstanceOf[T]
-		case "name" => name.get.asInstanceOf[T]
-		case "aliases" => aliases.asInstanceOf[T]
-		case "category" => category.get.asInstanceOf[T]
-		case x => properties(x).asInstanceOf[T]
+	override def equals(obj: Any): Boolean = obj match {
+		case that: Subject => that.id == this.id
+		case _ => false
 	}
+
+	// For debugging
+	/*override def toString(): String = {
+		"Subject(" + this.id + ", " + this.name.get + ")"
+	}*/
+
+  // use reflection to get attribute from a string
+  def get[T](attribute: String): T = {
+    val field: Field = this.getClass().getDeclaredField(attribute)
+    field.get(this) match {
+			case Some(value) => value.asInstanceOf[T]
+			case None => properties(attribute).asInstanceOf[T]
+		}
+  }
 }

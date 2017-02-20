@@ -28,7 +28,7 @@ object WikipediaRedirectParser {
 	def main(args: Array[String]) {
 		val conf = new SparkConf()
 			.setAppName("WikipediaRedirectParser")
-			.set("spark.cassandra.connection.host", "172.20.21.11")
+			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
 
 		val redirectRegex = new Regex("(?i)(#((Weiterleitung)|(redirect))\\s?:?)")

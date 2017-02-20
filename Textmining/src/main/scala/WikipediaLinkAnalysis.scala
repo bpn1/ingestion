@@ -23,7 +23,8 @@ object WikipediaLinkAnalysis {
 
 	def removeDeadLinks(links: RDD[Link], allPages: RDD[String]): RDD[Link] = {
 		links
-			.flatMap(link => link.pages.map(page => (link.alias, page._1, page._2)))
+			.flatMap{link => link.pages
+				.map(page => (link.alias, page._1, page._2))}
 			.keyBy { case (alias, pageName, count) => pageName }
 			.join(allPages.map(entry => (entry, entry)).keyBy(_._1)) // ugly, but working
 			.map { case (pageName, (link, doublePageName)) => link }
@@ -91,7 +92,7 @@ object WikipediaLinkAnalysis {
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Link Extraction")
-			.set("spark.cassandra.connection.host", "172.20.21.11")
+			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
 
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
