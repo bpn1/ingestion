@@ -7,8 +7,11 @@ object WikipediaAliasCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputTablename = "wikipediaaliases"
+	val TAG = "WikipediaAliasCounter"
 
-	def identifyAliasOccurrencesInArticle(article: ParsedWikipediaEntry): AliasOccurrencesInArticle = {
+	def identifyAliasOccurrencesInArticle(
+		article: ParsedWikipediaEntry): AliasOccurrencesInArticle =
+	{
 		val links = article.links
 			.map(_.alias)
 			.toSet
@@ -32,7 +35,7 @@ object WikipediaAliasCounter {
 			.map(_._1)
 			.filter(_.length > 100)
 			.collect
-			.foreach(alias => println("[WikipediaAliasCounter ERROR]    Very long alias: " + alias.take(100)))
+			.foreach(alias => println(s"[$TAG ERROR]\tVery long alias: " + alias.take(100)))
 
 		allAliasOccurrences
 			.filter { case (alias, isLink) => alias.nonEmpty && alias.length < 100 }
@@ -48,8 +51,9 @@ object WikipediaAliasCounter {
 
 				counters
 					.foreach { case (alias1, isLink, count) =>
-						if (isLink)
+						if (isLink) {
 							linkOccurrences += count
+						}
 						totalOccurrences += count
 					}
 				AliasCounter(alias, linkOccurrences, totalOccurrences)

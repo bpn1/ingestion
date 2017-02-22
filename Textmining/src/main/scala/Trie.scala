@@ -17,7 +17,10 @@ sealed trait Trie extends Traversable[List[String]] with Serializable {
 
 }
 
-class TrieNode(val token : Option[String] = None, var word: Option[List[String]] = None) extends Trie {
+class TrieNode(
+	val token : Option[String] = None,
+	var word: Option[List[String]] = None) extends Trie
+{
 
 	val children: mutable.Map[String, TrieNode] = mutable.Map[String, TrieNode]()
 
@@ -50,7 +53,11 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 
 	override def findByPrefix(prefix: List[String]): scala.collection.Seq[List[String]] = {
 
-		@tailrec def helper(currentIndex: Int, node: TrieNode, items: ListBuffer[List[String]]): ListBuffer[List[String]] = {
+		@tailrec def helper(
+			currentIndex: Int,
+			node: TrieNode,
+			items: ListBuffer[List[String]]): ListBuffer[List[String]] =
+		{
 			if (currentIndex == prefix.length) {
 				items ++ node
 			} else {
@@ -107,7 +114,11 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 
 	def pathTo(word : List[String]): Option[ListBuffer[TrieNode]] = {
 
-		def helper(buffer : ListBuffer[TrieNode], currentIndex : Int, node : TrieNode): Option[ListBuffer[TrieNode]] = {
+		def helper(
+			buffer : ListBuffer[TrieNode],
+			currentIndex : Int,
+			node : TrieNode): Option[ListBuffer[TrieNode]] =
+		{
 			if (currentIndex == word.length) {
 				node.word.map(word => buffer += node)
 			} else {
@@ -125,7 +136,11 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 	}
 
 	def matchTokens(tokens: List[String]): ListBuffer[List[String]] = {
-		@tailrec def helper(currentIndex: Int, node: TrieNode, items: ListBuffer[List[String]]): ListBuffer[List[String]] = {
+		@tailrec def helper(
+			currentIndex: Int,
+			node: TrieNode,
+			items: ListBuffer[List[String]]): ListBuffer[List[String]] =
+		{
 			if(node.word != None) {
 				items += node.word.get
 			}
@@ -146,6 +161,7 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 		val childrenDesc = children.mkString("\n" + indent)
 		val desc = indent + nodeDesc + "\n" + indent + childrenDesc
 		val newIndent = indent + "\t"
-		return desc + "\n" + newIndent + children.map(child => child._2.printableString(level + 1)).mkString("\n")
+		val result = desc + "\n" + newIndent
+		result + children.map(child => child._2.printableString(level + 1)).mkString("\n")
 	}
 }

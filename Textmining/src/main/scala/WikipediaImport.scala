@@ -6,7 +6,7 @@ import scala.xml.XML
 import WikiClasses.WikipediaEntry
 
 object WikipediaImport {
-	val inputFile = "dewiki.xml" // load from hdfs
+	val inputFile = "dewiki.xml"
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 
@@ -22,11 +22,19 @@ object WikipediaImport {
 			.setAppName("WikipediaImport")
 			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
+		// scalastyle:off line.size.limit
 		// from https://github.com/databricks/spark-xml/blob/master/src/main/scala/com/databricks/spark/xml/util/XmlFile.scala
+		// scalastyle:on line.size.limit
 		sc.hadoopConfiguration.set(XmlInputFormat.START_TAG_KEY, "<page>")
 		sc.hadoopConfiguration.set(XmlInputFormat.END_TAG_KEY, "</page>")
 		sc.hadoopConfiguration.set(XmlInputFormat.ENCODING_KEY, "UTF-8")
-		sc.newAPIHadoopFile(inputFile, classOf[XmlInputFormat], classOf[LongWritable], classOf[Text])
+		val inputXML = sc.newAPIHadoopFile(
+			inputFile,
+			classOf[XmlInputFormat],
+			classOf[LongWritable],
+			classOf[Text])
+
+		inputXML
 			.map(pair => new String(pair._2.getBytes, 0, pair._2.getLength, "UTF-8"))
 			.map(parseXML)
 			.saveToCassandra(keyspace, tablename)

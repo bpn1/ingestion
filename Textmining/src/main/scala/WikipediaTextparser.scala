@@ -134,12 +134,13 @@ object WikipediaTextparser {
 		var depth = 0
 		var escaped = false
 		for (character <- wikitext) {
-			if (!escaped && character == '{')
+			if (!escaped && character == '{') {
 				depth += 1
-			else if (!escaped && character == '}' && depth > 0)
+			} else if (!escaped && character == '}' && depth > 0) {
 				depth -= 1
-			else if (depth == 0)
+			} else if (depth == 0) {
 				cleanText += character
+			}
 			escaped = character == '\\'
 		}
 		cleanText
@@ -151,13 +152,15 @@ object WikipediaTextparser {
 		var escaped = false
 		for (i <- startIndex until wikitext.length) {
 			val character = wikitext(i)
-			if (!escaped && character == '{')
+			if (!escaped && character == '{') {
 				depth += 1
-			else if (!escaped && character == '}' && depth > 0)
+			} else if (!escaped && character == '}' && depth > 0) {
 				depth -= 1
+			}
 			infoboxText += character
-			if (depth == 0)
+			if (depth == 0) {
 				return infoboxText
+			}
 			escaped = character == '\\'
 		}
 
@@ -186,16 +189,21 @@ object WikipediaTextparser {
 
 	def linkMatchToLink(linkMatch: scala.util.matching.Regex.Match): Link = {
 		val page = linkMatch.group(1)
-		if (page.startsWith("Datei:"))
+		if (page.startsWith("Datei:")) {
 			return null
+		}
 
 		var alias = ""
-		if (linkMatch.groupCount > 2)
+		if (linkMatch.groupCount > 2) {
 			alias = linkMatch.group(2)
-		if (alias != null)
-			alias = alias.stripPrefix("|")
-		if (alias == null || alias.isEmpty)
+		}
+		if (alias != null) {
+		alias = alias.stripPrefix("|")
+		}
+		if (alias == null || alias.isEmpty) {
 			alias = page
+		}
+
 
 		Link(alias, page, infoboxOffset)
 	}
@@ -209,8 +217,9 @@ object WikipediaTextparser {
 			.matchData
 			.foreach { linkMatch =>
 				val link = linkMatchToLink(linkMatch)
-				if (link != null)
+				if (link != null) {
 					linkList += link
+				}
 			}
 		linkList.toList
 	}
