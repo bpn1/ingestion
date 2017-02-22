@@ -3,6 +3,7 @@ import java.util.{Date, UUID}
 import scala.collection.mutable
 import com.datastax.spark.connector._
 import com.datastax.driver.core.utils.UUIDs
+import DataLake.{Subject, SubjectManager, Version}
 
 object DataLakeImport {
 	val appname = "DataLakeImport_v1.0"
@@ -30,18 +31,22 @@ object DataLakeImport {
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
-		if(wd.label.isDefined)
+		if(wd.label.isDefined) {
 			sm.setName(wd.label.get)
-		if(wd.aliases.size > 0)
+		}
+		if(wd.aliases.nonEmpty) {
 			sm.addAliases(wd.aliases)
-		if(wd.instancetype.isDefined)
+		}
+		if(wd.instancetype.isDefined) {
 			sm.setCategory(wd.instancetype.get)
-
+		}
 		val metadata = mutable.Map(("wikidata_id", List(wd.id)))
-		if(wd.wikiname.isDefined)
+		if(wd.wikiname.isDefined) {
 			metadata += "wikipedia_name" -> List(wd.wikiname.get)
-		if(wd.data.size > 0)
+		}
+		if(wd.data.nonEmpty) {
 			metadata ++= wd.data
+		}
 
 		sm.addProperties(metadata.toMap)
 
@@ -59,7 +64,7 @@ object DataLakeImport {
 	def main(args : Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName(appname)
-			.set("spark.cassandra.connection.host", "172.20.21.11")
+			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
 		val wikidata = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
@@ -75,8 +80,12 @@ object DataLakeImport {
 			.saveToCassandra(outputKeyspace, outputTablename)
 
 		// write version information
-		sc.parallelize(List((version.version, version.timestamp, version.datasources, version.program)))
-			.saveToCassandra(outputKeyspace, versionTablename, SomeColumns("version", "timestamp", "datasources", "program"))
+		val versionRDD = sc.parallelize(
+			List((version.version, version.timestamp, version.datasources, version.program)))
+		versionRDD.saveToCassandra(
+			outputKeyspace,
+			versionTablename,
+			SomeColumns("version", "timestamp", "datasources", "program"))
 
 		//sc.stop
 	}

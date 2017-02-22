@@ -1,92 +1,102 @@
-import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
+import org.scalatest.FlatSpec
+import WikiClasses._
 
-class WikipediaContextExtractorTest extends FlatSpec with SharedSparkContext {
+class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with SharedSparkContext {
 	"Link contexts" should "contain all occurring page names of links and only once" in {
 		val pageNames = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
 			.map(_.pagename)
 			.sortBy(identity)
-		assert(areRDDsEqual(pageNames.asInstanceOf[RDD[Any]], allPageNamesTestRDD().asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(pageNames, allPageNamesTestRDD()))
 	}
 
 	"Link contexts" should "not be empty" in {
 		val contexts = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
-		assert(!contexts.isEmpty())
-		contexts
+		assert(!contexts.isEmpty)
+	}
+
+	"Link contexts" should "contain any words" in {
+		WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
 			.collect
 			.foreach(context => assert(context.words.nonEmpty))
 	}
 
 	"Link contexts of one article" should "contain all occurring page names of links" in {
-		val testArticle = parsedWikipediaTestRDD()
-			.filter(_.title == "Testartikel")
-			.collect
-			.head
-		val pageNames = WikipediaContextExtractor.extractLinkContextsFromArticle(testArticle)
+		val articleTitle = "Testartikel"
+		val article = getArticle(articleTitle)
+		val pageNames = WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanCoreNLPTokenizer)
 			.map(_.pagename)
 		assert(pageNames == allPageNamesOfTestArticleList())
 	}
 
 	"Link contexts of one article" should "contain at least these words" in {
-		val testArticle = parsedWikipediaTestRDD()
-			.filter(_.title == "Streitberg (Brachttal)")
+		val articleTitle = "Streitberg (Brachttal)"
+		val testWords = articleContextwordSets()(articleTitle)
+		val article = getArticle(articleTitle)
+		WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanCoreNLPTokenizer)
+			.foreach(context => assert(isSubset(testWords, context.words)))
+	}
+
+	"Document frequencies" should "not be empty" in {
+		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
+		assert(!documentFrequencies.isEmpty)
+	}
+
+	"Document frequencies" should "be greater than zero" in {
+		WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
 			.collect
-			.head
-		WikipediaContextExtractor.extractLinkContextsFromArticle(testArticle)
-			.foreach(context => assert(isSubset(articleContextWords().asInstanceOf[Set[Any]], context.words.asInstanceOf[Set[Any]])))
+			.foreach(df => assert(df.count > 0))
 	}
 
-	def printSequence(sequence: Seq[Any], title: String = ""): Unit = {
-		println(title)
-		sequence
-			.foreach(println)
+	"Word set from one article" should "be exactly this word set" in {
+		val articleTitle = "Testartikel"
+		val testWords = articleContextwordSets()(articleTitle)
+		val article = getArticle(articleTitle)
+		val wordSet = WikipediaContextExtractor.textToWordSet(article.text.get, new CleanCoreNLPTokenizer)
+		assert(areSetsEqual(wordSet, testWords))
 	}
 
-	def areRDDsEqual(is: RDD[Any], should: RDD[Any]): Boolean = {
-		//		printSequence(is.collect, "\nRDD:")
-		//		printSequence(should.collect, "\nShould be:")
-		val sizeIs = is.count
-		val sizeShould = should.count
-		if (sizeIs != sizeShould)
-			return false
-		val diff = is
+	"Document frequencies" should "contain these document frequencies" in {
+		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
 			.collect
-			.zip(should.collect)
-			.collect { case (a, b) if a != b => a -> b }
-		diff.isEmpty
+			.toSet
+		val testDocumentFrequencies = documentFrequenciesTestRDD()
+			.collect
+			.toSet
+		assert(isSubset(testDocumentFrequencies, documentFrequencies))
 	}
 
-	def isSubset(subset: Set[Any], set: Set[Any]): Boolean = {
-		//		printSequence(subset.toSeq, "\nSet:")
-		//		printSequence(set.toSeq, "\nShould be subset of:")
-		subset.subsetOf(set)
+	def getArticle(title: String): ParsedWikipediaEntry = {
+		parsedWikipediaTestRDD()
+			.filter(_.title == title)
+		    .first
 	}
 
-	def parsedWikipediaTestRDD(): RDD[WikiClasses.ParsedWikipediaEntry] = {
+	def parsedWikipediaTestRDD(): RDD[ParsedWikipediaEntry] = {
 		sc.parallelize(List(
-			WikiClasses.ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
-					WikiClasses.Link("Audi", "Audi", 9)
+					Link("Audi", "Audi", 9)
 				),
 				List("Audi")),
-			WikiClasses.ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
+			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
 				List("Audi")),
-			WikiClasses.ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
-					WikiClasses.Link("Brachttal", "Brachttal", 55),
-					WikiClasses.Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
-					WikiClasses.Link("Hessen", "Hessen", 87),
-					WikiClasses.Link("1377", "1377", 225),
-					WikiClasses.Link("Büdinger Wald", "Büdinger Wald", 546)
+					Link("Brachttal", "Brachttal", 55),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
+					Link("Hessen", "Hessen", 87),
+					Link("1377", "1377", 225),
+					Link("Büdinger Wald", "Büdinger Wald", 546)
 				),
 				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald")),
-			WikiClasses.ParsedWikipediaEntry("Testartikel", Option("""Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."""),
+			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
-					WikiClasses.Link("Audi", "Audi", 7),
-					WikiClasses.Link("Brachttal", "Brachttal", 13),
-					WikiClasses.Link("historisches Jahr", "1377", 24)
+					Link("Audi", "Audi", 7),
+					Link("Brachttal", "Brachttal", 13),
+					Link("historisches Jahr", "1377", 24)
 				),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
 	}
@@ -111,9 +121,24 @@ class WikipediaContextExtractorTest extends FlatSpec with SharedSparkContext {
 		)
 	}
 
-	def articleContextWords(): Set[String] = {
-		Set("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde",
-			"Im", "Jahre", "1500", "ist", "von", "Stridberg", "die",
-			"Vom", "Mittelalter", "bis", "ins", "19.", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte")
+	def articleContextwordSets(): Map[String, Set[String]] = {
+		Map("Testartikel" ->
+			Set("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
+
+			"Streitberg (Brachttal)" ->
+				Set("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde",
+					"Im", "Jahre", "1500", "ist", "von", "Stridberg", "die",
+					"Vom", "Mittelalter", "bis", "ins", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte"
+				))
+	}
+
+	def documentFrequenciesTestRDD(): RDD[DocumentFrequency] = {
+		sc.parallelize(List(
+			DocumentFrequency("Audi", 3),
+			DocumentFrequency("Backfisch", 1),
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 2),
+			DocumentFrequency("zugleich", 1)
+		))
 	}
 }

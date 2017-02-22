@@ -57,7 +57,6 @@ object TrieBuilder {
 				trieSerializer.getField("token").setClass(classOf[Option[_]], kryo.getSerializer(classOf[Option[_]]))
 				trieSerializer.getField("word").setClass(classOf[Option[_]], kryo.getSerializer(classOf[Option[_]]))
 				kryo.register(classOf[TrieNode], trieSerializer)
-
 				val hadoopConf = new Configuration()
 				val triePath = new Path("/user/bp2016n1/trie.bin")
 				val fs = FileSystem.get(hadoopConf)

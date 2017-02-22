@@ -17,7 +17,10 @@ sealed trait Trie extends Traversable[List[String]] with Serializable {
 
 }
 
-class TrieNode(val token : Option[String] = None, var word: Option[List[String]] = None) extends Trie {
+class TrieNode(
+	val token : Option[String] = None,
+	var word: Option[List[String]] = None) extends Trie
+{
 
 	def this() = this(None, None)
 
@@ -52,7 +55,11 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 
 	override def findByPrefix(prefix: List[String]): scala.collection.Seq[List[String]] = {
 
-		@tailrec def helper(currentIndex: Int, node: TrieNode, items: ListBuffer[List[String]]): ListBuffer[List[String]] = {
+		@tailrec def helper(
+			currentIndex: Int,
+			node: TrieNode,
+			items: ListBuffer[List[String]]): ListBuffer[List[String]] =
+		{
 			if (currentIndex == prefix.length) {
 				items ++ node
 			} else {
@@ -109,7 +116,11 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 
 	def pathTo(word : List[String]): Option[ListBuffer[TrieNode]] = {
 
-		def helper(buffer : ListBuffer[TrieNode], currentIndex : Int, node : TrieNode): Option[ListBuffer[TrieNode]] = {
+		def helper(
+			buffer : ListBuffer[TrieNode],
+			currentIndex : Int,
+			node : TrieNode): Option[ListBuffer[TrieNode]] =
+		{
 			if (currentIndex == word.length) {
 				node.word.map(word => buffer += node)
 			} else {
@@ -127,7 +138,12 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 	}
 
 	def matchTokens(tokens: List[String]): ListBuffer[List[String]] = {
-		@tailrec def helper(currentIndex: Int, node: TrieNode, items: ListBuffer[List[String]]): ListBuffer[List[String]] = {
+		@tailrec def helper(
+			currentIndex: Int,
+			node: TrieNode,
+			items: ListBuffer[List[String]]
+		): ListBuffer[List[String]] =
+		{
 			if(node.word.isDefined) {
 				items += node.word.get
 			}
@@ -146,7 +162,12 @@ class TrieNode(val token : Option[String] = None, var word: Option[List[String]]
 	override def toString(): String = s"Trie(token=$token,word=$word)"
 
 	def printableString(level: Int): String = {
-		def helper(currentIndex: Int, node: TrieNode, outputStringBuffer: ListBuffer[String]): Unit = {
+		def helper(
+			currentIndex: Int,
+			node: TrieNode,
+			outputStringBuffer: ListBuffer[String]
+		): Unit =
+		{
 			val nodeDesc = s"Trie(token=$token,word=$word)"
 			val indent = "\t" * currentIndex
 			outputStringBuffer += indent + nodeDesc
