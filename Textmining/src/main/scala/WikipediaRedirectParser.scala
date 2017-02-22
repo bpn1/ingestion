@@ -57,7 +57,10 @@ object WikipediaRedirectParser {
 		// val joinedRDD = wikiRDD
 		// 	.join(parsedWikipediaRDD)
 		// 	.take(100)
-		// .map(entry => (entry._2._1._1, new Regex("([rR][eE][dD][iI][rR][eE][cC][tT])\\s?").replaceAllIn(entry._2._1._2, "WEITERLEITUNG")))
+//			.map { entry =>
+//				val regex = new Regex("(?i)(redirect)\\s?")
+//			(entry._2._1._1, regex.replaceAllIn(entry._2._1._2, "WEITERLEITUNG"))
+//			}
 		// 	.map(entry => (entry._1, entry._2, wikipediaToHtml(entry._2)))
 		// 	.foreach(println)
 

@@ -2,8 +2,12 @@ import scala.collection.immutable.Set
 import scala.collection.SetLike
 import scala.collection.mutable.Builder
 
-class Bag[A](private val counts: Map[A, Int] = Map.empty[A, Int]) extends SetLike[A, Bag[A]] with Set[A] {
+class Bag[A](
+	private val counts: Map[A, Int] = Map.empty[A, Int]) extends SetLike[A, Bag[A]] with Set[A]
+{
+
 	// http://stackoverflow.com/questions/15065070/implement-a-multiset-bag-as-scala-collection
+
 	override def +(elem: A): Bag[A] = {
 		val count = this.counts.getOrElse(elem, 0) + 1
 		new Bag(this.counts + (elem -> count))

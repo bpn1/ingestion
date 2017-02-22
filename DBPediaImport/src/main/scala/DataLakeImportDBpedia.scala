@@ -20,8 +20,9 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
-		if(entity.label.isDefined)
+		if(entity.label.isDefined) {
 			sm.setName(entity.label.orNull)
+		}
 
 		val metadata = mutable.Map[String, List[String]]()
 		metadata("dbpedianame") = List(entity.dbpedianame)

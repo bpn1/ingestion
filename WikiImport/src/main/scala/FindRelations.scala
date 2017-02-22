@@ -4,6 +4,7 @@ import scala.collection.mutable
 import scala.util.matching.Regex
 import com.datastax.spark.connector._
 import com.datastax.driver.core.utils.UUIDs
+import DataLake.{Subject, SubjectManager, Version}
 
 object FindRelations {
 	val appname = "FindRelations_v1.1"
@@ -15,7 +16,11 @@ object FindRelations {
 
 	val wikiDataIdKey = "wikidata_id"
 
-	def findRelations(subject: Subject, idMap: Map[String, (UUID, String)], version: Version): Subject = {
+	def findRelations(
+		subject: Subject,
+		idMap: Map[String, (UUID, String)],
+		version: Version): Subject =
+	{
 		val sm = new SubjectManager(subject, version)
 		val relationsBuffer = mutable.Map[UUID, Map[String, String]]()
 
@@ -29,16 +34,17 @@ object FindRelations {
 				val updatedList = mutable.ListBuffer[String]()
 
 				for(value <- list) {
-					if(idRegex.findFirstIn(value) != None && idMap.contains(value)) {
+					if(idRegex.findFirstIn(value).isDefined && idMap.contains(value)) {
 						val idTuple = idMap(value)
 						relationsBuffer ++= Map(idTuple._1 -> Map("type" -> key))
 
 						// translate ID to label (if available)
 						val label = idTuple._2
-						if(label != "")
+						if(label != "") {
 							updatedList.append(label)
-						else
+						} else {
 							updatedList.append(value)
+						}
 					} else {
 						updatedList.append(value) // keep original values
 					}
@@ -82,7 +88,11 @@ object FindRelations {
 			.saveToCassandra(keyspace, tablename)
 
 		// write version information
-		sc.parallelize(List((version.version, version.timestamp, version.datasources, version.program)))
-			.saveToCassandra(keyspace, versionTablename, SomeColumns("version", "timestamp", "datasources", "program"))
+		val versionRDD = sc.parallelize(
+			List((version.version, version.timestamp, version.datasources, version.program)))
+		versionRDD.saveToCassandra(
+			keyspace,
+			versionTablename,
+			SomeColumns("version", "timestamp", "datasources", "program"))
 	}
 }

@@ -13,9 +13,14 @@ object WikiDataRDD {
 	val keyspace = "wikidumps"
 	val tablename = "wikidata"
 
-	case class WikiDataEntity(var id: String = null, var entitytype: String = null,
-		var wikiname: String = null, var description: String = null, var label: String = null,
-		var aliases: List[String] = null, var data: Map[String, List[String]] = Map[String, List[String]]())
+	case class WikiDataEntity(
+		var id: String = null,
+		var entitytype: String = null,
+		var wikiname: String = null,
+		var description: String = null,
+		var label: String = null,
+		var aliases: List[String] = null,
+		var data: Map[String, List[String]] = Map[String, List[String]]())
 
 	// remove array syntax from JSON for parallel parsing
 	def cleanJSON(json: String): String = {
@@ -35,49 +40,52 @@ object WikiDataRDD {
 				return null
 		}
 
-		if(element.getClass == classOf[JsUndefined])
+		if(element.getClass == classOf[JsUndefined]) {
 			return null
-
+		}
 		element
 	}
 
 	def extractString(json: JsValue, path: List[String]): String = {
 		val value = getValue(json, path)
 		try {
-			if(value != null)
+			if(value != null) {
 				value.as[String]
-			else
+			} else {
 				null
+			}
 		} catch {
 			case e : Exception =>
 				println(value + " " + value.getClass)
 				null
 		}
-
 	}
 
 	def extractList(json: JsValue, path: List[String]): List[JsValue] = {
 		val value = getValue(json, path)
-		if(value != null)
+		if(value != null) {
 			value.as[List[JsValue]]
-		else
+		} else {
 			null
+		}
 	}
 
 	def extractMap(json: JsValue, path: List[String]): Map[String, JsValue] = {
 		val value = getValue(json, path)
-		if(value != null)
+		if(value != null) {
 			value.as[Map[String, JsValue]]
-		else
+		} else {
 			null
+		}
 	}
 
 	def extractDouble(json: JsValue, path: List[String]): String = {
 		val value = getValue(json, path)
-		if(value != null)
+		if(value != null) {
 			value.as[Double].toString
-		else
+		} else {
 			null
+		}
 	}
 
 	def parseDataType(dataType: String, dataValue: JsValue): String = {
@@ -89,9 +97,13 @@ object WikiDataRDD {
 			case "time" =>
 				extractString(dataValue, List("value", "time"))
 			case "globecoordinate" =>
-				extractDouble(dataValue, List("value", "latitude")) + ";" + extractDouble(dataValue, List("value", "longitude"))
+				extractDouble(dataValue, List("value", "latitude")) +
+					";" +
+					extractDouble(dataValue, List("value", "longitude"))
 			case "quantity" =>
-				extractString(dataValue, List("value", "amount")) + ";" + extractString(dataValue, List("value", "unit")).split("/").last
+				extractString(dataValue, List("value", "amount")) +
+					";" +
+					extractString(dataValue, List("value", "unit")).split("/").last
 			case "monolingualtext" =>
 				extractString(dataValue, List("value", "text"))
 			case null =>
@@ -101,37 +113,39 @@ object WikiDataRDD {
 		}
 	}
 
-	def parseEntity(line: String): WikiDataEntity = {
-		val json = Json.parse(line)
+	def fillEntityValues(json: JsValue): WikiDataEntity = {
 		val entity = WikiDataEntity()
-
 		entity.id = extractString(json, List("id"))
 		entity.entitytype = extractString(json, List("type"))
 		entity.wikiname = extractString(json, List("sitelinks", language + "wiki", "title"))
-
 		entity.description = extractString(json, List("descriptions", language, "value"))
 		if(entity.description == null) {
-			entity.description = extractString(json, List("descriptions", fallbackLanguage, "value"))
+			entity.description = extractString(
+				json,
+				List("descriptions", fallbackLanguage, "value"))
 		}
-
 		// fall back to secondary language or first available language for label
 		val labels = getValue(json, List("labels")).as[JsObject]
 		val labelLanguages = labels.keys
-
 		if(labelLanguages.contains(language) && entity.entitytype != "property") {
 			entity.label = extractString(labels, List(language, "value"))
 		} else if(labelLanguages.contains(fallbackLanguage)) {
 			entity.label = extractString(labels, List(fallbackLanguage, "value"))
-		} else if(labelLanguages.size > 0) {
+		} else if(labelLanguages.nonEmpty) {
 			// take first available language if other two languages don't exist
 			val firstLanguage = labelLanguages.head
 			entity.label = extractString(labels, List(firstLanguage, "value"))
 		}
+		entity
+	}
+
+	def parseEntity(line: String): WikiDataEntity = {
+		val json = Json.parse(line)
+		val entity = fillEntityValues(json)
 
 		// concatenate aliases in all languages
 		val aliases = getValue(json, List("aliases")).as[JsObject]
 		val aliasBuffer = mutable.ListBuffer[String]()
-
 		for(language <- aliases.keys) {
 			try {
 				aliasBuffer ++= extractList(aliases, List(language))
@@ -141,7 +155,6 @@ object WikiDataRDD {
 					println(aliases, aliases.getClass)
 			}
 		}
-
 		entity.aliases = aliasBuffer.toList
 
 		val claims = extractMap(json, List("claims"))
@@ -153,20 +166,25 @@ object WikiDataRDD {
 					val dataValue = getValue(claim, List("mainsnak", "datavalue"))
 					val dataType = extractString(dataValue, List("type"))
 					val value = parseDataType(dataType, dataValue)
-					if(value != "")
+					if(value != "") {
 						propertyBuffer += value
+					}
 				}
 				claimBuffer += Tuple2(property, propertyBuffer.toList)
 			}
 		}
-		entity.data = claimBuffer.toMap
 
+		entity.data = claimBuffer.toMap
 		entity
 	}
 
-	def translatePropertyIDs(entity: WikiDataEntity, properties: Map[String, String]): WikiDataEntity = {
+	def translatePropertyIDs(
+		entity: WikiDataEntity,
+		properties: Map[String, String]): WikiDataEntity =
+	{
 		val translatedData = entity.data.map { case (key, value) =>
-			val newKey = properties.getOrElse(key, key) // keep original key if there is no such key in the Map
+			// keep original key if there is no such key in the Map
+			val newKey = properties.getOrElse(key, key)
 			(newKey, value)
 		}.toMap
 
@@ -198,8 +216,9 @@ object WikiDataRDD {
 
 	def main(args: Array[String]) {
 		var inputFile = defaultInputFile
-		if(args.length > 0)
+		if(args.length > 0) {
 			inputFile = args(0)
+		}
 
 		val conf = new SparkConf()
 			.setAppName("WikiDataRDD")
@@ -210,9 +229,19 @@ object WikiDataRDD {
 		val wikiData = parseDump(jsonFile) //.cache
 
 		val properties = buildPropertyMap(wikiData)
-		var propertyBroadcast = sc.broadcast(properties)
+		val propertyBroadcast = sc.broadcast(properties)
 
 		translateProps(wikiData, propertyBroadcast)
-			.saveToCassandra(keyspace, tablename, SomeColumns("id", "entitytype", "wikiname", "description", "label", "aliases", "data"))
+			.saveToCassandra(
+				keyspace,
+				tablename,
+				SomeColumns(
+					"id",
+					"entitytype",
+					"wikiname",
+					"description",
+					"label",
+					"aliases",
+					"data"))
 	}
 }
