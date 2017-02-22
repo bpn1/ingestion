@@ -1,3 +1,4 @@
+import DataLake.{Subject, SubjectManager, Version}
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import java.util.{UUID, Date}
@@ -10,19 +11,23 @@ object VersionDiff {
 	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
 
 	def timeFromUUID(uuid : UUID): Long = {
+		// scalastyle:off line.size.limit
 		// from https://github.com/rantav/hector/blob/master/core/src/main/java/me/prettyprint/cassandra/utils/TimeUUIDUtils.java
+		// scalastyle:on line.size.limit
 		(uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000
 	}
 
-	// returns list of values of the given version or the last version before it that changed the given field
+	// returns list of values of the given version
+	// or the last version before it that changed the given field
 	def findValues(queryVersion : UUID, versionList : List[Version]) : List[String] = {
 		// check if our version exists in the list
-		if(versionList.filter(_.version == queryVersion).length > 0) {
+		if(versionList.exists(_.version == queryVersion)) {
 			versionList.filter(_.version == queryVersion).head.value
 		} else {
 			// returns the last version of all versions older than the one we look for
-			val olderVersions = versionList.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersion))
-			if(olderVersions.length > 0) {
+			val olderVersions = versionList
+				.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersion))
+			if(olderVersions.nonEmpty) {
 				olderVersions.maxBy(v => timeFromUUID(v.version)).value
 			} else {
 				// there is no older version for this value
@@ -33,33 +38,40 @@ object VersionDiff {
 
 	// returns a list of old and new values for the given field
 	// returns null if the current field has no versions
-	def createValueList(oldVersion : UUID, newVersion : UUID, versionList : List[Version]) : List[List[String]] = {
-		if(versionList.length > 0) {
+	def createValueList(
+		oldVersion : UUID,
+		newVersion : UUID,
+		versionList : List[Version]) : List[List[String]] =
+	{
+		if(versionList.nonEmpty) {
 			List(findValues(oldVersion, versionList), findValues(newVersion, versionList))
 		} else {
 			null
 		}
 	}
 
-	// returns an empty string if there were no versions no compare and otherwise returns a string in the following format
+	// returns an empty string if there were no versions no compare
+	// otherwise returns a string in the following format
 	// -oldValue1;oldValue2;oldValue3 +newValue1;newValue2;newValue3
 	def diffLists(valueList : List[List[String]]) : JsValue = {
 		// if input does not exist
-		if(valueList == null)
+		if(valueList == null) {
 			return null
-
+		}
 		val result = mutable.Map[String, JsValue]()
 		val oldValueList = valueList(0)
 		val newValueList = valueList(1)
 		val oldValues = oldValueList.filterNot(newValueList.toSet)
 		val newValues = newValueList.filterNot(oldValueList.toSet)
-		if(oldValues.length > 0)
+		if(oldValues.nonEmpty) {
 			result += Tuple2("-", Json.toJson(oldValues))
-		if(newValues.length > 0)
+		}
+		if(newValues.nonEmpty) {
 			result += Tuple2("+", Json.toJson(newValues))
-
-		if(result.size == 0)
+		}
+		if(result.isEmpty) {
 			return null
+		}
 		Json.toJson(result.toMap)
 	}
 
@@ -117,7 +129,7 @@ object VersionDiff {
 					"relations" -> Json.toJson(relations
 						.map { case (key, value) =>
 							(key.toString, value.mapValues(diffLists).filter(_._2 != null))
-						}.filter(_._2.size > 0)
+						}.filter(_._2.nonEmpty)
 						.mapValues(propMap => Json.toJson(propMap)))
 				).filter(_._2 != null)
 		}
@@ -126,12 +138,13 @@ object VersionDiff {
 	def main(args : Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("VersionDiff")
-			.set("spark.cassandra.connection.host", "172.20.21.11")
+			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
 
 		// stop if we don't have two versions to compare
-		if(args.length < 2)
-            return
+		if(args.length < 2) {
+			return
+		}
 
 		// identify older and newer version
 		var oldVersion = UUID.fromString(args(0))
