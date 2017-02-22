@@ -14,7 +14,12 @@ object TrieBuilder {
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
 
-	def matchEntry(entry: ParsedWikipediaEntry, trie: TrieNode, tokenizer: Tokenizer): ParsedWikipediaEntry = {
+	def matchEntry(
+		entry: ParsedWikipediaEntry,
+		trie: TrieNode,
+		tokenizer: Tokenizer
+	): ParsedWikipediaEntry =
+	{
 		val sentenceTokenizer = new SentenceTokenizer()
 		val sentenceList = sentenceTokenizer.tokenize(entry.getText)
 		val resultList = mutable.ListBuffer[String]()
@@ -26,45 +31,42 @@ object TrieBuilder {
 				resultList ++= aliasMatches.map(tokenizer.reverse)
 			}
 		}
-		entry.foundaliases = resultList.toList
+		entry.foundaliases = resultList.distinct.toList
 		entry
 	}
 
+	// recommended spark-submit flags
+	// --driver-memory 16G				<< needed for building the Trie
+	// --driver-java-options -Xss1g		<< needed for serialization of Trie
+	// --conf spark.executor.extrajavaoptions="-Xss8g"	<< not sure if needed
+	// --conf spark.yarn.am.extraJavaOptions="-Xss8g"	<< not sure if needed
+	// --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
+	// ThreadStackSize is needed for deserialization of Trie
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("TrieBuilder")
 			.set("spark.cassandra.connection.host", "odin01")
 		 	.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+			.set("spark.kryo.registrator", "TrieKryoRegistrator")
 		val sc = new SparkContext(conf)
-
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
-//		val aliases = parsedWikipedia
-//			.flatMap(_.links)
-//			.map(_.alias)
-//			.distinct
-//			.collect
+		val aliasList = parsedWikipedia
+			.flatMap(_.links)
+			.map(_.alias)
+			.distinct
+			.collect
 
 		val tokenizer = new WhitespaceTokenizer()
+		val localTrie = new TrieNode()
+		for(alias <- aliasList) {
+			localTrie.append(tokenizer.tokenize(alias))
+		}
+		val trieBroadcast = sc.broadcast(localTrie)
 
 		parsedWikipedia
 			.mapPartitions({ partition =>
-				val kryo = new Kryo()
-				kryo.addDefaultSerializer(classOf[mutable.Map[_, _]], classOf[MutableMapSerializer])
-				kryo.addDefaultSerializer(classOf[Option[_]], classOf[OptionSerializer])
-
-				val trieSerializer = new FieldSerializer(kryo, classOf[TrieNode])
-				trieSerializer.getField("children").setClass(classOf[mutable.Map[_, _]], kryo.getSerializer(classOf[mutable.Map[_, _]]))
-				trieSerializer.getField("token").setClass(classOf[Option[_]], kryo.getSerializer(classOf[Option[_]]))
-				trieSerializer.getField("word").setClass(classOf[Option[_]], kryo.getSerializer(classOf[Option[_]]))
-				kryo.register(classOf[TrieNode], trieSerializer)
-				val hadoopConf = new Configuration()
-				val triePath = new Path("/user/bp2016n1/trie.bin")
-				val fs = FileSystem.get(hadoopConf)
-				val trieStream = fs.open(triePath)
-				val trieInput = new Input(trieStream)
-				val inputTrie = kryo.readObject(trieInput, classOf[TrieNode])
-				trieInput.close()
-				partition.map(entry => matchEntry(entry, inputTrie, tokenizer))
+				val trie = trieBroadcast.value
+				partition.map(entry => matchEntry(entry, trie, tokenizer))
 			}, true)
 			.saveToCassandra(keyspace, tablename)
 

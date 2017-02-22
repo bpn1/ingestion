@@ -1,0 +1,30 @@
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.serializers.FieldSerializer
+import org.apache.spark.serializer.KryoRegistrator
+
+import scala.collection.mutable
+
+class TrieKryoRegistrator extends KryoRegistrator {
+	override def registerClasses(kryo: Kryo): Unit = {
+		kryo.register(classOf[mutable.Map[_, _]], new MutableMapSerializer())
+		kryo.register(classOf[Option[_]], new OptionSerializer())
+
+		val trieSerializer = new FieldSerializer(kryo, classOf[TrieNode])
+		trieSerializer
+			.getField("children")
+			.setClass(
+				classOf[mutable.Map[_, _]],
+				kryo.getSerializer(classOf[mutable.Map[_, _]]))
+		trieSerializer
+			.getField("token")
+			.setClass(
+				classOf[Option[_]],
+				kryo.getSerializer(classOf[Option[_]]))
+		trieSerializer
+			.getField("word")
+			.setClass(
+				classOf[Option[_]],
+				kryo.getSerializer(classOf[Option[_]]))
+		kryo.register(classOf[TrieNode], trieSerializer)
+	}
+}
