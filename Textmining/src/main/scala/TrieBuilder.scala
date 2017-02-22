@@ -31,7 +31,10 @@ object TrieBuilder {
 				resultList ++= aliasMatches.map(tokenizer.reverse)
 			}
 		}
-		entry.foundaliases = resultList.distinct.toList
+		entry.foundaliases = resultList
+			.filter(_ != "")
+			.distinct
+			.toList
 		entry
 	}
 
