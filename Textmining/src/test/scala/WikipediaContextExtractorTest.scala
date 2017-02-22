@@ -11,12 +11,12 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		assert(areRDDsEqual(pageNames, allPageNamesTestRDD()))
 	}
 
-	"Link contexts" should "not be empty" in {
+	they should "not be empty" in {
 		val contexts = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
 		assert(!contexts.isEmpty)
 	}
 
-	"Link contexts" should "contain any words" in {
+	they should "contain any words" in {
 		WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
 			.collect
 			.foreach(context => assert(context.words.nonEmpty))
@@ -30,7 +30,7 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		assert(pageNames == allPageNamesOfTestArticleList())
 	}
 
-	"Link contexts of one article" should "contain at least these words" in {
+	they should "contain at least these words" in {
 		val articleTitle = "Streitberg (Brachttal)"
 		val testWords = articleContextwordSets()(articleTitle)
 		val article = getArticle(articleTitle)
@@ -43,10 +43,20 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		assert(!documentFrequencies.isEmpty)
 	}
 
-	"Document frequencies" should "be greater than zero" in {
+	they should "be greater than zero" in {
 		WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
 			.collect
 			.foreach(df => assert(df.count > 0))
+	}
+
+	they should "contain these document frequencies" in {
+		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
+			.collect
+			.toSet
+		val testDocumentFrequencies = documentFrequenciesTestRDD()
+			.collect
+			.toSet
+		assert(isSubset(testDocumentFrequencies, documentFrequencies))
 	}
 
 	"Word set from one article" should "be exactly this word set" in {
@@ -55,16 +65,6 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		val article = getArticle(articleTitle)
 		val wordSet = WikipediaContextExtractor.textToWordSet(article.text.get, new CleanCoreNLPTokenizer)
 		assert(areSetsEqual(wordSet, testWords))
-	}
-
-	"Document frequencies" should "contain these document frequencies" in {
-		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
-			.collect
-			.toSet
-		val testDocumentFrequencies = documentFrequenciesTestRDD()
-			.collect
-			.toSet
-		assert(isSubset(testDocumentFrequencies, documentFrequencies))
 	}
 
 	def getArticle(title: String): ParsedWikipediaEntry = {

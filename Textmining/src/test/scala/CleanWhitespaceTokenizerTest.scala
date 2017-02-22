@@ -8,7 +8,7 @@ class CleanWhitespaceTokenizerTest extends FlatSpec with PrettyTester {
 			.foreach(tokens => assert(tokens.length > 1))
 	}
 
-	"Cleaned tokenized sentences" should "be exactly these token lists" in {
+	they should "be exactly these token lists" in {
 		val tokenizer = new CleanWhitespaceTokenizer
 		val tokenizedSentences = testSentences()
 			.map(tokenizer.tokenize)

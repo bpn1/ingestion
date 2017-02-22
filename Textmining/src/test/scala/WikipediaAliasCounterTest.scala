@@ -10,20 +10,20 @@ class WikipediaAliasCounterTest extends FlatSpec with PrettyTester with SharedSp
 		assert(countedAliases.count() == allAliases.count)
 	}
 
-	"Counted aliases" should "have the same aliases as all links" in {
+	they should "have the same aliases as all links" in {
 		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.map(_.alias)
 			.sortBy(identity)
 		assert(areRDDsEqual(countedAliases, allAliasesTestRDD()))
 	}
 
-	"Counted aliases" should "have counted any occurrence" in {
+	they should "have counted any occurrence" in {
 		WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.collect
 			.foreach(aliasCounter => assert(aliasCounter.totaloccurrences > 0))
 	}
 
-	"Counted aliases" should "have consistent counts" in {
+	they should "have consistent counts" in {
 		WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.collect
 			.foreach { aliasCounter =>
@@ -32,7 +32,7 @@ class WikipediaAliasCounterTest extends FlatSpec with PrettyTester with SharedSp
 			}
 	}
 
-	"Counted aliases" should "be exactly these counted aliases" in {
+	they should "be exactly these counted aliases" in {
 		val countedAliases = WikipediaAliasCounter
 			.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.sortBy(_.alias)

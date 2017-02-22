@@ -9,18 +9,18 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 		assert(groupedAliases.count > 0)
 	}
 
-	"Grouped page names" should "not be empty" in {
-		val groupedPageNames = WikipediaLinkAnalysis.groupByPageNames(parsedWikipediaTestRDD())
-		assert(groupedPageNames.count > 0)
-	}
-
-	"Grouped aliases" should "be exactly these aliases" in {
+	they should "be exactly these aliases" in {
 		val groupedAliases = WikipediaLinkAnalysis.groupByAliases(parsedWikipediaTestRDD())
 		val groupedAliasesTest = groupedAliasesTestRDD()
 		assert(areRDDsEqual(groupedAliases.asInstanceOf[RDD[Any]], groupedAliasesTest.asInstanceOf[RDD[Any]]))
 	}
 
-	"Grouped page names" should "be exactly these page names" in {
+	"Grouped page names" should "not be empty" in {
+		val groupedPageNames = WikipediaLinkAnalysis.groupByPageNames(parsedWikipediaTestRDD())
+		assert(groupedPageNames.count > 0)
+	}
+
+	they should "be exactly these page names" in {
 		val groupedPages = WikipediaLinkAnalysis.groupByPageNames(parsedWikipediaTestRDD())
 		val groupedPagesTest = groupedPagesTestRDD()
 		assert(areRDDsEqual(groupedPages.asInstanceOf[RDD[Any]], groupedPagesTest.asInstanceOf[RDD[Any]]))

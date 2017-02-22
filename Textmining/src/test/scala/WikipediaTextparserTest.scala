@@ -22,7 +22,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.foreach(element => assert(wikimarkupRegex.findFirstIn(element).isEmpty))
 	}
 
-	"Wikipedia article text" should "not contain escaped HTML characters" in {
+	it should "not contain escaped HTML characters" in {
 		val wikimarkupRegex = new Regex("&\\S*?;")
 		wikipediaTestRDD()
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText)))
@@ -31,7 +31,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.foreach(element => assert(wikimarkupRegex.findFirstIn(element.getText).isEmpty))
 	}
 
-	"Wikipedia article text" should "contain none of the tags: table, h[0-9], small" in {
+	it should "contain none of the tags: table, h[0-9], small" in {
 		val tagBlacklist = List[String]("table", "h[0-9]", "small")
 		wikipediaTestRDD()
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText)))
@@ -67,7 +67,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.foreach(links => assert(links.nonEmpty))
 	}
 
-	"Wikipedia links" should "contain links from all infoboxes in article" in {
+	they should "contain links from all infoboxes in article" in {
 		val infoboxArticles = wikipediaTestInfoboxArticles()
 		wikipediaTestRDD()
 			.filter(entry => infoboxArticles.contains(entry.title))
@@ -75,6 +75,27 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 			.map(_.links)
 			.collect
 			.foreach(links => assert(links.exists(link => link.offset == WikipediaTextparser.infoboxOffset)))
+	}
+
+	they should "be valid (have alias and page)" in {
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText)))
+			.map(WikipediaTextparser.parseHtml)
+			.flatMap(_.links)
+			.collect
+			.foreach(link => assert(isLinkValid(link)))
+	}
+
+	they should "be exactly these links" in {
+		val links = wikipediaTestReferences()
+		wikipediaTestRDD()
+			.map(WikipediaTextparser.parseWikipediaEntry)
+			.filter(entry => links.contains(entry.title))
+			.collect
+			.foreach { entry =>
+				for (i <- entry.links.indices)
+					assert(entry.links(i) == links(entry.title)(i)) // elementwise comparision shows where it fails
+			}
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
@@ -88,18 +109,10 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 
 	def isLinkValid(link: Link): Boolean = {
 		val result = link.alias.nonEmpty && link.page.nonEmpty
-		if (!result)
+		if (!result) {
 			println(link)
+		}
 		result
-	}
-
-	"Wikipedia links" should "be valid (have alias and page)" in {
-		wikipediaTestRDD()
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText)))
-			.map(WikipediaTextparser.parseHtml)
-			.flatMap(_.links)
-			.collect
-			.foreach(link => assert(isLinkValid(link)))
 	}
 
 	"Wikipedia text link offsets" should "be consistent with text" in {
@@ -114,22 +127,9 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext {
 							println(link)
 							println(element.getText)
 						}
-
 						assert(isTextLinkConsistent(link, element.getText))
 					}
 				}
-			}
-	}
-
-	"Wikipedia links" should "be exactly these links" in {
-		val links = wikipediaTestReferences()
-		wikipediaTestRDD()
-			.map(WikipediaTextparser.parseWikipediaEntry)
-			.filter(entry => links.contains(entry.title))
-			.collect
-			.foreach { entry =>
-				for (i <- entry.links.indices)
-					assert(entry.links(i) == links(entry.title)(i)) // elementwise comparision shows where it fails
 			}
 	}
 
