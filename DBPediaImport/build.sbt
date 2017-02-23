@@ -47,4 +47,5 @@ logLevel in assembly := Level.Error
 
 // scalastyle config file
 scalastyleConfig := new File("../scalastyle-config.xml")
+scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value
 
