@@ -36,7 +36,6 @@ assemblyMergeStrategy in assembly := {
 	case PathList(ps @ _*) if ps.last endsWith "pom.properties" => MergeStrategy.discard
 	case _ => MergeStrategy.first
 }
-}
 
 assemblyShadeRules in assembly := Seq(
   ShadeRule.rename("com.google.**" -> "shadeio.@1").inAll
