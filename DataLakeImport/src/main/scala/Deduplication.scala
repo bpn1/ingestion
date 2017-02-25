@@ -120,6 +120,7 @@ object Deduplication {
 					case "DiceSorensen" => scoreConfig[String, DiceSorensen.type](attribute, DiceSorensen, weight.toDouble)
 					case "Jaro" => scoreConfig[String, Jaro.type](attribute, Jaro, weight.toDouble)
 					case "JaroWinkler" => scoreConfig[String, JaroWinkler.type](attribute, JaroWinkler, weight.toDouble)
+          case "N-Gram" => scoreConfig[String, NGram.type](attribute, NGram, weight.toDouble)
           case _ => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
 			}}
 	}
