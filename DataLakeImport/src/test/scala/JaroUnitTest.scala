@@ -8,20 +8,23 @@ class JaroUnitTest extends FlatSpec {
 
     val s1 = "dwayne"
     val t1 = "duane"
+    val r1 = 0.8222222222222223
     val score1 = {
       Jaro.compare(s1, t1)
     }
-    assert(score1 === 0.8222222222222223)
+    assert(score1 === r1)
 
     val s2 = "jones"
     val t2 = "johnson"
+    val r2 = 0.7904761904761904
     val score2 = {
       Jaro.compare(s2, t2)
     }
-    assert(score2 === 0.7904761904761904)
+    assert(score2 === r2)
 
     val s3 = "fvie"
     val t3 = "ten"
+    val r3 = 0.0
     val score3 = {
       Jaro.compare(s3, t3)
     }
