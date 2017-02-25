@@ -117,6 +117,7 @@ object Deduplication {
 					case "ExactMathString" => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
 					case "MongeElkan" => scoreConfig[String, MongeElkan.type](attribute, MongeElkan, weight.toDouble)
           case "Jaccard" => scoreConfig[String, Jaccard.type](attribute, Jaccard, weight.toDouble)
+					case "DiceSorensen" => scoreConfig[String, DiceSorensen.type](attribute, DiceSorensen, weight.toDouble)
 					case _ => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
 			}}
 	}
@@ -168,7 +169,7 @@ object Deduplication {
 		* @tparam A Type of list
 		* @return List of pairs of all elements from the original list without containing duplicates
 		*/
-	def makePairs[A](list: List[A], acc: List[(A, A)] = List().asInstanceOf[List[(A, A)]]): List[(A, A)] = list match {
+	def makePairs[A](list: List[A], acc: List[(A, A)] = List[(A, A)]()): List[(A, A)] = list match {
 		case Nil => acc
 		case x::Nil => acc
 		case x::xs => makePairs(xs, acc ::: list.map((x,_)).filter(x => x._1 != x._2))

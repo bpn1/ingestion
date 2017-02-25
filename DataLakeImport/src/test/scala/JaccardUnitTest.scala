@@ -33,6 +33,6 @@ class JaccardUnitTest extends FlatSpec {
       Jaccard.compare(s4, t4)
     }
     assert(score4 === 0.0)
-    
+
   }
 }
