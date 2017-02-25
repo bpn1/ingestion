@@ -1,5 +1,5 @@
 #!/bin/bash
-usage="Usage: spark.sh (yarn|local) ClassName num_nodes_to_use path/to/app.assembly.jar [ADDITIONAL_PROGRAM_ARGS]"
+usage="Usage: spark.sh (yarn|local|print) ClassName num_nodes_to_use path/to/app.assembly.jar [ADDITIONAL_PROGRAM_ARGS]"
 if [ "$#" -lt 3 ]; then
 	echo $usage
     exit 1
@@ -29,6 +29,8 @@ if [ "$mode" = "local" ]; then
     $spark_submit --class $class --master local[*] $jarPath $*
 elif [ "$mode" = "yarn" ]; then
     $spark_submit --class $class --master yarn --num-executors $num_executors --executor-cores $executor_cores --executor-memory $executor_memory $jarPath $*
+elif [ "$mode" = "print" ]; then
+    echo "HADOOP_USER_NAME=\"bp2016n1\"" $spark_submit --class $class --master yarn --num-executors $num_executors --executor-cores $executor_cores --executor-memory $executor_memory $jarPath $*
 else
  	echo "Unsupported mode $mode, use local or yarn"
  	echo $usage

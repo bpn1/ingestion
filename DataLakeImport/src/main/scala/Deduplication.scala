@@ -168,19 +168,11 @@ object Deduplication {
 		* @tparam A Type of list
 		* @return List of pairs of all elements from the original list without containing duplicates
 		*/
-	def makePairs[A](list: List[A], acc: List[(A, A)]): List[(A, A)] = list match {
+	def makePairs[A](list: List[A], acc: List[(A, A)] = List().asInstanceOf[List[(A, A)]]): List[(A, A)] = list match {
 		case Nil => acc
 		case x::Nil => acc
 		case x::xs => makePairs(xs, acc ::: list.map((x,_)).filter(x => x._1 != x._2))
 	}
-
-	/**
-		* Creates a list by pairing all items without duplicates
-		* @param list List of items to pair
-		* @tparam A Type of list
-		* @return List of pairs of all elements from the original list without containing duplicates
-		*/
-	def makePairs[A](list: List[A]): List[(A, A)] = makePairs(list, List().asInstanceOf[List[(A, A)]])
 
 	/**
 		* Calculates a similarity score for each pair of Subjects of the same block
@@ -191,7 +183,7 @@ object Deduplication {
 	def findDuplicates(blocks: RDD[(String, Iterable[Subject])], config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): RDD[(String, Iterable[possibleDuplicate])] = {
 		blocks
 		  .map{
-				case (industry, subjects) => (industry, makePairs[Subject](subjects.toList))
+				case (industry, subjects) => (industry, makePairs(subjects.toList))
 			}
 		  .map {
 				case (industry, subjectPairs) => (industry, subjectPairs.map(pair => possibleDuplicate(pair._1.id, pair._2.id, compare(pair._1, pair._2, config))))
