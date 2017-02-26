@@ -29,17 +29,14 @@ case class Subject(
 	var aliases_history: List[Version] = List[Version](),
 	var category_history: List[Version] = List[Version](),
 	var properties_history: Map[String, List[Version]] = Map[String, List[Version]](),
-	var relations_history: Map[UUID, Map[String, List[Version]]]  = Map[UUID, Map[String, List[Version]]]()
+	var relations_history:
+		Map[UUID, Map[String, List[Version]]] = Map[UUID, Map[String, List[Version]]]()
 ){
 	override def equals(obj: Any): Boolean = obj match {
 		case that: Subject => that.id == this.id
 		case _ => false
 	}
-
-	// For debugging
-	/*override def toString(): String = {
-		"Subject(" + this.id + ", " + this.name.get + ")"
-	}*/
+	override def hashCode = super.hashCode
 
   // use reflection to get attribute from a string
   def get[T](attribute: String): T = {

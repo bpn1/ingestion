@@ -28,6 +28,8 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String,
 			that.weight == this.weight
 		case _ => false
 	}
+
+	override def hashCode = super.hashCode
 }
 
 /**
