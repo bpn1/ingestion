@@ -43,7 +43,8 @@ trait DLImport[T] extends Serializable {
 
 /**
 	* An abstract DataLakeImport to import new sources to the staging table
-	* @constructor create a new DataLakeImport with an appName, dataSources, an inputKeyspace and an inputTable
+	* @constructor create a new DataLakeImport with an appName, dataSources, an inputKeyspace
+	* and an inputTable
 	* @param appName the name of the importing job
 	* @param dataSources list of the sources where the new data is fetched from
 	* @param inputKeyspace the name of the keyspace where the new data is saved in the database
@@ -75,8 +76,10 @@ abstract case class DataLakeImport[T](
 		data.saveToCassandra(outputKeyspace, outputTable)
 
 		sc
-			.parallelize(List((version.version, version.timestamp, version.datasources, version.program)))
-			.saveToCassandra(outputKeyspace, versionTable, SomeColumns("version", "timestamp", "datasources", "program"))
+			.parallelize(
+				List((version.version, version.timestamp, version.datasources, version.program)))
+			.saveToCassandra(outputKeyspace,
+				versionTable, SomeColumns("version", "timestamp", "datasources", "program"))
 
 		sc.stop
 	}
