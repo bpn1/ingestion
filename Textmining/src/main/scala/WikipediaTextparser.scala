@@ -14,7 +14,7 @@ object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
-	val infoboxOffset = -1
+	val templateOffset = -1
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
@@ -146,8 +146,8 @@ object WikipediaTextparser {
 		cleanText
 	}
 
-	def extractInfobox(wikitext: String, startIndex: Int): String = {
-		var infoboxText = ""
+	def extractTemplate(wikitext: String, startIndex: Int): String = {
+		var templateText = ""
 		var depth = 0
 		var escaped = false
 		for (i <- startIndex until wikitext.length) {
@@ -157,24 +157,24 @@ object WikipediaTextparser {
 			} else if (!escaped && character == '}' && depth > 0) {
 				depth -= 1
 			}
-			infoboxText += character
+			templateText += character
 			if (depth == 0) {
-				return infoboxText
+				return templateText
 			}
 			escaped = character == '\\'
 		}
 
-		println("[Textparser WARN]	Infobox has no end!")
-		infoboxText
+		println("[Textparser WARN]	Template has no end!")
+		templateText
 	}
 
-	def extractAllInfoboxes(wikitext: String): String = {
-		var infoboxText = ""
-		var infoboxRegex = new Regex("\\{\\{Infobox ")
-		// cannot check if first '{' is escaped because page may begin with infobox
+	def extractAllTemplates(wikitext: String): String = {
+		var templateText = ""
+		var templateRegex = new Regex("\\{\\{")
+		// cannot check if first '{' is escaped because page may begin with template
 		var startIndices = new ListBuffer[Int]()
 
-		infoboxRegex
+		templateRegex
 			.findAllIn(wikitext)
 			.matchData
 			.foreach { regexMatch =>
@@ -182,9 +182,9 @@ object WikipediaTextparser {
 			}
 
 		for (startIndex <- startIndices) {
-			infoboxText += extractInfobox(wikitext, startIndex)
+			templateText += extractTemplate(wikitext, startIndex)
 		}
-		infoboxText
+		templateText
 	}
 
 	def linkMatchToLink(linkMatch: scala.util.matching.Regex.Match): Link = {
@@ -205,15 +205,15 @@ object WikipediaTextparser {
 		}
 
 
-		Link(alias, page, infoboxOffset)
+		Link(alias, page, templateOffset)
 	}
 
-	def extractInfoboxLinks(wikitext: String): List[Link] = {
+	def extractTemplateLinks(wikitext: String): List[Link] = {
 		val linkList = mutable.ListBuffer[Link]()
-		val infoboxText = extractAllInfoboxes(wikitext)
+		val templateText = extractAllTemplates(wikitext)
 		val linkRegex = new Regex("\\[\\[(.*?)(\\|(.*?))?\\]\\]")
 		linkRegex
-			.findAllIn(infoboxText)
+			.findAllIn(templateText)
 			.matchData
 			.foreach { linkMatch =>
 				val link = linkMatchToLink(linkMatch)
@@ -227,8 +227,8 @@ object WikipediaTextparser {
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val html = wikipediaToHtml(entry.getText)
 		var parsedEntry = parseHtml(entry, html)
-		val infoboxLinks = extractInfoboxLinks(entry.getText)
-		parsedEntry.links ++= infoboxLinks
+		val templateLinks = extractTemplateLinks(entry.getText)
+		parsedEntry.links ++= templateLinks
 		parsedEntry
 	}
 
