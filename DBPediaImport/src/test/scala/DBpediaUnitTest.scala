@@ -31,13 +31,28 @@ class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 	}
 
 	"cleanURL" should "replace all prefixes" in {
-		val cleanList = lineTokens.map(el => DBPediaImport.cleanURL(el, prefixesList))
+		val cleanList = lineTokens.map(el => DBPediaImport.cleanURL(el, prefixesList()))
 		assert(cleanList.head.startsWith("dbpedia-de:"))
 		assert(cleanList(1).startsWith("dct:"))
 		assert(cleanList(2).startsWith("dbpedia-de:"))
 	}
 
-	// TODO test extractProperties()
+	"extractProperties" should "create a DBPediaEntity from properties" in {
+		val entity = DBPediaImport.extractProperties("Test Objekt", properties)
+		val expectedEntity = DBPediaEntity(
+			"Test Objekt",
+			Some("1"),
+			Some("Anschluss"),
+			Some("Der Anschluss ist der Anschluss zum Anschluss"),
+			Some("Typ 0"),
+			Map(
+				"ist" -> List("klein", "mittel"),
+				"hat" -> List("Namen", "Nachnamen"),
+				"kennt" -> List("alle")
+			)
+		)
+		assert(expectedEntity === entity)
+	}
 
 	def prefixesList(): List[(String,String)] = {
 		val prefixFile = Source.fromURL(getClass.getResource("/prefixes.txt"))
@@ -52,24 +67,18 @@ class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 	val lineTokens = List(
 		"http://de.dbpedia.org/resource/Anschluss_(Soziologie)",
 		"http://purl.org/dc/terms/subject",
-		"http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie")
-
-	val propTuple = ("dbpedia-de:Anschluss_(Soziologie)", List(("dbpedia-db:Anschluss_(Soziologie)","ist","klein"), ("dbpedia-db:Anschluss_(Soziologie)", "ist", "mittel"), ("dbpedia-db:Anschluss_(Soziologie)", "ist", "groß")))
-
-	val properties = List(Tuple2("ist", "klein"), Tuple2("ist", "mittel"), Tuple2("hat", "Namen"), Tuple2("hat", "Nachnamen"), Tuple2("kennt", "alle"))
-
-	val map = Map(
-		"dbpedia-entity" -> List("dbpedia-de:Anschluss_(Soziologie)"),
-		"dbo:wikiPageID" -> List("1"),
-		"rdfs:label" -> List("Anschluss"),
-		"dbo:abstract" -> List("Der Anschluss ist der Anschluss zum Anschluss"),
-		"ist" -> List("klein", "mittel", "groß"),
-		"hat" -> List("Namen", "Nachnamen"),
-		"kennt" -> List("alle")
+		"http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie"
 	)
 
-	val mapWithoutLabelAndDescription = Map(
-		"dbpedia-entity" -> List("dbpedia-de:Anschluss_(Soziologie)"),
-		"dbo:wikiPageID" -> List("1")
+	val properties = List(
+		("dbo:wikiPageID", "1"),
+		("rdfs:label", "Anschluss"),
+		("dbo:abstract", "Der Anschluss ist der Anschluss zum Anschluss"),
+		("rdf:type", "Typ 0"),
+		("ist", "klein"),
+		("ist", "mittel"),
+		("hat", "Namen"),
+		("hat", "Nachnamen"),
+		("kennt", "alle")
 	)
 }
