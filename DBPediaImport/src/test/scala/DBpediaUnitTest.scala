@@ -51,6 +51,7 @@ class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 				"kennt" -> List("alle")
 			)
 		)
+		assert(expectedEntity === entity)
 	}
 
 	def prefixesList(): List[(String,String)] = {
@@ -70,7 +71,7 @@ class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 	)
 
 	val properties = List(
-		("dbo:wikiPageId", "1"),
+		("dbo:wikiPageID", "1"),
 		("rdfs:label", "Anschluss"),
 		("dbo:abstract", "Der Anschluss ist der Anschluss zum Anschluss"),
 		("rdf:type", "Typ 0"),
