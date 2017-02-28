@@ -27,8 +27,7 @@ object WikipediaContextExtractor {
 
 	def extractLinkContextsFromArticle(
 		article: ParsedWikipediaEntry,
-		tokenizer: Tokenizer): Set[LinkContext] =
-	{
+		tokenizer: Tokenizer): Set[LinkContext] = {
 		// Do not initialize tokenizer here so it is initialized only once.
 		// (probably important for good performance of CoreNLP)
 		val wordSet = textToWordSet(article.getText, tokenizer)
