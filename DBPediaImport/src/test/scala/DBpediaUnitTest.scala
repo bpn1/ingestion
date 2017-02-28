@@ -15,18 +15,22 @@ class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 	}
 
 	it should "return a three element long list with a shorter input" in {
+		// scalastyle:off line.size.limit
 		val lineList = List(
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> .""",
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> .""",
 			"")
+		// scalastyle:on line.size.limit
 		lineList.foreach(line => assert(DBPediaImport.tokenize(line).length == 3))
 	}
 
 	it should "return a three element long list with a longer input" in {
+		// scalastyle:off line.size.limit
 		val lineList = List(
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> .""",
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://purl.org/dc/terms/subject> ."""
 		)
+		// scalastyle:on line.size.limit
 		lineList.foreach(line => assert(DBPediaImport.tokenize(line).length == 3))
 	}
 
@@ -62,7 +66,9 @@ class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
 		prefixes
 	}
 
+	// scalastyle:off line.size.limit
 	val line = """<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> ."""
+	// scalastyle:on line.size.limit
 
 	val lineTokens = List(
 		"http://de.dbpedia.org/resource/Anschluss_(Soziologie)",

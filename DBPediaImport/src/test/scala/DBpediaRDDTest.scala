@@ -48,6 +48,7 @@ class DBpediaRDDTest extends FlatSpec with SharedSparkContext with RDDComparison
 	}
 
 	def turtleRDD(): RDD[String] = {
+		// scalastyle:off line.size.limit
 		sc.parallelize(List(
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> .""",
 			"""<http://de.dbpedia.org/resource/Liste_von_Autoren/V> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Autor> .""",
@@ -55,6 +56,7 @@ class DBpediaRDDTest extends FlatSpec with SharedSparkContext with RDDComparison
 			"""<http://de.dbpedia.org/resource/Liste_von_Autoren/T> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Autor> .""",
 			"""<http://de.dbpedia.org/resource/Liste_von_Autoren/T> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Wikipedia:Liste> ."""
 		))
+		// scalastyle:on line.size.limit
 	}
 
 	def prefixesList(): List[(String,String)] = {
@@ -66,6 +68,7 @@ class DBpediaRDDTest extends FlatSpec with SharedSparkContext with RDDComparison
 	}
 
 	def tripleRDD(): RDD[(String, (String, String))] = {
+		// scalastyle:off line.size.limit
 		sc.parallelize(List(
 			("dbpedia-de:Anschluss_(Soziologie)", ("dct:subject", "dbpedia-de:Kategorie:Soziologische_Systemtheorie")),
 			("dbpedia-de:Liste_von_Autoren/V", ("dct:subject", "dbpedia-de:Kategorie:Autor")),
@@ -73,13 +76,16 @@ class DBpediaRDDTest extends FlatSpec with SharedSparkContext with RDDComparison
 			("dbpedia-de:Liste_von_Autoren/T", ("dct:subject", "dbpedia-de:Kategorie:Autor")),
 			("dbpedia-de:Liste_von_Autoren/T", ("dct:subject", "dbpedia-de:Kategorie:Wikipedia:Liste"))
 		))
+		// scalastyle:on line.size.limit
 	}
 
 	def entityRDD(): RDD[DBPediaEntity] = {
+		// scalastyle:off line.size.limit
 		sc.parallelize(List(
 			DBPediaEntity(dbpedianame="dbpedia-de:Liste_von_Autoren/V", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste"))),
 			DBPediaEntity(dbpedianame="dbpedia-de:Anschluss_(Soziologie)", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Soziologische_Systemtheorie"))),
 			DBPediaEntity(dbpedianame="dbpedia-de:Liste_von_Autoren/T", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste")))
 		))
+		// scalastyle:on line.size.limit
 	}
 }
