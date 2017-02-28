@@ -67,10 +67,19 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		assert(isSubset(testDocumentFrequencies, documentFrequencies))
 	}
 
+	"Filtered document frequencies" should "not contain German stopwords" in {
+		val stopwords = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD(), germanStopwordsTestSet())
+			.map(_.word)
+			.collect
+			.toSet
+			.intersect(germanStopwordsTestSet())
+		assert(stopwords.isEmpty)
+	}
+
 	def getArticle(title: String): ParsedWikipediaEntry = {
 		parsedWikipediaTestRDD()
 			.filter(_.title == title)
-		    .first
+			.first
 	}
 
 	def parsedWikipediaTestRDD(): RDD[ParsedWikipediaEntry] = {
@@ -140,5 +149,9 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1)
 		))
+	}
+
+	def germanStopwordsTestSet(): Set[String] = {
+		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
 	}
 }
