@@ -6,24 +6,26 @@ import WikiClasses._
 class WikipediaAliasCounterTest extends FlatSpec with PrettyTester with SharedSparkContext {
 	"Counted aliases" should "have the same size as all links" in {
 		val allAliases = allAliasesTestRDD()
-		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
+		val countedAliases =
+			WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 		assert(countedAliases.count() == allAliases.count)
 	}
 
-	"Counted aliases" should "have the same aliases as all links" in {
-		val countedAliases = WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
-			.map(_.alias)
-			.sortBy(identity)
+	they should "have the same aliases as all links" in {
+		val countedAliases =
+			WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
+				.map(_.alias)
+				.sortBy(identity)
 		assert(areRDDsEqual(countedAliases, allAliasesTestRDD()))
 	}
 
-	"Counted aliases" should "have counted any occurrence" in {
+	they should "have counted any occurrence" in {
 		WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.collect
 			.foreach(aliasCounter => assert(aliasCounter.totaloccurrences > 0))
 	}
 
-	"Counted aliases" should "have consistent counts" in {
+	they should "have consistent counts" in {
 		WikipediaAliasCounter.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.collect
 			.foreach { aliasCounter =>
@@ -32,7 +34,7 @@ class WikipediaAliasCounterTest extends FlatSpec with PrettyTester with SharedSp
 			}
 	}
 
-	"Counted aliases" should "be exactly these counted aliases" in {
+	they should "be exactly these counted aliases" in {
 		val countedAliases = WikipediaAliasCounter
 			.countAllAliasOccurrences(parsedWikipediaTestRDD())
 			.sortBy(_.alias)
@@ -49,12 +51,14 @@ class WikipediaAliasCounterTest extends FlatSpec with PrettyTester with SharedSp
 		parsedWikipediaTestRDD()
 			.map(article => WikipediaAliasCounter.identifyAliasOccurrencesInArticle(article))
 			.collect
-			.foreach(occurrences => assert(occurrences.links.intersect(occurrences.noLinks).isEmpty))
+			.foreach(occurrences =>
+				assert(occurrences.links.intersect(occurrences.noLinks).isEmpty))
 	}
 
 	"Probability that word is link" should "be calculated correctly" in {
 		val linkProbabilities = countedAliasesTestRDD()
-			.map(countedAlias => (countedAlias.alias, WikipediaAliasCounter.probabilityIsLink(countedAlias)))
+			.map(countedAlias =>
+				(countedAlias.alias, WikipediaAliasCounter.probabilityIsLink(countedAlias)))
 		assert(areRDDsEqual(linkProbabilities, linkProbabilitiesTestRDD()))
 	}
 
@@ -74,6 +78,7 @@ class WikipediaAliasCounterTest extends FlatSpec with PrettyTester with SharedSp
 	}
 
 	def parsedWikipediaTestRDD(): RDD[ParsedWikipediaEntry] = {
+		// scalastyle:off line.size.limit
 		sc.parallelize(List(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
@@ -99,15 +104,18 @@ class WikipediaAliasCounterTest extends FlatSpec with PrettyTester with SharedSp
 					Link("historisches Jahr", "1377", 24)
 				),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
+		// scalastyle:on line.size.limit
 	}
 
 	def aliasOccurrencesInArticlesTestRDD(): RDD[AliasOccurrencesInArticle] = {
+		// scalastyle:off line.size.limit
 		sc.parallelize(List(
 			AliasOccurrencesInArticle(Set("Audi"), Set()),
 			AliasOccurrencesInArticle(Set(), Set("Audi")),
 			AliasOccurrencesInArticle(Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), Set("Streitberg")),
 			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
 		))
+		// scalastyle:on line.size.limit
 	}
 
 	def countedAliasesTestRDD(): RDD[AliasCounter] = {

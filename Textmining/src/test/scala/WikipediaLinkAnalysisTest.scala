@@ -9,78 +9,54 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 		assert(groupedAliases.count > 0)
 	}
 
+	they should "be exactly these aliases" in {
+		val groupedAliases = WikipediaLinkAnalysis.groupByAliases(parsedWikipediaTestRDD())
+		val groupedAliasesTest = groupedAliasesTestRDD()
+		assert(areRDDsEqual(
+			groupedAliases.asInstanceOf[RDD[Any]],
+			groupedAliasesTest.asInstanceOf[RDD[Any]]))
+	}
+
 	"Grouped page names" should "not be empty" in {
 		val groupedPageNames = WikipediaLinkAnalysis.groupByPageNames(parsedWikipediaTestRDD())
 		assert(groupedPageNames.count > 0)
 	}
 
-	"Grouped aliases" should "be exactly these aliases" in {
-		val groupedAliases = WikipediaLinkAnalysis.groupByAliases(parsedWikipediaTestRDD())
-		val groupedAliasesTest = groupedAliasesTestRDD()
-		assert(areRDDsEqual(groupedAliases.asInstanceOf[RDD[Any]], groupedAliasesTest.asInstanceOf[RDD[Any]]))
-	}
-
-	"Grouped page names" should "be exactly these page names" in {
+	they should "be exactly these page names" in {
 		val groupedPages = WikipediaLinkAnalysis.groupByPageNames(parsedWikipediaTestRDD())
 		val groupedPagesTest = groupedPagesTestRDD()
-		assert(areRDDsEqual(groupedPages.asInstanceOf[RDD[Any]], groupedPagesTest.asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(
+			groupedPages.asInstanceOf[RDD[Any]],
+			groupedPagesTest.asInstanceOf[RDD[Any]]))
 	}
 
 	"Probability that link directs to page" should "be computed correctly" in {
 		val references = probabilityReferences()
 		cleanedGroupedAliasesTestRDD()
-			.map(link => (link.alias, WikipediaLinkAnalysis.probabilityLinkDirectsToPage(link, "Bayern")))
+			.map(link =>
+				(link.alias, WikipediaLinkAnalysis.probabilityLinkDirectsToPage(link, "Bayern")))
 			.collect
 			.foreach { case (alias, probability) => assert(probability == references(alias)) }
 	}
 
 	"Dead links and only dead links" should "be removed" in {
-		val cleanedGroupedAliases = WikipediaLinkAnalysis.removeDeadLinks(groupedAliasesTestRDD(), allPagesTestRDD())
+		val cleanedGroupedAliases = WikipediaLinkAnalysis.removeDeadLinks(
+			groupedAliasesTestRDD(),
+			allPagesTestRDD())
 		val cleanedGroupedAliasesTest = cleanedGroupedAliasesTestRDD()
-		assert(areRDDsEqual(cleanedGroupedAliases.asInstanceOf[RDD[Any]], cleanedGroupedAliasesTest.asInstanceOf[RDD[Any]]))
+		assert(areRDDsEqual(
+			cleanedGroupedAliases.asInstanceOf[RDD[Any]],
+			cleanedGroupedAliasesTest.asInstanceOf[RDD[Any]]))
 	}
 
 	"Dead pages and only dead pages" should "be removed" in {
-		val cleanedGroupedPages = WikipediaLinkAnalysis.removeDeadPages(groupedPagesTestRDD(), allPagesTestRDD())
+		val cleanedGroupedPages = WikipediaLinkAnalysis.removeDeadPages(
+			groupedPagesTestRDD(),
+			allPagesTestRDD())
 		val cleanedGroupedPagesTest = cleanedGroupedPagesTestRDD()
-		assert(areRDDsEqual(cleanedGroupedPages.asInstanceOf[RDD[Any]], cleanedGroupedPagesTest.asInstanceOf[RDD[Any]]))
-	}
-
-	def areRDDsEqual(left: RDD[Any], right: RDD[Any]): Boolean = {
-		// This function is not very pretty but takes Links and Pages.
-		val sizeLeft = left.count
-		val sizeRight = right.count
-		if (sizeLeft != sizeRight) return false
-
-		val rdd2 = right
-			.keyBy {
-				case l: Alias => l.alias
-				case p: Page => p.page
-			}
-
-		val rdd1 = left
-			.keyBy {
-				case l: Alias => l.alias
-				case p: Page => p.page
-			}
-			.join(rdd2)
-
-		if (rdd1.count != sizeLeft) return false
-		rdd1
-			.map {
-				case (key, (leftLink: Alias, rightLink: Alias)) =>
-					(key, leftLink.pages, rightLink.pages)
-				case (key, (leftLink: Page, rightLink: Page)) =>
-					(key, leftLink.aliases, rightLink.aliases)
-			}
-			.collect
-			.foreach { case (key, leftSequence, rightSequence) =>
-				val map1 = leftSequence.asInstanceOf[Seq[(String, Int)]].toMap
-				val map2 = rightSequence.asInstanceOf[Seq[(String, Int)]].toMap
-				if (map1 != map2)
-					return false
-			}
-		true
+		assert(areRDDsEqual(
+			cleanedGroupedPages.asInstanceOf[RDD[Any]],
+			cleanedGroupedPagesTest.asInstanceOf[RDD[Any]]))
 	}
 
 	def parsedWikipediaTestRDD(): RDD[ParsedWikipediaEntry] = {
@@ -148,5 +124,46 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext {
 			"Bayern",
 			"Zerfall (Album)"
 		))
+	}
+
+	def joinableRDD[T](input: RDD[T]): RDD[(String, T)] = {
+		input.keyBy {
+			case l: Alias => l.alias
+			case p: Page => p.page
+		}
+	}
+
+	def areRDDsEqual(left: RDD[Any], right: RDD[Any]): Boolean = {
+		// This function is not very pretty but takes Links and Pages.
+		val sizeLeft = left.count
+		val sizeRight = right.count
+		if (sizeLeft != sizeRight) {
+			return false
+		}
+
+		val rdd2 = joinableRDD(right)
+		val rdd1 = joinableRDD(left)
+			.join(rdd2)
+
+		if (rdd1.count != sizeLeft) {
+			return false
+		}
+
+		rdd1
+			.map {
+				case (key, (leftLink: Alias, rightLink: Alias)) =>
+					(key, leftLink.pages, rightLink.pages)
+				case (key, (leftLink: Page, rightLink: Page)) =>
+					(key, leftLink.aliases, rightLink.aliases)
+			}
+			.collect
+			.foreach { case (key, leftSequence, rightSequence) =>
+				val map1 = leftSequence.asInstanceOf[Seq[(String, Int)]].toMap
+				val map2 = rightSequence.asInstanceOf[Seq[(String, Int)]].toMap
+				if (map1 != map2) {
+					return false
+				}
+			}
+		true
 	}
 }

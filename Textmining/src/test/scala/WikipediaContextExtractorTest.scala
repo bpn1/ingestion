@@ -11,12 +11,12 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		assert(areRDDsEqual(pageNames, allPageNamesTestRDD()))
 	}
 
-	"Link contexts" should "not be empty" in {
+	they should "not be empty" in {
 		val contexts = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
 		assert(!contexts.isEmpty)
 	}
 
-	"Link contexts" should "contain any words" in {
+	they should "contain any words" in {
 		WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
 			.collect
 			.foreach(context => assert(context.words.nonEmpty))
@@ -25,12 +25,15 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 	"Link contexts of one article" should "contain all occurring page names of links" in {
 		val articleTitle = "Testartikel"
 		val article = getArticle(articleTitle)
-		val pageNames = WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanCoreNLPTokenizer)
+		val pageNames =
+			WikipediaContextExtractor.extractLinkContextsFromArticle(
+				article,
+				new CleanCoreNLPTokenizer)
 			.map(_.pagename)
 		assert(pageNames == allPageNamesOfTestArticleList())
 	}
 
-	"Link contexts of one article" should "contain at least these words" in {
+	they should "contain at least these words" in {
 		val articleTitle = "Streitberg (Brachttal)"
 		val testWords = articleContextwordSets()(articleTitle)
 		val article = getArticle(articleTitle)
@@ -39,11 +42,12 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 	}
 
 	"Document frequencies" should "not be empty" in {
-		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
+		val documentFrequencies =
+			WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
 		assert(!documentFrequencies.isEmpty)
 	}
 
-	"Document frequencies" should "be greater than zero" in {
+	they should "be greater than zero" in {
 		WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
 			.collect
 			.foreach(df => assert(df.count > 0))
@@ -53,12 +57,15 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		val articleTitle = "Testartikel"
 		val testWords = articleContextwordSets()(articleTitle)
 		val article = getArticle(articleTitle)
-		val wordSet = WikipediaContextExtractor.textToWordSet(article.text.get, new CleanCoreNLPTokenizer)
+		val wordSet = WikipediaContextExtractor.textToWordSet(
+			article.text.get,
+			new CleanCoreNLPTokenizer)
 		assert(areSetsEqual(wordSet, testWords))
 	}
 
 	"Document frequencies" should "contain these document frequencies" in {
-		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
+		val documentFrequencies =
+			WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
 			.collect
 			.toSet
 		val testDocumentFrequencies = documentFrequenciesTestRDD()
@@ -74,6 +81,7 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 	}
 
 	def parsedWikipediaTestRDD(): RDD[ParsedWikipediaEntry] = {
+		// scalastyle:off line.size.limit
 		sc.parallelize(List(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
@@ -99,6 +107,7 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 					Link("historisches Jahr", "1377", 24)
 				),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
+		// scalastyle:on line.size.limit
 	}
 
 	def allPageNamesTestRDD(): RDD[String] = {
@@ -122,14 +131,13 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 	}
 
 	def articleContextwordSets(): Map[String, Set[String]] = {
-		Map("Testartikel" ->
-			Set("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
-
+		Map(
+			"Testartikel" -> Set("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine",
+				"Main-Kinzig-Kreis","Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
 			"Streitberg (Brachttal)" ->
 				Set("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde",
-					"Im", "Jahre", "1500", "ist", "von", "Stridberg", "die",
-					"Vom", "Mittelalter", "bis", "ins", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte"
-				))
+					"Im", "Jahre", "1500", "ist", "von", "Stridberg", "die", "Vom", "Mittelalter",
+					"bis", "ins", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte"))
 	}
 
 	def documentFrequenciesTestRDD(): RDD[DocumentFrequency] = {
