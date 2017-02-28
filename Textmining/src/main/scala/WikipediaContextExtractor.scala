@@ -11,7 +11,11 @@ object WikipediaContextExtractor {
 	val removeStopwords = true
 	val stopwordsPath = "german_stopwords.txt"
 
-	def countDocumentFrequencies(articles: RDD[ParsedWikipediaEntry], stopwords: Set[String] = Set[String]()): RDD[DocumentFrequency] = {
+	def countDocumentFrequencies(
+		articles: RDD[ParsedWikipediaEntry],
+		stopwords: Set[String] = Set[String]()
+	): RDD[DocumentFrequency] =
+	{
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
 			.flatMap(article => textToWordSet(article.getText, tokenizer))
