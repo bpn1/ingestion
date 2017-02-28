@@ -3,78 +3,110 @@ import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
 import scala.util.matching.Regex
+import org.scalatest._
 
-class WikipediaTextparserTest extends FlatSpec with PrettyTester with SharedSparkContext {
+class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Wikipedia entry title" should "not change" in {
 		wikipediaTestRDD()
-			.map(entry => (entry.title, (entry, WikipediaTextparser.wikipediaToHtml(entry.getText))))
+			.map(entry => (entry.title, (entry, WikipediaTextparser.wikipediaToHtml(entry.getText()))))
 			.map(tuple => (tuple._1, WikipediaTextparser.parseHtml(tuple._2).title))
 			.collect
-			.foreach(entry => assert(entry._1 == entry._2))
+			.foreach(entry => entry._1 shouldEqual entry._2)
 	}
 
 	"Wikipedia article text" should "not contain Wikimarkup" in {
 		// matches [[...]] and {{...}} but not escaped '{', i.e. "\{"
 		val wikimarkupRegex = new Regex("(\\[\\[.*?\\]\\])" + "|" + "([^\\\\]\\{\\{.*?\\}\\})")
 		wikipediaTestRDD()
-			.map(entry => WikipediaTextparser.wikipediaToHtml(entry.getText))
+			.map(entry => WikipediaTextparser.wikipediaToHtml(entry.getText()))
 			.collect
-			.foreach(element => assert(wikimarkupRegex.findFirstIn(element).isEmpty))
+			.foreach(element => wikimarkupRegex.findFirstIn(element) shouldBe empty)
 	}
-
-	"Wikipedia article text" should "not contain escaped HTML characters" in {
+	it should "not contain escaped HTML characters" in {
 		val wikimarkupRegex = new Regex("&\\S*?;")
 		wikipediaTestRDD()
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText)))
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
 			.map(WikipediaTextparser.parseHtml)
 			.collect
-			.foreach(element => assert(wikimarkupRegex.findFirstIn(element.getText).isEmpty))
+			.foreach(element => wikimarkupRegex.findFirstIn(element.getText()) shouldBe empty)
 	}
-
-	"Wikipedia article text" should "contain none of the tags: table, h[0-9], small" in {
+	it should "contain none of the tags: table, h[0-9], small" in {
 		val tagBlacklist = List[String]("table", "h[0-9]", "small")
 		wikipediaTestRDD()
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText)))
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
 			.map(WikipediaTextparser.parseHtml)
-			.map(_.getText)
+			.map(_.getText())
 			.collect
 			.foreach { element =>
 				for (tag <- tagBlacklist) {
 					val tagRegex = new Regex("(</" + tag + ">)|(<" + tag + "(>| .*?>))")
-					assert(tagRegex.findFirstIn(element).isEmpty)
+					tagRegex.findFirstIn(element) shouldBe empty
 				}
 			}
 	}
-
-	"Wikipedia article plain text" should "be complete" in {
+	it should "be complete" in {
 		val abstracts = Map(
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
 			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
 		wikipediaTestRDD()
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText)))
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
 			.map(WikipediaTextparser.parseHtml)
 			.filter(entry => abstracts.contains(entry.title))
 			.collect
-			.foreach(element => assert(element.getText.startsWith(abstracts(element.title))))
+			.foreach(element => element.getText() should startWith(abstracts(element.title)))
 	}
 
 	"Wikipedia links" should "not be empty" in {
 		wikipediaTestRDD()
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText)))
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
 			.map(WikipediaTextparser.parseHtml)
 			.map(_.links)
 			.collect
-			.foreach(links => assert(links.nonEmpty))
+			.foreach(links => links should not be empty)
 	}
-
-	"Wikipedia links" should "contain links from all templates in article" in {
-		val templateArticles = wikipediaTestTemplateArticles()
+	they should "contain links from templates in article" in {
+		val templateArticlesTest = wikipediaTestTemplateArticles()
 		wikipediaTestRDD()
-			.filter(entry => templateArticles.contains(entry.title))
+			.filter(entry => templateArticlesTest.contains(entry.title))
 			.map(WikipediaTextparser.parseWikipediaEntry)
 			.map(_.links)
 			.collect
 			.foreach(links => assert(links.exists(link => link.offset == WikipediaTextparser.templateOffset)))
+	}
+	they should "be valid (have alias and page)" in {
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
+			.map(WikipediaTextparser.parseHtml)
+			.flatMap(_.links)
+			.collect
+			.foreach(link => assert(isLinkValid(link)))
+	}
+	they should "be exactly these links" in {
+		val links = wikipediaTestReferences()
+		wikipediaTestRDD()
+			.map(WikipediaTextparser.parseWikipediaEntry)
+			.filter(entry => links.contains(entry.title))
+			.collect
+			.foreach(entry => entry.links shouldEqual links(entry.title))
+	}
+
+	"Wikipedia text link offsets" should "be consistent with text" in {
+		wikipediaTestRDD()
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
+			.map(WikipediaTextparser.parseHtml)
+			.collect
+			.foreach { element =>
+				element.links.foreach { link =>
+					if (!isTemplateLink(link)) {
+						if (!isTextLinkConsistent(link, element.getText())) {
+							println(link)
+							println(element.getText())
+						}
+
+						assert(isTextLinkConsistent(link, element.getText()))
+					}
+				}
+			}
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
@@ -91,43 +123,6 @@ class WikipediaTextparserTest extends FlatSpec with PrettyTester with SharedSpar
 		if (!result)
 			println(link)
 		result
-	}
-
-	"Wikipedia links" should "be valid (have alias and page)" in {
-		wikipediaTestRDD()
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText)))
-			.map(WikipediaTextparser.parseHtml)
-			.flatMap(_.links)
-			.collect
-			.foreach(link => assert(isLinkValid(link)))
-	}
-
-	"Wikipedia text link offsets" should "be consistent with text" in {
-		wikipediaTestRDD()
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText)))
-			.map(WikipediaTextparser.parseHtml)
-			.collect
-			.foreach { element =>
-				element.links.foreach { link =>
-					if (!isTemplateLink(link)) {
-						if (!isTextLinkConsistent(link, element.getText)) {
-							println(link)
-							println(element.getText)
-						}
-
-						assert(isTextLinkConsistent(link, element.getText))
-					}
-				}
-			}
-	}
-
-	"Wikipedia links" should "be exactly these links" in {
-		val links = wikipediaTestReferences()
-		wikipediaTestRDD()
-			.map(WikipediaTextparser.parseWikipediaEntry)
-			.filter(entry => links.contains(entry.title))
-			.collect
-			.foreach(entry => assert(areListsEqual(entry.links, links(entry.title))))
 	}
 
 	def wikipediaTestReferences(): Map[String, List[Link]] = {
@@ -217,6 +212,6 @@ class WikipediaTextparserTest extends FlatSpec with PrettyTester with SharedSpar
 			WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#WEITERLEITUNG [[Postbank-Hochhaus (Berlin)]]""")),
 			WikipediaEntry("Abraham Lincoln", Option("""{{Infobox officeholder\n| vicepresident = [[Hannibal Hamlin]]\n}}\nAbraham Lincoln was the 16th [[President of the United States]].\n{{Infobox U.S. Cabinet\n| Vice President 2 = [[Andrew Johnson]]\n}}\n{{multiple image\n | direction=horizontal\n | width=\n | footer=\n | width1=180\n | image1=A&TLincoln.jpg\n | alt1=A seated Lincoln holding a book as his young son looks at it\n | caption1=1864 photo of President Lincoln with youngest son, [[Tad Lincoln|Tad]]\n | width2=164\n | image2=Mary Todd Lincoln 1846-1847 restored cropped.png\n | alt2=Black and white photo of Mary Todd Lincoln's shoulders and head\n | caption2=[[Mary Todd Lincoln]], wife of Abraham Lincoln, age 28\n }}"""))
 		))
-		// sc.getTextFile("testwiki.txt").map(data => new WikipediaEntry("Audi", data))
+		// sc.getText()File("testwiki.txt").map(data => new WikipediaEntry("Audi", data))
 	}
 }
