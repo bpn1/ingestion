@@ -48,7 +48,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 			}
 	}
 
-	it should "be complete" in {
+	it should "parse and return all text properly" in {
 		// scalastyle:off line.size.limit
 		val abstracts = Map(
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
