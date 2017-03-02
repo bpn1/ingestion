@@ -53,7 +53,7 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		val articleTitle = "Testartikel"
 		val testWords = articleContextwordSets()(articleTitle)
 		val article = getArticle(articleTitle)
-		val wordSet = WikipediaContextExtractor.textToWordSet(article.text.get, new CleanCoreNLPTokenizer)
+		val wordSet = WikipediaContextExtractor.textToWordSet(article.getText(), new CleanCoreNLPTokenizer)
 		assert(areSetsEqual(wordSet, testWords))
 	}
 
@@ -61,18 +61,23 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
 			.collect
 			.toSet
-		assert(isSubset(documentFrequenciesTestSet(), documentFrequencies))
+		documentFrequencies should contain allElementsOf unstemmedDocumentFrequenciesTestSet()
 	}
 
 	"Stemmed document frequencies" should "not contain unstemmed German words" in {
-		val unstemmedWords = unstemmedGermanWordsTestSet()
-		val documentFrequencies = sc.parallelize(documentFrequenciesTestSet().toList)
-		val unstemmedWordsInDocumentFrequencies = WikipediaContextExtractor.stemDocumentFrequencies(documentFrequencies)
+		val documentFrequencies = sc.parallelize(unstemmedDocumentFrequenciesTestSet().toList)
+		val stemmedDocumentFrequencies = WikipediaContextExtractor.stemDocumentFrequencies(documentFrequencies)
 			.map(_.word)
-			.filter(word => unstemmedWords.contains(word))
-			.collect
-			.toSet
-		unstemmedWordsInDocumentFrequencies shouldBe empty
+		    .collect
+		    .toSet
+		stemmedDocumentFrequencies should contain noElementsOf unstemmedGermanWordsTestSet()
+	}
+	they should "contain these document frequencies" in {
+		val documentFrequencies = sc.parallelize(unstemmedDocumentFrequenciesTestSet().toList)
+		val stemmedDocumentFrequencies = WikipediaContextExtractor.stemDocumentFrequencies(documentFrequencies)
+		    .collect
+		    .toSet
+		stemmedDocumentFrequencies should contain allElementsOf stemmedDocumentFrequenciesTestSet()
 	}
 
 	def getArticle(title: String): ParsedWikipediaEntry = {
@@ -106,7 +111,11 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 					Link("Brachttal", "Brachttal", 13),
 					Link("historisches Jahr", "1377", 24)
 				),
-				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
+				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")),
+			ParsedWikipediaEntry("Stemming words", Option("""einer ein Einer Ein"""),
+				List(),
+				List())
+			))
 	}
 
 	def allPageNamesTestRDD(): RDD[String] = {
@@ -140,20 +149,28 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 				))
 	}
 
-	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("Audi", 3),
 			DocumentFrequency("Backfisch", 1),
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("einer", 1)
+			DocumentFrequency("einer", 2),
+			DocumentFrequency("ein", 2),
+			DocumentFrequency("Einer", 1),
+			DocumentFrequency("Ein", 1)
 		)
 	}
 
 	def stemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
-			
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("backfisch", 1),
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 2),
+			DocumentFrequency("zugleich", 1),
+			DocumentFrequency("ein", 6)
 		)
 	}
 

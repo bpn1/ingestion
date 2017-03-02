@@ -61,7 +61,7 @@ object WikipediaContextExtractor {
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		countDocumentFrequencies(allArticles)
+		stemDocumentFrequencies(countDocumentFrequencies(allArticles))
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
 		//		extractAllContexts(allArticles)
 		//			.saveToCassandra(keyspace, outputContextsTablename)

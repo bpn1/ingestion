@@ -12,6 +12,7 @@ class AccessibleGermanStemmerTest extends FlatSpec with Matchers {
 	def unstemmedGermanWordsTestList(): List[String] = {
 		List("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "ist", "Streitberg", "Braunschweig",
 			"Deutschland", "Baum", "brauchen", "suchen", "könnte")
+		// problem words: eine -> eine, hatte -> hatt
 	}
 
 	def stemmedGermanWordsTestList(): List[String] = {
