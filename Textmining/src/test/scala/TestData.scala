@@ -137,14 +137,24 @@ object TestData {
 					"bis", "ins", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte"))
 	}
 
-	def documentFrequenciesTestRDD(sc: SparkContext): RDD[DocumentFrequency] = {
-		sc.parallelize(List(
+	def documentFrequenciesTestList(): List[DocumentFrequency] = {
+		List(
 			DocumentFrequency("Audi", 3),
 			DocumentFrequency("Backfisch", 1),
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1)
-		))
+		)
+	}
+
+	def filteredDocumentFrequenciesTestList(): List[DocumentFrequency] = {
+		List(
+			DocumentFrequency("Audi", 3)
+		)
+	}
+
+	def requestedDocumentFrequenciesTestList(): List[Int] = {
+		List(3, 2, 2, 2, 2)
 	}
 
 	// scalastyle:off method.length
