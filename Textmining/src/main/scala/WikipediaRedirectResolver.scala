@@ -21,7 +21,8 @@ object WikipediaRedirectResolver {
 		var dict = mutable.Map[String, String]()
 
 		val redirectRegex = new Regex("(?i)((Weiterleitung:?)|(redirect))\\s?:?")
-		val wikiRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
+		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
+		dataRDD
 			.map{ entry =>
 				val text = entry.text match {
 					case Some(t) => t
@@ -38,22 +39,24 @@ object WikipediaRedirectResolver {
 					dict(title) = links.head.page
 				}
 			}
-
-		var noRedirectsRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
-			.map{ entry =>
-				var i = entry.links.size
-				while (i > 0) {
-					i = entry.links.size
-					entry.links.foreach{ link =>
-						if (dict.contains(link.page)) {
-							link.page = dict(link.page)
-						} else {
-							i -= 1
+		println(dict.mkString("\n"))
+		
+		val dictBroadcast = sc.broadcast(dict)
+		var noRedirectsRDD = dataRDD
+			.mapPartitions({ entryRDD =>
+				val localDict = dictBroadcast.value
+				entryRDD.map { entry =>
+					entry.links.foreach { link =>
+						var lookupResult = dict.getOrElse(link.page, link.page)
+						while(dict.contains(lookupResult)) {
+							lookupResult = dict.getOrElse(lookupResult, lookupResult)
+							println(s"looking up $lookupResult")
 						}
+						link.page = lookupResult
 					}
+					entry
 				}
-				entry
-			}
+			}, true)
 			.saveToCassandra(keyspace, tablename)
 		sc.stop()
 	}
