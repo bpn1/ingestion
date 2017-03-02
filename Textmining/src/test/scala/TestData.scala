@@ -310,5 +310,9 @@ object TestData {
 			))))
 	}
 
+	def germanStopwordsTestSet(): Set[String] = {
+		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
+	}
+
 	// scalastyle:on line.size.limit
 }
