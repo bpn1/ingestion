@@ -36,7 +36,8 @@ case class Subject(
 		case that: Subject => that.id == this.id
 		case _ => false
 	}
-	override def hashCode = super.hashCode
+
+	override def hashCode(): Int = this.id.hashCode()
 
 	// use reflection to get attribute from a string
 	def get[T](attribute: String): T = {
