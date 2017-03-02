@@ -9,7 +9,7 @@ class BagTest extends FlatSpec {
 			Bag("X" -> 3, "Y" -> 1, "Z" -> 1))
 	}
 
-	"Bag" should "remove elements properly" in {
+	it should "remove elements properly" in {
 		assert(Bag("a" -> 2, "b" -> 5) - "b" ===
 			Bag("a" -> 2, "b" -> 4))
 		assert(Bag("a" -> 2, "b" -> 5) - "c" ===

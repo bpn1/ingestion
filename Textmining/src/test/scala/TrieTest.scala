@@ -10,7 +10,7 @@ class TrieTest extends FlatSpec {
 		assert(trie.contains(List[String]("Maurício")))
 	}
 
-	"trie" should "find by prefix" in {
+	it should "find by prefix" in {
 		val trie = new TrieNode()
 		trie.append(List[String]("San", "Francisco"))
 		trie.append(List[String]("San", "Diego"))
@@ -25,7 +25,7 @@ class TrieTest extends FlatSpec {
 		assert(result.contains(List[String]("San", "to", "Domingo")))
 	}
 
-	"trie" should "not find by prefix if it does not exist" in {
+	it should "not find by prefix if it does not exist" in {
 		val trie = new TrieNode()
 		trie.append(List[String]("São", "Paulo"))
 		trie.append(List[String]("Rio", "de", "Janeiro"))
@@ -34,21 +34,21 @@ class TrieTest extends FlatSpec {
 		assert(trie.findByPrefix(List[String]("bos")).isEmpty)
 	}
 
-	"trie" should "say that a word is contained" in {
+	it should "say that a word is contained" in {
 		val trie = new TrieNode()
 		trie.append(List[String]("João", "Pessoa"))
 
 		assert(trie.contains(List[String]("João", "Pessoa")))
 	}
 
-	"trie" should "say that a word is not contained" in {
+	it should "say that a word is not contained" in {
 		val trie = new TrieNode()
 		trie.append(List[String]("João", "Pessoa"))
 
 		assert(!trie.contains(List[String]("João")))
 	}
 
-	"trie" should "provide the path to a word" in {
+	it should "provide the path to a word" in {
 		val word = List[String]("San", "Diego")
 
 		val trie = new TrieNode()
@@ -62,7 +62,7 @@ class TrieTest extends FlatSpec {
 		}
 	}
 
-	"trie" should "remove an item" in {
+	it should "remove an item" in {
 		val trie = new TrieNode()
 		trie.append(List[String]("San", "Francisco"))
 		trie.append(List[String]("San", "Antonio"))
@@ -71,7 +71,7 @@ class TrieTest extends FlatSpec {
 		assert(trie.contains(List[String]("San", "Antonio")))
 	}
 
-	"trie" should "remove a longer item" in {
+	it should "remove a longer item" in {
 		val name = List[String]("João", "Pessoa")
 
 		val trie = new TrieNode()
@@ -84,7 +84,7 @@ class TrieTest extends FlatSpec {
 		assert(trie.contains(List[String]("João")))
 	}
 
-	"trie" should "remove a smaller item" in {
+	it should "remove a smaller item" in {
 		val name = List[String]("João")
 
 		val trie = new TrieNode()
@@ -97,28 +97,29 @@ class TrieTest extends FlatSpec {
 		assert(trie.contains(List[String]("João", "Pessoa")))
 	}
 
-	"trie" should "not remove if it does not exist" in {
+	it should "not remove if it does not exist" in {
 		val trie = new TrieNode()
 		trie.append(List[String]("New", "York"))
 
 		assert(!trie.remove(List[String]("Berlin")))
 	}
 
-	"trie" should "not remove if it is not a word node" in {
+	it should "not remove if it is not a word node" in {
 		val trie = new TrieNode()
 		trie.append(List[String]("New", "York"))
 
 		assert(!trie.remove(List[String]("New")))
 	}
 
-	"trie" should "find matching words" in {
+	it should "find matching words" in {
 		val trie = new TrieNode()
 		trie.append(List[String]("This", "is"))
 		trie.append(List[String]("This", "is", "a", "good", "day"))
 		trie.append(List[String]("That", "test", "sucks", "a", "lot"))
-		val matchingWords = trie.matchTokens(List[String]("This", "is", "a", "good", "day", "to", "do", "shit"))
+		val searchTokens = List[String]("This", "is", "a", "good", "day", "to", "do", "shit")
+		val matchingWords = trie.matchTokens(searchTokens)
 		assert(matchingWords.length == 2)
-		assert(matchingWords(0).length <= matchingWords(1).length)
+		assert(matchingWords.head.length <= matchingWords(1).length)
 	}
 
 

@@ -39,8 +39,8 @@ object WikipediaLinkAnalysis {
 	def groupByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Alias] = {
 		parsedWikipedia
 			.flatMap(_.links)
-			.map(link => (link.alias, link.page))
-			.groupByKey
+			.map(link => (link.alias, List(link.page)))
+			.reduceByKey(_ ++ _)
 			.map { case (alias, pageList) =>
 				val pages = pageList
 					.groupBy(identity)
