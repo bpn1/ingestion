@@ -1,9 +1,9 @@
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Matchers}
 import WikiClasses._
 
-class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with SharedSparkContext {
+class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with SharedSparkContext with Matchers {
 	"Link contexts" should "contain all occurring page names of links and only once" in {
 		val pageNames = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
 			.map(_.pagename)
@@ -61,16 +61,24 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
 			.collect
 			.toSet
-		val testDocumentFrequencies = documentFrequenciesTestRDD()
+		assert(isSubset(documentFrequenciesTestSet(), documentFrequencies))
+	}
+
+	"Stemmed document frequencies" should "not contain unstemmed German words" in {
+		val unstemmedWords = unstemmedGermanWordsTestSet()
+		val documentFrequencies = sc.parallelize(documentFrequenciesTestSet().toList)
+		val unstemmedWordsInDocumentFrequencies = WikipediaContextExtractor.stemDocumentFrequencies(documentFrequencies)
+			.map(_.word)
+			.filter(word => unstemmedWords.contains(word))
 			.collect
 			.toSet
-		assert(isSubset(testDocumentFrequencies, documentFrequencies))
+		unstemmedWordsInDocumentFrequencies shouldBe empty
 	}
 
 	def getArticle(title: String): ParsedWikipediaEntry = {
 		parsedWikipediaTestRDD()
 			.filter(_.title == title)
-		    .first
+			.first
 	}
 
 	def parsedWikipediaTestRDD(): RDD[ParsedWikipediaEntry] = {
@@ -132,13 +140,24 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 				))
 	}
 
-	def documentFrequenciesTestRDD(): RDD[DocumentFrequency] = {
-		sc.parallelize(List(
+	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
+		Set(
 			DocumentFrequency("Audi", 3),
 			DocumentFrequency("Backfisch", 1),
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 1)
-		))
+			DocumentFrequency("zugleich", 1),
+			DocumentFrequency("einer", 1)
+		)
+	}
+
+	def stemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+		Set(
+			
+		)
+	}
+
+	def unstemmedGermanWordsTestSet(): Set[String] = {
+		Set("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "brauchen", "können", "sollte")
 	}
 }

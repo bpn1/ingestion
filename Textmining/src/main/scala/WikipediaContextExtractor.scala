@@ -1,8 +1,7 @@
-import WikiClasses.{LinkContext, ParsedWikipediaEntry, DocumentFrequency}
+import WikiClasses.{DocumentFrequency, LinkContext, ParsedWikipediaEntry}
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
-import scala.collection.mutable
 
 object WikipediaContextExtractor {
 	val keyspace = "wikidumps"
@@ -10,10 +9,22 @@ object WikipediaContextExtractor {
 	val outputDocumentFrequenciesTablename = "wikipediadocfreq"
 	val outputContextsTablename = "wikipediacontexts"
 
+	def stem(word: String): String = {
+		val stemmer = new AccessibleGermanStemmer
+		stemmer.stem(word)
+	}
+
+	def stemDocumentFrequencies(documentFrequencies: RDD[DocumentFrequency]): RDD[DocumentFrequency] = {
+		documentFrequencies
+			.map(df => (stem(df.word), df.count))
+			.reduceByKey(_ + _)
+			.map { case (word, count) => DocumentFrequency(word, count) }
+	}
+
 	def countDocumentFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[DocumentFrequency] = {
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
-			.flatMap(article => textToWordSet(article.getText, tokenizer))
+			.flatMap(article => textToWordSet(article.getText(), tokenizer))
 			.map(word => (word, 1))
 			.reduceByKey(_ + _)
 			.map { case (word, count) => DocumentFrequency(word, count) }
@@ -25,11 +36,10 @@ object WikipediaContextExtractor {
 
 	def extractLinkContextsFromArticle(
 		article: ParsedWikipediaEntry,
-		tokenizer: Tokenizer): Set[LinkContext] =
-	{
+		tokenizer: Tokenizer): Set[LinkContext] = {
 		// Do not initialize tokenizer here so it is initialized only once.
 		// (probably important for good performance of CoreNLP)
-		val wordSet = textToWordSet(article.getText, tokenizer)
+		val wordSet = textToWordSet(article.getText(), tokenizer)
 		article.links
 			.map(link => LinkContext(link.page, wordSet))
 			.toSet
