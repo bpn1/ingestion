@@ -38,12 +38,12 @@ case class Subject(
 	}
 	override def hashCode = super.hashCode
 
-  // use reflection to get attribute from a string
-  def get[T](attribute: String): T = {
-    val field: Field = this.getClass().getDeclaredField(attribute)
-    field.get(this) match {
+	// use reflection to get attribute from a string
+	def get[T](attribute: String): T = {
+		val field: Field = this.getClass().getDeclaredField(attribute)
+		field.get(this) match {
 			case Some(value) => value.asInstanceOf[T]
 			case None => properties(attribute).asInstanceOf[T]
 		}
-  }
+	}
 }
