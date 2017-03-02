@@ -3,7 +3,6 @@ package DataLake
 import java.lang.reflect.Field
 import java.util.{Date, UUID}
 
-import com.datastax.spark.connector.types._
 import com.datastax.driver.core.utils.UUIDs
 
 case class Version(

@@ -104,7 +104,7 @@ object Deduplication {
 	}
 
 	/**
-	  * Createds a new version for the import
+	  * Creates a new version for the import
 	  *
 	  * @return a version reproducing to the details of the import
 	  */
@@ -182,15 +182,20 @@ object Deduplication {
 	  * containing the Subjects categorized as this industry
 	  */
 
-	def generateBlocks(subjects: RDD[Subject], sc: SparkContext):
-	RDD[(String, Iterable[Subject])] = {
+	def generateBlocks(
+		subjects: RDD[Subject],
+		sc: SparkContext
+	): RDD[(String, Iterable[Subject])] =
+	{
 		val industries = collectIndustries(subjects)
-		sc.parallelize(industries.map(x => (x, subjects.filter(subject => subject
-			.properties
-			.getOrElse("branche", List("uncategorized"))
-			.contains(x))
-			.collect
-			.toList)))
+		sc.parallelize(industries.map(x =>
+			(x, subjects.filter(subject =>
+				subject
+					.properties
+					.getOrElse("branche", List("uncategorized"))
+					.contains(x))
+					.collect
+					.toList)))
 	}
 
 	/**
@@ -242,7 +247,6 @@ object Deduplication {
 	  * @return RDD containing a list of triples (subject1, subject2, similarity score)
 	  * for each block
 	  */
-
 	def findDuplicates(
 		blocks: RDD[(String, Iterable[Subject])],
 		config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]
@@ -256,9 +260,8 @@ object Deduplication {
 					pair => possibleDuplicate(
 						pair._1.id, pair._2.id, compare(pair._1, pair._2, config))))
 			}.map {
-				case (industry, possibleDuplicates) => (industry,
-					possibleDuplicates.filter(_.isConfident())
-				)
+				case (industry, possibleDuplicates) =>
+					(industry, possibleDuplicates.filter(_.isConfident()))
 			}
 	}
 }

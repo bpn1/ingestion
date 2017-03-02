@@ -5,8 +5,6 @@ import com.datastax.spark.connector._
 import java.util.Date
 import org.apache.spark.rdd.RDD
 import com.datastax.driver.core.utils.UUIDs
-import com.datastax.spark.connector.rdd.reader.RowReaderFactory
-import scala.reflect.ClassTag
 
 trait DLImport[T] extends Serializable {
 	val outputKeyspace = "datalake"
