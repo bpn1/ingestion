@@ -23,14 +23,13 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
 	similarityMeasure: B,
 	weight: Double)
 {
-	override def equals(obj: Any): Boolean = obj match {
+	def equals2(obj: Any): Boolean = obj match {
 		case that: scoreConfig[A, B] => that.key == this.key &&
 			that.similarityMeasure.equals(this.similarityMeasure) &&
 			that.weight == this.weight
 		case _ => false
 	}
 
-	override def hashCode = super.hashCode
 }
 
 /**
