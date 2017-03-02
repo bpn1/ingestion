@@ -14,7 +14,10 @@ object WikipediaContextExtractor {
 		stemmer.stem(word)
 	}
 
-	def stemDocumentFrequencies(documentFrequencies: RDD[DocumentFrequency]): RDD[DocumentFrequency] = {
+	def stemDocumentFrequencies(
+		documentFrequencies: RDD[DocumentFrequency]
+	): RDD[DocumentFrequency] =
+	{
 		documentFrequencies
 			.map(df => (stem(df.word), df.count))
 			.reduceByKey(_ + _)

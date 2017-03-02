@@ -5,4 +5,3 @@ class AccessibleGermanStemmer extends GermanStemmer {
 		super.stem(term)
 	}
 }
-	
