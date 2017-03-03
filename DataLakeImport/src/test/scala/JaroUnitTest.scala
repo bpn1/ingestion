@@ -5,6 +5,7 @@ import org.scalatest.FlatSpec
 class JaroUnitTest extends FlatSpec {
 
   "score" should "return the Jaro score for given strings" in {
+
     // result confirmed in round terms by https://asecuritysite.com/forensics/simstring
     val s1 = "dwayne"
     val t1 = "duane"
@@ -28,6 +29,7 @@ class JaroUnitTest extends FlatSpec {
     val s3 = "fvie"
     val t3 = "ten"
     val r3 = 0.0
+
     val score3 = {
       Jaro.compare(s3, t3)
     }
