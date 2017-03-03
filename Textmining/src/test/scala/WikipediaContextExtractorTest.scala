@@ -61,18 +61,10 @@ class WikipediaContextExtractorTest
 	}
 
 	they should "contain these document frequencies" in {
-		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(TestData.parsedWikipediaTestRDD())
+		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(TestData.parsedWikipediaTestRDD(sc))
 			.collect
 			.toSet
 		documentFrequencies should contain allElementsOf TestData.unstemmedDocumentFrequenciesTestSet()
-	}
-
-	"Word set from one article" should "be exactly this word set" in {
-		val articleTitle = "Testartikel"
-		val testWords = TestData.articleContextwordSets()(articleTitle)
-		val article = TestData.getArticle(articleTitle)
-		val wordSet = WikipediaContextExtractor.textToWordSet(article.getText(), new CleanCoreNLPTokenizer)
-		wordSet shouldEqual testWords
 	}
 
 	"Stemmed document frequencies" should "not contain unstemmed German words" in {
@@ -81,7 +73,7 @@ class WikipediaContextExtractorTest
 			.map(_.word)
 		    .collect
 		    .toSet
-		stemmedDocumentFrequencies should contain noElementsOf TestData.unstemmedGermanWordsTestSet()
+		stemmedDocumentFrequencies should contain noElementsOf TestData.unstemmedGermanWordsTestList()
 	}
     
 	they should "contain these document frequencies" in {
