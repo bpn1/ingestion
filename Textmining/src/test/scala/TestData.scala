@@ -314,7 +314,7 @@ object TestData {
 		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
 	}
 
-	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def unstemmedDFTestSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("Audi", 3),
 			DocumentFrequency("Backfisch", 1),
@@ -328,7 +328,7 @@ object TestData {
 		)
 	}
 
-	def stemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def stemmedDFTestSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("backfisch", 1),
