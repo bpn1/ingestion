@@ -2,8 +2,10 @@ import WikiClasses._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+// scalastyle:off number.of.methods
 object TestData {
 	// scalastyle:off line.size.limit
+
 	def testSentences(): List[String] = {
 		List(
 			"This is a test sentence.",
@@ -382,3 +384,4 @@ object TestData {
 
 	// scalastyle:on line.size.limit
 }
+// scalastyle:on number.of.methods
