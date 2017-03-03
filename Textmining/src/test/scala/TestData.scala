@@ -340,13 +340,13 @@ object TestData {
 	}
 
 	def unstemmedGermanWordsTestList(): List[String] = {
-		List("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "ist", "Streitberg", "Braunschweig",
+		List("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "Streitberg", "Braunschweig",
 			"Deutschland", "Baum", "brauchen", "suchen", "könnte")
 		// problem words: eine -> eine, hatte -> hatt
 	}
 
 	def stemmedGermanWordsTestList(): List[String] = {
-		List("es", "kein", "kein", "kein", "ist", "kein", "kein", "ist", "streitberg", "braunschweig",
+		List("es", "kein", "kein", "kein", "ist", "kein", "kein", "streitberg", "braunschweig",
 			"deutschla", "baum", "brauch", "such", "konn")
 	}
 
