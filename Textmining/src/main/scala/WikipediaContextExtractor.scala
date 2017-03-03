@@ -3,6 +3,8 @@ import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
+import scala.io.Source
+
 object WikipediaContextExtractor {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
@@ -64,12 +66,11 @@ object WikipediaContextExtractor {
 			.map { case (pagename, contextSum) => LinkContext(pagename, contextSum) }
 	}
 
-	def loadStopwords(sc: SparkContext): Set[String] = {
+	def loadStopwords(): Set[String] = {
 		var stopwords = Set[String]()
 		if (removeStopwords) {
-			stopwords = sc
-				.textFile(stopwordsPath)
-				.collect
+			stopwords = Source.fromURL(getClass.getResource(s"/$stopwordsPath"))
+				.getLines()
 				.toSet
 		}
 		stopwords
@@ -82,7 +83,7 @@ object WikipediaContextExtractor {
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val stopwords = loadStopwords(sc)
+		val stopwords = loadStopwords()
 		stemDocumentFrequencies(countDocumentFrequencies(allArticles, stopwords))
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
 		//		extractAllContexts(allArticles)

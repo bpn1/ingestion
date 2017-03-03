@@ -344,5 +344,41 @@ object TestData {
 		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
 	}
 
+	def unstemmedDFTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("Audi", 3),
+			DocumentFrequency("Backfisch", 1),
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 2),
+			DocumentFrequency("zugleich", 1),
+			DocumentFrequency("einer", 2),
+			DocumentFrequency("ein", 2),
+			DocumentFrequency("Einer", 1),
+			DocumentFrequency("Ein", 1)
+		)
+	}
+
+	def stemmedDFTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("backfisch", 1),
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 2),
+			DocumentFrequency("zugleich", 1),
+			DocumentFrequency("ein", 6)
+		)
+	}
+
+	def unstemmedGermanWordsTestList(): List[String] = {
+		List("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "Streitberg", "Braunschweig",
+			"Deutschland", "Baum", "brauchen", "suchen", "könnte")
+		// problem words: eine -> eine, hatte -> hatt
+	}
+
+	def stemmedGermanWordsTestList(): List[String] = {
+		List("es", "kein", "kein", "kein", "ist", "kein", "kein", "streitberg", "braunschweig",
+			"deutschla", "baum", "brauch", "such", "konn")
+	}
+
 	// scalastyle:on line.size.limit
 }
