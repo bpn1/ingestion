@@ -1,3 +1,4 @@
+import WikiClasses.DocumentFrequency
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -76,7 +77,7 @@ class WikipediaContextExtractorTest
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(articles)
 			.collect
-			.toSet 
+			.toSet
 		documentFrequencies should contain allElementsOf TestData.documentFrequenciesTestSet()
 	}
 
@@ -85,8 +86,8 @@ class WikipediaContextExtractorTest
 		val stemmedDF = WikipediaContextExtractor
 			.stemDocumentFrequencies(documentFrequencies)
 			.map(_.word)
-		    .collect
-		    .toSet
+			.collect
+			.toSet
 		stemmedDF should contain noElementsOf TestData.unstemmedGermanWordsTestList()
 	}
 
@@ -94,13 +95,13 @@ class WikipediaContextExtractorTest
 		val documentFrequencies = sc.parallelize(TestData.unstemmedDFTestSet().toList)
 		val stemmedDF = WikipediaContextExtractor
 			.stemDocumentFrequencies(documentFrequencies)
-		    .collect
-		    .toSet
+			.collect
+			.toSet
 		stemmedDF should contain allElementsOf TestData.stemmedDFTestSet()
 	}
 
 	"Filtered document frequencies" should "not contain German stopwords" in {
-		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet())
+		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
 		val filteredWords = WikipediaContextExtractor
 			.filterDocumentFrequencies(documentFrequencies,
 				1,
@@ -113,7 +114,7 @@ class WikipediaContextExtractorTest
 
 	they should "not contain infrequent words" in {
 		val threshold = WikipediaContextExtractor.leastSignificantDocumentFrequency
-		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestList())
+		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
 		val infrequentWords = WikipediaContextExtractor
 			.filterDocumentFrequencies(documentFrequencies,
 				threshold,
@@ -126,8 +127,9 @@ class WikipediaContextExtractorTest
 
 	they should "contain these document frequencies" in {
 		val threshold = 3
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val documentFrequencies = WikipediaContextExtractor
-			.countDocumentFrequencies(TestData.parsedWikipediaTestRDD(sc))
+			.countDocumentFrequencies(articles)
 		val filteredDocumentFrequencies = WikipediaContextExtractor
 			.filterDocumentFrequencies(documentFrequencies,
 				threshold,
@@ -141,12 +143,14 @@ class WikipediaContextExtractorTest
 
 	"Requested document frequency" should "be correct for known words or else (threshold - 1)" in {
 		val threshold = 3
-		val requestedDocumentFrequencies = TestData.documentFrequenciesTestList()
-			.map(documentFrequency =>
-				WikipediaContextExtractor.getDocumentFrequency(
+		val requestedDocumentFrequencies = TestData.documentFrequenciesTestSet()
+			.map { documentFrequency =>
+				val count = WikipediaContextExtractor.getDocumentFrequency(
 					documentFrequency.word,
 					sc.parallelize(TestData.filteredDocumentFrequenciesTestList()),
-					threshold))
-		requestedDocumentFrequencies shouldEqual TestData.requestedDocumentFrequenciesTestList()
+					threshold)
+				DocumentFrequency(documentFrequency.word, count)
+			}
+		requestedDocumentFrequencies shouldEqual TestData.requestedDocumentFrequenciesTestSet()
 	}
 }

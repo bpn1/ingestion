@@ -21,8 +21,7 @@ object WikipediaContextExtractor {
 
 	def stemDocumentFrequencies(
 		documentFrequencies: RDD[DocumentFrequency]
-	): RDD[DocumentFrequency] =
-	{
+	): RDD[DocumentFrequency] = {
 		documentFrequencies
 			.map(df => (stem(df.word), df.count))
 			.reduceByKey(_ + _)
@@ -30,9 +29,8 @@ object WikipediaContextExtractor {
 	}
 
 	def countDocumentFrequencies(
-		articles: RDD[ParsedWikipediaEntry],
-	): RDD[DocumentFrequency] =
-	{
+		articles: RDD[ParsedWikipediaEntry]
+	): RDD[DocumentFrequency] = {
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
 			.flatMap(article => textToWordSet(article.getText(), tokenizer))
@@ -111,11 +109,11 @@ object WikipediaContextExtractor {
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val stopwords = loadStopwords(sc)
+		val stopwords = loadStopwords()
 		val documentFrequencies = countDocumentFrequencies(allArticles)
 		val filteredDocumentFrequencies = filterDocumentFrequencies(documentFrequencies, leastSignificantDocumentFrequency, stopwords)
 		val stemmedDocuementFrequencies = stemDocumentFrequencies(filteredDocumentFrequencies)
-    stemmedDocuementFrequencies
+		stemmedDocuementFrequencies
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
 		//		extractAllContexts(allArticles)
 		//			.saveToCassandra(keyspace, outputContextsTablename)
