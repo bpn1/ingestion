@@ -1,17 +1,14 @@
 package DataLake
 
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Matchers}
 
-class NGramUnitTest extends FlatSpec {
+class NGramUnitTest extends FlatSpec with Matchers {
 
-  "score" should "return the NGram score for given strings" in {
-
-    val s1 = "nacht"
-    val t1 = "night"
-    val score1 = {
-      NGram.compare(s1, t1)
-    }
-    assert(score1 === 0.6)
-
-  }
+	"compare" should "return the NGram score for given strings" in {
+		val s1 = "nacht"
+		val t1 = "night"
+		val r1 = 0.6
+		val score1 = NGram.compare(s1, t1)
+		score1 shouldEqual r1
+	}
 }
