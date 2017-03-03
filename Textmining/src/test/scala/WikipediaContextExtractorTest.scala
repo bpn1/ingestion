@@ -95,7 +95,8 @@ class WikipediaContextExtractorTest
 
 	they should "contain these document frequencies" in {
 		val threshold = 3
-		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(TestData.parsedWikipediaTestRDD(sc))
+		val documentFrequencies = WikipediaContextExtractor
+			.countDocumentFrequencies(TestData.parsedWikipediaTestRDD(sc))
 		val filteredDocumentFrequencies = WikipediaContextExtractor
 			.filterDocumentFrequencies(documentFrequencies,
 				threshold,
@@ -117,7 +118,7 @@ class WikipediaContextExtractorTest
 		wordSet shouldEqual testWords
 	}
 
-	"Requested document frequency" should "be correct for known words and otherwise (threshold - 1)" in {
+	"Requested document frequency" should "be correct for known words or else (threshold - 1)" in {
 		val threshold = 3
 		val requestedDocumentFrequencies = TestData.documentFrequenciesTestList()
 			.map(documentFrequency =>
