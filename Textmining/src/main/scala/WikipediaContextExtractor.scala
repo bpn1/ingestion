@@ -8,6 +8,8 @@ object WikipediaContextExtractor {
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputDocumentFrequenciesTablename = "wikipediadocfreq"
 	val outputContextsTablename = "wikipediacontexts"
+	val removeStopwords = true
+	val stopwordsPath = "german_stopwords.txt"
 
 	def stem(word: String): String = {
 		val stemmer = new AccessibleGermanStemmer
@@ -24,13 +26,18 @@ object WikipediaContextExtractor {
 			.map { case (word, count) => DocumentFrequency(word, count) }
 	}
 
-	def countDocumentFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[DocumentFrequency] = {
+	def countDocumentFrequencies(
+		articles: RDD[ParsedWikipediaEntry],
+		stopwords: Set[String] = Set[String]()
+	): RDD[DocumentFrequency] =
+	{
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
 			.flatMap(article => textToWordSet(article.getText(), tokenizer))
 			.map(word => (word, 1))
 			.reduceByKey(_ + _)
 			.map { case (word, count) => DocumentFrequency(word, count) }
+			.filter(documentFrequency => !stopwords.contains(documentFrequency.word))
 	}
 
 	def textToWordSet(text: String, tokenizer: Tokenizer): Set[String] = {
@@ -57,6 +64,17 @@ object WikipediaContextExtractor {
 			.map { case (pagename, contextSum) => LinkContext(pagename, contextSum) }
 	}
 
+	def loadStopwords(sc: SparkContext): Set[String] = {
+		var stopwords = Set[String]()
+		if (removeStopwords) {
+			stopwords = sc
+				.textFile(stopwordsPath)
+				.collect
+				.toSet
+		}
+		stopwords
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Context Extractor")
@@ -64,7 +82,8 @@ object WikipediaContextExtractor {
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		stemDocumentFrequencies(countDocumentFrequencies(allArticles))
+		val stopwords = loadStopwords(sc)
+		stemDocumentFrequencies(countDocumentFrequencies(allArticles, stopwords))
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
 		//		extractAllContexts(allArticles)
 		//			.saveToCassandra(keyspace, outputContextsTablename)

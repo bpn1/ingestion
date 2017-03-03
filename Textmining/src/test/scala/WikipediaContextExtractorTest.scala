@@ -2,179 +2,115 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
 import org.scalatest.{FlatSpec, Matchers}
 import WikiClasses._
+import org.scalatest._
 
-class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with SharedSparkContext with Matchers {
+class WikipediaContextExtractorTest
+	extends FlatSpec with PrettyTester with SharedSparkContext with Matchers {
 	"Link contexts" should "contain all occurring page names of links and only once" in {
-		val pageNames = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
+		val pageNames = WikipediaContextExtractor
+			.extractAllContexts(TestData.parsedWikipediaTestRDD(sc))
 			.map(_.pagename)
 			.sortBy(identity)
-		assert(areRDDsEqual(pageNames, allPageNamesTestRDD()))
+		assert(areRDDsEqual(pageNames, TestData.allPageNamesTestRDD(sc)))
 	}
 
-	"Link contexts" should "not be empty" in {
-		val contexts = WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
-		assert(!contexts.isEmpty)
+	they should "not be empty" in {
+		val contexts = WikipediaContextExtractor
+			.extractAllContexts(TestData.parsedWikipediaTestRDD(sc))
+		contexts should not be empty
 	}
 
-	"Link contexts" should "contain any words" in {
-		WikipediaContextExtractor.extractAllContexts(parsedWikipediaTestRDD())
+	they should "contain any words" in {
+		WikipediaContextExtractor
+			.extractAllContexts(TestData.parsedWikipediaTestRDD(sc))
 			.collect
-			.foreach(context => assert(context.words.nonEmpty))
+			.foreach(context => context.words should not be empty)
 	}
 
 	"Link contexts of one article" should "contain all occurring page names of links" in {
 		val articleTitle = "Testartikel"
-		val article = getArticle(articleTitle)
-		val pageNames = WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanCoreNLPTokenizer)
+		val article = TestData.getArticle(articleTitle, sc)
+		val pageNames =
+			WikipediaContextExtractor.extractLinkContextsFromArticle(
+				article,
+				new CleanCoreNLPTokenizer)
 			.map(_.pagename)
-		assert(pageNames == allPageNamesOfTestArticleList())
+		pageNames shouldEqual TestData.allPageNamesOfTestArticleList()
 	}
 
-	"Link contexts of one article" should "contain at least these words" in {
+	they should "contain at least these words" in {
 		val articleTitle = "Streitberg (Brachttal)"
-		val testWords = articleContextwordSets()(articleTitle)
-		val article = getArticle(articleTitle)
-		WikipediaContextExtractor.extractLinkContextsFromArticle(article, new CleanCoreNLPTokenizer)
-			.foreach(context => assert(isSubset(testWords, context.words)))
+		val testWords = TestData.articleContextwordSets()(articleTitle)
+		val article = TestData.getArticle(articleTitle, sc)
+		WikipediaContextExtractor
+			.extractLinkContextsFromArticle(article, new CleanCoreNLPTokenizer)
+			.foreach(context => context.words should contain allElementsOf testWords)
 	}
 
 	"Document frequencies" should "not be empty" in {
-		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
-		assert(!documentFrequencies.isEmpty)
+		val documentFrequencies = WikipediaContextExtractor
+			.countDocumentFrequencies(TestData.parsedWikipediaTestRDD(sc))
+		documentFrequencies should not be empty
 	}
 
-	"Document frequencies" should "be greater than zero" in {
-		WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
+	they should "be greater than zero" in {
+		WikipediaContextExtractor
+			.countDocumentFrequencies(TestData.parsedWikipediaTestRDD(sc))
 			.collect
-			.foreach(df => assert(df.count > 0))
+			.foreach(df => df.count should be > 0)
+	}
+
+	they should "contain these document frequencies" in {
+		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(TestData.parsedWikipediaTestRDD())
+			.collect
+			.toSet
+		documentFrequencies should contain allElementsOf TestData.unstemmedDocumentFrequenciesTestSet()
 	}
 
 	"Word set from one article" should "be exactly this word set" in {
 		val articleTitle = "Testartikel"
-		val testWords = articleContextwordSets()(articleTitle)
-		val article = getArticle(articleTitle)
+		val testWords = TestData.articleContextwordSets()(articleTitle)
+		val article = TestData.getArticle(articleTitle)
 		val wordSet = WikipediaContextExtractor.textToWordSet(article.getText(), new CleanCoreNLPTokenizer)
-		assert(areSetsEqual(wordSet, testWords))
-	}
-
-	"Document frequencies" should "contain these document frequencies" in {
-		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(parsedWikipediaTestRDD())
-			.collect
-			.toSet
-		documentFrequencies should contain allElementsOf unstemmedDocumentFrequenciesTestSet()
+		wordSet shouldEqual testWords
 	}
 
 	"Stemmed document frequencies" should "not contain unstemmed German words" in {
-		val documentFrequencies = sc.parallelize(unstemmedDocumentFrequenciesTestSet().toList)
+		val documentFrequencies = sc.parallelize(TestData.unstemmedDocumentFrequenciesTestSet().toList)
 		val stemmedDocumentFrequencies = WikipediaContextExtractor.stemDocumentFrequencies(documentFrequencies)
 			.map(_.word)
 		    .collect
 		    .toSet
-		stemmedDocumentFrequencies should contain noElementsOf unstemmedGermanWordsTestSet()
+		stemmedDocumentFrequencies should contain noElementsOf TestData.unstemmedGermanWordsTestSet()
 	}
+    
 	they should "contain these document frequencies" in {
-		val documentFrequencies = sc.parallelize(unstemmedDocumentFrequenciesTestSet().toList)
+		val documentFrequencies = sc.parallelize(TestData.unstemmedDocumentFrequenciesTestSet().toList)
 		val stemmedDocumentFrequencies = WikipediaContextExtractor.stemDocumentFrequencies(documentFrequencies)
 		    .collect
 		    .toSet
-		stemmedDocumentFrequencies should contain allElementsOf stemmedDocumentFrequenciesTestSet()
+		stemmedDocumentFrequencies should contain allElementsOf TestData.stemmedDocumentFrequenciesTestSet()
 	}
 
-	def getArticle(title: String): ParsedWikipediaEntry = {
-		parsedWikipediaTestRDD()
-			.filter(_.title == title)
-			.first
+	"Filtered document frequencies" should "not contain German stopwords" in {
+		val containedStopwords = WikipediaContextExtractor
+			.countDocumentFrequencies(
+				TestData.parsedWikipediaTestRDD(sc),
+				TestData.germanStopwordsTestSet())
+			.map(_.word)
+			.collect
+			.toSet
+			.intersect(TestData.germanStopwordsTestSet())
+		containedStopwords shouldBe empty
 	}
 
-	def parsedWikipediaTestRDD(): RDD[ParsedWikipediaEntry] = {
-		sc.parallelize(List(
-			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
-				List(
-					Link("Audi", "Audi", 9)
-				),
-				List("Audi")),
-			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
-				List(),
-				List("Audi")),
-			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
-				List(
-					Link("Brachttal", "Brachttal", 55),
-					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
-					Link("Hessen", "Hessen", 87),
-					Link("1377", "1377", 225),
-					Link("Büdinger Wald", "Büdinger Wald", 546)
-				),
-				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald")),
-			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
-				List(
-					Link("Audi", "Audi", 7),
-					Link("Brachttal", "Brachttal", 13),
-					Link("historisches Jahr", "1377", 24)
-				),
-				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")),
-			ParsedWikipediaEntry("Stemming words", Option("""einer ein Einer Ein"""),
-				List(),
-				List())
-			))
-	}
-
-	def allPageNamesTestRDD(): RDD[String] = {
-		sc.parallelize(List(
-			"Brachttal",
-			"Main-Kinzig-Kreis",
-			"Hessen",
-			"1377",
-			"Büdinger Wald",
-			"Audi"
-		))
-			.sortBy(identity)
-	}
-
-	def allPageNamesOfTestArticleList(): Set[String] = {
-		Set(
-			"Audi",
-			"Brachttal",
-			"1377"
-		)
-	}
-
-	def articleContextwordSets(): Map[String, Set[String]] = {
-		Map("Testartikel" ->
-			Set("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
-
-			"Streitberg (Brachttal)" ->
-				Set("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde",
-					"Im", "Jahre", "1500", "ist", "von", "Stridberg", "die",
-					"Vom", "Mittelalter", "bis", "ins", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte"
-				))
-	}
-
-	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
-		Set(
-			DocumentFrequency("Audi", 3),
-			DocumentFrequency("Backfisch", 1),
-			DocumentFrequency("ist", 3),
-			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("einer", 2),
-			DocumentFrequency("ein", 2),
-			DocumentFrequency("Einer", 1),
-			DocumentFrequency("Ein", 1)
-		)
-	}
-
-	def stemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
-		Set(
-			DocumentFrequency("audi", 3),
-			DocumentFrequency("backfisch", 1),
-			DocumentFrequency("ist", 3),
-			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("ein", 6)
-		)
-	}
-
-	def unstemmedGermanWordsTestSet(): Set[String] = {
-		Set("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "brauchen", "können", "sollte")
+	"Word set from one article" should "be exactly this word set" in {
+		val articleTitle = "Testartikel"
+		val testWords = TestData.articleContextwordSets()(articleTitle)
+		val article = TestData.getArticle(articleTitle, sc)
+		val wordSet = WikipediaContextExtractor.textToWordSet(
+			article.getText(),
+			new CleanCoreNLPTokenizer)
+		wordSet shouldEqual testWords
 	}
 }
