@@ -2,8 +2,10 @@ import WikiClasses._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+// scalastyle:off number.of.methods
 object TestData {
 	// scalastyle:off line.size.limit
+
 	def testSentences(): List[String] = {
 		List(
 			"This is a test sentence.",
@@ -34,8 +36,8 @@ object TestData {
 			.sortBy(identity)
 	}
 
-	def parsedWikipediaTestRDD(sc: SparkContext): RDD[ParsedWikipediaEntry] = {
-		sc.parallelize(List(
+	def parsedWikipediaTestSet(): Set[ParsedWikipediaEntry] = {
+		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
 					Link("Audi", "Audi", 9)
@@ -59,7 +61,7 @@ object TestData {
 					Link("Brachttal", "Brachttal", 13),
 					Link("historisches Jahr", "1377", 24)
 				),
-				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
+				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
 	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
@@ -101,10 +103,10 @@ object TestData {
 			.sortBy(_._1)
 	}
 
-	def getArticle(title: String, sc: SparkContext): ParsedWikipediaEntry = {
-		parsedWikipediaTestRDD(sc)
+	def getArticle(title: String): ParsedWikipediaEntry = {
+		parsedWikipediaTestSet()
 			.filter(_.title == title)
-			.first
+		    .head
 	}
 
 	def allPageNamesTestRDD(sc: SparkContext): RDD[String] = {
@@ -137,14 +139,44 @@ object TestData {
 					"bis", "ins", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte"))
 	}
 
-	def documentFrequenciesTestRDD(sc: SparkContext): RDD[DocumentFrequency] = {
-		sc.parallelize(List(
+	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
+		Set(
 			DocumentFrequency("Audi", 3),
 			DocumentFrequency("Backfisch", 1),
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 1)
-		))
+			DocumentFrequency("zugleich", 1),
+			DocumentFrequency("einer", 1)
+		)
+	}
+
+	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("Audi", 3),
+			DocumentFrequency("Backfisch", 1),
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 2),
+			DocumentFrequency("zugleich", 1),
+			DocumentFrequency("einer", 1),
+			DocumentFrequency("ein", 2),
+			DocumentFrequency("Einer", 1),
+			DocumentFrequency("Ein", 1)
+		)
+	}
+
+	def stemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("backfisch", 1),
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 2),
+			DocumentFrequency("zugleich", 1),
+			DocumentFrequency("ein", 5)
+		)
+	}
+
+	def unstemmedGermanWordsTestSet(): Set[String] = {
+		Set("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "brauchen", "können", "sollte")
 	}
 
 	// scalastyle:off method.length
@@ -314,5 +346,42 @@ object TestData {
 		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
 	}
 
+	def unstemmedDFTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("Audi", 3),
+			DocumentFrequency("Backfisch", 1),
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 2),
+			DocumentFrequency("zugleich", 1),
+			DocumentFrequency("einer", 2),
+			DocumentFrequency("ein", 2),
+			DocumentFrequency("Einer", 1),
+			DocumentFrequency("Ein", 1)
+		)
+	}
+
+	def stemmedDFTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("backfisch", 1),
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 2),
+			DocumentFrequency("zugleich", 1),
+			DocumentFrequency("ein", 6)
+		)
+	}
+
+	def unstemmedGermanWordsTestList(): List[String] = {
+		List("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "Streitberg", "Braunschweig",
+			"Deutschland", "Baum", "brauchen", "suchen", "könnte")
+		// problem words: eine -> eine, hatte -> hatt
+	}
+
+	def stemmedGermanWordsTestList(): List[String] = {
+		List("es", "kein", "kein", "kein", "ist", "kein", "kein", "streitberg", "braunschweig",
+			"deutschla", "baum", "brauch", "such", "konn")
+	}
+
 	// scalastyle:on line.size.limit
 }
+// scalastyle:on number.of.methods
