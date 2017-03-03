@@ -1,7 +1,9 @@
-import WikiClasses.{LinkContext, ParsedWikipediaEntry, DocumentFrequency}
+import WikiClasses.{DocumentFrequency, LinkContext, ParsedWikipediaEntry}
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
+
+import scala.io.Source
 
 object WikipediaContextExtractor {
 	val keyspace = "wikidumps"
@@ -12,7 +14,25 @@ object WikipediaContextExtractor {
 	val stopwordsPath = "german_stopwords.txt"
 	val leastSignificantDocumentFrequency = 5
 
-	def countDocumentFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[DocumentFrequency] = {
+	def stem(word: String): String = {
+		val stemmer = new AccessibleGermanStemmer
+		stemmer.stem(word)
+	}
+
+	def stemDocumentFrequencies(
+		documentFrequencies: RDD[DocumentFrequency]
+	): RDD[DocumentFrequency] =
+	{
+		documentFrequencies
+			.map(df => (stem(df.word), df.count))
+			.reduceByKey(_ + _)
+			.map { case (word, count) => DocumentFrequency(word, count) }
+	}
+
+	def countDocumentFrequencies(
+		articles: RDD[ParsedWikipediaEntry],
+	): RDD[DocumentFrequency] =
+	{
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
 			.flatMap(article => textToWordSet(article.getText(), tokenizer))
@@ -55,12 +75,11 @@ object WikipediaContextExtractor {
 			.map { case (pagename, contextSum) => LinkContext(pagename, contextSum) }
 	}
 
-	def loadStopwords(sc: SparkContext): Set[String] = {
+	def loadStopwords(): Set[String] = {
 		var stopwords = Set[String]()
 		if (removeStopwords) {
-			stopwords = sc
-				.textFile(stopwordsPath)
-				.collect
+			stopwords = Source.fromURL(getClass.getResource(s"/$stopwordsPath"))
+				.getLines()
 				.toSet
 		}
 		stopwords
@@ -94,7 +113,9 @@ object WikipediaContextExtractor {
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val stopwords = loadStopwords(sc)
 		val documentFrequencies = countDocumentFrequencies(allArticles)
-		filterDocumentFrequencies(documentFrequencies, leastSignificantDocumentFrequency, stopwords)
+		val filteredDocumentFrequencies = filterDocumentFrequencies(documentFrequencies, leastSignificantDocumentFrequency, stopwords)
+		val stemmedDocuementFrequencies = stemDocumentFrequencies(filteredDocumentFrequencies)
+    stemmedDocuementFrequencies
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
 		//		extractAllContexts(allArticles)
 		//			.saveToCassandra(keyspace, outputContextsTablename)
