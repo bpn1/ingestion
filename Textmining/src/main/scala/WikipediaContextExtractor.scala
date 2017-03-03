@@ -111,7 +111,11 @@ object WikipediaContextExtractor {
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val stopwords = loadStopwords()
 		val documentFrequencies = countDocumentFrequencies(allArticles)
-		val filteredDocumentFrequencies = filterDocumentFrequencies(documentFrequencies, leastSignificantDocumentFrequency, stopwords)
+		val filteredDocumentFrequencies = filterDocumentFrequencies(
+			documentFrequencies,
+			leastSignificantDocumentFrequency,
+			stopwords
+		)
 		val stemmedDocuementFrequencies = stemDocumentFrequencies(filteredDocumentFrequencies)
 		stemmedDocuementFrequencies
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
