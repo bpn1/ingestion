@@ -7,7 +7,8 @@ import com.rockymadden.stringmetric.similarity.JaroWinklerMetric
 	*/
 object MongeElkan extends SimilarityMeasure[String] {
 	/**
-		* Finds the highest similarity score using JaroWinkler compare for a token with a list of tokens
+		* Finds the highest similarity score using JaroWinkler compare for a token with a list
+		* of tokens
 		* @param token token to find the highest score for
 		* @param list list of tokens the token is compared to
 		* @return only the highest of the scores for all combinations of token x list of tokens
@@ -29,7 +30,7 @@ object MongeElkan extends SimilarityMeasure[String] {
 		val y = t.split(" ").toList
 		val sum = x
 		  .map(maxSim(_, y))
-		  .foldLeft(0.0)((b, a) => b+a)
+		  .foldLeft(0.0)((b, a) => b + a)
 		sum / y.length
 	}
 }
