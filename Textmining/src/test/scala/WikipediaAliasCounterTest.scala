@@ -5,28 +5,32 @@ import WikiClasses._
 
 class WikipediaAliasCounterTest extends FlatSpec with PrettyTester with SharedSparkContext {
 	"Counted aliases" should "have the same size as all links" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val allAliases = TestData.allAliasesTestRDD(sc)
 		val countedAliases =
-			WikipediaAliasCounter.countAllAliasOccurrences(TestData.parsedWikipediaTestRDD(sc))
+			WikipediaAliasCounter.countAllAliasOccurrences(articles)
 		assert(countedAliases.count() == allAliases.count)
 	}
 
 	they should "have the same aliases as all links" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val countedAliases =
-			WikipediaAliasCounter.countAllAliasOccurrences(TestData.parsedWikipediaTestRDD(sc))
+			WikipediaAliasCounter.countAllAliasOccurrences(articles)
 				.map(_.alias)
 				.sortBy(identity)
 		assert(areRDDsEqual(countedAliases, TestData.allAliasesTestRDD(sc)))
 	}
 
 	they should "have counted any occurrence" in {
-		WikipediaAliasCounter.countAllAliasOccurrences(TestData.parsedWikipediaTestRDD(sc))
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		WikipediaAliasCounter.countAllAliasOccurrences(articles)
 			.collect
 			.foreach(aliasCounter => assert(aliasCounter.totaloccurrences > 0))
 	}
 
 	they should "have consistent counts" in {
-		WikipediaAliasCounter.countAllAliasOccurrences(TestData.parsedWikipediaTestRDD(sc))
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		WikipediaAliasCounter.countAllAliasOccurrences(articles)
 			.collect
 			.foreach { aliasCounter =>
 				assert(aliasCounter.linkoccurrences <= aliasCounter.totaloccurrences)
@@ -35,21 +39,23 @@ class WikipediaAliasCounterTest extends FlatSpec with PrettyTester with SharedSp
 	}
 
 	they should "be exactly these counted aliases" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val countedAliases = WikipediaAliasCounter
-			.countAllAliasOccurrences(TestData.parsedWikipediaTestRDD(sc))
+			.countAllAliasOccurrences(articles)
 			.sortBy(_.alias)
 		assert(areRDDsEqual(countedAliases, TestData.countedAliasesTestRDD(sc)))
 	}
 
 	"Alias occurrences" should "be correct identified as link or no link" in {
 		val testOccurences = TestData.aliasOccurrencesInArticlesTestRDD(sc)
-		val aliasOccurrencesInArticles = TestData.parsedWikipediaTestRDD(sc)
+		val aliasOccurrencesInArticles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.map(article => WikipediaAliasCounter.identifyAliasOccurrencesInArticle(article))
 		assert(areRDDsEqual(aliasOccurrencesInArticles, testOccurences))
 	}
 
 	"Identified aliases" should "not be link and no link in the same article" in {
-		TestData.parsedWikipediaTestRDD(sc)
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		articles
 			.map(article => WikipediaAliasCounter.identifyAliasOccurrencesInArticle(article))
 			.collect
 			.foreach(occurrences =>
