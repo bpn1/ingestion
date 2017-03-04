@@ -24,14 +24,157 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeas
 	}
 }
 
-/**
-	* Possible duplication object
-	* @param subject1 id of subject1
-	* @param subject2 id of subject 2
-	* @param confidence similarity score
+abstract class Duplication (
+	val confidence: Double,
+	val appName: String,
+	val dataSources: List[String]
+){
+	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
+	val keyspace = "datalake"
+	val subjectTable = "subject"
+	val stagingTable = "subject_temp"
+	val duplicatesTable = "duplicatecandidates"
+	val versionTable = "version"
+
+	/**
+	* Creates a list by pairing all subjects without order
+	* @param list List of subjects
+	* @param acc accumulator
+	* @return list of paired subjects
 	*/
-case class possibleDuplicate(subject1: UUID, subject2: UUID, confidence: Double) {
-	def isConfident(): Boolean = this.confidence > Deduplication.confidenceThreshold
+	def makePairs(list: List[Subject], acc: List[(Subject, Subject)] = List[(Subject, Subject)]()): List[(Subject, Subject)] = list match {
+		case Nil => acc
+		case x::Nil => acc
+		case x::xs => makePairs(xs, acc ::: list.map((x,_)).filter(x => x._1 != x._2))
+	}
+
+	/**
+	* Compares to subjects regarding the configuration
+	* @param subject1 subjects to be compared to subject2
+	* @param subject2 subjects to be compared to subject2
+	* @param config configuration of the similarity measures for the comparison
+	* @return the similarity score of the subjects
+	*/
+	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): (Subject, Subject, Double) = {
+		val list = ListBuffer.empty[Double]
+		for(item <- config) {
+			list += item.similarityMeasure.compare(subject1.get(item.key), subject2.get(item.key)) * item.weight
+		}
+		(subject1, subject2, list.sum / config.length)
+	}
+
+	/**
+	* Reads the configuration from a xml file
+	* @param path the path where the config.xml is located
+	* @return a list containing scoreConfig entities parsed from the xml file
+	*/
+	def parseConfig(path: String): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
+		val xml = XML.loadFile(path)
+		val config = (xml \\ "items" \ "item" ).toList
+
+		config
+			.map(item => Tuple3((item \ "attribute").text, (item \ "similartyMeasure").text, (item \ "weight").text))
+			.map{
+				case (attribute, similarityMeasure, weight) => similarityMeasure match {
+					case "ExactMathString" => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
+					case "MongeElkan" => scoreConfig[String, MongeElkan.type](attribute, MongeElkan, weight.toDouble)
+					case "Jaccard" => scoreConfig[String, Jaccard.type](attribute, Jaccard, weight.toDouble)
+					case "DiceSorensen" => scoreConfig[String, DiceSorensen.type](attribute, DiceSorensen, weight.toDouble)
+					case "Jaro" => scoreConfig[String, Jaro.type](attribute, Jaro, weight.toDouble)
+					case "JaroWinkler" => scoreConfig[String, JaroWinkler.type](attribute, JaroWinkler, weight.toDouble)
+					case "N-Gram" => scoreConfig[String, NGram.type](attribute, NGram, weight.toDouble)
+					case "Overlap" => scoreConfig[String, Overlap.type](attribute, Overlap, weight.toDouble)
+					case _ => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
+				}}
+	}
+
+	def makeTemplateVersion(): Version = {
+		// create timestamp and TimeUUID for versioning
+		val timestamp = new Date()
+		val version = UUIDs.timeBased()
+
+		Version(version, appName, null, null, dataSources, timestamp)
+	}
+
+	/**
+	* Partitions the subjects in buckets
+	* @param subjects subjects to be blocked
+	* @return tuple containing a describing String and an Iterable containing the Subjects
+	*/
+	def blocking(subjects: RDD[Subject]): RDD[(String, Iterable[Subject])] = {
+		subjects
+			.groupBy(subject => subject.id.toString.hashCode().%(500).toString )
+	}
+	/**
+		* Partitions the subjects in buckets
+		* @param subjects subjects to be blocked
+		* @param stagings stagings to be blocked
+		* @return tuple containing a describing String and an Iterable containing the Subjects
+		*/
+	def blocking(subjects: RDD[Subject], stagings: RDD[Subject]): RDD[(String, Iterable[Subject])] = {
+		val subjectBlocks = blocking(subjects)
+		val stagingBlocks = blocking(stagings)
+		subjectBlocks
+			.fullOuterJoin(stagingBlocks)
+			.map{
+				case (description, (None, None)) => (description, List())
+				case (description, (x, None)) => (description, x.get.toList)
+				case (description, (None, x)) => (description, x.get.toList)
+				case (description, (x, y)) => (description, x.get.toSet.++(y.get.toSet).toList)
+			}
+	}
+
+	/**
+	* Finds the duplicates of each block
+	* @param blocks buckets where the duplicates are searched in
+	* @return tuple of Subjects and their score whos score is greater than the confidence threshold
+	*/
+	def findDuplicates(blocks: RDD[(String, Iterable[Subject])]): List[(Subject, Subject)] = {
+		blocks
+			.map{
+				case (description, subjects) => makePairs(subjects.toList)
+			}
+		  .map {
+				list => list
+					.map(pair => compare(pair._1, pair._2, this.config))
+					.filter(pair => pair._3 > this.confidence)
+					.map(pair => (pair._1, pair._2))
+			}
+			.reduce(_ ::: _)
+	}
+
+	/**
+		* Merging two duplicates in one subject
+		* @param duplicates tuple of Subject
+		* @return subjects containing the merged information of both duplicates
+		*/
+	def merging(duplicates: List[(Subject, Subject)], version: Version): List[Subject] = {
+		duplicates
+		  .map(x => {
+				val sm = new SubjectManager(x._1, version)
+				sm.addProperties(x._2.properties)
+				x._1
+			})
+	}
+
+	def deduplication(merge: Boolean = false): Unit = {
+		val conf = new SparkConf()
+		  .setAppName(this.appName)
+			.set("spark.cassandra.connection.host", "172.20.21.11")
+		val sc = new SparkContext(conf)
+
+		val subjects = sc.cassandraTable[Subject](keyspace, subjectTable)
+		val stagings = if(merge) sc.cassandraTable[Subject](keyspace, subjectTable) else null
+		val version = makeTemplateVersion()
+
+		val blocks = if(merge) blocking(subjects, stagings) else blocking(subjects)
+		val duplicates = findDuplicates(blocks)
+		val merged = merging(duplicates, version)
+
+		sc
+			.parallelize[Subject](merged)
+			.saveToCassandra(keyspace, duplicatesTable)
+	}
 }
 
 /**
