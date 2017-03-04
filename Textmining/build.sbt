@@ -23,7 +23,8 @@ libraryDependencies ++= Seq(
 	"info.bliki.wiki" % "bliki-core" % "3.1.0" exclude("ch.qos.logback", "logback-classic"),
 	"org.jsoup" % "jsoup" % "1.10.1",
 	"com.esotericsoftware" % "kryo" % "4.0.0",
-	"com.google.protobuf" % "protobuf-java" % "2.6.1"
+	"com.google.protobuf" % "protobuf-java" % "2.6.1",
+	"org.apache.lucene" % "lucene-analyzers" % "2.9.4"
 )
 
 // testing settings

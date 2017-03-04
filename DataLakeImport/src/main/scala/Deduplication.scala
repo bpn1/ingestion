@@ -116,7 +116,13 @@ object Deduplication {
 				case (attribute, similarityMeasure, weight) => similarityMeasure match {
 					case "ExactMathString" => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
 					case "MongeElkan" => scoreConfig[String, MongeElkan.type](attribute, MongeElkan, weight.toDouble)
-					case _ => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
+          case "Jaccard" => scoreConfig[String, Jaccard.type](attribute, Jaccard, weight.toDouble)
+					case "DiceSorensen" => scoreConfig[String, DiceSorensen.type](attribute, DiceSorensen, weight.toDouble)
+					case "Jaro" => scoreConfig[String, Jaro.type](attribute, Jaro, weight.toDouble)
+					case "JaroWinkler" => scoreConfig[String, JaroWinkler.type](attribute, JaroWinkler, weight.toDouble)
+          case "N-Gram" => scoreConfig[String, NGram.type](attribute, NGram, weight.toDouble)
+          case "Overlap" => scoreConfig[String, Overlap.type](attribute, Overlap, weight.toDouble)
+          case _ => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
 			}}
 	}
 
@@ -167,19 +173,11 @@ object Deduplication {
 		* @tparam A Type of list
 		* @return List of pairs of all elements from the original list without containing duplicates
 		*/
-	def makePairs[A](list: List[A], acc: List[(A, A)]): List[(A, A)] = list match {
+	def makePairs[A](list: List[A], acc: List[(A, A)] = List[(A, A)]()): List[(A, A)] = list match {
 		case Nil => acc
 		case x::Nil => acc
 		case x::xs => makePairs(xs, acc ::: list.map((x,_)).filter(x => x._1 != x._2))
 	}
-
-	/**
-		* Creates a list by pairing all items without duplicates
-		* @param list List of items to pair
-		* @tparam A Type of list
-		* @return List of pairs of all elements from the original list without containing duplicates
-		*/
-	def makePairs[A](list: List[A]): List[(A, A)] = makePairs(list, List().asInstanceOf[List[(A, A)]])
 
 	/**
 		* Calculates a similarity score for each pair of Subjects of the same block
@@ -190,7 +188,7 @@ object Deduplication {
 	def findDuplicates(blocks: RDD[(String, Iterable[Subject])], config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): RDD[(String, Iterable[possibleDuplicate])] = {
 		blocks
 		  .map{
-				case (industry, subjects) => (industry, makePairs[Subject](subjects.toList))
+				case (industry, subjects) => (industry, makePairs(subjects.toList))
 			}
 		  .map {
 				case (industry, subjectPairs) => (industry, subjectPairs.map(pair => possibleDuplicate(pair._1.id, pair._2.id, compare(pair._1, pair._2, config))))
