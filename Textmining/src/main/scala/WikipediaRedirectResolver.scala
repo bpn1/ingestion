@@ -17,10 +17,10 @@ object WikipediaRedirectResolver {
 			.setAppName("WikipediaRedirectResolver")
 			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
-
 		var dict = mutable.Map[String, String]()
 
 		val redirectRegex = new Regex("(?i)((Weiterleitung:?)|(redirect))\\s?:?")
+		val categoryRegex = new Regex("Kategorie:")
 		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
 		dataRDD
 			.map{ entry =>
@@ -33,9 +33,12 @@ object WikipediaRedirectResolver {
 			.filter{ case (title, links, text: String) =>
 				redirectRegex.findFirstIn(text).isDefined
 			}
+			.filter{ case (title, links, text: String) =>
+				categoryRegex.findFirstIn(text).isDefined
+			}
 			.collect()
 			.foreach{ case (title, links, text) =>
-				if (links.size == 1 && title != links.head.page) {
+				if (categoryRegex.findFirstIn(links.head.page).isEmpty && title != links.head.page) {
 					dict(title) = links.head.page
 				}
 			}
@@ -50,8 +53,6 @@ object WikipediaRedirectResolver {
 						while(dict.contains(lookupResult) || lookupSet.contains(lookupResult)) {
 							lookupSet += lookupResult
 							lookupResult = localDict.getOrElse(lookupResult, lookupResult)
-							println(s"looking up $lookupResult")
-							println(s"looking up ${entry.title} ${entry.links}")
 						}
 						link.page = lookupResult
 					}
