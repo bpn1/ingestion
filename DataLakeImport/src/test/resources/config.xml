@@ -2,12 +2,17 @@
 <items>
     <item>
         <attribute>name</attribute>
-        <similartyMeasure>ExactMatchString</similartyMeasure>
-        <weight>1.0</weight>
+        <similartyMeasure>MongeElkan</similartyMeasure>
+        <weight>0.8</weight>
     </item>
     <item>
         <attribute>name</attribute>
-        <similartyMeasure>MongeElkan</similartyMeasure>
-        <weight>0.8</weight>
+        <similartyMeasure>JaroWinkler</similartyMeasure>
+        <weight>0.7</weight>
+    </item>
+    <item>
+        <attribute>name</attribute>
+        <similartyMeasure>ExactMatchString</similartyMeasure>
+        <weight>0.2</weight>
     </item>
 </items>

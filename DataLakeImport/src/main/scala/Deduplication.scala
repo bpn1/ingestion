@@ -24,7 +24,13 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeas
 	}
 }
 
-abstract class Duplication (
+/**
+	* Abstact class containing generic methods for the deduplication
+	* @param confidence minium confidence for two subjects to be identified as duplicates
+	* @param appName name of the deduplication
+	* @param dataSources sources where the new data is retrieved from
+	*/
+abstract class Deduplication (
 	val confidence: Double,
 	val appName: String,
 	val dataSources: List[String]
@@ -125,6 +131,49 @@ abstract class Duplication (
 	}
 
 	/**
+		* Partitions the subjects in buckets respecting an entry in the properties
+		* @param subjects subjects to be blocked
+		* @param key key of the properties to be partitioned by
+		* @param sc Spark Context
+		* @return tuple containing the value and a list of all subjects containing the value
+		*/
+	def blockingByKey(subjects: RDD[Subject], key: String, sc: SparkContext): RDD[(String, Iterable[Subject])] = {
+		val values = subjects
+		  .map(subject => {
+				subject
+					.properties
+				  .getOrElse(key, List("uncategorized"))
+			})
+		  .reduce(_.:::(_).distinct)
+
+		var blocks = values
+		  .map(value => {
+				(value, subjects
+					.filter(subject => {
+						subject
+							.properties
+							.getOrElse(key, List("uncategorized"))
+							.contains(value)
+					})
+					.collect()
+					.toList
+			)})
+
+		if (blocks.contains(("uncategorized", _))) {
+			val uncategorizedSubjects = blocks
+				.filter(_._1 == "uncategorized")
+				.head
+			  ._2
+
+			blocks = blocks
+				.map(block => (block._1, block._2 ::: uncategorizedSubjects))
+				.filter(_._1 != "uncategorized")
+		}
+
+		sc.parallelize[(String, Iterable[Subject])](blocks)
+	}
+
+	/**
 	* Finds the duplicates of each block
 	* @param blocks buckets where the duplicates are searched in
 	* @return tuple of Subjects and their score whos score is greater than the confidence threshold
@@ -148,7 +197,7 @@ abstract class Duplication (
 		* @param duplicates tuple of Subject
 		* @return subjects containing the merged information of both duplicates
 		*/
-	def merging(duplicates: List[(Subject, Subject)], version: Version): List[Subject] = {
+	def merging(duplicates: RDD[(Subject, Subject)], version: Version): RDD[Subject] = {
 		duplicates
 		  .map(x => {
 				val sm = new SubjectManager(x._1, version)
@@ -168,19 +217,17 @@ abstract class Duplication (
 		val version = makeTemplateVersion()
 
 		val blocks = if(merge) blocking(subjects, stagings) else blocking(subjects)
-		val duplicates = findDuplicates(blocks)
+		val duplicates = sc.parallelize(findDuplicates(blocks))
 		val merged = merging(duplicates, version)
 
-		sc
-			.parallelize[Subject](merged)
-			.saveToCassandra(keyspace, duplicatesTable)
+		merged.saveToCassandra(keyspace, duplicatesTable)
 	}
 }
 
 /**
 	* Deduplication object for finding an handling duplicates in the database
 	*/
-object Deduplication {
+object Duplication {
 	val confidenceThreshold = 0.1
 	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
 	val appName = "Deduplication"
