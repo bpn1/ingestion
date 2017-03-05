@@ -3,12 +3,6 @@ import com.datastax.spark.connector._
 
 import scala.collection.mutable
 import WikiClasses._
-import com.esotericsoftware.kryo.Kryo
-import com.esotericsoftware.kryo.serializers.FieldSerializer
-import com.esotericsoftware.kryo.io.Input
-
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
 
 object TrieBuilder {
 	val keyspace = "wikidumps"
