@@ -5,7 +5,7 @@ import scala.language.implicitConversions
 import scala.reflect.{ClassTag, classTag}
 import scala.math.BigDecimal
 
-trait BagCounter[T] {
+trait BagCounter[T] extends Ordered[T]{
 	def +(that: T): T
 	def -(that: T): T
 	def *(that: T): T
@@ -14,6 +14,7 @@ trait BagCounter[T] {
 	def lessThanZero(): Boolean
 	def invert(): T
 	def round(): T
+	def compare(that: T): Int
 }
 
 object BagCounter {
@@ -26,6 +27,7 @@ object BagCounter {
 		def lessThanZero(): Boolean = x < 0
 		def invert(): Int = x * -1
 		def round(): Int = x
+		def compare(y: Int): Int = x - y
 	}
 
 	implicit def doubleToBagCounter(x : Double): BagCounter[Double] = new BagCounter[Double] {
@@ -38,6 +40,7 @@ object BagCounter {
 		def invert(): Double = x * -1.0
 		// TODO set precision
 		def round(): Double = BigDecimal(x).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+		def compare(y: Double): Int = (x - y).signum
 	}
 }
 
@@ -172,12 +175,29 @@ class Bag[A, B <% BagCounter[B] : ClassTag](
 	override def seq: Bag[A, B] = this
 
 	override def equals(that: Any): Boolean = {
+		println(s"does $this equal ${that.asInstanceOf[Bag[A, B]]}")
 		this.counts == that.asInstanceOf[Bag[A, B]].getCounts()
 	}
 
 	override def hashCode(): Int = this.counts.hashCode
 
 	override def toString(): String = this.counts.toString.replaceAll("Map", "Bag")
+
+	def normalise(): Bag[A, Double] = {
+		var result = new Bag[A, Double]
+		val maxCount = this.counts.maxBy(_._2)._2 match {
+			case x: Int => x.doubleValue()
+			case x: Double => x
+		}
+		for((elem, count) <- this.counts) {
+			val newValue = (count match {
+				case x: Int => x.doubleValue()
+				case x: Double => x
+			}) / maxCount
+			result = result + (elem, newValue)
+		}
+		result
+	}
 
 }
 

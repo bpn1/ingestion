@@ -58,4 +58,15 @@ class BagTest extends FlatSpec with Matchers {
 		Bag("X" -> 3.4, "Y" -> 1.3) -- Bag("X" -> 2.8, "Y" -> 0.1, "Z" -> 0.5) shouldEqual res3
 		Bag("X" -> 3.4, "Y" -> 1.3) -- Bag("X" -> 1.8, "Y" -> 1.4, "Z" -> 1.3) shouldEqual res4
 	}
+
+	"Bag normalisation" should "be correct" in {
+		val res1 = Bag("b" -> 1.0)
+		val res2 = Bag("X" -> 0.5, "Y" -> 1.0)
+		val res3 = Bag("X" -> 0.5, "Y" -> 1.0)
+		val res4 = Bag("X" -> 1.0, "Y" -> 0.5555555555555556, "Z" -> 0.3333333333333333)
+		Bag("b" -> 5).normalise shouldEqual res1
+		Bag("X" -> 1, "Y" -> 2).normalise shouldEqual res2
+		Bag("X" -> 0.6, "Y" -> 1.2).normalise shouldEqual res3
+		Bag("X" -> 9.0, "Y" -> 5.0, "Z" -> 3.0).normalise shouldEqual res4
+	}
 }
