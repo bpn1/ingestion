@@ -2,7 +2,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{SharedSparkContext, RDDComparisons}
 
 class WikipediaAliasCounterTest
-	extends FlatSpec with RDDComparisons with SharedSparkContext with Matchers {
+	extends FlatSpec with RDDComparisons with SharedSparkContext with Matchers with PrettyTester {
 	"Counted aliases" should "have the same size as all links" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val allAliases = TestData.allAliasesTestRDD(sc)
@@ -56,14 +56,14 @@ class WikipediaAliasCounterTest
 		assertRDDEquals(aliasListsRDD, testAliasLists)
 	}
 
-	they should "have only one alias counter set to 1" in {
+	they should "have the alias counter set properly" in {
 		sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.flatMap(WikipediaAliasCounter.extractAliasList)
 			.collect
 		    .foreach { alias =>
-				(alias.linkoccurrences + alias.totaloccurrences) shouldBe 1
+				alias.linkoccurrences should be <= 1
 				alias.linkoccurrences should be >= 0
-				alias.totaloccurrences should be >= 0
+				alias.totaloccurrences shouldBe 1
 			}
 
 	}
@@ -72,7 +72,7 @@ class WikipediaAliasCounterTest
 		val testAliasCounterData = TestData.startAliasCounterTestRDD(sc)
 		val aliasCounterRDD = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.flatMap(WikipediaAliasCounter.extractAliasList)
-		assertRDDEquals(testAliasCounterData, aliasCounterRDD)
+		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
 	}
 
 	"Alias reduction function" should "properly add link occurences" in {
@@ -81,7 +81,7 @@ class WikipediaAliasCounterTest
 			.map(alias => (alias.alias, alias))
 			.reduceByKey(WikipediaAliasCounter.aliasReduction(_, _))
 		    .map(_._2)
-		assertRDDEquals(testAliasCounterData, aliasCounterRDD)
+		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
 	}
 
 	"Probability that word is link" should "be calculated correctly" in {

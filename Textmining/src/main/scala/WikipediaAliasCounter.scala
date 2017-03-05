@@ -24,13 +24,18 @@ object WikipediaAliasCounter {
 	  * @return list of aliases each with an occurence set to 1
 	  */
 	def extractAliasList(entry: ParsedWikipediaEntry): List[AliasCounter] = {
-		val links = entry.links
+		val linkSet = entry.links
 			.map(_.alias)
-			.distinct
-			.map(AliasCounter(_, 1, 0))
+			.toSet
+
+		val links = linkSet
+		    .toList
+			.map(AliasCounter(_, 1, 1))
 
 		val aliases = entry.foundaliases
-			.distinct
+			.toSet
+			.filterNot(linkSet)
+			.toList
 			.map(AliasCounter(_, 0, 1))
 
 		links ++ aliases

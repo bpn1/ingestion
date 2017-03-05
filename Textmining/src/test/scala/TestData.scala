@@ -75,30 +75,21 @@ object TestData {
 
 	def startAliasCounterTestRDD(sc: SparkContext): RDD[AliasCounter] = {
 		sc.parallelize(List(
-			AliasCounter("Audi", 1, 0),
-			AliasCounter("Audi", 1, 0),
+			AliasCounter("Audi", 1, 1),
+			AliasCounter("Audi", 1, 1),
 			AliasCounter("Audi", 0, 1),
-			AliasCounter("Audi", 0, 1),
-			AliasCounter("Audi", 0, 1),
-			AliasCounter("Brachttal", 1, 0),
-			AliasCounter("Brachttal", 1, 0),
-			AliasCounter("Brachttal", 0, 1),
-			AliasCounter("Brachttal", 0, 1),
-			AliasCounter("Main-Kinzig-Kreis", 1, 0),
+			AliasCounter("Brachttal", 1, 1),
+			AliasCounter("Brachttal", 1, 1),
+			AliasCounter("Main-Kinzig-Kreis", 1, 1),
 			AliasCounter("Main-Kinzig-Kreis", 0, 1),
-			AliasCounter("Main-Kinzig-Kreis", 0, 1),
-			AliasCounter("Hessen", 1, 0),
+			AliasCounter("Hessen", 1, 1),
 			AliasCounter("Hessen", 0, 1),
-			AliasCounter("Hessen", 0, 1),
-			AliasCounter("1377", 0, 1),
-			AliasCounter("1377", 1, 0),
-			AliasCounter("Büdinger Wald", 1, 0),
-			AliasCounter("Büdinger Wald", 0, 1),
+			AliasCounter("1377", 1, 1),
+			AliasCounter("Büdinger Wald", 1, 1),
 			AliasCounter("Büdinger Wald", 0, 1),
 			AliasCounter("Backfisch", 0, 1),
 			AliasCounter("Streitberg", 0, 1),
-			AliasCounter("historisches Jahr", 0, 1),
-			AliasCounter("historisches Jahr", 1, 0)
+			AliasCounter("historisches Jahr", 1, 1)
 		))
 	}
 
