@@ -1,7 +1,6 @@
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
 import com.datastax.spark.connector._
-import org.apache.spark.sql.SQLContext
 import DataLake.Subject
 
 object DBPediaDeduplication {
@@ -15,7 +14,6 @@ object DBPediaDeduplication {
 			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
-		val sql = new SQLContext(sc)
 
 		val dbpedia = sc.cassandraTable[DBPediaEntity]("wikidumps", "dbpeidadata")
 		val subjects = sc.cassandraTable[Subject]("datalake", "subject")

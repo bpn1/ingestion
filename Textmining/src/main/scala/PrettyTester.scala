@@ -46,7 +46,7 @@ trait PrettyTester {
 		val areEqual = is == should
 
 		if (!areEqual) {
-			printSequenceAsError(is, "\nSet:")
+			printSequenceAsError(is, "\nList:")
 			printSequenceAsError(should, "\nShould be:")
 		}
 		areEqual
