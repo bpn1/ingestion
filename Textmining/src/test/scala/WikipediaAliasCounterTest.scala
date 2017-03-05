@@ -2,7 +2,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{SharedSparkContext, RDDComparisons}
 
 class WikipediaAliasCounterTest
-	extends FlatSpec with RDDComparisons with SharedSparkContext with Matchers with PrettyTester {
+	extends FlatSpec with RDDComparisons with SharedSparkContext with Matchers {
 	"Counted aliases" should "have the same size as all links" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val allAliases = TestData.allAliasesTestRDD(sc)
