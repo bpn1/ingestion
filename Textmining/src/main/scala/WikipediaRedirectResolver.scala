@@ -35,22 +35,23 @@ object WikipediaRedirectResolver {
 			}
 			.collect()
 			.foreach{ case (title, links, text) =>
-				if (links.size == 1) {
+				if (links.size == 1 && title != links.head.page) {
 					dict(title) = links.head.page
 				}
 			}
-		println(dict.mkString("\n"))
-		
 		val dictBroadcast = sc.broadcast(dict)
-		var noRedirectsRDD = dataRDD
+		dataRDD
 			.mapPartitions({ entryRDD =>
 				val localDict = dictBroadcast.value
 				entryRDD.map { entry =>
 					entry.links.foreach { link =>
-						var lookupResult = dict.getOrElse(link.page, link.page)
-						while(dict.contains(lookupResult)) {
-							lookupResult = dict.getOrElse(lookupResult, lookupResult)
+						var lookupSet = Set[String]()
+						var lookupResult = localDict.getOrElse(link.page, link.page)
+						while(dict.contains(lookupResult) || lookupSet.contains(lookupResult)) {
+							lookupSet += lookupResult
+							lookupResult = localDict.getOrElse(lookupResult, lookupResult)
 							println(s"looking up $lookupResult")
+							println(s"looking up ${entry.title} ${entry.links}")
 						}
 						link.page = lookupResult
 					}
