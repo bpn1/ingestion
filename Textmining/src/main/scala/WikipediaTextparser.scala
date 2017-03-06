@@ -31,12 +31,17 @@ object WikipediaTextparser {
 		val anchorList = Jsoup.parse(html).select("a")
 		val linksList = mutable.ListBuffer[Link]()
 		val redirectRegex = new Regex("REDIRECT( )*")
+		val categoryRegex = new Regex("Kategorie:")
 		val redirectOffset = (redirectRegex.findFirstIn(text) match {
 			case Some(x) => x
 			case None => "REDIRECT"
 		}).length
 		for (anchor <- anchorList) {
-			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), redirectOffset)
+			if (categoryRegex.findFirstIn(anchor.text).isEmpty) {
+				linksList += Link(anchor.text, parseUrl(anchor.attr("href")), redirectOffset)
+			} else {
+				linksList += Link(anchor.text, parseUrl(anchor.attr("href")), text.indexOfSlice(anchor.text))
+			}
 		}
 		linksList.toList
 	}
