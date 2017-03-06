@@ -16,6 +16,6 @@ object NGram extends SimilarityMeasure[String] {
 
 	override def compare(s: String, t: String) : Double = {
 		val score = NGramMetric(1).compare(s,t)
-		return score.getOrElse(0.0)
+		score.getOrElse(0.0)
 	}
 }
