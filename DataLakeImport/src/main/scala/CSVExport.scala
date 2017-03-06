@@ -21,7 +21,8 @@ object CSVExport {
 			.replace("\\", "")
 			.replace("\"", "\\\"")
 		val name = subject.name.getOrElse("").replace("\"", "'")
-		var output = List(subject.id.toString, name, aliasString, subject.category.getOrElse("")).mkString(quote+separator+quote)
+		val output = List(subject.id.toString, name, aliasString, subject.category.getOrElse(""))
+			.mkString(quote + separator + quote)
 
 		// TODO serialize properties to JSON string
 		quote + output + quote
