@@ -17,25 +17,24 @@ object WikipediaRedirectResolver {
 			.setAppName("WikipediaRedirectResolver")
 			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
-		var dict = mutable.Map[String, String]()
+		val dict = mutable.Map[String, String]()
 
 		val redirectRegex = new Regex("REDIRECT[^\\s]")
 		val categoryRegex = new Regex("Kategorie:")
 		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
 		dataRDD
-			.map{ entry =>
+			.map { entry =>
 				val text = entry.text match {
 					case Some(t) => t
 					case None => ""
 				}
 				(entry.title, entry.links, text)
-			}
-			.filter{ case (title, links, text: String) =>
+			}.filter { case (title, links, text: String) =>
 				redirectRegex.findFirstIn(text).isDefined
-			}
-			.collect()
-			.foreach{ case (title, links, text) =>
-				if (categoryRegex.findFirstIn(links.head.page).isEmpty && title != links.head.page) {
+			}.collect()
+			.foreach { case (title, links, text) =>
+				if (categoryRegex.findFirstIn(links.head.page).isEmpty
+					&& title != links.head.page) {
 					dict(title) = links.head.page
 				}
 			}
