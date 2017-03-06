@@ -46,7 +46,7 @@ object WikipediaRedirectResolver {
 					entry.links.foreach { link =>
 						var lookupSet = Set[String]()
 						var lookupResult = localDict.getOrElse(link.page, link.page)
-						while(dict.contains(lookupResult) || lookupSet.contains(lookupResult)) {
+						while(dict.contains(lookupResult) && !lookupSet.contains(lookupResult)) {
 							lookupSet += lookupResult
 							lookupResult = localDict.getOrElse(lookupResult, lookupResult)
 						}
