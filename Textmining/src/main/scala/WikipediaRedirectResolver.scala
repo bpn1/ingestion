@@ -19,7 +19,7 @@ object WikipediaRedirectResolver {
 		val sc = new SparkContext(conf)
 		var dict = mutable.Map[String, String]()
 
-		val redirectRegex = new Regex("(?i)((Weiterleitung:?)|(redirect))\\s?:?")
+		val redirectRegex = new Regex("Redirect[^\\s]")
 		val categoryRegex = new Regex("Kategorie:")
 		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
 		dataRDD
@@ -32,9 +32,6 @@ object WikipediaRedirectResolver {
 			}
 			.filter{ case (title, links, text: String) =>
 				redirectRegex.findFirstIn(text).isDefined
-			}
-			.filter{ case (title, links, text: String) =>
-				categoryRegex.findFirstIn(text).isDefined
 			}
 			.collect()
 			.foreach{ case (title, links, text) =>

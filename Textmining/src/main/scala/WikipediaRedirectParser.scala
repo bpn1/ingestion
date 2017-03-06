@@ -34,7 +34,11 @@ object WikipediaRedirectParser {
 			}
 			.map(entry => (entry._1, replaceRegex.replaceAllIn(entry._2, "WEITERLEITUNG")))
 			.map(entry => (entry._1, wikipediaToHtml(entry._2)))
-			.map(entry => parseRedirect(entry._1, entry._2))
+			.map { entry =>
+				if (checkRedirect(entry._2)) {
+					parseRedirect(entry._1, entry._2)
+				}
+			}
 			.saveToCassandra(keyspace, tablename)
 
 			// .keyBy(_.title)
