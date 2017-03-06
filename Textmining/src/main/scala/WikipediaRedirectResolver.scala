@@ -19,7 +19,7 @@ object WikipediaRedirectResolver {
 		val sc = new SparkContext(conf)
 		var dict = mutable.Map[String, String]()
 
-		val redirectRegex = new Regex("Redirect[^\\s]")
+		val redirectRegex = new Regex("REDIRECT[^\\s]")
 		val categoryRegex = new Regex("Kategorie:")
 		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
 		dataRDD
