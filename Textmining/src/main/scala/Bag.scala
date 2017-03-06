@@ -175,7 +175,6 @@ class Bag[A, B <% BagCounter[B] : ClassTag](
 	override def seq: Bag[A, B] = this
 
 	override def equals(that: Any): Boolean = {
-		println(s"does $this equal ${that.asInstanceOf[Bag[A, B]]}")
 		this.counts == that.asInstanceOf[Bag[A, B]].getCounts()
 	}
 
