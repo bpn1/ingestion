@@ -37,11 +37,11 @@ object WikipediaTextparser {
 			case None => "REDIRECT"
 		}).length
 		for (anchor <- anchorList) {
+			var offset = text.indexOfSlice(anchor.text)
 			if (categoryRegex.findFirstIn(anchor.text).isEmpty) {
-				linksList += Link(anchor.text, parseUrl(anchor.attr("href")), redirectOffset)
-			} else {
-				linksList += Link(anchor.text, parseUrl(anchor.attr("href")), text.indexOfSlice(anchor.text))
+				offset = redirectOffset
 			}
+			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), offset)
 		}
 		linksList.toList
 	}

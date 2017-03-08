@@ -28,6 +28,9 @@ fork in Test := true
 testOptions in Test := Seq(Tests.Argument(TestFrameworks.ScalaTest, "-oD"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"))
 javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:+CMSClassUnloadingEnabled")
 
+// disables testing for assembly
+test in assembly := {}
+
 // fat jar assembly settings
 assemblyMergeStrategy in assembly := {
 	case PathList("META-INF", xs @ _*) => MergeStrategy.discard
@@ -44,4 +47,5 @@ logLevel in assembly := Level.Error
 
 // scalastyle config file
 scalastyleConfig := new File("../scalastyle-config.xml")
+scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value
 
