@@ -2,7 +2,19 @@ import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import scala.collection.mutable.ListBuffer
 
+/**
+  * This class is a Kryo Serializer for Scala Options.
+  * It can only handle Options of Strings or Lists.
+  */
 class OptionSerializer() extends Serializer[Option[_]] {
+
+	/**
+	  * Deserializes an Object given an input buffer to read from.
+	  * @param kryo current Kryo instance
+	  * @param input input input buffer to read from
+	  * @param typ class of the object we read
+	  * @return the deserialized object
+	  */
 	override def read(kryo: Kryo, input: Input, typ: Class[Option[_]]): Option[_] = {
 		val mode = input.readInt(true)
 		mode match {
@@ -16,12 +28,17 @@ class OptionSerializer() extends Serializer[Option[_]] {
 					in += kryo.readClassAndObject(input)
 				}
 			Option(in.toList)
-			case 3 => None
-			case _ => None
+			case 3 | _ => None
 		}
-
 	}
 
+	/**
+	  * Serializes a mutable Map to a given output buffer.
+	  * Only Options of Strings and Lists can be serialized.
+	  * @param kryo current Kryo instance
+	  * @param output output buffer to write to
+	  * @param value Option to serialize
+	  */
 	override def write(kryo: Kryo, output: Output, value: Option[_]) = {
 		value match {
 			case Some(a: String) =>
@@ -38,9 +55,10 @@ class OptionSerializer() extends Serializer[Option[_]] {
 						kryo.writeClassAndObject(output, t)
 					}
 				}
+			case Some(a: _) =>
+				Console.err.println(s"This serializer can't serialize objects of ${a.getClass}")
 			case None =>
 				output.writeInt(3, true)
-			case _ =>
 		}
 	}
 }

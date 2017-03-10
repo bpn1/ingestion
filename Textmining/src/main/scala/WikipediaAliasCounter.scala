@@ -7,7 +7,6 @@ object WikipediaAliasCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputTablename = "wikipediaaliases"
-	val TAG = "WikipediaAliasCounter"
 
 	/**
 	  * Calculates the probability that an alias is a link.

@@ -2,34 +2,51 @@ import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import scala.collection.mutable
 
+/**
+  * This class is a Kryo Serializer for the Scala mutable.Map.
+  */
 class MutableMapSerializer() extends Serializer[mutable.Map[_, _]] {
+
+	/**
+	  * Deserializes a mutable Map given an input buffer to read from.
+	  * @param kryo current Kryo instance
+	  * @param input input buffer to read from
+	  * @param typ class of the object we read
+	  * @return the deserialized object
+	  */
 	override def read(
 		kryo: Kryo,
 		input: Input,
 		typ: Class[mutable.Map[_, _]]
 	): mutable.Map[_, _] =
 	{
-		val len = input.readInt(true)
-		val coll = mutable.Map[Any, Any]()
-		if (len != 0) {
+		val mapLength = input.readInt(true)
+		val resultMap = mutable.Map[Any, Any]()
+		if (mapLength != 0) {
 			var i = 0
-			while (i < len) {
-				coll(kryo.readClassAndObject(input)) = kryo.readClassAndObject(input)
+			while (i < mapLength) {
+				resultMap(kryo.readClassAndObject(input)) = kryo.readClassAndObject(input)
 				i += 1
 			}
 		}
-		coll
+		resultMap
 	}
 
+	/**
+	  * Serializes a mutable Map to a given output buffer.
+	  * @param kryo current Kryo instance
+	  * @param output output buffer to write to
+	  * @param collection mutable Map to serialize
+	  */
 	override def write(kryo: Kryo, output: Output, collection: mutable.Map[_, _]) = {
-		val len = collection.size
-		output.writeInt(len, true)
-		if (len != 0) {
-			val it = collection.iterator
-			while (it.hasNext) {
-				val t = it.next
-				kryo.writeClassAndObject(output, t._1)
-				kryo.writeClassAndObject(output, t._2)
+		val mapLength = collection.size
+		output.writeInt(mapLength, true)
+		if (mapLength != 0) {
+			val mapIterator = collection.iterator
+			while (mapIterator.hasNext) {
+				val mapEntry = mapIterator.next
+				kryo.writeClassAndObject(output, mapEntry._1)
+				kryo.writeClassAndObject(output, mapEntry._2)
 			}
 		}
 	}
