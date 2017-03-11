@@ -7,61 +7,63 @@ object WikipediaAliasCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputTablename = "wikipediaaliases"
-	val TAG = "WikipediaAliasCounter"
 
-	def identifyAliasOccurrencesInArticle(
-		article: ParsedWikipediaEntry): AliasOccurrencesInArticle =
-	{
-		val links = article.links
-			.map(_.alias)
-			.toSet
-		val noLinks = article.foundaliases.toSet
-			.filterNot(links)
-		AliasOccurrencesInArticle(links, noLinks)
-	}
-
-	def countAllAliasOccurrences(articles: RDD[ParsedWikipediaEntry]): RDD[AliasCounter] = {
-		val allAliasOccurrences = articles
-			.map(identifyAliasOccurrencesInArticle)
-			.flatMap { occurrences =>
-				val links = occurrences.links
-					.map(alias => (alias, true))
-				val noLinks = occurrences.noLinks
-					.map(alias => (alias, false))
-				links ++ noLinks
-			}
-
-		allAliasOccurrences
-			.map(_._1)
-			.filter(_.length > 100)
-			.collect
-			.foreach(alias => println(s"[$TAG ERROR]\tVery long alias: " + alias.take(100)))
-
-		allAliasOccurrences
-			.filter { case (alias, isLink) => alias.nonEmpty && alias.length < 100 }
-			.groupBy(identity)
-			.map { case ((alias, isLink), occurrences) => (alias, isLink, occurrences.size) }
-			.groupBy { case (alias, isLink, count) => alias }
-			.map { case ((alias, counters)) =>
-				// at most one counter for links and one counter for no link
-				assert(counters.size <= 2)
-
-				var linkOccurrences = 0
-				var totalOccurrences = 0
-
-				counters
-					.foreach { case (alias1, isLink, count) =>
-						if (isLink) {
-							linkOccurrences += count
-						}
-						totalOccurrences += count
-					}
-				AliasCounter(alias, linkOccurrences, totalOccurrences)
-			}
-	}
-
+	/**
+	  * Calculates the probability that an alias is a link.
+	  * @param aliasCounter AliasCounter of a given alias
+	  * @return percentage of the occurences as link.
+	  */
 	def probabilityIsLink(aliasCounter: AliasCounter): Double = {
 		aliasCounter.linkoccurrences.toDouble / aliasCounter.totaloccurrences
+	}
+
+	/**
+	  * Extracts list of link and general alias occurences for an article
+	  * @param entry article from which the aliases will be extracted
+	  * @return list of aliases each with an occurence set to 1
+	  */
+	def extractAliasList(entry: ParsedWikipediaEntry): List[AliasCounter] = {
+		val linkSet = entry.links
+			.map(_.alias)
+			.toSet
+
+		val links = linkSet
+		    .toList
+			.map(AliasCounter(_, 1, 1))
+
+		val aliases = entry.foundaliases
+			.toSet
+			.filterNot(linkSet)
+			.toList
+			.map(AliasCounter(_, 0, 1))
+
+		links ++ aliases
+	}
+
+	/**
+	  * Reduces two AliasCounters of the same alias.
+	  * @param alias1 first AliasCounter with the same alias as alias2
+	  * @param alias2 second AliasCounter with the same alias as alias1
+	  * @return AliasCounter with summed link and total occurences
+	  */
+	def aliasReduction(alias1: AliasCounter, alias2: AliasCounter): AliasCounter = {
+		AliasCounter(
+			alias1.alias,
+			alias1.linkoccurrences + alias2.linkoccurrences,
+			alias1.totaloccurrences + alias2.totaloccurrences)
+	}
+
+	/**
+	  * Counts link and total occurences of link aliases in Wikipedia articles.
+	  * @param articles RDD containing parsed wikipedia articles
+	  * @return RDD containing alias counts for links and total occurences
+	  */
+	def countAliases(articles: RDD[ParsedWikipediaEntry]): RDD[AliasCounter] = {
+		articles.flatMap(extractAliasList)
+			.map(alias => (alias.alias, alias))
+			.reduceByKey(aliasReduction(_, _))
+			.map(_._2)
+			.filter(_.alias.nonEmpty)
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -70,8 +72,10 @@ object WikipediaAliasCounter {
 			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
-		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		countAllAliasOccurrences(allArticles)
+
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		countAliases(articles).cache
+			.filter(_.alias.length <= 1000)
 			.saveToCassandra(keyspace, outputTablename)
 
 		sc.stop()

@@ -83,7 +83,6 @@ class CoreNLPTokenizer() extends Tokenizer {
 }
 
 class SentenceTokenizer() extends Tokenizer {
-	def tokenize(txt: String) = txt.split(".").toList
-
-	def reverse(tokens: List[String]) = tokens.mkString(".")
+	def tokenize(txt: String) = txt.split("\\.").toList.map(_.trim)
+	def reverse(tokens: List[String]) = tokens.mkString(". ").trim
 }
