@@ -17,7 +17,12 @@ import scala.collection.mutable.ListBuffer
 	* @tparam A type of the attribute
 	* @tparam B type of the similarity measure
 	*/
-case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double) {
+case class scoreConfig[A, B <: SimilarityMeasure[A]](
+		key: String,
+		similarityMeasure: B,
+		weight: Double,
+		scale: Double = 1.0) {
+
 	override def equals(obj: Any): Boolean = obj match {
 		case that: scoreConfig[A, B] => that.key == this.key &&
 			that.similarityMeasure.equals(this.similarityMeasure) &&
@@ -81,19 +86,19 @@ abstract class Deduplication (
 		val config = (xml \\ "items" \ "item" ).toList
 
 		config
-			.map(item => Tuple3((item \ "attribute").text, (item \ "similartyMeasure").text, (item \ "weight").text))
-			.map{
-				case (attribute, similarityMeasure, weight) => similarityMeasure match {
-					case "ExactMatchString" => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
-					case "MongeElkan" => scoreConfig[String, MongeElkan.type](attribute, MongeElkan, weight.toDouble)
-					case "Jaccard" => scoreConfig[String, Jaccard.type](attribute, Jaccard, weight.toDouble)
-					case "DiceSorensen" => scoreConfig[String, DiceSorensen.type](attribute, DiceSorensen, weight.toDouble)
-					case "Jaro" => scoreConfig[String, Jaro.type](attribute, Jaro, weight.toDouble)
-					case "JaroWinkler" => scoreConfig[String, JaroWinkler.type](attribute, JaroWinkler, weight.toDouble)
-					case "N-Gram" => scoreConfig[String, NGram.type](attribute, NGram, weight.toDouble)
-					case "Overlap" => scoreConfig[String, Overlap.type](attribute, Overlap, weight.toDouble)
-					case _ => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
-				}}
+			.map(item =>
+				((item \ "attribute").text,
+					(item \ "similartyMeasure").text,
+					(item \ "weight").text,
+					(item \ "scale").text))
+			.map { case (attribute, similarityMeasure, weight, scale) =>
+				scoreConfig[String, SimilarityMeasure[String]](
+					attribute,
+					dataTypes.getOrElse(similarityMeasure, ExactMatchString)
+						.asInstanceOf[SimilarityMeasure[String]],
+					weight.toDouble,
+					scale.toDouble)
+			}
 	}
 
 	def makeTemplateVersion(): Version = {
@@ -225,6 +230,9 @@ abstract class Deduplication (
 		merged.saveToCassandra(keyspace, duplicatesTable)
 	}
 }
+
+
+
 
 /**
 	* Deduplication object for finding an handling duplicates in the database
