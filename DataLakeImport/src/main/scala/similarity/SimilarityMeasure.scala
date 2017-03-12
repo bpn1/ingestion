@@ -11,5 +11,5 @@ trait SimilarityMeasure[T] extends Serializable {
 		* @param y object to be compared to x
 		* @return a normalized similarity score between 1.0 and 0.0
 		*/
-	def compare(x: T, y: T) : Double
+	def compare(x: T, y: T, u: Int) : Double
 }

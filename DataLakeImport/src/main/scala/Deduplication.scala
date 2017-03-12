@@ -21,7 +21,7 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
 		key: String,
 		similarityMeasure: B,
 		weight: Double,
-		scale: Double = 1.0) {
+		scale: Int = 1) {
 
 	override def equals(obj: Any): Boolean = obj match {
 		case that: scoreConfig[A, B] => that.key == this.key &&
@@ -68,10 +68,10 @@ abstract class Deduplication (
 	* @param config configuration of the similarity measures for the comparison
 	* @return the similarity score of the subjects
 	*/
-	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]): (Subject, Subject, Double) = {
+	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]], scale: Int): (Subject, Subject, Double, Double) = {
 		val list = ListBuffer.empty[Double]
 		for(item <- config) {
-			list += item.similarityMeasure.compare(subject1.get(item.key), subject2.get(item.key)) * item.weight
+			list += item.similarityMeasure.compare(subject1.get(item.key), subject2.get(item.key), scale) * item.weight
 		}
 		(subject1, subject2, list.sum / config.length)
 	}

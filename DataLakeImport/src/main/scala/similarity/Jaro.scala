@@ -14,7 +14,7 @@ object Jaro extends SimilarityMeasure[String] {
     * 0.0 as default value if one of the input strings is empty
     */
 
-  override def compare(s: String, t: String) : Double = {
+  override def compare(s: String, t: String, u: Int = 1) : Double = {
     val score = JaroMetric.compare(s,t)
     return score.getOrElse(0.0)
   }

@@ -3,7 +3,7 @@ package DataLake
 import com.rockymadden.stringmetric.similarity.JaroWinklerMetric
 
 /**
-  * A hybrid similarity measure comparing strings corresponding to the jaccard algorithm
+  * A hybrid similarity measure comparing strings corresponding to the JaroWinkler algorithm
   */
 object JaroWinkler extends SimilarityMeasure[String] {
   /**
@@ -14,7 +14,7 @@ object JaroWinkler extends SimilarityMeasure[String] {
     * 0.0 as default value if one of the input strings is empty
     */
 
-  override def compare(s: String, t: String) : Double = {
+  override def compare(s: String, t: String, u: Int = 1) : Double = {
     val score = JaroWinklerMetric.compare(s,t)
     return score.getOrElse(0.0)
   }

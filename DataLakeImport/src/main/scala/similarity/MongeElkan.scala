@@ -25,7 +25,7 @@ object MongeElkan extends SimilarityMeasure[String] {
 		* @param t string to be compared to s
 		* @return a normalized similarity score between 1.0 and 0.0
 		*/
-	override def compare(s: String, t: String) : Double = {
+	override def compare(s: String, t: String, u: Int = 1) : Double = {
 		val x = s.split(" ").toList
 		val y = t.split(" ").toList
 		val sum = x
