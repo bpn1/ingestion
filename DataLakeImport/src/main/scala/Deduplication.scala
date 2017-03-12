@@ -19,14 +19,16 @@ import scala.collection.mutable.ListBuffer
 	*/
 case class scoreConfig[A, B <: SimilarityMeasure[A]](key: String, similarityMeasure: B, weight: Double) {
 	override def equals(obj: Any): Boolean = obj match {
-		case that: scoreConfig[A, B] => that.key == this.key && that.similarityMeasure.equals(this.similarityMeasure) && that.weight == this.weight
+		case that: scoreConfig[A, B] => that.key == this.key &&
+			that.similarityMeasure.equals(this.similarityMeasure) &&
+			that.weight == this.weight
 		case _ => false
 	}
 }
 
 /**
 	* Abstact class containing generic methods for the deduplication
-	* @param confidence minium confidence for two subjects to be identified as duplicates
+	* @param confidence minimum confidence for two subjects to be identified as duplicates
 	* @param appName name of the deduplication
 	* @param dataSources sources where the new data is retrieved from
 	*/
@@ -82,7 +84,7 @@ abstract class Deduplication (
 			.map(item => Tuple3((item \ "attribute").text, (item \ "similartyMeasure").text, (item \ "weight").text))
 			.map{
 				case (attribute, similarityMeasure, weight) => similarityMeasure match {
-					case "ExactMathString" => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
+					case "ExactMatchString" => scoreConfig[String, ExactMatchString.type](attribute, ExactMatchString, weight.toDouble)
 					case "MongeElkan" => scoreConfig[String, MongeElkan.type](attribute, MongeElkan, weight.toDouble)
 					case "Jaccard" => scoreConfig[String, Jaccard.type](attribute, Jaccard, weight.toDouble)
 					case "DiceSorensen" => scoreConfig[String, DiceSorensen.type](attribute, DiceSorensen, weight.toDouble)
@@ -131,7 +133,7 @@ abstract class Deduplication (
 	}
 
 	/**
-		* Partitions the subjects in buckets respecting an entry in the properties
+		* Divides the subjects into buckets respecting an entry in the properties
 		* @param subjects subjects to be blocked
 		* @param key key of the properties to be partitioned by
 		* @param sc Spark Context
@@ -176,7 +178,7 @@ abstract class Deduplication (
 	/**
 	* Finds the duplicates of each block
 	* @param blocks buckets where the duplicates are searched in
-	* @return tuple of Subjects and their score whos score is greater than the confidence threshold
+	* @return tuple of Subjects and their score whose score is greater than the confidence threshold
 	*/
 	def findDuplicates(blocks: RDD[(String, Iterable[Subject])]): List[(Subject, Subject)] = {
 		blocks
@@ -265,7 +267,7 @@ object Duplication {
 	}
 
 	/**
-		* Createds a new version for the import
+		* Creates a new version for the import
 		* @return a version reproducing to the details of the import
 		*/
 	def makeTemplateVersion(): Version = {
@@ -330,7 +332,7 @@ object Duplication {
 	/**
 		* Creates blocks for the different industries
 		* @param subjects RDD to peform the blocking on
-		* @return RDD of blocks. One block for each industry containing the Subjects categorized as this industry
+		* @return RDD of blocks. One block for each industry contains the subjects categorized as this industry
 		*/
 	def generateBlocks(subjects: RDD[Subject], sc: SparkContext): RDD[(String, Iterable[Subject])] = {
 		val industries = collectIndustries(subjects)
