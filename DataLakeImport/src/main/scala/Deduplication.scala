@@ -40,7 +40,8 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
 class Deduplication (
 	val confidence: Double,
 	val appName: String,
-	val dataSources: List[String]
+	val dataSources: List[String],
+	val configFile: String
 ){
 	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
 
@@ -227,7 +228,7 @@ class Deduplication (
 		val sc = new SparkContext(conf)
 
 		val subjects = sc.cassandraTable[Subject](keyspace, subjectTable)
-		val stagings = if(merge) sc.cassandraTable[Subject](keyspace, subjectTable) else null
+		val stagings = if(merge) sc.cassandraTable[Subject](keyspace, configSettings get subjectTable) else null
 		val version = makeTemplateVersion()
 
 		val blocks = if(merge) blocking(subjects, stagings) else blocking(subjects)
