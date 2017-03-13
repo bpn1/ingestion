@@ -19,36 +19,36 @@ object TagEntities {
 	val subclassProperty = "subclass of"
 	val wikidataPathProperty = "wikidata_path"
 
+	case class SubclassEntry(
+		id: String,
+		var label: String = "",
+		var data: Map[String, List[String]] = Map[String, List[String]](),
+		var classList: List[String] = List[String]())
+
 	def addShorterPaths(
 		subclasses: Map[String, List[String]],
 		oldClasses: Map[String, List[String]]
-	): Map[String, List[String]] =
-	{
+	): Map[String, List[String]] = {
 		// merge into subclasses based on path length
 		val resultMap = mutable.Map[String, List[String]]()
 		resultMap ++= subclasses
-		for((key, path) <- oldClasses) {
-			if(resultMap.contains(key)) {
-				if(path.size < resultMap(key).size) {
-					resultMap(key) = path
-				}
-			} else {
+		oldClasses.foreach { case (key, path) =>
+			val oldPathLength = resultMap.get(key).map(_.size)
+			if(oldPathLength.isEmpty || path.size < oldPathLength.get) {
 				resultMap(key) = path
 			}
 		}
 		resultMap.toMap
 	}
 
-
 	def buildSubclassMap(
-		categoryData: RDD[(String, String, Map[String,List[String]])]
-	): Map[String, List[String]] =
-	{
+		categoryData: RDD[SubclassEntry]
+	): Map[String, List[String]] = {
 		// build subclass map for each given class
 		val subclasses = mutable.Map[String, List[String]]()
 
 		for((wikiDataID, tag) <- tagClasses) {
-			var oldClasses = Map[String, List[String]](wikiDataID -> List(tag))
+			var oldClasses = Map(wikiDataID -> List(tag))
 			var addedElements = true
 			var newClasses = Map[String, List[String]]()
 
@@ -57,11 +57,13 @@ object TagEntities {
 
 				// recursively append next layer of tree
 				newClasses = categoryData
-					.map { case (id, label, data) =>
-						(id, label, data(subclassProperty).filter(oldClasses.contains(_)))
-					}.filter { case (id, label, classList) => classList.nonEmpty }
-					.map { case (id, label, classList) =>
-						(id, oldClasses(classList.head) ++ List(label))
+					.map { entry =>
+						entry.classList = entry.data(subclassProperty)
+							.filter(oldClasses.contains)
+						entry
+					}.filter { entry => entry.classList.nonEmpty }
+					.map { entry =>
+						(entry.id, oldClasses(entry.classList.head) ++ List(entry.label))
 					}.collect
 					.toMap
 
@@ -71,7 +73,6 @@ object TagEntities {
 						newClasses.keySet == oldClasses.keySet)
 
 				oldClasses = newClasses
-				println(s"Tag: $tag, New size: ${newClasses.size}")
 			}
 		}
 		subclasses.toMap
@@ -83,22 +84,17 @@ object TagEntities {
 			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
-		val wikidata = sc.cassandraTable(keyspace, tablename)
-
-		val classData = wikidata
-			.map(line =>
-				(line.get[String]("id"),
-				line.get[Option[String]]("label"),
-				line.get[Map[String,List[String]]]("data")))
-			.map { case (id, label, data) =>
-				(id,
-				label.getOrElse(id),
-				data.filterKeys(key => key == instanceProperty || key == subclassProperty))
+		val classData = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
+			.map { entry =>
+				SubclassEntry(entry.id,
+					entry.label.getOrElse(entry.id),
+					entry.data
+						.filterKeys(key => key == instanceProperty || key == subclassProperty))
 			}
 
 		val categoryData = classData
-			.filter { case (id, label, data) =>
-				data.contains(subclassProperty)
+			.filter { subclassEntry =>
+				subclassEntry.data.contains(subclassProperty)
 			}.cache
 
 		val subclasses = buildSubclassMap(categoryData)
@@ -110,17 +106,14 @@ object TagEntities {
 
 		// update all entities that fit the found classes
 		val updatedEntities = classData
-			.filter { case (id, label, data) =>
-				if(data.contains(instanceProperty)) {
-					data(instanceProperty).exists(subclasses.contains)
-				} else {
-					false
-				}
-			}.map { case (id, label, data) =>
-				val path = subclasses(data(instanceProperty)
-					.filter(subclasses.contains).head)
-
-				(id, path.head, Map(wikidataPathProperty -> path))
+			.filter(_.data
+				.getOrElse(instanceProperty, List[String]())
+				.exists(subclasses.contains))
+			.map { entry =>
+				val path = subclasses(entry.data(instanceProperty)
+					.filter(subclasses.contains)
+					.head)
+				(entry.id, path.head, Map(wikidataPathProperty -> path))
 			}
 
 		updatedEntities.saveToCassandra(

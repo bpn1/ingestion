@@ -1,8 +1,7 @@
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.SparkContext._
-import org.apache.spark.broadcast.Broadcast
-import scala.collection.mutable
+
+import scala.collection.mutable.ListBuffer
 import play.api.libs.json._
 import com.datastax.spark.connector._
 
@@ -14,12 +13,14 @@ object WikiDataRDD {
 	val tablename = "wikidata"
 
 	case class WikiDataEntity(
-		var id: String = null,
-		var entitytype: String = null,
-		var wikiname: String = null,
-		var description: String = null,
-		var label: String = null,
-		var aliases: List[String] = null,
+		id: String,
+		var aliases: List[String] = List[String](),
+		var description: Option[String] = None,
+		var entitytype: Option[String] = None,
+		var wikiname: Option[String] = None,
+		var enwikiname: Option[String] = None,
+		var instancetype: Option[String] = None,
+		var label: Option[String] = None,
 		var data: Map[String, List[String]] = Map[String, List[String]]())
 
 	// remove array syntax from JSON for parallel parsing
@@ -27,191 +28,151 @@ object WikiDataRDD {
 		json.replaceAll("^\\[|,$|, $|\\]$", "")
 	}
 
-	def getValue(json: JsValue, path: List[String]): JsValue = {
-		var element = json
+	def getValue(json: JsValue, path: List[String]): Option[JsValue] = {
+		var element = Option(json)
 		try {
 			for(pathSegment <- path) {
-				element = (element \ pathSegment).as[JsValue]
+				element = Option((element.get \ pathSegment).as[JsValue])
 			}
 		} catch {
 			case jre: JsResultException =>
-				return null
-			case npe: NullPointerException =>
-				return null
+				element = None
+			case ex: NoSuchElementException =>
+				element = None
 		}
 
-		if(element.getClass == classOf[JsUndefined]) {
-			return null
+		if(element.isDefined && element.get.getClass == classOf[JsUndefined]) {
+			element = None
 		}
+
 		element
 	}
 
-	def extractString(json: JsValue, path: List[String]): String = {
+	def extractString(json: JsValue, path: List[String]): Option[String] = {
 		val value = getValue(json, path)
-		try {
-			if(value != null) {
-				value.as[String]
-			} else {
-				null
-			}
-		} catch {
-			case e : Exception =>
-				println(value + " " + value.getClass)
-				null
-		}
+		value.orNull.asOpt[String]
 	}
 
 	def extractList(json: JsValue, path: List[String]): List[JsValue] = {
-		val value = getValue(json, path)
-		if(value != null) {
-			value.as[List[JsValue]]
-		} else {
-			null
-		}
+		val value = getValue(json, path).getOrElse(JsArray())
+		value.as[List[JsValue]]
 	}
 
 	def extractMap(json: JsValue, path: List[String]): Map[String, JsValue] = {
-		val value = getValue(json, path)
-		if(value != null) {
-			value.as[Map[String, JsValue]]
-		} else {
-			null
-		}
+		val value = getValue(json, path).getOrElse(JsObject(Seq[(String, JsValue)]()))
+		value.as[Map[String, JsValue]]
 	}
 
-	def extractDouble(json: JsValue, path: List[String]): String = {
+	def extractDouble(json: JsValue, path: List[String]): Option[String] = {
 		val value = getValue(json, path)
-		if(value != null) {
-			value.as[Double].toString
-		} else {
-			null
-		}
+		value.orNull.asOpt[Double].map(_.toString)
 	}
 
-	def parseDataType(dataType: String, dataValue: JsValue): String = {
-		dataType match {
-			case "string" =>
-				extractString(dataValue, List("value"))
-			case "wikibase-entityid" =>
-				extractString(dataValue, List("value", "id"))
-			case "time" =>
-				extractString(dataValue, List("value", "time"))
-			case "globecoordinate" =>
-				extractDouble(dataValue, List("value", "latitude")) +
-					";" +
-					extractDouble(dataValue, List("value", "longitude"))
-			case "quantity" =>
-				extractString(dataValue, List("value", "amount")) +
-					";" +
-					extractString(dataValue, List("value", "unit")).split("/").last
-			case "monolingualtext" =>
-				extractString(dataValue, List("value", "text"))
-			case null =>
-				""
-			case _ =>
-				"DataType " + dataType + " not supported"
+	def parseDataType(dataType: Option[String], dataValue: JsValue): String = {
+		val propertyPathMap = Map(
+			"string" -> List("value"),
+			"wikibase-entityid" -> List("value", "id"),
+			"time" -> List("value", "time"),
+			"monolingualtext" -> List("value", "text"))
+
+		val propertyKey = dataType.getOrElse("")
+		if(propertyPathMap.contains(propertyKey)) {
+			extractString(dataValue, propertyPathMap(propertyKey)).getOrElse("")
+		} else {
+			propertyKey match {
+				case "globecoordinate" =>
+					val lat = extractDouble(dataValue, List("value", "latitude")).getOrElse("")
+					val long = extractDouble(dataValue, List("value", "longitude")).getOrElse("")
+					lat + ";" + long
+				case "quantity" =>
+					val amount = extractString(dataValue, List("value", "amount")).getOrElse("")
+					val unit = extractString(dataValue, List("value", "unit")).getOrElse("")
+						.split("/")
+						.last
+					amount + ";" + unit
+				case _ => ""
+			}
 		}
 	}
 
 	def fillEntityValues(json: JsValue): WikiDataEntity = {
-		val entity = WikiDataEntity()
-		entity.id = extractString(json, List("id"))
+		val entity = WikiDataEntity(extractString(json, List("id")).getOrElse(""))
 		entity.entitytype = extractString(json, List("type"))
 		entity.wikiname = extractString(json, List("sitelinks", language + "wiki", "title"))
 		entity.description = extractString(json, List("descriptions", language, "value"))
-		if(entity.description == null) {
-			entity.description = extractString(
-				json,
-				List("descriptions", fallbackLanguage, "value"))
-		}
+			.orElse(extractString(json, List("descriptions", fallbackLanguage, "value")))
+
 		// fall back to secondary language or first available language for label
-		val labels = getValue(json, List("labels")).as[JsObject]
-		val labelLanguages = labels.keys
-		if(labelLanguages.contains(language) && entity.entitytype != "property") {
-			entity.label = extractString(labels, List(language, "value"))
-		} else if(labelLanguages.contains(fallbackLanguage)) {
-			entity.label = extractString(labels, List(fallbackLanguage, "value"))
-		} else if(labelLanguages.nonEmpty) {
-			// take first available language if other two languages don't exist
-			val firstLanguage = labelLanguages.head
-			entity.label = extractString(labels, List(firstLanguage, "value"))
+		val labels = getValue(json, List("labels"))
+		if(labels.isDefined) {
+			val labelLanguages = labels.get.as[JsObject].keys
+			if(labelLanguages.contains(language) && !entity.entitytype.contains("property")) {
+				entity.label = extractString(labels.get, List(language, "value"))
+			} else if(labelLanguages.contains(fallbackLanguage)) {
+				entity.label = extractString(labels.get, List(fallbackLanguage, "value"))
+			} else if(labelLanguages.nonEmpty) {
+				// take first available language if other two languages don't exist
+				val firstLanguage = labelLanguages.headOption.getOrElse("")
+				entity.label = extractString(labels.get, List(firstLanguage, "value"))
+			}
 		}
+
 		entity
 	}
+
+	def extractClaimValues(claim: JsValue): String = {
+		val dataValue = getValue(claim, List("mainsnak", "datavalue"))
+		var value = ""
+		if(dataValue.isDefined) {
+			val dataType = extractString(dataValue.get, List("type"))
+			value = parseDataType(dataType, dataValue.get)
+		}
+		value
+	}
+
 
 	def parseEntity(line: String): WikiDataEntity = {
 		val json = Json.parse(line)
 		val entity = fillEntityValues(json)
 
 		// concatenate aliases in all languages
-		val aliases = getValue(json, List("aliases")).as[JsObject]
-		val aliasBuffer = mutable.ListBuffer[String]()
+		val aliases = getValue(json, List("aliases"))
+			.getOrElse(JsObject(Seq[(String, JsValue)]()))
+			.as[JsObject]
+		val aliasBuffer = ListBuffer[String]()
 		for(language <- aliases.keys) {
-			try {
-				aliasBuffer ++= extractList(aliases, List(language))
-					.map(jsVal => extractString(jsVal, List("value")))
-			} catch {
-				case e: JsResultException =>
-					println(aliases, aliases.getClass)
-			}
+			aliasBuffer ++= extractList(aliases, List(language))
+				.map(jsVal => extractString(jsVal, List("value")).getOrElse(""))
 		}
 		entity.aliases = aliasBuffer.toList
 
 		val claims = extractMap(json, List("claims"))
-		val claimBuffer = mutable.ListBuffer[(String, List[String])]()
-		if(claims != null) {
-			for((property, content) <- claims) {
-				val propertyBuffer = mutable.ListBuffer[String]()
-				for(claim <- content.as[List[JsValue]]) {
-					val dataValue = getValue(claim, List("mainsnak", "datavalue"))
-					val dataType = extractString(dataValue, List("type"))
-					val value = parseDataType(dataType, dataValue)
-					if(value != "") {
-						propertyBuffer += value
-					}
-				}
-				claimBuffer += Tuple2(property, propertyBuffer.toList)
-			}
+		entity.data = claims.mapValues { content =>
+			content.as[List[JsValue]]
+				.map(extractClaimValues)
+				.filter(_.nonEmpty)
 		}
-
-		entity.data = claimBuffer.toMap
 		entity
 	}
 
 	def translatePropertyIDs(
 		entity: WikiDataEntity,
-		properties: Map[String, String]): WikiDataEntity =
-	{
-		val translatedData = entity.data.map { case (key, value) =>
+		properties: Map[String, String]
+	): WikiDataEntity = {
+		entity.data = entity.data.map { case (key, value) =>
 			// keep original key if there is no such key in the Map
 			val newKey = properties.getOrElse(key, key)
 			(newKey, value)
-		}.toMap
-
-		entity.data = translatedData
+		}
 		entity
-	}
-
-	// START OF MAIN PROGRAM
-
-	def parseDump(rdd: RDD[String]): RDD[WikiDataEntity] = {
-		rdd
-			.map(cleanJSON)
-			.filter(_ != "")
-			.map(parseEntity)
 	}
 
 	def buildPropertyMap(rdd: RDD[WikiDataEntity]): Map[String, String] = {
 		rdd
-			.filter(entity => entity.entitytype == "property" && entity.label != null)
-			.map(entity => (entity.id, entity.label))
+			.filter(entity => entity.label.isDefined && entity.entitytype.contains("property"))
+			.map(entity => (entity.id, entity.label.get))
 			.collect
 			.toMap
-	}
-
-	def translateProps(rdd: RDD[WikiDataEntity],
-		propertyBroadcast: Broadcast[Map[String, String]]): RDD[WikiDataEntity] = {
-		rdd.map(translatePropertyIDs(_, propertyBroadcast.value))
 	}
 
 	def main(args: Array[String]) {
@@ -226,22 +187,19 @@ object WikiDataRDD {
 
 		val sc = new SparkContext(conf)
 		val jsonFile = sc.textFile(inputFile)
-		val wikiData = parseDump(jsonFile) //.cache
+
+		val wikiData = jsonFile
+			.map(cleanJSON)
+			.filter(_.nonEmpty)
+			.map(parseEntity)
 
 		val properties = buildPropertyMap(wikiData)
 		val propertyBroadcast = sc.broadcast(properties)
 
-		translateProps(wikiData, propertyBroadcast)
-			.saveToCassandra(
-				keyspace,
-				tablename,
-				SomeColumns(
-					"id",
-					"entitytype",
-					"wikiname",
-					"description",
-					"label",
-					"aliases",
-					"data"))
+		wikiData.mapPartitions({ partition =>
+			val localPropertyMap = propertyBroadcast.value
+			partition.map(translatePropertyIDs(_, localPropertyMap))
+		}, true)
+			.saveToCassandra(keyspace, tablename)
 	}
 }
