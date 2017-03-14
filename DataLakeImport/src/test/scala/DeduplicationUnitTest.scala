@@ -4,86 +4,58 @@ import java.util.UUID
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import org.apache.spark.rdd.RDD
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Matchers}
 
-
-/*object Deduplication extends Deduplication(
-	confidence = 0.5,
-	appName = "TestDeduplication",
-	dataSources = List("testSource")
-){
-	def main(args: Array[String]): Unit = {
-		if (args.length < 1) {
-			println("Usage: config.xml_path merge(optionally)")
-			return
-		}
-		val merge = if (args.length >= 2) args(1) == "merge"  else false
-		this.config = parseConfig(args(0))
-
-		deduplication(merge)
-	}
-}*/
-
-class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons{
+class DeduplicationUnitTest
+	extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 
 	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 
 	"compare" should "calculate a score regarding the configuration" in {
-		val config = List(
-			scoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8),
-			scoreConfig[String, SimilarityMeasure[String]]("name", JaroWinkler, 0.7),
-			scoreConfig[String, SimilarityMeasure[String]]("name", ExactMatchString, 0.2)
-		)
-		val score = deduplication.compare(subject1, subject2, config)
+		deduplication.parseConfig()
+		val score = deduplication.compare(subject1, subject2)
 		val simScores = List (
 			MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
 			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7,
 			ExactMatchString.compare(subject1.name.get, subject2.name.get) * 0.2
 		)
-		val expected = (
-			subject1,
-			subject2,
-			simScores.sum / 3
-		)
-		assert(expected === score)
+		val expectedScore = simScores.sum / 3
+		score shouldEqual expectedScore
 	}
 
 	it should "just return the weighted score if the configuration contains only one element" in {
-		val config = List(scoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8))
-		val score = deduplication.compare(subject1, subject2, config)
-		var expected = (
-			subject1,
-			subject2,
-			MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8
-		)
-		assert(expected === score)
+		deduplication.parseConfig()
+		val score = deduplication.compare(subject1, subject2)
+		val expectedScore = MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8
+		score shouldEqual expectedScore
 	}
 
 	"parseConfig" should "generate a configuration from a given path" in {
-		val config = deduplication.parseConfig()
+		deduplication.parseConfig()
 		val expected = List(
 			scoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8),
 			scoreConfig[String, SimilarityMeasure[String]]("name", JaroWinkler, 0.7),
 			scoreConfig[String, SimilarityMeasure[String]]("name", ExactMatchString, 0.2)
 		)
-		assert(expected === config)
+		deduplication.config shouldEqual expected
 	}
 
-	"blockingByKey" should "partition subjects regarding the value of the given key" in {
-		val subjects = subjectRDD()
-		val blocks = deduplication.blockingByKey(subjects, "city", sc)
-		val expected = blockRDD()
-		assertRDDEquals(expected, blocks)
-	}
-/*
-	"findDuplicates" should "return a list of tuple of duplicates" in {
-		val duplicates = deduplication.findDuplicates(blockRDD())	// RDD or List as input?
-		val expected = List(
-			(subject1, subject4),
-			(subject2, subject3)
-		)
-	}
-*/
+//	"blockingByKey" should "partition subjects regarding the value of the given key" in {
+//		val subjects = subjectRDD()
+//		val blocks = deduplication.blockingByKey(subjects, "city", sc)
+//		val expected = blockRDD()
+//		assertRDDEquals(expected, blocks)
+//	}
+
+//	"findDuplicates" should "return a list of tuple of duplicates" in {
+//		TODO: make used rdds fields in deduplication
+//		val duplicates = deduplication.findDuplicates(blockRDD())	// RDD or List as input?
+//		val expected = List(
+//			(subject1, subject4),
+//			(subject2, subject3)
+//		)
+//	}
+
 	"mergingDuplicates" should "should merge the properties of both subjects together" in {
 		val duplicates = sc.parallelize(List(
 			(subject1, subject4),
@@ -104,7 +76,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		assertRDDEquals(expected, mergedSubject)
 	}
 
-	val path = "./src/test/resources/config.xml"
+	val path = "config.xml"
 	val subject1 = Subject(
 		id = UUID.randomUUID(),
 		name = Some("Volkswagen"),
@@ -140,11 +112,10 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		))
 	}
 
-	def blockRDD(): RDD[(String, Iterable[Subject])] = {
-		sc.parallelize(List(
+	def testBlocks(): List[(String, List[Subject])] = {
+		List(
 			("Berlin", List(subject1, subject2, subject4, subject5)),
 			("Potsdam", List(subject1, subject5)),
-			("New York", List(subject2, subject3, subject5))
-		))
+			("New York", List(subject2, subject3, subject5)))
 	}
 }

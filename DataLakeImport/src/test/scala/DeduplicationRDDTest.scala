@@ -7,10 +7,10 @@ import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import org.apache.spark.rdd.RDD
 
 class DeduplicationRDDTest extends FlatSpec with SharedSparkContext with RDDComparisons {
-		
-		val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
-		
-/*		"generateBlocks" should "generate a block for each industry" in {
+
+	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
+
+/*	"generateBlocks" should "generate a block for each industry" in {
 		val subjects = subjectRDD()
 		val blocks = deduplication.generateBlocks(subjects, sc)
 		val expected = subjectBlockRDD()

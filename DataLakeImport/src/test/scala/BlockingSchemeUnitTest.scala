@@ -20,7 +20,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 			Subject(id = null, name = Option("VW"))
 		)
 	}
-	def testKeys(): List[String] = {
-		List("Aud", "BMW", "Lam", "Ope", "Por", "VW")
+	def testKeys(): List[List[String]] = {
+		List(List("Aud"), List("BMW"), List("Lam"), List("Ope"), List("Por"), List("VW"))
 	}
 }
