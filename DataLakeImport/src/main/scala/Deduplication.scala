@@ -244,7 +244,6 @@ class Deduplication (
 	def deduplication(merge: Boolean = false): Unit = {
 		val conf = new SparkConf()
 		  .setAppName(this.appName)
-			.set("spark.cassandra.connection.host", "172.20.21.11")
 		val sc = new SparkContext(conf)
 
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
@@ -252,10 +251,14 @@ class Deduplication (
 		val version = makeTemplateVersion()
 		val blockingScheme = SimpleBlockingScheme
 		val blocks = if(merge) blocking(subjects, stagings,blockingScheme) else blocking(subjects, blockingScheme)
-		val duplicates = sc.parallelize(findDuplicates(blocks))
-		val merged = merging(duplicates, version)
+		blocks
+		  .map(block => block._1 + "," + block._2.size)
+			.saveAsTextFile("someoutput.txt")
+			//.map(block => findDuplicates(block._2))
+		  //.saveToCassandra(sett)
+		//val merged = merging(duplicates, version)
 
-		merged.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
+		//merged.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
 	}
 }
 
