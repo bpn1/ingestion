@@ -1,6 +1,6 @@
 package DataLake
 
-import java.lang.reflect.Field
+import scala.reflect.runtime.universe._
 import java.util.{Date, UUID}
 
 import com.datastax.driver.core.utils.UUIDs
@@ -38,12 +38,29 @@ case class Subject(
 
 	override def hashCode(): Int = this.id.hashCode()
 
+	def fieldNames(): List[String] = {
+		def classAccessors[T: TypeTag]: List[MethodSymbol] = typeOf[T].members.collect {
+			case m: MethodSymbol if m.isCaseAccessor => m
+		}.toList
+		val accessors = classAccessors[Subject]
+		accessors.map(_.name.toString)
+	}
+
 	// use reflection to get attribute from a string
-	def get[T](attribute: String): T = {
-		val field: Field = this.getClass().getDeclaredField(attribute)
-		field.get(this) match {
-			case Some(value) => value.asInstanceOf[T]
-			case None => properties(attribute).asInstanceOf[T]
+	def get(attribute: String): List[String] = {
+		if(this.fieldNames.contains(attribute)) {
+			val field = this.getClass().getDeclaredField(attribute)
+			field.setAccessible(true)
+			if(attribute == "name" || attribute == "category") {
+				val value = field.get(this).asInstanceOf[Option[String]]
+				List[String](value.getOrElse(""))
+			} else if(attribute == "aliases") {
+				field.get(this).asInstanceOf[List[String]]
+			} else {
+				List[String]()
+			}
+		} else {
+			properties.getOrElse(attribute, List[String]())
 		}
 	}
 }
