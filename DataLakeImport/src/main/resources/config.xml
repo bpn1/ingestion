@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deduplication>
+    <sourceSettings>
+        <keyspace>datalake</keyspace>
+        <subjectTable>subject</subjectTable>
+        <stagingTable>subject_temp</stagingTable>
+        <duplicatestable>duplicatecandidates</duplicatestable>
+        <versionTable>version</versionTable>
+        <statsTable>stats</statsTable>
+    </sourceSettings>
+    <simMeasurements>
+        <feature>
+            <attribute>name</attribute>
+            <similartyMeasure>MongeElkan</similartyMeasure>
+            <weight>0.8</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>name</attribute>
+            <similartyMeasure>JaroWinkler</similartyMeasure>
+            <weight>0.7</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>name</attribute>
+            <similartyMeasure>ExactMatchString</similartyMeasure>
+            <weight>0.2</weight>
+            <scale>1</scale>
+        </feature>
+    </simMeasurements>
+</deduplication>
+

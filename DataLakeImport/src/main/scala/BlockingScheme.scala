@@ -3,7 +3,7 @@ package DataLake
 /**
 	* This trait is the template for our blocking schemes.
 	*/
-trait BlockingScheme {
+trait BlockingScheme extends Serializable {
 
 	/**
 		* Generates key from the subject's properties.
@@ -18,6 +18,7 @@ trait BlockingScheme {
 	*/
 object SimpleBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject) = {
-		subject.name.get.substring(0, 3)
+		val name = subject.name.getOrElse("")
+		name.substring(0, Math.min(3, name.length))
 	}
 }

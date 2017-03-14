@@ -84,11 +84,14 @@ class Deduplication (
 	*/
 	def parseConfig(): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
 
-		val xml = XML.loadFile("src/test/resources/config.xml")
-		val measures = (xml \\ "deduplictaion" \ "simMeasurements" \ "feature").toList
+		val xml = XML.loadString(Source
+			.fromURL(getClass.getResource("/config.xml"))
+			.getLines()
+			.mkString("\n"))
+		val measures = (xml \\ "deduplication" \ "simMeasurements" \ "feature").toList
 
 
-		val configSettings = (xml \\ "deduplication" \ "sourceSettings" )
+		val configSettings = xml \\ "deduplication" \ "sourceSettings"
 		settings("keyspace") = (configSettings \ "keyspace").text
 		settings("stagingTable") = (configSettings \ "stagingTable").text
 		settings("subjectTable") = (configSettings \ "subjectTable").text
@@ -245,15 +248,22 @@ class Deduplication (
 		val conf = new SparkConf()
 		  .setAppName(this.appName)
 		val sc = new SparkContext(conf)
-
+		parseConfig()
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
-		val stagings = if(merge) {sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable")) } else { null }
 		val version = makeTemplateVersion()
 		val blockingScheme = SimpleBlockingScheme
-		val blocks = if(merge) blocking(subjects, stagings,blockingScheme) else blocking(subjects, blockingScheme)
+		val blocks = if(merge) {
+			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
+			blocking(subjects, staging, blockingScheme)
+		} else {
+			blocking(subjects, blockingScheme)
+		}
 		blocks
-		  .map(block => block._1 + "," + block._2.size)
-			.saveAsTextFile("someoutput.txt")
+			//.map(block => findDuplicates(block._2))
+			.map(block => (block._1, block._2.size))
+			.sortBy(_._2, ascending = false)
+			.map(block => block._1 + "," + block._2)
+			.saveAsTextFile(s"blockcount_${System.currentTimeMillis()}")
 			//.map(block => findDuplicates(block._2))
 		  //.saveToCassandra(sett)
 		//val merged = merging(duplicates, version)
