@@ -84,7 +84,8 @@ class Deduplication (
 	*/
 	def parseConfig(): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
 
-		val xml = XML.loadFile("src/test/resources/config.xml")
+		var	path = this.configFile.getOrElse("src/test/resources/config.xml")
+		val xml = XML.loadFile(path)
 		val measures = (xml \\ "deduplictaion" \ "simMeasurements" \ "feature").toList
 
 
