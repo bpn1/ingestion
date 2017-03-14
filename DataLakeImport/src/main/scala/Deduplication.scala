@@ -12,6 +12,24 @@ import scala.collection.mutable
 import scala.io.Source
 
 /**
+  * Case class for corresponding duplicatecandidates cassandra table.
+  * @param id unique UUID used as primary key
+  * @param subject_id UUID of subject in the existing subject table
+  * @param subject_name name of subject in the existing subject table
+  * @param duplicate_id UUID of duplicate subject
+  * @param duplicate_name name of duplicate subject
+  * @param duplicate_table source table of duplicate
+  */
+case class DuplicateCandidate(
+	id: UUID,
+	subject_id: UUID,
+	subject_name: Option[String] = None,
+	duplicate_id: UUID,
+	duplicate_name: Option[String] = None,
+	duplicate_table: String)
+
+
+/**
   * Reproduces a configuration for a comparison of two Subjects
   * @param key the attribute of a Subject to be compared
   * @param similarityMeasure the type of similarity measure for the comparing
@@ -30,13 +48,14 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
   * @param confidence minimum confidence for two subjects to be identified as duplicates
   * @param appName name of the deduplication
   * @param dataSources sources where the new data is retrieved from
+  * @param configFile name of config file in resource folder
   */
-class Deduplication (
+class Deduplication(
 	val confidence: Double,
 	val appName: String,
 	val dataSources: List[String],
 	val configFile: Option[String] = None
-){
+) extends Serializable {
 	//var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
 	var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
 	val settings = mutable.Map[String, String]()
@@ -195,23 +214,27 @@ class Deduplication (
 		val version = makeTemplateVersion()
 		val blockingScheme = SimpleBlockingScheme
 		val blocks = if(merge) {
-			val staging = sc.cassandraTable[Subject](settings("keyspace"), "subject_temp")
-			//sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
+			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable"))
 			blocking(subjects, staging, blockingScheme)
 		} else {
 			blocking(subjects, blockingScheme)
 		}
 		blocks
-			//.map(block => findDuplicates(block._2))
-			.map(block => (block._1, block._2.size))
-			.sortBy(_._2, ascending = false)
-			.map(block => block._1 + "," + block._2)
-			.saveAsTextFile(s"blockcount_${System.currentTimeMillis()}")
-			//.map(block => findDuplicates(block._2))
-		  //.saveToCassandra(sett)
-		//val merged = merging(duplicates, version)
+			.flatMap(block => findDuplicates(block._2))
+		    .map { case (subject1, subject2) =>
+				DuplicateCandidate(
+					UUIDs.random(),
+					subject1.id,
+					subject1.name,
+					subject2.id,
+					subject2.name,
+					"subject_temp")
+			}.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
 
-		//merged.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
+//			.map(block => (block._1, block._2.size))
+//			.sortBy(_._2, ascending = false)
+//			.map(block => block._1 + "," + block._2)
+//			.saveAsTextFile(s"blockcount_${System.currentTimeMillis()}")
 	}
 }
 
