@@ -14,8 +14,8 @@ object DiceSorensen extends SimilarityMeasure[String] {
 	  * the default value 0.0 if one of the input strings is empty
 	  */
 
-	override def compare(s: String, t: String) : Double = {
-		val score = DiceSorensenMetric(1).compare(s,t)
-		score.getOrElse(0.0)
+	override def compare(s: String, t: String, u: Int = 1) : Double = {
+		val score = DiceSorensenMetric(u).compare(s,t)
+		return score.getOrElse(0.0)
 	}
 }
