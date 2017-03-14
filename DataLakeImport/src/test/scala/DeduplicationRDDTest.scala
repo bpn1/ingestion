@@ -9,27 +9,22 @@ import org.apache.spark.rdd.RDD
 class DeduplicationRDDTest extends FlatSpec with SharedSparkContext with RDDComparisons {
 	"generateBlocks" should "generate a block for each industry" in {
 		val subjects = subjectRDD()
-		val blocks = Deduplication.generateBlocks(subjects, sc)
+		val blockingScheme = SimpleBlockingScheme
+		val blocks = Deduplication.generateBlocks(subjects, blockingScheme)
 		val expected = subjectBlockRDD()
 		assertRDDEquals(expected, blocks)
 	}
 
 	it should "merge the blocks if two subject RDDs are given" in {
 		val subjects = subjectRDD()
+		val blockingScheme = SimpleBlockingScheme
 		val stagings = stagingSubjectsRDD()
 		// Conversion from list to set because of an unordered comparison
-		val blocks = Deduplication.generateBlocks(subjects, stagings, sc)
+		val blocks = Deduplication.generateBlocks(subjects, stagings, blockingScheme)
 			.map(x => (x._1, x._2.toSet))
 		val expected = subjectAndStagingBlockRDD()
 			.map(x => (x._1, x._2.toSet))
 		assertRDDEquals(expected, blocks)
-	}
-
-	"collectIndustries" should "collect all industries of the subjects" in {
-		val subjects = subjectRDD()
-		val industries = Deduplication.collectIndustries(subjects).toSet
-		val expected = Set("auto", "kohle", "uncategorized", "stahl")
-		assert(expected, industries)
 	}
 
 	"findDuplicates" should "find all duplicates having a similarity score above the threshold" in {
@@ -84,10 +79,10 @@ class DeduplicationRDDTest extends FlatSpec with SharedSparkContext with RDDComp
 		))
 	}
 
-	def duplicateCandidatesRDD(): RDD[(String, Iterable[Subject])] = {
+	def duplicateCandidatesRDD(): RDD[(String, List[Subject])] = {
 		sc.parallelize(Seq(
-			("auto", Iterable(audi, audi2, lamborghini, opel, vw)),
-			("kohle", Iterable(audi, bmw, bmw2))
+			("auto", List(audi, audi2, lamborghini, opel, vw)),
+			("kohle", List(audi, bmw, bmw2))
 		))
 	}
 

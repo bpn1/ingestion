@@ -79,11 +79,12 @@ object Deduplication {
 
 		val subjects = sc.cassandraTable[Subject](keyspace, inputTable)
 		val version = makeTemplateVersion()
+		val blockingScheme = SimpleBlockingScheme
 
 		val blocksRDD = if(doMerge) {
-			generateBlocks(subjects, sc.cassandraTable[Subject](keyspace, stagingTable), sc)
+			generateBlocks(subjects, sc.cassandraTable[Subject](keyspace, stagingTable), blockingScheme)
 		} else {
-			generateBlocks(subjects, sc)
+			generateBlocks(subjects, blockingScheme)
 		}
 		val duplicates = findDuplicates(blocksRDD, this.config)
 
@@ -163,39 +164,19 @@ object Deduplication {
 	}
 
 	/**
-	  * Collects all different industries of the subjects given
-	  *
-	  * @param subjects Subjects from whom to collect the industries
-	  * @return List of all the industries the subjects work in
-	  */
-	def collectIndustries(subjects: RDD[Subject]): List[String] = {
-		subjects
-			.map(x => x.properties.getOrElse("branche", List("uncategorized")))
-			.reduce((x, y) => (x ::: y).distinct)
-	}
-
-	/**
-	  * Creates blocks for the different industries
-	  *
-	  * @param subjects RDD to peform the blocking on
-	  * @return RDD of blocks. One block for each industry
-	  * containing the Subjects categorized as this industry
-	  */
-
+		* Uses input blocking scheme to generate blocks of subjects.
+		* @param subjects RDD to perform the blocking on.
+		* @param blockingScheme blocking scheme to use to generate keys.
+		* @return subjects grouped by blocking keys
+		*/
 	def generateBlocks(
 		subjects: RDD[Subject],
-		sc: SparkContext
-	): RDD[(String, Iterable[Subject])] =
+		blockingScheme: BlockingScheme
+	): RDD[(String, List[Subject])] =
 	{
-		val industries = collectIndustries(subjects)
-		sc.parallelize(industries.map(x =>
-			(x, subjects.filter(subject =>
-				subject
-					.properties
-					.getOrElse("branche", List("uncategorized"))
-					.contains(x))
-					.collect
-					.toList)))
+		subjects
+			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
+			.reduceByKey(_ ++ _)
 	}
 
 	/**
@@ -203,25 +184,24 @@ object Deduplication {
 	  *
 	  * @param subjects RDD to peform the blocking on
 	  * @param stagingSubjects RDD to peform the blocking on
+		* @param blockingScheme blocking scheme to use to generate keys.
 	  * @return RDD of blocks. One block for each industry containing the
 	  * Subjects categorized as this industry
 	  */
-
 	def generateBlocks(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
-		sc: SparkContext
-	): RDD[(String, Iterable[Subject])] =
+		blockingScheme: BlockingScheme
+	): RDD[(String, List[Subject])] =
 	{
-		val subjectBlocks = generateBlocks(subjects, sc)
-		val stagingBlocks = generateBlocks(stagingSubjects, sc)
+		val subjectBlocks = generateBlocks(subjects, blockingScheme)
+		val stagingBlocks = generateBlocks(stagingSubjects, blockingScheme)
 		subjectBlocks
 			.fullOuterJoin(stagingBlocks)
 			.map {
-				case (branche, (None, None)) => (branche, List())
-				case (branche, (Some(x), None)) => (branche, x.toList)
-				case (branche, (None, Some(x))) => (branche, x.toList)
-				case (branche, (Some(x), Some(y))) => (branche, x.toSet ++ y.toSet.toList)
+				case (key, (Some(x), None)) => (key, x)
+				case (key, (None, Some(x))) => (key, x)
+				case (key, (Some(x), Some(y))) => (key, (x ++ y).distinct)
 			}
 	}
 
@@ -248,9 +228,9 @@ object Deduplication {
 	  * for each block
 	  */
 	def findDuplicates(
-		blocks: RDD[(String, Iterable[Subject])],
+		blocks: RDD[(String, List[Subject])],
 		config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]
-	): RDD[(String, Iterable[possibleDuplicate])] =
+	): RDD[(String, List[possibleDuplicate])] =
 	{
 		blocks
 			.map {
