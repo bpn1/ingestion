@@ -6,7 +6,8 @@ import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import org.apache.spark.rdd.RDD
 import org.scalatest.FlatSpec
 
-object Deduplication extends Deduplication(
+
+/*object Deduplication extends Deduplication(
 	confidence = 0.5,
 	appName = "TestDeduplication",
 	dataSources = List("testSource")
@@ -21,16 +22,18 @@ object Deduplication extends Deduplication(
 
 		deduplication(merge)
 	}
-}
+}*/
 
 class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons{
+
+	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 	"makePairs" should "generate a list containing all distinct pairs without regarding the order" in {
 		val subjects = List(
 			subject1,
 			subject2,
 			subject3
 		)
-		val pairs = Deduplication.makePairs(subjects)
+		val pairs = deduplication.makePairs(subjects)
 		val expected = List(
 			(subject1, subject2),
 			(subject1, subject3),
@@ -41,11 +44,11 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 	"compare" should "calculate a score regarding the configuration" in {
 		val config = List(
-			scoreConfig("name", MongeElkan, 0.8),
-			scoreConfig("name", JaroWinkler, 0.7),
-			scoreConfig("name", ExactMatchString, 0.2)
+			scoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8),
+			scoreConfig[String, SimilarityMeasure[String]]("name", JaroWinkler, 0.7),
+			scoreConfig[String, SimilarityMeasure[String]]("name", ExactMatchString, 0.2)
 		)
-		val score = Deduplication.compare(subject1, subject2, config)
+		val score = deduplication.compare(subject1, subject2, config)
 		val simScores = List (
 			MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
 			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7,
@@ -60,8 +63,8 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	it should "just return the weighted score if the configuration contains only one element" in {
-		val config = List(scoreConfig("name", MongeElkan, 0.8))
-		val score = Deduplication.compare(subject1, subject2, config)
+		val config = List(scoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8))
+		val score = deduplication.compare(subject1, subject2, config)
 		var expected = (
 			subject1,
 			subject2,
@@ -71,24 +74,24 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	"parseConfig" should "generate a configuration from a given path" in {
-		val config = Deduplication.parseConfig(path)
+		val config = deduplication.parseConfig()
 		val expected = List(
-			scoreConfig("name", MongeElkan, 0.8),
-			scoreConfig("name", JaroWinkler, 0.7),
-			scoreConfig("name", ExactMatchString, 0.2)
+			scoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8),
+			scoreConfig[String, SimilarityMeasure[String]]("name", JaroWinkler, 0.7),
+			scoreConfig[String, SimilarityMeasure[String]]("name", ExactMatchString, 0.2)
 		)
 		assert(expected === config)
 	}
 
 	"blockingByKey" should "partition subjects regarding the value of the given key" in {
 		val subjects = subjectRDD()
-		val blocks = Deduplication.blockingByKey(subjects, "city", sc)
+		val blocks = deduplication.blockingByKey(subjects, "city", sc)
 		val expected = blockRDD()
 		assertRDDEquals(expected, blocks)
 	}
 
 	"findDuplicates" should "return a list of tuple of duplicates" in {
-		val duplicates = Deduplication.findDuplicates(blockRDD())
+		val duplicates = deduplication.findDuplicates(blockRDD())
 		val expected = List(
 			(subject1, subject4),
 			(subject2, subject3)
@@ -100,8 +103,8 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 			(subject1, subject4),
 			(subject2, subject3)
 		))
-		val version = Deduplication.makeTemplateVersion()
-		val mergedSubject = Deduplication.merging(duplicates, version)
+		val version = deduplication.makeTemplateVersion()
+		val mergedSubject = deduplication.merging(duplicates, version)
 		val expected = sc.parallelize(List(
 			Subject(id = subject1.id, name = subject1.name, properties = subject1.properties ++ subject4.properties),
 			Subject(id = subject2.id, name = subject2.name, properties = subject2.properties ++ subject3.properties)

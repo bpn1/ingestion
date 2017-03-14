@@ -6,9 +6,11 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import com.datastax.driver.core.utils.UUIDs
+
 import scala.xml.XML
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.io.Source
 
 /**
 	* Reproduces a configuration for a comparison of two Subjects
@@ -42,7 +44,7 @@ class Deduplication (
 	val confidence: Double,
 	val appName: String,
 	val dataSources: List[String],
-	val configFile: String
+	val configFile: Option[String] = None
 ){
 	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
 	val settings = mutable.Map[String, String]()
@@ -68,7 +70,7 @@ class Deduplication (
 	* @param config configuration of the similarity measures for the comparison
 	* @return the similarity score of the subjects
 	*/
-	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]], scale: Int): (Subject, Subject, Double, Double) = {
+	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]], scale: Int = 1): (Subject, Subject, Double, Double) = {
 		val list = ListBuffer.empty[Double]
 		for(item <- config) {
 			list += item.similarityMeasure.compare(subject1.get(item.key), subject2.get(item.key), scale) * item.weight
@@ -81,8 +83,9 @@ class Deduplication (
 	* @param path the path where the config.xml is located
 	* @return a list containing scoreConfig entities parsed from the xml file
 	*/
-	def parseConfig(path: String): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
-		val xml = XML.loadFile(path)
+	def parseConfig(): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
+
+		val xml = XML.loadFile("src/test/resources/config.xml")
 		val measures = (xml \\ "deduplictaion" \ "simMeasurements" \ "item").toList
 
 
@@ -152,7 +155,9 @@ class Deduplication (
 		* @param sc Spark Context
 		* @return tuple containing the value and a list of all subjects containing the value
 		*/
-	def blockingByKey(subjects: RDD[Subject], key: String, sc: SparkContext): RDD[(String, Iterable[Subject])] = {
+	def blockingByKey(subjects: RDD[Subject],
+		key: String,
+		sc: SparkContext): RDD[(String, Iterable[Subject])] = {
 		val values = subjects
 		  .map(subject => {
 				subject
@@ -174,16 +179,16 @@ class Deduplication (
 					.toList
 			)})
 
-		if (blocks.contains(("uncategorized", _))) {
 			val uncategorizedSubjects = blocks
 				.filter(_._1 == "uncategorized")
-				.head
-			  ._2
+			    .map(_._2)
 
+/*
 			blocks = blocks
 				.map(block => (block._1, block._2 ::: uncategorizedSubjects))
 				.filter(_._1 != "uncategorized")
-		}
+*/
+
 
 		sc.parallelize[(String, Iterable[Subject])](blocks)
 	}
