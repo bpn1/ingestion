@@ -3,8 +3,10 @@ package DataLake
 import org.scalatest.{FlatSpec, Matchers}
 
 class BlockingSchemeUnitTest extends FlatSpec with Matchers {
+	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 	"SimpleBlockingScheme" should "generate proper keys" in {
-		val keys = SimpleBlockingScheme.generateKey()
+		val blockingScheme = SimpleBlockingScheme
+		val keys = testSubjects.map(subject => blockingScheme.generateKey(subject))
 		val expected = testKeys
 		assert(expected == keys)
 	}
