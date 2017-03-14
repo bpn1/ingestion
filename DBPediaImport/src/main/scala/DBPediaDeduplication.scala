@@ -1,4 +1,4 @@
-import java.util.Date
+import java.util.{Date, UUID}
 
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
@@ -11,29 +11,45 @@ object DBPediaDeduplication {
 
 	val appName = "DBPediaDeduplication_v0.1"
 	val dataSources = List("dbpedia_20161203")
-	val outputKeyspace = "datalake"
+	val keyspace = "datalake"
+	val inputTableName = "subject_temp"
+	val subjectTable = "subject"
+	val wikidataKey = "wikipedia_name"
 	val outputTable = "duplicatecandidates"
+
+	case class DuplicateCandidate(
+		id: UUID,
+		subject_id: UUID,
+		subject_name: Option[String] = None,
+		duplicate_id: UUID,
+		duplicate_name: Option[String] = None,
+		duplicate_table: String)
 
 	def makeTemplateVersion(): Version = {
 		// create timestamp and TimeUUID for versioning
 		val timestamp = new Date()
 		val version = UUIDs.timeBased()
 
-		Version(version, appName, null, null, dataSources, timestamp)
+		Version(version, appName, List[String](), Map[String, String](), dataSources, timestamp)
 	}
 
 	def dbpediaFilter(rdd: RDD[Subject]): RDD[(String, Subject)] = {
 		rdd
 			.filter(_.name.isDefined)
-			.keyBy(_.name.get)
-			// To remove the @de  . from the name of every dbpedia subject
-			.map(x => (x._1.dropRight(5), x._2))
+			.map { entry =>
+				// To remove the @de  . from the name of every dbpedia subject
+				val name = entry.name.get.dropRight(5)
+				(name, entry)
+			}
 	}
 
 	def subjectFilter(rdd: RDD[Subject]): RDD[(String, Subject)] = {
 		rdd
-		  .filter(_.properties.contains("wikipedia_name"))
-			.keyBy(_.properties.getOrElse("wikipedia_name", List("null")).head)
+			.filter(_.properties.contains(wikidataKey))
+			.map { entry =>
+				val keyOpt = entry.properties(wikidataKey).headOption
+				(keyOpt.getOrElse(""), entry)
+			}
 	}
 
 	def mergeSubjects(subject1: Subject, subject2: Subject, version: Version) : Subject = {
@@ -50,16 +66,23 @@ object DBPediaDeduplication {
 		val sc = new SparkContext(conf)
 
 		val version = makeTemplateVersion()
-		val dbpedia = sc.cassandraTable[Subject]("datalake", "subject_temp")
-		val subjects = sc.cassandraTable[Subject]("datalake", "subject")
+		val dbpedia = sc.cassandraTable[Subject](keyspace, inputTableName)
+		val subjects = sc.cassandraTable[Subject](keyspace, subjectTable)
 		val dbpediaTopic = dbpediaFilter(dbpedia)
 		val subjectTopic = subjectFilter(subjects)
 
-		val joined : RDD[Subject] = dbpediaTopic
+		dbpediaTopic
 			.join(subjectTopic)
-		  .map(x => mergeSubjects(x._2._1, x._2._2, version))
+			.map { case (key, (dbpediaSubject, subject)) =>
+				DuplicateCandidate(
+					UUIDs.random(),
+					subject.id,
+					subject.name,
+					dbpediaSubject.id,
+					dbpediaSubject.name,
+					inputTableName)
+			}.saveToCassandra(keyspace, outputTable)
 
-		joined.saveToCassandra(outputKeyspace, outputTable)
 
 		sc.stop()
 	}
