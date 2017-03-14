@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import com.datastax.driver.core.utils.UUIDs
 import scala.xml.XML
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -44,7 +45,7 @@ class Deduplication (
 	val configFile: String
 ){
 	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
-
+	val settings = mutable.Map[String, String]()
 
 	def apply() {}
 
@@ -82,16 +83,15 @@ class Deduplication (
 	*/
 	def parseConfig(path: String): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
 		val xml = XML.loadFile(path)
-		val configSettings = (xml \\ "deduplication" \ "sourceSettings" ).toList
 		val measures = (xml \\ "deduplictaion" \ "simMeasurements" \ "item").toList
 
-		configSettings
-			.map(sourceSettings =>
-				((sourceSettings \ "keyspace").text,
-					(sourceSettings \ "subjectTable").text,
-					(sourceSettings \ "stagingTable").text,
-					(sourceSettings \ "duplicatesTable").text,
-					(sourceSettings \ "versionTable").text))
+
+		val configSettings = (xml \\ "deduplication" \ "sourceSettings" )
+		settings("keyspace") = (configSettings \ "keyspace").text
+		settings("stagingTable") = (configSettings \ "stagingTable").text
+		settings("subjectTable") = (configSettings \ "subjectTable").text
+		settings("duplicatesTable") = (configSettings \ "duplicatesTable").text
+		settings("versionTable") = (configSettings \ "versionTable").text
 
 		measures
 			.map(item =>
@@ -102,7 +102,7 @@ class Deduplication (
 			.map { case (attribute, similarityMeasure, weight, scale) =>
 				scoreConfig[String, SimilarityMeasure[String]](
 					attribute,
-					dataTypes.getOrElse(similarityMeasure, ExactMatchString)
+					Deduplication.dataTypes.getOrElse(similarityMeasure, ExactMatchString)
 						.asInstanceOf[SimilarityMeasure[String]],
 					weight.toDouble,
 					scale.toInt)
@@ -227,14 +227,26 @@ class Deduplication (
 			.set("spark.cassandra.connection.host", "172.20.21.11")
 		val sc = new SparkContext(conf)
 
-		val subjects = sc.cassandraTable[Subject](keyspace, subjectTable)
-		val stagings = if(merge) sc.cassandraTable[Subject](keyspace, configSettings get subjectTable) else null
+		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
+		val stagings = if(merge) {sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable")) } else { null }
 		val version = makeTemplateVersion()
 
 		val blocks = if(merge) blocking(subjects, stagings) else blocking(subjects)
 		val duplicates = sc.parallelize(findDuplicates(blocks))
 		val merged = merging(duplicates, version)
 
-		merged.saveToCassandra(keyspace, duplicatesTable)
+		merged.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
 	}
+}
+
+object Deduplication {
+	val dataTypes = Map[String, SimilarityMeasure[_]](
+	"ExactMatchString" -> ExactMatchString,
+	"MongeElkan" -> MongeElkan,
+	"Jaccard" -> Jaccard,
+	"DiceSorensen" -> DiceSorensen,
+	"Jaro" -> Jaro,
+	"JaroWinkler" -> JaroWinkler,
+	"N-Gram" -> NGram,
+	"Overlap" -> Overlap)
 }
