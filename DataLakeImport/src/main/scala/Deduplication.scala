@@ -121,30 +121,43 @@ class Deduplication (
 	}
 
 	/**
-	* Partitions the subjects in buckets
-	* @param subjects subjects to be blocked
-	* @return tuple containing a describing String and an Iterable containing the Subjects
-	*/
-	def blocking(subjects: RDD[Subject]): RDD[(String, Iterable[Subject])] = {
+		* Uses input blocking scheme to generate blocks of subjects.
+		* @param subjects RDD to perform the blocking on.
+		* @param blockingScheme blocking scheme to use to generate keys.
+		* @return subjects grouped by blocking keys
+		*/
+	def blocking(
+		subjects: RDD[Subject],
+		blockingScheme: BlockingScheme
+	): RDD[(String, List[Subject])] =
+	{
 		subjects
-			.groupBy(subject => subject.id.toString.hashCode().%(500).toString )
+			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
+			.reduceByKey(_ ++ _)
 	}
 	/**
-		* Partitions the subjects in buckets
-		* @param subjects subjects to be blocked
-		* @param stagings stagings to be blocked
-		* @return tuple containing a describing String and an Iterable containing the Subjects
+		* Creates blocks for the different industries
+		*
+		* @param subjects RDD to peform the blocking on
+		* @param stagingSubjects RDD to peform the blocking on
+		* @param blockingScheme blocking scheme to use to generate keys.
+		* @return RDD of blocks. One block for each industry containing the
+		* Subjects categorized as this industry
 		*/
-	def blocking(subjects: RDD[Subject], stagings: RDD[Subject]): RDD[(String, Iterable[Subject])] = {
-		val subjectBlocks = blocking(subjects)
-		val stagingBlocks = blocking(stagings)
+	def blocking(
+		subjects: RDD[Subject],
+		stagingSubjects: RDD[Subject],
+		blockingScheme: BlockingScheme
+	): RDD[(String, List[Subject])] =
+	{
+		val subjectBlocks = blocking(subjects, blockingScheme)
+		val stagingBlocks = blocking(stagingSubjects, blockingScheme)
 		subjectBlocks
 			.fullOuterJoin(stagingBlocks)
-			.map{
-				case (description, (None, None)) => (description, List())
-				case (description, (x, None)) => (description, x.get.toList)
-				case (description, (None, x)) => (description, x.get.toList)
-				case (description, (x, y)) => (description, x.get.toSet.++(y.get.toSet).toList)
+			.map {
+				case (key, (Some(x), None)) => (key, x)
+				case (key, (None, Some(x))) => (key, x)
+				case (key, (Some(x), Some(y))) => (key, (x ++ y).distinct)
 			}
 	}
 
@@ -235,8 +248,8 @@ class Deduplication (
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
 		val stagings = if(merge) {sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable")) } else { null }
 		val version = makeTemplateVersion()
-
-		val blocks = if(merge) blocking(subjects, stagings) else blocking(subjects)
+		val blockingScheme = SimpleBlockingScheme
+		val blocks = if(merge) blocking(subjects, stagings,blockingScheme) else blocking(subjects, blockingScheme)
 		val duplicates = sc.parallelize(findDuplicates(blocks))
 		val merged = merging(duplicates, version)
 
