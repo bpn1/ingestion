@@ -27,20 +27,6 @@ import org.scalatest.FlatSpec
 class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons{
 
 	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
-	"makePairs" should "generate a list containing all distinct pairs without regarding the order" in {
-		val subjects = List(
-			subject1,
-			subject2,
-			subject3
-		)
-		val pairs = deduplication.makePairs(subjects)
-		val expected = List(
-			(subject1, subject2),
-			(subject1, subject3),
-			(subject2, subject3)
-		)
-		assert(expected === pairs)
-	}
 
 	"compare" should "calculate a score regarding the configuration" in {
 		val config = List(
@@ -89,15 +75,15 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val expected = blockRDD()
 		assertRDDEquals(expected, blocks)
 	}
-
+/*
 	"findDuplicates" should "return a list of tuple of duplicates" in {
-		val duplicates = deduplication.findDuplicates(blockRDD())
+		val duplicates = deduplication.findDuplicates(blockRDD())	// RDD or List as input?
 		val expected = List(
 			(subject1, subject4),
 			(subject2, subject3)
 		)
 	}
-
+*/
 	"mergingDuplicates" should "should merge the properties of both subjects together" in {
 		val duplicates = sc.parallelize(List(
 			(subject1, subject4),
@@ -106,8 +92,14 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val version = deduplication.makeTemplateVersion()
 		val mergedSubject = deduplication.merging(duplicates, version)
 		val expected = sc.parallelize(List(
-			Subject(id = subject1.id, name = subject1.name, properties = subject1.properties ++ subject4.properties),
-			Subject(id = subject2.id, name = subject2.name, properties = subject2.properties ++ subject3.properties)
+			Subject(
+				id = subject1.id,
+				name = subject1.name,
+				properties = subject1.properties ++ subject4.properties),
+			Subject(
+				id = subject2.id,
+				name = subject2.name,
+				properties = subject2.properties ++ subject3.properties)
 		))
 		assertRDDEquals(expected, mergedSubject)
 	}

@@ -1,24 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deduplication>
     <sourceSettings>
-        <keyspace>
-            datalake
-        </keyspace>
-        <subjectTable>
-            subject
-        </subjectTable>
-        <stagingTable>
-            subject_temp
-        </stagingTable>
-        <duplicatestable>
-            duplicatecandidates
-        </duplicatestables>
-        <versionTable>
-            version
-        </versionTable>
-        <statsTable>
-            stats
-        </statsTable>
+        <keyspace>datalake</keyspace>
+        <subjectTable>subject</subjectTable>
+        <stagingTable>subject_temp</stagingTable>
+        <duplicatestable>duplicatecandidates</duplicatestable>
+        <versionTable>version</versionTable>
+        <statsTable>stats</statsTable>
     </sourceSettings>
     <simMeasurements>
         <feature>

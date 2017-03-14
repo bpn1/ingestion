@@ -24,15 +24,7 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
 		key: String,
 		similarityMeasure: B,
 		weight: Double,
-		scale: Int = 1) {
-
-	override def equals(obj: Any): Boolean = obj match {
-		case that: scoreConfig[A, B] => that.key == this.key &&
-			that.similarityMeasure.equals(this.similarityMeasure) &&
-			that.weight == this.weight
-		case _ => false
-	}
-}
+		scale: Int = 1)
 
 /**
 	* Abstract class containing generic methods for the deduplication
@@ -49,20 +41,6 @@ class Deduplication (
 	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
 	val settings = mutable.Map[String, String]()
 
-	def apply() {}
-
-	/**
-	* Creates a list by pairing all subjects without order
-	* @param list List of subjects
-	* @param acc accumulator
-	* @return list of paired subjects
-	*/
-	def makePairs(list: List[Subject], acc: List[(Subject, Subject)] = List[(Subject, Subject)]()): List[(Subject, Subject)] = list match {
-		case Nil => acc
-		case x::Nil => acc
-		case x::xs => makePairs(xs, acc ::: list.map((x,_)).filter(x => x._1 != x._2))
-	}
-
 	/**
 	* Compares to subjects regarding the configuration
 	* @param subject1 subjects to be compared to subject2
@@ -70,10 +48,16 @@ class Deduplication (
 	* @param config configuration of the similarity measures for the comparison
 	* @return the similarity score of the subjects
 	*/
-	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]], scale: Int = 1): Double = {
+	def compare(subject1: Subject,
+		subject2: Subject,
+		config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]],
+		scale: Int = 1
+	): Double = {
 		val list = ListBuffer.empty[Double]
 		for(item <- config) {
-			list += item.similarityMeasure.compare(subject1.get(item.key), subject2.get(item.key), scale) * item.weight
+			list += item
+				.similarityMeasure
+				.compare(subject1.get(item.key), subject2.get(item.key), scale) * item.weight
 		}
 		list.sum / config.length
 	}
@@ -83,13 +67,13 @@ class Deduplication (
 	* @return a list containing scoreConfig entities parsed from the xml file
 	*/
 	def parseConfig(): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
-
+		val path = this.configFile.getOrElse("config.xml")
 		val xml = XML.loadString(Source
-			.fromURL(getClass.getResource("/config.xml"))
+			.fromURL(getClass.getResource(s"/$path"))
 			.getLines()
 			.mkString("\n"))
-		val measures = (xml \\ "deduplication" \ "simMeasurements" \ "feature").toList
 
+		val measures = (xml \\ "deduplication" \ "simMeasurements" \ "feature").toList
 
 		val configSettings = xml \\ "deduplication" \ "sourceSettings"
 		settings("keyspace") = (configSettings \ "keyspace").text
@@ -131,8 +115,7 @@ class Deduplication (
 	def blocking(
 		subjects: RDD[Subject],
 		blockingScheme: BlockingScheme
-	): RDD[(String, List[Subject])] =
-	{
+	): RDD[(String, List[Subject])] = {
 		subjects
 			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
 			.reduceByKey(_ ++ _)
@@ -150,8 +133,7 @@ class Deduplication (
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
 		blockingScheme: BlockingScheme
-	): RDD[(String, List[Subject])] =
-	{
+	): RDD[(String, List[Subject])] = {
 		val subjectBlocks = blocking(subjects, blockingScheme)
 		val stagingBlocks = blocking(stagingSubjects, blockingScheme)
 		subjectBlocks
@@ -163,57 +145,12 @@ class Deduplication (
 			}
 	}
 
-	/**
-		* Divides the subjects into buckets respecting an entry in the properties
-		* @param subjects subjects to be blocked
-		* @param key key of the properties to be partitioned by
-		* @param sc Spark Context
-		* @return tuple containing the value and a list of all subjects containing the value
-		*/
-	def blockingByKey(subjects: RDD[Subject],
-		key: String,
-		sc: SparkContext): RDD[(String, Iterable[Subject])] = {
-		val values = subjects
-		  .map(subject => {
-				subject
-					.properties
-				  .getOrElse(key, List("uncategorized"))
-			})
-		  .reduce(_.:::(_).distinct)
-
-		var blocks = values
-		  .map(value => {
-				(value, subjects
-					.filter(subject => {
-						subject
-							.properties
-							.getOrElse(key, List("uncategorized"))
-							.contains(value)
-					})
-					.collect()
-					.toList
-			)})
-
-			val uncategorizedSubjects = blocks
-				.filter(_._1 == "uncategorized")
-			    .map(_._2)
-
-/*
-			blocks = blocks
-				.map(block => (block._1, block._2 ::: uncategorizedSubjects))
-				.filter(_._1 != "uncategorized")
-*/
-
-
-		sc.parallelize[(String, Iterable[Subject])](blocks)
-	}
 
 	/**
-	* Finds the duplicates of each block
-	* @param block List of Subjects where the duplicates are searched in
-	* @return tuple of Subjects whose score is greater or equal a given threshold this.confidence
-	*/
-
+	  * Finds the duplicates of each block
+	  * @param block List of Subjects where the duplicates are searched in
+	  * @return tuple of Subjects whose score is greater or equal a given threshold this.confidence
+	  */
 	def findDuplicates(block: List[Subject]): List[(Subject, Subject)] = {
 
 		implicit class Crossable[X](xs: Traversable[X]) {
@@ -227,21 +164,20 @@ class Deduplication (
 			.toList
 			.distinct
 			.filter(tuple => compare(tuple._1, tuple._2, this.config) >= this.confidence)
-
 	}
 
 	/**
-		* Merging two duplicates in one subject
-		* @param duplicates tuple of Subject
-		* @return subjects containing the merged information of both duplicates
-		*/
+	  * Merging two duplicates in one subject
+	  * @param duplicates tuple of Subject
+	  * @return subjects containing the merged information of both duplicates
+	  */
 	def merging(duplicates: RDD[(Subject, Subject)], version: Version): RDD[Subject] = {
 		duplicates
-		  .map(x => {
+			.map { x =>
 				val sm = new SubjectManager(x._1, version)
 				sm.addProperties(x._2.properties)
 				x._1
-			})
+			}
 	}
 
 	def deduplication(merge: Boolean = false): Unit = {
@@ -273,13 +209,13 @@ class Deduplication (
 }
 
 object Deduplication {
-	val dataTypes = Map[String, SimilarityMeasure[_]](
-	"ExactMatchString" -> ExactMatchString,
-	"MongeElkan" -> MongeElkan,
-	"Jaccard" -> Jaccard,
-	"DiceSorensen" -> DiceSorensen,
-	"Jaro" -> Jaro,
-	"JaroWinkler" -> JaroWinkler,
-	"N-Gram" -> NGram,
-	"Overlap" -> Overlap)
+	val dataTypes: Map[String, SimilarityMeasure[_]] = Map(
+		"ExactMatchString" -> ExactMatchString,
+		"MongeElkan" -> MongeElkan,
+		"Jaccard" -> Jaccard,
+		"DiceSorensen" -> DiceSorensen,
+		"Jaro" -> Jaro,
+		"JaroWinkler" -> JaroWinkler,
+		"N-Gram" -> NGram,
+		"Overlap" -> Overlap)
 }
