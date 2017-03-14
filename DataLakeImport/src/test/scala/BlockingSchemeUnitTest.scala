@@ -6,9 +6,8 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 	"SimpleBlockingScheme" should "generate proper keys" in {
 		val blockingScheme = SimpleBlockingScheme
-		val keys = testSubjects.map(subject => blockingScheme.generateKey(subject))
-		val expected = testKeys
-		assert(expected == keys)
+		val keys = testSubjects.map(blockingScheme.generateKey)
+		keys.toSet shouldEqual testKeys.toSet
 	}
 
 	def testSubjects(): List[Subject] = {

@@ -24,15 +24,7 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
 		key: String,
 		similarityMeasure: B,
 		weight: Double,
-		scale: Int = 1) {
-
-		override def equals(obj: Any): Boolean = obj match {
-			case that: scoreConfig[A, B] => that.key == this.key &&
-				that.similarityMeasure.equals(this.similarityMeasure) &&
-				that.weight == this.weight
-			case _ => false
-		}
-}
+		scale: Int = 1)
 
 /**
 	* Abstract class containing generic methods for the deduplication
@@ -49,20 +41,6 @@ class Deduplication (
 	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
 	val settings = mutable.Map[String, String]()
 
-	def apply() {}
-
-	/**
-	* Creates a list by pairing all subjects without order
-	* @param list List of subjects
-	* @param acc accumulator
-	* @return list of paired subjects
-	*/
-	def makePairs(list: List[Subject], acc: List[(Subject, Subject)] = List[(Subject, Subject)]()): List[(Subject, Subject)] = list match {
-		case Nil => acc
-		case x::Nil => acc
-		case x::xs => makePairs(xs, acc ::: list.map((x,_)).filter(x => x._1 != x._2))
-	}
-
 	/**
 	* Compares to subjects regarding the configuration
 	* @param subject1 subjects to be compared to subject2
@@ -70,10 +48,16 @@ class Deduplication (
 	* @param config configuration of the similarity measures for the comparison
 	* @return the similarity score of the subjects
 	*/
-	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]], scale: Int = 1): Double = {
+	def compare(subject1: Subject,
+		subject2: Subject,
+		config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]],
+		scale: Int = 1
+	): Double = {
 		val list = ListBuffer.empty[Double]
 		for(item <- config) {
-			list += item.similarityMeasure.compare(subject1.get(item.key), subject2.get(item.key), scale) * item.weight
+			list += item
+				.similarityMeasure
+				.compare(subject1.get(item.key), subject2.get(item.key), scale) * item.weight
 		}
 		list.sum / config.length
 	}
@@ -89,7 +73,7 @@ class Deduplication (
 		val measures = (xml \\ "deduplication" \ "simMeasurements" \ "feature").toList
 
 
-		val configSettings = (xml \\ "deduplication" \ "sourceSettings" )
+		val configSettings = xml \\ "deduplication" \ "sourceSettings"
 		settings("keyspace") = (configSettings \ "keyspace").text
 		settings("stagingTable") = (configSettings \ "stagingTable").text
 		settings("subjectTable") = (configSettings \ "subjectTable").text
@@ -129,8 +113,7 @@ class Deduplication (
 	def blocking(
 		subjects: RDD[Subject],
 		blockingScheme: BlockingScheme
-	): RDD[(String, List[Subject])] =
-	{
+	): RDD[(String, List[Subject])] = {
 		subjects
 			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
 			.reduceByKey(_ ++ _)
@@ -148,8 +131,7 @@ class Deduplication (
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
 		blockingScheme: BlockingScheme
-	): RDD[(String, List[Subject])] =
-	{
+	): RDD[(String, List[Subject])] = {
 		val subjectBlocks = blocking(subjects, blockingScheme)
 		val stagingBlocks = blocking(stagingSubjects, blockingScheme)
 		subjectBlocks
@@ -248,10 +230,18 @@ class Deduplication (
 		val sc = new SparkContext(conf)
 
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
-		val stagings = if(merge) {sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable")) } else { null }
+		val stagings = if(merge) {
+			sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
+		} else {
+			null
+		}
 		val version = makeTemplateVersion()
 		val blockingScheme = SimpleBlockingScheme
-		val blocks = if(merge) blocking(subjects, stagings,blockingScheme) else blocking(subjects, blockingScheme)
+		val blocks = if(merge) {
+			blocking(subjects, stagings, blockingScheme)
+		} else {
+			blocking(subjects, blockingScheme)
+		}
 		blocks
 		  .map(block => block._1 + "," + block._2.size)
 			.saveAsTextFile("someoutput.txt")
