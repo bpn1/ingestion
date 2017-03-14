@@ -26,12 +26,12 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
 		weight: Double,
 		scale: Int = 1) {
 
-	override def equals(obj: Any): Boolean = obj match {
-		case that: scoreConfig[A, B] => that.key == this.key &&
-			that.similarityMeasure.equals(this.similarityMeasure) &&
-			that.weight == this.weight
-		case _ => false
-	}
+		override def equals(obj: Any): Boolean = obj match {
+			case that: scoreConfig[A, B] => that.key == this.key &&
+				that.similarityMeasure.equals(this.similarityMeasure) &&
+				that.weight == this.weight
+			case _ => false
+		}
 }
 
 /**
@@ -70,23 +70,23 @@ class Deduplication (
 	* @param config configuration of the similarity measures for the comparison
 	* @return the similarity score of the subjects
 	*/
-	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]], scale: Int = 1): (Subject, Subject, Double, Double) = {
+	def compare(subject1: Subject, subject2: Subject, config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]], scale: Int = 1): Double = {
 		val list = ListBuffer.empty[Double]
 		for(item <- config) {
 			list += item.similarityMeasure.compare(subject1.get(item.key), subject2.get(item.key), scale) * item.weight
 		}
-		(subject1, subject2, list.sum / config.length, scale)
+		list.sum / config.length
 	}
 
 	/**
 	* Reads the configuration from a xml file
-	* @param path the path where the config.xml is located
 	* @return a list containing scoreConfig entities parsed from the xml file
 	*/
 	def parseConfig(): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
 
-		val xml = XML.loadFile("src/test/resources/config.xml")
-		val measures = (xml \\ "deduplictaion" \ "simMeasurements" \ "item").toList
+		var	path = this.configFile.getOrElse("src/test/resources/config.xml")
+		val xml = XML.loadFile(path)
+		val measures = (xml \\ "deduplication" \ "simMeasurements" \ "feature").toList
 
 
 		val configSettings = (xml \\ "deduplication" \ "sourceSettings" )
@@ -97,11 +97,11 @@ class Deduplication (
 		settings("versionTable") = (configSettings \ "versionTable").text
 
 		measures
-			.map(item =>
-				((item \ "attribute").text,
-					(item \ "similartyMeasure").text,
-					(item \ "weight").text,
-					(item \ "scale").text))
+			.map(feature =>
+				((feature \ "attribute").text,
+					(feature \ "similartyMeasure").text,
+					(feature \ "weight").text,
+					(feature \ "scale").text))
 			.map { case (attribute, similarityMeasure, weight, scale) =>
 				scoreConfig[String, SimilarityMeasure[String]](
 					attribute,
@@ -208,21 +208,24 @@ class Deduplication (
 
 	/**
 	* Finds the duplicates of each block
-	* @param blocks buckets where the duplicates are searched in
-	* @return tuple of Subjects and their score whose score is greater than the confidence threshold
+	* @param block List of Subjects where the duplicates are searched in
+	* @return tuple of Subjects whose score is greater or equal a given threshold this.confidence
 	*/
-	def findDuplicates(blocks: RDD[(String, Iterable[Subject])]): List[(Subject, Subject)] = {
-		blocks
-			.map{
-				case (description, subjects) => makePairs(subjects.toList)
-			}
-		  .map {
-				list => list
-					.map(pair => compare(pair._1, pair._2, this.config))
-					.filter(pair => pair._3 > this.confidence)
-					.map(pair => (pair._1, pair._2))
-			}
-			.reduce(_ ::: _)
+
+	def findDuplicates(block: List[Subject]): List[(Subject, Subject)] = {
+
+		implicit class Crossable[X](xs: Traversable[X]) {
+			def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
+		}
+
+		block
+			.cross(block)
+			.filter(tuple => tuple._1 != tuple._2)
+			.map(_.swap)
+			.toList
+			.distinct
+			.filter(tuple => compare(tuple._1, tuple._2, this.config) >= this.confidence)
+
 	}
 
 	/**
@@ -242,7 +245,6 @@ class Deduplication (
 	def deduplication(merge: Boolean = false): Unit = {
 		val conf = new SparkConf()
 		  .setAppName(this.appName)
-			.set("spark.cassandra.connection.host", "172.20.21.11")
 		val sc = new SparkContext(conf)
 
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
@@ -250,10 +252,14 @@ class Deduplication (
 		val version = makeTemplateVersion()
 		val blockingScheme = SimpleBlockingScheme
 		val blocks = if(merge) blocking(subjects, stagings,blockingScheme) else blocking(subjects, blockingScheme)
-		val duplicates = sc.parallelize(findDuplicates(blocks))
-		val merged = merging(duplicates, version)
+		blocks
+		  .map(block => block._1 + "," + block._2.size)
+			.saveAsTextFile("someoutput.txt")
+			//.map(block => findDuplicates(block._2))
+		  //.saveToCassandra(sett)
+		//val merged = merging(duplicates, version)
 
-		merged.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
+		//merged.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
 	}
 }
 
