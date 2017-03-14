@@ -10,15 +10,15 @@ trait BlockingScheme extends Serializable {
 	  * @param subject Subject to use.
 	  * @return Key as string.
 	  */
-	def generateKey(subject: Subject): String
+	def generateKey(subject: Subject): List[String]
 }
 
 /**
   * This class uses the first three characters of the name property as key.
   */
 object SimpleBlockingScheme extends BlockingScheme {
-	override def generateKey(subject: Subject): String = {
+	override def generateKey(subject: Subject): List[String] = {
 		val name = subject.name.getOrElse("")
-		name.substring(0, Math.min(3, name.length))
+		List(name.substring(0, Math.min(3, name.length)))
 	}
 }
