@@ -9,17 +9,16 @@ import com.datastax.driver.core.utils.UUIDs
 
 import scala.xml.XML
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
 /**
-	* Reproduces a configuration for a comparison of two Subjects
-	* @param key the attribute of a Subject to be compared
-	* @param similarityMeasure the type of similarity measure for the comparing
-	* @param weight the weight of the calculation
-	* @tparam A type of the attribute
-	* @tparam B type of the similarity measure
-	*/
+  * Reproduces a configuration for a comparison of two Subjects
+  * @param key the attribute of a Subject to be compared
+  * @param similarityMeasure the type of similarity measure for the comparing
+  * @param weight the weight of the calculation
+  * @tparam A type of the attribute
+  * @tparam B type of the similarity measure
+  */
 case class scoreConfig[A, B <: SimilarityMeasure[A]](
 		key: String,
 		similarityMeasure: B,
@@ -27,53 +26,58 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
 		scale: Int = 1)
 
 /**
-	* Abstract class containing generic methods for the deduplication
-	* @param confidence minimum confidence for two subjects to be identified as duplicates
-	* @param appName name of the deduplication
-	* @param dataSources sources where the new data is retrieved from
-	*/
+  * Abstract class containing generic methods for the deduplication
+  * @param confidence minimum confidence for two subjects to be identified as duplicates
+  * @param appName name of the deduplication
+  * @param dataSources sources where the new data is retrieved from
+  */
 class Deduplication (
 	val confidence: Double,
 	val appName: String,
 	val dataSources: List[String],
 	val configFile: Option[String] = None
 ){
-	var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
+	//var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
+	var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
 	val settings = mutable.Map[String, String]()
 
 	/**
-	* Compares to subjects regarding the configuration
-	* @param subject1 subjects to be compared to subject2
-	* @param subject2 subjects to be compared to subject2
-	* @param config configuration of the similarity measures for the comparison
-	* @return the similarity score of the subjects
-	*/
-	def compare(subject1: Subject,
+	  * Compares to subjects regarding the configuration
+	  * @param subject1 subjects to be compared to subject2
+	  * @param subject2 subjects to be compared to subject2
+	  * @return the similarity score of the subjects
+	  */
+	def compare(
+		subject1: Subject,
 		subject2: Subject,
-		config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]],
 		scale: Int = 1
 	): Double = {
-		val list = ListBuffer.empty[Double]
-		for(item <- config) {
-			list += item
-				.similarityMeasure
-				.compare(subject1.get(item.key), subject2.get(item.key), scale) * item.weight
-		}
-		list.sum / config.length
+		val scoreList = this.config
+			.map { feature =>
+				val valueSub1 = subject1.get(feature.key).headOption
+				val valueSub2 = subject2.get(feature.key).headOption
+				if(valueSub1.isDefined && valueSub2.isDefined) {
+					val score = feature
+						.similarityMeasure
+						.compare(valueSub1.get, valueSub2.get, scale)
+					score * feature.weight
+				} else {
+					-1.0
+				}
+			}.filter(_ != -1.0)
+		scoreList.sum / Math.max(1, scoreList.length)
 	}
 
 	/**
-	* Reads the configuration from a xml file
-	* @return a list containing scoreConfig entities parsed from the xml file
-	*/
-	def parseConfig(): List[scoreConfig[_,_ <: SimilarityMeasure[_]]] = {
+	  * Reads the configuration from a xml file
+	  * @return a list containing scoreConfig entities parsed from the xml file
+	  */
+	def parseConfig(): Unit = {
 		val path = this.configFile.getOrElse("config.xml")
 		val xml = XML.loadString(Source
 			.fromURL(getClass.getResource(s"/$path"))
 			.getLines()
 			.mkString("\n"))
-
-		val measures = (xml \\ "deduplication" \ "simMeasurements" \ "feature").toList
 
 		val configSettings = xml \\ "deduplication" \ "sourceSettings"
 		settings("keyspace") = (configSettings \ "keyspace").text
@@ -82,16 +86,18 @@ class Deduplication (
 		settings("duplicatesTable") = (configSettings \ "duplicatesTable").text
 		settings("versionTable") = (configSettings \ "versionTable").text
 
-		measures
-			.map(feature =>
-				((feature \ "attribute").text,
-					(feature \ "similartyMeasure").text,
-					(feature \ "weight").text,
-					(feature \ "scale").text))
-			.map { case (attribute, similarityMeasure, weight, scale) =>
+		config = (xml \\ "deduplication" \ "simMeasurements" \ "feature")
+			.toList
+			.map { feature =>
+				val attribute = (feature \ "attribute").text
+				val simMeasure = (feature \ "similartyMeasure").text
+				val weight = (feature \ "weight").text
+				val scale = (feature \ "scale").text
+
 				scoreConfig[String, SimilarityMeasure[String]](
 					attribute,
-					Deduplication.dataTypes.getOrElse(similarityMeasure, ExactMatchString)
+					Deduplication.dataTypes
+						.getOrElse(simMeasure, ExactMatchString)
 						.asInstanceOf[SimilarityMeasure[String]],
 					weight.toDouble,
 					scale.toInt)
@@ -115,7 +121,7 @@ class Deduplication (
 	def blocking(
 		subjects: RDD[Subject],
 		blockingScheme: BlockingScheme
-	): RDD[(String, List[Subject])] = {
+	): RDD[(List[String], List[Subject])] = {
 		subjects
 			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
 			.reduceByKey(_ ++ _)
@@ -133,7 +139,7 @@ class Deduplication (
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
 		blockingScheme: BlockingScheme
-	): RDD[(String, List[Subject])] = {
+	): RDD[(List[String], List[Subject])] = {
 		val subjectBlocks = blocking(subjects, blockingScheme)
 		val stagingBlocks = blocking(stagingSubjects, blockingScheme)
 		subjectBlocks
@@ -163,7 +169,7 @@ class Deduplication (
 			.map(_.swap)
 			.toList
 			.distinct
-			.filter(tuple => compare(tuple._1, tuple._2, this.config) >= this.confidence)
+			.filter(tuple => compare(tuple._1, tuple._2) >= this.confidence)
 	}
 
 	/**
@@ -189,7 +195,8 @@ class Deduplication (
 		val version = makeTemplateVersion()
 		val blockingScheme = SimpleBlockingScheme
 		val blocks = if(merge) {
-			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
+			val staging = sc.cassandraTable[Subject](settings("keyspace"), "subject_temp")
+			//sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
 			blocking(subjects, staging, blockingScheme)
 		} else {
 			blocking(subjects, blockingScheme)
