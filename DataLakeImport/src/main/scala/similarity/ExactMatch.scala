@@ -1,9 +1,9 @@
 package DataLake
 
 /**
-	* An abstract binary similarity measure for exact matching
-	* @tparam T the type of data to be compared
-	*/
+  * An abstract binary similarity measure for exact matching
+  * @tparam T the type of data to be compared
+  */
 abstract class ExactMatch[T] extends SimilarityMeasure[T] {
 	/**
 		* Comparing the given objects on exact matching
@@ -15,11 +15,12 @@ abstract class ExactMatch[T] extends SimilarityMeasure[T] {
 }
 
 /**
-	* A specific exact match similarity measure comparing strings
-	*/
+  * A specific exact match similarity measure comparing strings
+  */
 object ExactMatchString extends ExactMatch[String]
 
 /**
-	* A specific exact match similarity measure comparing Doubles
-	*/
+  * A specific exact match similarity measure comparing Doubles
+  */
 object ExactMatchDouble extends ExactMatch[Double]
+

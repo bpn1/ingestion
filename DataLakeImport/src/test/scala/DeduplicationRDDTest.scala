@@ -19,6 +19,7 @@ class DeduplicationRDDTest extends FlatSpec with SharedSparkContext with RDDComp
 
 	it should "merge the blocks if two subject RDDs are given" in {
 		val subjects = subjectRDD()
+		val blockingScheme = SimpleBlockingScheme
 		val stagings = stagingSubjectsRDD()
 		// Conversion from list to set because of an unordered comparison
 		val blocks = deduplication.generateBlocks(subjects, stagings, sc)
@@ -87,10 +88,10 @@ class DeduplicationRDDTest extends FlatSpec with SharedSparkContext with RDDComp
 		))
 	}
 
-	def duplicateCandidatesRDD(): RDD[(String, Iterable[Subject])] = {
+	def duplicateCandidatesRDD(): RDD[(String, List[Subject])] = {
 		sc.parallelize(Seq(
-			("auto", Iterable(audi, audi2, lamborghini, opel, vw)),
-			("kohle", Iterable(audi, bmw, bmw2))
+			("auto", List(audi, audi2, lamborghini, opel, vw)),
+			("kohle", List(audi, bmw, bmw2))
 		))
 	}
 
