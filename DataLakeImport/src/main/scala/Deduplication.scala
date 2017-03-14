@@ -26,12 +26,12 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
 		weight: Double,
 		scale: Int = 1) {
 
-	override def equals(obj: Any): Boolean = obj match {
-		case that: scoreConfig[A, B] => that.key == this.key &&
-			that.similarityMeasure.equals(this.similarityMeasure) &&
-			that.weight == this.weight
-		case _ => false
-	}
+		override def equals(obj: Any): Boolean = obj match {
+			case that: scoreConfig[A, B] => that.key == this.key &&
+				that.similarityMeasure.equals(this.similarityMeasure) &&
+				that.weight == this.weight
+			case _ => false
+		}
 }
 
 /**
@@ -86,7 +86,7 @@ class Deduplication (
 
 		var	path = this.configFile.getOrElse("src/test/resources/config.xml")
 		val xml = XML.loadFile(path)
-		val measures = (xml \\ "deduplictaion" \ "simMeasurements" \ "feature").toList
+		val measures = (xml \\ "deduplication" \ "simMeasurements" \ "feature").toList
 
 
 		val configSettings = (xml \\ "deduplication" \ "sourceSettings" )
