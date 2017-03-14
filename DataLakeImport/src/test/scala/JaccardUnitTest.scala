@@ -1,38 +1,17 @@
 package DataLake
 
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Matchers}
 
-class JaccardUnitTest extends FlatSpec {
+class JaccardUnitTest extends FlatSpec with Matchers {
 
-  "score" should "return the Jaccard score for given strings" in {
+	"compare" should "return the Jaccard score for given strings" in {
+		val testData = List(
+			("apple", "applet", 0.8333333333333334),
+			("SomeText", "SomeText", 1.0),
+			("string", "gnirts", 1.0),
+			("a", "b", 0.0))
 
-    val s1 = "apple"
-    val t1 = "applet"
-    val score1 = {
-      Jaccard.compare(s1, t1)
-    }
-    assert(score1 === 0.8333333333333334)
-
-    val s2 = "SomeText"
-    val t2 = "SomeText"
-    val score2 = {
-      Jaccard.compare(s2, t2)
-    }
-    assert(score2 === 1.0)
-
-    val s3 = "string"
-    val t3 = "gnirts"
-    val score3 = {
-      Jaccard.compare(s3, t3)
-    }
-    assert(score3 === 1.0)
-
-    val s4 = "a"
-    val t4 = "b"
-    val score4 = {
-      Jaccard.compare(s4, t4)
-    }
-    assert(score4 === 0.0)
-
-  }
+		testData.foreach(tuple =>
+			Jaccard.compare(tuple._1, tuple._2) shouldEqual tuple._3)
+	}
 }

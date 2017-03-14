@@ -1,24 +1,15 @@
 package DataLake
 
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Matchers}
 
-class DiceSorensenUnitTest extends FlatSpec {
+class DiceSorensenUnitTest extends FlatSpec with Matchers {
 
-  "score" should "return the DiceSorensen score for given strings" in {
+	"compare" should "return the DiceSorensen score for given strings" in {
+		val testData = List(
+			("night", "nachts", 0.5454545454545454),
+			("context", "contact", 0.7142857142857143))
 
-    val s1 = "night"
-    val t1 = "nachts"
-    val score1 = {
-      DiceSorensen.compare(s1, t1)
-    }
-    assert(score1 === 0.5454545454545454)
-
-    val s2 = "context"
-    val t2 = "contact"
-    val score2 = {
-      DiceSorensen.compare(s2, t2)
-    }
-    assert(score2 === 0.7142857142857143)
-
-  }
+		testData.foreach(tuple =>
+			DiceSorensen.compare(tuple._1, tuple._2) shouldEqual tuple._3)
+	}
 }
