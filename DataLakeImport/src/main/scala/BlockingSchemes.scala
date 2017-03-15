@@ -8,7 +8,7 @@ trait BlockingScheme extends Serializable {
 	/**
 	  * Generates key from the subject's properties.
 	  * @param subject Subject to use.
-	  * @return Key as string.
+	  * @return Key as list of strings.
 	  */
 	def generateKey(subject: Subject): List[String]
 }
