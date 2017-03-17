@@ -228,7 +228,7 @@ class Deduplication(
 					subject1.name,
 					subject2.id,
 					subject2.name,
-					"subject_temp")
+					settings("stagingTable"))
 			}.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
 
 //			.map(block => (block._1, block._2.size))
