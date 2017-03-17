@@ -116,8 +116,7 @@ class TrieTest extends FlatSpec {
 		trie.append(List[String]("This", "is"))
 		trie.append(List[String]("This", "is", "a", "good", "day"))
 		trie.append(List[String]("That", "test", "sucks", "a", "lot"))
-		val searchTokens = List[String]("This", "is", "a", "good", "day", "to", "do", "shit")
-		val matchingWords = trie.matchTokens(searchTokens)
+		val matchingWords = trie.matchTokens("This is a good day to do shit".split(" ").toList)
 		assert(matchingWords.length == 2)
 		assert(matchingWords.head.length <= matchingWords(1).length)
 	}

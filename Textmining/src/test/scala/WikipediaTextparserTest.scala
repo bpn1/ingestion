@@ -108,7 +108,6 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 							println(link)
 							println(element.getText())
 						}
-
 						assert(isTextLinkConsistent(link, element.getText()))
 					}
 				}
