@@ -13,7 +13,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 
 	"ListBlockingScheme" should "generate proper keys" in {
 		val blockingScheme = ListBlockingScheme
-		blockingScheme.inputAttributes = List("name", "aliases", "category", "properties")
+		blockingScheme.setAttributes("name", "aliases", "category", "properties")
 		val keys = testSubjects.map(blockingScheme.generateKey)
 		keys.toSet shouldEqual listTestKeys.toSet
 	}
@@ -61,11 +61,11 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	}
 	def listTestKeys(): List[List[String]] = {
 		List(
-			List("AuCaBeNe"),
-			List("BMbwBaCa"),
-			List("LaCa"),
-			List("OpCa"),
-			List("PoCa"),
-			List("VWVoCaBePo"))
+			List("Audi", "Cars", "Berlin", "New York"),
+			List("BMW", "bwm", "Bayerische Motoren Werke", "Cars"),
+			List("Lamborghini", "Cars"),
+			List("Opel", "Cars"),
+			List("Porsche", "Cars"),
+			List("VW", "Volkswagen", "Cars", "Berlin", "Potsdam"))
 	}
 }

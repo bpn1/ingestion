@@ -4,13 +4,11 @@ package DataLake
   * This trait is the template for our blocking schemes.
   */
 trait BlockingScheme extends Serializable {
-	var inputAttributes = List[String]()
-
 	/**
-	  * Generates key from the subject's properties.
-	  * @param subject Subject to use.
-	  * @return Key as list of strings.
-	  */
+		* Generates key from the subject's properties.
+		* @param subject Subject to use.
+		* @return Key as list of strings.
+		*/
 	def generateKey(subject: Subject): List[String]
 }
 
@@ -25,13 +23,25 @@ object SimpleBlockingScheme extends BlockingScheme {
 }
 
 /**
-	* This class uses the first two characters of the input attributes as key.
+	* This class uses a list of input attributes as key.
 	*/
 object ListBlockingScheme extends BlockingScheme {
+	/**
+		* This variable contains a list of attributes set by setAttributes.
+		*/
+	private var inputAttributes: List[String] = List[String]()
+
+	/**
+		* Gets the attributes to generate the key with as input and converts them to a list.
+		* @param attrList Sequence of attributes to use.
+		* @return List of attributes as list of strings.
+		*/
+	def setAttributes(attrList: String*): List[String] = {
+		inputAttributes = attrList.toList
+		inputAttributes
+	}
+
 	override def generateKey(subject: Subject): List[String] = {
-		val attributeList = inputAttributes.flatMap(subject.get)
-		List(attributeList.map(
-			attribute => attribute.substring(0, Math.min(2, attribute.length)))
-			.mkString(""))
+		inputAttributes.flatMap(subject.get)
 	}
 }
