@@ -157,7 +157,7 @@ class Deduplication(
 	def blocking(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
-		blockingScheme: BlockingScheme
+		blockingScheme: BlockingScheme = new SimpleBlockingScheme()
 	): RDD[(List[String], List[Subject])] = {
 		val subjectBlocks = blocking(subjects, blockingScheme)
 		val stagingBlocks = blocking(stagingSubjects, blockingScheme)
