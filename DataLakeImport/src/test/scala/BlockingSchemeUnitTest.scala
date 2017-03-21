@@ -11,12 +11,14 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		keys.toSet shouldEqual simpleTestKeys.toSet
 	}
 
+	/*
 	"ListBlockingScheme" should "generate proper keys" in {
 		val blockingScheme = ListBlockingScheme
 		blockingScheme.setAttributes("name", "aliases", "category", "properties")
 		val keys = testSubjects.map(blockingScheme.generateKey)
 		keys.toSet shouldEqual listTestKeys.toSet
 	}
+	*/
 
 	def testSubjects(): List[Subject] = {
 		List(

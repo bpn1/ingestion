@@ -123,6 +123,10 @@ class Deduplication(
 			}
 	}
 
+	/**
+		* Creates timestamp and TimeUUID for versioning.
+		* @return New current Version object.
+		*/
 	def makeTemplateVersion(): Version = {
 		// create timestamp and TimeUUID for versioning
 		val timestamp = new Date()
@@ -146,13 +150,11 @@ class Deduplication(
 			.reduceByKey(_ ++ _)
 	}
 	/**
-		* Creates blocks for the different industries
-		*
-		* @param subjects RDD to peform the blocking on
-		* @param stagingSubjects RDD to peform the blocking on
+		* Creates blocks based on the input blocking scheme
+		* @param subjects RDD to perform the blocking on
+		* @param stagingSubjects RDD to perform the blocking on
 		* @param blockingScheme blocking scheme to use to generate keys.
-		* @return RDD of blocks. One block for each industry containing the
-		* Subjects categorized as this industry
+		* @return RDD of blocks.
 		*/
 	def blocking(
 		subjects: RDD[Subject],
