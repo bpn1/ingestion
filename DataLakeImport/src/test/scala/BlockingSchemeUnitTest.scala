@@ -5,22 +5,32 @@ import org.scalatest.{FlatSpec, Matchers}
 class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 
-	/*
 	"SimpleBlockingScheme" should "generate proper keys" in {
-		val blockingScheme = SimpleBlockingScheme
+		val blockingScheme = new SimpleBlockingScheme()
 		val keys = testSubjects.map(blockingScheme.generateKey)
-		keys.toSet shouldEqual simpleTestKeys.toSet
+		keys.toSet shouldEqual simpleTestKeys
 	}
-	*/
 
-	/*
-	"ListBlockingScheme" should "generate proper keys" in {
-		val blockingScheme = ListBlockingScheme
-		blockingScheme.setAttributes("name", "aliases", "category", "properties")
-		val keys = testSubjects.map(blockingScheme.generateKey)
-		keys.toSet shouldEqual listTestKeys.toSet
+	it should "generate an undefined block for subjects without names" in {
+		val blockingScheme = new SimpleBlockingScheme()
+		val keys = testUndefinedSubjects().map(blockingScheme.generateKey)
+		keys.toSet shouldEqual simpleUndefinedTestKeys
 	}
-	*/
+
+	"ListBlockingScheme" should "generate proper keys" in {
+		val blockingScheme = new ListBlockingScheme()
+		blockingScheme.setAttributes("name", "aliases", "category", "city")
+		val keys = testSubjects.map(blockingScheme.generateKey)
+		keys.toSet shouldEqual listTestKeys
+	}
+
+	it should "generate an undefined block for subjects with an empty key" in {
+		val blockingScheme = new ListBlockingScheme()
+		blockingScheme.setAttributes("city")
+		val keys = testSubjects.map(blockingScheme.generateKey)
+		keys.toSet shouldEqual listUndefinedTestKeys
+	}
+
 
 	def testSubjects(): List[Subject] = {
 		List(
@@ -54,8 +64,42 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 				properties = Map("city" -> List("Berlin", "Potsdam")))
 		)
 	}
-	def simpleTestKeys(): List[List[String]] = {
+
+	def testUndefinedSubjects(): List[Subject] = {
 		List(
+			Subject(
+				id = null,
+				name = None,
+				category = Option("Cars"),
+				properties = Map("city" -> List("Berlin", "New York"))),
+			Subject(
+				id = null,
+				name = Option("BMW"),
+				aliases = List("bwm", "Bayerische Motoren Werke"),
+				category = Option("Cars")),
+			Subject(
+				id = null,
+				name = Option("Lamborghini"),
+				category = Option("Cars")),
+			Subject(
+				id = null,
+				name = Option("Opel"),
+				category = Option("Cars")),
+			Subject(
+				id = null,
+				name = None,
+				category = Option("Cars")),
+			Subject(
+				id = null,
+				name = Option("VW"),
+				aliases = List("Volkswagen"),
+				category = Option("Cars"),
+				properties = Map("city" -> List("Berlin", "Potsdam")))
+		)
+	}
+
+	def simpleTestKeys(): Set[List[String]] = {
+		Set(
 			List("Aud"),
 			List("BMW"),
 			List("Lam"),
@@ -63,13 +107,30 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 			List("Por"),
 			List("VW"))
 	}
-	def listTestKeys(): List[List[String]] = {
-		List(
+
+	def simpleUndefinedTestKeys(): Set[List[String]] = {
+		Set(
+			List("undefined"),
+			List("BMW"),
+			List("Lam"),
+			List("Ope"),
+			List("VW"))
+	}
+
+	def listTestKeys(): Set[List[String]] = {
+		Set(
 			List("Audi", "Cars", "Berlin", "New York"),
 			List("BMW", "bwm", "Bayerische Motoren Werke", "Cars"),
 			List("Lamborghini", "Cars"),
 			List("Opel", "Cars"),
 			List("Porsche", "Cars"),
 			List("VW", "Volkswagen", "Cars", "Berlin", "Potsdam"))
+	}
+
+	def listUndefinedTestKeys(): Set[List[String]] = {
+		Set(
+			List("Berlin", "New York"),
+			List("undefined"),
+			List("Berlin", "Potsdam"))
 	}
 }

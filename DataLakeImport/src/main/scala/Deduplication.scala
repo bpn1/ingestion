@@ -28,7 +28,6 @@ case class DuplicateCandidate(
 	duplicate_name: Option[String] = None,
 	duplicate_table: String)
 
-
 /**
   * Reproduces a configuration for a comparison of two Subjects
   * @param key the attribute of a Subject to be compared
@@ -38,10 +37,10 @@ case class DuplicateCandidate(
   * @tparam B type of the similarity measure
   */
 case class scoreConfig[A, B <: SimilarityMeasure[A]](
-		key: String,
-		similarityMeasure: B,
-		weight: Double,
-		scale: Int = 1)
+	key: String,
+	similarityMeasure: B,
+	weight: Double,
+	scale: Int = 1)
 
 /**
   * Abstract class containing generic methods for the deduplication
@@ -56,7 +55,6 @@ class Deduplication(
 	val dataSources: List[String],
 	val configFile: Option[String] = None
 ) extends Serializable {
-	//var config = List[scoreConfig[_,_ <: SimilarityMeasure[_]]]()
 	var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
 	val settings = mutable.Map[String, String]()
 
@@ -124,9 +122,9 @@ class Deduplication(
 	}
 
 	/**
-		* Creates timestamp and TimeUUID for versioning.
-		* @return New current Version object.
-		*/
+	  * Creates timestamp and TimeUUID for versioning.
+	  * @return New current Version object.
+	  */
 	def makeTemplateVersion(): Version = {
 		val timestamp = new Date()
 		val version = UUIDs.timeBased()
@@ -135,11 +133,11 @@ class Deduplication(
 	}
 
 	/**
-		* Uses input blocking scheme to generate blocks of subjects.
-		* @param subjects RDD to perform the blocking on.
-		* @param blockingScheme blocking scheme to use to generate keys.
-		* @return subjects grouped by blocking keys
-		*/
+	  * Uses input blocking scheme to generate blocks of subjects.
+	  * @param subjects RDD to perform the blocking on.
+	  * @param blockingScheme blocking scheme to use to generate keys.
+	  * @return subjects grouped by blocking keys
+	  */
 	def blocking(
 		subjects: RDD[Subject],
 		blockingScheme: BlockingScheme
@@ -148,13 +146,14 @@ class Deduplication(
 			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
 			.reduceByKey(_ ++ _)
 	}
+
 	/**
-		* Creates blocks based on the input blocking scheme
-		* @param subjects RDD to perform the blocking on
-		* @param stagingSubjects RDD to perform the blocking on
-		* @param blockingScheme blocking scheme to use to generate keys.
-		* @return RDD of blocks.
-		*/
+	  * Creates blocks based on the input blocking scheme
+	  * @param subjects RDD to perform the blocking on
+	  * @param stagingSubjects RDD to perform the blocking on
+	  * @param blockingScheme blocking scheme to use to generate keys.
+	  * @return RDD of blocks.
+	  */
 	def blocking(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
@@ -170,7 +169,6 @@ class Deduplication(
 				case (key, (Some(x), Some(y))) => (key, (x ++ y).distinct)
 			}
 	}
-
 
 	/**
 	  * Finds the duplicates of each block
@@ -206,20 +204,24 @@ class Deduplication(
 			}
 	}
 
+	/**
+	  * Starts the deduplication process and writes the result to Cassandra.
+	  * @param merge boolean indicating whether or not the duplicates should be merged
+	  */
 	def deduplication(merge: Boolean = false): Unit = {
 		val conf = new SparkConf()
 		  .setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
-		val version = makeTemplateVersion()
-		val blockingScheme = SimpleBlockingScheme
+		val blockingScheme = new SimpleBlockingScheme()
 		val blocks = if(merge) {
 			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable"))
 			blocking(subjects, staging, blockingScheme)
 		} else {
 			blocking(subjects, blockingScheme)
 		}
+
 		blocks
 			.flatMap(block => findDuplicates(block._2))
 		    .map { case (subject1, subject2) =>
@@ -231,11 +233,6 @@ class Deduplication(
 					subject2.name,
 					settings("stagingTable"))
 			}.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
-
-//			.map(block => (block._1, block._2.size))
-//			.sortBy(_._2, ascending = false)
-//			.map(block => block._1 + "," + block._2)
-//			.saveAsTextFile(s"blockcount_${System.currentTimeMillis()}")
 	}
 }
 
