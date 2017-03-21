@@ -177,6 +177,7 @@ class Deduplication(
 	  */
 	def findDuplicates(block: List[Subject]): List[(Subject, Subject)] = {
 
+		// from http://stackoverflow.com/questions/14740199/cross-product-in-scala
 		implicit class Crossable[X](xs: Traversable[X]) {
 			def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
 		}
@@ -184,9 +185,10 @@ class Deduplication(
 		block
 			.cross(block)
 			.filter(tuple => tuple._1 != tuple._2)
-			.map(_.swap)
+			.map(tuple => Set(tuple, tuple.swap))
 			.toList
 			.distinct
+			.map(_.head)
 			.filter(tuple => compare(tuple._1, tuple._2) >= this.confidence)
 	}
 

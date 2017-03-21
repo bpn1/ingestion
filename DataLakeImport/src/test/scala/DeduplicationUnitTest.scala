@@ -9,9 +9,8 @@ import org.scalatest.{FlatSpec, Matchers}
 class DeduplicationUnitTest
 	extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 
-	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
-
 	"compare" should "calculate a score regarding the configuration" in {
+		val deduplication = defaultDeduplication
 		deduplication.parseConfig()
 		val score = deduplication.compare(subject1, subject2)
 		val simScores = List (
@@ -24,6 +23,7 @@ class DeduplicationUnitTest
 	}
 
 	it should "just return the weighted score if the configuration contains only one element" in {
+		val deduplication = defaultDeduplication
 		deduplication.parseConfig()
 		val score = deduplication.compare(subject1, subject2)
 		val expectedScore = MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8
@@ -31,6 +31,7 @@ class DeduplicationUnitTest
 	}
 
 	"parseConfig" should "generate a configuration from a given path" in {
+		val deduplication = defaultDeduplication
 		deduplication.parseConfig()
 		val expected = List(
 			scoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8),
@@ -40,27 +41,31 @@ class DeduplicationUnitTest
 		deduplication.config shouldEqual expected
 	}
 
-//	"blockingByKey" should "partition subjects regarding the value of the given key" in {
-//		val subjects = subjectRDD()
-//		val blocks = deduplication.blockingByKey(subjects, "city", sc)
-//		val expected = blockRDD()
-//		assertRDDEquals(expected, blocks)
-//	}
+	"blocking" should "partition subjects regarding the value of the given key" in {
+		val deduplication = defaultDeduplication
+		val subjects = subjectRDD()
+		val blockingScheme = new ListBlockingScheme()
+		blockingScheme.setAttributes("city")
+		val blocks = deduplication.blocking(subjects, blockingScheme)
+		val expected = sc.parallelize(testBlocks)
+		assertRDDEquals(expected, blocks)
+	}
 
-//	"findDuplicates" should "return a list of tuple of duplicates" in {
-//		TODO: make used rdds fields in deduplication
-//		val duplicates = deduplication.findDuplicates(blockRDD())	// RDD or List as input?
-//		val expected = List(
-//			(subject1, subject4),
-//			(subject2, subject3)
-//		)
-//	}
+	"findDuplicates" should "return a list of tuple of duplicates" in {
+		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
+		deduplication.parseConfig()
+		val duplicates = testBlocks()
+			.map(_._2)
+			.flatMap(deduplication.findDuplicates)
+		val expected = List((subject1, subject4))
+		duplicates shouldEqual expected
+	}
 
 	"mergingDuplicates" should "should merge the properties of both subjects together" in {
+		val deduplication = defaultDeduplication
 		val duplicates = sc.parallelize(List(
 			(subject1, subject4),
-			(subject2, subject3)
-		))
+			(subject2, subject3)))
 		val version = deduplication.makeTemplateVersion()
 		val mergedSubject = deduplication.merging(duplicates, version)
 		val expected = sc.parallelize(List(
@@ -76,16 +81,15 @@ class DeduplicationUnitTest
 		assertRDDEquals(expected, mergedSubject)
 	}
 
-	val path = "config.xml"
 	val subject1 = Subject(
 		id = UUID.randomUUID(),
 		name = Some("Volkswagen"),
-		properties = Map("city" -> List("Berlin", "Potsdam"))
+		properties = Map("city" -> List("Berlin"))
 	)
 	val subject2 = Subject(
 		id = UUID.randomUUID(),
 		name = Some("Audi GmbH"),
-		properties = Map("city" -> List("Berlin", "New York"))
+		properties = Map("city" -> List("Berlin"))
 	)
 	val subject3 = Subject(
 		id = UUID.randomUUID(),
@@ -112,10 +116,14 @@ class DeduplicationUnitTest
 		))
 	}
 
-	def testBlocks(): List[(String, List[Subject])] = {
+	def testBlocks(): List[(List[String], List[Subject])] = {
 		List(
-			("Berlin", List(subject1, subject2, subject4, subject5)),
-			("Potsdam", List(subject1, subject5)),
-			("New York", List(subject2, subject3, subject5)))
+			(List("Berlin"), List(subject1, subject2, subject4)),
+			(List("New York"), List(subject3)),
+			(List("undefined"), List(subject5)))
+	}
+
+	def defaultDeduplication(): Deduplication = {
+		new Deduplication(0.5, "TestDeduplication", List("testSource"))
 	}
 }
