@@ -105,3 +105,12 @@ CREATE TABLE datalake.object (
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>
 );
+
+CREATE TABLE datalake.duplicatecandidates (
+    id uuid PRIMARY KEY,
+    subject_id uuid,
+    subject_name text,
+    duplicate_id uuid,
+    duplicate_name text,
+    duplicate_table text
+);
