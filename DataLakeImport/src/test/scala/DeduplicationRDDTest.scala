@@ -10,41 +10,40 @@ class DeduplicationRDDTest extends FlatSpec with SharedSparkContext with RDDComp
 
 	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 
-/*	"generateBlocks" should "generate a block for each industry" in {
-		val subjects = subjectRDD()
-		val blocks = deduplication.generateBlocks(subjects, sc)
-		val expected = subjectBlockRDD()
-		assertRDDEquals(expected, blocks)
-	}
+//	"blocking" should "generate a block for each industry" in {
+//		val subjects = subjectRDD()
+//		val blocks = deduplication.blocking(subjects, new SimpleBlockingScheme())
+//		val expected = subjectBlockRDD()
+//		assertRDDEquals(expected, blocks)
+//	}
+//
+//	it should "merge the blocks if two subject RDDs are given" in {
+//		val subjects = subjectRDD()
+//		val stagings = stagingSubjectsRDD()
+//		// Conversion from list to set because of an unordered comparison
+//		val blocks = deduplication.blocking(subjects, stagings)
+//			.map(x => (x._1, x._2.toSet))
+//		val expected = subjectAndStagingBlockRDD()
+//			.map(x => (x._1, x._2.toSet))
+//		assertRDDEquals(expected, blocks)
+//	}
 
-	it should "merge the blocks if two subject RDDs are given" in {
-		val subjects = subjectRDD()
-		val blockingScheme = SimpleBlockingScheme
-		val stagings = stagingSubjectsRDD()
-		// Conversion from list to set because of an unordered comparison
-		val blocks = deduplication.generateBlocks(subjects, stagings, sc)
-			.map(x => (x._1, x._2.toSet))
-		val expected = subjectAndStagingBlockRDD()
-			.map(x => (x._1, x._2.toSet))
-		assertRDDEquals(expected, blocks)
-	}
+//	"collectIndustries" should "collect all industries of the subjects" in {
+//		val subjects = subjectRDD()
+//		val industries = deduplication.collectIndustries(subjects).toSet
+//		val expected = Set("auto", "kohle", "uncategorized", "stahl")
+//		assert(expected, industries)
+//	}
 
-	"collectIndustries" should "collect all industries of the subjects" in {
-		val subjects = subjectRDD()
-		val industries = deduplication.collectIndustries(subjects).toSet
-		val expected = Set("auto", "kohle", "uncategorized", "stahl")
-		assert(expected, industries)
-	}*/
-/*
-	"findDuplicates" should "find all duplicates having a similarity score above the threshold" in {
-		val config = deduplication.parseConfig()
-		val blocks = duplicateCandidatesRDD()
-		val duplicates = deduplication.findDuplicates(blocks)
-			.map(x => (x._1, x._2.toSet))
-		val expected = duplicatesRDD(config)
-			.map(x => (x._1, x._2.toSet))
-		assertRDDEquals(expected, duplicates)
-	}*/
+//	"findDuplicates" should "find all duplicates having a similarity score above the threshold" in {
+//		val config = deduplication.parseConfig()
+//		val blocks = duplicateCandidatesRDD()
+//		val duplicates = deduplication.findDuplicates(blocks)
+//			.map(x => (x._1, x._2.toSet))
+//		val expected = duplicatesRDD(config)
+//			.map(x => (x._1, x._2.toSet))
+//		assertRDDEquals(expected, duplicates)
+//	}
 
 	def testSubject(subjectName: String, props: Map[String, List[String]]): Subject = {
 		Subject(id = UUID.randomUUID(), name = Option(subjectName), properties = props)
@@ -69,40 +68,40 @@ class DeduplicationRDDTest extends FlatSpec with SharedSparkContext with RDDComp
 		sc.parallelize(Seq(opel, lamborghini, audi))
 	}
 
-	def subjectBlockRDD(): RDD[(String, Iterable[Subject])] = {
+	def subjectBlockRDD(): RDD[(List[String], List[Subject])] = {
 		sc.parallelize(Seq(
-			("auto", Iterable(audi, bmw, vw)),
-			("kohle", Iterable(audi, bmw)),
-			("uncategorized", Iterable(porsche)),
-			("stahl", Iterable(vw))
+			(List("auto"), List(audi, bmw, vw)),
+			(List("kohle"), List(audi, bmw)),
+			(List("undefined"), List(porsche)),
+			(List("stahl"), List(vw))
 		))
 	}
 
-	def subjectAndStagingBlockRDD(): RDD[(String, Iterable[Subject])] = {
+	def subjectAndStagingBlockRDD(): RDD[(List[String], List[Subject])] = {
 		sc.parallelize(Seq(
-			("auto", Iterable(audi, bmw, lamborghini, opel, vw)),
-			("kohle", Iterable(audi, bmw)),
-			("metall", Iterable(lamborghini, opel)),
-			("uncategorized", Iterable(porsche)),
-			("stahl", Iterable(vw))
+			(List("auto"), List(audi, bmw, lamborghini, opel, vw)),
+			(List("kohle"), List(audi, bmw)),
+			(List("metall"), List(lamborghini, opel)),
+			(List("undefined"), List(porsche)),
+			(List("stahl"), List(vw))
 		))
 	}
 
-	def duplicateCandidatesRDD(): RDD[(String, List[Subject])] = {
-		sc.parallelize(Seq(
-			("auto", List(audi, audi2, lamborghini, opel, vw)),
-			("kohle", List(audi, bmw, bmw2))
+	def duplicateCandidatesRDD(): RDD[(List[String], List[Subject])] = {
+		sc.parallelize(List(
+			(List("auto"), List(audi, audi2, lamborghini, opel, vw)),
+			(List("kohle"), List(audi, bmw, bmw2))
 		))
 	}
 
-/*	def duplicatesRDD(
-		config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]
-	): RDD[(String, Iterable[possibleDuplicate])] =
-	{
-		sc.parallelize(Seq(
-			("auto", Iterable(
-				possibleDuplicate(audi.id, audi2.id, deduplication.compare(audi, audi2, config)))),
-			("kohle", Iterable(
-				possibleDuplicate(bmw.id, bmw2.id, deduplication.compare(bmw, bmw2, config))))))
-	}*/
+//	def duplicatesRDD(
+//		config: List[scoreConfig[_,_ <: SimilarityMeasure[_]]]
+//	): RDD[(String, Iterable[possibleDuplicate])] =
+//	{
+//		sc.parallelize(Seq(
+//			("auto", Iterable(
+//				possibleDuplicate(audi.id, audi2.id, deduplication.compare(audi, audi2, config)))),
+//			("kohle", Iterable(
+//				possibleDuplicate(bmw.id, bmw2.id, deduplication.compare(bmw, bmw2, config))))))
+//	}
 }
