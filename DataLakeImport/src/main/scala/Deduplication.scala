@@ -128,7 +128,6 @@ class Deduplication(
 		* @return New current Version object.
 		*/
 	def makeTemplateVersion(): Version = {
-		// create timestamp and TimeUUID for versioning
 		val timestamp = new Date()
 		val version = UUIDs.timeBased()
 

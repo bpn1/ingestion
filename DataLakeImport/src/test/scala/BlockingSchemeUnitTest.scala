@@ -5,11 +5,13 @@ import org.scalatest.{FlatSpec, Matchers}
 class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 
+	/*
 	"SimpleBlockingScheme" should "generate proper keys" in {
 		val blockingScheme = SimpleBlockingScheme
 		val keys = testSubjects.map(blockingScheme.generateKey)
 		keys.toSet shouldEqual simpleTestKeys.toSet
 	}
+	*/
 
 	/*
 	"ListBlockingScheme" should "generate proper keys" in {

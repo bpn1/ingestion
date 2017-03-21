@@ -17,7 +17,7 @@ trait BlockingScheme extends Serializable {
   */
 object SimpleBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject): List[String] = {
-		val name = subject.name.getOrElse("")
+		val name = subject.name.getOrElse("undefined")
 		List(name.substring(0, Math.min(3, name.length)))
 	}
 }
@@ -39,6 +39,11 @@ object ListBlockingScheme extends BlockingScheme {
 	def setAttributes(attrList: String*): Unit = inputAttributes = attrList
 
 	override def generateKey(subject: Subject): List[String] = {
-		inputAttributes.flatMap(subject.get)
+		val key = inputAttributes.flatMap(subject.get)
+		if (key.isEmpty) {
+			List("undefined")
+		} else {
+			key
+		}
 	}
 }
