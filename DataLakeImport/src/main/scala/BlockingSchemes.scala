@@ -36,10 +36,7 @@ object ListBlockingScheme extends BlockingScheme {
 		* @param attrList Sequence of attributes to use.
 		* @return List of attributes as list of strings.
 		*/
-	def setAttributes(attrList: String*): List[String] = {
-		inputAttributes = attrList.toList
-		inputAttributes
-	}
+	def setAttributes(attrList: String*): Unit = inputAttributes = attrList
 
 	override def generateKey(subject: Subject): List[String] = {
 		inputAttributes.flatMap(subject.get)
