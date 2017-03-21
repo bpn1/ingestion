@@ -3,8 +3,6 @@ package DataLake
 import scala.reflect.runtime.universe._
 import java.util.{Date, UUID}
 
-import com.datastax.driver.core.utils.UUIDs
-
 case class Version(
 	version: UUID,
 	program: String,
@@ -16,7 +14,7 @@ case class Version(
 
 case class Subject(
 
-	var id: UUID = UUIDs.random(),
+	var id: UUID = UUID.randomUUID(),
 	var name: Option[String] = None,
 	var aliases: List[String] = List[String](),
 	var category: Option[String] = None,
