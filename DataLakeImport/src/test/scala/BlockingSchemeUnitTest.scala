@@ -33,8 +33,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 
 
 	def testSubjects(): List[Subject] = {
-		List(
-			Subject(
+		List(Subject(
 				id = null,
 				name = Option("Audi"),
 				category = Option("Cars"),
@@ -61,13 +60,11 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 				name = Option("VW"),
 				aliases = List("Volkswagen"),
 				category = Option("Cars"),
-				properties = Map("city" -> List("Berlin", "Potsdam")))
-		)
+				properties = Map("city" -> List("Berlin", "Potsdam"))))
 	}
 
 	def testUndefinedSubjects(): List[Subject] = {
-		List(
-			Subject(
+		List(Subject(
 				id = null,
 				name = None,
 				category = Option("Cars"),
@@ -94,32 +91,19 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 				name = Option("VW"),
 				aliases = List("Volkswagen"),
 				category = Option("Cars"),
-				properties = Map("city" -> List("Berlin", "Potsdam")))
-		)
+				properties = Map("city" -> List("Berlin", "Potsdam"))))
 	}
 
 	def simpleTestKeys(): Set[List[String]] = {
-		Set(
-			List("Aud"),
-			List("BMW"),
-			List("Lam"),
-			List("Ope"),
-			List("Por"),
-			List("VW"))
+		Set(List("Aud"), List("BMW"), List("Lam"), List("Ope"), List("Por"), List("VW"))
 	}
 
 	def simpleUndefinedTestKeys(): Set[List[String]] = {
-		Set(
-			List("undefined"),
-			List("BMW"),
-			List("Lam"),
-			List("Ope"),
-			List("VW"))
+		Set(List("undefined"), List("BMW"), List("Lam"), List("Ope"), List("VW"))
 	}
 
 	def listTestKeys(): Set[List[String]] = {
-		Set(
-			List("Audi", "Cars", "Berlin", "New York"),
+		Set(List("Audi", "Cars", "Berlin", "New York"),
 			List("BMW", "bwm", "Bayerische Motoren Werke", "Cars"),
 			List("Lamborghini", "Cars"),
 			List("Opel", "Cars"),
@@ -128,8 +112,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	}
 
 	def listUndefinedTestKeys(): Set[List[String]] = {
-		Set(
-			List("Berlin", "New York"),
+		Set(List("Berlin", "New York"),
 			List("undefined"),
 			List("Berlin", "Potsdam"))
 	}

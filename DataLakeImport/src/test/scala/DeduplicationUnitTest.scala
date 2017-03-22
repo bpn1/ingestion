@@ -107,18 +107,11 @@ class DeduplicationUnitTest
 	)
 
 	def subjectRDD(): RDD[Subject] = {
-		sc.parallelize(List(
-			subject1,
-			subject2,
-			subject3,
-			subject4,
-			subject5
-		))
+		sc.parallelize(List(subject1, subject2, subject3, subject4, subject5))
 	}
 
 	def testBlocks(): List[(List[String], List[Subject])] = {
-		List(
-			(List("Berlin"), List(subject1, subject2, subject4)),
+		List((List("Berlin"), List(subject1, subject2, subject4)),
 			(List("New York"), List(subject3)),
 			(List("undefined"), List(subject5)))
 	}
