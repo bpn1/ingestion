@@ -210,7 +210,7 @@ class Deduplication(
 	  * Starts the deduplication process and writes the result to Cassandra.
 	  * @param merge boolean indicating whether or not the duplicates should be merged
 	  */
-	def deduplication(merge: Boolean = false): Unit = {
+	def run(merge: Boolean = false): Unit = {
 		val conf = new SparkConf()
 		  .setAppName(this.appName)
 		val sc = new SparkContext(conf)
