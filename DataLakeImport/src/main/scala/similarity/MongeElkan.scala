@@ -6,7 +6,7 @@ import com.rockymadden.stringmetric.similarity.JaroWinklerMetric
   * A hybrid similarity measure comparing strings corresponding to the MongeElkan algorithm
   */
 object MongeElkan extends SimilarityMeasure[String] {
-	
+
 	/**
 	  * Finds the highest similarity score using the JaroWinkler comparison
 	  * for a token with a list of tokens
