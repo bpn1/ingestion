@@ -270,8 +270,7 @@ object WikipediaTextparser {
 	  * @return list of links without links to unused namespace pages.
 	  */
 	def cleanMetapageLinks(linkList: List[Link]): List[Link] = {
-		linkList
-			.filterNot(link => badNamespaces.exists(link.page.startsWith))
+		linkList.filterNot(link => badNamespaces.exists(link.page.startsWith))
 	}
 
 	def main(args: Array[String]): Unit = {
