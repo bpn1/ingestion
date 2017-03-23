@@ -97,11 +97,6 @@ object WikipediaTextparser {
 		cleanedUrl.replaceAll("\\A/", "")
 	}
 
-	def cleanMetapageLinks(linkList: List[Link]): List[Link] = {
-		linkList
-			.filterNot(link => badNamespaces.exists(link.page.startsWith))
-	}
-
 	def extractLinks(body: Element): (String, List[Link]) = {
 		val linksList = ListBuffer[Link]()
 		var offset = 0
@@ -204,7 +199,6 @@ object WikipediaTextparser {
 		if (page.startsWith("Datei:")) {
 			return null
 		}
-
 		var alias = ""
 		if (linkMatch.groupCount > 2) {
 			alias = linkMatch.group(2)
@@ -215,8 +209,6 @@ object WikipediaTextparser {
 		if (alias == null || alias.isEmpty) {
 			alias = page
 		}
-
-
 		Link(alias, page, templateOffset)
 	}
 
@@ -236,15 +228,6 @@ object WikipediaTextparser {
 		linkList.toList
 	}
 
-	def badNamespaces(): List[String] = {
-		val namespaces = Source
-			.fromURL(getClass().getResource(s"/$namespaceFile"))
-			.getLines()
-			.toList
-		val usedNamespaces = List("Kategorie:")
-		namespaces.filterNot(usedNamespaces.toSet)
-	}
-
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val html = wikipediaToHtml(entry.getText)
 		val parsedEntry = parseHtml(entry, html)
@@ -259,8 +242,36 @@ object WikipediaTextparser {
 		entry
 	}
 
+	/**
+	  * Reads namespaces from resource file and removes used namespaces.
+	  * @return list of unused namespaces
+	  */
+	def badNamespaces(): List[String] = {
+		val namespaces = Source
+			.fromURL(getClass().getResource(s"/$namespaceFile"))
+			.getLines()
+			.toList
+		val usedNamespaces = List("Kategorie:")
+		namespaces.filterNot(usedNamespaces.toSet)
+	}
+
+	/**
+	  * Checks whether the entry starts with a namespace.
+	  * @param entry Wikipedia entry to check
+	  * @return true if entry starts with a namespace
+	  */
 	def isMetaPage(entry: WikipediaEntry): Boolean = {
 		badNamespaces.exists(entry.title.startsWith)
+	}
+
+	/**
+	  * Removes links to pages with an unused namespace.
+	  * @param linkList list of links to clean
+	  * @return list of links without links to unused namespace pages.
+	  */
+	def cleanMetapageLinks(linkList: List[Link]): List[Link] = {
+		linkList
+			.filterNot(link => badNamespaces.exists(link.page.startsWith))
 	}
 
 	def main(args: Array[String]): Unit = {
