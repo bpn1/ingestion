@@ -24,6 +24,7 @@ object MongeElkan extends SimilarityMeasure[String] {
 	  * Calculates the MongeElkan similarity score for two strings
 	  * @param s string to be compared to t
 	  * @param t string to be compared to s
+		* @param u has no specific use in here
 	  * @return a normalized similarity score between 1.0 and 0.0
 	  */
 	override def compare(s: String, t: String, u: Int = 1) : Double = {

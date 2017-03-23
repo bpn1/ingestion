@@ -11,6 +11,7 @@ object DiceSorensen extends SimilarityMeasure[String] {
 	  * Calculates the jaccard similarity score for two strings
 	  * @param s string to be compared to t
 	  * @param t string to be compared to s
+		* @param u specifes the n-gram in the algorithm
 	  * @return a normalized similarity score between 1.0 and 0.0 or
 	  * the default value 0.0 if one of the input strings is empty
 	  */

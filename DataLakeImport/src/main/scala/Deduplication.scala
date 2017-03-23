@@ -33,6 +33,7 @@ case class DuplicateCandidate(
   * @param key the attribute of a Subject to be compared
   * @param similarityMeasure the type of similarity measure for the comparing
   * @param weight the weight of the calculation
+	* @param scale some similarity measures take a third param as a configuration
   * @tparam A type of the attribute
   * @tparam B type of the similarity measure
   */
@@ -145,8 +146,6 @@ class Deduplication(
 		subjects
 			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
 			.reduceByKey(_ ++ _)
-
-
 	}
 
 	/**
