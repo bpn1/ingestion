@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<deduplication>
+<config>
     <sourceSettings>
         <keyspace>datalake</keyspace>
         <subjectTable>subject</subjectTable>
@@ -28,5 +28,5 @@
             <scale>1</scale>
         </feature>
     </simMeasurements>
-</deduplication>
+</config>
 

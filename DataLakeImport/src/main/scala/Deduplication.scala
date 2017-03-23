@@ -97,14 +97,14 @@ class Deduplication(
 			.getLines()
 			.mkString("\n"))
 
-		val configSettings = xml \\ "deduplication" \ "sourceSettings"
+		val configSettings = xml \\ "config" \ "sourceSettings"
 		settings("keyspace") = (configSettings \ "keyspace").text
 		settings("stagingTable") = (configSettings \ "stagingTable").text
 		settings("subjectTable") = (configSettings \ "subjectTable").text
 		settings("duplicatesTable") = (configSettings \ "duplicatesTable").text
 		settings("versionTable") = (configSettings \ "versionTable").text
 
-		config = (xml \\ "deduplication" \ "simMeasurements" \ "feature")
+		config = (xml \\ "config" \ "simMeasurements" \ "feature")
 			.toList
 			.map { feature =>
 				val attribute = (feature \ "attribute").text
