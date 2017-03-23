@@ -145,6 +145,8 @@ class Deduplication(
 		subjects
 			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
 			.reduceByKey(_ ++ _)
+
+
 	}
 
 	/**
@@ -168,6 +170,8 @@ class Deduplication(
 				case (key, (None, Some(x))) => (key, x)
 				case (key, (Some(x), Some(y))) => (key, (x ++ y).distinct)
 			}
+		println(subjects.count.toString)
+		subjectBlocks
 	}
 
 	/**
