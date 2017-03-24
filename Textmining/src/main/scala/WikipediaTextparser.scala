@@ -16,6 +16,7 @@ object WikipediaTextparser {
 	val outputTablename = "parsedwikipedia"
 	val templateOffset = -1
 	val categoryNamespace = "Kategorie:"
+	val redirectText = "REDIRECT "
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
@@ -35,7 +36,7 @@ object WikipediaTextparser {
 		val categoryRegex = new Regex("Kategorie:")
 		val redirectOffset = (redirectRegex.findFirstIn(text) match {
 			case Some(x) => x
-			case None => "REDIRECT"
+			case None => redirectText
 		}).length
 		for (anchor <- anchorList) {
 			var offset = text.indexOfSlice(anchor.text)
@@ -51,7 +52,7 @@ object WikipediaTextparser {
 		val parsedEntry = ParsedWikipediaEntry(entry._1.title)
 		if (checkRedirect(entry._2)) {
 			val doc = Jsoup.parse(entry._2)
-			val text = doc.body.text.replaceAll("\\AWEITERLEITUNG", "REDIRECT")
+			val text = doc.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
 			parsedEntry.setText(text)
 			parsedEntry.links = extractRedirect(entry._2, text)
 		} else {
