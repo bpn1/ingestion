@@ -61,6 +61,7 @@ object WikipediaTextparser {
 		val outputTuple = extractLinks(document.body)
 		parsedEntry.setText(outputTuple._1)
 		parsedEntry.links = outputTuple._2
+		parsedEntry.list_links = extractListLinks(entry._2)
 		parsedEntry
 	}
 
@@ -210,7 +211,6 @@ object WikipediaTextparser {
 			alias = page
 		}
 
-
 		Link(alias, page, templateOffset)
 	}
 
@@ -242,6 +242,15 @@ object WikipediaTextparser {
 		val redirectRegex = "(?i)#(weiterleitung|redirect) ?(: ?)?"
 		entry.setText(entry.getText.replaceAll(redirectRegex, "WEITERLEITUNG"))
 		entry
+	}
+
+	def extractListLinks(html: String): List[Link] = {
+		val document = Jsoup.parse(html)
+		val htmlLists = document.select("ul").toList ++ document.select("ol").toList
+		htmlLists
+			.map(element => Jsoup.parse(element.html()))
+			.flatMap(_.select("a"))
+		    .map(anchor => Link(anchor.text, parseUrl(anchor.attr("href")), 0))
 	}
 
 	def main(args: Array[String]): Unit = {

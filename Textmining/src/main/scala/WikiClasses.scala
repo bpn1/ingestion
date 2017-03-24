@@ -1,6 +1,6 @@
 object WikiClasses {
 
-	case class Link(alias: String, var page: String, offset: Int)
+	case class Link(alias: String, var page: String, var offset: Int)
 
 	case class WikipediaEntry(
 		title: String,
@@ -14,7 +14,8 @@ object WikiClasses {
 		title: String,
 		var text: Option[String],
 		var links: List[Link],
-		var foundaliases: List[String] = List[String]())
+		var foundaliases: List[String] = List[String](),
+		var list_links: List[Link] = List[Link]())
 	{
 		def setText(t: String): Unit = text = Option(t)
 		def getText(): String = text.getOrElse("")

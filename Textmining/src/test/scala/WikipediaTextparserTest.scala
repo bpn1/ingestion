@@ -114,6 +114,12 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 			}
 	}
 
+	"List links" should "be extracted" in {
+		val testLinks = WikipediaTextparser.extractListLinks(TestData.testListLinkPage())
+		val expected = TestData.testExtractedListLinks()
+		testLinks shouldBe expected
+	}
+
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
 		val substring = text.substring(link.offset, link.offset + link.alias.length)
 		substring == link.alias

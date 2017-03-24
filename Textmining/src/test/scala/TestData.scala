@@ -425,6 +425,16 @@ object TestData {
 			List[Link](Link("Hickelkasten", "Hickelkasten", 0), Link("Humor", "Humor", 182), Link("satirischer", "Satire", 321), Link("paradoxer", "Paradoxon", 451), Link("Stilfiguren", "Rhetorische Figur", 461), Link("Kontroversen", "Kontroverse", 495), Link("guten Geschmacks", "Geschmack (Kultur)", 601), Link("Surrealisten", "Surrealismus", 865), Link("André Breton", "André Breton", 878), Link("Desillusion", "Desillusion", 1061), Link("Nihilismus", "Nihilismus", 1081), Link("Freud", "Sigmund Freud", 1173), Link("Hegel", "Georg Wilhelm Friedrich Hegel", 1183), Link("Anthologie", "Anthologie", 1314), Link("Jonathan Swift", "Jonathan Swift", 1368), Link("Directions to Servants", "Directions to Servants", 1387), Link("A Modest Proposal", "A Modest Proposal", 1411), Link("A Meditation on a Broom-Stick", "A Meditation on a Broom-Stick", 1430), Link("Aphorismen", "Aphorismus", 1478), Link("Nathanael West", "Nathanael West", 1663), Link("Vladimir Nabokov", "Vladimir Nabokov", 1679), Link("Joseph Heller", "Joseph Heller", 1700), Link("Catch-22", "Catch-22", 1723), Link("Kurt Vonnegut", "Kurt Vonnegut", 1893), Link("Slaughterhouse Five", "Schlachthof 5 oder Der Kinderkreuzzug", 1908), Link("Thomas Pynchon", "Thomas Pynchon", 1936), Link("V.", "V.", 1952), Link("Gravity’s Rainbow", "Die Enden der Parabel", 1966), Link("Stanley Kubrick", "Stanley Kubrick", 2006), Link("Dr. Strangelove", "Dr. Seltsam oder: Wie ich lernte, die Bombe zu lieben", 2024), Link("Absurden Theater", "Absurdes Theater", 2054), Link("Eugène Ionesco", "Eugène Ionesco", 2088), Link("Shakespeares", "Shakespeare", 2222), Link("Christian-Albrechts-Universität zu Kiel", "Christian-Albrechts-Universität zu Kiel", 2296), Link("Komödientyp", "Komödie", 2340), Link("sarkastischen", "Sarkasmus", 2368), Link("absurden", "Absurdität", 2383), Link("morbiden", "Morbidität", 2396), Link("tabuisierte", "Tabuisierung", 2462), Link("sakrosankt", "Sakrosankt", 2551), Link("politischen Unkorrektheiten", "Politische Korrektheit", 2612), Link("sexuellen und skatologischen", "Vulgärsprache", 2656), Link("zynischer", "Zynismus", 2756), Link("Satire", "Satire", 2933), Link("Robert Altmans", "Robert Altman", 2997), Link("M*A*S*H", "MASH (Film)", 3012), Link("Mike Nichols", "Mike Nichols", 3032), Link("Catch-22", "Catch-22 – Der böse Trick", 3046), Link("Joseph Heller", "Joseph Heller", 3071), Link("Postmoderne", "Postmoderne", 3099), Link("Quentin Tarantinos", "Quentin Tarantino", 3111), Link("Pulp Fiction", "Pulp Fiction", 3130), Link("Lars von Triers", "Lars von Trier", 3158), Link("Idioterne", "Idioten", 3174), Link("François Bondy", "François Bondy", 3214), Link("Die Zeit", "Die Zeit", 3245), Link("Witz", "Witz", 3491), Link("Duden", "Duden", 3639), Link("Galgenhumor", "Galgenhumor", 3806)))
 	}
 
+	def testListLinkPage(): String = {
+		// TODO read proper html page
+		""
+	}
+
+	def testExtractedListLinks(): List[Link] = {
+		// TODO extract list links from test html page
+		List(Link("", "", 0))
+	}
+
 	// scalastyle:on line.size.limit
 }
 // scalastyle:on number.of.methods
