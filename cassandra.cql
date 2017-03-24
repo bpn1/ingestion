@@ -18,7 +18,7 @@ CREATE TABLE wikidumps.parsedwikipedia (
     links frozen<list<frozen<link>>>,
     list_links frozen<list<frozen<link>>>,
     text text
-)
+);
 
 CREATE TABLE wikidumps.wikipedia (
     title text PRIMARY KEY,
