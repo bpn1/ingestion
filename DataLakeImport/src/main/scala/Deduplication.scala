@@ -31,9 +31,9 @@ case class DuplicateCandidate(
 /**
   * Reproduces a configuration for a comparison of two Subjects
   * @param key the attribute of a Subject to be compared
-  * @param similarityMeasure the type of similarity measure for the comparing
-  * @param weight the weight of the calculation
-	* @param scale some similarity measures take a third param as a configuration
+  * @param similarityMeasure the similarity measure used for the comparison
+  * @param weight the weight of the result
+  * @param scale specifies the n-gram if the similarity measure has one
   * @tparam A type of the attribute
   * @tparam B type of the similarity measure
   */
