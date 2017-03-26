@@ -5,7 +5,7 @@ import scala.collection.mutable
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
-import org.jsoup.nodes.{Document, Element, Node, TextNode}
+import org.jsoup.nodes.{Document, Element, TextNode}
 import java.net.URLDecoder
 import scala.collection.mutable.ListBuffer
 import WikiClasses._
@@ -16,13 +16,14 @@ object WikipediaTextparser {
 	val outputTablename = "parsedwikipedia"
 	val templateOffset = -1
 	val redirectText = "REDIRECT "
+	val disambiguationSuffix = " (Begriffsklärung)"
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
 		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
 		WikiModel.toHtml(removeWikiMarkup(html))
 	}
 
-	def checkRedirect(html: String): Boolean = {
+	def isRedirectPage(html: String): Boolean = {
 		val redirectRegex = new Regex("\\AWEITERLEITUNG")
 		val searchText = Jsoup.parse(html).body.text
 		redirectRegex.findFirstIn(searchText).isDefined
@@ -47,26 +48,30 @@ object WikipediaTextparser {
 		linksList.toList
 	}
 
-	def parseHtml(entry: (WikipediaEntry, String)): ParsedWikipediaEntry = {
-		val parsedEntry = ParsedWikipediaEntry(entry._1.title, Option(""), null)
-		if (checkRedirect(entry._2)) {
-			val doc = Jsoup.parse(entry._2)
-			val text = doc.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
+	def parseHtml(title: String, html: String): ParsedWikipediaEntry = {
+		val parsedEntry = ParsedWikipediaEntry(title, Option(""), null)
+		val document = Jsoup.parse(html)
+		if (isRedirectPage(html)) {
+			val text = document.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
 			parsedEntry.setText(text)
-			parsedEntry.links = extractRedirect(entry._2, text)
-			return parsedEntry
+			parsedEntry.links = extractRedirect(html, text)
 		}
-
-		val document = removeTags(entry._2)
-		val outputTuple = extractLinks(document.body)
-		parsedEntry.setText(outputTuple._1)
-		parsedEntry.links = outputTuple._2
+		else if (isDisambiguationPage(title, html)) {
+			val outputTuple = extractDisambiguationLinks(title, document.body)
+			parsedEntry.setText(outputTuple._1)
+			parsedEntry.links = outputTuple._2
+		}
+		else {
+			val cleanedDocument = removeTags(document)
+			val outputTuple = extractLinks(cleanedDocument.body)
+			parsedEntry.setText(outputTuple._1)
+			parsedEntry.links = outputTuple._2
+		}
 		parsedEntry
 	}
 
-	def removeTags(html: String): Document = {
-		val doc = Jsoup.parse(html)
-		val documentContent = doc
+	def removeTags(document: Document): Document = {
+		val documentContent = document
 			.select("p")
 			.map { element =>
 				element.getElementsByClass("reference").remove
@@ -97,6 +102,27 @@ object WikipediaTextparser {
 		cleanedUrl.replaceAll("\\A/", "")
 	}
 
+	def isDisambiguationPage(title: String, html: String): Boolean = {
+		if (title.endsWith(disambiguationSuffix)) {
+			return true
+		}
+		val disambiguationRegex = new Regex(title + " (steht für)|(bezeichnet):")
+		val searchText = Jsoup.parse(html).body.text
+		disambiguationRegex.findFirstIn(searchText).isDefined
+	}
+
+	def extractDisambiguationLinks(title: String, body: Element): Tuple2[String, List[Link]] = {
+		val linksList = mutable.ListBuffer[Link]()
+		val cleanTitle = title.stripSuffix(disambiguationSuffix)
+		body.select("a")
+			.foreach { anchor =>
+				val target = parseUrl(anchor.attr("href"))
+				val link = Link(cleanTitle, target, -1)
+				linksList += link
+			}
+		(body.text, linksList.toList)
+	}
+
 	def extractLinks(body: Element): Tuple2[String, List[Link]] = {
 		val linksList = mutable.ListBuffer[Link]()
 		var offset = 0
@@ -107,7 +133,7 @@ object WikipediaTextparser {
 			return ("", linksList.toList)
 		}
 
-		if (children(0).isInstanceOf[TextNode]) {
+		if (children.head.isInstanceOf[TextNode]) {
 			startIndex = 1
 			var firstChildText = children(0).asInstanceOf[TextNode].text
 			while (firstChildText.charAt(0) != body.text.charAt(0)) {
@@ -122,6 +148,7 @@ object WikipediaTextparser {
 		for (element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
+					assert(t.tag.toString == "a")
 					val target = parseUrl(t.attr("href"))
 					val source = if (t.text == "") target else t.text
 					val link = Link(source, target, offset)
@@ -132,6 +159,7 @@ object WikipediaTextparser {
 				case _ =>
 			}
 		}
+
 		(body.text, linksList.toList)
 	}
 
@@ -204,7 +232,7 @@ object WikipediaTextparser {
 			alias = linkMatch.group(2)
 		}
 		if (alias != null) {
-		alias = alias.stripPrefix("|")
+			alias = alias.stripPrefix("|")
 		}
 		if (alias == null || alias.isEmpty) {
 			alias = page
@@ -232,7 +260,7 @@ object WikipediaTextparser {
 
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val html = wikipediaToHtml(entry.getText)
-		var parsedEntry = parseHtml(entry, html)
+		var parsedEntry = parseHtml(entry.title, html)
 		val templateLinks = extractTemplateLinks(entry.getText)
 		parsedEntry.links ++= templateLinks
 		parsedEntry
