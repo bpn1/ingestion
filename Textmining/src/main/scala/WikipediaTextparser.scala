@@ -5,7 +5,7 @@ import scala.collection.mutable
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
-import org.jsoup.nodes.{Document, Element, Node, TextNode}
+import org.jsoup.nodes.{Document, Element, TextNode}
 import java.net.URLDecoder
 import scala.collection.mutable.ListBuffer
 import WikiClasses._
@@ -14,7 +14,6 @@ object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
-	val templateOffset = -1
 	val redirectText = "REDIRECT "
 
 	def wikipediaToHtml(wikipediaMarkup: String): String = {
@@ -48,19 +47,20 @@ object WikipediaTextparser {
 	}
 
 	def parseHtml(entry: (WikipediaEntry, String)): ParsedWikipediaEntry = {
-		val parsedEntry = ParsedWikipediaEntry(entry._1.title, Option(""), null)
+		val parsedEntry = ParsedWikipediaEntry(entry._1.title, Option(""), null, null)
+		parsedEntry.templatelinks = extractTemplateLinks(entry._1.getText)
 		if (checkRedirect(entry._2)) {
 			val doc = Jsoup.parse(entry._2)
 			val text = doc.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
 			parsedEntry.setText(text)
-			parsedEntry.links = extractRedirect(entry._2, text)
+			parsedEntry.textlinks = extractRedirect(entry._2, text)
 			return parsedEntry
 		}
 
 		val document = removeTags(entry._2)
-		val outputTuple = extractLinks(document.body)
+		val outputTuple = extractTextLinks(document.body)
 		parsedEntry.setText(outputTuple._1)
-		parsedEntry.links = outputTuple._2
+		parsedEntry.textlinks = outputTuple._2
 		parsedEntry
 	}
 
@@ -97,7 +97,7 @@ object WikipediaTextparser {
 		cleanedUrl.replaceAll("\\A/", "")
 	}
 
-	def extractLinks(body: Element): Tuple2[String, List[Link]] = {
+	def extractTextLinks(body: Element): Tuple2[String, List[Link]] = {
 		val linksList = mutable.ListBuffer[Link]()
 		var offset = 0
 		var startIndex = 0
@@ -204,14 +204,13 @@ object WikipediaTextparser {
 			alias = linkMatch.group(2)
 		}
 		if (alias != null) {
-		alias = alias.stripPrefix("|")
+			alias = alias.stripPrefix("|")
 		}
 		if (alias == null || alias.isEmpty) {
 			alias = page
 		}
 
-
-		Link(alias, page, templateOffset)
+		Link(alias, page)
 	}
 
 	def extractTemplateLinks(wikitext: String): List[Link] = {
@@ -233,8 +232,6 @@ object WikipediaTextparser {
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val html = wikipediaToHtml(entry.getText)
 		var parsedEntry = parseHtml(entry, html)
-		val templateLinks = extractTemplateLinks(entry.getText)
-		parsedEntry.links ++= templateLinks
 		parsedEntry
 	}
 

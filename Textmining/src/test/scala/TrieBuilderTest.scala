@@ -22,7 +22,7 @@ class TrieBuilderTest extends FlatSpec {
 		val entry = TestData.parsedTestEntry()
 		val trie = new TrieNode()
 		val tokenizer = new WhitespaceTokenizer()
-		for(link <- entry.links) {
+		for(link <- entry.allLinks) {
 			trie.append(tokenizer.tokenize(link.alias))
 		}
 		TrieBuilder.matchEntry(entry, trie, tokenizer)

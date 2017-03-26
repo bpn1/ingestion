@@ -58,42 +58,31 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 			.foreach(element => element.getText() should startWith(abstracts(element.title)))
 	}
 
-	"Wikipedia links" should "not be empty" in {
+	"Wikipedia text links" should "not be empty" in {
 		TestData.wikipediaTestRDD(sc)
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
 			.map(WikipediaTextparser.parseHtml)
-			.map(_.links)
+			.map(_.textlinks)
 			.collect
-			.foreach(links => links should not be empty)
-	}
-
-	they should "contain links from templates in article" in {
-		val templateArticlesTest = TestData.wikipediaTestTemplateArticles()
-		TestData.wikipediaTestRDD(sc)
-			.filter(entry => templateArticlesTest.contains(entry.title))
-			.map(WikipediaTextparser.parseWikipediaEntry)
-			.map(_.links)
-			.collect
-			.foreach(links =>
-				assert(links.exists(link => link.offset == WikipediaTextparser.templateOffset)))
+			.foreach(textLinks => textLinks should not be empty)
 	}
 
 	they should "be valid (have alias and page)" in {
 		TestData.wikipediaTestRDD(sc)
 			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
 			.map(WikipediaTextparser.parseHtml)
-			.flatMap(_.links)
+			.flatMap(_.textlinks)
 			.collect
 			.foreach(link => assert(isLinkValid(link)))
 	}
 
 	they should "be exactly these links" in {
-		val links = TestData.wikipediaTestReferences()
+		val textLinks = TestData.wikipediaTestTextLinks()
 		TestData.wikipediaTestRDD(sc)
 			.map(WikipediaTextparser.parseWikipediaEntry)
-			.filter(entry => links.contains(entry.title))
+			.filter(entry => textLinks.contains(entry.title))
 			.collect
-			.foreach(entry => entry.links shouldEqual links(entry.title))
+			.foreach(entry => entry.textlinks shouldEqual textLinks(entry.title))
 	}
 
 	"Wikipedia text link offsets" should "be consistent with text" in {
@@ -102,25 +91,47 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 			.map(WikipediaTextparser.parseHtml)
 			.collect
 			.foreach { element =>
-				element.links.foreach { link =>
-					if (!isTemplateLink(link)) {
-						if (!isTextLinkConsistent(link, element.getText())) {
-							println(link)
-							println(element.getText())
-						}
-						assert(isTextLinkConsistent(link, element.getText()))
+				element.textlinks.foreach { link =>
+					if (!isTextLinkConsistent(link, element.getText())) {
+						println(link)
+						println(element.getText())
 					}
+					assert(isTextLinkConsistent(link, element.getText()))
 				}
 			}
+	}
+
+	"Wikipedia template links" should "not be empty" in {
+		val templateArticlesTest = TestData.wikipediaTestTemplateArticles()
+		TestData.wikipediaTestRDD(sc)
+			.filter(entry => templateArticlesTest.contains(entry.title))
+			.map(WikipediaTextparser.parseWikipediaEntry)
+			.map(_.templatelinks)
+			.collect
+			.foreach(templateLinks => templateLinks should not be empty)
+	}
+
+	they should "be valid (have alias and page)" in {
+		TestData.wikipediaTestRDD(sc)
+			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
+			.map(WikipediaTextparser.parseHtml)
+			.flatMap(_.templatelinks)
+			.collect
+			.foreach(link => assert(isLinkValid(link)))
+	}
+
+	they should "be exactly these links" in {
+		val templateLinks = TestData.wikipediaTestTemplateLinks()
+		TestData.wikipediaTestRDD(sc)
+			.map(WikipediaTextparser.parseWikipediaEntry)
+			.filter(entry => templateLinks.contains(entry.title))
+			.collect
+			.foreach(entry => entry.templatelinks shouldEqual templateLinks(entry.title))
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
 		val substring = text.substring(link.offset, link.offset + link.alias.length)
 		substring == link.alias
-	}
-
-	def isTemplateLink(link: Link): Boolean = {
-		link.offset == WikipediaTextparser.templateOffset
 	}
 
 	def isLinkValid(link: Link): Boolean = {
