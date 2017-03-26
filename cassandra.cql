@@ -13,7 +13,8 @@ CREATE TYPE wikidumps.link (
 
 CREATE TABLE wikidumps.parsedwikipedia (
     title text PRIMARY KEY,
-    links frozen<list<frozen<link>>>,
+    textlinks frozen<list<frozen<link>>>,
+    templatelinks frozen<list<frozen<link>>>,
     text text
 );
 
