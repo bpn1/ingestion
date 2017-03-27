@@ -2,7 +2,6 @@ import WikiClasses._
 import WikipediaTextparser.disambiguationTitleSuffix
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
-
 import scala.util.matching.Regex
 import org.scalatest._
 
@@ -117,7 +116,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 
 	"Wikipedia disambiguation pages" should "be recognized as such" in {
 		val disambiguationPages = TestData.wikipediaEntriesTestList()
-			.filter(entry => WikipediaTextparser.isDisambiguationPage(entry.getText()))
+			.filter(entry => WikipediaTextparser.isDisambiguationPage(entry))
 			.map(_.title)
 			.toSet
 		disambiguationPages shouldEqual TestData.wikipediaDisambiguationPagesTestSet
@@ -135,6 +134,38 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 						link.alias shouldEqual cleanTitle
 						link.page should not equal entry.title
 					}
+			}
+	}
+
+	"Category links" should "be extracted" in {
+		val testLinks = TestData.testCategoryLinks()
+		val testEntry = ParsedWikipediaEntry(title = "test", links = testLinks)
+		val result = WikipediaTextparser.extractCategoryLinks(testEntry)
+		val expectedLinks = TestData.testCleanedCategoryLinks()
+		val expectedCategoryLinks = TestData.testExtractedCategoryLinks()
+		result.links shouldEqual expectedLinks
+		result.category_links shouldEqual expectedCategoryLinks
+	}
+
+	they should "have cleaned aliases and pages" in {
+		val testLinks = TestData.testCategoryLinks()
+		val testEntry = ParsedWikipediaEntry(title = "test", links = testLinks)
+		WikipediaTextparser
+			.extractCategoryLinks(testEntry)
+			.category_links
+			.foreach { link =>
+				link.alias shouldNot startWith (WikipediaTextparser.categoryNamespace)
+				link.page shouldNot startWith (WikipediaTextparser.categoryNamespace)
+			}
+	}
+
+	they should "have their offset set to zero" in {
+		val testLinks = TestData.testCategoryLinks()
+		val testEntry = ParsedWikipediaEntry(title = "test", links = testLinks)
+		WikipediaTextparser
+			.extractCategoryLinks(testEntry)
+			.category_links
+			.foreach { link => link.offset shouldBe 0
 			}
 	}
 

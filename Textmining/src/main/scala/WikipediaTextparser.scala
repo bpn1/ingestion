@@ -15,6 +15,7 @@ object WikipediaTextparser {
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
 	val templateOffset = -1
+	val categoryNamespace = "Kategorie:"
 	val redirectText = "REDIRECT "
 	val disambiguationTitleSuffix = " (Begriffsklärung)"
 
@@ -55,19 +56,17 @@ object WikipediaTextparser {
 			val text = document.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
 			parsedEntry.setText(text)
 			parsedEntry.links = extractRedirect(html, text)
-		}
-		else if (title.endsWith(disambiguationTitleSuffix)) {
+		} else if (title.endsWith(disambiguationTitleSuffix)) {
 			val outputTuple = extractDisambiguationLinks(title, document.body)
 			parsedEntry.setText(outputTuple._1)
 			parsedEntry.links = outputTuple._2
-		}
-		else {
+		} else {
 			val cleanedDocument = removeTags(document)
 			val outputTuple = extractLinks(cleanedDocument.body)
 			parsedEntry.setText(outputTuple._1)
 			parsedEntry.links = outputTuple._2
 		}
-		parsedEntry
+		extractCategoryLinks(parsedEntry)
 	}
 
 	def removeTags(document: Document): Document = {
@@ -102,12 +101,12 @@ object WikipediaTextparser {
 		cleanedUrl.replaceAll("\\A/", "")
 	}
 
-	def isDisambiguationPage(wikiMarkup: String): Boolean = {
+	def isDisambiguationPage(entry: WikipediaEntry): Boolean = {
 		val disambiguationWikiMarkupSuffix = "{{Begriffsklärung}}"
-		wikiMarkup.endsWith(disambiguationWikiMarkupSuffix)
+		entry.getText().endsWith(disambiguationWikiMarkupSuffix)
 	}
 
-	def extractDisambiguationLinks(title: String, body: Element): Tuple2[String, List[Link]] = {
+	def extractDisambiguationLinks(title: String, body: Element): (String, List[Link]) = {
 		val linksList = mutable.ListBuffer[Link]()
 		val cleanTitle = title.stripSuffix(disambiguationTitleSuffix)
 		body.select("a")
@@ -119,7 +118,7 @@ object WikipediaTextparser {
 		(body.text, linksList.toList)
 	}
 
-	def extractLinks(body: Element): Tuple2[String, List[Link]] = {
+	def extractLinks(body: Element): (String, List[Link]) = {
 		val linksList = mutable.ListBuffer[Link]()
 		var offset = 0
 		var startIndex = 0
@@ -256,7 +255,7 @@ object WikipediaTextparser {
 
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		var title = entry.title
-		if(isDisambiguationPage(entry.getText()) && !title.endsWith(disambiguationTitleSuffix)) {
+		if(isDisambiguationPage(entry) && !title.endsWith(disambiguationTitleSuffix)) {
 			title += disambiguationTitleSuffix
 		}
 		val html = wikipediaToHtml(entry.getText())
@@ -269,6 +268,18 @@ object WikipediaTextparser {
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
 		val redirectRegex = "(?i)#(weiterleitung|redirect) ?(: ?)?"
 		entry.setText(entry.getText().replaceAll(redirectRegex, "WEITERLEITUNG"))
+		entry
+	}
+
+	def extractCategoryLinks(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
+		val categoryLinks = entry.links.filter(entry =>
+			entry.alias.startsWith(categoryNamespace) || entry.page.startsWith(categoryNamespace))
+		entry.links = entry.links.filterNot(categoryLinks.toSet)
+		entry.category_links = categoryLinks.map { link =>
+			val alias = link.alias.replaceFirst(categoryNamespace, "")
+			val page = link.page.replaceFirst(categoryNamespace, "")
+			Link(alias, page, 0)
+		}
 		entry
 	}
 
