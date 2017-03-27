@@ -1,7 +1,6 @@
 import WikiClasses._
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
-import org.apache.spark.rdd.RDD
 import scala.util.matching.Regex
 import org.scalatest._
 
@@ -101,7 +100,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 			}
 	}
 
-	"Wikipedia template links" should "not be empty" in {
+	"Template links" should "not be empty" in {
 		val templateArticlesTest = TestData.wikipediaTestTemplateArticles()
 		TestData.wikipediaTestRDD(sc)
 			.filter(entry => templateArticlesTest.contains(entry.title))
@@ -121,12 +120,47 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 	}
 
 	they should "be exactly these links" in {
-		val templateLinks = TestData.wikipediaTestTemplateLinks()
-		TestData.wikipediaTestRDD(sc)
+		val templateLinks = TestData
+			.wikipediaTestTemplateLinks()
+		TestData
+			.wikipediaTestRDD(sc)
 			.map(WikipediaTextparser.parseWikipediaEntry)
 			.filter(entry => templateLinks.contains(entry.title))
 			.collect
 			.foreach(entry => entry.templatelinks shouldEqual templateLinks(entry.title))
+	}
+
+	"Category links" should "be extracted" in {
+		val testLinks = TestData.testCategoryLinks()
+		val testEntry = ParsedWikipediaEntry(title = "test", textlinks = testLinks)
+		val result = WikipediaTextparser.extractCategoryLinks(testEntry)
+		val expectedLinks = TestData.testCleanedCategoryLinks()
+		val expectedCategoryLinks = TestData.testExtractedCategoryLinks()
+		result.textlinks shouldEqual expectedLinks
+		result.category_links shouldEqual expectedCategoryLinks
+	}
+
+	they should "have cleaned aliases and pages" in {
+		val testLinks = TestData.testCategoryLinks()
+		val testEntry = ParsedWikipediaEntry(title = "test", textlinks = testLinks)
+		WikipediaTextparser
+			.extractCategoryLinks(testEntry)
+			.category_links
+		    .foreach { link =>
+				link.alias shouldNot startWith (WikipediaTextparser.categoryNamespace)
+				link.page shouldNot startWith (WikipediaTextparser.categoryNamespace)
+			}
+	}
+
+	they should "have their offset set to zero" in {
+		val testLinks = TestData.testCategoryLinks()
+		val testEntry = ParsedWikipediaEntry(title = "test", textlinks = testLinks)
+		WikipediaTextparser
+			.extractCategoryLinks(testEntry)
+			.category_links
+			.foreach { link =>
+				link.offset shouldBe 0
+			}
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {

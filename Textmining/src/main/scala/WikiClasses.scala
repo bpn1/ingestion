@@ -12,14 +12,17 @@ object WikiClasses {
 
 	case class ParsedWikipediaEntry(
 		title: String,
-		var text: Option[String],
-		var textlinks: List[Link],
-		var templatelinks: List[Link],
-		var foundaliases: List[String] = List[String]()) {
+		var text: Option[String] = None,
+		var textlinks: List[Link] = List[Link](),
+		var templatelinks: List[Link] = List[Link](),
+		var foundaliases: List[String] = List[String](),
+		var category_links: List[Link] = List[Link]())
+	{
+
 		def setText(t: String): Unit = text = Option(t)
 
 		def getText(): String = text.getOrElse("")
-		def allLinks(): List[Link] = textlinks ++ templatelinks
+		def allLinks(): List[Link] = textlinks ++ templatelinks ++ category_links
 	}
 
 	case class AliasCounter(
