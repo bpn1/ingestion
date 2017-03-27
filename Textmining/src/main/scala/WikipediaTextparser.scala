@@ -16,10 +16,10 @@ object WikipediaTextparser {
 	val outputTablename = "parsedwikipedia"
 	val templateOffset = -1
 	val redirectText = "REDIRECT "
-	val disambiguationSuffix = " (Begriffsklärung)"
+	val disambiguationTitleSuffix = " (Begriffsklärung)"
 
-	def wikipediaToHtml(wikipediaMarkup: String): String = {
-		val html = wikipediaMarkup.replaceAll("\\\\n", "\n")
+	def wikipediaToHtml(wikiMarkup: String): String = {
+		val html = wikiMarkup.replaceAll("\\\\n", "\n")
 		WikiModel.toHtml(removeWikiMarkup(html))
 	}
 
@@ -56,7 +56,7 @@ object WikipediaTextparser {
 			parsedEntry.setText(text)
 			parsedEntry.links = extractRedirect(html, text)
 		}
-		else if (isDisambiguationPage(title, html)) {
+		else if (title.endsWith(disambiguationTitleSuffix)) {
 			val outputTuple = extractDisambiguationLinks(title, document.body)
 			parsedEntry.setText(outputTuple._1)
 			parsedEntry.links = outputTuple._2
@@ -102,18 +102,14 @@ object WikipediaTextparser {
 		cleanedUrl.replaceAll("\\A/", "")
 	}
 
-	def isDisambiguationPage(title: String, html: String): Boolean = {
-		if (title.endsWith(disambiguationSuffix)) {
-			return true
-		}
-		val disambiguationRegex = new Regex(title + " (steht für)|(bezeichnet):")
-		val searchText = Jsoup.parse(html).body.text
-		disambiguationRegex.findFirstIn(searchText).isDefined
+	def isDisambiguationPage(wikiMarkup: String): Boolean = {
+		val disambiguationWikiMarkupSuffix = "{{Begriffsklärung}}"
+		wikiMarkup.endsWith(disambiguationWikiMarkupSuffix)
 	}
 
 	def extractDisambiguationLinks(title: String, body: Element): Tuple2[String, List[Link]] = {
 		val linksList = mutable.ListBuffer[Link]()
-		val cleanTitle = title.stripSuffix(disambiguationSuffix)
+		val cleanTitle = title.stripSuffix(disambiguationTitleSuffix)
 		body.select("a")
 			.foreach { anchor =>
 				val target = parseUrl(anchor.attr("href"))
@@ -259,16 +255,20 @@ object WikipediaTextparser {
 	}
 
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
-		val html = wikipediaToHtml(entry.getText)
-		var parsedEntry = parseHtml(entry.title, html)
-		val templateLinks = extractTemplateLinks(entry.getText)
+		var title = entry.title
+		if(isDisambiguationPage(entry.getText()) && !title.endsWith(disambiguationTitleSuffix)) {
+			title += disambiguationTitleSuffix
+		}
+		val html = wikipediaToHtml(entry.getText())
+		val parsedEntry = parseHtml(title, html)
+		val templateLinks = extractTemplateLinks(entry.getText())
 		parsedEntry.links ++= templateLinks
 		parsedEntry
 	}
 
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
 		val redirectRegex = "(?i)#(weiterleitung|redirect) ?(: ?)?"
-		entry.setText(entry.getText.replaceAll(redirectRegex, "WEITERLEITUNG"))
+		entry.setText(entry.getText().replaceAll(redirectRegex, "WEITERLEITUNG"))
 		entry
 	}
 

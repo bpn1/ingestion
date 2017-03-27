@@ -1,5 +1,5 @@
 import WikiClasses._
-import WikipediaTextparser.{disambiguationSuffix, wikipediaToHtml}
+import WikipediaTextparser.disambiguationTitleSuffix
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 
@@ -61,10 +61,8 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 
 	"Wikipedia links" should "not be empty" in {
 		TestData.wikipediaEntriesTestList()
-			.map { entry =>
-				val html = WikipediaTextparser.wikipediaToHtml(entry.getText())
-				WikipediaTextparser.parseHtml(entry.title, html).links
-			}
+			.map(WikipediaTextparser.parseWikipediaEntry)
+			.map(_.links)
 			.foreach(links => links should not be empty)
 	}
 
@@ -119,24 +117,21 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 
 	"Wikipedia disambiguation pages" should "be recognized as such" in {
 		val disambiguationPages = TestData.wikipediaEntriesTestList()
-			.filter { entry =>
-				val html = wikipediaToHtml(entry.getText())
-				WikipediaTextparser.isDisambiguationPage(entry.title, html)
-			}
+			.filter(entry => WikipediaTextparser.isDisambiguationPage(entry.getText()))
 			.map(_.title)
 			.toSet
 		disambiguationPages shouldEqual TestData.wikipediaDisambiguationPagesTestSet
 	}
 
 	"Wikipedia disambiguation links" should "direct from the page name itself (without '" +
-		WikipediaTextparser.disambiguationSuffix + "') to another page" in {
+		WikipediaTextparser.disambiguationTitleSuffix + "') to another page" in {
 		TestData.wikipediaEntriesTestList()
 			.filter(entry => TestData.wikipediaDisambiguationPagesTestSet().contains(entry.title))
 			.map(WikipediaTextparser.parseWikipediaEntry)
 			.foreach { entry =>
 				entry.links
 					.foreach { link =>
-						val cleanTitle = entry.title.stripSuffix(disambiguationSuffix)
+						val cleanTitle = entry.title.stripSuffix(disambiguationTitleSuffix)
 						link.alias shouldEqual cleanTitle
 						link.page should not equal entry.title
 					}
