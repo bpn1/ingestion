@@ -14,7 +14,8 @@ object WikiClasses {
 		title: String,
 		var text: Option[String] = None,
 		var links: List[Link] = List[Link](),
-		var foundaliases: List[String] = List[String]())
+		var foundaliases: List[String] = List[String](),
+		var category_links: List[Link] = List[Link]())
 	{
 		def setText(t: String): Unit = text = Option(t)
 		def getText(): String = text.getOrElse("")

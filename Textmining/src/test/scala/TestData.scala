@@ -498,6 +498,39 @@ object TestData {
 		)
 	}
 
+	def testCategoryLinks(): List[Link] = {
+		List(Link("Ingolstadt", "Ingolstadt", 55),
+			Link("Bayern", "Bayern", 69),
+			Link("Automobilhersteller", "Kategorie:Automobilhersteller", 94),
+			Link("Volkswagen", "Volkswagen AG", 123),
+			Link("Wortspiel", "Kategorie:Wortspiel", 175),
+			Link("Kategorie:Namensrechte", "Marke (Recht)", 202),
+			Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", 255),
+			Link("August Horch", "August Horch", 316),
+			Link("Lateinische", "Latein", 599),
+			Link("Imperativ", "Imperativ (Modus)", 636),
+			Link("Kategorie:Zwickau", "Zwickau", 829),
+			Link("Zschopauer", "Zschopau", 868))
+	}
+
+	def testCleanedCategoryLinks(): List[Link] = {
+		List(Link("Ingolstadt", "Ingolstadt", 55),
+			Link("Bayern", "Bayern", 69),
+			Link("Volkswagen", "Volkswagen AG", 123),
+			Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", 255),
+			Link("August Horch", "August Horch", 316),
+			Link("Lateinische", "Latein", 599),
+			Link("Imperativ", "Imperativ (Modus)", 636),
+			Link("Zschopauer", "Zschopau", 868))
+	}
+
+	def testExtractedCategoryLinks(): List[Link] = {
+		List(Link("Automobilhersteller", "Automobilhersteller", 0),
+			Link("Wortspiel", "Wortspiel", 0),
+			Link("Namensrechte", "Marke (Recht)", 0),
+			Link("Zwickau", "Zwickau", 0))
+	}
+
 	// scalastyle:on line.size.limit
 }
 // scalastyle:on number.of.methods
