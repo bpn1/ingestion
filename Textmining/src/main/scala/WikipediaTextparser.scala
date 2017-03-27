@@ -1,7 +1,6 @@
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import scala.collection.JavaConversions._
-import scala.collection.mutable
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
@@ -9,12 +8,13 @@ import org.jsoup.nodes.{Document, Element, TextNode}
 import java.net.URLDecoder
 import scala.collection.mutable.ListBuffer
 import WikiClasses._
+import scala.io.Source
 
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
-	val templateOffset = -1
+	val namespaceFile = "dewiki_namespaces"
 	val categoryNamespace = "Kategorie:"
 	val redirectText = "REDIRECT "
 
@@ -31,7 +31,7 @@ object WikipediaTextparser {
 
 	def extractRedirect(html: String, text: String): List[Link] = {
 		val anchorList = Jsoup.parse(html).select("a")
-		val linksList = mutable.ListBuffer[Link]()
+		val linksList = ListBuffer[Link]()
 		val redirectRegex = new Regex("REDIRECT( )*")
 		val categoryRegex = new Regex("Kategorie:")
 		val redirectOffset = (redirectRegex.findFirstIn(text) match {
@@ -45,7 +45,7 @@ object WikipediaTextparser {
 			}
 			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), offset)
 		}
-		linksList.toList
+		cleanMetapageLinks(linksList.toList)
 	}
 
 	def parseHtml(entry: (WikipediaEntry, String)): ParsedWikipediaEntry = {
@@ -99,7 +99,7 @@ object WikipediaTextparser {
 	}
 
 	def extractTextLinks(body: Element): Tuple2[String, List[Link]] = {
-		val linksList = mutable.ListBuffer[Link]()
+		val linksList = ListBuffer[Link]()
 		var offset = 0
 		var startIndex = 0
 		val children = body.childNodes
@@ -133,7 +133,8 @@ object WikipediaTextparser {
 				case _ =>
 			}
 		}
-		(body.text, linksList.toList)
+		val cleanedLinks = cleanMetapageLinks(linksList.toList)
+		(body.text, cleanedLinks)
 	}
 
 	def removeWikiMarkup(wikitext: String): String = {
@@ -199,7 +200,6 @@ object WikipediaTextparser {
 		if (page.startsWith("Datei:")) {
 			return null
 		}
-
 		var alias = ""
 		if (linkMatch.groupCount > 2) {
 			alias = linkMatch.group(2)
@@ -210,12 +210,11 @@ object WikipediaTextparser {
 		if (alias == null || alias.isEmpty) {
 			alias = page
 		}
-
 		Link(alias, page)
 	}
 
 	def extractTemplateLinks(wikitext: String): List[Link] = {
-		val linkList = mutable.ListBuffer[Link]()
+		val linkList = ListBuffer[Link]()
 		val templateText = extractAllTemplates(wikitext)
 		val linkRegex = new Regex("\\[\\[(.*?)(\\|(.*?))?\\]\\]")
 		linkRegex
@@ -232,14 +231,44 @@ object WikipediaTextparser {
 
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val html = wikipediaToHtml(entry.getText)
-		var parsedEntry = parseHtml(entry, html)
-		parsedEntry
+		parseHtml(entry, html)
 	}
 
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
 		val redirectRegex = "(?i)#(weiterleitung|redirect) ?(: ?)?"
 		entry.setText(entry.getText.replaceAll(redirectRegex, "WEITERLEITUNG"))
 		entry
+	}
+
+	/**
+	  * Reads namespaces from resource file and removes used namespaces.
+	  * @return list of unused namespaces
+	  */
+	def badNamespaces(): List[String] = {
+		val namespaces = Source
+			.fromURL(getClass().getResource(s"/$namespaceFile"))
+			.getLines()
+			.toList
+		val usedNamespaces = List("Kategorie:")
+		namespaces.filterNot(usedNamespaces.toSet)
+	}
+
+	/**
+	  * Checks whether the entry starts with a namespace.
+	  * @param entry Wikipedia entry to check
+	  * @return true if entry starts with a namespace
+	  */
+	def isMetaPage(entry: WikipediaEntry): Boolean = {
+		badNamespaces.exists(entry.title.startsWith)
+	}
+
+	/**
+	  * Removes links to pages with an unused namespace.
+	  * @param linkList list of links to clean
+	  * @return list of links without links to unused namespace pages.
+	  */
+	def cleanMetapageLinks(linkList: List[Link]): List[Link] = {
+		linkList.filterNot(link => badNamespaces.exists(link.page.startsWith))
 	}
 
 	def extractCategoryLinks(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {

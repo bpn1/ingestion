@@ -433,6 +433,79 @@ object TestData {
 			List())
 	}
 
+	def testNamespacePages(): List[WikipediaEntry] = {
+		List(
+			WikipediaEntry("lol"),
+			WikipediaEntry("Audi"),
+			WikipediaEntry("Electronic Arts"),
+			WikipediaEntry("Postbank-Hochhaus (Berlin)"),
+			WikipediaEntry("Postbank-Hochhaus Berlin"),
+			WikipediaEntry("Abraham Lincoln"),
+			WikipediaEntry("Diskussion:Testpage"),
+			WikipediaEntry("Benutzer:Testpage"),
+			WikipediaEntry("Benutzerin:Testpage"),
+			WikipediaEntry("Benutzer Diskussion:Testpage"),
+			WikipediaEntry("BD:Testpage"),
+			WikipediaEntry("Benutzerin Diskussion:Testpage"),
+			WikipediaEntry("Wikipedia:Testpage"),
+			WikipediaEntry("WP:Testpage"),
+			WikipediaEntry("Wikipedia Diskussion:Testpage"),
+			WikipediaEntry("WD:Testpage"),
+			WikipediaEntry("Datei:Testpage"),
+			WikipediaEntry("Datei Diskussion:Testpage"),
+			WikipediaEntry("MediaWiki:Testpage"),
+			WikipediaEntry("MediaWiki Diskussion:Testpage"),
+			WikipediaEntry("Vorlage:Testpage"),
+			WikipediaEntry("Vorlage Diskussion:Testpage"),
+			WikipediaEntry("Hilfe:Testpage"),
+			WikipediaEntry("H:Testpage"),
+			WikipediaEntry("Hilfe Diskussion:Testpage"),
+			WikipediaEntry("HD:Testpage"),
+			WikipediaEntry("Kategorie:Testpage"),
+			WikipediaEntry("Kategorie Diskussion:Testpage"),
+			WikipediaEntry("Portal:Testpage"),
+			WikipediaEntry("P:Testpage"),
+			WikipediaEntry("Portal Diskussion:Testpage"),
+			WikipediaEntry("PD:Testpage"),
+			WikipediaEntry("Modul:Testpage"),
+			WikipediaEntry("Modul Diskussion:Testpage"),
+			WikipediaEntry("Gadget:Testpage"),
+			WikipediaEntry("Gadget Diskussion:Testpage"),
+			WikipediaEntry("Gadget-Definition:Testpage"),
+			WikipediaEntry("Gadget-Definition Diskussion:Testpage"),
+			WikipediaEntry("Thema:Testpage"),
+			WikipediaEntry("Spezial:Testpage"),
+			WikipediaEntry("Medium:Testpage"))
+	}
+
+	def testCleanedNamespacePages(): List[WikipediaEntry] = {
+		List(
+			WikipediaEntry("lol"),
+			WikipediaEntry("Audi"),
+			WikipediaEntry("Electronic Arts"),
+			WikipediaEntry("Postbank-Hochhaus (Berlin)"),
+			WikipediaEntry("Postbank-Hochhaus Berlin"),
+			WikipediaEntry("Abraham Lincoln"),
+			WikipediaEntry("Kategorie:Testpage"))
+	}
+
+	def testNamespaceLinks(): List[Link] = {
+		List(
+			Link("August Horch", "August Horch", 0),
+			Link("August Horch", "Benutzer:August Horch", 0),
+			Link("August Horch", "Thema:August Horch", 0),
+			Link("August Horch", "HD:August Horch", 0),
+			Link("August Horch", "Kategorie:August Horch", 0)
+		)
+	}
+
+	def testCleanedNamespaceLinks(): List[Link] = {
+		List(
+			Link("August Horch", "August Horch", 0),
+			Link("August Horch", "Kategorie:August Horch", 0)
+		)
+	}
+
 	def testCategoryLinks(): List[Link] = {
 		List(Link("Ingolstadt", "Ingolstadt", 55),
 			Link("Bayern", "Bayern", 69),
