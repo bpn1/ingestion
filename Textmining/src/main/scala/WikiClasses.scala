@@ -16,13 +16,13 @@ object WikiClasses {
 		var textlinks: List[Link] = List[Link](),
 		var templatelinks: List[Link] = List[Link](),
 		var foundaliases: List[String] = List[String](),
-		var category_links: List[Link] = List[Link]())
+		var categorylinks: List[Link] = List[Link]())
 	{
 
 		def setText(t: String): Unit = text = Option(t)
 
 		def getText(): String = text.getOrElse("")
-		def allLinks(): List[Link] = textlinks ++ templatelinks ++ category_links
+		def allLinks(): List[Link] = textlinks ++ templatelinks ++ categorylinks
 	}
 
 	case class AliasCounter(

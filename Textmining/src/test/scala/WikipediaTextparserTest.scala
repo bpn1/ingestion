@@ -137,7 +137,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 		val expectedLinks = TestData.testCleanedCategoryLinks()
 		val expectedCategoryLinks = TestData.testExtractedCategoryLinks()
 		result.textlinks shouldEqual expectedLinks
-		result.category_links shouldEqual expectedCategoryLinks
+		result.categorylinks shouldEqual expectedCategoryLinks
 	}
 
 	they should "have cleaned aliases and pages" in {
@@ -145,7 +145,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 		val testEntry = ParsedWikipediaEntry(title = "test", textlinks = testLinks)
 		WikipediaTextparser
 			.extractCategoryLinks(testEntry)
-			.category_links
+			.categorylinks
 		    .foreach { link =>
 				link.alias shouldNot startWith (WikipediaTextparser.categoryNamespace)
 				link.page shouldNot startWith (WikipediaTextparser.categoryNamespace)
@@ -157,7 +157,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 		val testEntry = ParsedWikipediaEntry(title = "test", textlinks = testLinks)
 		WikipediaTextparser
 			.extractCategoryLinks(testEntry)
-			.category_links
+			.categorylinks
 			.foreach { link =>
 				link.offset shouldBe 0
 			}

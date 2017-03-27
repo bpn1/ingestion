@@ -246,7 +246,7 @@ object WikipediaTextparser {
 		val categoryLinks = entry.textlinks.filter(entry =>
 			entry.alias.startsWith(categoryNamespace) || entry.page.startsWith(categoryNamespace))
 		entry.textlinks = entry.textlinks.filterNot(categoryLinks.toSet)
-		entry.category_links = categoryLinks.map { link =>
+		entry.categorylinks = categoryLinks.map { link =>
 			val alias = link.alias.replaceFirst(categoryNamespace, "")
 			val page = link.page.replaceFirst(categoryNamespace, "")
 			Link(alias, page, 0)
