@@ -9,11 +9,12 @@ object WikipediaRedirectParser {
 	val tablename = "parsedwikipedia"
 	val inputTablename = "wikipedia"
 	val keyspace = "wikidumps"
+	val redirectText = "REDIRECT "
 
 	def parseRedirect(title: String, html: String): ParsedWikipediaEntry = {
 		val parsedEntry = ParsedWikipediaEntry(title, Option(""), null)
 		val doc = Jsoup.parse(html)
-		val text = doc.body.text.replaceAll("(?i)((\\AWEITERLEITUNG)|(\\AREDIRECT))", "REDIRECT")
+		val text = doc.body.text.replaceAll("(?i)((\\AWEITERLEITUNG)|(\\AREDIRECT))", redirectText)
 		parsedEntry.setText(text)
 		parsedEntry.links = extractRedirect(html, text)
 		parsedEntry
