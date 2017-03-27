@@ -4,7 +4,7 @@ object WikiClasses {
 
 	case class WikipediaEntry(
 		title: String,
-		var text: Option[String])
+		var text: Option[String] = None)
 	{
 		def setText(t: String): Unit = text = Option(t)
 		def getText(): String = text.getOrElse("")

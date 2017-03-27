@@ -113,6 +113,21 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 			}
 	}
 
+	"Bad namespace pages" should "be filtered" in {
+		val testPages = TestData.testNamespacePages
+			.filterNot(WikipediaTextparser.isMetaPage)
+		val expectedPages = TestData.testCleanedNamespacePages
+		testPages shouldEqual expectedPages
+
+	}
+
+	"Bad namespace links" should "be filtered" in {
+		val testLinks = WikipediaTextparser
+			.cleanMetapageLinks(TestData.testNamespaceLinks)
+		val expectedLinks = TestData.testCleanedNamespaceLinks
+		testLinks shouldEqual expectedLinks
+	}
+
 	"Category links" should "be extracted" in {
 		val testLinks = TestData.testCategoryLinks()
 		val testEntry = ParsedWikipediaEntry(title = "test", links = testLinks)
