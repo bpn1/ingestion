@@ -5,11 +5,13 @@ package DataLake
   * @tparam T the type of the objects to be compared
   */
 trait SimilarityMeasure[T] extends Serializable {
+
 	/**
 	  * Calculates a similarity score for two objects
 	  * @param x object to be compared to y
 	  * @param y object to be compared to x
+	  * @param u is for giving config params to similarity measures that take one
 	  * @return a normalized similarity score between 1.0 and 0.0
 	  */
-	def compare(x: T, y: T) : Double
+	def compare(x: T, y: T, u: Int) : Double
 }
