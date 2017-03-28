@@ -17,7 +17,7 @@ object WikipediaRedirectResolver {
 		categoryRegex.findFirstIn(firstLink.page).isEmpty && title != firstLink.page
 	}
 
-	def cleanLinkOfRedirects(link: Link, dict: mutable.Map[String, String]: Link = {
+	def cleanLinkOfRedirects(link: Link, dict: mutable.Map[String, String]): Link = {
 		var lookupSet = Set[String]()
 		var lookupResult = dict.getOrElse(link.page, link.page)
 		while(dict.contains(lookupResult) && !lookupSet.contains(lookupResult)) {
@@ -25,6 +25,7 @@ object WikipediaRedirectResolver {
 			lookupResult = dict.getOrElse(lookupResult, lookupResult)
 		}
 		link.page = lookupResult
+		link
 	}
 
 	def main(args: Array[String]) {
