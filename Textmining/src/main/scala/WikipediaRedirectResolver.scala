@@ -12,6 +12,21 @@ object WikipediaRedirectResolver {
 	val tablename = "parsedwikipedia"
 	val keyspace = "wikidumps"
 
+	def checkRedirectPage(firstLink: Link, title: String): Boolean = {
+		val categoryRegex = new Regex("Kategorie:")
+		categoryRegex.findFirstIn(firstLink.page).isEmpty && title != firstLink.page
+	}
+
+	def cleanLinkOfRedirects(link: Link, dict: mutable.Map[String, String]: Link = {
+		var lookupSet = Set[String]()
+		var lookupResult = dict.getOrElse(link.page, link.page)
+		while(dict.contains(lookupResult) && !lookupSet.contains(lookupResult)) {
+			lookupSet += lookupResult
+			lookupResult = dict.getOrElse(lookupResult, lookupResult)
+		}
+		link.page = lookupResult
+	}
+
 	def main(args: Array[String]) {
 		val conf = new SparkConf()
 			.setAppName("WikipediaRedirectResolver")
@@ -20,7 +35,6 @@ object WikipediaRedirectResolver {
 		val dict = mutable.Map[String, String]()
 
 		val redirectRegex = new Regex("REDIRECT[^\\s]")
-		val categoryRegex = new Regex("Kategorie:")
 		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
 		dataRDD
 			.map { entry =>
@@ -33,8 +47,7 @@ object WikipediaRedirectResolver {
 				redirectRegex.findFirstIn(text).isDefined
 			}.collect()
 			.foreach { case (title, links, text) =>
-				if (categoryRegex.findFirstIn(links.head.page).isEmpty
-					&& title != links.head.page) {
+				if (checkRedirectPage(links.head, title)) {
 					dict(title) = links.head.page
 				}
 			}
@@ -44,13 +57,7 @@ object WikipediaRedirectResolver {
 				val localDict = dictBroadcast.value
 				entryRDD.map { entry =>
 					entry.links.foreach { link =>
-						var lookupSet = Set[String]()
-						var lookupResult = localDict.getOrElse(link.page, link.page)
-						while(dict.contains(lookupResult) && !lookupSet.contains(lookupResult)) {
-							lookupSet += lookupResult
-							lookupResult = localDict.getOrElse(lookupResult, lookupResult)
-						}
-						link.page = lookupResult
+						cleanLinkOfRedirects(link, localDict)
 					}
 					entry
 				}
