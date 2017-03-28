@@ -50,3 +50,5 @@ logLevel in assembly := Level.Error
 scalastyleConfig := new File("../scalastyle-config.xml")
 scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value
 
+// ScalaDoc Settings
+scalacOptions in (Compile, doc) ++= Seq("-doc-footer", "Impressum: https://hpi.de/naumann/sites/ingestion/impressum/")
