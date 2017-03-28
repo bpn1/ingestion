@@ -51,7 +51,7 @@ object TrieBuilder {
 		val sc = new SparkContext(conf)
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 		val aliasList = parsedWikipedia
-			.flatMap(_.links)
+			.flatMap(_.allLinks)
 			.map(_.alias)
 			.distinct
 			.collect

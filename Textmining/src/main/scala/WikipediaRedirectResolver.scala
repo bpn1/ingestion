@@ -27,7 +27,7 @@ object WikipediaRedirectResolver {
 					case Some(t) => t
 					case None => ""
 				}
-				(entry.title, entry.links, text)
+				(entry.title, entry.allLinks, text)
 			}
 			.filter{ case (title, links, text: String) =>
 				redirectRegex.findFirstIn(text).isDefined
@@ -41,10 +41,10 @@ object WikipediaRedirectResolver {
 
 		var noRedirectsRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 			.map{ entry =>
-				var i = entry.links.size
+				var i = entry.allLinks.size
 				while (i > 0) {
-					i = entry.links.size
-					entry.links.foreach{ link =>
+					i = entry.allLinks.size
+					entry.allLinks.foreach{ link =>
 						if (dict.contains(link.page)) {
 							link.page = dict(link.page)
 						} else {

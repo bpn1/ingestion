@@ -42,8 +42,10 @@ object TestData {
 				List(
 					Link("Audi", "Audi", 9)
 				),
+				List(),
 				List("Audi")),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
+				List(),
 				List(),
 				List("Audi")),
 			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
@@ -54,6 +56,7 @@ object TestData {
 					Link("1377", "1377", 225),
 					Link("Büdinger Wald", "Büdinger Wald", 546)
 				),
+				List(),
 				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald")),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
@@ -61,6 +64,7 @@ object TestData {
 					Link("Brachttal", "Brachttal", 13),
 					Link("historisches Jahr", "1377", 24)
 				),
+				List(),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
@@ -216,11 +220,10 @@ object TestData {
 	}
 
 	// scalastyle:off method.length
-	def wikipediaTestReferences(): Map[String, List[Link]] = {
-		// extracted links from Article abstracts
+	def wikipediaTestTextLinks(): Map[String, List[Link]] = {
+		// extracted text links from Article abstracts
 		Map(
 			"Audi" -> List(
-				// Article text links
 				Link("Ingolstadt", "Ingolstadt", 55),
 				Link("Bayern", "Bayern", 69),
 				Link("Automobilhersteller", "Automobilhersteller", 94),
@@ -240,26 +243,9 @@ object TestData {
 				Link("Zweiten Weltkrieg", "Zweiter Weltkrieg", 1358),
 				Link("Ingolstadt", "Ingolstadt", 1423),
 				Link("NSU Motorenwerke AG", "NSU Motorenwerke", 1599),
-				Link("Neckarsulm", "Neckarsulm", 1830),
-
-				// Template links
-				Link("Aktiengesellschaft", "Aktiengesellschaft", WikipediaTextparser.templateOffset),
-				Link("Zwickau", "Zwickau", WikipediaTextparser.templateOffset),
-				Link("Chemnitz", "Chemnitz", WikipediaTextparser.templateOffset),
-				Link("Ingolstadt", "Ingolstadt", WikipediaTextparser.templateOffset),
-				Link("Neckarsulm", "Neckarsulm", WikipediaTextparser.templateOffset),
-				Link("Ingolstadt", "Ingolstadt", WikipediaTextparser.templateOffset),
-				Link("Deutschland", "Deutschland", WikipediaTextparser.templateOffset),
-				Link("Rupert Stadler", "Rupert Stadler", WikipediaTextparser.templateOffset),
-				Link("Vorstand", "Vorstand", WikipediaTextparser.templateOffset),
-				Link("Matthias Müller", "Matthias Müller (Manager)", WikipediaTextparser.templateOffset),
-				Link("Aufsichtsrat", "Aufsichtsrat", WikipediaTextparser.templateOffset),
-				Link("Mrd.", "Milliarde", WikipediaTextparser.templateOffset),
-				Link("EUR", "Euro", WikipediaTextparser.templateOffset),
-				Link("Automobilhersteller", "Automobilhersteller", WikipediaTextparser.templateOffset)),
+				Link("Neckarsulm", "Neckarsulm", 1830)),
 
 			"Electronic Arts" -> List(
-				// Article text links
 				Link("Publisher", "Publisher", 83),
 				Link("Computer- und Videospielen", "Computerspiel", 97),
 				Link("Madden NFL", "Madden NFL", 180),
@@ -268,26 +254,45 @@ object TestData {
 				Link("Activision", "Activision", 364),
 				Link("Activision Blizzard", "Activision Blizzard", 378),
 				Link("Nasdaq Composite", "Nasdaq Composite", 675),
-				Link("S&P 500", "S&P 500", 699),
-
-				// Template links
-				Link("Corporation", "Gesellschaftsrecht der Vereinigten Staaten#Corporation", WikipediaTextparser.templateOffset),
-				Link("Redwood City", "Redwood City", WikipediaTextparser.templateOffset),
-				Link("USA", "Vereinigte Staaten", WikipediaTextparser.templateOffset),
-				Link("Larry Probst", "Larry Probst", WikipediaTextparser.templateOffset),
-				Link("USD", "US-Dollar", WikipediaTextparser.templateOffset),
-				Link("Fiskaljahr", "Geschäftsjahr", WikipediaTextparser.templateOffset),
-				Link("Softwareentwicklung", "Softwareentwicklung", WikipediaTextparser.templateOffset)),
+				Link("S&P 500", "S&P 500", 699)),
 
 			"Abraham Lincoln" -> List(
-				// Article text links
-				Link("President of the United States", "President of the United States", 29),
+				Link("President of the United States", "President of the United States", 29)))
+	}
 
-				// Template links
-				Link("Hannibal Hamlin", "Hannibal Hamlin", WikipediaTextparser.templateOffset),
-				Link("Andrew Johnson", "Andrew Johnson", WikipediaTextparser.templateOffset),
-				Link("Tad", "Tad Lincoln", WikipediaTextparser.templateOffset),
-				Link("Mary Todd Lincoln", "Mary Todd Lincoln", WikipediaTextparser.templateOffset)))
+	def wikipediaTestTemplateLinks(): Map[String, List[Link]] = {
+		// extracted template links from Article abstracts
+		Map(
+			"Audi" -> List(
+				Link("Aktiengesellschaft", "Aktiengesellschaft"),
+				Link("Zwickau", "Zwickau"),
+				Link("Chemnitz", "Chemnitz"),
+				Link("Ingolstadt", "Ingolstadt"),
+				Link("Neckarsulm", "Neckarsulm"),
+				Link("Ingolstadt", "Ingolstadt"),
+				Link("Deutschland", "Deutschland"),
+				Link("Rupert Stadler", "Rupert Stadler"),
+				Link("Vorstand", "Vorstand"),
+				Link("Matthias Müller", "Matthias Müller (Manager)"),
+				Link("Aufsichtsrat", "Aufsichtsrat"),
+				Link("Mrd.", "Milliarde"),
+				Link("EUR", "Euro"),
+				Link("Automobilhersteller", "Automobilhersteller")),
+
+			"Electronic Arts" -> List(
+				Link("Corporation", "Gesellschaftsrecht der Vereinigten Staaten#Corporation"),
+				Link("Redwood City", "Redwood City"),
+				Link("USA", "Vereinigte Staaten"),
+				Link("Larry Probst", "Larry Probst"),
+				Link("USD", "US-Dollar"),
+				Link("Fiskaljahr", "Geschäftsjahr"),
+				Link("Softwareentwicklung", "Softwareentwicklung")),
+
+			"Abraham Lincoln" -> List(
+				Link("Hannibal Hamlin", "Hannibal Hamlin"),
+				Link("Andrew Johnson", "Andrew Johnson"),
+				Link("Tad", "Tad Lincoln"),
+				Link("Mary Todd Lincoln", "Mary Todd Lincoln")))
 	}
 	// scalastyle:on method.length
 
@@ -375,7 +380,9 @@ object TestData {
 				Link("Automobilhersteller", "Automobilhersteller", 94),
 				Link("Zerfall", "Zerfall (Album)", 4711),
 				Link("Zerfall", "Zerfall (Soziologie)", 4711) // dead link
-			))))
+			),
+			List()
+			)))
 	}
 
 	def germanStopwordsTestSet(): Set[String] = {
@@ -422,7 +429,8 @@ object TestData {
 		ParsedWikipediaEntry(
 			"Schwarzer Humor",
 			Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod. Hier hat sich jemand einen makabren Scherz erlaubt. Als schwarzer Humor wird Humor bezeichnet, der Verbrechen, Krankheit, Tod und ähnliche Themen, für die gewöhnlich eine Abhandlung in ernster Form erwartet wird, in satirischer oder bewusst verharmlosender Weise verwendet. Oft bezieht er sich auf Zeitthemen. Schwarzer Humor bedient sich häufig paradoxer Stilfiguren. Nicht selten löst er Kontroversen aus darüber, ob man sich über die genannten Dinge lustig machen dürfe und wo die Grenzen des guten Geschmacks lägen; besonders ist dies der Fall, wenn religiöse und sexuelle Themen und tragische Ereignisse zum Gegenstand genommen werden. In der darstellenden Kunst nennt man auf schwarzen Humor setzende Werke schwarze Komödien. Der Begriff wurde durch den Surrealisten André Breton erstmals 1940 in seiner Schrift Anthologie de l’humour noir näher umrissen, wird jedoch seit den 1960er Jahren zum Teil deutlich anders verstanden, indem Kennzeichen der Desillusion und des Nihilismus hinzutraten. In dem Vorwort seines Werkes nennt Breton unter anderem Quellen von Freud und Hegel, die seiner Meinung nach in die Begriffsentwicklung eingeflossen sind. Ursprünge des ‚schwarzen Humors‘ sah Breton in seiner Anthologie bei einigen Werken des irischen Satirikers Jonathan Swift wie Directions to Servants, A Modest Proposal, A Meditation on a Broom-Stick und einige seiner Aphorismen. In den öffentlichen Gebrauch kam der Begriff erst in den 1960er Jahren insbesondere im angloamerikanischen Raum (‚black humour‘) durch die Rezeption von Schriftstellern wie Nathanael West, Vladimir Nabokov und Joseph Heller. So gilt Catch-22 (1961) als ein bekanntes Beispiel dieser Stilart, in dem die Absurdität des Militarismus im Zweiten Weltkrieg satirisch überspitzt wurde. Weitere Beispiele sind Kurt Vonnegut, Slaughterhouse Five (1969), Thomas Pynchon, V. (1963) und Gravity’s Rainbow (1973), sowie im Film Stanley Kubrick’s Dr. Strangelove (1964) und im Absurden Theater insbesondere bei Eugène Ionesco zu finden. Der Begriff black comedy (dtsch. „schwarze Komödie“), der in der englischen Sprache schon für einige Stücke Shakespeares angewandt wurde, weist nach dem Lexikon der Filmbegriffe der Christian-Albrechts-Universität zu Kiel als Komödientyp durch „manchmal sarkastischen, absurden und morbiden ‚schwarzen‘ Humor“ aus, der sich sowohl auf „ernste oder tabuisierte Themen wie Krankheit, Behinderung, Tod, Krieg, Verbrechen“ wie auch auf „für sakrosankt gehaltene Dinge“ richten kann und dabei „auch vor politischen Unkorrektheiten, derben Späßen, sexuellen und skatologischen Anzüglichkeiten nicht zurückschreckt.“ Dabei stehe „hinter der Fassade zynischer Grenzüberschreitungen“ häufig ein „aufrichtiges Anliegen, falsche Hierarchien, Konventionen und Verlogenheiten innerhalb einer Gesellschaft mit den Mitteln filmischer Satire zu entlarven.“ Als filmische Beispiele werden angeführt: Robert Altmans M*A*S*H (USA 1970), Mike Nichols’ Catch-22 (USA 1970), nach Joseph Heller) sowie in der Postmoderne Quentin Tarantinos Pulp Fiction (USA 1994) und Lars von Triers Idioterne (Dänemark 1998). Der Essayist François Bondy schrieb 1971 in Die Zeit: „Der schwarze Humor ist nicht zu verwechseln mit dem ‚kranken Humor‘, der aus den Staaten kam, mit seinen ‚sick jokes‘“ und nannte als Beispiel den Witz: „Mama, ich mag meinen kleinen Bruder nicht. – Schweig, iß, was man dir vorsetzt“. Witz und Humor seien jedoch nicht dasselbe und letzteres „eine originale Geschichte in einer besonderen Tonart“. Humor im Sinne von einer – wie der Duden definiert – „vorgetäuschten Heiterkeit mit der jemand einer unangenehmen oder verzweifelten Lage, in der er sich befindet, zu begegnen“ versucht, nennt man auch Galgenhumor."""),
-			List[Link](Link("Hickelkasten", "Hickelkasten", 0), Link("Humor", "Humor", 182), Link("satirischer", "Satire", 321), Link("paradoxer", "Paradoxon", 451), Link("Stilfiguren", "Rhetorische Figur", 461), Link("Kontroversen", "Kontroverse", 495), Link("guten Geschmacks", "Geschmack (Kultur)", 601), Link("Surrealisten", "Surrealismus", 865), Link("André Breton", "André Breton", 878), Link("Desillusion", "Desillusion", 1061), Link("Nihilismus", "Nihilismus", 1081), Link("Freud", "Sigmund Freud", 1173), Link("Hegel", "Georg Wilhelm Friedrich Hegel", 1183), Link("Anthologie", "Anthologie", 1314), Link("Jonathan Swift", "Jonathan Swift", 1368), Link("Directions to Servants", "Directions to Servants", 1387), Link("A Modest Proposal", "A Modest Proposal", 1411), Link("A Meditation on a Broom-Stick", "A Meditation on a Broom-Stick", 1430), Link("Aphorismen", "Aphorismus", 1478), Link("Nathanael West", "Nathanael West", 1663), Link("Vladimir Nabokov", "Vladimir Nabokov", 1679), Link("Joseph Heller", "Joseph Heller", 1700), Link("Catch-22", "Catch-22", 1723), Link("Kurt Vonnegut", "Kurt Vonnegut", 1893), Link("Slaughterhouse Five", "Schlachthof 5 oder Der Kinderkreuzzug", 1908), Link("Thomas Pynchon", "Thomas Pynchon", 1936), Link("V.", "V.", 1952), Link("Gravity’s Rainbow", "Die Enden der Parabel", 1966), Link("Stanley Kubrick", "Stanley Kubrick", 2006), Link("Dr. Strangelove", "Dr. Seltsam oder: Wie ich lernte, die Bombe zu lieben", 2024), Link("Absurden Theater", "Absurdes Theater", 2054), Link("Eugène Ionesco", "Eugène Ionesco", 2088), Link("Shakespeares", "Shakespeare", 2222), Link("Christian-Albrechts-Universität zu Kiel", "Christian-Albrechts-Universität zu Kiel", 2296), Link("Komödientyp", "Komödie", 2340), Link("sarkastischen", "Sarkasmus", 2368), Link("absurden", "Absurdität", 2383), Link("morbiden", "Morbidität", 2396), Link("tabuisierte", "Tabuisierung", 2462), Link("sakrosankt", "Sakrosankt", 2551), Link("politischen Unkorrektheiten", "Politische Korrektheit", 2612), Link("sexuellen und skatologischen", "Vulgärsprache", 2656), Link("zynischer", "Zynismus", 2756), Link("Satire", "Satire", 2933), Link("Robert Altmans", "Robert Altman", 2997), Link("M*A*S*H", "MASH (Film)", 3012), Link("Mike Nichols", "Mike Nichols", 3032), Link("Catch-22", "Catch-22 – Der böse Trick", 3046), Link("Joseph Heller", "Joseph Heller", 3071), Link("Postmoderne", "Postmoderne", 3099), Link("Quentin Tarantinos", "Quentin Tarantino", 3111), Link("Pulp Fiction", "Pulp Fiction", 3130), Link("Lars von Triers", "Lars von Trier", 3158), Link("Idioterne", "Idioten", 3174), Link("François Bondy", "François Bondy", 3214), Link("Die Zeit", "Die Zeit", 3245), Link("Witz", "Witz", 3491), Link("Duden", "Duden", 3639), Link("Galgenhumor", "Galgenhumor", 3806)))
+			List[Link](Link("Hickelkasten", "Hickelkasten", 0), Link("Humor", "Humor", 182), Link("satirischer", "Satire", 321), Link("paradoxer", "Paradoxon", 451), Link("Stilfiguren", "Rhetorische Figur", 461), Link("Kontroversen", "Kontroverse", 495), Link("guten Geschmacks", "Geschmack (Kultur)", 601), Link("Surrealisten", "Surrealismus", 865), Link("André Breton", "André Breton", 878), Link("Desillusion", "Desillusion", 1061), Link("Nihilismus", "Nihilismus", 1081), Link("Freud", "Sigmund Freud", 1173), Link("Hegel", "Georg Wilhelm Friedrich Hegel", 1183), Link("Anthologie", "Anthologie", 1314), Link("Jonathan Swift", "Jonathan Swift", 1368), Link("Directions to Servants", "Directions to Servants", 1387), Link("A Modest Proposal", "A Modest Proposal", 1411), Link("A Meditation on a Broom-Stick", "A Meditation on a Broom-Stick", 1430), Link("Aphorismen", "Aphorismus", 1478), Link("Nathanael West", "Nathanael West", 1663), Link("Vladimir Nabokov", "Vladimir Nabokov", 1679), Link("Joseph Heller", "Joseph Heller", 1700), Link("Catch-22", "Catch-22", 1723), Link("Kurt Vonnegut", "Kurt Vonnegut", 1893), Link("Slaughterhouse Five", "Schlachthof 5 oder Der Kinderkreuzzug", 1908), Link("Thomas Pynchon", "Thomas Pynchon", 1936), Link("V.", "V.", 1952), Link("Gravity’s Rainbow", "Die Enden der Parabel", 1966), Link("Stanley Kubrick", "Stanley Kubrick", 2006), Link("Dr. Strangelove", "Dr. Seltsam oder: Wie ich lernte, die Bombe zu lieben", 2024), Link("Absurden Theater", "Absurdes Theater", 2054), Link("Eugène Ionesco", "Eugène Ionesco", 2088), Link("Shakespeares", "Shakespeare", 2222), Link("Christian-Albrechts-Universität zu Kiel", "Christian-Albrechts-Universität zu Kiel", 2296), Link("Komödientyp", "Komödie", 2340), Link("sarkastischen", "Sarkasmus", 2368), Link("absurden", "Absurdität", 2383), Link("morbiden", "Morbidität", 2396), Link("tabuisierte", "Tabuisierung", 2462), Link("sakrosankt", "Sakrosankt", 2551), Link("politischen Unkorrektheiten", "Politische Korrektheit", 2612), Link("sexuellen und skatologischen", "Vulgärsprache", 2656), Link("zynischer", "Zynismus", 2756), Link("Satire", "Satire", 2933), Link("Robert Altmans", "Robert Altman", 2997), Link("M*A*S*H", "MASH (Film)", 3012), Link("Mike Nichols", "Mike Nichols", 3032), Link("Catch-22", "Catch-22 – Der böse Trick", 3046), Link("Joseph Heller", "Joseph Heller", 3071), Link("Postmoderne", "Postmoderne", 3099), Link("Quentin Tarantinos", "Quentin Tarantino", 3111), Link("Pulp Fiction", "Pulp Fiction", 3130), Link("Lars von Triers", "Lars von Trier", 3158), Link("Idioterne", "Idioten", 3174), Link("François Bondy", "François Bondy", 3214), Link("Die Zeit", "Die Zeit", 3245), Link("Witz", "Witz", 3491), Link("Duden", "Duden", 3639), Link("Galgenhumor", "Galgenhumor", 3806)),
+			List())
 	}
 
 	def testNamespacePages(): List[WikipediaEntry] = {
