@@ -115,12 +115,12 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 			}
 	}
 
-	it should "contain WEITERLEITUNG link" in {
+	"All redirects" should "contain WEITERLEITUNG link" in {
  		val entry = WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]"""))
 		val cleanedEntry = WikipediaTextparser.cleanRedirects(entry)
  		val redirectRegex = new Regex("\\AWEITERLEITUNG")
  		val searchText = Jsoup.parse(cleanedEntry.getText).body.text
- 		redirectRegex.findFirstIn(searchText) shouldBe defined
+ 		searchText shouldBe startWith("\AWEITERLEITUNG")
 		}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
