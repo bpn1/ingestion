@@ -1,4 +1,5 @@
 import WikiClasses._
+import WikipediaTextparser.disambiguationTitleSuffix
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import scala.util.matching.Regex
@@ -6,39 +7,38 @@ import org.scalatest._
 
 class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Wikipedia entry title" should "not change" in {
-		TestData.wikipediaTestRDD(sc)
+		TestData.wikipediaEntriesTestList()
 			.map(entry =>
-				(entry.title, (entry, WikipediaTextparser.wikipediaToHtml(entry.getText()))))
-			.map(tuple => (tuple._1, WikipediaTextparser.parseHtml(tuple._2).title))
-			.collect
+				(entry.title, WikipediaTextparser.wikipediaToHtml(entry.getText())))
+			.map(tuple => (tuple._1, WikipediaTextparser.parseHtml(tuple._1, tuple._2).title))
 			.foreach(entry => entry._1 shouldEqual entry._2)
 	}
 
 	"Wikipedia article text" should "not contain Wikimarkup" in {
 		// matches [[...]] and {{...}} but not escaped '{', i.e. "\{"
 		val wikimarkupRegex = new Regex("(\\[\\[.*?\\]\\])" + "|" + "([^\\\\]\\{\\{.*?\\}\\})")
-		TestData.wikipediaTestRDD(sc)
+		TestData.wikipediaEntriesTestList()
 			.map(entry => WikipediaTextparser.wikipediaToHtml(entry.getText()))
-			.collect
 			.foreach(element => wikimarkupRegex.findFirstIn(element) shouldBe empty)
 	}
 
 	it should "not contain escaped HTML characters" in {
 		val wikimarkupRegex = new Regex("&\\S*?;")
-		TestData.wikipediaTestRDD(sc)
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
-			.map(WikipediaTextparser.parseHtml)
-			.collect
+		TestData.wikipediaEntriesTestList()
+			.map { entry =>
+				val html = WikipediaTextparser.wikipediaToHtml(entry.getText())
+				WikipediaTextparser.parseHtml(entry.title, html)
+			}
 			.foreach(element => wikimarkupRegex.findFirstIn(element.getText()) shouldBe empty)
 	}
 
 	it should "contain none of the tags: table, h[0-9], small" in {
 		val tagBlacklist = List[String]("table", "h[0-9]", "small")
-		TestData.wikipediaTestRDD(sc)
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
-			.map(WikipediaTextparser.parseHtml)
-			.map(_.getText())
-			.collect
+		TestData.wikipediaEntriesTestList()
+			.map { entry =>
+				val html = WikipediaTextparser.wikipediaToHtml(entry.getText())
+				WikipediaTextparser.parseHtml(entry.title, html).getText()
+			}
 			.foreach { element =>
 				for (tag <- tagBlacklist) {
 					val tagRegex = new Regex("(</" + tag + ">)|(<" + tag + "(>| .*?>))")
@@ -49,46 +49,41 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 
 	it should "parse and return all text properly" in {
 		val abstracts = TestData.wikipediaTestAbstracts()
-		TestData.wikipediaTestRDD(sc)
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
-			.map(WikipediaTextparser.parseHtml)
+		TestData.wikipediaEntriesTestList()
+			.map { entry =>
+				val html = WikipediaTextparser.wikipediaToHtml(entry.getText())
+				WikipediaTextparser.parseHtml(entry.title, html)
+			}
 			.filter(entry => abstracts.contains(entry.title))
-			.collect
 			.foreach(element => element.getText() should startWith(abstracts(element.title)))
 	}
 
 	"Wikipedia text links" should "not be empty" in {
-		TestData.wikipediaTestRDD(sc)
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
-			.map(WikipediaTextparser.parseHtml)
+		TestData.wikipediaEntriesTestList()
+			.map(WikipediaTextparser.parseWikipediaEntry)
+			.filter(_.disambiguationlinks.isEmpty)
 			.map(_.textlinks)
-			.collect
 			.foreach(textLinks => textLinks should not be empty)
 	}
 
 	they should "be valid (have alias and page)" in {
-		TestData.wikipediaTestRDD(sc)
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
-			.map(WikipediaTextparser.parseHtml)
+		TestData.wikipediaEntriesTestList()
+			.map(WikipediaTextparser.parseWikipediaEntry)
 			.flatMap(_.textlinks)
-			.collect
 			.foreach(link => assert(isLinkValid(link)))
 	}
 
 	they should "be exactly these links" in {
 		val textLinks = TestData.wikipediaTestTextLinks()
-		TestData.wikipediaTestRDD(sc)
+		TestData.wikipediaEntriesTestList()
 			.map(WikipediaTextparser.parseWikipediaEntry)
 			.filter(entry => textLinks.contains(entry.title))
-			.collect
 			.foreach(entry => entry.textlinks shouldEqual textLinks(entry.title))
 	}
 
 	"Wikipedia text link offsets" should "be consistent with text" in {
-		TestData.wikipediaTestRDD(sc)
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
-			.map(WikipediaTextparser.parseHtml)
-			.collect
+		TestData.wikipediaEntriesTestList()
+			.map(WikipediaTextparser.parseWikipediaEntry)
 			.foreach { element =>
 				element.textlinks.foreach { link =>
 					if (!isTextLinkConsistent(link, element.getText())) {
@@ -100,30 +95,60 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 			}
 	}
 
+	"Wikipedia disambiguation pages" should "be recognized as such" in {
+		val disambiguationPages = TestData.wikipediaEntriesTestList()
+			.filter(WikipediaTextparser.isDisambiguationPage)
+			.map(_.title)
+			.toSet
+		disambiguationPages shouldEqual TestData.wikipediaDisambiguationPagesTestSet
+	}
+
+	"Wikipedia disambiguation links" should "be found" in {
+		TestData.wikipediaEntriesTestList()
+			.filter(entry => TestData.wikipediaDisambiguationPagesTestSet().contains(entry.title))
+			.map(WikipediaTextparser.parseWikipediaEntry)
+			.foreach { entry =>
+				entry.disambiguationlinks should not be empty
+			}
+	}
+
+	they should "direct from the page name itself (without '" +
+		WikipediaTextparser.disambiguationTitleSuffix + "') to another page" in {
+		TestData.wikipediaEntriesTestList()
+			.filter(entry => TestData.wikipediaDisambiguationPagesTestSet().contains(entry.title))
+			.map(WikipediaTextparser.parseWikipediaEntry)
+			.foreach { entry =>
+				entry.disambiguationlinks.foreach { link =>
+					val cleanTitle = entry.title.stripSuffix(disambiguationTitleSuffix)
+					link.alias shouldEqual cleanTitle
+					link.page should not equal entry.title
+				}
+			}
+	}
+
 	"Template links" should "not be empty" in {
 		val templateArticlesTest = TestData.wikipediaTestTemplateArticles()
-		TestData.wikipediaTestRDD(sc)
+		TestData.wikipediaEntriesTestList()
 			.filter(entry => templateArticlesTest.contains(entry.title))
 			.map(WikipediaTextparser.parseWikipediaEntry)
 			.map(_.templatelinks)
-			.collect
 			.foreach(templateLinks => templateLinks should not be empty)
 	}
 
 	they should "be valid (have alias and page)" in {
-		TestData.wikipediaTestRDD(sc)
-			.map(entry => (entry, WikipediaTextparser.wikipediaToHtml(entry.getText())))
-			.map(WikipediaTextparser.parseHtml)
-			.flatMap(_.templatelinks)
-			.collect
+		TestData.wikipediaEntriesTestList()
+			.map { entry =>
+				val html = WikipediaTextparser.wikipediaToHtml(entry.getText())
+				WikipediaTextparser.parseHtml(entry.title, html)
+			}.flatMap(_.templatelinks)
 			.foreach(link => assert(isLinkValid(link)))
 	}
 
 	they should "be exactly these links" in {
 		val templateLinks = TestData.wikipediaTestTemplateLinks()
-		TestData.wikipediaTestRDD(sc).map(WikipediaTextparser.parseWikipediaEntry)
+		TestData.wikipediaEntriesTestList()
+			.map(WikipediaTextparser.parseWikipediaEntry)
 			.filter(entry => templateLinks.contains(entry.title))
-			.collect
 			.foreach(entry =>
 				entry.templatelinks shouldEqual templateLinks(entry.title))
 	}
@@ -171,8 +196,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 		WikipediaTextparser
 			.extractCategoryLinks(testEntry)
 			.categorylinks
-			.foreach { link =>
-				link.offset shouldBe 0
+			.foreach { link => link.offset shouldBe 0
 			}
 	}
 
