@@ -14,7 +14,6 @@ object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
-	val templateOffset = -1
 	val namespaceFile = "dewiki_namespaces"
 	val categoryNamespace = "Kategorie:"
 	val redirectText = "REDIRECT "
@@ -51,16 +50,17 @@ object WikipediaTextparser {
 
 	def parseHtml(entry: (WikipediaEntry, String)): ParsedWikipediaEntry = {
 		val parsedEntry = ParsedWikipediaEntry(entry._1.title)
+		parsedEntry.templatelinks = extractTemplateLinks(entry._1.getText)
 		if (checkRedirect(entry._2)) {
 			val doc = Jsoup.parse(entry._2)
 			val text = doc.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
 			parsedEntry.setText(text)
-			parsedEntry.links = extractRedirect(entry._2, text)
+			parsedEntry.textlinks = extractRedirect(entry._2, text)
 		} else {
 			val document = removeTags(entry._2)
-			val outputTuple = extractLinks(document.body)
+			val outputTuple = extractTextLinks(document.body)
 			parsedEntry.setText(outputTuple._1)
-			parsedEntry.links = outputTuple._2
+			parsedEntry.textlinks = outputTuple._2
 		}
 		extractCategoryLinks(parsedEntry)
 	}
@@ -98,7 +98,7 @@ object WikipediaTextparser {
 		cleanedUrl.replaceAll("\\A/", "")
 	}
 
-	def extractLinks(body: Element): (String, List[Link]) = {
+	def extractTextLinks(body: Element): Tuple2[String, List[Link]] = {
 		val linksList = ListBuffer[Link]()
 		var offset = 0
 		var startIndex = 0
@@ -205,12 +205,12 @@ object WikipediaTextparser {
 			alias = linkMatch.group(2)
 		}
 		if (alias != null) {
-		alias = alias.stripPrefix("|")
+			alias = alias.stripPrefix("|")
 		}
 		if (alias == null || alias.isEmpty) {
 			alias = page
 		}
-		Link(alias, page, templateOffset)
+		Link(alias, page)
 	}
 
 	def extractTemplateLinks(wikitext: String): List[Link] = {
@@ -231,10 +231,7 @@ object WikipediaTextparser {
 
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val html = wikipediaToHtml(entry.getText)
-		val parsedEntry = parseHtml(entry, html)
-		val templateLinks = extractTemplateLinks(entry.getText)
-		parsedEntry.links ++= templateLinks
-		parsedEntry
+		parseHtml(entry, html)
 	}
 
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
@@ -275,10 +272,10 @@ object WikipediaTextparser {
 	}
 
 	def extractCategoryLinks(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
-		val categoryLinks = entry.links.filter(entry =>
+		val categoryLinks = entry.textlinks.filter(entry =>
 			entry.alias.startsWith(categoryNamespace) || entry.page.startsWith(categoryNamespace))
-		entry.links = entry.links.filterNot(categoryLinks.toSet)
-		entry.category_links = categoryLinks.map { link =>
+		entry.textlinks = entry.textlinks.filterNot(categoryLinks.toSet)
+		entry.categorylinks = categoryLinks.map { link =>
 			val alias = link.alias.replaceFirst(categoryNamespace, "")
 			val page = link.page.replaceFirst(categoryNamespace, "")
 			Link(alias, page, 0)
