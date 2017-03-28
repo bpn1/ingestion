@@ -1,7 +1,6 @@
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import scala.collection.JavaConversions._
-import scala.collection.mutable
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
@@ -9,12 +8,13 @@ import org.jsoup.nodes.{Document, Element, TextNode}
 import java.net.URLDecoder
 import scala.collection.mutable.ListBuffer
 import WikiClasses._
+import scala.io.Source
 
 object WikipediaTextparser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
-	val templateOffset = -1
+	val namespaceFile = "dewiki_namespaces"
 	val categoryNamespace = "Kategorie:"
 	val redirectText = "REDIRECT "
 	val disambiguationTitleSuffix = " (Begriffsklärung)"
@@ -32,7 +32,7 @@ object WikipediaTextparser {
 
 	def extractRedirect(html: String, text: String): List[Link] = {
 		val anchorList = Jsoup.parse(html).select("a")
-		val linksList = mutable.ListBuffer[Link]()
+		val linksList = ListBuffer[Link]()
 		val redirectRegex = new Regex("REDIRECT( )*")
 		val categoryRegex = new Regex("Kategorie:")
 		val redirectOffset = (redirectRegex.findFirstIn(text) match {
@@ -46,25 +46,25 @@ object WikipediaTextparser {
 			}
 			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), offset)
 		}
-		linksList.toList
+		cleanMetapageLinks(linksList.toList)
 	}
 
 	def parseHtml(title: String, html: String): ParsedWikipediaEntry = {
-		val parsedEntry = ParsedWikipediaEntry(title, Option(""), null)
+		val parsedEntry = ParsedWikipediaEntry(title)
 		val document = Jsoup.parse(html)
 		if (isRedirectPage(html)) {
 			val text = document.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
 			parsedEntry.setText(text)
-			parsedEntry.links = extractRedirect(html, text)
+			parsedEntry.textlinks = extractRedirect(html, text)
 		} else if (title.endsWith(disambiguationTitleSuffix)) {
 			val outputTuple = extractDisambiguationLinks(title, document.body)
 			parsedEntry.setText(outputTuple._1)
-			parsedEntry.links = outputTuple._2
+			parsedEntry.disambiguationlinks = outputTuple._2
 		} else {
 			val cleanedDocument = removeTags(document)
-			val outputTuple = extractLinks(cleanedDocument.body)
+			val outputTuple = extractTextLinks(cleanedDocument.body)
 			parsedEntry.setText(outputTuple._1)
-			parsedEntry.links = outputTuple._2
+			parsedEntry.textlinks = outputTuple._2
 		}
 		extractCategoryLinks(parsedEntry)
 	}
@@ -107,19 +107,19 @@ object WikipediaTextparser {
 	}
 
 	def extractDisambiguationLinks(title: String, body: Element): (String, List[Link]) = {
-		val linksList = mutable.ListBuffer[Link]()
+		val linksList = ListBuffer[Link]()
 		val cleanTitle = title.stripSuffix(disambiguationTitleSuffix)
 		body.select("a")
 			.foreach { anchor =>
 				val target = parseUrl(anchor.attr("href"))
-				val link = Link(cleanTitle, target, -1)
+				val link = Link(cleanTitle, target)
 				linksList += link
 			}
 		(body.text, linksList.toList)
 	}
 
-	def extractLinks(body: Element): (String, List[Link]) = {
-		val linksList = mutable.ListBuffer[Link]()
+	def extractTextLinks(body: Element): (String, List[Link]) = {
+		val linksList = ListBuffer[Link]()
 		var offset = 0
 		var startIndex = 0
 		val children = body.childNodes
@@ -154,8 +154,8 @@ object WikipediaTextparser {
 				case _ =>
 			}
 		}
-
-		(body.text, linksList.toList)
+		val cleanedLinks = cleanMetapageLinks(linksList.toList)
+		(body.text, cleanedLinks)
 	}
 
 	def removeWikiMarkup(wikitext: String): String = {
@@ -199,7 +199,7 @@ object WikipediaTextparser {
 
 	def extractAllTemplates(wikitext: String): String = {
 		var templateText = ""
-		var templateRegex = new Regex("\\{\\{")
+		val templateRegex = new Regex("\\{\\{")
 		// cannot check if first '{' is escaped because page may begin with template
 		var startIndices = new ListBuffer[Int]()
 
@@ -221,7 +221,6 @@ object WikipediaTextparser {
 		if (page.startsWith("Datei:")) {
 			return null
 		}
-
 		var alias = ""
 		if (linkMatch.groupCount > 2) {
 			alias = linkMatch.group(2)
@@ -232,13 +231,11 @@ object WikipediaTextparser {
 		if (alias == null || alias.isEmpty) {
 			alias = page
 		}
-
-
-		Link(alias, page, templateOffset)
+		Link(alias, page)
 	}
 
 	def extractTemplateLinks(wikitext: String): List[Link] = {
-		val linkList = mutable.ListBuffer[Link]()
+		val linkList = ListBuffer[Link]()
 		val templateText = extractAllTemplates(wikitext)
 		val linkRegex = new Regex("\\[\\[(.*?)(\\|(.*?))?\\]\\]")
 		linkRegex
@@ -260,9 +257,10 @@ object WikipediaTextparser {
 		}
 		val html = wikipediaToHtml(entry.getText())
 		val parsedEntry = parseHtml(title, html)
-		val templateLinks = extractTemplateLinks(entry.getText())
-		parsedEntry.links ++= templateLinks
+		parsedEntry.templatelinks = extractTemplateLinks(entry.getText())
 		parsedEntry
+//		val html = wikipediaToHtml(entry.getText)
+//		parseHtml(entry.title, html)
 	}
 
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
@@ -271,11 +269,42 @@ object WikipediaTextparser {
 		entry
 	}
 
+	/**
+	  * Reads namespaces from resource file and removes used namespaces.
+	  * @return list of unused namespaces
+	  */
+	def badNamespaces(): List[String] = {
+		val namespaces = Source
+			.fromURL(getClass().getResource(s"/$namespaceFile"))
+			.getLines()
+			.toList
+		val usedNamespaces = List("Kategorie:")
+		namespaces.filterNot(usedNamespaces.toSet)
+	}
+
+	/**
+	  * Checks whether the entry starts with a namespace.
+	  * @param entry Wikipedia entry to check
+	  * @return true if entry starts with a namespace
+	  */
+	def isMetaPage(entry: WikipediaEntry): Boolean = {
+		badNamespaces.exists(entry.title.startsWith)
+	}
+
+	/**
+	  * Removes links to pages with an unused namespace.
+	  * @param linkList list of links to clean
+	  * @return list of links without links to unused namespace pages.
+	  */
+	def cleanMetapageLinks(linkList: List[Link]): List[Link] = {
+		linkList.filterNot(link => badNamespaces.exists(link.page.startsWith))
+	}
+
 	def extractCategoryLinks(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
-		val categoryLinks = entry.links.filter(entry =>
+		val categoryLinks = entry.textlinks.filter(entry =>
 			entry.alias.startsWith(categoryNamespace) || entry.page.startsWith(categoryNamespace))
-		entry.links = entry.links.filterNot(categoryLinks.toSet)
-		entry.category_links = categoryLinks.map { link =>
+		entry.textlinks = entry.textlinks.filterNot(categoryLinks.toSet)
+		entry.categorylinks = categoryLinks.map { link =>
 			val alias = link.alias.replaceFirst(categoryNamespace, "")
 			val page = link.page.replaceFirst(categoryNamespace, "")
 			Link(alias, page, 0)
@@ -285,8 +314,7 @@ object WikipediaTextparser {
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Text Parser")
-			.set("spark.cassandra.connection.host", "odin01")
+			.setAppName("Wikipedia Textparser")
 		val sc = new SparkContext(conf)
 
 		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
