@@ -120,7 +120,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 		val cleanedEntry = WikipediaTextparser.cleanRedirects(entry)
  		val redirectRegex = new Regex("\\AWEITERLEITUNG")
  		val searchText = Jsoup.parse(cleanedEntry.getText).body.text
- 		searchText shouldBe startWith("\AWEITERLEITUNG")
+ 		searchText should startWith ("WEITERLEITUNG")
 		}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
