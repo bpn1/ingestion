@@ -1,4 +1,4 @@
-# Ingestion [![Build Status](https://hpi.de/naumann/sites/bp2016n1/job/ingestion/badge/icon)](https://hpi.de/naumann/sites/bp2016n1/job/ingestion/badge/icon)
+# Ingestion [![Build Status](https://hpi.de/naumann/sites/ingestion/jenkins/buildStatus/icon?job=ingestion)](https://hpi.de/naumann/sites/ingestion/jenkins/job/ingestion/)
 Bachelor project at HPI Potsdam
 
 Scrum board is located [here](https://github.com/bpn1/ingestion/projects/1).  
