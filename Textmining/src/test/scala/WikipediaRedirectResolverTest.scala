@@ -5,14 +5,19 @@ import scala.collection.mutable
 
 class WikipediaRedirectResolverTest extends FlatSpec with SharedSparkContext with Matchers {
 	"All redirects in an entry" should "be resolved" in {
-		val dict: mutable.Map[String, String] = mutable.Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
+		val dict: mutable.Map[String, String] =
+			mutable.Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
 		val link: Link = Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus Berlin", 10)
 		val resolvedLink = WikipediaRedirectResolver.cleanLinkOfRedirects(link, dict)
 		resolvedLink.page shouldBe "Postbank-Hochhaus (Berlin)"
 	}
 
 	"All redirect pages" should "not have looped links" in {
-		val entry = ParsedWikipediaEntry("?", Option("#WEITERLEITUNG [[?]]"), List[Link](Link("?", "?", 0)))
+		val entry = ParsedWikipediaEntry(
+			"?",
+			Option("#WEITERLEITUNG [[?]]"),
+			List[Link](Link("?", "?", 0))
+		)
 		WikipediaRedirectResolver.checkRedirectPage(entry.links.head, entry.title) shouldBe false
 	}
 }
