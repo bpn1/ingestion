@@ -17,7 +17,8 @@ object WikiClasses {
 		var textlinks: List[Link] = List[Link](),
 		var templatelinks: List[Link] = List[Link](),
 		var foundaliases: List[String] = List[String](),
-		var categorylinks: List[Link] = List[Link]())
+		var categorylinks: List[Link] = List[Link](),
+		var disambiguationlinks: List[Link] = List[Link]())
 	{
 
 		def setText(t: String): Unit = text = Option(t)
