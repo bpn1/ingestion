@@ -126,6 +126,54 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
  		searchText should startWith ("WEITERLEITUNG")
 		}
 
+	"Bad namespace pages" should "be filtered" in {
+		val testPages = TestData.testNamespacePages
+			.filterNot(WikipediaTextparser.isMetaPage)
+		val expectedPages = TestData.testCleanedNamespacePages
+		testPages shouldEqual expectedPages
+
+	}
+
+	"Bad namespace links" should "be filtered" in {
+		val testLinks = WikipediaTextparser
+			.cleanMetapageLinks(TestData.testNamespaceLinks)
+		val expectedLinks = TestData.testCleanedNamespaceLinks
+		testLinks shouldEqual expectedLinks
+	}
+
+	"Category links" should "be extracted" in {
+		val testLinks = TestData.testCategoryLinks()
+		val testEntry = ParsedWikipediaEntry(title = "test", links = testLinks)
+		val result = WikipediaTextparser.extractCategoryLinks(testEntry)
+		val expectedLinks = TestData.testCleanedCategoryLinks()
+		val expectedCategoryLinks = TestData.testExtractedCategoryLinks()
+		result.links shouldEqual expectedLinks
+		result.category_links shouldEqual expectedCategoryLinks
+	}
+
+	they should "have cleaned aliases and pages" in {
+		val testLinks = TestData.testCategoryLinks()
+		val testEntry = ParsedWikipediaEntry(title = "test", links = testLinks)
+		WikipediaTextparser
+			.extractCategoryLinks(testEntry)
+			.category_links
+		    .foreach { link =>
+				link.alias shouldNot startWith (WikipediaTextparser.categoryNamespace)
+				link.page shouldNot startWith (WikipediaTextparser.categoryNamespace)
+			}
+	}
+
+	they should "have their offset set to zero" in {
+		val testLinks = TestData.testCategoryLinks()
+		val testEntry = ParsedWikipediaEntry(title = "test", links = testLinks)
+		WikipediaTextparser
+			.extractCategoryLinks(testEntry)
+			.category_links
+			.foreach { link =>
+				link.offset shouldBe 0
+			}
+	}
+
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
 		val substring = text.substring(link.offset, link.offset + link.alias.length)
 		substring == link.alias
