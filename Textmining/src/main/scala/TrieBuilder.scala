@@ -51,13 +51,13 @@ object TrieBuilder {
 		val sc = new SparkContext(conf)
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 		val aliasList = parsedWikipedia
-			.flatMap(_.links)
+			.flatMap(_.allLinks)
 			.map(_.alias)
 			.distinct
 			.collect
 
-		val tokenizer = new CleanWhitespaceTokenizer()
-		//val tokenizer = new CleanCoreNLPTokenizer()
+		val tokenizer = new CleanCoreNLPTokenizer()
+
 		val localTrie = new TrieNode()
 		for(alias <- aliasList) {
 			localTrie.append(tokenizer.tokenize(alias))
