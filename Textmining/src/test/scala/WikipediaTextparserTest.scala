@@ -95,6 +95,12 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 			}
 	}
 
+	"All redirects" should "contain WEITERLEITUNG link" in {
+ 		val entries = TestData.testEntriesWithBadRedirects
+		entries.map(entry => WikipediaTextparser.cleanRedirects(entry))
+		    .map(entry => entry.getText should startWith ("WEITERLEITUNG"))
+	}
+
 	"Wikipedia disambiguation pages" should "be recognized as such" in {
 		val disambiguationPages = TestData.wikipediaEntriesTestList()
 			.filter(WikipediaTextparser.isDisambiguationPage)
