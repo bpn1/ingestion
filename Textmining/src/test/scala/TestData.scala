@@ -649,6 +649,25 @@ object TestData {
 			Link("Zwickau", "Zwickau", 0))
 	}
 
+	def testRedirectCornerCaseEntries(): Set[ParsedWikipediaEntry] = {
+		Set(ParsedWikipediaEntry("?", Option("#WEITERLEITUNG [[?]]"), List[Link](Link("?", "?", 0))))
+	}
+
+	def testRedirectDict(): Map[String, String] = {
+		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
+	}
+
+	def testLinksWithRedirects(): Set[Link] = {
+		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus Berlin", 10))
+	}
+
+	def testLinksWithResolvedRedirects(): Set[Link] = {
+		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus (Berlin)", 10))
+	}
+
+	def testEntriesWithBadRedirects(): List[WikipediaEntry] = {
+		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
+	}
 	// scalastyle:on line.size.limit
 }
 
