@@ -2,7 +2,6 @@ import WikiClasses._
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.rdd.RDD
-import org.jsoup.Jsoup
 import scala.util.matching.Regex
 import org.scalatest._
 
@@ -116,14 +115,9 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 	}
 
 	"All redirects" should "contain WEITERLEITUNG link" in {
- 		val entry = WikipediaEntry(
-			"Postbank-Hochhaus Berlin",
-			Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")
-		)
-		val cleanedEntry = WikipediaTextparser.cleanRedirects(entry)
- 		val redirectRegex = new Regex("\\AWEITERLEITUNG")
- 		val searchText = Jsoup.parse(cleanedEntry.getText).body.text
- 		searchText should startWith ("WEITERLEITUNG")
+ 		val entries = TestData.testEntriesWithBadRedirects
+		entries.map(entry => WikipediaTextparser.cleanRedirects(entry))
+		    .map(entry => entry.getText should startWith ("WEITERLEITUNG"))
 		}
 
 	"Bad namespace pages" should "be filtered" in {
