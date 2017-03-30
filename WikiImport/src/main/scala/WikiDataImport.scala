@@ -5,7 +5,7 @@ import scala.collection.mutable.ListBuffer
 import play.api.libs.json._
 import com.datastax.spark.connector._
 
-object WikiDataRDD {
+object WikiDataImport {
 	val defaultInputFile = "wikidata.json"
 	val language = "de"
 	val fallbackLanguage = "en"
@@ -182,7 +182,7 @@ object WikiDataRDD {
 		}
 
 		val conf = new SparkConf()
-			.setAppName("WikiDataRDD")
+			.setAppName("WikiDataImport")
 
 		val sc = new SparkContext(conf)
 		val jsonFile = sc.textFile(inputFile)
