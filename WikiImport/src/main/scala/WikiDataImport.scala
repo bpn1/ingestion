@@ -12,17 +12,6 @@ object WikiDataImport {
 	val keyspace = "wikidumps"
 	val tablename = "wikidata"
 
-	case class WikiDataEntity(
-		id: String,
-		var aliases: List[String] = List[String](),
-		var description: Option[String] = None,
-		var entitytype: Option[String] = None,
-		var wikiname: Option[String] = None,
-		var enwikiname: Option[String] = None,
-		var instancetype: Option[String] = None,
-		var label: Option[String] = None,
-		var data: Map[String, List[String]] = Map[String, List[String]]())
-
 	// remove array syntax from JSON for parallel parsing
 	def cleanJSON(json: String): String = {
 		json.replaceAll("^\\[|,$|, $|\\]$", "")
