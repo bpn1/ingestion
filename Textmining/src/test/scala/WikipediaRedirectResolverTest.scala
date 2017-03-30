@@ -16,7 +16,7 @@ class WikipediaRedirectResolverTest extends FlatSpec with SharedSparkContext wit
 	"All looped or bad redirect pages" should "be filtered" in {
 		val entries = TestData.testRedirectCornerCaseEntries
 		entries.filter { case (entry) =>
-			WikipediaRedirectResolver.checkRedirectPage(entry.links.head, entry.title)
+			WikipediaRedirectResolver.isValidRedirect(entry.textlinks.head, entry.title)
 		} shouldBe empty
 	}
 }
