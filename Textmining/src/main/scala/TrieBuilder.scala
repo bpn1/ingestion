@@ -21,16 +21,12 @@ object TrieBuilder {
 		tokenizer: Tokenizer
 	): ParsedWikipediaEntry =
 	{
-		val sentenceTokenizer = new SentenceTokenizer()
-		val sentenceList = sentenceTokenizer.tokenize(entry.getText)
 		val resultList = mutable.ListBuffer[String]()
-		for(sentence <- sentenceList) {
-			val tokens = tokenizer.tokenize(sentence)
-			for(i <- tokens.indices) {
-				val testTokens = tokens.slice(i, tokens.length)
-				val aliasMatches = trie.matchTokens(testTokens)
-				resultList ++= aliasMatches.map(tokenizer.reverse)
-			}
+		val tokens = tokenizer.tokenize(entry.getText())
+		for(i <- tokens.indices) {
+			val testTokens = tokens.slice(i, tokens.length)
+			val aliasMatches = trie.matchTokens(testTokens)
+			resultList ++= aliasMatches.map(tokenizer.reverse)
 		}
 		entry.foundaliases = resultList
 			.filter(_ != "")
@@ -55,12 +51,12 @@ object TrieBuilder {
 		val sc = new SparkContext(conf)
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 		val aliasList = parsedWikipedia
-			.flatMap(_.links)
+			.flatMap(_.allLinks)
 			.map(_.alias)
 			.distinct
 			.collect
 
-		val tokenizer = new WhitespaceTokenizer()
+		val tokenizer = new CleanCoreNLPTokenizer()
 		val localTrie = new TrieNode()
 		for(alias <- aliasList) {
 			localTrie.append(tokenizer.tokenize(alias))
