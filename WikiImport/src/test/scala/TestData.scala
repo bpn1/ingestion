@@ -78,5 +78,21 @@ object TestData {
 			Subject(UUID.fromString("bbd8f942-1663-4fea-9e70-3cf27896bc57"), name = Option("Entry 6"), properties = Map("test" -> List("Q5"))))
 	}
 
+	def testWikidataEntities(): List[WikiDataEntity] = {
+		List(WikiDataEntity("Q21110253", List("testalias"), Option("human protein (annotated by UniProtKB/Swiss-Prot Q8N128)"), Option("item"), Option("testwikiname"), Option("en_testwikiname"), Option("test_instancetype"), Option("Protein FAM177A1"), Map("Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"), "subclass of" -> List("Protein", "FAM177 family"))))
+	}
+
+	def translatedSubjects(): List[Subject] = {
+		List(Subject(
+			name = Option("Protein FAM177A1"),
+			aliases = List("testalias"),
+			category = Option("test_instancetype"),
+			properties = Map(
+				"wikipedia_name" -> List("testwikiname"),
+				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
+				"subclass of" -> List("Protein", "FAM177 family"),
+				"wikidata_id" -> List("Q21110253"))))
+	}
+
 	// scalastyle:on line.size.limit
 }
