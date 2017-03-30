@@ -2,6 +2,8 @@ import WikiClasses._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import scala.io.Source
+
 // scalastyle:off number.of.methods
 object TestData {
 	// scalastyle:off line.size.limit
@@ -426,13 +428,30 @@ object TestData {
 	}
 
 	def testListLinkPage(): String = {
-		// TODO read proper html page
-		""
+		Source.fromURL(getClass.getResource("/test_data.html")).getLines().mkString("\n")
 	}
 
 	def testExtractedListLinks(): List[Link] = {
-		// TODO extract list links from test html page
-		List(Link("", "", 0))
+		List(Link("Zwillinge", "Zwillinge"))
+		List(Link("Kristallzwilling", "Kristallzwilling"))
+		List(Link("Zwilling J. A. Henckels", "Zwilling_J._A._Henckels"))
+		List(Link("Zwillinge (Sternbild)", "Zwillinge_(Sternbild)"))
+		List(Link("Zwillinge (Tierkreiszeichen)", "Zwillinge_(Tierkreiszeichen)"))
+		List(Link("Christian Zwilling", "Christian_Zwilling"))
+		List(Link("David Zwilling", "David_Zwilling"))
+		List(Link("Edgar Zwilling", "Edgar_Zwilling"))
+		List(Link("Ernst Zwilling", "Ernst_Zwilling"))
+		List(Link("Gabriel Zwilling", "Gabriel_Zwilling"))
+		List(Link("Michail Jakowlewitsch Zwilling", "Michail_Jakowlewitsch_Zwilling"))
+		List(Link("Paul Zwilling", "Paul_Zwilling"))
+		List(Link("Georg Zwilling", "Georg_Zwilling"))
+		List(Link("Poker", "Poker"))
+		List(Link("Primzahlzwilling", "Primzahlzwilling"))
+		List(Link("Zwilling (Heeresfeldbahn)", "Zwilling_(Heeresfeldbahn)"))
+		List(Link("Twins � Zwillinge", "Twins_%EF%BF%BD_Zwillinge"))
+		List(Link("Zwillingswendeltreppe", "Zwillingswendeltreppe"))
+		List(Link("Der Zwilling", "Der_Zwilling"))
+		List(Link("Die Zwillinge", "Die_Zwillinge"))
 	}
 
 	// scalastyle:on line.size.limit
