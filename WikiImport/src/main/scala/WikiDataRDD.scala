@@ -50,7 +50,7 @@ object WikiDataRDD {
 
 	def extractString(json: JsValue, path: List[String]): Option[String] = {
 		val value = getValue(json, path)
-		value.orNull.asOpt[String]
+		value.map(_.as[String])
 	}
 
 	def extractList(json: JsValue, path: List[String]): List[JsValue] = {
@@ -65,7 +65,7 @@ object WikiDataRDD {
 
 	def extractDouble(json: JsValue, path: List[String]): Option[String] = {
 		val value = getValue(json, path)
-		value.orNull.asOpt[Double].map(_.toString)
+		value.map(_.as[Double].toString)
 	}
 
 	def parseDataType(dataType: Option[String], dataValue: JsValue): String = {
@@ -183,7 +183,6 @@ object WikiDataRDD {
 
 		val conf = new SparkConf()
 			.setAppName("WikiDataRDD")
-			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
 		val jsonFile = sc.textFile(inputFile)
