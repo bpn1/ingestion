@@ -14,7 +14,6 @@ object DBPediaDeduplication {
 	val keyspace = "datalake"
 	val inputTableName = "subject_temp"
 	val subjectTable = "subject"
-	val wikidataKey = "wikipedia_name"
 	val outputTable = "duplicatecandidates"
 
 	case class DuplicateCandidate(
@@ -33,29 +32,66 @@ object DBPediaDeduplication {
 		Version(version, appName, List[String](), Map[String, String](), dataSources, timestamp)
 	}
 
-	def dbpediaFilter(rdd: RDD[Subject]): RDD[(String, Subject)] = {
+	def keyBySingleProperty(rdd: RDD[Subject], property: String): RDD[(String, Subject)] = {
 		rdd
-			.filter(_.name.isDefined)
-			.map { entry =>
+		  .filter(_.properties.contains(property))
+		  .map { subject =>
+				val keyOpt = subject.properties(property).headOption
+				(keyOpt.getOrElse(""), subject)
+			}
+	}
+
+	def keyByProperty(rdd: RDD[Subject], property: String): RDD[(List[String], Subject)] = {
+		rdd
+		  .filter(_.properties.contains(property))
+		  .map { subject =>
+				val list = subject.properties.getOrElse(property, List())
+				(list, subject)
+			}
+	}
+
+	def translateToCandidate(rdd: RDD[(String, (Subject, Subject))]): RDD[DuplicateCandidate] = {
+		rdd
+		  .map { case (key, (subject1, subject2)) =>
+				DuplicateCandidate(
+					UUIDs.random(),
+					subject1.id,
+					subject1.name,
+					subject2.id,
+					subject2.name,
+					inputTableName)
+			}
+	}
+
+	def joinOnName(dbpediaRDD: RDD[Subject], subjectRDD: RDD[Subject]): RDD[(String, (Subject, Subject))] = {
+		val dbpediaNameRDD = dbpediaRDD
+		  .filter(_.name.isDefined)
+		  .map { subject =>
 				// To remove the @de  . from the name of every dbpedia subject
-				val name = entry.name.get.dropRight(5)
-				(name, entry)
+				val name = subject.name.get.dropRight(5)
+				(name, subject)
 			}
+
+		val subjectWikinameRDD = keyBySingleProperty(subjectRDD, "wikipedia_name")
+
+		dbpediaNameRDD.join(subjectWikinameRDD)
 	}
 
-	def subjectFilter(rdd: RDD[Subject]): RDD[(String, Subject)] = {
-		rdd
-			.filter(_.properties.contains(wikidataKey))
-			.map { entry =>
-				val keyOpt = entry.properties(wikidataKey).headOption
-				(keyOpt.getOrElse(""), entry)
+	def joinOnWikiId(dbpediaRDD: RDD[Subject], subjectRDD: RDD[Subject]): RDD[(String, (Subject, Subject))] = {
+		val dbpediaSameAsRDD = keyByProperty(dbpediaRDD, "owl:sameAs")
+		  .filter(_._1.nonEmpty)
+			.filter(_._1.exists(_.startsWith("wikidata:")))
+		  .map { case (property, subject) =>
+				val id = property
+					.filter(_.startsWith("wikidata:"))
+				  .head
+				  .drop(9)
+				(id, subject)
 			}
-	}
 
-	def mergeSubjects(subject1: Subject, subject2: Subject, version: Version) : Subject = {
-		val sm = new SubjectManager(subject1, version)
-		sm.addProperties(subject2.properties)
-		subject1
+		val subjectWikiId = keyBySingleProperty(subjectRDD, "wikidata_id")
+
+		dbpediaSameAsRDD.join(subjectWikiId)
 	}
 
 	def main(args: Array[String]) {
@@ -68,21 +104,20 @@ object DBPediaDeduplication {
 		val version = makeTemplateVersion()
 		val dbpedia = sc.cassandraTable[Subject](keyspace, inputTableName)
 		val subjects = sc.cassandraTable[Subject](keyspace, subjectTable)
-		val dbpediaTopic = dbpediaFilter(dbpedia)
-		val subjectTopic = subjectFilter(subjects)
 
-		dbpediaTopic
-			.join(subjectTopic)
-			.map { case (key, (dbpediaSubject, subject)) =>
-				DuplicateCandidate(
-					UUIDs.random(),
-					subject.id,
-					subject.name,
-					dbpediaSubject.id,
-					dbpediaSubject.name,
-					inputTableName)
-			}.saveToCassandra(keyspace, outputTable)
+		val nameJoined = joinOnName(dbpedia, subjects)
+		val idJoined = joinOnWikiId(dbpedia, subjects)
 
+		val nameCandidates = translateToCandidate(nameJoined)
+		val idCandidates = translateToCandidate(idJoined)
+
+		println(nameCandidates.count())
+		println(idCandidates.count())
+
+		println(nameCandidates
+		  .keyBy(duplicate => (duplicate.subject_id, duplicate.duplicate_id))
+		  .join(idCandidates.keyBy(duplicate => (duplicate.subject_id, duplicate.duplicate_id)))
+		  .count())
 
 		sc.stop()
 	}
