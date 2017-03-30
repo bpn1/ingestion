@@ -4,9 +4,10 @@ import scala.collection.JavaConverters._
 
 object DBPediaDumpURLs {
 	def main(args: Array[String]) {
-		val html = Source.fromFile("dbpedia2016.html").getLines.mkString
+		val latestDumpURL = "http://wiki.dbpedia.org/Downloads"
+		val html = Source.fromURL(latestDumpURL).getLines.mkString("\n")
 		val doc = Jsoup.parse(html)
-		val links = doc
+		doc
 			.select("a:contains(ttl)")
 			.asScala
 			.map(_.attr("href"))
