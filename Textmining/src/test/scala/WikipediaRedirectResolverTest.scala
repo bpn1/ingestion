@@ -1,14 +1,13 @@
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
-import WikiClasses._
 import scala.collection.mutable
 
 class WikipediaRedirectResolverTest extends FlatSpec with SharedSparkContext with Matchers {
 	"All redirects in an entry" should "be resolved" in {
-		val dict: mutable.Map[String, String] = TestData.testRedirectDict
-		val links: List[Link] = TestData.testLinksWithRedirects
-		val resolvedLinks: List[Link] = links.map(link =>
-			WikipediaRedirectResolver.cleanLinkOfRedirects(link, dict)
+		val dict = mutable.Map[String, String]() ++ TestData.testRedirectDict
+		val links= TestData.testLinksWithRedirects
+		val resolvedLinks = links.map(
+			WikipediaRedirectResolver.cleanLinkOfRedirects(_, dict)
 		)
 		resolvedLinks shouldBe TestData.testLinksWithResolvedRedirects
 	}

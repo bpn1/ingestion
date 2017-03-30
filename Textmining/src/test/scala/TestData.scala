@@ -2,8 +2,6 @@ import WikiClasses._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import scala.collection.mutable
-
 // scalastyle:off number.of.methods
 object TestData {
 	// scalastyle:off line.size.limit
@@ -655,16 +653,16 @@ object TestData {
 		Set(ParsedWikipediaEntry("?", Option("#WEITERLEITUNG [[?]]"), List[Link](Link("?", "?", 0))))
 	}
 
-	def testRedirectDict(): mutable.Map[String, String] = {
-		mutable.Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
+	def testRedirectDict(): Map[String, String] = {
+		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
 	}
 
-	def testLinksWithRedirects(): List[Link] = {
-		List(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus Berlin", 10))
+	def testLinksWithRedirects(): Set[Link] = {
+		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus Berlin", 10))
 	}
 
-	def testLinksWithResolvedRedirects(): List[Link] = {
-		List(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus (Berlin)", 10))
+	def testLinksWithResolvedRedirects(): Set[Link] = {
+		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus (Berlin)", 10))
 	}
 
 	def testEntriesWithBadRedirects(): List[WikipediaEntry] = {
