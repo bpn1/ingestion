@@ -6,13 +6,13 @@ import play.api.libs.json.Json
 import scala.io.Source
 import scala.util.matching.Regex
 
-class WikiDataRDDTest extends FlatSpec with SharedSparkContext with Matchers {
+class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers {
 	// def cleanJSON(json: String): String
 
 	"json cleaning" should "return valid json" in {
 		// invalid json would cause an exception
 		wikiDataTestData
-			.map(WikiDataRDD.cleanJSON)
+			.map(WikiDataImport.cleanJSON)
 		    .filter(_.nonEmpty)
 			.map(Json.parse)
 	}
@@ -110,11 +110,11 @@ class WikiDataRDDTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	def getPropertyMap(): Map[String, String] = {
 		// TODO create test dataset
-		WikiDataRDD.buildPropertyMap(
+		WikiDataImport.buildPropertyMap(
 			sc.parallelize(wikiDataTestData())
-				.map(WikiDataRDD.cleanJSON)
+				.map(WikiDataImport.cleanJSON)
 				.filter(_.nonEmpty)
-				.map(WikiDataRDD.parseEntity))
+				.map(WikiDataImport.parseEntity))
 	}
 
 	// extracted from WikiData dump

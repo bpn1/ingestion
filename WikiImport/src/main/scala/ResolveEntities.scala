@@ -39,7 +39,7 @@ object ResolveEntities {
 	  */
 	def hasUnitValue(element: (String, String, String)): Boolean = {
 		val unitRegex = new Regex(";(P|Q)[0-9]+$")
-		unitRegex.findFirstIn(element._3).isEmpty
+		unitRegex.findFirstIn(element._3).isDefined
 	}
 
 	/**
@@ -69,6 +69,15 @@ object ResolveEntities {
 	  */
 	def extractNameData(entity: WikiDataEntity): (String, String) = {
 		(entity.id, entity.label.get)
+	}
+
+	/**
+	  * Transforms triple into a joinable format
+	  * @param element triple to transform
+	  * @return joinable tuple
+	  */
+	def makeJoinable(element: (String, String, String)): (String, (String, String)) = {
+		(element._3, (element._1, element._2))
 	}
 
 	/**
@@ -123,6 +132,7 @@ object ResolveEntities {
 				val propertyMap = propertyList
 					.groupBy(_._1)
 					.mapValues(_.map(_._2))
+				    .map(identity)
 				(id, propertyMap)
 			}
 	}
@@ -143,10 +153,9 @@ object ResolveEntities {
 		    .filter(shouldBeResolved)
 		    .map(extractNameData)
 
-		// transform to joinable RDD
 		val idData = entityData
 			.filter(containsWikidataIdValue)
-			.map(el => (el._3, (el._1, el._2)))
+			.map(makeJoinable)
 
 		val idJoin = joinIdRDD(idData, resolvableNames)
 		val unitJoin = joinUnitRDD(unitData, resolvableNames)
