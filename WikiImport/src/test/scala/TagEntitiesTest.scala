@@ -11,4 +11,19 @@ class TagEntitiesTest extends FlatSpec with SharedSparkContext with Matchers {
 		//buildSubclassMap
 		assert(false)
 	}
+
+	"Wikidata entity" should "be properly translated into SublcassEntry" in {
+		//translateToSubclassEntry
+		assert(false)
+	}
+
+	"Instance of property" should "be checked correctly" in {
+		//isInstanceOf
+		assert(false)
+	}
+
+	it should "be updated correctly" in {
+		//updateInstanceOfProperty
+		assert(false)
+	}
 }

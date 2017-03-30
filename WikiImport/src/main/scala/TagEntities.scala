@@ -2,28 +2,18 @@ import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import scala.collection.mutable
 import org.apache.spark.rdd._
+import scala.language.postfixOps
 
 object TagEntities {
 	val keyspace = "wikidumps"
 	val tablename = "wikidata"
-
 	val tagClasses = Map(
 		"Q43229" -> "organization",
 		"Q4830453" -> "business",
-		//"Q215627" -> "person",
-		//"Q1496967" -> "location", // is "territorial entity" (previously "Q2221906")
-		"Q268592" -> "economic branch"
-	)
-
+		"Q268592" -> "economic branch")
 	val instanceProperty = "instance of"
 	val subclassProperty = "subclass of"
 	val wikidataPathProperty = "wikidata_path"
-
-	case class SubclassEntry(
-		id: String,
-		var label: String = "",
-		var data: Map[String, List[String]] = Map[String, List[String]](),
-		var classList: List[String] = List[String]())
 
 	def addShorterPaths(
 		subclasses: Map[String, List[String]],
@@ -38,6 +28,10 @@ object TagEntities {
 				resultMap(key) = path
 			}
 		}
+//		resultMap ++= oldClasses.filter { case (key, path) =>
+//			val oldPathLength = resultMap.get(key).map(_.size)
+//			oldPathLength.isEmpty || path.size < oldPathLength.get
+//		}
 		resultMap.toMap
 	}
 
@@ -78,43 +72,65 @@ object TagEntities {
 		subclasses.toMap
 	}
 
+	/**
+	  * Translates a Wikidata entity into a Subclass entry. This entry contains the id, the label
+	  * or the id if there is no label and the data entries with either the {@instanceProperty} or
+	  * {@subclassProperty} key.
+	  * @param entity Wikidata entity to translate
+	  * @return SubclassEntry with only the id, label and subclass or instance property
+	  */
+	def translateToSubclassEntry(entity: WikiDataEntity): SubclassEntry = {
+		val data = entity.data.filterKeys(key =>
+			key == instanceProperty || key == subclassProperty)
+		val label = entity.label.getOrElse(entity.id)
+		SubclassEntry(entity.id, label, data)
+	}
+
+	/**
+	  * Returns true of the entry is an instance of one of the given classes.
+	  * @param entry Subclass entry to test
+	  * @param classes map of class data used to test the entry
+	  * @return true if one of the values of the instance of property of the entry exists as key
+	  * in the class map
+	  */
+	def isInstanceOf(entry: SubclassEntry, classes: Map[String, List[String]]): Boolean = {
+		entry.data.contains(instanceProperty) &&
+			entry.data(instanceProperty).exists(classes.contains)
+	}
+
+	/**
+	  * Creates value of the instancetype column and creates new data entry containing the subclass
+	  * path for a Wikidata entity.
+	  * @param entry Subclass entry containing the id and data of the Wikidata entry
+	  * @param classes map of class data used to set subclass path and set instancetype
+	  * @return triple of wikidata id, instancetype and path property
+	  */
+	def updateInstanceOfProperty(
+		entry: SubclassEntry,
+		classes: Map[String, List[String]]
+	): (String, String, Map[String, List[String]]) = {
+		val classKey = entry.data(instanceProperty)
+			.filter(classes.contains)
+			.head
+		val path = classes(classKey)
+		(entry.id, path.head, Map(wikidataPathProperty -> path))
+	}
+
 	def main(args : Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("TagEntities")
-			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
 		val classData = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
-			.map { entry =>
-				SubclassEntry(entry.id,
-					entry.label.getOrElse(entry.id),
-					entry.data
-						.filterKeys(key => key == instanceProperty || key == subclassProperty))
-			}
+			.map(translateToSubclassEntry)
 
-		val categoryData = classData
-			.filter { subclassEntry =>
-				subclassEntry.data.contains(subclassProperty)
-			}.cache
-
-		val subclasses = buildSubclassMap(categoryData)
-
-		// save subclasses as text
-		sc.parallelize(subclasses.toList)
-			.map { case (id, path) => id + " => " + path.mkString("/") }
-			.saveAsTextFile("subclass_tree_" + System.currentTimeMillis / 1000)
-
-		// update all entities that fit the found classes
+		val subclassData = classData
+			.filter(_.data.contains(subclassProperty))
+			.cache
+		val subclasses = buildSubclassMap(subclassData)
 		val updatedEntities = classData
-			.filter(_.data
-				.getOrElse(instanceProperty, List[String]())
-				.exists(subclasses.contains))
-			.map { entry =>
-				val path = subclasses(entry.data(instanceProperty)
-					.filter(subclasses.contains)
-					.head)
-				(entry.id, path.head, Map(wikidataPathProperty -> path))
-			}
+			.filter(isInstanceOf(_, subclasses))
+			.map(updateInstanceOfProperty(_, subclasses))
 
 		updatedEntities.saveToCassandra(
 			keyspace,
