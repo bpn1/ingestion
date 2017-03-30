@@ -9,7 +9,7 @@ import scala.util.matching.Regex
 class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers {
 	// def cleanJSON(json: String): String
 
-	"json cleaning" should "return valid json" in {
+	"Json" should "be cleaned and valid json" in {
 		// invalid json would cause an exception
 		wikiDataTestData
 			.map(WikiDataImport.cleanJSON)
@@ -17,30 +17,35 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 			.map(Json.parse)
 	}
 
-	// TODO json test dataset
-	// def getValue(json: JsValue, path: List[String]): Option[JsValue]
+	"Data types" should "be parsed" in {
+		// def parseDataType(dataType: Option[String], dataValue: JsValue): String
+		assert(false)
+	}
 
-	// def extractString(json: JsValue, path: List[String]): Option[String]
+	"Entity values" should "be filled in" in {
+		// def fillEntityValues(json: JsValue): WikiDataEntity
+		assert(false)
+	}
 
-	// def extractList(json: JsValue, path: List[String]): List[JsValue]
+	"Claim values" should "be extracted" in {
+		// def extractClaimValues(claim: JsValue): String
+		assert(false)
+	}
 
-	// def extractMap(json: JsValue, path: List[String]): Map[String, JsValue]
+	"Wikidata entity" should "be parsed" in {
+		// def parseEntity(line: String): WikiDataEntity
+		assert(false)
+	}
 
-	// def extractDouble(json: JsValue, path: List[String]): Option[String]
+	"Property ids" should "be translated" in {
+		// def translatePropertyIDs(entity: WikiDataEntity, properties: Map[String, String]):
+		assert(false)
+	}
 
-
-	// def parseDataType(dataType: Option[String], dataValue: JsValue): String
-
-	// def fillEntityValues(json: JsValue): WikiDataEntity
-
-	// def extractClaimValues(claim: JsValue): String
-
-	// def parseEntity(line: String): WikiDataEntity
-
-	// def translatePropertyIDs(entity: WikiDataEntity, properties: Map[String, String]):
-	// WikiDataEntity
-
-	// def buildPropertyMap(rdd: RDD[WikiDataEntity]): Map[String, String]
+	"Property map" should "be built" in {
+		// def buildPropertyMap(rdd: RDD[WikiDataEntity]): Map[String, String]
+		assert(false)
+	}
 
 //	they should "have valid IDs" in {
 //		val validIDs = getRDD()
