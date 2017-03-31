@@ -36,12 +36,13 @@ object TagEntities {
 	}
 
 	def buildSubclassMap(
-		categoryData: RDD[SubclassEntry]
+		categoryData: RDD[SubclassEntry],
+		searchClasses: Map[String, String]
 	): Map[String, List[String]] = {
 		// build subclass map for each given class
 		val subclasses = mutable.Map[String, List[String]]()
 
-		for((wikiDataID, tag) <- tagClasses) {
+		for((wikiDataID, tag) <- searchClasses) {
 			var oldClasses = Map(wikiDataID -> List(tag))
 			var addedElements = true
 			var newClasses = Map[String, List[String]]()
@@ -127,7 +128,7 @@ object TagEntities {
 		val subclassData = classData
 			.filter(_.data.contains(subclassProperty))
 			.cache
-		val subclasses = buildSubclassMap(subclassData)
+		val subclasses = buildSubclassMap(subclassData, tagClasses)
 		val updatedEntities = classData
 			.filter(isInstanceOf(_, subclasses))
 			.map(updateInstanceOfProperty(_, subclasses))

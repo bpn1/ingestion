@@ -94,5 +94,58 @@ object TestData {
 				"wikidata_id" -> List("Q21110253"))))
 	}
 
+	def classWikidataEntities(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity("Q1", label = Option("Entry 1"), data = Map("instance of" -> List("Q2"), "subclass of" -> List("Q3"), "test" -> List("testVal"))),
+			WikiDataEntity("Q2", label = Option("Entry 2"), data = Map("instance of" -> List("Q1"), "test" -> List("testVal"))),
+			WikiDataEntity("Q3", label = Option("Entry 3"), data = Map("subclass of" -> List("Q4"))),
+			WikiDataEntity("Q4", label = Option("Entry 4"), data = Map("test" -> List("testVal"))))
+	}
+
+	def subclassEntries(): List[SubclassEntry] = {
+		List(
+			SubclassEntry("Q1", "Entry 1", Map("instance of" -> List("Q2"), "subclass of" -> List("Q3"))),
+			SubclassEntry("Q2", "Entry 2", Map("instance of" -> List("Q1"))),
+			SubclassEntry("Q3", "Entry 3", Map("subclass of" -> List("Q4"))),
+			SubclassEntry("Q4", "Entry 4"))
+	}
+
+	def subclassOfProperties(): List[SubclassEntry] = {
+		List(
+			SubclassEntry("Q1", "Entry 1", Map("instance of" -> List("Q2"), "subclass of" -> List("Q3"))),
+			SubclassEntry("Q3", "Entry 3", Map("subclass of" -> List("Q4"))))
+	}
+
+	def oldClassMap(): Map[String, List[String]] = {
+		Map(
+			"Q3" -> List("Entry 4", "Entry 5", "Entry 3"),
+			"Q4" -> List("Entry 4"))
+	}
+
+	def newClassMap(): Map[String, List[String]] = {
+		Map(
+			"Q1" -> List("Entry 4", "Entry 3", "Entry 1"),
+			"Q3" -> List("Entry 4", "Entry 3"))
+	}
+
+	def classMap(): Map[String, List[String]] = {
+		Map(
+			"Q1" -> List("Entry 4", "Entry 3", "Entry 1"),
+			"Q3" -> List("Entry 4", "Entry 3"),
+			"Q4" -> List("Entry 4"))
+	}
+
+	def validInstanceOfProperties(): List[SubclassEntry] = {
+		List(SubclassEntry("Q2", "Entry 2", Map("instance of" -> List("Q1"))))
+	}
+
+	def updatedInstanceOfProperties(): List[(String, String, Map[String, List[String]])] = {
+		List(("Q2", "Entry 4", Map("wikidata_path" -> List("Entry 4", "Entry 3", "Entry 1"))))
+	}
+
+	def classesToTag(): Map[String, String] = {
+		Map("Q4" -> "Entry 4")
+	}
+
 	// scalastyle:on line.size.limit
 }
