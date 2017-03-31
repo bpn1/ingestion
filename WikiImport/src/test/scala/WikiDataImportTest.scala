@@ -11,10 +11,11 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 
 	"Json" should "be cleaned and valid json" in {
 		// invalid json would cause an exception
-		wikiDataTestData
+		TestData.rawWikiDataEntries()
 			.map(WikiDataImport.cleanJSON)
 		    .filter(_.nonEmpty)
 			.map(Json.parse)
+		    .foreach(println)
 	}
 
 	"Data types" should "be parsed" in {
@@ -116,16 +117,10 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 	def getPropertyMap(): Map[String, String] = {
 		// TODO create test dataset
 		WikiDataImport.buildPropertyMap(
-			sc.parallelize(wikiDataTestData())
+			sc.parallelize(TestData.rawWikiDataEntries())
 				.map(WikiDataImport.cleanJSON)
 				.filter(_.nonEmpty)
 				.map(WikiDataImport.parseEntity))
 	}
 
-	// extracted from WikiData dump
-	def wikiDataTestData(): List[String] = {
-		Source.fromURL(getClass.getResource("/wikidataTestData"))
-			.getLines()
-			.toList
-	}
 }

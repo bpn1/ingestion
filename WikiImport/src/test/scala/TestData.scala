@@ -1,6 +1,6 @@
 import java.util.UUID
-
 import DataLake.Subject
+import scala.io.Source
 
 object TestData {
 	// scalastyle:off line.size.limit
@@ -146,6 +146,12 @@ object TestData {
 
 	def classesToTag(): Map[String, String] = {
 		Map("Q4" -> "Entry 4")
+	}
+
+	def rawWikiDataEntries(): List[String] = {
+		Source.fromURL(getClass.getResource("/wikidataTestData"))
+			.getLines()
+			.toList
 	}
 
 	// scalastyle:on line.size.limit
