@@ -1,6 +1,6 @@
 object WikiClasses {
 
-	case class Link(alias: String, var page: String, offset: Int = -1)
+	case class Link(alias: String, var page: String, var offset: Int = -1)
 
 	case class WikipediaEntry(
 		title: String,
@@ -18,13 +18,15 @@ object WikiClasses {
 		var templatelinks: List[Link] = List[Link](),
 		var foundaliases: List[String] = List[String](),
 		var categorylinks: List[Link] = List[Link](),
-		var disambiguationlinks: List[Link] = List[Link]())
+		var disambiguationlinks: List[Link] = List[Link](),
+		var listlinks: List[Link] = List[Link]())
 	{
-
 		def setText(t: String): Unit = text = Option(t)
 
 		def getText(): String = text.getOrElse("")
-		def allLinks(): List[Link] = textlinks ++ templatelinks ++ categorylinks
+		def allLinks(): List[Link] = {
+			textlinks ++ templatelinks ++ categorylinks ++ listlinks ++ disambiguationlinks
+		}
 	}
 
 	case class AliasCounter(

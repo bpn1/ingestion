@@ -65,6 +65,7 @@ object WikipediaTextparser {
 			val outputTuple = extractTextLinks(cleanedDocument.body)
 			parsedEntry.setText(outputTuple._1)
 			parsedEntry.textlinks = outputTuple._2
+			parsedEntry.listlinks = extractListLinks(html)
 		}
 		extractCategoryLinks(parsedEntry)
 	}
@@ -310,6 +311,15 @@ object WikipediaTextparser {
 			Link(alias, page, 0)
 		}
 		entry
+	}
+
+	def extractListLinks(html: String): List[Link] = {
+		val document = Jsoup.parse(html)
+		val htmlLists = document.select("ul").toList ++ document.select("ol").toList
+		htmlLists
+			.map(element => Jsoup.parse(element.html()))
+			.flatMap(_.select("a"))
+		    .map(anchor => Link(anchor.text, parseUrl(anchor.attr("href"))))
 	}
 
 	def main(args: Array[String]): Unit = {
