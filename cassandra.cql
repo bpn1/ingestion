@@ -17,6 +17,7 @@ CREATE TABLE wikidumps.parsedwikipedia (
     templatelinks frozen<list<frozen<link>>>,
     categorylinks frozen<list<frozen<link>>>,
     disambiguationlinks frozen<list<frozen<link>>>,
+    listlinks frozen<list<frozen<link>>>,
     foundaliases list<text>,
     text text
 );
