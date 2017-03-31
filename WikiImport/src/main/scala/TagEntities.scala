@@ -32,42 +32,42 @@ object TagEntities {
 		}
 	}
 
+	/**
+	  * Builds a map of subclass paths given a list of subclass entries containing
+	  * the {@subclassProperty} property.
+	  * @param categoryData RDD of Subclass Entries containing the subclass information.
+	  * @param searchClasses Map of superclasses with id and name for which the subclass
+	  * information is gathered.
+	  * @return Map of subclass id pointing to the path of superclasses
+	  */
 	def buildSubclassMap(
 		categoryData: RDD[SubclassEntry],
 		searchClasses: Map[String, String]
 	): Map[String, List[String]] = {
-		// build subclass map for each given class
-		val subclasses = mutable.Map[String, List[String]]()
+		searchClasses.map { case (wikiDataId, tag) =>
+			var oldClasses = Map(wikiDataId -> List(tag))
+			var subclasses = Map[String, List[String]]()
 
-		for((wikiDataID, tag) <- searchClasses) {
-			var oldClasses = Map(wikiDataID -> List(tag))
 			var addedElements = true
-			var newClasses = Map[String, List[String]]()
-
 			while(addedElements) {
-				subclasses ++= addShorterPaths(subclasses.toMap, oldClasses)
+				subclasses ++= addShorterPaths(subclasses, oldClasses)
 
-				// recursively append next layer of tree
-				newClasses = categoryData
+				// iteratively append next layer of subclass tree
+				val newClasses = categoryData
 					.map { entry =>
-						entry.classList = entry.data(subclassProperty)
-							.filter(oldClasses.contains)
+						entry.classList = entry.data(subclassProperty).filter(oldClasses.contains)
 						entry
-					}.filter { entry => entry.classList.nonEmpty }
-					.map { entry =>
-						(entry.id, oldClasses(entry.classList.head) ++ List(entry.label))
-					}.collect
+					}.filter(_.classList.nonEmpty)
+					.map(entry => (entry.id, oldClasses(entry.classList.head) ++ List(entry.label)))
+					.collect
 					.toMap
 
 				// check if new elements were added and not stuck in a loop
-				addedElements = newClasses.nonEmpty &&
-					!(newClasses.size == oldClasses.size &&
-						newClasses.keySet == oldClasses.keySet)
-
+				addedElements = newClasses.nonEmpty && newClasses.keySet != oldClasses.keySet
 				oldClasses = newClasses
 			}
-		}
-		subclasses.toMap
+			subclasses
+		}.reduce(_ ++ _)
 	}
 
 	/**
