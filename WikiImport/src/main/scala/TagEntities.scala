@@ -15,24 +15,21 @@ object TagEntities {
 	val subclassProperty = "subclass of"
 	val wikidataPathProperty = "wikidata_path"
 
+	/**
+	  * Adds entries of new class path map to the old map if they are new or shorter than the
+	  * current path.
+	  * @param subclasses Map of new subclass path entries
+	  * @param oldClasses Map of current subclass path entries
+	  * @return Map of merged subclass path entries containing all new entries and shorter paths
+	  */
 	def addShorterPaths(
 		subclasses: Map[String, List[String]],
 		oldClasses: Map[String, List[String]]
 	): Map[String, List[String]] = {
-		// merge into subclasses based on path length
-		val resultMap = mutable.Map[String, List[String]]()
-		resultMap ++= subclasses
-		oldClasses.foreach { case (key, path) =>
-			val oldPathLength = resultMap.get(key).map(_.size)
-			if(oldPathLength.isEmpty || path.size < oldPathLength.get) {
-				resultMap(key) = path
-			}
+		subclasses ++ oldClasses.filter { case (key, path) =>
+			val oldPathLength = subclasses.get(key).map(_.size)
+			oldPathLength.isEmpty || path.size < oldPathLength.get
 		}
-//		resultMap ++= oldClasses.filter { case (key, path) =>
-//			val oldPathLength = resultMap.get(key).map(_.size)
-//			oldPathLength.isEmpty || path.size < oldPathLength.get
-//		}
-		resultMap.toMap
 	}
 
 	def buildSubclassMap(

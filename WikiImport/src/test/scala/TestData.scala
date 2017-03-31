@@ -125,7 +125,8 @@ object TestData {
 	def newClassMap(): Map[String, List[String]] = {
 		Map(
 			"Q1" -> List("Entry 4", "Entry 3", "Entry 1"),
-			"Q3" -> List("Entry 4", "Entry 3"))
+			"Q3" -> List("Entry 4", "Entry 3"),
+			"Q4" -> List("Entry 4", "Entry 4", "Entry 3"))
 	}
 
 	def classMap(): Map[String, List[String]] = {
