@@ -2,6 +2,8 @@ import WikiClasses._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import scala.io.Source
+
 // scalastyle:off number.of.methods
 object TestData {
 	// scalastyle:off line.size.limit
@@ -609,6 +611,35 @@ object TestData {
 		)
 	}
 
+	def testListLinkPage(): String = {
+		Source.fromURL(getClass.getResource("/test_data.html")).getLines().mkString("\n")
+	}
+
+	def testExtractedListLinks(): List[Link] = {
+		List(
+			Link("Zwillinge", "Zwillinge"),
+			Link("Kristallzwilling", "Kristallzwilling"),
+			Link("Zwilling J. A. Henckels", "Zwilling J. A. Henckels"),
+			Link("Zwillinge (Sternbild)", "Zwillinge (Sternbild)"),
+			Link("Zwillinge (Tierkreiszeichen)", "Zwillinge (Tierkreiszeichen)"),
+			Link("Christian Zwilling", "Christian Zwilling"),
+			Link("David Zwilling", "David Zwilling"),
+			Link("Edgar Zwilling", "Edgar Zwilling"),
+			Link("Ernst Zwilling", "Ernst Zwilling"),
+			Link("Gabriel Zwilling", "Gabriel Zwilling"),
+			Link("Michail Jakowlewitsch Zwilling", "Michail Jakowlewitsch Zwilling"),
+			Link("Paul Zwilling", "Paul Zwilling"),
+			Link("Georg Zwilling", "Georg Zwilling"),
+			Link("Poker", "Poker"),
+			Link("Primzahlzwilling", "Primzahlzwilling"),
+			Link("Zwilling (Heeresfeldbahn)", "Zwilling (Heeresfeldbahn)"),
+			Link("Ivan Reitman", "Ivan Reitman"),
+			Link("Twins – Zwillinge", "Twins – Zwillinge"),
+			Link("Zwillingswendeltreppe", "Zwillingswendeltreppe"),
+			Link("Der Zwilling", "Der Zwilling"),
+			Link("Die Zwillinge", "Die Zwillinge"))
+	}
+
 	def testCleanedNamespaceLinks(): List[Link] = {
 		List(
 			Link("August Horch", "August Horch", 0),
@@ -617,7 +648,8 @@ object TestData {
 	}
 
 	def testCategoryLinks(): List[Link] = {
-		List(Link("Ingolstadt", "Ingolstadt", 55),
+		List(
+			Link("Ingolstadt", "Ingolstadt", 55),
 			Link("Bayern", "Bayern", 69),
 			Link("Automobilhersteller", "Kategorie:Automobilhersteller", 94),
 			Link("Volkswagen", "Volkswagen AG", 123),
@@ -632,7 +664,8 @@ object TestData {
 	}
 
 	def testCleanedCategoryLinks(): List[Link] = {
-		List(Link("Ingolstadt", "Ingolstadt", 55),
+		List(
+			Link("Ingolstadt", "Ingolstadt", 55),
 			Link("Bayern", "Bayern", 69),
 			Link("Volkswagen", "Volkswagen AG", 123),
 			Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", 255),
@@ -643,7 +676,8 @@ object TestData {
 	}
 
 	def testExtractedCategoryLinks(): List[Link] = {
-		List(Link("Automobilhersteller", "Automobilhersteller", 0),
+		List(
+			Link("Automobilhersteller", "Automobilhersteller", 0),
 			Link("Wortspiel", "Wortspiel", 0),
 			Link("Namensrechte", "Marke (Recht)", 0),
 			Link("Zwickau", "Zwickau", 0))
@@ -668,7 +702,7 @@ object TestData {
 	def testEntriesWithBadRedirects(): List[WikipediaEntry] = {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
+
 	// scalastyle:on line.size.limit
 }
-
 // scalastyle:on number.of.methods
