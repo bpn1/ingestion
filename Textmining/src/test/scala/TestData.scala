@@ -616,7 +616,8 @@ object TestData {
 	}
 
 	def testExtractedListLinks(): List[Link] = {
-		List(Link("Zwillinge", "Zwillinge"),
+		List(
+			Link("Zwillinge", "Zwillinge"),
 			Link("Kristallzwilling", "Kristallzwilling"),
 			Link("Zwilling J. A. Henckels", "Zwilling J. A. Henckels"),
 			Link("Zwillinge (Sternbild)", "Zwillinge (Sternbild)"),
@@ -647,7 +648,8 @@ object TestData {
 	}
 
 	def testCategoryLinks(): List[Link] = {
-		List(Link("Ingolstadt", "Ingolstadt", 55),
+		List(
+			Link("Ingolstadt", "Ingolstadt", 55),
 			Link("Bayern", "Bayern", 69),
 			Link("Automobilhersteller", "Kategorie:Automobilhersteller", 94),
 			Link("Volkswagen", "Volkswagen AG", 123),
@@ -662,7 +664,8 @@ object TestData {
 	}
 
 	def testCleanedCategoryLinks(): List[Link] = {
-		List(Link("Ingolstadt", "Ingolstadt", 55),
+		List(
+			Link("Ingolstadt", "Ingolstadt", 55),
 			Link("Bayern", "Bayern", 69),
 			Link("Volkswagen", "Volkswagen AG", 123),
 			Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", 255),
@@ -673,7 +676,8 @@ object TestData {
 	}
 
 	def testExtractedCategoryLinks(): List[Link] = {
-		List(Link("Automobilhersteller", "Automobilhersteller", 0),
+		List(
+			Link("Automobilhersteller", "Automobilhersteller", 0),
 			Link("Wortspiel", "Wortspiel", 0),
 			Link("Namensrechte", "Marke (Recht)", 0),
 			Link("Zwickau", "Zwickau", 0))
