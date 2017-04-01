@@ -24,7 +24,7 @@ object WikipediaLinkAnalysis {
 			.keyBy { case (alias, pageName, count) => pageName }
 			.join(allPages.map(entry => (entry, entry)).keyBy(_._1)) // ugly, but working
 			.map { case (pageName, (link, doublePageName)) => link }
-			.map { case (alias, pageName, count) => (alias, Seq((pageName, count))) }
+			.map { case (alias, pageName, count) => (alias, Map((pageName, count))) }
 			.reduceByKey(_ ++ _)
 			.map { case (alias, links) => Alias(alias, links) }
 	}
@@ -38,28 +38,28 @@ object WikipediaLinkAnalysis {
 
 	def groupByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Alias] = {
 		parsedWikipedia
-			.flatMap(_.allLinks)
+			.flatMap(_.allLinks())
 			.map(link => (link.alias, List(link.page)))
 			.reduceByKey(_ ++ _)
 			.map { case (alias, pageList) =>
 				val pages = pageList
 					.groupBy(identity)
 					.mapValues(_.size)
-					.toSeq
+					.map(identity)
 				Alias(alias, pages)
 			}
 	}
 
 	def groupByPageNames(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Page] = {
 		parsedWikipedia
-			.flatMap(_.allLinks)
+			.flatMap(_.allLinks())
 			.map(link => (link.page, link.alias))
 			.groupByKey
 			.map { case (page, aliasList) =>
 				val aliases = aliasList
 					.groupBy(identity)
 					.mapValues(_.size)
-					.toSeq
+					.map(identity)
 				Page(page, aliases)
 			}
 	}
@@ -67,9 +67,8 @@ object WikipediaLinkAnalysis {
 	def probabilityLinkDirectsToPage(alias: Alias, pageName: String): Double = {
 		val totalReferences = alias
 			.pages
-			.toMap
 			.foldLeft(0)(_ + _._2)
-		val references = alias.pages.toMap.getOrElse(pageName, 0)
+		val references = alias.pages.getOrElse(pageName, 0)
 		references / totalReferences
 	}
 

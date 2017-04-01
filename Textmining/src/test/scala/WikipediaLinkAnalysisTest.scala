@@ -1,59 +1,65 @@
-import com.holdenkarau.spark.testing.{SharedSparkContext, RDDComparisons}
-import org.scalatest.FlatSpec
-import org.apache.spark.rdd._
-import WikiClasses._
+import com.holdenkarau.spark.testing.SharedSparkContext
+import org.scalatest.{FlatSpec, Matchers}
 
-class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext with RDDComparisons {
+class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Grouped aliases" should "not be empty" in {
 		val groupedAliases = WikipediaLinkAnalysis
-			.groupByAliases(TestData.smallerParsedWikipediaTestRDD(sc))
-		assert(groupedAliases.count > 0)
+			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
+			.collect
+			.toSet
+		groupedAliases should not be empty
 	}
 
 	they should "be exactly these aliases" in {
 		val groupedAliases = WikipediaLinkAnalysis
-			.groupByAliases(TestData.smallerParsedWikipediaTestRDD(sc))
-			.map(alias => (alias.alias, alias.pages.toMap))
-		val groupedAliasesTest = TestData.groupedAliasesTestRDD(sc)
-			.map(alias => (alias.alias, alias.pages.toMap))
-		assertRDDEquals(groupedAliases, groupedAliasesTest)
+			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
+			.map(alias => (alias.alias, alias.pages))
+			.collect
+			.toSet
+		val groupedAliasesTest = TestData.groupedAliasesTestSet()
+			.map(alias => (alias.alias, alias.pages))
+		groupedAliases shouldEqual groupedAliasesTest
 	}
 
 	"Grouped page names" should "not be empty" in {
 		val groupedPageNames = WikipediaLinkAnalysis
-			.groupByPageNames(TestData.smallerParsedWikipediaTestRDD(sc))
-		assert(groupedPageNames.count > 0)
+			.groupByPageNames(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
+			.collect
+			.toSet
+		groupedPageNames should not be empty
 	}
 
 	they should "be exactly these page names" in {
 		val groupedPages = WikipediaLinkAnalysis
-			.groupByPageNames(TestData.smallerParsedWikipediaTestRDD(sc))
-		val groupedPagesTest = TestData.groupedPagesTestRDD(sc)
-		assertRDDEquals(groupedPages, groupedPagesTest)
+			.groupByPageNames(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
+			.collect
+			.toSet
+		groupedPages shouldEqual TestData.groupedPagesTestSet()
 	}
 
 	"Probability that link directs to page" should "be computed correctly" in {
 		val references = TestData.probabilityReferences()
-		TestData.cleanedGroupedAliasesTestRDD(sc)
+		TestData.cleanedGroupedAliasesTestSet()
 			.map(link =>
 				(link.alias, WikipediaLinkAnalysis.probabilityLinkDirectsToPage(link, "Bayern")))
-			.collect
-			.foreach { case (alias, probability) => assert(probability == references(alias)) }
+			.foreach { case (alias, probability) => probability shouldEqual references(alias) }
 	}
 
 	"Dead links and only dead links" should "be removed" in {
 		val cleanedGroupedAliases = WikipediaLinkAnalysis.removeDeadLinks(
-			TestData.groupedAliasesTestRDD(sc),
-			TestData.allPagesTestRDD(sc))
-		val cleanedGroupedAliasesTest = TestData.cleanedGroupedAliasesTestRDD(sc)
-		assertRDDEquals(cleanedGroupedAliases, cleanedGroupedAliasesTest)
+			sc.parallelize(TestData.groupedAliasesTestSet().toList),
+			sc.parallelize(TestData.allPagesTestList()))
+			.collect
+			.toSet
+		cleanedGroupedAliases shouldEqual TestData.cleanedGroupedAliasesTestSet()
 	}
 
 	"Dead pages and only dead pages" should "be removed" in {
 		val cleanedGroupedPages = WikipediaLinkAnalysis.removeDeadPages(
-			TestData.groupedPagesTestRDD(sc),
-			TestData.allPagesTestRDD(sc))
-		val cleanedGroupedPagesTest = TestData.cleanedGroupedPagesTestRDD(sc)
-		assertRDDEquals(cleanedGroupedPages, cleanedGroupedPagesTest)
+			sc.parallelize(TestData.groupedPagesTestSet().toList),
+			sc.parallelize(TestData.allPagesTestList()))
+			.collect
+			.toSet
+		cleanedGroupedPages shouldEqual TestData.cleanedGroupedPagesTestSet()
 	}
 }
