@@ -94,6 +94,23 @@ object DBPediaDeduplication {
 		dbpediaSameAsRDD.join(subjectWikiId)
 	}
 
+	def candidatesJoin(candidate1: RDD[DuplicateCandidate], candidate2: RDD[DuplicateCandidate]): RDD[DuplicateCandidate] = {
+		val left = candidate1
+		  .keyBy(duplicate => (duplicate.subject_id, duplicate.duplicate_id))
+
+		val right = candidate2
+			.keyBy(duplicate => (duplicate.subject_id, duplicate.duplicate_id))
+
+		left
+			.fullOuterJoin(right)
+		  .map {
+				case ((ids, (Some(duplicate1), Some(duplicate2)))) => duplicate1
+				case ((ids, (Some(duplicate), None))) => duplicate
+				case ((ids, (None, Some(duplicate)))) => duplicate
+				case _ => null
+			}
+	}
+
 	def main(args: Array[String]) {
 		val conf = new SparkConf()
 			.setAppName(appName)
@@ -111,13 +128,7 @@ object DBPediaDeduplication {
 		val nameCandidates = translateToCandidate(nameJoined)
 		val idCandidates = translateToCandidate(idJoined)
 
-		println(nameCandidates.count())
-		println(idCandidates.count())
-
-		println(nameCandidates
-		  .keyBy(duplicate => (duplicate.subject_id, duplicate.duplicate_id))
-		  .join(idCandidates.keyBy(duplicate => (duplicate.subject_id, duplicate.duplicate_id)))
-		  .count())
+		candidatesJoin(nameCandidates, idCandidates).saveToCassandra(keyspace, outputTable)
 
 		sc.stop()
 	}
