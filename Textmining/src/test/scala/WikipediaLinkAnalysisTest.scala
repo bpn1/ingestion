@@ -3,7 +3,8 @@ import org.scalatest.{FlatSpec, Matchers}
 import org.apache.spark.rdd._
 import WikiClasses._
 
-class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
+class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext with RDDComparisons
+	with Matchers {
 	"Page names grouped by aliases" should "not be empty" in {
 		val groupedAliases = WikipediaLinkAnalysis
 			.groupByAliases(TestData.smallerParsedWikipediaTestRDD(sc))
