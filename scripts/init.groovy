@@ -1,0 +1,1 @@
+System.setProperty("hudson.model.DirectoryBrowserSupport.CSP", "sandbox allow-scripts allow-same-origin; default-src 'self'; script-src * 'unsafe-inline'; img-src *; style-src * 'unsafe-inline'; child-src *; frame-src *;")
