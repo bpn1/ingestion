@@ -71,11 +71,11 @@ case class BlockEvaluation(
   * @param configFile  name of config file in resource folder
   */
 class Deduplication(
-	 val confidence: Double,
-	 val appName: String,
-	 val dataSources: List[String],
-	 val configFile: Option[String] = None
-   ) extends Serializable {
+	  val confidence: Double,
+	  val appName: String,
+	  val dataSources: List[String],
+	  val configFile: Option[String] = None
+	  ) extends Serializable {
   var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
   val settings = mutable.Map[String, String]()
 
@@ -143,7 +143,7 @@ class Deduplication(
 		  weight.toDouble,
 		  scale.toInt)
 		   }
-  }
+	}
 
   /**
 	* Creates timestamp and TimeUUID for versioning.
@@ -155,12 +155,12 @@ class Deduplication(
 	val version = UUIDs.timeBased()
 
 	Version(version, appName, null, null, dataSources, timestamp)
-  }
+	}
 
   /**
 	* Uses input blocking scheme to generate blocks of subjects.
 	*
-	* @param subjects       RDD to perform the blocking on.
+	* @param subjects RDD to perform the blocking on.
 	* @param blockingScheme blocking scheme to use to generate keys.
 	* @return subjects grouped by blocking keys
 	*/
@@ -171,7 +171,7 @@ class Deduplication(
 	subjects
 	  .map(subject => (blockingScheme.generateKey(subject), List(subject)))
 	  .reduceByKey(_ ++ _)
-  }
+	}
 
   /**
 	* Creates blocks based on the input blocking scheme
@@ -296,7 +296,7 @@ class Deduplication(
 }
 
 object Deduplication {
-  val dataTypes: Map[String, SimilarityMeasure[_]] = Map(
+	val dataTypes: Map[String, SimilarityMeasure[_]] = Map(
 	"ExactMatchString" -> ExactMatchString,
 	"MongeElkan" -> MongeElkan,
 	"Jaccard" -> Jaccard,
