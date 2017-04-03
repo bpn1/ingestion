@@ -10,7 +10,6 @@ import com.datastax.driver.core.utils.UUIDs
 import scala.xml.XML
 import scala.collection.mutable
 import scala.io.Source
-import play.api.libs.json._
 
 /**
 	* Case class for corresponding duplicatecandidates cassandra table.
@@ -52,7 +51,7 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
 	*/
 case class BlockEvaluation(
 														id: UUID = UUID.randomUUID(),
-														data: Option[String],
+														data: Option[Map[String, Int]],
 														comment: Option[String]
 													)
 
@@ -237,7 +236,7 @@ class Deduplication(
 			.sortBy(_._2, ascending = false)
 			.collect()
 			.toMap[String, Int]
-		BlockEvaluation(data = Some(Json.toJson(dataMap).toString), comment = Some(comment))
+		BlockEvaluation(data = Some(dataMap), comment = Some(comment))
 	}
 
 	/**

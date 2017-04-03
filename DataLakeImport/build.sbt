@@ -20,8 +20,7 @@ libraryDependencies ++= Seq(
 	"org.scalactic" % "scalactic_2.11" % "3.0.1",
 	"org.scalatest" % "scalatest_2.11" % "3.0.1" % "test",
 	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0",
-	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4",
-	"com.typesafe.play" % "play-json_2.11" % "2.3.0"
+	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4"
 )
 
 // testing settings
