@@ -208,8 +208,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 		WikipediaTextparser
 			.extractCategoryLinks(testEntry)
 			.categorylinks
-			.foreach { link => link.offset shouldBe 0
-			}
+			.foreach(link => link.offset shouldBe 0)
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {

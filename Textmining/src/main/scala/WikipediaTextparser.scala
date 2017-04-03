@@ -144,7 +144,7 @@ object WikipediaTextparser {
 		for (element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
-					//					assert(t.tag.toString == "a") // This may fail for strange reasons.
+					//assert(t.tag.toString == "a") // This may fail for strange reasons.
 					val target = parseUrl(t.attr("href"))
 					val source = if (t.text == "") target else t.text
 					val link = Link(source, target, offset)
