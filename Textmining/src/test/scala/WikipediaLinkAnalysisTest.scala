@@ -14,21 +14,21 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext with Ma
 
 	they should "not have empty aliases" in {
 		WikipediaLinkAnalysis
-			.groupByAliases(TestData.smallerParsedWikipediaTestRDD(sc))
+			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
 			.collect
 			.foreach(alias => alias.alias should not be empty)
 	}
 
 	they should "contain at least one page name per alias" in {
 		WikipediaLinkAnalysis
-			.groupByAliases(TestData.smallerParsedWikipediaTestRDD(sc))
+			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
 			.collect
 			.foreach(alias => alias.pages should not be empty)
 	}
 
 	they should "not contain empty page names" in {
-		val pages = WikipediaLinkAnalysis
-			.groupByAliases(TestData.smallerParsedWikipediaTestRDD(sc))
+		WikipediaLinkAnalysis
+			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
 			.flatMap(_.pages)
 			.map(_._1)
 			.collect
@@ -37,14 +37,12 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext with Ma
 
 	they should "be exactly these aliases" in {
 		val groupedAliases = WikipediaLinkAnalysis
-			.groupByAliases(TestData.smallerParsedWikipediaTestRDD(sc))
-			.map(alias => (alias.alias, alias.pages.toMap))
+			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
+			.map(alias => (alias.alias, alias.pages))
 			.collect
 			.toSet
-		val groupedAliasesTest = TestData.groupedAliasesTestRDD(sc)
-			.map(alias => (alias.alias, alias.pages.toMap))
-			.collect
-			.toSet
+		val groupedAliasesTest = TestData.groupedAliasesTestSet()
+			.map(alias => (alias.alias, alias.pages))
 		groupedAliases shouldEqual groupedAliasesTest
 	}
 
@@ -58,21 +56,21 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext with Ma
 
 	they should "not have empty page names" in {
 		WikipediaLinkAnalysis
-			.groupByPageNames(TestData.smallerParsedWikipediaTestRDD(sc))
+			.groupByPageNames(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
 			.collect
 			.foreach(page => page.page should not be empty)
 	}
 
 	they should "contain at least one alias per page name" in {
 		WikipediaLinkAnalysis
-			.groupByPageNames(TestData.smallerParsedWikipediaTestRDD(sc))
+			.groupByPageNames(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
 			.collect
 			.foreach(pages => pages.aliases should not be empty)
 	}
 
 	they should "not contain empty aliases" in {
 		val aliases = WikipediaLinkAnalysis
-			.groupByPageNames(TestData.smallerParsedWikipediaTestRDD(sc))
+			.groupByPageNames(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
 			.flatMap(_.aliases)
 			.map(_._1)
 			.collect
