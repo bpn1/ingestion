@@ -1,5 +1,6 @@
 package de.hpi.ingestion.deduplication
 
+import de.hpi.ingestion.datalake.models.Subject
 import org.scalatest.{FlatSpec, Matchers}
 
 class BlockingSchemeUnitTest extends FlatSpec with Matchers {

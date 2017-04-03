@@ -1,5 +1,6 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
+import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 

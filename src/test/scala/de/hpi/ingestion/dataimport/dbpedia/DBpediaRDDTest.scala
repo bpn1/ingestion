@@ -2,6 +2,7 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
+import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
 
 class DBpediaRDDTest extends FlatSpec with SharedSparkContext with RDDComparisons {
 

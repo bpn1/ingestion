@@ -1,8 +1,9 @@
 package de.hpi.ingestion.textmining
 
-import WikiClasses._
+import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.textmining.models._
 
 import scala.io.Source
 

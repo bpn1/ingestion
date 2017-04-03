@@ -1,6 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import WikiClasses.DocumentFrequency
+import de.hpi.ingestion.textmining.models.DocumentFrequency
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 

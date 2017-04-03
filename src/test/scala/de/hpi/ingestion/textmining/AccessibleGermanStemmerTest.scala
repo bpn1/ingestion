@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.{FlatSpec, Matchers}
 
 class AccessibleGermanStemmerTest extends FlatSpec with Matchers {
 	"German stemmer" should "stem German words" in {

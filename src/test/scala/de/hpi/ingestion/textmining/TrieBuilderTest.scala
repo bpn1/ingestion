@@ -1,6 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import WikiClasses.{ParsedWikipediaEntry, Link}
+import de.hpi.ingestion.textmining.models.{Link, ParsedWikipediaEntry, TrieNode}
 import org.scalatest.FlatSpec
 
 class TrieBuilderTest extends FlatSpec {

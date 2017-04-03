@@ -1,9 +1,7 @@
 package de.hpi.ingestion.textmining
 
-import com.holdenkarau.spark.testing.{SharedSparkContext, RDDComparisons}
+import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
-import org.apache.spark.rdd._
-import WikiClasses._
 
 class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Page names grouped by aliases" should "not be empty" in {
@@ -71,7 +69,7 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext with Ma
 	}
 
 	they should "not contain empty aliases" in {
-		val aliases = WikipediaLinkAnalysis
+		WikipediaLinkAnalysis
 			.groupByPageNames(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
 			.flatMap(_.aliases)
 			.map(_._1)

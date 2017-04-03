@@ -1,9 +1,10 @@
 package de.hpi.ingestion.textmining
 
-import WikiClasses._
 import WikipediaTextparser.disambiguationTitleSuffix
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.textmining.models.{Link, ParsedWikipediaEntry}
+
 import scala.util.matching.Regex
 import org.scalatest._
 

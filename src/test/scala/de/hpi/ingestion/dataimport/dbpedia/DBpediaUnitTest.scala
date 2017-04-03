@@ -1,6 +1,7 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
 import org.scalatest.FlatSpec
 
 class DBpediaUnitTest extends FlatSpec with SharedSparkContext {

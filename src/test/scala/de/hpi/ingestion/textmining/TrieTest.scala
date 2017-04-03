@@ -1,5 +1,6 @@
 package de.hpi.ingestion.textmining
 
+import de.hpi.ingestion.textmining.models.TrieNode
 import org.scalatest.FlatSpec
 
 class TrieTest extends FlatSpec {
