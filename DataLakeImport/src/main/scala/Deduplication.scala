@@ -188,7 +188,8 @@ class Deduplication(
 	/**
 		* Finds the duplicates of each block
 		* @param block List of Subjects where the duplicates are searched in
-		* @return tuple of Subjects whose score is greater or equal a given threshold this.confidence
+		* @return tuple of Subjects whose score is greater or equal a given threshold
+		* this.confidence
 		*/
 	def findDuplicates(block: List[Subject]): List[(Subject, Subject)] = {
 		// from http://stackoverflow.com/questions/14740199/cross-product-in-scala
