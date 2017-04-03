@@ -67,8 +67,8 @@ case class Subject(
 	 */
   def fieldNames(): List[String] = {
 	 def classAccessors[T: TypeTag]: List[MethodSymbol] = typeOf[T].members.collect {
-																												 case m: MethodSymbol if m.isCaseAccessor => m
-																											  }.toList
+		 case m: MethodSymbol if m.isCaseAccessor => m
+	  }.toList
 	 val accessors = classAccessors[Subject]
 	 accessors.map(_.name.toString)
   }
