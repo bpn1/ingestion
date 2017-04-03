@@ -135,7 +135,7 @@ class DeduplicationUnitTest
 
 	def evaluationTestData(): BlockEvaluation = {
 		new BlockEvaluation(
-			data = Some("""{"Berlin":3,"undefined":2,"New York":1}"""),
+			data = Some(Map("Berlin" -> 3, "undefined" -> 2, "New York" -> 1)),
 			comment = Some("Test comment"))
 	}
 }
