@@ -10,7 +10,7 @@ import scala.collection.mutable.ListBuffer
 import WikiClasses._
 import scala.io.Source
 
-object WikipediaTextparser {
+object WikipediaTextParser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
