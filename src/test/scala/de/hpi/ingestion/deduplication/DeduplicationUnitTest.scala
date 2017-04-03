@@ -63,7 +63,7 @@ class DeduplicationUnitTest
 		duplicates shouldEqual expected
 	}
 
-	"mergingDuplicates" should "should merge the properties of both subjects together" in {
+	"mergingDuplicates" should "merge the properties of both subjects together" in {
 		val deduplication = defaultDeduplication
 		val duplicates = sc.parallelize(List(
 			(subject1, subject4),
@@ -83,42 +83,55 @@ class DeduplicationUnitTest
 		assertRDDEquals(expected, mergedSubject)
 	}
 
+	"evaluateBlocks" should "evaluate each block sorted by its size" in {
+		val deduplication = defaultDeduplication
+		val blocks = sc.parallelize(testBlocks)
+		val evaluation = deduplication.evaluateBlocks(blocks, "Test comment")
+		val expected = evaluationTestData
+		expected.data shouldEqual evaluation.data
+		expected.comment shouldEqual evaluation.comment
+	}
+
 	val subject1 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Volkswagen"),
 		properties = Map("city" -> List("Berlin"))
 	)
 	val subject2 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Audi GmbH"),
 		properties = Map("city" -> List("Berlin"))
 	)
 	val subject3 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Audy GmbH"),
 		properties = Map("city" -> List("New York"))
 	)
 	val subject4 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Volkswagen AG"),
 		properties = Map("city" -> List("Berlin"))
 	)
 	val subject5 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Porsche")
+	)
+	val subject6 = Subject(
+		name = Some("Ferrari")
 	)
 
 	def subjectRDD(): RDD[Subject] = {
-		sc.parallelize(List(subject1, subject2, subject3, subject4, subject5))
+		sc.parallelize(List(subject1, subject2, subject3, subject4, subject5, subject6))
 	}
 
 	def testBlocks(): List[(List[String], List[Subject])] = {
 		List((List("Berlin"), List(subject1, subject2, subject4)),
 			(List("New York"), List(subject3)),
-			(List("undefined"), List(subject5)))
+			(List("undefined"), List(subject5, subject6)))
 	}
 
 	def defaultDeduplication(): Deduplication = {
 		new Deduplication(0.5, "TestDeduplication", List("testSource"))
+	}
+
+	def evaluationTestData(): BlockEvaluation = {
+		BlockEvaluation(
+			data = Map("Berlin" -> 3, "undefined" -> 2, "New York" -> 1),
+			comment = Option("Test comment"))
 	}
 }

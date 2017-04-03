@@ -2,11 +2,11 @@
 <config>
     <sourceSettings>
         <keyspace>datalake</keyspace>
-        <subjectTable>subject</subjectTable>
+        <subjectTable>testsubject</subjectTable>
         <stagingTable>subject_temp</stagingTable>
         <duplicatesTable>duplicatecandidates</duplicatesTable>
         <versionTable>version</versionTable>
-        <statsTable>stats</statsTable>
+        <statsTable>deduplicationstats</statsTable>
     </sourceSettings>
     <simMeasurements>
         <feature>
@@ -29,4 +29,3 @@
         </feature>
     </simMeasurements>
 </config>
-
