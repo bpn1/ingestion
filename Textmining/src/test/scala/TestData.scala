@@ -634,7 +634,7 @@ object TestData {
 			Link("Primzahlzwilling", "Primzahlzwilling"),
 			Link("Zwilling (Heeresfeldbahn)", "Zwilling (Heeresfeldbahn)"),
 			Link("Ivan Reitman", "Ivan Reitman"),
-			Link("Twins – Zwillinge", "Twins – Zwillinge"),
+			Link("Twins - Zwillinge", "Twins - Zwillinge"),
 			Link("Zwillingswendeltreppe", "Zwillingswendeltreppe"),
 			Link("Der Zwilling", "Der Zwilling"),
 			Link("Die Zwillinge", "Die Zwillinge"))
