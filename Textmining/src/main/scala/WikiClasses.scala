@@ -40,9 +40,8 @@ object WikiClasses {
 
 	case class DocumentFrequency(word: String, count: Int)
 
-	// Seq is Serializable, Map isn't
-	case class Alias(alias: String, pages: Seq[(String, Int)])
+	case class Alias(alias: String, pages: Map[String, Int])
 
-	case class Page(page: String, aliases: Seq[(String, Int)])
+	case class Page(page: String, aliases: Map[String, Int])
 
 }
