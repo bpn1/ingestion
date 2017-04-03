@@ -225,20 +225,21 @@ class Deduplication(
 	}
 
 	/**
-	 * Executes methods on the blocked data to gain information.
-	 *
-	 * @param blocks  Input data, partitioned in blocks.
-	 * @param comment Note to add to the evaluated data.
-	 * @return Blocks with size-value and comment.
-	 */
+	  * Executes methods on the blocked data to gain information.
+	  *
+	  * @param blocks  Input data, partitioned in blocks.
+	  * @param comment Note to add to the evaluated data.
+	  * @return Blocks with size-value and comment.
+	  */
 	def evaluateBlocks(
 		blocks: RDD[(List[String], List[Subject])],
-		comment: String): BlockEvaluation = {
+		comment: String
+	): BlockEvaluation = {
 		val dataMap = blocks
 			.map(block => (block._1.mkString(" "), block._2.size))
 			.sortBy(_._2, false)
 			.collect()
-			.toMap[String, Int]
+			.toMap
 		BlockEvaluation(data = Some(dataMap), comment = Some(comment))
 	}
 	/**
@@ -247,7 +248,7 @@ class Deduplication(
 	  */
 	def run(merge: Boolean = false): Unit = {
 		val conf = new SparkConf()
-		  .setAppName(this.appName)
+			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
