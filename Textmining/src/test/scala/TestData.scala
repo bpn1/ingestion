@@ -491,9 +491,11 @@ object TestData {
 				Link("Bayern", "Bayern", 69),
 				Link("Automobilhersteller", "Automobilhersteller", 94),
 				Link("Zerfall", "Zerfall (Album)", 4711),
-				Link("Zerfall", "Zerfall (Soziologie)", 4711) // dead link
+				Link("Zerfall", "Zerfall (Soziologie)", 4711), // dead link
+				Link("", "page name with empty alias", 4711),
+				Link("alias with empty page name", "", 4711)
 			),
-			List()
+				List()
 			)))
 	}
 
@@ -634,7 +636,7 @@ object TestData {
 			Link("Primzahlzwilling", "Primzahlzwilling"),
 			Link("Zwilling (Heeresfeldbahn)", "Zwilling (Heeresfeldbahn)"),
 			Link("Ivan Reitman", "Ivan Reitman"),
-			Link("Twins – Zwillinge", "Twins – Zwillinge"),
+			Link("Twins - Zwillinge", "Twins - Zwillinge"),
 			Link("Zwillingswendeltreppe", "Zwillingswendeltreppe"),
 			Link("Der Zwilling", "Der Zwilling"),
 			Link("Die Zwillinge", "Die Zwillinge"))
@@ -705,4 +707,5 @@ object TestData {
 
 	// scalastyle:on line.size.limit
 }
+
 // scalastyle:on number.of.methods
