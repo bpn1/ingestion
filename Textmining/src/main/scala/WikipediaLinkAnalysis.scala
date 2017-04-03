@@ -43,11 +43,13 @@ object WikipediaLinkAnalysis {
 			.reduceByKey(_ ++ _)
 			.map { case (alias, pageList) =>
 				val pages = pageList
+					.filter(_.nonEmpty)
 					.groupBy(identity)
 					.mapValues(_.size)
 					.toSeq
 				Alias(alias, pages)
 			}
+			.filter(alias => alias.alias.nonEmpty && alias.pages.nonEmpty)
 	}
 
 	def groupByPageNames(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Page] = {
@@ -57,11 +59,13 @@ object WikipediaLinkAnalysis {
 			.groupByKey
 			.map { case (page, aliasList) =>
 				val aliases = aliasList
+					.filter(_.nonEmpty)
 					.groupBy(identity)
 					.mapValues(_.size)
 					.toSeq
 				Page(page, aliases)
 			}
+			.filter(page => page.page.nonEmpty && page.aliases.nonEmpty)
 	}
 
 	def probabilityLinkDirectsToPage(alias: Alias, pageName: String): Double = {
