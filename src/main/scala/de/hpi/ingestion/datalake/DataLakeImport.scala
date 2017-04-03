@@ -75,12 +75,12 @@ abstract case class DataLakeImport[T](
 		val data = readInput(sc, version)
 		data.saveToCassandra(outputKeyspace, outputTable)
 
-	sc
-		.parallelize(
-			List((version.version, version.timestamp, version.datasources, version.program)))
-		.saveToCassandra(outputKeyspace,
-			versionTable, SomeColumns("version", "timestamp", "datasources", "program"))
+		sc
+			.parallelize(
+				List((version.version, version.timestamp, version.datasources, version.program)))
+			.saveToCassandra(outputKeyspace,
+				versionTable, SomeColumns("version", "timestamp", "datasources", "program"))
 
-	sc.stop
+		sc.stop
 	}
 }
