@@ -16,6 +16,15 @@ object WikiDataRDD {
 	val keyspace = "wikidumps"
 	val tablename = "wikidata"
 
+	case class WikiDataEntity(
+		var id: String = null,
+		var entitytype: String = null,
+		var wikiname: String = null,
+		var description: String = null,
+		var label: String = null,
+		var aliases: List[String] = null,
+		var data: Map[String, List[String]] = Map[String, List[String]]())
+
 	// remove array syntax from JSON for parallel parsing
 	def cleanJSON(json: String): String = {
 		json.replaceAll("^\\[|,$|, $|\\]$", "")

@@ -24,6 +24,7 @@ libraryDependencies ++= Seq(
 	"com.esotericsoftware" % "kryo" % "4.0.0",
 	"com.google.protobuf" % "protobuf-java" % "2.6.1",
 	"org.apache.lucene" % "lucene-analyzers" % "2.9.4",
+	"com.typesafe.play" %% "play-json" % "2.3.0",
 	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4"
 )
 
