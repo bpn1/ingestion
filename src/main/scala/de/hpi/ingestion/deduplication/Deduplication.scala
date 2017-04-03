@@ -26,12 +26,12 @@ import scala.io.Source
   * @param duplicate_table source table of duplicate
   */
 case class DuplicateCandidate(
-   id: UUID,
-   subject_id: UUID,
-   subject_name: Option[String] = None,
-   duplicate_id: UUID,
-   duplicate_name: Option[String] = None,
-   duplicate_table: String)
+	  id: UUID,
+	  subject_id: UUID,
+	  subject_name: Option[String] = None,
+	  duplicate_id: UUID,
+	  duplicate_name: Option[String] = None,
+	  duplicate_table: String)
 
 /**
   * Reproduces a configuration for a comparison of two Subjects
@@ -71,41 +71,41 @@ case class BlockEvaluation(
   * @param configFile  name of config file in resource folder
   */
 class Deduplication(
-	  val confidence: Double,
-	  val appName: String,
-	  val dataSources: List[String],
-	  val configFile: Option[String] = None
-	  ) extends Serializable {
-  var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
-  val settings = mutable.Map[String, String]()
+		 val confidence: Double,
+		 val appName: String,
+		 val dataSources: List[String],
+		 val configFile: Option[String] = None
+	) extends Serializable {
+  		var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
+  		val settings = mutable.Map[String, String]()
 
-  /**
-	* Compares to subjects regarding the configuration
-	*
-	* @param subject1 subjects to be compared to subject2
-	* @param subject2 subjects to be compared to subject2
-	* @return the similarity score of the subjects
-	*/
-  def compare(
-	 subject1: Subject,
-	 subject2: Subject,
-	 scale: Int = 1
-   ): Double = {
-	val scoreList = this.config
-	  .map { feature =>
-		val valueSub1 = subject1.get(feature.key).headOption
-		val valueSub2 = subject2.get(feature.key).headOption
-		if (valueSub1.isDefined && valueSub2.isDefined) {
-		  val score = feature
-			.similarityMeasure
-			.compare(valueSub1.get, valueSub2.get, scale)
-		  score * feature.weight
-		} else {
-		  -1.0
+		/**
+		 * Compares to subjects regarding the configuration
+		 *
+		 * @param subject1 subjects to be compared to subject2
+		 * @param subject2 subjects to be compared to subject2
+		 * @return the similarity score of the subjects
+		 */
+		def compare(
+		  subject1: Subject,
+		  subject2: Subject,
+		  scale: Int = 1
+			): Double = {
+			val scoreList = this.config
+			  .map { feature =>
+				val valueSub1 = subject1.get(feature.key).headOption
+				val valueSub2 = subject2.get(feature.key).headOption
+				if (valueSub1.isDefined && valueSub2.isDefined) {
+				  val score = feature
+					.similarityMeasure
+					.compare(valueSub1.get, valueSub2.get, scale)
+				  score * feature.weight
+				} else {
+				  -1.0
+				}
+					}.filter(_ != -1.0)
+		 scoreList.sum / Math.max(1, scoreList.length)
 		}
-		   }.filter(_ != -1.0)
-	scoreList.sum / Math.max(1, scoreList.length)
-  }
 
   /**
 	* Reads the configuration from a xml file
@@ -297,12 +297,13 @@ class Deduplication(
 
 object Deduplication {
 	val dataTypes: Map[String, SimilarityMeasure[_]] = Map(
-	"ExactMatchString" -> ExactMatchString,
-	"MongeElkan" -> MongeElkan,
-	"Jaccard" -> Jaccard,
-	"DiceSorensen" -> DiceSorensen,
-	"Jaro" -> Jaro,
-	"JaroWinkler" -> JaroWinkler,
-	"N-Gram" -> NGram,
-	"Overlap" -> Overlap)
+	  "ExactMatchString" -> ExactMatchString,
+	  "MongeElkan" -> MongeElkan,
+	  "Jaccard" -> Jaccard,
+	  "DiceSorensen" -> DiceSorensen,
+	  "Jaro" -> Jaro,
+	  "JaroWinkler" -> JaroWinkler,
+	  "N-Gram" -> NGram,
+	  "Overlap" -> Overlap
+	)
 }
