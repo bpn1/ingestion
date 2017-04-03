@@ -1,13 +1,10 @@
 import org.scalatest._
 import com.holdenkarau.spark.testing.SharedSparkContext
-import org.apache.spark.rdd.RDD
-import play.api.libs.json.Json
-
+import play.api.libs.json.{JsObject, Json}
 import scala.io.Source
-import scala.util.matching.Regex
 
 class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers {
-	// def cleanJSON(json: String): String
+	val datatypeFile = "claim_datatypes.json"
 
 	"Json" should "be cleaned and valid json" in {
 		// invalid json would cause an exception
@@ -15,12 +12,16 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 			.map(WikiDataImport.cleanJSON)
 		    .filter(_.nonEmpty)
 			.map(Json.parse)
-		    .foreach(println)
 	}
 
 	"Data types" should "be parsed" in {
-		// def parseDataType(dataType: Option[String], dataValue: JsValue): String
-		assert(false)
+		val jsonFile = Source.fromURL(getClass.getResource(s"$datatypeFile"))
+		val claimJson = Json.parse(jsonFile.getLines().mkString("\n")).as[JsObject]
+		claimJson.value.foreach { case (dataType, jsonData) =>
+			val extractedData = WikiDataImport.parseDataType(Option(dataType), jsonData)
+			val expectedValue = TestData.dataTypeValues(dataType)
+			extractedData shouldBe expectedValue
+		}
 	}
 
 	"Entity values" should "be filled in" in {
@@ -29,8 +30,13 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 	}
 
 	"Claim values" should "be extracted" in {
-		// def extractClaimValues(claim: JsValue): String
-		assert(false)
+		val jsonFile = Source.fromURL(getClass.getResource(s"$datatypeFile"))
+		val claimJson = Json.parse(jsonFile.getLines().mkString("\n")).as[JsObject]
+		claimJson.value.foreach { case (dataType, jsonData) =>
+			val extractedData = WikiDataImport.extractClaimValues(jsonData)
+			val expectedValue = TestData.dataTypeValues(dataType)
+			extractedData shouldBe expectedValue
+		}
 	}
 
 	"Wikidata entity" should "be parsed" in {

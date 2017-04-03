@@ -154,5 +154,16 @@ object TestData {
 			.toList
 	}
 
+	def dataTypeValues(dataType: String): String = {
+		dataType match {
+			case "string" => "test string 1"
+			case "wikibase-entityid" => "test id 1"
+			case "time" => "test time 1"
+			case "monolingualtext" => "test text 1"
+			case "globecoordinate" => "1.0;2.0"
+			case "quantity" => "test amount;test unit"
+		}
+	}
+
 	// scalastyle:on line.size.limit
 }

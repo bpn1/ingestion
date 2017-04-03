@@ -12,29 +12,30 @@ object WikiDataImport {
 	val keyspace = "wikidumps"
 	val tablename = "wikidata"
 
-	// remove array syntax from JSON for parallel parsing
+	/**
+	  * Removes array syntax from Json for parallel parsing of the JSON objects.
+	  * @param json JSON String to clean
+	  * @return cleaned JSON String in which each line is either a JSON object or empty
+	  */
 	def cleanJSON(json: String): String = {
 		json.replaceAll("^\\[|,$|, $|\\]$", "")
 	}
 
+	// TODO: use *parameter
 	def getValue(json: JsValue, path: List[String]): Option[JsValue] = {
-		var element = Option(json)
-		try {
-			for(pathSegment <- path) {
-				element = Option((element.get \ pathSegment).as[JsValue])
+		var element = json
+		for(pathSegment <- path) {
+			if(element.as[JsObject].value.contains(pathSegment)) {
+				element = (element \ pathSegment).as[JsValue]
+			} else {
+				return None
 			}
-		} catch {
-			case jre: JsResultException =>
-				element = None
-			case ex: NoSuchElementException =>
-				element = None
 		}
-
-		if(element.isDefined && element.get.getClass == classOf[JsUndefined]) {
-			element = None
+		if(element.getClass == classOf[JsUndefined]) {
+			None
+		} else {
+			Option(element)
 		}
-
-		element
 	}
 
 	def extractString(json: JsValue, path: List[String]): Option[String] = {
@@ -43,13 +44,13 @@ object WikiDataImport {
 	}
 
 	def extractList(json: JsValue, path: List[String]): List[JsValue] = {
-		val value = getValue(json, path).getOrElse(JsArray())
-		value.as[List[JsValue]]
+		val value = getValue(json, path).map(_.as[List[JsValue]])
+		value.getOrElse(List[JsValue]())
 	}
 
 	def extractMap(json: JsValue, path: List[String]): Map[String, JsValue] = {
-		val value = getValue(json, path).getOrElse(JsObject(Seq[(String, JsValue)]()))
-		value.as[Map[String, JsValue]]
+		val value = getValue(json, path).map(_.as[Map[String, JsValue]])
+		value.getOrElse(Map[String, JsValue]())
 	}
 
 	def extractDouble(json: JsValue, path: List[String]): Option[String] = {
@@ -57,6 +58,12 @@ object WikiDataImport {
 		value.map(_.as[Double].toString)
 	}
 
+	/**
+	  * Extracts data of given data type out of JSON object.
+	  * @param dataType data type to extract
+	  * @param dataValue JSON object to extract the data from
+	  * @return value of the data type as String
+	  */
 	def parseDataType(dataType: Option[String], dataValue: JsValue): String = {
 		val propertyPathMap = Map(
 			"string" -> List("value"),
@@ -119,7 +126,6 @@ object WikiDataImport {
 		value
 	}
 
-
 	def parseEntity(line: String): WikiDataEntity = {
 		val json = Json.parse(line)
 		val entity = fillEntityValues(json)
@@ -144,21 +150,32 @@ object WikiDataImport {
 		entity
 	}
 
+	/**
+	  * Translates Wikidata id of property to their label. If there is no label for the property,
+	  * the id will be kept.
+	  * @param entity Wikidata Entity whose properties will be translated
+	  * @param properties Map of property id pointing to its label
+	  * @return Wikidata Entity with translated property ids
+	  */
 	def translatePropertyIDs(
 		entity: WikiDataEntity,
 		properties: Map[String, String]
 	): WikiDataEntity = {
 		entity.data = entity.data.map { case (key, value) =>
-			// keep original key if there is no such key in the Map
-			val newKey = properties.getOrElse(key, key)
-			(newKey, value)
+			(properties.getOrElse(key, key), value)
 		}
 		entity
 	}
 
-	def buildPropertyMap(rdd: RDD[WikiDataEntity]): Map[String, String] = {
-		rdd
-			.filter(entity => entity.label.isDefined && entity.entitytype.contains("property"))
+	/**
+	  * Builds property map containing each Wikidata property and its label.
+	  * @param wikidataEntities RDD of Wikidata Entities including the property entities
+	  * @return Map of property id pointing to its label
+	  */
+	def buildPropertyMap(wikidataEntities: RDD[WikiDataEntity]): Map[String, String] = {
+		val propertyType = "property"
+		wikidataEntities
+			.filter(entity => entity.label.isDefined && entity.entitytype.contains(propertyType))
 			.map(entity => (entity.id, entity.label.get))
 			.collect
 			.toMap
