@@ -160,7 +160,7 @@ class Deduplication(
   /**
 	 * Uses input blocking scheme to generate blocks of subjects.
 	 *
-	 * @param subjects RDD to perform the blocking on.
+	 * @param subjects       RDD to perform the blocking on.
 	 * @param blockingScheme blocking scheme to use to generate keys.
 	 * @return subjects grouped by blocking keys
 	 */
