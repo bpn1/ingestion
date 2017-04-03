@@ -12,76 +12,76 @@ import scala.collection.mutable
 import scala.io.Source
 
 /**
-	* Case class for corresponding duplicatecandidates cassandra table.
-	* @param id unique UUID used as primary key
-	* @param subject_id UUID of subject in the existing subject table
-	* @param subject_name name of subject in the existing subject table
-	* @param duplicate_id UUID of duplicate subject
-	* @param duplicate_name name of duplicate subject
-	* @param duplicate_table source table of duplicate
-	*/
+  * Case class for corresponding duplicatecandidates cassandra table.
+  * @param id unique UUID used as primary key
+  * @param subject_id UUID of subject in the existing subject table
+  * @param subject_name name of subject in the existing subject table
+  * @param duplicate_id UUID of duplicate subject
+  * @param duplicate_name name of duplicate subject
+  * @param duplicate_table source table of duplicate
+  */
 case class DuplicateCandidate(
-															 id: UUID,
-															 subject_id: UUID,
-															 subject_name: Option[String] = None,
-															 duplicate_id: UUID,
-															 duplicate_name: Option[String] = None,
-															 duplicate_table: String)
+  id: UUID,
+  subject_id: UUID,
+  subject_name: Option[String] = None,
+  duplicate_id: UUID,
+  duplicate_name: Option[String] = None,
+  duplicate_table: String)
 
 /**
-	* Reproduces a configuration for a comparison of two Subjects
-	* @param key the attribute of a Subject to be compared
-	* @param similarityMeasure the similarity measure used for the comparison
-	* @param weight the weight of the result
-	* @param scale specifies the n-gram if the similarity measure has one
-	* @tparam A type of the attribute
-	* @tparam B type of the similarity measure
-	*/
+  * Reproduces a configuration for a comparison of two Subjects
+  * @param key the attribute of a Subject to be compared
+  * @param similarityMeasure the similarity measure used for the comparison
+  * @param weight the weight of the result
+  * @param scale specifies the n-gram if the similarity measure has one
+  * @tparam A type of the attribute
+  * @tparam B type of the similarity measure
+  */
 case class scoreConfig[A, B <: SimilarityMeasure[A]](
-																											key: String,
-																											similarityMeasure: B,
-																											weight: Double,
-																											scale: Int = 1)
+  key: String,
+  similarityMeasure: B,
+  weight: Double,
+  scale: Int = 1)
 
 /**
-	* Case class for corresponding block_evaluation cassandra table
-	* @param id unique UUID used as primary key
-	* @param data JSON containing the information about the blocks sizes
-	* @param comment String containing a comment or description of the data
-	*/
+  * Case class for corresponding block_evaluation cassandra table
+  * @param id unique UUID used as primary key
+  * @param data JSON containing the information about the blocks sizes
+  * @param comment String containing a comment or description of the data
+  */
 case class BlockEvaluation(
-														id: UUID = UUID.randomUUID(),
-														data: Option[Map[String, Int]],
-														comment: Option[String]
-													)
+  id: UUID = UUID.randomUUID(),
+  data: Option[Map[String, Int]],
+  comment: Option[String]
+)
 
 /**
-	* Abstract class containing generic methods for the deduplication
-	* @param confidence minimum confidence for two subjects to be identified as duplicates
-	* @param appName name of the deduplication
-	* @param dataSources sources where the new data is retrieved from
-	* @param configFile name of config file in resource folder
-	*/
+  * Abstract class containing generic methods for the deduplication
+  * @param confidence minimum confidence for two subjects to be identified as duplicates
+  * @param appName name of the deduplication
+  * @param dataSources sources where the new data is retrieved from
+  * @param configFile name of config file in resource folder
+  */
 class Deduplication(
-										 val confidence: Double,
-										 val appName: String,
-										 val dataSources: List[String],
-										 val configFile: Option[String] = None
-									 ) extends Serializable {
+	 val confidence: Double,
+	 val appName: String,
+	 val dataSources: List[String],
+	 val configFile: Option[String] = None
+ ) extends Serializable {
 	var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
 	val settings = mutable.Map[String, String]()
 
 	/**
-		* Compares to subjects regarding the configuration
-		* @param subject1 subjects to be compared to subject2
-		* @param subject2 subjects to be compared to subject2
-		* @return the similarity score of the subjects
-		*/
+	  * Compares to subjects regarding the configuration
+	  * @param subject1 subjects to be compared to subject2
+	  * @param subject2 subjects to be compared to subject2
+	  * @return the similarity score of the subjects
+	  */
 	def compare(
-							 subject1: Subject,
-							 subject2: Subject,
-							 scale: Int = 1
-						 ): Double = {
+		 subject1: Subject,
+		 subject2: Subject,
+		 scale: Int = 1
+	 ): Double = {
 		val scoreList = this.config
 			.map { feature =>
 				val valueSub1 = subject1.get(feature.key).headOption
@@ -136,9 +136,9 @@ class Deduplication(
 	}
 
 	/**
-		* Creates timestamp and TimeUUID for versioning.
-		* @return New current Version object.
-		*/
+	  * Creates timestamp and TimeUUID for versioning.
+	  * @return New current Version object.
+	  */
 	def makeTemplateVersion(): Version = {
 		val timestamp = new Date()
 		val version = UUIDs.timeBased()
@@ -147,32 +147,32 @@ class Deduplication(
 	}
 
 	/**
-		* Uses input blocking scheme to generate blocks of subjects.
-		* @param subjects RDD to perform the blocking on.
-		* @param blockingScheme blocking scheme to use to generate keys.
-		* @return subjects grouped by blocking keys
-		*/
+	  * Uses input blocking scheme to generate blocks of subjects.
+	  * @param subjects RDD to perform the blocking on.
+	  * @param blockingScheme blocking scheme to use to generate keys.
+	  * @return subjects grouped by blocking keys
+	  */
 	def blocking(
-								subjects: RDD[Subject],
-								blockingScheme: BlockingScheme
-							): RDD[(List[String], List[Subject])] = {
+		subjects: RDD[Subject],
+		blockingScheme: BlockingScheme
+	): RDD[(List[String], List[Subject])] = {
 		subjects
 			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
 			.reduceByKey(_ ++ _)
 	}
 
 	/**
-		* Creates blocks based on the input blocking scheme
-		* @param subjects RDD to perform the blocking on
-		* @param stagingSubjects RDD to perform the blocking on
-		* @param blockingScheme blocking scheme to use to generate keys.
-		* @return RDD of blocks.
-		*/
+	  * Creates blocks based on the input blocking scheme
+	  * @param subjects RDD to perform the blocking on
+	  * @param stagingSubjects RDD to perform the blocking on
+	  * @param blockingScheme blocking scheme to use to generate keys.
+	  * @return RDD of blocks.
+	  */
 	def blocking(
-								subjects: RDD[Subject],
-								stagingSubjects: RDD[Subject],
-								blockingScheme: BlockingScheme = new SimpleBlockingScheme()
-							): RDD[(List[String], List[Subject])] = {
+		subjects: RDD[Subject],
+		stagingSubjects: RDD[Subject],
+		blockingScheme: BlockingScheme = new SimpleBlockingScheme()
+	): RDD[(List[String], List[Subject])] = {
 		val subjectBlocks = blocking(subjects, blockingScheme)
 		val stagingBlocks = blocking(stagingSubjects, blockingScheme)
 		subjectBlocks
@@ -186,11 +186,11 @@ class Deduplication(
 	}
 
 	/**
-		* Finds the duplicates of each block
-		* @param block List of Subjects where the duplicates are searched in
-		* @return tuple of Subjects whose score is greater or equal a given threshold
-		* this.confidence
-		*/
+	  * Finds the duplicates of each block
+	  * @param block List of Subjects where the duplicates are searched in
+	  * @return tuple of Subjects whose score is greater or equal a given threshold
+	  * confidence
+	  */
 	def findDuplicates(block: List[Subject]): List[(Subject, Subject)] = {
 		// from http://stackoverflow.com/questions/14740199/cross-product-in-scala
 		implicit class Crossable[X](xs: Traversable[X]) {
@@ -209,10 +209,10 @@ class Deduplication(
 	}
 
 	/**
-		* Merging two duplicates in one subject
-		* @param duplicates tuple of Subject
-		* @return subjects containing the merged information of both duplicates
-		*/
+	  * Merging two duplicates in one subject
+	  * @param duplicates tuple of Subject
+	  * @return subjects containing the merged information of both duplicates
+	  */
 	def merging(duplicates: RDD[(Subject, Subject)], version: Version): RDD[Subject] = {
 		duplicates
 			.map { x =>
@@ -223,27 +223,27 @@ class Deduplication(
 	}
 
 	/**
-		*	Executes methods on the blocked data to gain information.
-		* @param blocks Input data, partitioned in blocks.
-		* @param comment Note to add to the evaluated data.
-		* @return Blocks with size-value and comment.
-		*/
+	  *	Executes methods on the blocked data to gain information.
+	  * @param blocks Input data, partitioned in blocks.
+	  * @param comment Note to add to the evaluated data.
+	  * @return Blocks with size-value and comment.
+	  */
 	def evaluateBlocks(
-											blocks: RDD[(List[String], List[Subject])],
-											comment: String
-										): BlockEvaluation = {
+		blocks: RDD[(List[String], List[Subject])],
+		comment: String
+	): BlockEvaluation = {
 		val dataMap = blocks
 			.map(block => (block._1.mkString(" "), block._2.size))
-			.sortBy(_._2, ascending = false)
+			.sortBy(_._2, false)
 			.collect()
 			.toMap[String, Int]
 		BlockEvaluation(data = Some(dataMap), comment = Some(comment))
 	}
 
 	/**
-		* Starts the deduplication process and writes the result to Cassandra.
-		* @param merge boolean indicating whether or not the duplicates should be merged
-		*/
+	  * Starts the deduplication process and writes the result to Cassandra.
+	  * @param merge boolean indicating whether or not the duplicates should be merged
+	  */
 	def run(merge: Boolean = false): Unit = {
 		val conf = new SparkConf()
 			.setAppName(this.appName)

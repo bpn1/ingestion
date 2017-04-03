@@ -1,16 +1,16 @@
 package DataLake
 
-/**
+	/**
 	* This trait is the template for our blocking schemes.
 	*/
 trait BlockingScheme extends Serializable {
 	val undefinedValue = List("undefined")
 
 	/**
-		* Generates key from the subject's properties.
-		* @param subject Subject to use.
-		* @return Key as list of strings.
-		*/
+	* Generates key from the subject's properties.
+	* @param subject Subject to use.
+	* @return Key as list of strings.
+	*/
 	def generateKey(subject: Subject): List[String]
 }
 
