@@ -91,31 +91,25 @@ class DeduplicationUnitTest
 	}
 
 	val subject1 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Volkswagen"),
 		properties = Map("city" -> List("Berlin"))
 	)
 	val subject2 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Audi GmbH"),
 		properties = Map("city" -> List("Berlin"))
 	)
 	val subject3 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Audy GmbH"),
 		properties = Map("city" -> List("New York"))
 	)
 	val subject4 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Volkswagen AG"),
 		properties = Map("city" -> List("Berlin"))
 	)
 	val subject5 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Porsche")
 	)
 	val subject6 = Subject(
-		id = UUID.randomUUID(),
 		name = Some("Ferrari")
 	)
 

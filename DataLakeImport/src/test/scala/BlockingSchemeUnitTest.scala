@@ -34,29 +34,23 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 
 	def testSubjects(): List[Subject] = {
 		List(Subject(
-			id = null,
 			name = Option("Audi"),
 			category = Option("Cars"),
 			properties = Map("city" -> List("Berlin", "New York"))),
 			Subject(
-				id = null,
 				name = Option("BMW"),
 				aliases = List("bwm", "Bayerische Motoren Werke"),
 				category = Option("Cars")),
 			Subject(
-				id = null,
 				name = Option("Lamborghini"),
 				category = Option("Cars")),
 			Subject(
-				id = null,
 				name = Option("Opel"),
 				category = Option("Cars")),
 			Subject(
-				id = null,
 				name = Option("Porsche"),
 				category = Option("Cars")),
 			Subject(
-				id = null,
 				name = Option("VW"),
 				aliases = List("Volkswagen"),
 				category = Option("Cars"),
@@ -65,29 +59,23 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 
 	def testUndefinedSubjects(): List[Subject] = {
 		List(Subject(
-			id = null,
 			name = None,
 			category = Option("Cars"),
 			properties = Map("city" -> List("Berlin", "New York"))),
 			Subject(
-				id = null,
 				name = Option("BMW"),
 				aliases = List("bwm", "Bayerische Motoren Werke"),
 				category = Option("Cars")),
 			Subject(
-				id = null,
 				name = Option("Lamborghini"),
 				category = Option("Cars")),
 			Subject(
-				id = null,
 				name = Option("Opel"),
 				category = Option("Cars")),
 			Subject(
-				id = null,
 				name = None,
 				category = Option("Cars")),
 			Subject(
-				id = null,
 				name = Option("VW"),
 				aliases = List("Volkswagen"),
 				category = Option("Cars"),
