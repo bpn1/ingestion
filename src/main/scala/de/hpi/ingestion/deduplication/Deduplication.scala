@@ -46,6 +46,17 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
 	similarityMeasure: B,
 	weight: Double,
 	scale: Int = 1)
+/**
+  * Case class for corresponding block_evaluation cassandra table
+  *
+  * @param id      unique UUID used as primary key
+  * @param data    Map containing the information about the blocks sizes
+  * @param comment String containing a comment or description of the data
+  */
+case class BlockEvaluation(
+	id: UUID = UUID.randomUUID(),
+	data: Map[String, Int] = Map[String, Int](),
+	comment: Option[String] = None)
 
 /**
   * Abstract class containing generic methods for the deduplication
@@ -214,12 +225,30 @@ class Deduplication(
 	}
 
 	/**
+	  * Executes methods on the blocked data to gain information.
+	  *
+	  * @param blocks  Input data, partitioned in blocks.
+	  * @param comment Note to add to the evaluated data.
+	  * @return Blocks with size-value and comment.
+	  */
+	def evaluateBlocks(
+		blocks: RDD[(List[String], List[Subject])],
+		comment: String
+	): BlockEvaluation = {
+		val dataMap = blocks
+			.map(block => (block._1.mkString(" "), block._2.size))
+			.sortBy(_._2, false)
+			.collect()
+			.toMap
+		BlockEvaluation(data = dataMap, comment = Option(comment))
+	}
+	/**
 	  * Starts the deduplication process and writes the result to Cassandra.
 	  * @param merge boolean indicating whether or not the duplicates should be merged
 	  */
 	def run(merge: Boolean = false): Unit = {
 		val conf = new SparkConf()
-		  .setAppName(this.appName)
+			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
@@ -230,6 +259,11 @@ class Deduplication(
 		} else {
 			blocking(subjects, blockingScheme)
 		}
+
+		val blockEvaluation = evaluateBlocks(blocks, this.appName)
+		sc
+			.parallelize(Seq(blockEvaluation))
+			.saveToCassandra(settings("keyspace"), settings("statsTable"))
 
 		blocks
 			.flatMap(block => findDuplicates(block._2))
