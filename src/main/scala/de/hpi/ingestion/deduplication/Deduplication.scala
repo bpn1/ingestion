@@ -50,13 +50,13 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
   * Case class for corresponding block_evaluation cassandra table
   *
   * @param id      unique UUID used as primary key
-  * @param data    JSON containing the information about the blocks sizes
+  * @param data    Map containing the information about the blocks sizes
   * @param comment String containing a comment or description of the data
   */
 case class BlockEvaluation(
 	id: UUID = UUID.randomUUID(),
-	data: Option[Map[String, Int]],
-	comment: Option[String])
+	data: Map[String, Int] = Map[String, Int](),
+	comment: Option[String] = None)
 
 /**
   * Abstract class containing generic methods for the deduplication
@@ -240,7 +240,7 @@ class Deduplication(
 			.sortBy(_._2, false)
 			.collect()
 			.toMap
-		BlockEvaluation(data = Some(dataMap), comment = Some(comment))
+		BlockEvaluation(data = dataMap, comment = Option(comment))
 	}
 	/**
 	  * Starts the deduplication process and writes the result to Cassandra.
