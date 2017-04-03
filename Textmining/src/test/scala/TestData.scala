@@ -429,41 +429,41 @@ object TestData {
 			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
 	}
 
-	def groupedAliasesTestRDD(sc: SparkContext): RDD[Alias] = {
-		sc.parallelize(List(
-			Alias("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
-			Alias("Bayern", Map("Bayern" -> 1).toSeq),
-			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Zerfall (Soziologie)" -> 1).toSeq)
-		))
+	def groupedAliasesTestSet(): Set[Alias] = {
+		Set(
+			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
+			Alias("Bayern", Map("Bayern" -> 1)),
+			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Zerfall (Soziologie)" -> 1))
+		)
 	}
 
-	def groupedPagesTestRDD(sc: SparkContext): RDD[Page] = {
-		sc.parallelize(List(
-			Page("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
-			Page("Bayern", Map("Bayern" -> 1).toSeq),
-			Page("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1).toSeq),
-			Page("Zerfall (Soziologie)", Map("Zerfall" -> 1).toSeq)
-		))
+	def groupedPagesTestSet(): Set[Page] = {
+		Set(
+			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
+			Page("Bayern", Map("Bayern" -> 1)),
+			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
+			Page("Zerfall (Soziologie)", Map("Zerfall" -> 1))
+		)
 	}
 
-	def cleanedGroupedAliasesTestRDD(sc: SparkContext): RDD[Alias] = {
-		sc.parallelize(List(
-			Alias("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
-			Alias("Bayern", Map("Bayern" -> 1).toSeq),
-			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1).toSeq)
-		))
+	def cleanedGroupedAliasesTestSet(): Set[Alias] = {
+		Set(
+			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
+			Alias("Bayern", Map("Bayern" -> 1)),
+			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1))
+		)
 	}
 
-	def cleanedGroupedPagesTestRDD(sc: SparkContext): RDD[Page] = {
-		sc.parallelize(List(
-			Page("Ingolstadt", Map("Ingolstadt" -> 1).toSeq),
-			Page("Bayern", Map("Bayern" -> 1).toSeq),
-			Page("Automobilhersteller", Map("Automobilhersteller" -> 1).toSeq),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1).toSeq)
-		))
+	def cleanedGroupedPagesTestSet(): Set[Page] = {
+		Set(
+			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
+			Page("Bayern", Map("Bayern" -> 1)),
+			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+		)
 	}
 
 	def probabilityReferences(): Map[String, Double] = {
@@ -475,17 +475,17 @@ object TestData {
 		)
 	}
 
-	def allPagesTestRDD(sc: SparkContext): RDD[String] = {
-		sc.parallelize(List(
+	def allPagesTestList(): List[String] = {
+		List(
 			"Automobilhersteller",
 			"Ingolstadt",
 			"Bayern",
 			"Zerfall (Album)"
-		))
+		)
 	}
 
-	def smallerParsedWikipediaTestRDD(sc: SparkContext): RDD[ParsedWikipediaEntry] = {
-		sc.parallelize(List(
+	def smallerParsedWikipediaTestList(): List[ParsedWikipediaEntry] = {
+		List(
 			ParsedWikipediaEntry("Audi", Option("dummy text"), List(
 				Link("Ingolstadt", "Ingolstadt", 55),
 				Link("Bayern", "Bayern", 69),
@@ -496,7 +496,7 @@ object TestData {
 				Link("alias with empty page name", "", 4711)
 			),
 				List()
-			)))
+			))
 	}
 
 	def germanStopwordsTestSet(): Set[String] = {

@@ -97,10 +97,8 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 
 	"List links" should "be extracted" in {
 		val testLinks = WikipediaTextparser.extractListLinks(TestData.testListLinkPage())
-		val expected = TestData.testExtractedListLinks()
-		println(s"links - expected: ${testLinks.filterNot(expected.toSet)}")
-		println(s"expected - links: ${expected.filterNot(testLinks.toSet)}")
-		testLinks shouldBe expected
+		val expectedLinks = TestData.testExtractedListLinks()
+		testLinks shouldBe expectedLinks
 	}
 
 	"All redirects" should "contain WEITERLEITUNG link" in {
