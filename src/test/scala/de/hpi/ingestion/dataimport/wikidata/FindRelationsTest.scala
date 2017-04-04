@@ -6,10 +6,10 @@ import org.scalatest.{FlatSpec, Matchers}
 class FindRelationsTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Subject relations" should "be found" in {
 		val nameMap = TestData.resolvedNameMap()
-		val subjects = TestData.testSubjects()
+		val subjects = TestData.unresolvedSubjects()
 			.map(FindRelations.findRelations(_, nameMap, FindRelations.makeTemplateVersion()))
 			.map(subject => (subject.id, subject.name, subject.properties, subject.relations))
-		val expectedSubjects = TestData.resolvedTestSubjects()
+		val expectedSubjects = TestData.resolvedSubjects()
 			.map(subject => (subject.id, subject.name, subject.properties, subject.relations))
 		subjects shouldBe expectedSubjects
 	}
@@ -26,7 +26,7 @@ class FindRelationsTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Name resolve map" should "contain all resolvable names" in {
-		val subjects = sc.parallelize(TestData.testSubjects())
+		val subjects = sc.parallelize(TestData.unresolvedSubjects())
 		val resolvedNames = FindRelations.resolvableNamesMap(subjects)
 		val expectedMap = TestData.resolvedNameMap()
 		resolvedNames shouldBe expectedMap
