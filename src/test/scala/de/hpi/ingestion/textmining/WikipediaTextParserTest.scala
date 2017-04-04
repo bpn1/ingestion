@@ -216,7 +216,7 @@ class WikipediaTextParserTest extends FlatSpec with SharedSparkContext with Matc
 	}
 
 	"Cleaned Wikipedia document" should "not contain other tags than anchors" in {
-		val cleanedDocuments = TestData.documentTestList()
+		TestData.documentTestList()
 			.map(Jsoup.parse)
 			.map(WikipediaTextParser.removeTags)
 			.map(_.toString)
