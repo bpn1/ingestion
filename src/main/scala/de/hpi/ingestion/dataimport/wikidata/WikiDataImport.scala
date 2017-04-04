@@ -69,80 +69,111 @@ object WikiDataImport {
 	  */
 	def parseDataType(dataType: Option[String], dataValue: JsValue): String = {
 		val propertyPathMap = Map(
-			"string" -> List("value"),
-			"wikibase-entityid" -> List("value", "id"),
-			"time" -> List("value", "time"),
-			"monolingualtext" -> List("value", "text"))
+			Option("string") -> List("value"),
+			Option("wikibase-entityid") -> List("value", "id"),
+			Option("time") -> List("value", "time"),
+			Option("monolingualtext") -> List("value", "text"))
 
-		val propertyKey = dataType.getOrElse("")
-		if(propertyPathMap.contains(propertyKey)) {
-			extractString(dataValue, propertyPathMap(propertyKey)).getOrElse("")
+		if(propertyPathMap.contains(dataType)) {
+			extractString(dataValue, propertyPathMap(dataType)).getOrElse("")
 		} else {
-			propertyKey match {
-				case "globecoordinate" =>
+			dataType match {
+				case Some("globecoordinate") =>
 					val lat = extractDouble(dataValue, List("value", "latitude")).getOrElse("")
 					val long = extractDouble(dataValue, List("value", "longitude")).getOrElse("")
 					lat + ";" + long
-				case "quantity" =>
+				case Some("quantity") =>
 					val amount = extractString(dataValue, List("value", "amount")).getOrElse("")
 					val unit = extractString(dataValue, List("value", "unit")).getOrElse("")
 						.split("/")
 						.last
 					amount + ";" + unit
-				case _ => ""
+				case _ | None => ""
 			}
 		}
 	}
 
+	/**
+	  * Extracts the label for a WikiDataEntity from a given JSON object. The first choice of the label langauge is
+	  * {@language} if the entity is not a property. The second choice of the language is {@fallbackLanguage}. If both
+	  * of these are not available the first available language is taken.
+	  * @param json JSON object containing the data
+	  * @param entityType type of the entity for which the labels are extracted
+	  * @return Option of the label (if it exists
+	  */
+	def extractLabels(json: JsValue, entityType: Option[String]): Option[String] = {
+		val labelMap = getValue(json, List("labels"))
+		if(labelMap.isDefined && labelMap.get.as[JsObject].keys.nonEmpty) {
+			val labelLanguages = labelMap.get.as[JsObject].keys
+			var labelLanguage = labelLanguages.head
+			if(labelLanguages.contains(language) && !entityType.contains("property")) {
+				labelLanguage = language
+			} else if(labelLanguages.contains(fallbackLanguage)) {
+				labelLanguage = fallbackLanguage
+			}
+			extractString(labelMap.get, List(labelLanguage, "value"))
+		} else {
+			None
+		}
+	}
+
+	/**
+	  * Extracts every field other than the properties and aliases from the json object into a WikiDataEntity.
+	  * @param json JSON object of the Wikidata entry
+	  * @return WikiDataEntity with every field other than the properties and aliases filled with data
+	  */
 	def fillEntityValues(json: JsValue): WikiDataEntity = {
 		val entity = WikiDataEntity(extractString(json, List("id")).getOrElse(""))
 		entity.entitytype = extractString(json, List("type"))
 		entity.wikiname = extractString(json, List("sitelinks", language + "wiki", "title"))
 		entity.description = extractString(json, List("descriptions", language, "value"))
 			.orElse(extractString(json, List("descriptions", fallbackLanguage, "value")))
-
-		// fall back to secondary language or first available language for label
-		val labels = getValue(json, List("labels"))
-		if(labels.isDefined) {
-			val labelLanguages = labels.get.as[JsObject].keys
-			if(labelLanguages.contains(language) && !entity.entitytype.contains("property")) {
-				entity.label = extractString(labels.get, List(language, "value"))
-			} else if(labelLanguages.contains(fallbackLanguage)) {
-				entity.label = extractString(labels.get, List(fallbackLanguage, "value"))
-			} else if(labelLanguages.nonEmpty) {
-				// take first available language if other two languages don't exist
-				val firstLanguage = labelLanguages.headOption.getOrElse("")
-				entity.label = extractString(labels.get, List(firstLanguage, "value"))
-			}
-		}
-
+		entity.label = extractLabels(json, entity.entitytype)
 		entity
 	}
 
+	/**
+	  * Extracts the value of a given claim in JSON and returns it as a String
+	  * @param claim JSON object of the claim
+	  * @return value of the claim as String
+	  */
 	def extractClaimValues(claim: JsValue): String = {
 		val dataValue = getValue(claim, List("mainsnak", "datavalue"))
-		var value = ""
-		if(dataValue.isDefined) {
-			val dataType = extractString(dataValue.get, List("type"))
-			value = parseDataType(dataType, dataValue.get)
-		}
-		value
+		dataValue.map { value =>
+			val dataType = extractString(value, List("type"))
+			parseDataType(dataType, value)
+		}.getOrElse("")
 	}
 
+	/**
+	  * Extracts the aliases of a WikiDataEntity out of a given JSON object
+	  * @param json JSON object of the Wikidata entry containing the data
+	  * @return List of all aliases contained in the JSON object
+	  */
+	def extractAliases(json: JsValue): List[String] = {
+		val aliasJsonObject = getValue(json, List("aliases"))
+			.map(_.as[JsObject])
+		val languageList = aliasJsonObject
+			.map(_.keys.toList)
+		    .getOrElse(List[String]())
+
+		languageList.flatMap { language =>
+			extractList(aliasJsonObject.get, List(language))
+				.map(extractString(_, List("value")))
+				.filter(_.isDefined)
+			    .map(_.get)
+		}
+	}
+
+	/**
+	  * Parses a JSON object given as String into a WikiDataEntity
+	  * @param line String containing the JSON object
+	  * @return WikiDataEntity filled with the data contained in the JSON object
+	  */
 	def parseEntity(line: String): WikiDataEntity = {
 		val json = Json.parse(line)
 		val entity = fillEntityValues(json)
-
-		// concatenate aliases in all languages
-		val aliases = getValue(json, List("aliases"))
-			.getOrElse(JsObject(Seq[(String, JsValue)]()))
-			.as[JsObject]
-		val aliasBuffer = ListBuffer[String]()
-		for(language <- aliases.keys) {
-			aliasBuffer ++= extractList(aliases, List(language))
-				.map(jsVal => extractString(jsVal, List("value")).getOrElse(""))
-		}
-		entity.aliases = aliasBuffer.toList
+		entity.aliases = extractAliases(json)
 
 		val claims = extractMap(json, List("claims"))
 		entity.data = claims.mapValues { content =>

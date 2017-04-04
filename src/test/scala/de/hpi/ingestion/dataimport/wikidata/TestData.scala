@@ -7,8 +7,13 @@ import de.hpi.ingestion.datalake.models.Subject
 
 import scala.io.Source
 
+// scalastyle:off number.of.methods
 object TestData {
 	// scalastyle:off line.size.limit
+
+	val wikidataEntriesPath = "/wikidata/wikidata_entries.json"
+	val testEntriesPath = "/wikidata/test_entities.json"
+	val claimDataPath = "/wikidata/claim_data.json"
 
 	def unfilteredWikidataEntities(): List[WikiDataEntity] = {
 		List(WikiDataEntity("Q5", label = Option("Mensch"), instancetype = Option("Don't resolve me")),
@@ -58,7 +63,7 @@ object TestData {
 		List(("Q433465", "mass", "+65;Kilogramm"))
 	}
 
-	def testSubjects(): List[Subject] = {
+	def unresolvedSubjects(): List[Subject] = {
 		List(Subject(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), name = Option("Entry 1"), properties = Map(FindRelations.wikiDataIdKey -> List("Q1"), "test" -> List("Q2"))),
 			Subject(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), name = Option("Entry 2"), properties = Map(FindRelations.wikiDataIdKey -> List("Q2"), "test" -> List("Q3"))),
 			Subject(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), name = Option("Entry 3"), properties = Map(FindRelations.wikiDataIdKey -> List("Q3"), "test" -> List("Q4"))),
@@ -74,7 +79,7 @@ object TestData {
 			"Q4" -> (UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), "Entry 4"))
 	}
 
-	def resolvedTestSubjects(): List[Subject] = {
+	def resolvedSubjects(): List[Subject] = {
 		List(Subject(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), name = Option("Entry 1"), properties = Map(FindRelations.wikiDataIdKey -> List("Q1"), "test" -> List("Q2", "Entry 2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("type" -> "test"))),
 			Subject(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), name = Option("Entry 2"), properties = Map(FindRelations.wikiDataIdKey -> List("Q2"), "test" -> List("Q3", "Entry 3")), relations = Map(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d") -> Map("type" -> "test"))),
 			Subject(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), name = Option("Entry 3"), properties = Map(FindRelations.wikiDataIdKey -> List("Q3"), "test" -> List("Q4", "Entry 4")), relations = Map(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("type" -> "test"))),
@@ -83,7 +88,7 @@ object TestData {
 			Subject(UUID.fromString("bbd8f942-1663-4fea-9e70-3cf27896bc57"), name = Option("Entry 6"), properties = Map("test" -> List("Q5"))))
 	}
 
-	def testWikidataEntities(): List[WikiDataEntity] = {
+	def completeWikidataEntities(): List[WikiDataEntity] = {
 		List(WikiDataEntity("Q21110253", List("testalias"), Option("human protein (annotated by UniProtKB/Swiss-Prot Q8N128)"), Option("item"), Option("testwikiname"), Option("en_testwikiname"), Option("test_instancetype"), Option("Protein FAM177A1"), Map("Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"), "subclass of" -> List("Protein", "FAM177 family"))))
 	}
 
@@ -154,9 +159,15 @@ object TestData {
 	}
 
 	def rawWikiDataEntries(): List[String] = {
-		Source.fromURL(getClass.getResource("/wikidataTestData"))
+		Source.fromURL(getClass.getResource(wikidataEntriesPath))
 			.getLines()
 			.toList
+	}
+
+	def claimData(): String = {
+		Source.fromURL(getClass.getResource(claimDataPath))
+			.getLines()
+			.mkString("\n")
 	}
 
 	def dataTypeValues(dataType: String): String = {
@@ -170,5 +181,91 @@ object TestData {
 		}
 	}
 
+	def propertyEntities(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity("P1", label = Option("Property 1"), entitytype = Option("property")),
+			WikiDataEntity("P2", label = Option("Property 2"), entitytype = Option("property")),
+			WikiDataEntity("P3", label = Option("Property 3"), entitytype = Option("property")),
+			WikiDataEntity("P4", label = Option("Property 4"), entitytype = Option("property")),
+			WikiDataEntity("P5", label = Option("Property 5")),
+			WikiDataEntity("P6", entitytype = Option("property")))
+	}
+
+	def propertyMap(): Map[String, String] = {
+		Map("P1" -> "Property 1", "P2" -> "Property 2", "P3" -> "Property 3", "P4" -> "Property 4")
+	}
+
+	def rawWikidataEntries(): String = {
+		Source.fromURL(getClass.getResource(testEntriesPath))
+			.getLines()
+			.mkString("\n")
+	}
+
+	def filledWikidataEntities(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity("ID 1", entitytype = Option("property"), description = Option("de description value"), label = Option("de label"), wikiname = Option("de wiki title")),
+			WikiDataEntity("ID 2", entitytype = Option("property"), description = Option("de description value"), label = Option("en label"), wikiname = Option("de wiki title")),
+			WikiDataEntity("ID 3", entitytype = Option("property"), description = Option("en description value"), label = Option("en label")),
+			WikiDataEntity("ID 4", entitytype = Option("property"), label = Option("bla label")),
+			WikiDataEntity("ID 5", entitytype = Option("entity"), description = Option("de description value"), label = Option("de label"), wikiname = Option("de wiki title")),
+			WikiDataEntity("ID 6", entitytype = Option("entity"), description = Option("de description value"), label = Option("de label"), wikiname = Option("de wiki title")),
+			WikiDataEntity("ID 7", entitytype = Option("entity"), description = Option("en description value"), label = Option("en label")),
+			WikiDataEntity("ID 8", entitytype = Option("entity2"), label = Option("bla label")),
+			WikiDataEntity("ID 9"))
+	}
+
+	def parsedWikidataEntities(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity("ID 1", aliases = List("de alias", "en alias"),entitytype = Option("property"), description = Option("de description value"), label = Option("de label"), wikiname = Option("de wiki title"), data = Map("P1" -> List("test string 1", "test time 1"))),
+			WikiDataEntity("ID 2", aliases = List("de alias"), entitytype = Option("property"), description = Option("de description value"), label = Option("en label"), wikiname = Option("de wiki title")),
+			WikiDataEntity("ID 3", aliases = List("en alias"), entitytype = Option("property"), description = Option("en description value"), label = Option("en label"), data = Map("P2" -> List("test text 1"))),
+			WikiDataEntity("ID 4", entitytype = Option("property"), label = Option("bla label")),
+			WikiDataEntity("ID 5", entitytype = Option("entity"), description = Option("de description value"), label = Option("de label"), wikiname = Option("de wiki title")),
+			WikiDataEntity("ID 6", aliases = List("asd alias"), entitytype = Option("entity"), description = Option("de description value"), label = Option("de label"), wikiname = Option("de wiki title")),
+			WikiDataEntity("ID 7", entitytype = Option("entity"), description = Option("en description value"), label = Option("en label")),
+			WikiDataEntity("ID 8", entitytype = Option("entity2"), label = Option("bla label")),
+			WikiDataEntity("ID 9", data = Map("P3" -> List("test amount;test unit"), "P4" -> List("1.0;2.0"))))
+	}
+
+	def translatedWikidataEntities(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity("ID 1", aliases = List("de alias", "en alias"),entitytype = Option("property"), description = Option("de description value"), label = Option("de label"), wikiname = Option("de wiki title"), data = Map("Property 1" -> List("test string 1", "test time 1"))),
+			WikiDataEntity("ID 2", aliases = List("de alias"), entitytype = Option("property"), description = Option("de description value"), label = Option("en label"), wikiname = Option("de wiki title")),
+			WikiDataEntity("ID 3", aliases = List("en alias"), entitytype = Option("property"), description = Option("en description value"), label = Option("en label"), data = Map("Property 2" -> List("test text 1"))),
+			WikiDataEntity("ID 4", entitytype = Option("property"), label = Option("bla label")),
+			WikiDataEntity("ID 5", entitytype = Option("entity"), description = Option("de description value"), label = Option("de label"), wikiname = Option("de wiki title")),
+			WikiDataEntity("ID 6", aliases = List("asd alias"), entitytype = Option("entity"), description = Option("de description value"), label = Option("de label"), wikiname = Option("de wiki title")),
+			WikiDataEntity("ID 7", entitytype = Option("entity"), description = Option("en description value"), label = Option("en label")),
+			WikiDataEntity("ID 8", entitytype = Option("entity2"), label = Option("bla label")),
+			WikiDataEntity("ID 9", data = Map("Property 3" -> List("test amount;test unit"), "Property 4" -> List("1.0;2.0"))))
+	}
+
+	def entityLabels(): List[Option[String]] = {
+		List(
+			Option("de label"),
+			Option("en label"),
+			Option("en label"),
+			Option("bla label"),
+			Option("de label"),
+			Option("de label"),
+			Option("en label"),
+			Option("bla label"),
+			None)
+	}
+
+	def entityAliases(): List[List[String]] = {
+		List(
+			List("de alias", "en alias"),
+			List("de alias"),
+			List("en alias"),
+			List(),
+			List(),
+			List("asd alias"),
+			List(),
+			List(),
+			List())
+	}
+
 	// scalastyle:on line.size.limit
 }
+// scalastyle:on number.of.methods
