@@ -705,6 +705,16 @@ object TestData {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
 
+	def documentTestList(): List[String] = {
+		List(
+			"""<body><p><a href="/2._Juli" title="2. Juli">2. Juli</a>
+			  |<a href="/1852" title="1852">1852</a> im Stadtteil
+			  |<span class="math">bli</span> bla
+			  |<span class="math">blub</span>
+			  |</p></body>""".stripMargin
+		)
+	}
+
 	// scalastyle:on line.size.limit
 }
 

@@ -83,7 +83,7 @@ object WikipediaTextParser {
 			.map(_.toString)
 			.mkString("\n")
 			.replaceAll("&lt;(/|)gallery&gt;", "") // removes gallery tags
-			.replaceAll("<(|/)([^a])>", "") // remove every tag other than anchors
+			.replaceAll("</?[b-z].*? ?.*?>", "") // remove every tag other than anchors
 		Jsoup.parse(htmltext)
 	}
 
@@ -253,15 +253,13 @@ object WikipediaTextParser {
 
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		var title = entry.title
-		if(isDisambiguationPage(entry) && !title.endsWith(disambiguationTitleSuffix)) {
+		if (isDisambiguationPage(entry) && !title.endsWith(disambiguationTitleSuffix)) {
 			title += disambiguationTitleSuffix
 		}
 		val html = wikipediaToHtml(entry.getText())
 		val parsedEntry = parseHtml(title, html)
 		parsedEntry.templatelinks = extractTemplateLinks(entry.getText())
 		parsedEntry
-//		val html = wikipediaToHtml(entry.getText)
-//		parseHtml(entry.title, html)
 	}
 
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
@@ -272,6 +270,7 @@ object WikipediaTextParser {
 
 	/**
 	  * Reads namespaces from resource file and removes used namespaces.
+	  *
 	  * @return list of unused namespaces
 	  */
 	def badNamespaces(): List[String] = {
@@ -285,6 +284,7 @@ object WikipediaTextParser {
 
 	/**
 	  * Checks whether the entry starts with a namespace.
+	  *
 	  * @param entry Wikipedia entry to check
 	  * @return true if entry starts with a namespace
 	  */
@@ -294,6 +294,7 @@ object WikipediaTextParser {
 
 	/**
 	  * Removes links to pages with an unused namespace.
+	  *
 	  * @param linkList list of links to clean
 	  * @return list of links without links to unused namespace pages.
 	  */
@@ -319,7 +320,7 @@ object WikipediaTextParser {
 		htmlLists
 			.map(element => Jsoup.parse(element.html()))
 			.flatMap(_.select("a"))
-		    .map(anchor => Link(anchor.text, parseUrl(anchor.attr("href"))))
+			.map(anchor => Link(anchor.text, parseUrl(anchor.attr("href"))))
 	}
 
 	def main(args: Array[String]): Unit = {

@@ -4,6 +4,7 @@ import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import scala.util.matching.Regex
 import org.scalatest._
+import org.jsoup.Jsoup
 
 class WikipediaTextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Wikipedia entry title" should "not change" in {
@@ -102,9 +103,9 @@ class WikipediaTextParserTest extends FlatSpec with SharedSparkContext with Matc
 	}
 
 	"All redirects" should "contain WEITERLEITUNG link" in {
- 		val entries = TestData.testEntriesWithBadRedirects()
+		val entries = TestData.testEntriesWithBadRedirects()
 		entries.map(entry => WikipediaTextParser.cleanRedirects(entry))
-		    .map(entry => entry.getText should startWith ("WEITERLEITUNG"))
+			.map(entry => entry.getText should startWith("WEITERLEITUNG"))
 	}
 
 	"Wikipedia disambiguation pages" should "be recognized as such" in {
@@ -196,9 +197,9 @@ class WikipediaTextParserTest extends FlatSpec with SharedSparkContext with Matc
 		WikipediaTextParser
 			.extractCategoryLinks(testEntry)
 			.categorylinks
-		    .foreach { link =>
-				link.alias shouldNot startWith (WikipediaTextParser.categoryNamespace)
-				link.page shouldNot startWith (WikipediaTextParser.categoryNamespace)
+			.foreach { link =>
+				link.alias shouldNot startWith(WikipediaTextParser.categoryNamespace)
+				link.page shouldNot startWith(WikipediaTextParser.categoryNamespace)
 			}
 	}
 
@@ -208,8 +209,15 @@ class WikipediaTextParserTest extends FlatSpec with SharedSparkContext with Matc
 		WikipediaTextParser
 			.extractCategoryLinks(testEntry)
 			.categorylinks
-			.foreach { link => link.offset shouldBe 0
-			}
+			.foreach(link => link.offset shouldBe 0)
+	}
+
+	"Cleaned Wikipedia document" should "not contain other tags than anchors" in {
+		val cleanedDocuments = TestData.documentTestList()
+			.map(Jsoup.parse)
+			.map(WikipediaTextParser.removeTags)
+			.map(_.toString)
+			.foreach(document => document should (not include "</span>" and not include "</p>"))
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
