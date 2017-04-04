@@ -28,6 +28,11 @@ libraryDependencies ++= Seq(
 	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4"
 )
 
+// scala compiler flags for warnings and correct file path for scala doc source links
+scalacOptions in ThisBuild ++= (baseDirectory.map { 
+	bd => Seq("-deprecation", "-feature", "-sourcepath", bd.getAbsolutePath, "-unchecked")
+}).value
+
 // testing settings
 logBuffered in Test := false
 parallelExecution in Test := false
@@ -53,4 +58,6 @@ scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value
 
 // ScalaDoc Settings
 scalacOptions in (Compile, doc) ++= Seq("-doc-footer", "Impressum: https://hpi.de/naumann/sites/ingestion/impressum/")
-scalacOptions in (Compile, doc) ++= Seq("-doc-source-url", "https://github.com/bpn1/ingestion/tree/master/src/main/scala/€{FILE_PATH}")
+scalacOptions in (Compile, doc) ++= Seq("-doc-source-url", "https://github.com/bpn1/ingestion/tree/master€{FILE_PATH}.scala")
+
+
