@@ -8,7 +8,6 @@ lazy val root = (project in file(".")).
 
 resolvers ++= Seq(
 	"Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven"
-	/*"Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"*/
 )
 
 libraryDependencies ++= Seq(
@@ -20,11 +19,11 @@ libraryDependencies ++= Seq(
 	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0",
 	"com.databricks" % "spark-xml_2.11" % "0.4.1",
 	"info.bliki.wiki" % "bliki-core" % "3.1.0" exclude("ch.qos.logback", "logback-classic"),
-	"org.jsoup" % "jsoup" % "1.10.1",
+	"org.jsoup" % "jsoup" % "1.10.2",
 	"com.esotericsoftware" % "kryo" % "4.0.0",
 	"com.google.protobuf" % "protobuf-java" % "2.6.1",
-	"org.apache.lucene" % "lucene-analyzers" % "2.9.4",
-	"com.typesafe.play" %% "play-json" % "2.5.13",
+	"org.apache.lucene" % "lucene-analyzers-common" % "6.5.0",
+	"com.typesafe.play" %% "play-json" % "2.4.11",
 	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4"
 )
 
