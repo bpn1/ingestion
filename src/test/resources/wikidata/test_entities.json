@@ -1,0 +1,299 @@
+[
+	{
+		"id": "ID 1",
+		"type": "property",
+		"sitelinks": {
+			"dewiki": {
+				"title": "de wiki title"
+			}
+		},
+		"descriptions": {
+			"de": {
+				"value": "de description value"
+			}
+		},
+		"labels": {
+			"de": {
+				"value": "de label"
+			}
+		},
+		"aliases": {
+			"de": [
+				{
+					"language": "de",
+					"value": "de alias"
+				}
+			],
+			"en": [
+				{
+					"language": "en",
+					"value": "en alias"
+				}
+			]
+		},
+		"claims": {
+			"P1": [
+				{
+					"mainsnak": {
+						"datavalue": {
+							"value": "test string 1",
+							"type": "string"
+						}
+					}
+				},
+				{
+					"mainsnak": {
+						"datavalue": {
+							"value": {
+								"time": "test time 1"
+							},
+							"type": "time"
+						}
+					}
+				}
+			]
+		}
+	},
+	{
+		"id": "ID 2",
+		"type": "property",
+		"sitelinks": {
+			"dewiki": {
+				"title": "de wiki title"
+			},
+			"enwiki": {
+				"title": "en wiki title"
+			}
+		},
+		"descriptions": {
+			"de": {
+				"value": "de description value"
+			},
+			"en": {
+				"value": "en description value"
+			}
+		},
+		"labels": {
+			"de": {
+				"value": "de label"
+			},
+			"en": {
+				"value": "en label"
+			}
+		},
+		"aliases": {
+			"de": [
+				{
+					"language": "de",
+					"value": "de alias"
+				}
+			]
+		}
+	},
+	{
+		"id": "ID 3",
+		"type": "property",
+		"sitelinks": {
+			"blawiki": {
+				"title": "bla wiki title"
+			},
+			"enwiki": {
+				"title": "en wiki title"
+			}
+		},
+		"descriptions": {
+			"bla": {
+				"value": "bla description value"
+			},
+			"en": {
+				"value": "en description value"
+			}
+		},
+		"labels": {
+			"bla": {
+				"value": "bla label"
+			},
+			"en": {
+				"value": "en label"
+			}
+		},
+		"aliases": {
+			"en": [
+				{
+					"language": "en",
+					"value": "en alias"
+				}
+			]
+		},
+		"claims": {
+			"P2": [
+				{
+					"mainsnak": {
+						"datavalue": {
+							"value": {
+								"text": "test text 1"
+							},
+							"type": "monolingualtext"
+						}
+					}
+				}
+			]
+		}
+	},
+	{
+		"id": "ID 4",
+		"type": "property",
+		"sitelinks": {
+			"blawiki": {
+				"title": "bla wiki title"
+			}
+		},
+		"descriptions": {
+			"bla": {
+				"value": "bla description value"
+			}
+		},
+		"labels": {
+			"bla": {
+				"value": "bla label"
+			}
+		}
+	},
+	{
+		"id": "ID 5",
+		"type": "entity",
+		"sitelinks": {
+			"dewiki": {
+				"title": "de wiki title"
+			}
+		},
+		"descriptions": {
+			"de": {
+				"value": "de description value"
+			}
+		},
+		"labels": {
+			"de": {
+				"value": "de label"
+			}
+		},
+		"aliases": {
+		}
+	},
+	{
+		"id": "ID 6",
+		"type": "entity",
+		"sitelinks": {
+			"dewiki": {
+				"title": "de wiki title"
+			},
+			"enwiki": {
+				"title": "en wiki title"
+			}
+		},
+		"descriptions": {
+			"de": {
+				"value": "de description value"
+			},
+			"en": {
+				"value": "en description value"
+			}
+		},
+		"labels": {
+			"de": {
+				"value": "de label"
+			},
+			"en": {
+				"value": "en label"
+			}
+		},
+		"aliases": {
+			"asd": [
+				{
+					"language": "asd",
+					"value": "asd alias"
+				}
+			]
+		},
+		"claims": {
+		}
+	},
+	{
+		"id": "ID 7",
+		"type": "entity",
+		"sitelinks": {
+			"blawiki": {
+				"title": "bla wiki title"
+			},
+			"enwiki": {
+				"title": "en wiki title"
+			}
+		},
+		"descriptions": {
+			"bla": {
+				"value": "bla description value"
+			},
+			"en": {
+				"value": "en description value"
+			}
+		},
+		"labels": {
+			"bla": {
+				"value": "bla label"
+			},
+			"en": {
+				"value": "en label"
+			}
+		}
+	},
+	{
+		"id": "ID 8",
+		"type": "entity2",
+		"sitelinks": {
+			"blawiki": {
+				"title": "bla wiki title"
+			}
+		},
+		"descriptions": {
+			"bla": {
+				"value": "bla description value"
+			}
+		},
+		"labels": {
+			"bla": {
+				"value": "bla label"
+			}
+		}
+	},
+	{
+		"id": "ID 9",
+		"claims": {
+			"P3": [
+				{
+					"mainsnak": {
+						"datavalue": {
+							"value": {
+								"amount": "test amount",
+								"unit": "test unit"
+							},
+							"type": "quantity"
+						}
+					}
+				}
+			],
+			"P4": [
+				{
+					"mainsnak": {
+						"datavalue": {
+							"value": {
+								"latitude": 1.0,
+								"longitude": 2.0
+							},
+							"type": "globecoordinate"
+						}
+					}
+				}
+			]
+		}
+	}
+]
