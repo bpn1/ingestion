@@ -59,5 +59,3 @@ scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value
 // ScalaDoc Settings
 scalacOptions in (Compile, doc) ++= Seq("-doc-footer", "Impressum: https://hpi.de/naumann/sites/ingestion/impressum/")
 scalacOptions in (Compile, doc) ++= Seq("-doc-source-url", "https://github.com/bpn1/ingestion/tree/master€{FILE_PATH}.scala")
-
-
