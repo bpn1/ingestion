@@ -1,12 +1,11 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import org.apache.spark.{SparkConf, SparkContext}
-import java.util.{Date, UUID}
+import java.util.UUID
 
 import scala.collection.mutable
 import scala.util.matching.Regex
 import com.datastax.spark.connector._
-import com.datastax.driver.core.utils.UUIDs
 
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models._
@@ -71,10 +70,7 @@ object FindRelations {
 	  * @return template version
 	  */
 	def makeTemplateVersion(): Version = {
-		val timestamp = new Date()
-		val version = UUIDs.timeBased()
-
-		Version(version, appname, List[String](), Map[String, String](), datasources, timestamp)
+		Version(program = appname, datasources = datasources)
 	}
 
 	/**
