@@ -7,13 +7,13 @@ lazy val root = (project in file(".")).
 	)
 
 resolvers ++= Seq(
-	"Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven",
-	"Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"
+	"Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven"
+	/*"Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"*/
 )
 
 libraryDependencies ++= Seq(
 	"org.apache.spark" % "spark-core_2.11" % "2.1.0" exclude("org.scalatest", "scalatest_2.11"),
-	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.0",
+	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.1",
 	"org.apache.spark" % "spark-sql_2.11" % "2.1.0",
 	"org.scalactic" % "scalactic_2.11" % "3.0.1",
 	"org.scalatest" % "scalatest_2.11" % "3.0.1" % "test",
@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
 	"com.esotericsoftware" % "kryo" % "4.0.0",
 	"com.google.protobuf" % "protobuf-java" % "2.6.1",
 	"org.apache.lucene" % "lucene-analyzers" % "2.9.4",
-	"com.typesafe.play" %% "play-json" % "2.3.0",
+	"com.typesafe.play" %% "play-json" % "2.5.13",
 	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4"
 )
 
@@ -33,7 +33,7 @@ logBuffered in Test := false
 parallelExecution in Test := false
 fork in Test := true
 testOptions in Test := Seq(Tests.Argument(TestFrameworks.ScalaTest, "-oD"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"))
-javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:+CMSClassUnloadingEnabled")
+javaOptions ++= Seq("-Xms512M", "-Xmx4096M", "-XX:+CMSClassUnloadingEnabled")
 
 // fat jar assembly settings
 assemblyMergeStrategy in assembly := {
