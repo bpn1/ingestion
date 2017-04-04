@@ -42,18 +42,18 @@ object FindRelations {
 			.filter(_._1 != wikiDataIdKey)
 		    .foreach { case (key, list) =>
 				val updatedList = mutable.ListBuffer[String]()
+
 				// skip properties without wikidata id or without resolve entry
-				val partitions = list.partition(value =>
+				val (resolvableValues, doneValues) = list.partition(value =>
 					idRegex.findFirstIn(value).isDefined && nameResolveMap.contains(value))
-				updatedList ++= partitions._2
+				updatedList ++= doneValues
 
 				// add relations to subject with the corresponding wikidata id
-				val propertyValues = partitions._1
-				relationsMap ++= propertyValues.map(value =>
+				relationsMap ++= resolvableValues.map(value =>
 					(nameResolveMap(value)._1, Map(relationTypeKey -> key))).toMap
 
 				// append resolved name to property value if it exists
-				updatedList ++= propertyValues
+				updatedList ++= resolvableValues
 					.filter(nameResolveMap(_)._2.nonEmpty)
 					.map(nameResolveMap(_)._2)
 				propertyMap(key) = updatedList.toList
