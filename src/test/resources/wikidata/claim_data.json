@@ -1,8 +1,8 @@
 {
 	"string": {
 		"value": "test string 1",
-		"mainsnak":{
-			"datavalue":{
+		"mainsnak": {
+			"datavalue": {
 				"value": "test string 1",
 				"type": "string"
 			}
@@ -12,8 +12,8 @@
 		"value": {
 			"id": "test id 1"
 		},
-		"mainsnak":{
-			"datavalue":{
+		"mainsnak": {
+			"datavalue": {
 				"value": {
 					"id": "test id 1"
 				},
@@ -25,8 +25,8 @@
 		"value": {
 			"time": "test time 1"
 		},
-		"mainsnak":{
-			"datavalue":{
+		"mainsnak": {
+			"datavalue": {
 				"value": {
 					"time": "test time 1"
 				},
@@ -38,8 +38,8 @@
 		"value": {
 			"text": "test text 1"
 		},
-		"mainsnak":{
-			"datavalue":{
+		"mainsnak": {
+			"datavalue": {
 				"value": {
 					"text": "test text 1"
 				},
@@ -52,8 +52,8 @@
 			"latitude": 1.0,
 			"longitude": 2.0
 		},
-		"mainsnak":{
-			"datavalue":{
+		"mainsnak": {
+			"datavalue": {
 				"value": {
 					"latitude": 1.0,
 					"longitude": 2.0
@@ -67,8 +67,8 @@
 			"amount": "test amount",
 			"unit": "test unit"
 		},
-		"mainsnak":{
-			"datavalue":{
+		"mainsnak": {
+			"datavalue": {
 				"value": {
 					"amount": "test amount",
 					"unit": "test unit"

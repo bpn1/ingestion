@@ -59,6 +59,7 @@ object TrieBuilder {
 			.collect
 
 		val tokenizer = new CleanCoreNLPTokenizer()
+
 		val localTrie = new TrieNode()
 		for(alias <- aliasList) {
 			localTrie.append(tokenizer.tokenize(alias))
