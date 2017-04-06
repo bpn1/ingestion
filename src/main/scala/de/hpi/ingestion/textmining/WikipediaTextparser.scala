@@ -37,7 +37,7 @@ object WikipediaTextparser {
 		val anchorList = Jsoup.parse(html).select("a")
 		val linksList = anchorList
 			.map(anchor => Link(title, parseUrl(anchor.attr("href"))))
-		    .toList
+			.toList
 		cleanMetapageLinks(linksList)
 	}
 
