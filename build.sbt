@@ -7,7 +7,7 @@ lazy val root = (project in file(".")).
 		mainClass in Compile := Some("ingestion")
 	)
 
-// repositories to use for dependency lookup. The public maven repository is the default lookup repository.
+// repositories to use for dependency lookup. the public maven repository is the default lookup repository.
 resolvers ++= Seq(
 	"Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven"
 )
