@@ -211,14 +211,14 @@ class Deduplication(
 	}
 
 	/**
-		* Add symmetric relations between two subject nodes, abstraction from SubjectManagers
-		* addRelations method
-		* @param subject1 UUID of a given node
-		* @param subject2 UUID of another given node
-		* @param relations A set of attributes of keys and values describing the relation,
-		* typically a 'type' value should be passed
-		* @param version Current transactional id handle
-		*/
+	  * Add symmetric relations between two subject nodes, abstraction from SubjectManagers
+	  * addRelations method
+	  * @param subject1 UUID of a given node
+	  * @param subject2 UUID of another given node
+	  * @param relations A set of attributes of keys and values describing the relation,
+	  * typically a 'type' value should be passed
+	  * @param version Current transactional id handle
+	  */
 	def addSymRelation(
 		subject1: Subject,
 		subject2: Subject,
