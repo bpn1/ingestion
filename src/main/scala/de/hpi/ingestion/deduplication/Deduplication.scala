@@ -237,12 +237,10 @@ class Deduplication(
 	  * @param duplicates tuple of Subject
 	  * @return subjects containing the merged information of both duplicates
 	  */
-	def merging(duplicates: RDD[(Subject, Subject)], version: Version): RDD[Subject] = {
+	def buildDuplicatesClique(duplicates: RDD[(Subject, Subject, Double)], version: Version): Unit = {
 		duplicates
 			.map { x =>
-				val sm = new SubjectManager(x._1, version)
-				sm.addProperties(x._2.properties)
-				x._1
+				addSymRelation(x._1, x._2, Map("type" -> "isDuplicate", "confidence" -> (x._3).toString), version)
 			}
 	}
 
