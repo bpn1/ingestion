@@ -92,6 +92,20 @@ class DeduplicationUnitTest
 		expected.comment shouldEqual evaluation.comment
 	}
 
+	"addSymRelation" should "add a symmetric relation between two given nodes" in {
+		val deduplication = defaultDeduplication()
+		val sampleRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
+		val sampleVersion = deduplication.makeTemplateVersion()
+
+		val expectedRelationNode1 = Map(subject2.id -> sampleRelation)
+		val expectedRelationNode2 = Map(subject1.id -> sampleRelation)
+
+		deduplication.addSymRelation(subject1, subject2, sampleRelation, sampleVersion)
+
+		subject1.relations shouldEqual expectedRelationNode1
+		subject2.relations shouldEqual expectedRelationNode2
+	}
+
 	val subject1 = Subject(
 		name = Some("Volkswagen"),
 		properties = Map("city" -> List("Berlin"))
