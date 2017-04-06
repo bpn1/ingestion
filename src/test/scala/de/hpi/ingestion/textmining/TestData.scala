@@ -714,6 +714,7 @@ object TestData {
 			  |<a href="/1852" title="1852">1852</a> im Stadtteil
 			  |<span class="math">bli</span> bla
 			  |<span class="math">blub</span>
+			  |<abbr title="Naturgesetze für Information">NGI</abbr>
 			  |</p></body>""".stripMargin
 		)
 	}

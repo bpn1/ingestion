@@ -220,7 +220,8 @@ class WikipediaTextParserTest extends FlatSpec with SharedSparkContext with Matc
 			.map(Jsoup.parse)
 			.map(WikipediaTextParser.removeTags)
 			.map(_.toString)
-			.foreach(document => document should (not include "</span>" and not include "</p>"))
+			.foreach(document => document should (not include "</span>"
+				and not include "</p>" and not include "</abbr>"))
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
