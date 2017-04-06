@@ -210,6 +210,19 @@ class Deduplication(
 			.filter(tuple => compare(tuple._1, tuple._2) >= this.confidence)
 	}
 
+	def addSymRelation(
+		subject_1: UUID,
+		subject_2: UUID,
+		relations: Map[String,String],
+		version: Version
+	): Unit = {
+		val subject_manager_1 = new SubjectManager(subject_1, version)
+		val subject_manager_2 = new SubjectManager(subject_2, version)
+
+		subject_manager_1.addRelations(Map(subject_2 -> relations))
+		subject_manager_2.addRelations(Map(subject_1 -> relations))
+	}
+
 	/**
 	  * Merging two duplicates in one subject
 	  * @param duplicates tuple of Subject
