@@ -109,15 +109,14 @@ object WikipediaContextExtractor {
 	def countTermFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[Vector] = {
 		val documents = articles
 			.map(_.getText())
-			.filter(_.length < 0)
-		val hashingTF = HashingTF
+			.map(_.split(" ").toSeq)
+		val hashingTF = new HashingTF()
 		hashingTF.transform(documents)
 	}
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Context Extractor")
-			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
