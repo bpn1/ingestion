@@ -4,6 +4,8 @@ import de.hpi.ingestion.textmining.models.{DocumentFrequency, LinkContext, Parse
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.mllib.feature.{HashingTF, IDF}
+import org.apache.spark.mllib.linalg.Vector
 
 import scala.io.Source
 
@@ -102,6 +104,14 @@ object WikipediaContextExtractor {
 		else {
 			frequencyThreshold - 1
 		}
+	}
+
+	def countTermFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[Vector] = {
+		val documents = articles
+			.map(_.getText())
+			.filter(_.length < 0)
+		val hashingTF = HashingTF
+		hashingTF.transform(documents)
 	}
 
 	def main(args: Array[String]): Unit = {

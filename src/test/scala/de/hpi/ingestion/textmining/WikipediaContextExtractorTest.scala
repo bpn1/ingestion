@@ -155,4 +155,23 @@ class WikipediaContextExtractorTest
 			}
 		requestedDocumentFrequencies shouldEqual TestData.requestedDocumentFrequenciesTestSet()
 	}
+
+	"Term frequencies" should "not be empty" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val documentFrequencies = WikipediaContextExtractor
+			.countTermFrequencies(articles)
+		documentFrequencies should not be empty
+	}
+
+	they should "be greater than zero" in {
+
+	}
+
+	"Inverse document frequencies" should "not be empty" in {
+
+	}
+
+	they should "be greater than zero" in {
+
+	}
 }
