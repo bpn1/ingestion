@@ -210,6 +210,15 @@ class Deduplication(
 			.filter(tuple => compare(tuple._1, tuple._2) >= this.confidence)
 	}
 
+	/**
+		* Add symmetric relations between two subject nodes, abstraction from SubjectManagers
+		* addRelations method
+		* @param subject_1 UUID of a given node
+		* @param subject_2 UUID of another given node
+		* @param relations A set of attributes of keys and values describing the relation,
+		* typically a 'type' value should be passed
+		* @param version Current transactional id handle
+		*/
 	def addSymRelation(
 		subject_1: UUID,
 		subject_2: UUID,
