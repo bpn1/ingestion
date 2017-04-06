@@ -7,7 +7,7 @@ lazy val root = (project in file(".")).
 		mainClass in Compile := Some("ingestion")
 	)
 
-// repositories to use for dependecy lookup. the public maven repository is the default repository
+// repositories to use for dependency lookup. The public maven repository is the default lookup repository.
 resolvers ++= Seq(
 	"Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven"
 )
@@ -32,11 +32,11 @@ libraryDependencies ++= Seq(
 	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4"
 )
 
-// exlcude scala libraries from assembly jar as they are provided by the spark environment
+// exclude scala libraries from assembly jar as they are provided by the spark environment
 assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
 
 // scala compiler flags for warnings
-// also sets sourcepath for correct scala doc source links
+// also sets source path for correct scala doc source links
 scalacOptions in ThisBuild ++= (baseDirectory.map { 
 	bd => Seq("-deprecation", "-feature", "-sourcepath", bd.getAbsolutePath, "-unchecked")
 }).value
