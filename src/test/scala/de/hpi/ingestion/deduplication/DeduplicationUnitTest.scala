@@ -94,12 +94,12 @@ class DeduplicationUnitTest
 
 	"addSymRelation" should "add a symmetric relation between two given nodes" in {
 		val deduplication = defaultDeduplication()
-		val sampleRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8") 
+		val sampleRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
 		val sampleVersion = deduplication.makeTemplateVersion()
 
 		val expectedRelationNode1 = Map(subject2.id -> sampleRelation)
 		val expectedRelationNode2 = Map(subject1.id -> sampleRelation)
-		
+
 		deduplication.addSymRelation(subject1, subject2, sampleRelation, sampleVersion)
 
 		subject1.relations shouldEqual expectedRelationNode1
