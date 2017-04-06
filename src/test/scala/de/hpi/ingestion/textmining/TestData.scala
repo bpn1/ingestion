@@ -10,6 +10,7 @@ import scala.io.Source
 // scalastyle:off number.of.methods
 object TestData {
 	// scalastyle:off line.size.limit
+	// scalastyle:off method.length
 
 	def testSentences(): List[String] = {
 		List(
@@ -225,112 +226,6 @@ object TestData {
 		Set("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "brauchen", "können", "sollte")
 	}
 
-	// scalastyle:off method.length
-	def wikipediaTestReferences(): Map[String, List[Link]] = {
-		// extracted links from Article abstracts
-		Map(
-			"Audi" -> List(
-				// Article text links
-				Link("Ingolstadt", "Ingolstadt", 55),
-				Link("Bayern", "Bayern", 69),
-				Link("Automobilhersteller", "Automobilhersteller", 94),
-				Link("Volkswagen", "Volkswagen AG", 123),
-				Link("Wortspiel", "Wortspiel", 175),
-				Link("Namensrechte", "Marke (Recht)", 202),
-				Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", 255),
-				Link("August Horch", "August Horch", 316),
-				Link("Lateinische", "Latein", 599),
-				Link("Imperativ", "Imperativ (Modus)", 636),
-				Link("Zwickau", "Zwickau", 829),
-				Link("Zschopauer", "Zschopau", 868),
-				Link("DKW", "DKW", 937),
-				Link("Wanderer", "Wanderer (Unternehmen)", 1071),
-				Link("Auto Union AG", "Auto Union", 1105),
-				Link("Chemnitz", "Chemnitz", 1131),
-				Link("Zweiten Weltkrieg", "Zweiter Weltkrieg", 1358),
-				Link("Ingolstadt", "Ingolstadt", 1423),
-				Link("NSU Motorenwerke AG", "NSU Motorenwerke", 1599),
-				Link("Neckarsulm", "Neckarsulm", 1830),
-
-				// Template links
-				Link("Aktiengesellschaft", "Aktiengesellschaft"),
-				Link("Zwickau", "Zwickau"),
-				Link("Chemnitz", "Chemnitz"),
-				Link("Ingolstadt", "Ingolstadt"),
-				Link("Neckarsulm", "Neckarsulm"),
-				Link("Ingolstadt", "Ingolstadt"),
-				Link("Deutschland", "Deutschland"),
-				Link("Rupert Stadler", "Rupert Stadler"),
-				Link("Vorstand", "Vorstand"),
-				Link("Matthias Müller", "Matthias Müller (Manager)"),
-				Link("Aufsichtsrat", "Aufsichtsrat"),
-				Link("Mrd.", "Milliarde"),
-				Link("EUR", "Euro"),
-				Link("Automobilhersteller", "Automobilhersteller")),
-
-			"Electronic Arts" -> List(
-				// Article text links
-				Link("Publisher", "Publisher", 83),
-				Link("Computer- und Videospielen", "Computerspiel", 97),
-				Link("Madden NFL", "Madden NFL", 180),
-				Link("FIFA", "FIFA (Spieleserie)", 192),
-				Link("Vivendi Games", "Vivendi Games", 346),
-				Link("Activision", "Activision", 364),
-				Link("Activision Blizzard", "Activision Blizzard", 378),
-				Link("Nasdaq Composite", "Nasdaq Composite", 675),
-				Link("S&P 500", "S&P 500", 699),
-
-				// Template links
-				Link("Corporation", "Gesellschaftsrecht der Vereinigten Staaten#Corporation"),
-				Link("Redwood City", "Redwood City"),
-				Link("USA", "Vereinigte Staaten"),
-				Link("Larry Probst", "Larry Probst"),
-				Link("USD", "US-Dollar"),
-				Link("Fiskaljahr", "Geschäftsjahr"),
-				Link("Softwareentwicklung", "Softwareentwicklung")),
-
-			"Abraham Lincoln" -> List(
-				// Article text links
-				Link("President of the United States", "President of the United States", 29),
-
-				// Template links
-				Link("Hannibal Hamlin", "Hannibal Hamlin"),
-				Link("Andrew Johnson", "Andrew Johnson"),
-				Link("Tad", "Tad Lincoln"),
-				Link("Mary Todd Lincoln", "Mary Todd Lincoln")),
-
-			"Zerfall" -> List(
-				// Disambiguation links
-				Link("Zerfall", "Radioaktivität", -1),
-				Link("Zerfall", "Zerfallsgesetz", -1),
-				Link("Zerfall", "Exponentielles Wachstum", -1),
-				Link("Zerfall", "Zerfall (Soziologie)", -1),
-				Link("Zerfall", "Zerfall (Album)", -1),
-				Link("Zerfall", "Raspad – Der Zerfall", -1)),
-
-			"Fisch" -> List(
-				// Disambiguation links
-				Link("Fisch", "Fische", -1),
-				Link("Fisch", "Speisefisch", -1),
-				Link("Fisch", "Fische (Sternbild)", -1),
-				Link("Fisch", "Fische (Tierkreiszeichen)", -1),
-				Link("Fisch", "Fisch (Christentum)", -1),
-				Link("Fisch", "Fisch (Wappentier)", -1),
-				Link("Fisch", "Fisch (Saargau)", -1)),
-
-			"Zwilling (Begriffsklärung)" -> List(
-				// Disambiguation links
-				Link("Zwilling", "Zwillinge", -1),
-				Link("Zwilling", "Kristallzwilling", -1),
-				Link("Zwilling", "Zwilling J. A. Henckels", -1),
-				Link("Zwilling", "Zwillinge (Sternbild)", -1),
-				Link("Zwilling", "Zwillinge (Tierkreiszeichen)", -1)),
-
-			"Leadinstrument" -> List(
-				// Redirect links
-				Link("Leadinstrument", "Lead (Musik)")))
-	}
-
 	def wikipediaTestTextLinks(): Map[String, List[Link]] = {
 		// extracted text links from Article abstracts
 		Map(
@@ -368,7 +263,11 @@ object TestData {
 				Link("S&P 500", "S&P 500", 699)),
 
 			"Abraham Lincoln" -> List(
-				Link("President of the United States", "President of the United States", 29)))
+				Link("President of the United States", "President of the United States", 29)),
+
+			"Leadinstrument" -> List(
+				// Redirect links
+				Link("Leadinstrument", "Lead (Musik)")))
 	}
 
 	def wikipediaTestTemplateLinks(): Map[String, List[Link]] = {
@@ -405,8 +304,6 @@ object TestData {
 				Link("Tad", "Tad Lincoln"),
 				Link("Mary Todd Lincoln", "Mary Todd Lincoln")))
 	}
-
-	// scalastyle:on method.length
 
 	def wikipediaTestTemplateArticles(): Set[String] = {
 		Set("Audi", "Electronic Arts", "Postbank-Hochhaus (Berlin)", "Abraham Lincoln")
@@ -713,6 +610,7 @@ object TestData {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
 
+	// scalastyle:on method.length
 	// scalastyle:on line.size.limit
 }
 
