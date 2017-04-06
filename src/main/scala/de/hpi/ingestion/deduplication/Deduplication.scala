@@ -274,7 +274,8 @@ class Deduplication(
 		val sc = new SparkContext(conf)
 		parseConfig()
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
-		val blockingScheme = new SimpleBlockingScheme()
+		val blockingScheme = new ListBlockingScheme()
+		blockingScheme.setAttributes("name", "branch")
 		val blocks = if(merge) {
 			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable"))
 			blocking(subjects, staging, blockingScheme)
