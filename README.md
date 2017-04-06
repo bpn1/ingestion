@@ -1,4 +1,5 @@
-# Ingestion [![Build Status](https://hpi.de/naumann/sites/ingestion/jenkins/buildStatus/icon?job=ingestion)](https://hpi.de/naumann/sites/ingestion/jenkins/job/ingestion/)
+# Ingestion
+### master: [![Build Status](https://hpi.de/naumann/sites/ingestion/jenkins/buildStatus/icon?job=ingestion_doc)](https://hpi.de/naumann/sites/ingestion/jenkins/job/ingestion_doc/) latest build: [![Build Status](https://hpi.de/naumann/sites/ingestion/jenkins/buildStatus/icon?job=ingestion)](https://hpi.de/naumann/sites/ingestion/jenkins/job/ingestion/)
 Bachelor's project at HPI Potsdam
 
 Useful Links:
