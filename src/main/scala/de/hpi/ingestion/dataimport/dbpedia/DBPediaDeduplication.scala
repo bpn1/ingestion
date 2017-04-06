@@ -3,6 +3,7 @@ package de.hpi.ingestion.dataimport.dbpedia
 import org.apache.spark.{SparkContext, SparkConf}
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.{Subject, Version}
+import de.hpi.ingestion.dataimport.dbpedia.models.DuplicateCandidates
 import java.util.{Date, UUID}
 import org.apache.spark.rdd.RDD
 import com.datastax.driver.core.utils.UUIDs
@@ -14,15 +15,26 @@ object DBPediaDeduplication {
 	val keyspace = "datalake"
 	val inputTableName = "subject_temp"
 	val subjectTable = "subject"
-	val outputTable = "duplicatecandidates"
+	val outputTable = "goldenstandard"
 
 	case class DuplicateCandidate(
-		id: UUID,
 		subject_id: UUID,
-		subject_name: Option[String] = None,
 		duplicate_id: UUID,
-		duplicate_name: Option[String] = None,
-		duplicate_table: String)
+		duplicate_table: String
+	){
+		override def hashCode(): Int = (this.subject_id, this.duplicate_id).hashCode()
+
+		override def equals(obj: Any): Boolean = obj match {
+			case that: DuplicateCandidate => {
+				that.subject_id == this.subject_id && that.duplicate_id == this.duplicate_id
+			}
+			case _ => false
+		}
+
+		def toTuple(): (UUID, UUID, String) = {
+			(this.subject_id, this.duplicate_id, this.duplicate_table)
+		}
+	}
 
 	def makeTemplateVersion(): Version = {
 		// create timestamp and TimeUUID for versioning
@@ -50,16 +62,17 @@ object DBPediaDeduplication {
 			}
 	}
 
-	def translateToCandidate(rdd: RDD[(String, (Subject, Subject))]): RDD[DuplicateCandidate] = {
+	def translateToCandidate(
+		rdd: RDD[(String, (Subject, Subject))],
+		duplicate_table: String
+	): RDD[DuplicateCandidate] = {
 		rdd
 		  .map { case (key, (subject1, subject2)) =>
 				DuplicateCandidate(
-					UUIDs.random(),
 					subject1.id,
-					subject1.name,
 					subject2.id,
-					subject2.name,
-					inputTableName)
+					duplicate_table
+				)
 			}
 	}
 
@@ -79,13 +92,13 @@ object DBPediaDeduplication {
 
 	def joinOnWikiId(dbpediaRDD: RDD[Subject], subjectRDD: RDD[Subject]): RDD[(String, (Subject, Subject))] = {
 		val dbpediaSameAsRDD = keyByProperty(dbpediaRDD, "owl:sameAs")
-		  .filter(_._1.nonEmpty)
+		  	.filter(_._1.nonEmpty)
 			.filter(_._1.exists(_.startsWith("wikidata:")))
-		  .map { case (property, subject) =>
+		  	.map { case (property, subject) =>
 				val id = property
 					.filter(_.startsWith("wikidata:"))
-				  .head
-				  .drop(9)
+				  	.head
+				  	.drop(9)
 				(id, subject)
 			}
 
@@ -94,23 +107,36 @@ object DBPediaDeduplication {
 		dbpediaSameAsRDD.join(subjectWikiId)
 	}
 
-	def candidatesJoin(
-		candidate1: RDD[DuplicateCandidate],
-		candidate2: RDD[DuplicateCandidate]
-	): RDD[DuplicateCandidate] = {
-		val left = candidate1
-		  .keyBy(duplicate => (duplicate.subject_id, duplicate.duplicate_id))
-
-		val right = candidate2
-			.keyBy(duplicate => (duplicate.subject_id, duplicate.duplicate_id))
+	def joinGoldenStandard(
+		dbpediaRDD: RDD[(String, (Subject, Subject))],
+		subjectRDD: RDD[(String, (Subject, Subject))]
+	): RDD[Subject] = {
+		val left = dbpediaRDD.values
+		val right = subjectRDD.values
 
 		left
-			.fullOuterJoin(right)
-		  .map {
-				case ((ids, (Some(duplicate1), Some(duplicate2)))) => duplicate1
-				case ((ids, (Some(duplicate), None))) => duplicate
-				case ((ids, (None, Some(duplicate)))) => duplicate
-				case _ => null
+			.union(right)
+		    .flatMap(x => List(x._1, x._2))
+		    .distinct()
+	}
+
+	def joinCandidates(
+		candidate1: RDD[DuplicateCandidate],
+		candidate2: RDD[DuplicateCandidate]
+	): RDD[DuplicateCandidates] = {
+		val left = candidate1
+		  .keyBy(duplicate => duplicate.subject_id)
+
+		val right = candidate2
+			.keyBy(duplicate => duplicate.subject_id)
+
+		left
+		    .cogroup(right)
+		    .map {
+				case (subject, (it1, it2)) => DuplicateCandidates(
+					subject = subject,
+					candidates = Some(it1.++(it2).toList.distinct.map(_.toTuple()))
+				)
 			}
 	}
 
@@ -127,10 +153,12 @@ object DBPediaDeduplication {
 		val nameJoined = joinOnName(dbpedia, subjects)
 		val idJoined = joinOnWikiId(dbpedia, subjects)
 
-		val nameCandidates = translateToCandidate(nameJoined)
-		val idCandidates = translateToCandidate(idJoined)
+		joinGoldenStandard(nameJoined, idJoined).saveToCassandra(keyspace, outputTable)
 
-		candidatesJoin(nameCandidates, idCandidates).saveToCassandra(keyspace, outputTable)
+		//val nameCandidates = translateToCandidate(nameJoined, inputTableName)
+		//val idCandidates = translateToCandidate(idJoined, inputTableName)
+
+		//joinCandidates(nameCandidates, idCandidates).saveToCassandra(keyspace, outputTable)
 
 		sc.stop()
 	}

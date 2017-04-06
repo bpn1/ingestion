@@ -1,6 +1,7 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
-import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
+import de.hpi.ingestion.dataimport.dbpedia.DBPediaDeduplication.DuplicateCandidate
+import de.hpi.ingestion.dataimport.dbpedia.models.{DBPediaEntity, DuplicateCandidates}
 import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -88,8 +89,8 @@ object TestData {
 
 	def dbpediaSubjectList(): List[Subject] = {
 		List(
-			Subject(name=Some("Liste_von_Autoren/V@de ."), properties = Map("owl:sameAs" -> List("dbpedia:Liste von Autoren", "yago:Liste von Autoren"))),
-			Subject(name=Some("Ausschluss@de ."), properties = Map("owl:sameAs" -> List("wikidata:Q123456789", "yago:Q123456789"))),
+			Subject(name=Some("Liste_von_Autoren/V@de ."), properties = Map("owl:sameAs" -> List("wikidata:Q123456789", "yago:Q123456789"))),
+			Subject(name=Some("Ausschluss@de ."), properties = Map("owl:sameAs" -> List("dbpedia:Liste von Autoren", "yago:Liste von Autoren"))),
 			Subject(name=Some("Liste_von_Autoren/T@de ."), properties = Map("owl:sameAs" -> List("wikidata:Q54321", "yago:Q54321")))
 		)
 	}
@@ -102,6 +103,16 @@ object TestData {
 		)
 	}
 
+	def joinedSubjectRDD(sc: SparkContext, dbpedia: List[Subject], subjects: List[Subject]): RDD[Subject] = {
+		sc.parallelize(Seq(
+			dbpedia.head,
+			dbpedia(2),
+			subjects.head,
+			subjects(1),
+			subjects(2)
+		))
+	}
+
 	def singleKeyRDD(sc: SparkContext, subjects: List[Subject]): RDD[(String, Subject)] = {
 		sc.parallelize(Seq(
 			("Liste_von_Autoren/V", subjects.head),
@@ -112,8 +123,8 @@ object TestData {
 
 	def multiKeyRDD(sc: SparkContext, subjects: List[Subject]): RDD[(List[String], Subject)] = {
 		sc.parallelize(Seq(
-			(List("dbpedia:Liste von Autoren", "yago:Liste von Autoren"), subjects.head),
-			(List("wikidata:Q123456789", "yago:Q123456789"), subjects(1)),
+			(List("wikidata:Q123456789", "yago:Q123456789"), subjects.head),
+			(List("dbpedia:Liste von Autoren", "yago:Liste von Autoren"), subjects(1)),
 			(List("wikidata:Q54321", "yago:Q54321"), subjects(2))
 		))
 	}
@@ -127,8 +138,39 @@ object TestData {
 
 	def idJoinedRDD(sc: SparkContext, dbpedia: List[Subject], subjects: List[Subject]): RDD[(String, (Subject, Subject))] = {
 		sc.parallelize(Seq(
-			("Q123456789", (dbpedia(1), subjects.head)),
+			("Q123456789", (dbpedia.head, subjects.head)),
 			("Q54321", (dbpedia(2), subjects(1)))
+		))
+	}
+
+	def nameCandidates(sc: SparkContext, dbpedia: List[Subject], subjects: List[Subject]): RDD[DuplicateCandidate] = {
+		sc.parallelize(Seq(
+			DuplicateCandidate(subject_id = subjects.head.id, duplicate_id = dbpedia.head.id, duplicate_table = "Test"),
+			DuplicateCandidate(subject_id = subjects(2).id, duplicate_id = dbpedia(2).id, duplicate_table = "Test")
+		))
+	}
+
+	def idCandidates(sc: SparkContext, dbpedia: List[Subject], subjects: List[Subject]): RDD[DuplicateCandidate] = {
+		sc.parallelize(Seq(
+			DuplicateCandidate(subject_id = subjects.head.id, duplicate_id = dbpedia.head.id, duplicate_table = "Test"),
+			DuplicateCandidate(subject_id = subjects(1).id, duplicate_id = dbpedia(2).id, duplicate_table = "Test")
+		))
+	}
+
+	def candidatesJoinedRDD(sc: SparkContext, dbpedia: List[Subject], subjects: List[Subject]): RDD[DuplicateCandidates] = {
+		sc.parallelize(Seq(
+			DuplicateCandidates(
+				subject = subjects.head.id,
+				candidates = Some(List((subjects.head.id, dbpedia.head.id, "Test")))
+			),
+			DuplicateCandidates(
+				subject = subjects(1).id,
+				candidates = Some(List((subjects(1).id, dbpedia(2).id, "Test")))
+			),
+			DuplicateCandidates(
+				subject = subjects(2).id,
+				candidates = Some(List((subjects(2).id, dbpedia(2).id, "Test")))
+			)
 		))
 	}
 

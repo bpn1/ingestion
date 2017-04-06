@@ -25,7 +25,9 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 		val sm = new SubjectManager(subject, version)
 
 		if(entity.label.isDefined) {
-			sm.setName(entity.label.orNull)
+			// To avoid this KEMA@de . as a name
+			val label = entity.label.getOrElse("").replaceAll("@de .$", "")
+			sm.setName(label)
 		}
 
 		val metadata = mutable.Map[String, List[String]]()
@@ -37,6 +39,8 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 			metadata("description") = List(entity.description.get)
 		}
 		if(entity.data.nonEmpty) {
+			val wikidatId = entity.data.getOrElse("owl:sameAs", Nil).filter(_.startsWith("wikidata:"))
+			if (wikidatId.nonEmpty) metadata += ("wikidata_id" -> wikidatId)
 			metadata ++= entity.data
 		}
 		sm.addProperties(metadata.toMap)
