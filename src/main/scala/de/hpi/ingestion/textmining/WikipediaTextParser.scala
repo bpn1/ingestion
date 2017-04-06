@@ -2,15 +2,20 @@ package de.hpi.ingestion.textmining
 
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
+
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Document, Element, TextNode}
+import org.jsoup.select.NodeTraversor
 import java.net.URLDecoder
+
 import scala.collection.mutable.ListBuffer
-import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
+import de.hpi.ingestion.textmining.models._
+
+
 import scala.io.Source
 
 object WikipediaTextParser {
@@ -86,8 +91,15 @@ object WikipediaTextParser {
 			.map(_.toString)
 			.mkString("\n")
 			.replaceAll("&lt;(/|)gallery&gt;", "") // removes gallery tags
-			.replaceAll("</?[b-z].*? ?.*?>", "") // remove every tag other than anchors
-		Jsoup.parse(htmltext)
+		val doc = Jsoup.parse(htmltext)
+
+		val childList = List[String]()
+		val anchorNodeVisitor = AnchorNodeVisitor(childList)
+		val traversor = NodeTraversor(anchorNodeVisitor)
+		val firstAnchor = doc.select("a:first-of-type").first()
+		if (firstAnchor != null) {
+			traversor.traverse(firstAnchor)
+		}
 	}
 
 	def parseUrl(url: String): String = {
@@ -147,14 +159,6 @@ object WikipediaTextParser {
 		for (element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
-					if (t.tag.toString != "a") {
-						println("Error------------")
-						println(t.tag)
-						println(t)
-						println(children)
-						println(body)
-						println("-----------------")
-					}
 					assert(t.tag.toString == "a")
 					val target = parseUrl(t.attr("href"))
 					val source = if (t.text == "") target else t.text
