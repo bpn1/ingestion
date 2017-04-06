@@ -1,7 +1,8 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.dataimport.dbpedia.DBPediaDeduplication.DuplicateCandidate
-import de.hpi.ingestion.dataimport.dbpedia.models.{DBPediaEntity, DuplicateCandidates}
+import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
+import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -145,32 +146,23 @@ object TestData {
 
 	def nameCandidates(sc: SparkContext, dbpedia: List[Subject], subjects: List[Subject]): RDD[DuplicateCandidate] = {
 		sc.parallelize(Seq(
-			DuplicateCandidate(subject_id = subjects.head.id, duplicate_id = dbpedia.head.id, duplicate_table = "Test"),
-			DuplicateCandidate(subject_id = subjects(2).id, duplicate_id = dbpedia(2).id, duplicate_table = "Test")
+			DuplicateCandidate(subjects.head.id, dbpedia.head, "Test"),
+			DuplicateCandidate(subjects(2).id, duplicate = dbpedia(2), duplicate_table = "Test")
 		))
 	}
 
 	def idCandidates(sc: SparkContext, dbpedia: List[Subject], subjects: List[Subject]): RDD[DuplicateCandidate] = {
 		sc.parallelize(Seq(
-			DuplicateCandidate(subject_id = subjects.head.id, duplicate_id = dbpedia.head.id, duplicate_table = "Test"),
-			DuplicateCandidate(subject_id = subjects(1).id, duplicate_id = dbpedia(2).id, duplicate_table = "Test")
+			DuplicateCandidate(subjects.head.id, dbpedia.head, "Test"),
+			DuplicateCandidate(subjects(1).id, dbpedia(2), "Test")
 		))
 	}
 
 	def candidatesJoinedRDD(sc: SparkContext, dbpedia: List[Subject], subjects: List[Subject]): RDD[DuplicateCandidates] = {
 		sc.parallelize(Seq(
-			DuplicateCandidates(
-				subject = subjects.head.id,
-				candidates = Some(List((subjects.head.id, dbpedia.head.id, "Test")))
-			),
-			DuplicateCandidates(
-				subject = subjects(1).id,
-				candidates = Some(List((subjects(1).id, dbpedia(2).id, "Test")))
-			),
-			DuplicateCandidates(
-				subject = subjects(2).id,
-				candidates = Some(List((subjects(2).id, dbpedia(2).id, "Test")))
-			)
+			DuplicateCandidates(subjects.head.id, List((dbpedia.head, "Test", 1.0))),
+			DuplicateCandidates(subjects(1).id, List((dbpedia(2), "Test", 1.0))),
+			DuplicateCandidates(subjects(2).id, List((dbpedia(2), "Test", 1.0)))
 		))
 	}
 

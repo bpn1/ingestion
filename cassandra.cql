@@ -112,10 +112,20 @@ CREATE TABLE datalake.object (
 );
 
 CREATE TABLE datalake.duplicatecandidates (
-    id uuid PRIMARY KEY,
-    subject_id uuid,
-    subject_name text,
-    duplicate_id uuid,
-    duplicate_name text,
-    duplicate_table text
+    subject_id uuid PRIMARY KEY,
+    candidates list<frozen<tuple<subject, text, double>>>
+);
+
+CREATE TYPE datalake.subject (
+    id uuid,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );

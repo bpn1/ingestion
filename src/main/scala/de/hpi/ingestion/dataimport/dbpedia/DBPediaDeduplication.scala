@@ -3,7 +3,7 @@ package de.hpi.ingestion.dataimport.dbpedia
 import org.apache.spark.{SparkContext, SparkConf}
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.dataimport.dbpedia.models.DuplicateCandidates
+import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 import java.util.{Date, UUID}
 import org.apache.spark.rdd.RDD
 import com.datastax.driver.core.utils.UUIDs
@@ -18,21 +18,13 @@ object DBPediaDeduplication {
 	val outputTable = "goldenstandard"
 
 	case class DuplicateCandidate(
-		subject_id: UUID,
-		duplicate_id: UUID,
-		duplicate_table: String
+		subject_id : UUID,
+		duplicate: Subject,
+		duplicate_table: String,
+		score: Double = 1.0
 	){
-		override def hashCode(): Int = (this.subject_id, this.duplicate_id).hashCode()
-
-		override def equals(obj: Any): Boolean = obj match {
-			case that: DuplicateCandidate => {
-				that.subject_id == this.subject_id && that.duplicate_id == this.duplicate_id
-			}
-			case _ => false
-		}
-
-		def toTuple(): (UUID, UUID, String) = {
-			(this.subject_id, this.duplicate_id, this.duplicate_table)
+		def toTuple(): (Subject, String, Double) = {
+			(this.duplicate, this.duplicate_table, this.score)
 		}
 	}
 
@@ -70,7 +62,7 @@ object DBPediaDeduplication {
 		  .map { case (key, (subject1, subject2)) =>
 				DuplicateCandidate(
 					subject1.id,
-					subject2.id,
+					subject2,
 					duplicate_table
 				)
 			}
@@ -133,9 +125,9 @@ object DBPediaDeduplication {
 		left
 		    .cogroup(right)
 		    .map {
-				case (subject, (it1, it2)) => DuplicateCandidates(
-					subject = subject,
-					candidates = Some(it1.++(it2).toList.distinct.map(_.toTuple()))
+				case (subject_id, (it1, it2)) => DuplicateCandidates(
+					subject_id,
+					it1.++(it2).toList.distinct.map(_.toTuple())
 				)
 			}
 	}
@@ -153,12 +145,11 @@ object DBPediaDeduplication {
 		val nameJoined = joinOnName(dbpedia, subjects)
 		val idJoined = joinOnWikiId(dbpedia, subjects)
 
+		val nameCandidates = translateToCandidate(nameJoined, inputTableName)
+		val idCandidates = translateToCandidate(idJoined, inputTableName)
+
 		joinGoldenStandard(nameJoined, idJoined).saveToCassandra(keyspace, outputTable)
-
-		//val nameCandidates = translateToCandidate(nameJoined, inputTableName)
-		//val idCandidates = translateToCandidate(idJoined, inputTableName)
-
-		//joinCandidates(nameCandidates, idCandidates).saveToCassandra(keyspace, outputTable)
+		joinCandidates(nameCandidates, idCandidates).saveToCassandra(keyspace, outputTable)
 
 		sc.stop()
 	}
