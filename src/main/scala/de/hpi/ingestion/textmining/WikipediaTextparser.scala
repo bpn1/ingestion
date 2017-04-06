@@ -33,23 +33,12 @@ object WikipediaTextparser {
 		redirectRegex.findFirstIn(searchText).isDefined
 	}
 
-	def extractRedirect(html: String, text: String): List[Link] = {
+	def extractRedirect(title: String, html: String, text: String): List[Link] = {
 		val anchorList = Jsoup.parse(html).select("a")
-		val linksList = ListBuffer[Link]()
-		val redirectRegex = new Regex("REDIRECT( )*")
-		val categoryRegex = new Regex("Kategorie:")
-		val redirectOffset = (redirectRegex.findFirstIn(text) match {
-			case Some(x) => x
-			case None => redirectText
-		}).length
-		for (anchor <- anchorList) {
-			var offset = text.indexOfSlice(anchor.text)
-			if (categoryRegex.findFirstIn(anchor.text).isEmpty) {
-				offset = redirectOffset
-			}
-			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), offset)
-		}
-		cleanMetapageLinks(linksList.toList)
+		val linksList = anchorList
+			.map(anchor => Link(title, parseUrl(anchor.attr("href"))))
+			.toList
+		cleanMetapageLinks(linksList)
 	}
 
 	def parseHtml(title: String, html: String): ParsedWikipediaEntry = {
@@ -58,7 +47,7 @@ object WikipediaTextparser {
 		if (isRedirectPage(html)) {
 			val text = document.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
 			parsedEntry.setText(text)
-			parsedEntry.textlinks = extractRedirect(html, text)
+			parsedEntry.textlinks = extractRedirect(title, html, text)
 		} else if (title.endsWith(disambiguationTitleSuffix)) {
 			val outputTuple = extractDisambiguationLinks(title, document.body)
 			parsedEntry.setText(outputTuple._1)
@@ -147,7 +136,7 @@ object WikipediaTextparser {
 		for (element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
-					assert(t.tag.toString == "a")
+					//assert(t.tag.toString == "a") // This may fail for strange reasons.
 					val target = parseUrl(t.attr("href"))
 					val source = if (t.text == "") target else t.text
 					val link = Link(source, target, offset)
@@ -207,6 +196,7 @@ object WikipediaTextparser {
 		// cannot check if first '{' is escaped because page may begin with template
 		var startIndices = new ListBuffer[Int]()
 
+
 		templateRegex
 			.findAllIn(wikitext)
 			.matchData
@@ -255,16 +245,15 @@ object WikipediaTextparser {
 	}
 
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
-		var title = entry.title
-		if(isDisambiguationPage(entry) && !title.endsWith(disambiguationTitleSuffix)) {
+		val cleanedEntry = cleanRedirects(entry)
+		var title = cleanedEntry.title
+		if (isDisambiguationPage(cleanedEntry) && !title.endsWith(disambiguationTitleSuffix)) {
 			title += disambiguationTitleSuffix
 		}
-		val html = wikipediaToHtml(entry.getText())
+		val html = wikipediaToHtml(cleanedEntry.getText())
 		val parsedEntry = parseHtml(title, html)
-		parsedEntry.templatelinks = extractTemplateLinks(entry.getText())
+		parsedEntry.templatelinks = extractTemplateLinks(cleanedEntry.getText())
 		parsedEntry
-//		val html = wikipediaToHtml(entry.getText)
-//		parseHtml(entry.title, html)
 	}
 
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
@@ -275,6 +264,7 @@ object WikipediaTextparser {
 
 	/**
 	  * Reads namespaces from resource file and removes used namespaces.
+	  *
 	  * @return list of unused namespaces
 	  */
 	def badNamespaces(): List[String] = {
@@ -288,6 +278,7 @@ object WikipediaTextparser {
 
 	/**
 	  * Checks whether the entry starts with a namespace.
+	  *
 	  * @param entry Wikipedia entry to check
 	  * @return true if entry starts with a namespace
 	  */
@@ -297,6 +288,7 @@ object WikipediaTextparser {
 
 	/**
 	  * Removes links to pages with an unused namespace.
+	  *
 	  * @param linkList list of links to clean
 	  * @return list of links without links to unused namespace pages.
 	  */
@@ -322,7 +314,7 @@ object WikipediaTextparser {
 		htmlLists
 			.map(element => Jsoup.parse(element.html()))
 			.flatMap(_.select("a"))
-		    .map(anchor => Link(anchor.text, parseUrl(anchor.attr("href"))))
+			.map(anchor => Link(anchor.text, parseUrl(anchor.attr("href"))))
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -332,7 +324,6 @@ object WikipediaTextparser {
 
 		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
 		wikipedia
-			.map(cleanRedirects)
 			.map(parseWikipediaEntry)
 			.saveToCassandra(keyspace, outputTablename)
 		sc.stop
