@@ -33,23 +33,12 @@ object WikipediaTextparser {
 		redirectRegex.findFirstIn(searchText).isDefined
 	}
 
-	def extractRedirect(html: String, text: String): List[Link] = {
+	def extractRedirect(title: String, html: String, text: String): List[Link] = {
 		val anchorList = Jsoup.parse(html).select("a")
-		val linksList = ListBuffer[Link]()
-		val redirectRegex = new Regex("REDIRECT( )*")
-		val categoryRegex = new Regex("Kategorie:")
-		val redirectOffset = (redirectRegex.findFirstIn(text) match {
-			case Some(x) => x
-			case None => redirectText
-		}).length
-		for (anchor <- anchorList) {
-			var offset = text.indexOfSlice(anchor.text)
-			if (categoryRegex.findFirstIn(anchor.text).isEmpty) {
-				offset = redirectOffset
-			}
-			linksList += Link(anchor.text, parseUrl(anchor.attr("href")), offset)
-		}
-		cleanMetapageLinks(linksList.toList)
+		val linksList = anchorList
+			.map(anchor => Link(title, parseUrl(anchor.attr("href"))))
+		    .toList
+		cleanMetapageLinks(linksList)
 	}
 
 	def parseHtml(title: String, html: String): ParsedWikipediaEntry = {
@@ -58,7 +47,7 @@ object WikipediaTextparser {
 		if (isRedirectPage(html)) {
 			val text = document.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
 			parsedEntry.setText(text)
-			parsedEntry.textlinks = extractRedirect(html, text)
+			parsedEntry.textlinks = extractRedirect(title, html, text)
 		} else if (title.endsWith(disambiguationTitleSuffix)) {
 			val outputTuple = extractDisambiguationLinks(title, document.body)
 			parsedEntry.setText(outputTuple._1)
