@@ -114,6 +114,13 @@ object WikipediaContextExtractor {
 		hashingTF.transform(documents)
 	}
 
+	def calculateInverseDocumentFrequencies(termFrequencies: RDD[Vector]): RDD[Vector] = {
+		termFrequencies.cache()
+		val idf = new IDF().fit(termFrequencies)
+		val tfidf = idf.transform(termFrequencies)
+		tfidf
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Context Extractor")
