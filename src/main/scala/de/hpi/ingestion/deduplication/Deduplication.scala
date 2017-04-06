@@ -73,6 +73,7 @@ class Deduplication(
 ) extends Serializable {
 	var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
 	val settings = mutable.Map[String, String]()
+	var blockingScheme: BlockingScheme = new SimpleBlockingScheme
 
 	/**
 	  * Compares to subjects regarding the configuration
@@ -173,7 +174,7 @@ class Deduplication(
 	def blocking(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
-		blockingScheme: BlockingScheme = new SimpleBlockingScheme()
+		blockingScheme: BlockingScheme
 	): RDD[(List[String], List[Subject])] = {
 		val subjectBlocks = blocking(subjects, blockingScheme)
 		val stagingBlocks = blocking(stagingSubjects, blockingScheme)
@@ -274,7 +275,7 @@ class Deduplication(
 		val sc = new SparkContext(conf)
 		parseConfig()
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
-		val blockingScheme = new ListBlockingScheme()
+		blockingScheme = new ListBlockingScheme
 		blockingScheme.setAttributes("name", "branch")
 		val blocks = if(merge) {
 			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable"))
