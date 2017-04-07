@@ -19,4 +19,10 @@ else
 	exit 1
 fi
 badge_url="https://img.shields.io/badge/coverage-$percentage%-$color.svg"
-wget -O /var/lib/jenkins/badges/latest.svg $badge_url
+if [ "$GIT_BRANCH" = "origin/master" ]; then
+	filename="master"
+else
+	filename="latest"
+fi
+wget -O "/var/lib/jenkins/badges/$filename.svg" $badge_url
+echo "Downloaded badge $badge_url"
