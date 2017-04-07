@@ -151,7 +151,7 @@ class Deduplication(
 	/**
 	  * Uses input blocking scheme to generate blocks of subjects.
 	  * @param subjects RDD to perform the blocking on.
-	  * @param blockingSchemes blocking scheme to use to generate keys.
+	  * @param blockingSchemes blocking schemes to use to generate keys.
 	  * @return subjects grouped by blocking keys
 	  */
 	def blocking(
@@ -167,7 +167,7 @@ class Deduplication(
 	  * Creates blocks based on the input blocking scheme
 	  * @param subjects RDD to perform the blocking on
 	  * @param stagingSubjects RDD to perform the blocking on
-	  * @param blockingSchemes blocking scheme to use to generate keys.
+	  * @param blockingSchemes blocking schemes to use to generate keys.
 	  * @return RDD of blocks.
 	  */
 	def blocking(
@@ -266,7 +266,6 @@ class Deduplication(
 	}
 
 	/**
-	  *
 	  * Starts the deduplication process and writes the result to Cassandra.
 	  * @param blockingSchemes List of blocking schemes to be used on the data
 	  * @param merge boolean indicating whether or not the duplicates should be merged
