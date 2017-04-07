@@ -4,7 +4,7 @@ import de.hpi.ingestion.textmining.models.{DocumentFrequency, LinkContext, Parse
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.mllib.feature.{HashingTF, IDF}
+import org.apache.spark.mllib.feature.IDF
 import org.apache.spark.mllib.linalg.Vector
 
 import scala.io.Source
@@ -37,7 +37,7 @@ object WikipediaContextExtractor {
 	): RDD[DocumentFrequency] = {
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
-			.flatMap(article => textToWordSet(article.getText(), tokenizer))
+			.flatMap(article => tokenizer.tokenize(article.getText()).toSet)
 			.map(word => (word, 1))
 			.reduceByKey(_ + _)
 			.map { case (word, count) => DocumentFrequency(word, count) }
@@ -53,17 +53,13 @@ object WikipediaContextExtractor {
 				documentFrequency.count >= threshold)
 	}
 
-	def textToWordSet(text: String, tokenizer: Tokenizer): Set[String] = {
-		tokenizer.tokenize(text).toSet
-	}
-
 	def extractLinkContextsFromArticle(
 		article: ParsedWikipediaEntry,
 		tokenizer: Tokenizer): Set[LinkContext] = {
 		// Do not initialize tokenizer here so it is initialized only once.
 		// (probably important for good performance of CoreNLP)
-		val wordSet = textToWordSet(article.getText(), tokenizer)
-		article.allLinks
+		val wordSet = tokenizer.tokenize(article.getText()).toSet
+		article.allLinks()
 			.map(link => LinkContext(link.page, wordSet))
 			.toSet
 	}
@@ -104,14 +100,6 @@ object WikipediaContextExtractor {
 		else {
 			frequencyThreshold - 1
 		}
-	}
-
-	def countTermFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[Vector] = {
-		val documents = articles
-			.map(_.getText())
-			.map(_.split(" ").toSeq)
-		val hashingTF = new HashingTF()
-		hashingTF.transform(documents)
 	}
 
 	def calculateInverseDocumentFrequencies(termFrequencies: RDD[Vector]): RDD[Vector] = {

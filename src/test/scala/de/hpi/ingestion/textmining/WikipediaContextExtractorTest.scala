@@ -4,8 +4,7 @@ import de.hpi.ingestion.textmining.models.DocumentFrequency
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
-class WikipediaContextExtractorTest
-	extends FlatSpec with PrettyTester with SharedSparkContext with Matchers {
+class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with SharedSparkContext with Matchers {
 	"Link contexts" should "contain all occurring page names of links and only once" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val pageNames = WikipediaContextExtractor
@@ -50,15 +49,15 @@ class WikipediaContextExtractorTest
 			.foreach(context => context.words should contain allElementsOf testWords)
 	}
 
-	"Word set from one article" should "be exactly this word set" in {
-		val articleTitle = "Testartikel"
-		val testWords = TestData.articleContextwordSets()(articleTitle)
-		val article = TestData.getArticle(articleTitle)
-		val wordSet = WikipediaContextExtractor.textToWordSet(
-			article.getText(),
-			new CleanCoreNLPTokenizer)
-		wordSet shouldEqual testWords
-	}
+	//	"Word set from one article" should "be exactly this word set" in {
+	//		val articleTitle = "Testartikel"
+	//		val testWords = TestData.articleContextwordSets()(articleTitle)
+	//		val article = TestData.getArticle(articleTitle)
+	//		val wordSet = WikipediaContextExtractor.textToWordSet(
+	//			article.getText(),
+	//			new CleanCoreNLPTokenizer)
+	//		wordSet shouldEqual testWords
+	//	}
 
 	"Document frequencies" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
@@ -156,19 +155,12 @@ class WikipediaContextExtractorTest
 		requestedDocumentFrequencies shouldEqual TestData.requestedDocumentFrequenciesTestSet()
 	}
 
-	"Term frequencies" should "not be empty" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val termFrequencies = WikipediaContextExtractor
-			.countTermFrequencies(articles)
-		termFrequencies should not be empty
-	}
-
-	"Inverse document frequencies" should "not be empty" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val termFrequencies = WikipediaContextExtractor
-			.countTermFrequencies(articles)
-		val tfidf = WikipediaContextExtractor
-			.calculateInverseDocumentFrequencies(termFrequencies)
-		tfidf should not be empty
-	}
+	//	"Inverse document frequencies" should "not be empty" in {
+	//		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+	//		val termFrequencies = WikipediaContextExtractor
+	//			.countTermFrequencies(articles)
+	//		val tfidf = WikipediaContextExtractor
+	//			.calculateInverseDocumentFrequencies(termFrequencies)
+	//		tfidf should not be empty
+	//	}
 }
