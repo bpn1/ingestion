@@ -77,9 +77,9 @@ object TestData {
 
 	def bagsOfWordsTestSet(): Set[TermFrequencies] = {
 		Set(
-			TermFrequencies("Audi Test mit Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlinkt" -> 1)),
-			TermFrequencies("Audi Test ohne Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "nicht" -> 1, "verlinkt" -> 1)),
-			TermFrequencies("Testartikel", Bag("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hessen" -> 2, "main-kinzig-kreis" -> 1, "büdinger" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1))
+			TermFrequencies("Audi Test mit Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)),
+			TermFrequencies("Audi Test ohne Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)),
+			TermFrequencies("Testartikel", Bag("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1))
 		)
 	}
 

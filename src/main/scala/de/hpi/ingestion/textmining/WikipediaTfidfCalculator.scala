@@ -12,9 +12,12 @@ object WikipediaTfidfCalculator {
 
 	def articlesToBagsOfWords(articles: RDD[ParsedWikipediaEntry]): RDD[TermFrequencies] = {
 		val tokenizer = new CleanCoreNLPTokenizer
+		val stemmer = new AccessibleGermanStemmer
 		articles
 			.map { article =>
-				val bagOfWords = Bag(tokenizer.tokenize(article.getText()))
+				val listOfStemmedWords = tokenizer.tokenize(article.getText())
+					.map(term => stemmer.stem(term))
+				val bagOfWords = Bag[String, Int](listOfStemmedWords)
 				TermFrequencies(article.title, bagOfWords)
 			}
 	}
@@ -37,6 +40,7 @@ object WikipediaTfidfCalculator {
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputTablename)
+		val tf = articlesToBagsOfWords(allArticles)
 		//		val termFrequencies = countTermFrequencies(allArticles)
 		//		calculateTfidf(termFrequencies)
 		//			.saveAsTextFile(outputDirectoryTfidf)
