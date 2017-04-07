@@ -21,8 +21,8 @@ class WikipediaTfidfCalculatorTest extends FlatSpec with SharedSparkContext with
 		val tfidf = WikipediaTfidfCalculator
 			.calculateTfidf(termFrequencies)
 		tfidf should not be empty
-		tfidf
-			.map(_.toArray.toList.filter(_ > 0))
-			.foreach(println)
+		//		tfidf
+		//			.map(_.toString)
+		//			.foreach(println)
 	}
 }
