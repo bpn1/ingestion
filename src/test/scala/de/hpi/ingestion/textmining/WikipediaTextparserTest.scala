@@ -87,6 +87,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 	"Wikipedia text link offsets" should "be consistent with text" in {
 		TestData.wikipediaEntriesTestList()
 			.map(WikipediaTextparser.parseWikipediaEntry)
+			.filter(!_.getText.startsWith("REDIRECT"))
 			.foreach { element =>
 				element.textlinks.foreach { link =>
 					if (!isTextLinkConsistent(link, element.getText())) {
@@ -105,7 +106,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 	}
 
 	"All redirects" should "contain WEITERLEITUNG link" in {
- 		val entries = TestData.testEntriesWithBadRedirects
+ 		val entries = TestData.testEntriesWithBadRedirects()
 		entries.map(entry => WikipediaTextparser.cleanRedirects(entry))
 		    .map(entry => entry.getText should startWith ("WEITERLEITUNG"))
 	}
@@ -169,17 +170,17 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 	}
 
 	"Bad namespace pages" should "be filtered" in {
-		val testPages = TestData.testNamespacePages
+		val testPages = TestData.testNamespacePages()
 			.filterNot(WikipediaTextparser.isMetaPage)
-		val expectedPages = TestData.testCleanedNamespacePages
+		val expectedPages = TestData.testCleanedNamespacePages()
 		testPages shouldEqual expectedPages
 
 	}
 
 	"Bad namespace links" should "be filtered" in {
 		val testLinks = WikipediaTextparser
-			.cleanMetapageLinks(TestData.testNamespaceLinks)
-		val expectedLinks = TestData.testCleanedNamespaceLinks
+			.cleanMetapageLinks(TestData.testNamespaceLinks())
+		val expectedLinks = TestData.testCleanedNamespaceLinks()
 		testLinks shouldEqual expectedLinks
 	}
 
@@ -211,8 +212,7 @@ class WikipediaTextparserTest extends FlatSpec with SharedSparkContext with Matc
 		WikipediaTextparser
 			.extractCategoryLinks(testEntry)
 			.categorylinks
-			.foreach { link => link.offset shouldBe 0
-			}
+			.foreach(link => link.offset shouldBe 0)
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
