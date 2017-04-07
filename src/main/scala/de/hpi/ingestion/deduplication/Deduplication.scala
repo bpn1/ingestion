@@ -211,6 +211,28 @@ class Deduplication(
 	}
 
 	/**
+	  * Add symmetric relations between two subject nodes, abstraction from SubjectManagers
+	  * addRelations method
+	  * @param subject1 UUID of a given node
+	  * @param subject2 UUID of another given node
+	  * @param relations A set of attributes of keys and values describing the relation,
+	  * typically a 'type' value should be passed
+	  * @param version Current transactional id handle
+	  */
+	def addSymRelation(
+		subject1: Subject,
+		subject2: Subject,
+		relations: Map[String,String],
+		version: Version
+	): Unit = {
+		val subject_manager1 = new SubjectManager(subject1, version)
+		val subject_manager2 = new SubjectManager(subject2, version)
+
+		subject_manager1.addRelations(Map(subject2.id -> relations))
+		subject_manager2.addRelations(Map(subject1.id -> relations))
+	}
+
+	/**
 	  * Merging two duplicates in one subject
 	  * @param duplicates tuple of Subject
 	  * @return subjects containing the merged information of both duplicates
