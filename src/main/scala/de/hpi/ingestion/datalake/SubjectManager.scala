@@ -68,7 +68,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 
 	def addRelations(relations: Map[UUID, Map[String, String]],
 		 validityMap: Map[UUID, Map[String, Map[String, String]]] = null
-	): Unit {
+	): Unit = {
 		val buffer = mutable.Map[UUID, Map[String, String]]()
 		buffer ++= subject.relations
 
