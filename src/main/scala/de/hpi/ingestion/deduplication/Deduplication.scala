@@ -55,7 +55,7 @@ case class scoreConfig[A, B <: SimilarityMeasure[A]](
   */
 case class BlockEvaluation(
 	id: UUID = UUID.randomUUID(),
-	data: Map[String, Int] = Map[String, Int](),
+	data: Map[List[String], Int] = Map[List[String], Int](),
 	comment: Option[String] = None)
 
 /**
@@ -73,7 +73,6 @@ class Deduplication(
 ) extends Serializable {
 	var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
 	val settings = mutable.Map[String, String]()
-	var blockingScheme: BlockingScheme = new SimpleBlockingScheme
 
 	/**
 	  * Compares to subjects regarding the configuration
@@ -152,32 +151,32 @@ class Deduplication(
 	/**
 	  * Uses input blocking scheme to generate blocks of subjects.
 	  * @param subjects RDD to perform the blocking on.
-	  * @param blockingScheme blocking scheme to use to generate keys.
+	  * @param blockingSchemes blocking scheme to use to generate keys.
 	  * @return subjects grouped by blocking keys
 	  */
 	def blocking(
 		subjects: RDD[Subject],
-		blockingScheme: BlockingScheme
-	): RDD[(List[String], List[Subject])] = {
+		blockingSchemes: List[BlockingScheme]
+	): RDD[(List[List[String]], List[Subject])] = {
 		subjects
-			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
-			.reduceByKey(_ ++ _)
+			.map(subject => (blockingSchemes.map(_.generateKey(subject)), List(subject)))
+			.reduceByKey(_ ++ _)	// ToDo: #182, better reduce function
 	}
 
 	/**
 	  * Creates blocks based on the input blocking scheme
 	  * @param subjects RDD to perform the blocking on
 	  * @param stagingSubjects RDD to perform the blocking on
-	  * @param blockingScheme blocking scheme to use to generate keys.
+	  * @param blockingSchemes blocking scheme to use to generate keys.
 	  * @return RDD of blocks.
 	  */
 	def blocking(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
-		blockingScheme: BlockingScheme
-	): RDD[(List[String], List[Subject])] = {
-		val subjectBlocks = blocking(subjects, blockingScheme)
-		val stagingBlocks = blocking(stagingSubjects, blockingScheme)
+		blockingSchemes: List[BlockingScheme]
+	): RDD[(List[List[String]], List[Subject])] = {
+		val subjectBlocks = blocking(subjects, blockingSchemes)
+		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
 		subjectBlocks
 			.fullOuterJoin(stagingBlocks)
 			.map {
@@ -255,33 +254,37 @@ class Deduplication(
 	  * @return Blocks with size-value and comment.
 	  */
 	def evaluateBlocks(
-		blocks: RDD[(List[String], List[Subject])],
+		blocks: RDD[(List[List[String]], List[Subject])],
 		comment: String
 	): BlockEvaluation = {
 		val dataMap = blocks
-			.map(block => (block._1.mkString(" "), block._2.size))
+			.map(block => (block._1.map(_.mkString(" ")), block._2.size))
 			.sortBy(_._2, false)
 			.collect()
 			.toMap
 		BlockEvaluation(data = dataMap, comment = Option(comment))
 	}
+
 	/**
+	  *
 	  * Starts the deduplication process and writes the result to Cassandra.
+	  * @param blockingSchemes List of blocking schemes to be used on the data
 	  * @param merge boolean indicating whether or not the duplicates should be merged
 	  */
-	def run(merge: Boolean = false): Unit = {
+	def run(
+		blockingSchemes:  List[BlockingScheme] = List(new SimpleBlockingScheme),
+		merge: Boolean = false
+	): Unit = {
 		val conf = new SparkConf()
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
-		blockingScheme = new ListBlockingScheme
-		blockingScheme.setAttributes("name", "branch")
 		val blocks = if(merge) {
 			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable"))
-			blocking(subjects, staging, blockingScheme)
+			blocking(subjects, staging, blockingSchemes)
 		} else {
-			blocking(subjects, blockingScheme)
+			blocking(subjects, blockingSchemes)
 		}
 
 		val blockEvaluation = evaluateBlocks(blocks, this.appName)

@@ -46,9 +46,9 @@ class DeduplicationUnitTest
 	"blocking" should "partition subjects regarding the value of the given key" in {
 		val deduplication = defaultDeduplication
 		val subjects = subjectRDD()
-		val blockingScheme = new ListBlockingScheme()
-		blockingScheme.setAttributes("city")
-		val blocks = deduplication.blocking(subjects, blockingScheme)
+		val blockingSchemes = List(new ListBlockingScheme())
+		blockingSchemes.foreach(_.setAttributes("city"))
+		val blocks = deduplication.blocking(subjects, blockingSchemes)
 		val expected = sc.parallelize(testBlocks)
 		assertRDDEquals(expected, blocks)
 	}
@@ -133,10 +133,10 @@ class DeduplicationUnitTest
 		sc.parallelize(List(subject1, subject2, subject3, subject4, subject5, subject6))
 	}
 
-	def testBlocks(): List[(List[String], List[Subject])] = {
-		List((List("Berlin"), List(subject1, subject2, subject4)),
-			(List("New York"), List(subject3)),
-			(List("undefined"), List(subject5, subject6)))
+	def testBlocks(): List[(List[List[String]], List[Subject])] = {
+		List((List(List("Berlin")), List(subject1, subject2, subject4)),
+			(List(List("New York")), List(subject3)),
+			(List(List("undefined")), List(subject5, subject6)))
 	}
 
 	def defaultDeduplication(): Deduplication = {
@@ -145,7 +145,7 @@ class DeduplicationUnitTest
 
 	def evaluationTestData(): BlockEvaluation = {
 		BlockEvaluation(
-			data = Map("Berlin" -> 3, "undefined" -> 2, "New York" -> 1),
+			data = Map(List("Berlin") -> 3, List("undefined") -> 2, List("New York") -> 1),
 			comment = Option("Test comment"))
 	}
 }
