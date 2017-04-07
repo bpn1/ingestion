@@ -90,19 +90,37 @@ object TestData {
 
 	def dbpediaSubjectList(): List[Subject] = {
 		List(
-			Subject(name=Some("Liste_von_Autoren/V@de ."), properties = Map("owl:sameAs" -> List("wikidata:Q123456789", "yago:Q123456789"))),
-			Subject(name=Some("Ausschluss@de ."), properties = Map("owl:sameAs" -> List("dbpedia:Liste von Autoren", "yago:Liste von Autoren"))),
-			Subject(name=Some("Liste_von_Autoren/T@de ."), properties = Map("owl:sameAs" -> List("wikidata:Q54321", "yago:Q54321")))
+			Subject(name=Option("Liste_von_Autoren/V"), properties = Map("wikidata_id" -> List("Q123456789"))),
+			Subject(name=Option("Ausschluss"), properties = Map("owl:sameAs" -> List("dbpedia:Liste von Autoren", "yago:Liste von Autoren"))),
+			Subject(name=Option("Liste_von_Autoren/T"), properties = Map("wikidata_id" -> List("Q54321")))
 		)
 	}
 
 	def subjectList(): List[Subject] = {
 		List(
-			Subject(name=Some("Liste_von_Autoren_5"), properties = Map("wikidata_id" -> List("Q123456789"), "wikipedia_name" -> List("Liste_von_Autoren/V"))),
-			Subject(name=Some("Anschluss_(Soziologie)"), properties = Map("wikidata_id" -> List("Q54321"), "wikipedia_name" -> List("Liste_von_Autoren/U"))),
-			Subject(name=Some("Liste_von_Autoren_T"), properties = Map("wikidata_id" -> List("Q12345"), "wikipedia_name" -> List("Liste_von_Autoren/T")))
+			Subject(name=Option("Liste_von_Autoren_5"), properties = Map("wikidata_id" -> List("Q123456789"), "wikipedia_name" -> List("Liste_von_Autoren/V"))),
+			Subject(name=Option("Anschluss_(Soziologie)"), properties = Map("wikidata_id" -> List("Q54321"), "wikipedia_name" -> List("Liste_von_Autoren/U"))),
+			Subject(name=Option("Liste_von_Autoren_T"), properties = Map("wikidata_id" -> List("Q12345"), "wikipedia_name" -> List("Liste_von_Autoren/T")))
 		)
 	}
+
+	def subjectDuplicatesRDD(sc: SparkContext, dbpedia: List[Subject], subjects: List[Subject]): RDD[(Subject, List[Subject])] = {
+		sc.parallelize(Seq(
+			(subjects.head, List(dbpedia.head)),
+			(subjects(1), List(dbpedia(2))),
+			(subjects(2), List(dbpedia(2)))
+		))
+	}
+
+	val mergedSubject = Subject(
+		name=Option("Liste_von_Autoren_5"),
+		properties=Map(
+			"wikidata.wikidata_id" -> List("Q123456789"),
+			"wikidata.wikipedia_name" -> List("Liste_von_Autoren/V"),
+			"dbpedia.wikidata_id" -> List("Q123456789"),
+			"dbpedia.name" -> List("Liste_von_Autoren/V")
+		)
+	)
 
 	def joinedSubjectRDD(sc: SparkContext, dbpedia: List[Subject], subjects: List[Subject]): RDD[Subject] = {
 		sc.parallelize(Seq(
@@ -124,9 +142,7 @@ object TestData {
 
 	def multiKeyRDD(sc: SparkContext, subjects: List[Subject]): RDD[(List[String], Subject)] = {
 		sc.parallelize(Seq(
-			(List("wikidata:Q123456789", "yago:Q123456789"), subjects.head),
-			(List("dbpedia:Liste von Autoren", "yago:Liste von Autoren"), subjects(1)),
-			(List("wikidata:Q54321", "yago:Q54321"), subjects(2))
+			(List("dbpedia:Liste von Autoren", "yago:Liste von Autoren"), subjects(1))
 		))
 	}
 

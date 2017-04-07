@@ -39,8 +39,11 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 			metadata("description") = List(entity.description.get)
 		}
 		if(entity.data.nonEmpty) {
-			val wikidatId = entity.data.getOrElse("owl:sameAs", Nil).filter(_.startsWith("wikidata:"))
-			if (wikidatId.nonEmpty) metadata += ("wikidata_id" -> wikidatId)
+			val wikidatId : Option[String] = entity
+				.data
+				.getOrElse("owl:sameAs", Nil)
+				.find(_.startsWith("wikidata:"))
+			if (wikidatId.isDefined) metadata += ("wikidata_id" -> List(wikidatId.get.drop(9)))
 			metadata ++= entity.data
 		}
 		sm.addProperties(metadata.toMap)

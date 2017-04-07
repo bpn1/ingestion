@@ -15,7 +15,7 @@ object DBPediaDeduplication {
 	val keyspace = "datalake"
 	val inputTableName = "subject_temp"
 	val subjectTable = "subject"
-	val outputTable = "goldenstandard"
+	val outputTable = "duplicatecandidates"
 
 	case class DuplicateCandidate(
 		subject_id : UUID,
@@ -72,9 +72,7 @@ object DBPediaDeduplication {
 		val dbpediaNameRDD = dbpediaRDD
 		  .filter(_.name.isDefined)
 		  .map { subject =>
-				// To remove the @de  . from the name of every dbpedia subject
-				val name = subject.name.get.dropRight(5)
-				(name, subject)
+				(subject.name.orNull, subject)
 			}
 
 		val subjectWikinameRDD = keyBySingleProperty(subjectRDD, "wikipedia_name")
@@ -83,17 +81,7 @@ object DBPediaDeduplication {
 	}
 
 	def joinOnWikiId(dbpediaRDD: RDD[Subject], subjectRDD: RDD[Subject]): RDD[(String, (Subject, Subject))] = {
-		val dbpediaSameAsRDD = keyByProperty(dbpediaRDD, "owl:sameAs")
-		  	.filter(_._1.nonEmpty)
-			.filter(_._1.exists(_.startsWith("wikidata:")))
-		  	.map { case (property, subject) =>
-				val id = property
-					.filter(_.startsWith("wikidata:"))
-				  	.head
-				  	.drop(9)
-				(id, subject)
-			}
-
+		val dbpediaSameAsRDD = keyBySingleProperty(dbpediaRDD, "wikidata_id")
 		val subjectWikiId = keyBySingleProperty(subjectRDD, "wikidata_id")
 
 		dbpediaSameAsRDD.join(subjectWikiId)
@@ -124,6 +112,9 @@ object DBPediaDeduplication {
 
 		left
 		    .cogroup(right)
+			.filter {
+				case (subject_id, (it1, it2)) => it1.++(it2).nonEmpty
+			}
 		    .map {
 				case (subject_id, (it1, it2)) => DuplicateCandidates(
 					subject_id,
@@ -148,7 +139,7 @@ object DBPediaDeduplication {
 		val nameCandidates = translateToCandidate(nameJoined, inputTableName)
 		val idCandidates = translateToCandidate(idJoined, inputTableName)
 
-		joinGoldenStandard(nameJoined, idJoined).saveToCassandra(keyspace, outputTable)
+		joinGoldenStandard(nameJoined, idJoined).saveToCassandra(keyspace, "goldenstandard")
 		joinCandidates(nameCandidates, idCandidates).saveToCassandra(keyspace, outputTable)
 
 		sc.stop()
