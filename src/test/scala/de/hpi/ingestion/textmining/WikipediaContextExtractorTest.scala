@@ -154,13 +154,4 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 			}
 		requestedDocumentFrequencies shouldEqual TestData.requestedDocumentFrequenciesTestSet()
 	}
-
-	//	"Inverse document frequencies" should "not be empty" in {
-	//		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-	//		val termFrequencies = WikipediaContextExtractor
-	//			.countTermFrequencies(articles)
-	//		val tfidf = WikipediaContextExtractor
-	//			.calculateInverseDocumentFrequencies(termFrequencies)
-	//		tfidf should not be empty
-	//	}
 }

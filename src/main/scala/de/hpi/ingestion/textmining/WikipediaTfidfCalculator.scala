@@ -4,20 +4,29 @@ import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.mllib.feature.HashingTF
+import org.apache.spark.mllib.feature.{HashingTF, IDF}
 import org.apache.spark.mllib.linalg.Vector
 
-object WikipediaTermFrequencyCounter {
+object WikipediaTfidfCalculator {
 	val keyspace = "wikidumps"
 	val inputTablename = "parsedwikipedia"
-	val outputTablename = "wikipediatermfreq"
+	val outputTablename = "wikipediatfidf"
 
 	def countTermFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[Vector] = {
+		// https://spark.apache.org/docs/latest/mllib-feature-extraction.html
 		val tokenizer = new CleanCoreNLPTokenizer
 		val documents = articles
 			.map(article => tokenizer.tokenize(article.getText()))
 		val hashingTF = new HashingTF()
 		hashingTF.transform(documents)
+	}
+
+	def calculateTfidf(termFrequencies: RDD[Vector]): RDD[Vector] = {
+		// https://spark.apache.org/docs/latest/mllib-feature-extraction.html
+		termFrequencies.cache()
+		val idf = new IDF().fit(termFrequencies)
+		val tfidf = idf.transform(termFrequencies)
+		tfidf
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -26,7 +35,8 @@ object WikipediaTermFrequencyCounter {
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, outputTablename)
-		countTermFrequencies(allArticles)
+		val termFrequencies = countTermFrequencies(allArticles)
+		calculateTfidf(termFrequencies)
 			.saveToCassandra(keyspace, outputTablename)
 
 		sc.stop()

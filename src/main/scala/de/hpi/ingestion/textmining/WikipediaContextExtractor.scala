@@ -4,8 +4,6 @@ import de.hpi.ingestion.textmining.models.{DocumentFrequency, LinkContext, Parse
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.mllib.feature.IDF
-import org.apache.spark.mllib.linalg.Vector
 
 import scala.io.Source
 
@@ -102,13 +100,6 @@ object WikipediaContextExtractor {
 		}
 	}
 
-	def calculateInverseDocumentFrequencies(termFrequencies: RDD[Vector]): RDD[Vector] = {
-		termFrequencies.cache()
-		val idf = new IDF().fit(termFrequencies)
-		val tfidf = idf.transform(termFrequencies)
-		tfidf
-	}
-
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Context Extractor")
@@ -122,8 +113,8 @@ object WikipediaContextExtractor {
 			leastSignificantDocumentFrequency,
 			stopwords
 		)
-		val stemmedDocuementFrequencies = stemDocumentFrequencies(filteredDocumentFrequencies)
-		stemmedDocuementFrequencies
+		val stemmedDocumentFrequencies = stemDocumentFrequencies(filteredDocumentFrequencies)
+		stemmedDocumentFrequencies
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
 		//		extractAllContexts(allArticles)
 		//			.saveToCassandra(keyspace, outputContextsTablename)
