@@ -11,7 +11,8 @@ object WikipediaTfidfCalculator {
 	val keyspace = "wikidumps"
 	val inputTablename = "parsedwikipedia"
 	val outputTablename = "wikipediatfidf"
-	val outputDirectory = "tfidf.txt"
+	val outputDirectoryTf = "tf.txt"
+	val outputDirectoryTfidf = "tfidf.txt"
 
 	def countTermFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[Vector] = {
 		// https://spark.apache.org/docs/latest/mllib-feature-extraction.html
@@ -37,8 +38,12 @@ object WikipediaTfidfCalculator {
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputTablename)
 		val termFrequencies = countTermFrequencies(allArticles)
+		val arr = termFrequencies
+			.collect
+		arr.saveAsTextFile(outputDirectoryTf)
 		calculateTfidf(termFrequencies)
-			.saveAsTextFile(outputDirectory)
+			.collect
+			.saveAsTextFile(outputDirectoryTfidf)
 
 		sc.stop()
 	}
