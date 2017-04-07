@@ -1,6 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.textmining.models.{ParsedWikipediaEntry, Bag}
+import de.hpi.ingestion.textmining.models.{Bag, ParsedWikipediaEntry, TermFrequencies}
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
@@ -9,21 +9,23 @@ object WikipediaTfidfCalculator {
 	val keyspace = "wikidumps"
 	val inputTablename = "parsedwikipedia"
 	val outputTablename = "wikipediatfidf"
-	val outputDirectoryTf = "tf.txt"
-	val outputDirectoryTfidf = "tfidf.txt"
 
-	def articlesToBagsOfWords(articles: RDD[ParsedWikipediaEntry]): RDD[Bag[String, Double]] = {
+	def articlesToBagsOfWords(articles: RDD[ParsedWikipediaEntry]): RDD[TermFrequencies] = {
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
-			.map(article => Bag(tokenizer.tokenize(article.getText())))
+			.map { article =>
+				val bagOfWords = Bag(tokenizer.tokenize(article.getText()))
+				TermFrequencies(article.title, bagOfWords)
+			}
 	}
 
-	//	def countTermFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[Vector] = {
+	//	def countTermFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[Bag[String, Double]] = {
 	//		val tokenizer = new CleanCoreNLPTokenizer
 	//		val documents = articles
 	//			.map(article => tokenizer.tokenize(article.getText()))
 	//
 	//	}
+
 	//
 	//	def calculateTfidf(termFrequencies: RDD[Vector]): RDD[Vector] = {
 	//

@@ -7,9 +7,16 @@ class WikipediaTfidfCalculatorTest extends FlatSpec with SharedSparkContext with
 	"Bags of words for articles" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		WikipediaTfidfCalculator.articlesToBagsOfWords(articles)
-			.map(_.nonEmpty)
+			.map(_.tokens.getCounts())
 			.collect
 			.foreach(bag => bag should not be empty)
+	}
+
+	they should "be exactly these bags of words" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val bags = WikipediaTfidfCalculator.articlesToBagsOfWords(articles)
+			.collect()
+		bags shouldEqual TestData.bagsOfWordsTestSet
 	}
 
 	//	"Term frequencies" should "not be empty" in {
