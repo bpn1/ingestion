@@ -8,13 +8,11 @@ import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Document, Element, TextNode}
-import org.jsoup.select.NodeTraversor
 import java.net.URLDecoder
 
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.textmining.models._
-
 
 import scala.io.Source
 
@@ -92,14 +90,9 @@ object WikipediaTextParser {
 			.mkString("\n")
 			.replaceAll("&lt;(/|)gallery&gt;", "") // removes gallery tags
 		val doc = Jsoup.parse(htmltext)
-
-		val childList = List[String]()
-		val anchorNodeVisitor = AnchorNodeVisitor(childList)
-		val traversor = NodeTraversor(anchorNodeVisitor)
-		val firstAnchor = doc.select("a:first-of-type").first()
-		if (firstAnchor != null) {
-			traversor.traverse(firstAnchor)
-		}
+		val traverser = new WikipediaNodeVisitor()
+		doc.traverse(traverser)
+		Jsoup.parse(traverser.getCleanedDocument())
 	}
 
 	def parseUrl(url: String): String = {
