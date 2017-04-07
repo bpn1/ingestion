@@ -24,8 +24,10 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		subject.category_history = List(makeVersion(List(value), validity))
 	}
 
-	def addProperties(value: Map[String, List[String]],
-										validityMap: Map[String, Map[String, String]] = null) {
+	def addProperties(
+		value: Map[String, List[String]],
+		validityMap: Map[String, Map[String, String]] = null
+	) {
 		val buffer = mutable.Map[String, List[String]]()
 		buffer ++= subject.properties
 		val historyBuffer = mutable.Map[String, List[Version]]()
@@ -50,8 +52,10 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		subject.properties_history = historyBuffer.toMap
 	}
 
-	def addRelations(relations: Map[UUID, Map[String, String]],
-		 validityMap: Map[UUID, Map[String, Map[String, String]]] = null) {
+	def addRelations(
+		relations: Map[UUID, Map[String, String]],
+		validityMap: Map[UUID, Map[String, Map[String, String]]] = null
+	) {
 		val buffer = mutable.Map[UUID, Map[String, String]]()
 		buffer ++= subject.relations
 
