@@ -83,22 +83,22 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 	}
 
 	"Stemmed document frequencies" should "not contain unstemmed German words" in {
-		val documentFrequencies = sc.parallelize(TestData.unstemmedDFTestSet().toList)
+		val documentFrequencies = sc.parallelize(TestData.unstemmedDocumentFrequenciesTestSet().toList)
 		val stemmedDF = WikipediaContextExtractor
 			.stemDocumentFrequencies(documentFrequencies)
-			.map(_.word)
+			.map(_.token)
 			.collect
 			.toSet
 		stemmedDF should contain noElementsOf TestData.unstemmedGermanWordsTestList()
 	}
 
 	they should "contain these document frequencies" in {
-		val documentFrequencies = sc.parallelize(TestData.unstemmedDFTestSet().toList)
+		val documentFrequencies = sc.parallelize(TestData.unstemmedDocumentFrequenciesTestSet().toList)
 		val stemmedDF = WikipediaContextExtractor
 			.stemDocumentFrequencies(documentFrequencies)
 			.collect
 			.toSet
-		stemmedDF should contain allElementsOf TestData.stemmedDFTestSet()
+		stemmedDF should contain allElementsOf TestData.stemmedDocumentFrequenciesTestSet()
 	}
 
 	"Filtered document frequencies" should "not contain German stopwords" in {
@@ -107,7 +107,7 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 			.filterDocumentFrequencies(documentFrequencies,
 				1,
 				TestData.germanStopwordsTestSet())
-			.map(_.word)
+			.map(_.token)
 			.collect
 			.toSet
 		filteredWords should contain noElementsOf TestData.germanStopwordsTestSet()
@@ -147,10 +147,10 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 		val requestedDocumentFrequencies = TestData.documentFrequenciesTestSet()
 			.map { documentFrequency =>
 				val count = WikipediaContextExtractor.getDocumentFrequency(
-					documentFrequency.word,
+					documentFrequency.token,
 					sc.parallelize(TestData.filteredDocumentFrequenciesTestList()),
 					threshold)
-				DocumentFrequency(documentFrequency.word, count)
+				DocumentFrequency(documentFrequency.token, count)
 			}
 		requestedDocumentFrequencies shouldEqual TestData.requestedDocumentFrequenciesTestSet()
 	}

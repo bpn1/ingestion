@@ -83,6 +83,31 @@ object TestData {
 		)
 	}
 
+	//	def inverseDocumentFrequenciesTestSet(): Set[InverseDocumentFrequency] = {
+	//		val oneOccurrence = 1.5849625007
+	//		val twoOccurrences = 0.5849625007
+	//		val threeOccurrences = 0.0
+	//		Set(
+	//			InverseDocumentFrequency("hier", twoOccurrences),
+	//			InverseDocumentFrequency("ist", twoOccurrences),
+	//			InverseDocumentFrequency("audi", threeOccurrences),
+	//			InverseDocumentFrequency("verlink", twoOccurrences),
+	//			InverseDocumentFrequency("nich", oneOccurrence),
+	//			InverseDocumentFrequency("link", oneOccurrence),
+	//			InverseDocumentFrequency("brachttal", oneOccurrence),
+	//			InverseDocumentFrequency("historisch", oneOccurrence),
+	//			InverseDocumentFrequency("jahr", oneOccurrence),
+	//			InverseDocumentFrequency("kein", oneOccurrence),
+	//			InverseDocumentFrequency("hess", oneOccurrence),
+	//			InverseDocumentFrequency("main-kinzig-kreis", oneOccurrence),
+	//			InverseDocumentFrequency("buding", oneOccurrence),
+	//			InverseDocumentFrequency("wald", oneOccurrence),
+	//			InverseDocumentFrequency("backfisch", oneOccurrence),
+	//			InverseDocumentFrequency("und", oneOccurrence),
+	//			InverseDocumentFrequency("nochmal", oneOccurrence)
+	//		)
+	//	}
+
 	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
 		sc.parallelize(List(
 			AliasOccurrencesInArticle(Set("Audi"), Set()),
@@ -212,7 +237,7 @@ object TestData {
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("einer", 1),
+			DocumentFrequency("einer", 2),
 			DocumentFrequency("ein", 2),
 			DocumentFrequency("Einer", 1),
 			DocumentFrequency("Ein", 1)
@@ -226,7 +251,21 @@ object TestData {
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("ein", 5)
+			DocumentFrequency("ein", 6)
+		)
+	}
+
+	def inverseDocumentFrequenciesTestSet(): Set[InverseDocumentFrequency] = {
+		val oneOccurrence = 0.6020599913279624
+		val twoOccurrences = 0.3010299956639812
+		val threeOccurrences = 0.12493874955128392
+		Set(
+			InverseDocumentFrequency("Audi", threeOccurrences),
+			InverseDocumentFrequency("Backfisch", oneOccurrence),
+			InverseDocumentFrequency("ist", threeOccurrences),
+			InverseDocumentFrequency("und", twoOccurrences),
+			InverseDocumentFrequency("zugleich", oneOccurrence),
+			InverseDocumentFrequency("einer", oneOccurrence)
 		)
 	}
 
@@ -414,31 +453,6 @@ object TestData {
 
 	def germanStopwordsTestSet(): Set[String] = {
 		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
-	}
-
-	def unstemmedDFTestSet(): Set[DocumentFrequency] = {
-		Set(
-			DocumentFrequency("Audi", 3),
-			DocumentFrequency("Backfisch", 1),
-			DocumentFrequency("ist", 3),
-			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("einer", 2),
-			DocumentFrequency("ein", 2),
-			DocumentFrequency("Einer", 1),
-			DocumentFrequency("Ein", 1)
-		)
-	}
-
-	def stemmedDFTestSet(): Set[DocumentFrequency] = {
-		Set(
-			DocumentFrequency("audi", 3),
-			DocumentFrequency("backfisch", 1),
-			DocumentFrequency("ist", 3),
-			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("ein", 6)
-		)
 	}
 
 	def unstemmedGermanWordsTestList(): List[String] = {

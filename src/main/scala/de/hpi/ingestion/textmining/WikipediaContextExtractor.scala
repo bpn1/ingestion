@@ -25,7 +25,7 @@ object WikipediaContextExtractor {
 		documentFrequencies: RDD[DocumentFrequency]
 	): RDD[DocumentFrequency] = {
 		documentFrequencies
-			.map(df => (stem(df.word), df.count))
+			.map(df => (stem(df.token), df.count))
 			.reduceByKey(_ + _)
 			.map { case (word, count) => DocumentFrequency(word, count) }
 	}
@@ -47,7 +47,7 @@ object WikipediaContextExtractor {
 		stopwords: Set[String]
 	): RDD[DocumentFrequency] = {
 		documentFrequencies
-			.filter(documentFrequency => !stopwords.contains(documentFrequency.word) &&
+			.filter(documentFrequency => !stopwords.contains(documentFrequency.token) &&
 				documentFrequency.count >= threshold)
 	}
 
@@ -87,7 +87,7 @@ object WikipediaContextExtractor {
 		frequencyThreshold: Int
 	): Int = {
 		val documentFrequency = documentFrequencyTable
-			.filter(_.word == word)
+			.filter(_.token == word)
 			.collect
 			.toList
 
