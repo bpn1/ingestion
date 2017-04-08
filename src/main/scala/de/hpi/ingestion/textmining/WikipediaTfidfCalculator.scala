@@ -1,6 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.textmining.models.{Bag, DocumentFrequency, ParsedWikipediaEntry, TermFrequencies}
+import de.hpi.ingestion.textmining.models.{Bag, DocumentFrequency, ParsedWikipediaEntry, PageTermFrequencies}
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
@@ -10,17 +10,6 @@ object WikipediaTfidfCalculator {
 	val inputTablename = "parsedwikipedia"
 	val outputTablename = "wikipediatfidf"
 
-	def articlesToBagsOfWords(articles: RDD[ParsedWikipediaEntry]): RDD[TermFrequencies] = {
-		val tokenizer = new CleanCoreNLPTokenizer
-		val stemmer = new AccessibleGermanStemmer
-		articles
-			.map { article =>
-				val stemmedWords = tokenizer.tokenize(article.getText())
-					.map(term => stemmer.stem(term))
-				val bagOfWords = Bag[String, Int](stemmedWords)
-				TermFrequencies(article.title, bagOfWords)
-			}
-	}
 
 	def extractBagOfWords(
 		entry: ParsedWikipediaEntry,
@@ -33,14 +22,20 @@ object WikipediaTfidfCalculator {
 		(entry.title, bagOfWords)
 	}
 
-	//	def countTermFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[Bag[String, Double]] = {
-	//		val tokenizer = new CleanCoreNLPTokenizer
-	//		val documents = articles
-	//			.map(article => tokenizer.tokenize(article.getText()))
-	//
-	//	}
+	def countTermFrequencies(articles: RDD[ParsedWikipediaEntry]): RDD[PageTermFrequencies] = {
+		val tokenizer = new CleanCoreNLPTokenizer
+		val stemmer = new AccessibleGermanStemmer
+		articles
+			.map { article =>
+				val stemmedWords = tokenizer.tokenize(article.getText())
+					.map(term => stemmer.stem(term))
+				val bagOfWords = Bag[String, Int](stemmedWords)
+				PageTermFrequencies(article.title, bagOfWords)
+			}
+	}
 
-	//
+	//	def calculateInverseDocumentFrequencies()
+
 	//	def calculateTfidf(termFrequencies: RDD[Vector]): RDD[Vector] = {
 	//
 	//	}
