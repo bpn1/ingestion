@@ -5,10 +5,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class WikipediaTfidfCalculatorTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Bags of words for articles" should "not be empty" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList).filter{
-			article =>
-				article.title != "Streitberg (Brachttal)"
-		}
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		WikipediaTfidfCalculator.articlesToBagsOfWords(articles)
 			.map(_.tokens.getCounts())
 			.collect
@@ -16,14 +13,15 @@ class WikipediaTfidfCalculatorTest extends FlatSpec with SharedSparkContext with
 	}
 
 	they should "be exactly these bags of words" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList).filter{
-			article =>
-				article.title != "Streitberg (Brachttal)"
-		}
+		val termFrequenciesTestSetReference = TestData.termFrequenciesTestSet()
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+			.filter { article =>
+				termFrequenciesTestSetReference.exists(termFrequencies => termFrequencies.page == article.title)
+			}
 		val bags = WikipediaTfidfCalculator.articlesToBagsOfWords(articles)
 			.collect
 			.toSet
-		bags shouldEqual TestData.bagsOfWordsTestSet
+		bags shouldEqual termFrequenciesTestSetReference
 	}
 
 	//	"Term frequencies" should "not be empty" in {

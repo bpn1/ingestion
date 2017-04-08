@@ -10,17 +10,17 @@ object WikipediaTfidfCalculator {
 	val inputTablename = "parsedwikipedia"
 	val outputTablename = "wikipediatfidf"
 
-//	def articlesToBagsOfWords(articles: RDD[ParsedWikipediaEntry]): RDD[TermFrequencies] = {
-//		val tokenizer = new CleanCoreNLPTokenizer
-//		val stemmer = new AccessibleGermanStemmer
-//		articles
-//			.map { article =>
-//				val listOfStemmedWords = tokenizer.tokenize(article.getText())
-//					.map(term => stemmer.stem(term))
-//				val bagOfWords = Bag[String, Int](listOfStemmedWords)
-//				(article.title, bagOfWords)
-//			}
-//	}
+	def articlesToBagsOfWords(articles: RDD[ParsedWikipediaEntry]): RDD[TermFrequencies] = {
+		val tokenizer = new CleanCoreNLPTokenizer
+		val stemmer = new AccessibleGermanStemmer
+		articles
+			.map { article =>
+				val stemmedWords = tokenizer.tokenize(article.getText())
+					.map(term => stemmer.stem(term))
+				val bagOfWords = Bag[String, Int](stemmedWords)
+				TermFrequencies(article.title, bagOfWords)
+			}
+	}
 
 	def extractBagOfWords(
 		entry: ParsedWikipediaEntry,

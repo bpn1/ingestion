@@ -75,7 +75,7 @@ object TestData {
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
-	def bagsOfWordsTestSet(): Set[TermFrequencies] = {
+	def termFrequenciesTestSet(): Set[TermFrequencies] = {
 		Set(
 			TermFrequencies("Audi Test mit Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)),
 			TermFrequencies("Audi Test ohne Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)),
