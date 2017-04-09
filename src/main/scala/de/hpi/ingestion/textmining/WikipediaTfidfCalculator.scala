@@ -9,6 +9,7 @@ object WikipediaTfidfCalculator {
 	val keyspace = "wikidumps"
 	val inputTablename = "parsedwikipedia"
 	val outputTablename = "wikipediatfidf"
+	val leastSignificantDocumentFrequency = 5
 
 
 	def extractBagOfWords(
@@ -31,16 +32,24 @@ object WikipediaTfidfCalculator {
 		PageTermFrequencies(article.title, bagOfWords)
 	}
 
+	def calculateInverseDocumentFrequencyValue(documentFrequency: Int, documents: Long): Double = {
+		Math.log10(documents.toFloat / documentFrequency)
+	}
+
 	def calculateInverseDocumentFrequency(
 		documentFrequency: DocumentFrequency,
 		documents: Long
 	): InverseDocumentFrequency = {
-		InverseDocumentFrequency(documentFrequency.token, Math.log10(documents.toFloat / documentFrequency.count))
+		InverseDocumentFrequency(
+			documentFrequency.token,
+			calculateInverseDocumentFrequencyValue(documentFrequency.count, documents)
+		)
 	}
 
 	def calculateTfidfContexts(
 		articles: RDD[ParsedWikipediaEntry],
-		documentFrequencies: RDD[DocumentFrequency]
+		documentFrequencies: RDD[DocumentFrequency],
+		documentFrequencyThreshold: Int
 	): RDD[TfidfContext] = {
 		val documents = articles.count
 		val inverseDocumentFrequencies = documentFrequencies
@@ -56,8 +65,12 @@ object WikipediaTfidfCalculator {
 			}
 			.map { case (token, ((page, token1, tf), right)) =>
 				right match {
-					case Some((token2, idf)) => (page, token, tf, idf)
-					case _ => (page, token, tf, 0.0) // todo: better default value
+					case Some((token2, idf)) =>
+						(page, token, tf, idf)
+					case _ =>
+						// compute default value
+						val idf = calculateInverseDocumentFrequencyValue(documentFrequencyThreshold - 1, documents)
+						(page, token, tf, idf)
 				}
 			}
 			.map { case (page, token, tf, idf) => (page, token, tf * idf) }

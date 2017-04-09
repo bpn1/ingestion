@@ -253,6 +253,15 @@ object TestData {
 		)
 	}
 
+	def filteredStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("hier", 2),
+			DocumentFrequency("ist", 2),
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("verlink", 2)
+		)
+	}
+
 	def inverseDocumentFrequenciesTestSet(): Set[InverseDocumentFrequency] = {
 		val oneOccurrence = 0.6020599913279624
 		val twoOccurrences = 0.3010299956639812

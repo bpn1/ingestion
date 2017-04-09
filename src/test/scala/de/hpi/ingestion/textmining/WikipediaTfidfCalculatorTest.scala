@@ -44,22 +44,37 @@ class WikipediaTfidfCalculatorTest extends FlatSpec with SharedSparkContext with
 		inverseDocumentFrequencies shouldEqual TestData.inverseDocumentFrequenciesTestSet()
 	}
 
-	"Tf-idf contexts for parsed Wikipedia articles" should "not be empty" in {
+	"Tf-idf contexts for parsed Wikipedia articles with complete document frequencies" should "not be empty" in {
+		val documentFrequencyThreshold = 1
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
 		val contexts = WikipediaTfidfCalculator
-			.calculateTfidfContexts(articles, documentFrequencies)
+			.calculateTfidfContexts(articles, documentFrequencies, documentFrequencyThreshold)
 			.collect
 		contexts should not be empty
 		contexts.foreach(context => context.tokens.getCounts should not be empty)
 	}
 
 	they should "be exactly these contexts" in {
+		val documentFrequencyThreshold = 1
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.filter { article => article.title != "Streitberg (Brachttal)" }
 		val documentFrequencies = sc.parallelize(TestData.stemmedDocumentFrequenciesTestSet().toList)
 		val contexts = WikipediaTfidfCalculator
-			.calculateTfidfContexts(articles, documentFrequencies)
+			.calculateTfidfContexts(articles, documentFrequencies, documentFrequencyThreshold)
+			.collect
+			.toSet
+		contexts shouldEqual TestData.tfidfContextsTestSet()
+	}
+
+	"Tf-idf contexts for parsed Wikipedia articles with missing document frequencies" should
+		"be exactly these contexts" in {
+		val documentFrequencyThreshold = 2
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+			.filter { article => article.title != "Streitberg (Brachttal)" }
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
+		val contexts = WikipediaTfidfCalculator
+			.calculateTfidfContexts(articles, documentFrequencies, documentFrequencyThreshold)
 			.collect
 			.toSet
 		contexts shouldEqual TestData.tfidfContextsTestSet()
