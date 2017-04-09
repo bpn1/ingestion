@@ -1,17 +1,16 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.textmining.models.{DocumentFrequency, LinkContext, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.models.{DocumentFrequency, ParsedWikipediaEntry}
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
 import scala.io.Source
 
-object WikipediaContextExtractor {
+object WikipediaDocumentFrequencyCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputDocumentFrequenciesTablename = "wikipediadocfreq"
-	val outputContextsTablename = "wikipediacontexts"
 	val removeStopwords = true
 	val stopwordsPath = "german_stopwords.txt"
 	val leastSignificantDocumentFrequency = 5
@@ -25,7 +24,7 @@ object WikipediaContextExtractor {
 		documentFrequencies: RDD[DocumentFrequency]
 	): RDD[DocumentFrequency] = {
 		documentFrequencies
-			.map(df => (stem(df.token), df.count))
+			.map(df => (stem(df.word), df.count))
 			.reduceByKey(_ + _)
 			.map { case (word, count) => DocumentFrequency(word, count) }
 	}
@@ -47,28 +46,8 @@ object WikipediaContextExtractor {
 		stopwords: Set[String]
 	): RDD[DocumentFrequency] = {
 		documentFrequencies
-			.filter(documentFrequency => !stopwords.contains(documentFrequency.token) &&
+			.filter(documentFrequency => !stopwords.contains(documentFrequency.word) &&
 				documentFrequency.count >= threshold)
-	}
-
-	def extractLinkContextsFromArticle(
-		article: ParsedWikipediaEntry,
-		tokenizer: Tokenizer): Set[LinkContext] = {
-		// Do not initialize tokenizer here so it is initialized only once.
-		// (probably important for good performance of CoreNLP)
-		val wordSet = tokenizer.tokenize(article.getText()).toSet
-		article.allLinks()
-			.map(link => LinkContext(link.page, wordSet))
-			.toSet
-	}
-
-	def extractAllContexts(articles: RDD[ParsedWikipediaEntry]): RDD[LinkContext] = {
-		val tokenizer = new CleanCoreNLPTokenizer
-		articles
-			.flatMap(article => extractLinkContextsFromArticle(article, tokenizer))
-			.map(linkContext => (linkContext.pagename, linkContext.words))
-			.reduceByKey(_ ++ _)
-			.map { case (pagename, contextSum) => LinkContext(pagename, contextSum) }
 	}
 
 	def loadStopwords(): Set[String] = {
@@ -79,25 +58,6 @@ object WikipediaContextExtractor {
 				.toSet
 		}
 		stopwords
-	}
-
-	def getDocumentFrequency(
-		word: String,
-		documentFrequencyTable: RDD[DocumentFrequency],
-		frequencyThreshold: Int
-	): Int = {
-		val documentFrequency = documentFrequencyTable
-			.filter(_.token == word)
-			.collect
-			.toList
-
-		assert(documentFrequency.length <= 1) // otherwise word is not a primary key
-		if (documentFrequency.nonEmpty) {
-			documentFrequency.head.count
-		}
-		else {
-			frequencyThreshold - 1
-		}
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -116,8 +76,6 @@ object WikipediaContextExtractor {
 		val stemmedDocumentFrequencies = stemDocumentFrequencies(filteredDocumentFrequencies)
 		stemmedDocumentFrequencies
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
-		//		extractAllContexts(allArticles)
-		//			.saveToCassandra(keyspace, outputContextsTablename)
 
 		sc.stop()
 	}

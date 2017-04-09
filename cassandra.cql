@@ -43,6 +43,16 @@ CREATE TABLE wikidumps.wikipediapages (
     aliases map<text, int>
 );
 
+CREATE TABLE wikidumps.wikipediadocfreq (
+    word text PRIMARY KEY,
+    count int
+);
+
+CREATE TABLE wikidumps.wikipediatfidf (
+    page text PRIMARY KEY,
+    tokens map<text, double>
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,

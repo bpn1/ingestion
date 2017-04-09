@@ -1,3 +1,3 @@
 package de.hpi.ingestion.textmining.models
 
-case class DocumentFrequency(token: String, count: Int)
+case class DocumentFrequency(word: String, count: Int)

@@ -40,7 +40,7 @@ object WikipediaTfidfContextExtractor {
 		documents: Long
 	): InverseDocumentFrequency = {
 		InverseDocumentFrequency(
-			documentFrequency.token,
+			documentFrequency.word,
 			calculateInverseDocumentFrequencyValue(documentFrequency.count, documents)
 		)
 	}
@@ -103,7 +103,7 @@ object WikipediaTfidfContextExtractor {
 		calculateTfidfContexts(
 			allArticles,
 			documentFrequencies,
-			WikipediaContextExtractor.leastSignificantDocumentFrequency
+			WikipediaDocumentFrequencyCounter.leastSignificantDocumentFrequency
 		).saveToCassandra(keyspace, outputTablename)
 
 		sc.stop()

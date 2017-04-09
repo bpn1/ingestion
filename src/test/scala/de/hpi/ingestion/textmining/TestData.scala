@@ -194,17 +194,6 @@ object TestData {
 		)
 	}
 
-	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
-		Set(
-			DocumentFrequency("Audi", 3),
-			DocumentFrequency("Backfisch", 2),
-			DocumentFrequency("ist", 2),
-			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 2),
-			DocumentFrequency("einer", 2)
-		)
-	}
-
 	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("Audi", 3),
