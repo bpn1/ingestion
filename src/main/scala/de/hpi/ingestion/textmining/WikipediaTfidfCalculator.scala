@@ -46,8 +46,8 @@ object WikipediaTfidfCalculator {
 
 	def calculateTfidfContexts(
 		articles: RDD[ParsedWikipediaEntry],
-		documentFrequencies: RDD[DocumentFrequency])
-	: RDD[TfidfContext] = {
+		documentFrequencies: RDD[DocumentFrequency]
+	): RDD[TfidfContext] = {
 		val documents = articles.count
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(documentFrequency => calculateInverseDocumentFrequency(documentFrequency, documents))

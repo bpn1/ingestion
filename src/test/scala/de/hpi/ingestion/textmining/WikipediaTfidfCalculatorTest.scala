@@ -44,15 +44,21 @@ class WikipediaTfidfCalculatorTest extends FlatSpec with SharedSparkContext with
 		inverseDocumentFrequencies shouldEqual TestData.inverseDocumentFrequenciesTestSet()
 	}
 
-	//	"Tf-idf for all parsed Wikipedia articles" should "not be empty" in {
-	//		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-	//		val termFrequencies = WikipediaTfidfCalculator
-	//			.countTermFrequencies(articles)
-	//		val tfidf = WikipediaTfidfCalculator
-	//			.calculateTfidf(termFrequencies)
-	//		tfidf should not be empty
-	//		//		tfidf
-	//		//			.map(_.toString)
-	//		//			.foreach(println)
-	//	}
+	"Tf-idf contexts for parsed Wikipedia articles" should "not be empty" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
+		val contexts = WikipediaTfidfCalculator
+			.calculateTfidfContexts(articles, documentFrequencies)
+		contexts should not be empty
+	}
+
+	they should "be exactly these contesxts" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
+		val contexts = WikipediaTfidfCalculator
+			.calculateTfidfContexts(articles, documentFrequencies)
+			.collect
+			.toSet
+		contexts shouldEqual TestData.tfidfContextsTestSet()
+	}
 }

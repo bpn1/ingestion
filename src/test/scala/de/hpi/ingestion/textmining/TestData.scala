@@ -83,31 +83,6 @@ object TestData {
 		)
 	}
 
-	//	def inverseDocumentFrequenciesTestSet(): Set[InverseDocumentFrequency] = {
-	//		val oneOccurrence = 1.5849625007
-	//		val twoOccurrences = 0.5849625007
-	//		val threeOccurrences = 0.0
-	//		Set(
-	//			InverseDocumentFrequency("hier", twoOccurrences),
-	//			InverseDocumentFrequency("ist", twoOccurrences),
-	//			InverseDocumentFrequency("audi", threeOccurrences),
-	//			InverseDocumentFrequency("verlink", twoOccurrences),
-	//			InverseDocumentFrequency("nich", oneOccurrence),
-	//			InverseDocumentFrequency("link", oneOccurrence),
-	//			InverseDocumentFrequency("brachttal", oneOccurrence),
-	//			InverseDocumentFrequency("historisch", oneOccurrence),
-	//			InverseDocumentFrequency("jahr", oneOccurrence),
-	//			InverseDocumentFrequency("kein", oneOccurrence),
-	//			InverseDocumentFrequency("hess", oneOccurrence),
-	//			InverseDocumentFrequency("main-kinzig-kreis", oneOccurrence),
-	//			InverseDocumentFrequency("buding", oneOccurrence),
-	//			InverseDocumentFrequency("wald", oneOccurrence),
-	//			InverseDocumentFrequency("backfisch", oneOccurrence),
-	//			InverseDocumentFrequency("und", oneOccurrence),
-	//			InverseDocumentFrequency("nochmal", oneOccurrence)
-	//		)
-	//	}
-
 	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
 		sc.parallelize(List(
 			AliasOccurrencesInArticle(Set("Audi"), Set()),
@@ -266,6 +241,18 @@ object TestData {
 			InverseDocumentFrequency("und", twoOccurrences),
 			InverseDocumentFrequency("zugleich", oneOccurrence),
 			InverseDocumentFrequency("einer", oneOccurrence)
+		)
+	}
+
+	def tfidfContextsTestSet(): Set[TfidfContext] = {
+		val tf1df1 = 0.4771
+		val tf1df2 = 0.1761
+		val tf2df1 = 0.9542
+		val df3 = 0.0
+		Set(
+			TfidfContext("Audi Test mit Link", Bag("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
+			TfidfContext("Audi Test ohne Link", Bag("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
+			TfidfContext("Testartikel", Bag("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1))
 		)
 	}
 
