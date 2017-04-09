@@ -38,34 +38,6 @@ object WikipediaTfidfCalculator {
 		InverseDocumentFrequency(documentFrequency.token, Math.log10(documents.toFloat / documentFrequency.count))
 	}
 
-	//	def calculateTfidfContext(
-	//		pageTermFrequencies: PageTermFrequencies,
-	//		inverseDocumentFrequencies: RDD[InverseDocumentFrequency],
-	//		sc: SparkContext
-	//	): TfidfContext = {
-	//		val tokens = pageTermFrequencies
-	//			.tokens
-	//			.getCounts()
-	//			.toList
-	//		val tfidfMap = sc.parallelize(tokens)
-	//			.keyBy { case (token, tf) => token }
-	//			.leftOuterJoin {
-	//				inverseDocumentFrequencies
-	//					.map(idf => (idf.token, idf.value))
-	//					.keyBy { case (token, value) => token }
-	//			}
-	//			.map { case (token, ((token1, tf), right)) =>
-	//				right match {
-	//					case Some((token2, idf)) => (token, tf, idf)
-	//					case _ => (token, tf, 0.0)
-	//				}
-	//			}
-	//			.map { case (token, tf, idf) => (token, tf * idf) }
-	//			.collect
-	//			.toMap
-	//		TfidfContext(pageTermFrequencies.page, Bag(tfidfMap))
-	//	}
-
 	def calculateTfidfContexts(
 		articles: RDD[ParsedWikipediaEntry],
 		documentFrequencies: RDD[DocumentFrequency]

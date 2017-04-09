@@ -54,13 +54,14 @@ class WikipediaTfidfCalculatorTest extends FlatSpec with SharedSparkContext with
 		contexts.foreach(context => context.tokens.getCounts should not be empty)
 	}
 
-	//	they should "be exactly these contexts" in {
-	//		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-	//		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
-	//		val contexts = WikipediaTfidfCalculator
-	//			.calculateTfidfContexts(articles, documentFrequencies)
-	//			.collect
-	//			.toSet
-	//		contexts shouldEqual TestData.tfidfContextsTestSet()
-	//	}
+	they should "be exactly these contexts" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+			.filter { article => article.title != "Streitberg (Brachttal)" }
+		val documentFrequencies = sc.parallelize(TestData.stemmedDocumentFrequenciesTestSet().toList)
+		val contexts = WikipediaTfidfCalculator
+			.calculateTfidfContexts(articles, documentFrequencies)
+			.collect
+			.toSet
+		contexts shouldEqual TestData.tfidfContextsTestSet()
+	}
 }

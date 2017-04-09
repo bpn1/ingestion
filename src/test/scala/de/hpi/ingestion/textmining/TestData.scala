@@ -219,7 +219,8 @@ object TestData {
 		)
 	}
 
-	def stemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def incorrectStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+		// This test case is wrong, since there are only 4 documents and "ein" has a document frequency of 6
 		Set(
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("backfisch", 1),
@@ -227,6 +228,28 @@ object TestData {
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1),
 			DocumentFrequency("ein", 6)
+		)
+	}
+
+	def stemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("hier", 2),
+			DocumentFrequency("ist", 2),
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("verlink", 2),
+			DocumentFrequency("nich", 1),
+			DocumentFrequency("link", 1),
+			DocumentFrequency("brachttal", 1),
+			DocumentFrequency("historisch", 1),
+			DocumentFrequency("jahr", 1),
+			DocumentFrequency("kein", 1),
+			DocumentFrequency("hess", 1),
+			DocumentFrequency("main-kinzig-kreis", 1),
+			DocumentFrequency("buding", 1),
+			DocumentFrequency("wald", 1),
+			DocumentFrequency("backfisch", 1),
+			DocumentFrequency("und", 1),
+			DocumentFrequency("nochmal", 1)
 		)
 	}
 
@@ -245,9 +268,9 @@ object TestData {
 	}
 
 	def tfidfContextsTestSet(): Set[TfidfContext] = {
-		val tf1df1 = 0.4771
-		val tf1df2 = 0.1761
-		val tf2df1 = 0.9542
+		val tf1df1 = 0.47712125471966244
+		val tf1df2 = 0.17609125905568124
+		val tf2df1 = 0.9542425094393249
 		val df3 = 0.0
 		Set(
 			TfidfContext("Audi Test mit Link", Bag("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
