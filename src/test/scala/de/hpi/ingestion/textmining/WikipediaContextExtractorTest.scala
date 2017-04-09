@@ -98,7 +98,7 @@ class WikipediaContextExtractorTest extends FlatSpec with PrettyTester with Shar
 			.stemDocumentFrequencies(documentFrequencies)
 			.collect
 			.toSet
-		stemmedDF should contain allElementsOf TestData.stemmedDocumentFrequenciesTestSet()
+		stemmedDF should contain allElementsOf TestData.incorrectStemmedDocumentFrequenciesTestSet()
 	}
 
 	"Filtered document frequencies" should "not contain German stopwords" in {

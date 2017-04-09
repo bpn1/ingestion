@@ -282,9 +282,9 @@ object TestData {
 		val tf2df1 = 0.9542425094393249
 		val df3 = 0.0
 		Set(
-			TfidfContext("Audi Test mit Link", Bag("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
-			TfidfContext("Audi Test ohne Link", Bag("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
-			TfidfContext("Testartikel", Bag("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1))
+			TfidfContext("Audi Test mit Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
+			TfidfContext("Audi Test ohne Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
+			TfidfContext("Testartikel", Map("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1))
 		)
 	}
 
