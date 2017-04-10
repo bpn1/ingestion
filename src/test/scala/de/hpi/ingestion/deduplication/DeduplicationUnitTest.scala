@@ -52,12 +52,19 @@ class DeduplicationUnitTest
 	}
 
 	"blocking" should "partition subjects regarding the value of the given key" in {
+		val testSubjects = getSampleSubjects()
+		val subject1 = testSubjects(0)
+		val subject2 = testSubjects(1)
+		val subject3 = testSubjects(2)
+		val subject4 = testSubjects(3)
+		val subject5 = testSubjects(4)
+		val subject6 = testSubjects(5)
 		val deduplication = defaultDeduplication
-		val subjects = subjectRDD()
+		val subjects = sc.parallelize(List(subject1, subject2, subject3, subject4, subject5, subject6))
 		val blockingScheme = new ListBlockingScheme()
 		blockingScheme.setAttributes("city")
 		val blocks = deduplication.blocking(subjects, blockingScheme)
-		val expected = sc.parallelize(testBlocks)
+		val expected = sc.parallelize(testBlocks(testSubjects))
 		assertRDDEquals(expected, blocks)
 	}
 
@@ -68,7 +75,7 @@ class DeduplicationUnitTest
 
 		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
 		deduplication.parseConfig()
-		val duplicates = testBlocks()
+		val duplicates = testBlocks(testSubjects)
 			.map(_._2)
 			.flatMap(deduplication.findDuplicates)
 		val expected = List((subject1, subject4))
@@ -99,8 +106,9 @@ class DeduplicationUnitTest
 	}
 
 	"evaluateBlocks" should "evaluate each block sorted by its size" in {
+		val testSubjects = getSampleSubjects()
 		val deduplication = defaultDeduplication
-		val blocks = sc.parallelize(testBlocks)
+		val blocks = sc.parallelize(testBlocks(testSubjects))
 		val evaluation = deduplication.evaluateBlocks(blocks, "Test comment")
 		val expected = evaluationTestData
 		expected.data shouldEqual evaluation.data
@@ -149,21 +157,7 @@ class DeduplicationUnitTest
 		)
 	}
 
-
-	def subjectRDD(): RDD[Subject] = {
-		val testSubjects = getSampleSubjects()
-		val subject1 = testSubjects(0)
-		val subject2 = testSubjects(1)
-		val subject3 = testSubjects(2)
-		val subject4 = testSubjects(3)
-		val subject5 = testSubjects(4)
-		val subject6 = testSubjects(5)
-
-		sc.parallelize(List(subject1, subject2, subject3, subject4, subject5, subject6))
-	}
-
-	def testBlocks(): List[(List[String], List[Subject])] = {
-		val testSubjects = getSampleSubjects()
+	def testBlocks(testSubjects: List[Subject]): List[(List[String], List[Subject])] = {
 		val subject1 = testSubjects(0)
 		val subject2 = testSubjects(1)
 		val subject3 = testSubjects(2)
