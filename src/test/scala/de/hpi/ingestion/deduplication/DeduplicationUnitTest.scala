@@ -12,6 +12,10 @@ class DeduplicationUnitTest
 	extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 
 	"compare" should "calculate a score regarding the configuration" in {
+		val testSubjects = getSampleSubjects()
+		val subject1 = testSubjects(0)
+		val subject2 = testSubjects(1)
+
 		val deduplication = defaultDeduplication
 		deduplication.parseConfig()
 		val score = deduplication.compare(subject1, subject2)
@@ -25,6 +29,10 @@ class DeduplicationUnitTest
 	}
 
 	it should "just return the weighted score if the configuration contains only one element" in {
+		val testSubjects = getSampleSubjects()
+		val subject1 = testSubjects(0)
+		val subject2 = testSubjects(1)
+
 		val deduplication = defaultDeduplication
 		deduplication.parseConfig()
 		val score = deduplication.compare(subject1, subject2)
@@ -54,6 +62,10 @@ class DeduplicationUnitTest
 	}
 
 	"findDuplicates" should "return a list of tuple of duplicates" in {
+		val testSubjects = getSampleSubjects()
+		val subject1 = testSubjects(0)
+		val subject4 = testSubjects(3)
+
 		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
 		deduplication.parseConfig()
 		val duplicates = testBlocks()
@@ -63,24 +75,27 @@ class DeduplicationUnitTest
 		duplicates shouldEqual expected
 	}
 
-	"mergingDuplicates" should "merge the properties of both subjects together" in {
+	"buildDuplicatesClique" should "should add isDuplicate relation with a confidence for a list of tuples" in {
+		val testSubjects = getSampleSubjects()
+		val subject1 = testSubjects(0)
+		val subject2 = testSubjects(1)
+		val subject3 = testSubjects(2)
+		val subject4 = testSubjects(3)
+
 		val deduplication = defaultDeduplication
-		val duplicates = sc.parallelize(List(
-			(subject1, subject4, 0.8),
-			(subject2, subject3, 0.6)))
+		val duplicates = List(
+			(subject1, subject3, 0.8),
+			(subject2, subject4, 0.8))
+		val expectedRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
+		val expectedRelationNode1 = Map(subject3.id -> expectedRelation)
+		val expectedRelationNode2 = Map(subject4.id -> expectedRelation)
 		val version = deduplication.makeTemplateVersion()
-		val mergedSubject = deduplication.buildDuplicatesClique(duplicates, version)
-		val expected = sc.parallelize(List(
-			Subject(
-				id = subject1.id,
-				name = subject1.name,
-				properties = subject1.properties ++ subject4.properties),
-			Subject(
-				id = subject2.id,
-				name = subject2.name,
-				properties = subject2.properties ++ subject3.properties)
-		))
-		// assertRDDEquals(expected, mergedSubject)
+		
+		deduplication.buildDuplicatesClique(duplicates, version)
+
+		subject1.relations shouldEqual expectedRelationNode1
+		subject2.relations shouldEqual expectedRelationNode2
+
 	}
 
 	"evaluateBlocks" should "evaluate each block sorted by its size" in {
@@ -93,6 +108,12 @@ class DeduplicationUnitTest
 	}
 
 	"addSymRelation" should "add a symmetric relation between two given nodes" in {
+		val testSubjects = getSampleSubjects()
+		val subject1 = testSubjects(0)
+		val subject2 = testSubjects(1)
+		val subject3 = testSubjects(2)
+		val subject4 = testSubjects(3)
+
 		val deduplication = defaultDeduplication()
 		val sampleRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
 		val sampleVersion = deduplication.makeTemplateVersion()
@@ -106,34 +127,50 @@ class DeduplicationUnitTest
 		subject2.relations shouldEqual expectedRelationNode2
 	}
 
-	val subject1 = Subject(
-		name = Some("Volkswagen"),
-		properties = Map("city" -> List("Berlin"))
-	)
-	val subject2 = Subject(
-		name = Some("Audi GmbH"),
-		properties = Map("city" -> List("Berlin"))
-	)
-	val subject3 = Subject(
-		name = Some("Audy GmbH"),
-		properties = Map("city" -> List("New York"))
-	)
-	val subject4 = Subject(
-		name = Some("Volkswagen AG"),
-		properties = Map("city" -> List("Berlin"))
-	)
-	val subject5 = Subject(
-		name = Some("Porsche")
-	)
-	val subject6 = Subject(
-		name = Some("Ferrari")
-	)
+	def getSampleSubjects() : List[Subject] = {
+
+		List( 
+			Subject(
+			name = Some("Volkswagen"),
+			properties = Map("city" -> List("Berlin"))),
+			Subject(
+			name = Some("Audi GmbH"),
+			properties = Map("city" -> List("Berlin"))),
+			Subject(
+			name = Some("Audy GmbH"),
+			properties = Map("city" -> List("New York"))),
+			Subject(
+			name = Some("Volkswagen AG"),
+			properties = Map("city" -> List("Berlin"))),
+			Subject(
+			name = Some("Porsche")),
+			Subject(
+			name = Some("Ferrari"))
+		)
+	}
+
 
 	def subjectRDD(): RDD[Subject] = {
+		val testSubjects = getSampleSubjects()
+		val subject1 = testSubjects(0)
+		val subject2 = testSubjects(1)
+		val subject3 = testSubjects(2)
+		val subject4 = testSubjects(3)
+		val subject5 = testSubjects(4)
+		val subject6 = testSubjects(5)
+
 		sc.parallelize(List(subject1, subject2, subject3, subject4, subject5, subject6))
 	}
 
 	def testBlocks(): List[(List[String], List[Subject])] = {
+		val testSubjects = getSampleSubjects()
+		val subject1 = testSubjects(0)
+		val subject2 = testSubjects(1)
+		val subject3 = testSubjects(2)
+		val subject4 = testSubjects(3)
+		val subject5 = testSubjects(4)
+		val subject6 = testSubjects(5)
+
 		List((List("Berlin"), List(subject1, subject2, subject4)),
 			(List("New York"), List(subject3)),
 			(List("undefined"), List(subject5, subject6)))

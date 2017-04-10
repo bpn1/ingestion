@@ -237,7 +237,7 @@ class Deduplication(
 	  * @param duplicates tuple of Subject
 	  * @return subjects containing the merged information of both duplicates
 	  */
-	def buildDuplicatesClique(duplicates: RDD[(Subject, Subject, Double)], version: Version): Unit = {
+	def buildDuplicatesClique(duplicates: List[(Subject, Subject, Double)], version: Version): Unit = {
 		duplicates
 			.map { x =>
 				addSymRelation(x._1, x._2, Map("type" -> "isDuplicate", "confidence" -> (x._3).toString), version)
