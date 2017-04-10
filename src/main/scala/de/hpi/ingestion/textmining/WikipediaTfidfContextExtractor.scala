@@ -11,35 +11,43 @@ object WikipediaTfidfContextExtractor {
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
 	val outputTablename = "wikipediatfidf"
 	val tokenizer = new CleanCoreNLPTokenizer
+	val contextSize = 20
 
 	/**
 	  * Extracts the stemmed terms of a Wikipedia article and their relative frequency (between 0.0 and 1.0).
 	  * @param entry parsed Wikipedia entry which terms will be extracted
-	  * @param tokenizer tokenizer used to tokenize the article
-	  * @param stemmer stemmer used to stem the tokens
-	  * @return tuple of the article title and a Bag containing every term and its frequency
+	  * @return a Bag containing every term and its frequency
 	  */
-	def extractBagOfWords(
-		entry: ParsedWikipediaEntry,
-		tokenizer: Tokenizer,
-		stemmer: AccessibleGermanStemmer
-	): (String, Bag[String, Double]) = {
+	def extractBagOfWords(entry: ParsedWikipediaEntry): Bag[String, Double] = {
 		val tokens = tokenizer.tokenize(entry.getText())
-		val stemmedWords = tokens.map(stemmer.stem)
-		val bagOfWords = Bag[String, Int](stemmedWords)
-		(entry.title, bagOfWords.normalise())
+		extractBagOfWords(tokens)
 	}
 
 	/**
-	  * Calculates term frequency of every term in a given Wikipedia entry.
-	  * @param entry parsed Wikipedia entry which terms will be extracted
-	  * @return list of tuples with the structure (term, (page title, term frequency))
+	  * Extracts the stemmed terms of a list of tokens and their relative frequency (between 0.0 and 1.0).
+	  * @param tokens list of tokens to be counted
+	  * @return a Bag containing every term and its frequency
 	  */
-	def calculateTermFrequencies(entry: ParsedWikipediaEntry): List[(String, (String, Double))] = {
-		val (title, wordBag) = extractBagOfWords(entry, tokenizer, new AccessibleGermanStemmer)
-		wordBag.getCounts()
+	def extractBagOfWords(tokens: List[String]): Bag[String, Double] = {
+		val stemmer = new AccessibleGermanStemmer
+		val stemmedWords = tokens.map(stemmer.stem)
+		val bagOfWords = Bag[String, Int](stemmedWords)
+		bagOfWords.normalise()
+	}
+
+	/**
+	  * Transforms the term frequencies in a bag and an identifier for the term frequencies in a joinable format
+	  * so that a join can be performed on the terms to calculate the tfIdf.
+	  * @param identifier identifier for the terms contained in the bag
+	  * @param tfBag Bag containing the terms with their frequencies
+	  * @tparam T type of the identifier (e.g. String for the article term frequencies and Link for the context
+	  * term frequencies.
+	  * @return list of tuples with the structure (term, (identifier, term frequency))
+	  */
+	def joinableTermFrequencies[T](identifier: T, tfBag: Bag[String, Double]): List[(String, (T, Double))] = {
+		tfBag.getCounts()
 			.map { case (term, frequency) =>
-				(term, (title, frequency))
+				(term, (identifier, frequency))
 			}.toList
 	}
 
@@ -71,26 +79,86 @@ object WikipediaTfidfContextExtractor {
 	  * Calculates the tfidf of every term for every Wikipedia article.
 	  * @param articles RDD of parsed Wikipedia articles
 	  * @param documentFrequencies RDD of document frequencies
+	  * @param numDocuments number of documents that was used to calculate the document frequencies
 	  * @param documentFrequencyThreshold lower threshold for document frequencies
-	  * @return
+	  * @return RDD of tuples containing the page name and the tfIdfs of every term on that page
 	  */
 	def calculateArticleTfidf(
 		articles: RDD[ParsedWikipediaEntry],
 		documentFrequencies: RDD[DocumentFrequency],
+		numDocuments: Long,
 		documentFrequencyThreshold: Int
-	): RDD[TfidfContext] = {
-		val numDocuments = articles.count
-		val inverseDocumentFrequencies = documentFrequencies.map(calculateIdf(_, numDocuments))
-		val termFrequencies = articles.flatMap(calculateTermFrequencies)
+	): RDD[(String, Map[String, Double])] = {
+		val termFrequencies = articles
+			.map(entry => (entry.title, extractBagOfWords(entry)))
+			.flatMap(t => joinableTermFrequencies(t._1, t._2))
 
+		calculateTfidf(
+			termFrequencies,
+			documentFrequencies,
+			numDocuments,
+			documentFrequencyThreshold)
+			.reduceByKey(_ ++ _)
+	}
+
+	/**
+	  * Calculates the tfIdf for the context of every link.
+	  * @param articles RDD of parsed Wikipedia articles containing the links
+	  * @param documentFrequencies RDD of document frequencies
+	  * @param numDocuments number of documents that was used to calculate the document frequencies
+	  * @param documentFrequencyThreshold lower threshold for document frequencies
+	  * @return RDD of tuples containing the link and the tfIdfs of ever term in its context
+	  */
+	def calculateContextTfidf(
+		articles: RDD[ParsedWikipediaEntry],
+		documentFrequencies: RDD[DocumentFrequency],
+		numDocuments: Long,
+		documentFrequencyThreshold: Int
+	): RDD[(Link, Map[String, Double])] = {
+		val contextTermFrequencies = articles
+			.flatMap(extractLinkContexts)
+			.flatMap(t => joinableTermFrequencies(t._1, t._2))
+
+		calculateTfidf(
+			contextTermFrequencies,
+			documentFrequencies,
+			numDocuments,
+			documentFrequencyThreshold)
+			.reduceByKey(_ ++ _)
+	}
+
+	def calculateTfidf[T](
+		termFrequencies: RDD[(String, (T, Double))],
+		documentFrequencies: RDD[DocumentFrequency],
+		numDocuments: Long,
+		documentFrequencyThreshold: Int
+	): RDD[(T, Map[String, Double])] = {
+		val inverseDocumentFrequencies = documentFrequencies.map(calculateIdf(_, numDocuments))
 		termFrequencies.leftOuterJoin(inverseDocumentFrequencies)
-			.map { case (token, ((page, tf), idfOption)) =>
+			.map { case (token, ((identifier, tf), idfOption)) =>
 				val idf = idfOption.getOrElse(calculateIdf(documentFrequencyThreshold - 1, numDocuments))
 				val tfidf = tf * idf
-				(page, List((token, tfidf)))
-			}.reduceByKey(_ ++ _)
-			.map { case (page, pageTokens) =>
-				TfidfContext(page, pageTokens.toMap)
+				(identifier, Map(token -> tfidf))
+			}
+	}
+
+	/**
+	  * Extracts context of the links of a given Wikipedia entry. The context are {@contextSize} tokens in front of
+	  * and behind the location of the links alias in the tokenized text.
+	  * @param entry Wikipedia entry containing the used links
+	  * @return list of tuples containing the link and its context
+	  */
+	def extractLinkContexts(entry: ParsedWikipediaEntry): List[(Link, Bag[String, Double])] = {
+		val tokens = tokenizer.tokenize(entry.getText())
+		entry.allLinks()
+			.map { link =>
+				val aliasTokens = tokenizer.tokenize(link.alias)
+				val aliasIndex = tokens.indexOfSlice(aliasTokens)
+				val contextStart = Math.max(aliasIndex - contextSize, 0)
+				val contextEnd = Math.min(aliasIndex + contextSize, tokens.length)
+				val context = tokens.slice(contextStart, contextEnd)
+				val bag = extractBagOfWords(context)
+				(link, bag)
 			}
 	}
 
@@ -101,11 +169,26 @@ object WikipediaTfidfContextExtractor {
 		val sc = new SparkContext(conf)
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
-		calculateArticleTfidf(
+
+		val numDocuments = articles.count
+
+		val articleTfidf = calculateArticleTfidf(
 			articles,
 			documentFrequencies,
-			WikipediaDocumentFrequencyCounter.leastSignificantDocumentFrequency
-		).saveToCassandra(keyspace, outputTablename)
+			numDocuments,
+			WikipediaDocumentFrequencyCounter.leastSignificantDocumentFrequency)
+
+		val contextTfidf = calculateContextTfidf(
+			articles,
+			documentFrequencies,
+			numDocuments,
+			WikipediaDocumentFrequencyCounter.leastSignificantDocumentFrequency)
+
+//		calculateArticleTfidf(
+//			articles,
+//			documentFrequencies,
+//			WikipediaDocumentFrequencyCounter.leastSignificantDocumentFrequency
+//		).saveToCassandra(keyspace, outputTablename)
 
 		sc.stop()
 	}

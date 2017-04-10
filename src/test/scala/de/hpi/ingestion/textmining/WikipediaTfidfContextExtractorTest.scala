@@ -7,11 +7,10 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 	"Term frequencies" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val pagesTermFrequencies = articles
-			.map(WikipediaTfidfContextExtractor
-				.extractBagOfWords(_, new CleanCoreNLPTokenizer, new AccessibleGermanStemmer))
+			.map(WikipediaTfidfContextExtractor.extractBagOfWords)
 		pagesTermFrequencies should not be empty
 		pagesTermFrequencies
-			.map(_._2.getCounts())
+			.map(_.getCounts())
 			.collect
 			.foreach(bag => bag should not be empty)
 	}
@@ -21,11 +20,10 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.filter(article => expectedTermFrequencies.exists(_._1 == article.title))
 		val tfSet = articles
-			.map(WikipediaTfidfContextExtractor
-				.extractBagOfWords(_, new CleanCoreNLPTokenizer, new AccessibleGermanStemmer))
+			.map(WikipediaTfidfContextExtractor.extractBagOfWords)
 			.collect
 			.toSet
-		tfSet shouldEqual expectedTermFrequencies
+		tfSet shouldEqual expectedTermFrequencies.map(_._2)
 	}
 
 	"Inverse document frequencies" should "contain as many tokens as document frequencies" in {
@@ -47,12 +45,13 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 	"Tf-idf contexts for parsed Wikipedia articles with complete document frequencies" should "not be empty" in {
 		val documentFrequencyThreshold = 1
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
 		val contexts = WikipediaTfidfContextExtractor
-			.calculateArticleTfidf(articles, documentFrequencies, documentFrequencyThreshold)
+			.calculateArticleTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 			.collect
 		contexts should not be empty
-		contexts.foreach(context => context.tokens should not be empty)
+		contexts.foreach(context => context._2 should not be empty)
 	}
 
 	they should "be exactly these contexts" in {
@@ -61,9 +60,10 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 			TestData.parsedWikipediaTestSet()
 				.toList
 				.filter(_.title != "Streitberg (Brachttal)"))
+		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.stemmedDocumentFrequenciesTestSet().toList)
 		val contexts = WikipediaTfidfContextExtractor
-			.calculateArticleTfidf(articles, documentFrequencies, documentFrequencyThreshold)
+			.calculateArticleTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 			.collect
 			.toSet
 		contexts shouldEqual TestData.tfidfContextsTestSet()
@@ -74,12 +74,33 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 		val documentFrequencyThreshold = 2
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.filter(_.title != "Streitberg (Brachttal)")
+		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
 		val contexts = WikipediaTfidfContextExtractor
-			.calculateArticleTfidf(articles, documentFrequencies, documentFrequencyThreshold)
+			.calculateArticleTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 			.collect
 			.toSet
 		contexts shouldEqual TestData.tfidfContextsTestSet()
+	}
+
+	"Link contexts" should "be extracted" in {
+		val linkContexts = TestData.parsedWikipediaTestSet()
+			.flatMap(WikipediaTfidfContextExtractor.extractLinkContexts)
+		val expectedContexts = TestData.linkContexts()
+		linkContexts shouldBe expectedContexts
+	}
+
+	"Tf-Idf of link contexts" should "be extactly these tf-Idf values" in {
+		val documentFrequencyThreshold = 1
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val numDocuments = articles.count
+		val documentFrequencies = sc.parallelize(TestData.stemmedDocumentFrequenciesTestSet().toList)
+		val linkContextValues = WikipediaTfidfContextExtractor
+			.calculateContextTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
+			.collect
+			.toSet
+		val expectedTfidf = TestData.linkContextsTfidf()
+		linkContextValues shouldBe expectedTfidf
 	}
 
 }

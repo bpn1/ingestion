@@ -75,6 +75,36 @@ object TestData {
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
+	def linkContexts(): Set[(Link, Bag[String, Double])] = {
+		Set(
+			(Link("Audi", "Audi", 9), Bag("hier" -> 1.0, "ist" -> 1.0, "audi" -> 1.0, "verlink" -> 1.0)),
+			(Link("Brachttal", "Brachttal", 55), Bag("einwohnerzahl" -> 0.5, "in" -> 0.5, "brachttal" -> 0.5, "ist" -> 1.0, "nachweislich" -> 0.5, "der" -> 1.0, "erwahnung" -> 0.5, "ortsteil" -> 1.0, "ein" -> 1.0, "von" -> 1.0, "270" -> 0.5, "erst" -> 0.5, "kleinst" -> 0.5, "die" -> 0.5, "hess" -> 0.5, "sech" -> 0.5, "gemei" -> 0.5, "es" -> 0.5, "mit" -> 0.5, "main-kinzig-kreis" -> 0.5, "streitberg" -> 0.5, "ca." -> 0.5, "zugleich" -> 0.5)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66), Bag("einwohnerzahl" -> 0.5, "in" -> 0.5, "brachttal" -> 0.5, "ist" -> 1.0, "nachweislich" -> 0.5, "der" -> 1.0, "erwahnung" -> 0.5, "ortsteil" -> 1.0, "ein" -> 1.0, "von" -> 1.0, "270" -> 0.5, "erst" -> 0.5, "kleinst" -> 0.5, "die" -> 0.5, "stamm" -> 0.5, "hess" -> 0.5, "sech" -> 0.5, "gemei" -> 0.5, "es" -> 0.5, "mit" -> 0.5, "main-kinzig-kreis" -> 0.5, "streitberg" -> 0.5, "ca." -> 0.5, "zugleich" -> 0.5)),
+			(Link("Hessen", "Hessen", 87), Bag("einwohnerzahl" -> 0.5, "in" -> 0.5, "brachttal" -> 0.5, "aus" -> 0.5, "ist" -> 1.0, "nachweislich" -> 0.5, "der" -> 1.0, "erwahnung" -> 0.5, "ortsteil" -> 1.0, "dem" -> 0.5, "ein" -> 1.0, "von" -> 1.0, "270" -> 0.5, "erst" -> 0.5, "kleinst" -> 0.5, "die" -> 0.5, "stamm" -> 0.5, "hess" -> 0.5, "sech" -> 0.5, "gemei" -> 0.5, "es" -> 0.5, "mit" -> 0.5, "main-kinzig-kreis" -> 0.5, "streitberg" -> 0.5, "ca." -> 0.5, "zugleich" -> 0.5)),
+			(Link("1377", "1377", 225), Bag("einwohnerzahl" -> 0.3333333333333333, "und" -> 0.3333333333333333, "streidtburgk" -> 0.3333333333333333, "aus" -> 0.3333333333333333, "ist" -> 0.6666666666666666, "nachweislich" -> 0.3333333333333333, "der" -> 0.3333333333333333, "erwahnung" -> 0.3333333333333333, "ortsteil" -> 0.3333333333333333, "dem" -> 0.3333333333333333, "bezeichnung" -> 0.3333333333333333, "ein" -> 0.6666666666666666, "jahr" -> 1.0, "von" -> 0.6666666666666666, "im" -> 0.3333333333333333, "270" -> 0.3333333333333333, "erst" -> 0.3333333333333333, "stridberg" -> 0.3333333333333333, "kleinst" -> 0.3333333333333333, "die" -> 1.0, "stamm" -> 0.3333333333333333, "auf" -> 0.3333333333333333, "weit" -> 0.3333333333333333, "tauch" -> 0.3333333333333333, "1500" -> 0.3333333333333333, "es" -> 0.3333333333333333, "mit" -> 0.3333333333333333, "1377" -> 0.3333333333333333, "spa" -> 0.3333333333333333, "namensvaria" -> 0.3333333333333333, "ca." -> 0.3333333333333333, "red" -> 0.3333333333333333, "zugleich" -> 0.3333333333333333)),
+			(Link("Büdinger Wald", "Büdinger Wald", 546), Bag("waldrech" -> 1.0, "und" -> 1.0, "19" -> 1.0, "ort" -> 1.0, "jahrhu" -> 1.0, "-lrb-" -> 1.0, "huterech" -> 1.0, "eingeburg" -> 1.0, "der" -> 1.0, "im" -> 1.0, "-" -> 1.0, "ins" -> 1.0, "-rrb-" -> 1.0, "hatt" -> 1.0, "holx" -> 1.0, "buding" -> 1.0, "wald" -> 1.0, "ortsnam" -> 1.0, "vom" -> 1.0, "streitberg" -> 1.0, "mittelal" -> 1.0, "bis" -> 1.0)),
+			(Link("Audi", "Audi", 7), Bag("link" -> 1.0, "audi" -> 0.5, "brachttal" -> 0.5, "historisch" -> 0.5, "jahr" -> 0.5, "kein" -> 0.5, "hess" -> 1.0, "main-kinzig-kreis" -> 0.5, "buding" -> 0.5, "wald" -> 0.5, "backfisch" -> 0.5, "und" -> 0.5, "nochmal" -> 0.5)),
+			(Link("Brachttal", "Brachttal", 13), Bag("link" -> 1.0, "audi" -> 0.5, "brachttal" -> 0.5, "historisch" -> 0.5, "jahr" -> 0.5, "kein" -> 0.5, "hess" -> 1.0, "main-kinzig-kreis" -> 0.5, "buding" -> 0.5, "wald" -> 0.5, "backfisch" -> 0.5, "und" -> 0.5, "nochmal" -> 0.5)),
+			(Link("historisches Jahr", "1377", 24), Bag("link" -> 1.0, "audi" -> 0.5, "brachttal" -> 0.5, "historisch" -> 0.5, "jahr" -> 0.5, "kein" -> 0.5, "hess" -> 1.0, "main-kinzig-kreis" -> 0.5, "buding" -> 0.5, "wald" -> 0.5, "backfisch" -> 0.5, "und" -> 0.5, "nochmal" -> 0.5)))
+	}
+
+	def linkContextsTfidf(): Set[(Link, Map[String, Double])] = {
+		val oneOccurrence = 0.6020599913279624
+		val twoOccurrences = 0.3010299956639812
+		val threeOccurrences = 0.12493873660829993
+		val smallArticleTfidf = tfidfContextsTestSet().toMap
+		Set(
+			(Link("Audi", "Audi", 9), smallArticleTfidf("Audi Test mit Link")),
+//			(Link("Brachttal", "Brachttal", 55), Map("einwohnerzahl" -> 0.5, "in" -> 0.5, "brachttal" -> 0.5, "ist" -> 1.0, "nachweislich" -> 0.5, "der" -> 1.0, "erwahnung" -> 0.5, "ortsteil" -> 1.0, "ein" -> 1.0, "von" -> 1.0, "270" -> 0.5, "erst" -> 0.5, "kleinst" -> 0.5, "die" -> 0.5, "hess" -> 0.5, "sech" -> 0.5, "gemei" -> 0.5, "es" -> 0.5, "mit" -> 0.5, "main-kinzig-kreis" -> 0.5, "streitberg" -> 0.5, "ca." -> 0.5, "zugleich" -> 0.5)),
+//			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66), Map("einwohnerzahl" -> 0.5, "in" -> 0.5, "brachttal" -> 0.5, "ist" -> 1.0, "nachweislich" -> 0.5, "der" -> 1.0, "erwahnung" -> 0.5, "ortsteil" -> 1.0, "ein" -> 1.0, "von" -> 1.0, "270" -> 0.5, "erst" -> 0.5, "kleinst" -> 0.5, "die" -> 0.5, "stamm" -> 0.5, "hess" -> 0.5, "sech" -> 0.5, "gemei" -> 0.5, "es" -> 0.5, "mit" -> 0.5, "main-kinzig-kreis" -> 0.5, "streitberg" -> 0.5, "ca." -> 0.5, "zugleich" -> 0.5)),
+//			(Link("Hessen", "Hessen", 87), Map("einwohnerzahl" -> 0.5, "in" -> 0.5, "brachttal" -> 0.5, "aus" -> 0.5, "ist" -> 1.0, "nachweislich" -> 0.5, "der" -> 1.0, "erwahnung" -> 0.5, "ortsteil" -> 1.0, "dem" -> 0.5, "ein" -> 1.0, "von" -> 1.0, "270" -> 0.5, "erst" -> 0.5, "kleinst" -> 0.5, "die" -> 0.5, "stamm" -> 0.5, "hess" -> 0.5, "sech" -> 0.5, "gemei" -> 0.5, "es" -> 0.5, "mit" -> 0.5, "main-kinzig-kreis" -> 0.5, "streitberg" -> 0.5, "ca." -> 0.5, "zugleich" -> 0.5)),
+//			(Link("1377", "1377", 225), Map("einwohnerzahl" -> 0.3333333333333333, "und" -> 0.3333333333333333, "streidtburgk" -> 0.3333333333333333, "aus" -> 0.3333333333333333, "ist" -> 0.6666666666666666, "nachweislich" -> 0.3333333333333333, "der" -> 0.3333333333333333, "erwahnung" -> 0.3333333333333333, "ortsteil" -> 0.3333333333333333, "dem" -> 0.3333333333333333, "bezeichnung" -> 0.3333333333333333, "ein" -> 0.6666666666666666, "jahr" -> 1.0, "von" -> 0.6666666666666666, "im" -> 0.3333333333333333, "270" -> 0.3333333333333333, "erst" -> 0.3333333333333333, "stridberg" -> 0.3333333333333333, "kleinst" -> 0.3333333333333333, "die" -> 1.0, "stamm" -> 0.3333333333333333, "auf" -> 0.3333333333333333, "weit" -> 0.3333333333333333, "tauch" -> 0.3333333333333333, "1500" -> 0.3333333333333333, "es" -> 0.3333333333333333, "mit" -> 0.3333333333333333, "1377" -> 0.3333333333333333, "spa" -> 0.3333333333333333, "namensvaria" -> 0.3333333333333333, "ca." -> 0.3333333333333333, "red" -> 0.3333333333333333, "zugleich" -> 0.3333333333333333)),
+//			(Link("Büdinger Wald", "Büdinger Wald", 546), Map("waldrech" -> 1.0, "und" -> 1.0, "19" -> 1.0, "ort" -> 1.0, "jahrhu" -> 1.0, "-lrb-" -> 1.0, "huterech" -> 1.0, "eingeburg" -> 1.0, "der" -> 1.0, "im" -> 1.0, "-" -> 1.0, "ins" -> 1.0, "-rrb-" -> 1.0, "hatt" -> 1.0, "holx" -> 1.0, "buding" -> 1.0, "wald" -> 1.0, "ortsnam" -> 1.0, "vom" -> 1.0, "streitberg" -> 1.0, "mittelal" -> 1.0, "bis" -> 1.0)),
+			(Link("Audi", "Audi", 7), smallArticleTfidf("Testartikel")),
+			(Link("Brachttal", "Brachttal", 13), smallArticleTfidf("Testartikel")),
+			(Link("historisches Jahr", "1377", 24), smallArticleTfidf("Testartikel")))
+	}
+
 	def normalizedTermFrequenciesTestSet(): Set[(String, Bag[String, Double])] = {
 		Set(
 			("Audi Test mit Link", Bag("hier" -> 1.0, "ist" -> 1.0, "audi" -> 1.0, "verlink" -> 1.0)),
@@ -264,15 +294,15 @@ object TestData {
 			("einer", oneOccurrence))
 	}
 
-	def tfidfContextsTestSet(): Set[TfidfContext] = {
+	def tfidfContextsTestSet(): Set[(String, Map[String, Double])] = {
 		val tf1df1 = 0.47712125471966244
 		val tf1df2 = 0.17609125905568124
 		val tf0_5df1 = 0.23856062735983122
 		val df3 = 0.0
 		Set(
-			TfidfContext("Audi Test mit Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
-			TfidfContext("Audi Test ohne Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
-			TfidfContext("Testartikel", Map("link" -> tf1df1, "audi" -> df3, "brachttal" -> tf0_5df1, "historisch" -> tf0_5df1, "jahr" -> tf0_5df1, "kein" -> tf0_5df1, "hess" -> tf1df1, "main-kinzig-kreis" -> tf0_5df1, "buding" -> tf0_5df1, "wald" -> tf0_5df1, "backfisch" -> tf0_5df1, "und" -> tf0_5df1, "nochmal" -> tf0_5df1))
+			("Audi Test mit Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
+			("Audi Test ohne Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
+			("Testartikel", Map("link" -> tf1df1, "audi" -> df3, "brachttal" -> tf0_5df1, "historisch" -> tf0_5df1, "jahr" -> tf0_5df1, "kein" -> tf0_5df1, "hess" -> tf1df1, "main-kinzig-kreis" -> tf0_5df1, "buding" -> tf0_5df1, "wald" -> tf0_5df1, "backfisch" -> tf0_5df1, "und" -> tf0_5df1, "nochmal" -> tf0_5df1))
 		)
 	}
 
