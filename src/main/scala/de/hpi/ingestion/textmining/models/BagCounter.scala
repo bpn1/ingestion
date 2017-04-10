@@ -1,6 +1,7 @@
 package de.hpi.ingestion.textmining.models
 
 import scala.math.BigDecimal
+import scala.language.implicitConversions
 
 trait BagCounter[T] extends Ordered[T] {
 	def +(that: T): T
