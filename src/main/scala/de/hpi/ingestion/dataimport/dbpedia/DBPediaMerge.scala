@@ -1,6 +1,6 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
-import java.util.Date
+import java.util.{Date, UUID}
 
 import com.datastax.driver.core.utils.UUIDs
 import de.hpi.ingestion.datalake.models.{Subject, Version}
@@ -9,6 +9,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.SubjectManager
+
 import scala.collection.mutable
 
 object DBPediaMerge {
@@ -28,36 +29,17 @@ object DBPediaMerge {
 		Version(version, appName, List[String](), Map[String, String](), dataSources, timestamp)
 	}
 
-	def reduceSubject(subject: Subject): Map[String, List[String]] = {
-		val properties = mutable.Map[String, List[String]]()
-
-		if(subject.name.isDefined) properties += ("dbpedia.name" -> subject.get("name"))
-		if(subject.aliases.nonEmpty) properties += ("dbpedia.aliases" -> subject.get("aliases"))
-		if(subject.category.isDefined) properties += ("dbpedia.category" -> subject.get("category"))
-
-		val prefixedProperties : Map[String, List[String]] = subject
-			.properties
-			.keySet
-			.map(key => "dbpedia." + key -> subject.properties(key))
-			.toMap
-
-		properties ++= prefixedProperties
-
-		properties.toMap
-	}
-
 	def mergeSubjects(subject: Subject, duplicates: List[Subject], version: Version): Subject = {
 		val sm = new SubjectManager(subject, version)
-
 		val prefixedProperties = subject
 		    .properties
 		    .keySet
-		    .map(key => "wikidata." + key -> subject.properties(key))
-		    .toMap
+		    .map(key => s"wikidata.$key" -> subject.properties(key))
+			.toMap
 
 		val newProperties = duplicates
 			.foldLeft(Map[String, List[String]]()) {
-				(properties, subject) => properties ++ reduceSubject(subject)
+				(properties, subject) => properties ++ subject.toProperties("dbpedia")
 			}
 
 		sm.removeProperties()
@@ -78,6 +60,13 @@ object DBPediaMerge {
 			}
 	}
 
+	def extractIds(duplicates: RDD[DuplicateCandidates]): List[UUID] = {
+		duplicates
+		    .map(_.candidates.map(_._1.id))
+		    .reduce(_:::_)
+		    .distinct
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName(appName)
@@ -89,10 +78,7 @@ object DBPediaMerge {
 		val dbpedia = sc.cassandraTable[Subject](keyspace, dbpediaTable)
 		val duplicates = sc.cassandraTable[DuplicateCandidates](keyspace, duplicateTable)
 
-		val duplicateIds = duplicates
-			.map(_.candidates.map(_._1.id))
-		    .reduce(_:::_)
-		    .distinct
+		val duplicateIds = extractIds(duplicates)
 
 		val notDuplicates = dbpedia
 			.filter(subject => !duplicateIds.contains(subject.id))
