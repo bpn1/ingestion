@@ -10,98 +10,99 @@ object WikipediaTfidfContextExtractor {
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
 	val outputTablename = "wikipediatfidf"
+	val tokenizer = new CleanCoreNLPTokenizer
 
+	/**
+	  * Extracts the stemmed terms of a Wikipedia article and their relative frequency (between 0.0 and 1.0).
+	  * @param entry parsed Wikipedia entry which terms will be extracted
+	  * @param tokenizer tokenizer used to tokenize the article
+	  * @param stemmer stemmer used to stem the tokens
+	  * @return tuple of the article title and a Bag containing every term and its frequency
+	  */
 	def extractBagOfWords(
 		entry: ParsedWikipediaEntry,
 		tokenizer: Tokenizer,
 		stemmer: AccessibleGermanStemmer
-	): (String, Bag[String, Int]) = {
-		val stemmedWords = tokenizer.tokenize(entry.getText())
-			.map(stemmer.stem)
+	): (String, Bag[String, Double]) = {
+		val tokens = tokenizer.tokenize(entry.getText())
+		val stemmedWords = tokens.map(stemmer.stem)
 		val bagOfWords = Bag[String, Int](stemmedWords)
-		(entry.title, bagOfWords)
+		(entry.title, bagOfWords.normalise())
 	}
 
-	def countTermFrequencies(article: ParsedWikipediaEntry): PageTermFrequencies = {
-		val tokenizer = new CleanCoreNLPTokenizer
-		val stemmer = new AccessibleGermanStemmer
-		val stemmedWords = tokenizer.tokenize(article.getText())
-			.map(term => stemmer.stem(term))
-		val bagOfWords = Bag[String, Int](stemmedWords)
-		PageTermFrequencies(article.title, bagOfWords.normalise())
+	/**
+	  * Calculates term frequency of every term in a given Wikipedia entry.
+	  * @param entry parsed Wikipedia entry which terms will be extracted
+	  * @return list of tuples with the structure (term, (page title, term frequency))
+	  */
+	def calculateTermFrequencies(entry: ParsedWikipediaEntry): List[(String, (String, Double))] = {
+		val (title, wordBag) = extractBagOfWords(entry, tokenizer, new AccessibleGermanStemmer)
+		wordBag.getCounts()
+			.map { case (term, frequency) =>
+				(term, (title, frequency))
+			}.toList
 	}
 
-	def calculateInverseDocumentFrequencyValue(documentFrequency: Int, documents: Long): Double = {
-		Math.log10(documents.toDouble / documentFrequency)
+	/**
+	  * Calculates the inverse document frequency (idf) for a given Document Frequency and the number of documents used
+	  * to calculate it.
+	  * @param df document frequency to use
+	  * @param numDocs number of documents used to compute the document frequency
+	  * @return tuple of term and calculated idf
+	  */
+	def calculateIdf(df: DocumentFrequency, numDocs: Long): (String, Double) = {
+		val idf = calculateIdf(df.count, numDocs)
+		(df.word, idf)
 	}
 
-	def calculateInverseDocumentFrequency(
-		documentFrequency: DocumentFrequency,
-		documents: Long
-	): InverseDocumentFrequency = {
-		InverseDocumentFrequency(
-			documentFrequency.word,
-			calculateInverseDocumentFrequencyValue(documentFrequency.count, documents)
-		)
+	/**
+	  * Calculates the inverse document frequency for a given document frequency and the number of documents used to
+	  * calculate it.
+	  * @param df document frequency to use
+	  * @param numDocs number of documents used to compute the document frequency
+	  * @return calculated inverse document frequency
+	  */
+	def calculateIdf(df: Int, numDocs: Long): Double = {
+		assert(df > 0, s"Document frequency $df is not greater than 0.")
+		Math.log10(numDocs.toDouble / df.toDouble)
 	}
 
-	def calculateTfidfContexts(
+	/**
+	  * Calculates the tfidf of every term for every Wikipedia article.
+	  * @param articles RDD of parsed Wikipedia articles
+	  * @param documentFrequencies RDD of document frequencies
+	  * @param documentFrequencyThreshold lower threshold for document frequencies
+	  * @return
+	  */
+	def calculateArticleTfidf(
 		articles: RDD[ParsedWikipediaEntry],
 		documentFrequencies: RDD[DocumentFrequency],
 		documentFrequencyThreshold: Int
 	): RDD[TfidfContext] = {
-		val documents = articles.count
-		val inverseDocumentFrequencies = documentFrequencies
-			.map(documentFrequency => calculateInverseDocumentFrequency(documentFrequency, documents))
-		articles
-			.map(countTermFrequencies)
-			.flatMap(ptf => ptf.tokens.getCounts().map(token => (ptf.page, token._1, token._2)))
-			.keyBy { case (page, token, tf) => token }
-			.leftOuterJoin {
-				inverseDocumentFrequencies
-					.map(idf => (idf.token, idf.value))
-					.keyBy { case (token, value) => token }
-			}
-			.map { case (token, ((page, token1, tf), right)) =>
-				right match {
-					case Some((token2, idf)) =>
-						(page, token, tf, idf)
-					case _ =>
-						// compute default value
-						val idf = calculateInverseDocumentFrequencyValue(documentFrequencyThreshold - 1, documents)
-						(page, token, tf, idf)
-				}
-			}
-			.map { case (page, token, tf, idf) => (page, token, tf * idf) }
-			.groupBy { case (page, token, tfidf) => page }
-			.map { case (page, pageTokens) =>
-				val tokens = pageTokens
-					.map { case (page1, token, tfidf) => (token, tfidf) }
-					.toMap
-				TfidfContext(page, tokens)
-			}
-	}
+		val numDocuments = articles.count
+		val inverseDocumentFrequencies = documentFrequencies.map(calculateIdf(_, numDocuments))
+		val termFrequencies = articles.flatMap(calculateTermFrequencies)
 
-	def calcTfidf(bag: Bag[String, Double], df: Map[String, Int], maxDf: Double): List[(String, Double)] = {
-		bag.getCounts()
-			.filter(tf => df.contains(tf._1))
-			.toList
-			.map {
-				case (word, count) =>
-					val tfidf = Math.log(maxDf / df(word)) * count
-					(word, tfidf)
+		termFrequencies.leftOuterJoin(inverseDocumentFrequencies)
+			.map { case (token, ((page, tf), idfOption)) =>
+				val idf = idfOption.getOrElse(calculateIdf(documentFrequencyThreshold - 1, numDocuments))
+				val tfidf = tf * idf
+				(page, List((token, tfidf)))
+			}.reduceByKey(_ ++ _)
+			.map { case (page, pageTokens) =>
+				TfidfContext(page, pageTokens.toMap)
 			}
 	}
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Tfidf Context Extractor")
+			.setAppName("Wikipedia tfIdf Context Extractor")
 
 		val sc = new SparkContext(conf)
-		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
-		calculateTfidfContexts(
-			allArticles,
+		calculateArticleTfidf(
+			articles,
 			documentFrequencies,
 			WikipediaDocumentFrequencyCounter.leastSignificantDocumentFrequency
 		).saveToCassandra(keyspace, outputTablename)

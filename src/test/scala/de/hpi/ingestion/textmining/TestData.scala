@@ -75,11 +75,11 @@ object TestData {
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
-	def normalizedTermFrequenciesTestSet(): Set[PageTermFrequencies] = {
+	def normalizedTermFrequenciesTestSet(): Set[(String, Bag[String, Double])] = {
 		Set(
-			PageTermFrequencies("Audi Test mit Link", Bag("hier" -> 1.0, "ist" -> 1.0, "audi" -> 1.0, "verlink" -> 1.0)),
-			PageTermFrequencies("Audi Test ohne Link", Bag("hier" -> 1.0, "ist" -> 1.0, "audi" -> 1.0, "nich" -> 1.0, "verlink" -> 1.0)),
-			PageTermFrequencies("Testartikel", Bag("link" -> 1.0, "audi" -> 0.5, "brachttal" -> 0.5, "historisch" -> 0.5, "jahr" -> 0.5, "kein" -> 0.5, "hess" -> 1.0, "main-kinzig-kreis" -> 0.5, "buding" -> 0.5, "wald" -> 0.5, "backfisch" -> 0.5, "und" -> 0.5, "nochmal" -> 0.5))
+			("Audi Test mit Link", Bag("hier" -> 1.0, "ist" -> 1.0, "audi" -> 1.0, "verlink" -> 1.0)),
+			("Audi Test ohne Link", Bag("hier" -> 1.0, "ist" -> 1.0, "audi" -> 1.0, "nich" -> 1.0, "verlink" -> 1.0)),
+			("Testartikel", Bag("link" -> 1.0, "audi" -> 0.5, "brachttal" -> 0.5, "historisch" -> 0.5, "jahr" -> 0.5, "kein" -> 0.5, "hess" -> 1.0, "main-kinzig-kreis" -> 0.5, "buding" -> 0.5, "wald" -> 0.5, "backfisch" -> 0.5, "und" -> 0.5, "nochmal" -> 0.5))
 		)
 	}
 
@@ -251,18 +251,17 @@ object TestData {
 		)
 	}
 
-	def inverseDocumentFrequenciesTestSet(): Set[InverseDocumentFrequency] = {
+	def inverseDocumentFrequenciesTestSet(): Set[(String, Double)] = {
 		val oneOccurrence = 0.6020599913279624
 		val twoOccurrences = 0.3010299956639812
 		val threeOccurrences = 0.12493873660829993
 		Set(
-			InverseDocumentFrequency("Audi", threeOccurrences),
-			InverseDocumentFrequency("Backfisch", oneOccurrence),
-			InverseDocumentFrequency("ist", threeOccurrences),
-			InverseDocumentFrequency("und", twoOccurrences),
-			InverseDocumentFrequency("zugleich", oneOccurrence),
-			InverseDocumentFrequency("einer", oneOccurrence)
-		)
+			("Audi", threeOccurrences),
+			("Backfisch", oneOccurrence),
+			("ist", threeOccurrences),
+			("und", twoOccurrences),
+			("zugleich", oneOccurrence),
+			("einer", oneOccurrence))
 	}
 
 	def tfidfContextsTestSet(): Set[TfidfContext] = {
