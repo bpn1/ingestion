@@ -75,11 +75,11 @@ object TestData {
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
-	def termFrequenciesTestSet(): Set[PageTermFrequencies] = {
+	def normalizedTermFrequenciesTestSet(): Set[PageTermFrequencies] = {
 		Set(
-			PageTermFrequencies("Audi Test mit Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)),
-			PageTermFrequencies("Audi Test ohne Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)),
-			PageTermFrequencies("Testartikel", Bag("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1))
+			PageTermFrequencies("Audi Test mit Link", Bag("hier" -> 1.0, "ist" -> 1.0, "audi" -> 1.0, "verlink" -> 1.0)),
+			PageTermFrequencies("Audi Test ohne Link", Bag("hier" -> 1.0, "ist" -> 1.0, "audi" -> 1.0, "nich" -> 1.0, "verlink" -> 1.0)),
+			PageTermFrequencies("Testartikel", Bag("link" -> 1.0, "audi" -> 0.5, "brachttal" -> 0.5, "historisch" -> 0.5, "jahr" -> 0.5, "kein" -> 0.5, "hess" -> 1.0, "main-kinzig-kreis" -> 0.5, "buding" -> 0.5, "wald" -> 0.5, "backfisch" -> 0.5, "und" -> 0.5, "nochmal" -> 0.5))
 		)
 	}
 
@@ -254,7 +254,7 @@ object TestData {
 	def inverseDocumentFrequenciesTestSet(): Set[InverseDocumentFrequency] = {
 		val oneOccurrence = 0.6020599913279624
 		val twoOccurrences = 0.3010299956639812
-		val threeOccurrences = 0.12493874955128392
+		val threeOccurrences = 0.12493873660829993
 		Set(
 			InverseDocumentFrequency("Audi", threeOccurrences),
 			InverseDocumentFrequency("Backfisch", oneOccurrence),
@@ -268,12 +268,12 @@ object TestData {
 	def tfidfContextsTestSet(): Set[TfidfContext] = {
 		val tf1df1 = 0.47712125471966244
 		val tf1df2 = 0.17609125905568124
-		val tf2df1 = 0.9542425094393249
+		val tf0_5df1 = 0.23856062735983122
 		val df3 = 0.0
 		Set(
 			TfidfContext("Audi Test mit Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
 			TfidfContext("Audi Test ohne Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
-			TfidfContext("Testartikel", Map("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1))
+			TfidfContext("Testartikel", Map("link" -> tf1df1, "audi" -> df3, "brachttal" -> tf0_5df1, "historisch" -> tf0_5df1, "jahr" -> tf0_5df1, "kein" -> tf0_5df1, "hess" -> tf1df1, "main-kinzig-kreis" -> tf0_5df1, "buding" -> tf0_5df1, "wald" -> tf0_5df1, "backfisch" -> tf0_5df1, "und" -> tf0_5df1, "nochmal" -> tf0_5df1))
 		)
 	}
 

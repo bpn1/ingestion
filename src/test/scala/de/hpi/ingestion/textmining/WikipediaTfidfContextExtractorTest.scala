@@ -16,7 +16,7 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 	}
 
 	they should "be exactly these term frequencies" in {
-		val termFrequenciesTestSetReference = TestData.termFrequenciesTestSet()
+		val termFrequenciesTestSetReference = TestData.normalizedTermFrequenciesTestSet()
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.filter { article =>
 				termFrequenciesTestSetReference.exists(termFrequencies => termFrequencies.page == article.title)

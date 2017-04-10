@@ -28,11 +28,11 @@ object WikipediaTfidfContextExtractor {
 		val stemmedWords = tokenizer.tokenize(article.getText())
 			.map(term => stemmer.stem(term))
 		val bagOfWords = Bag[String, Int](stemmedWords)
-		PageTermFrequencies(article.title, bagOfWords)
+		PageTermFrequencies(article.title, bagOfWords.normalise())
 	}
 
 	def calculateInverseDocumentFrequencyValue(documentFrequency: Int, documents: Long): Double = {
-		Math.log10(documents.toFloat / documentFrequency)
+		Math.log10(documents.toDouble / documentFrequency)
 	}
 
 	def calculateInverseDocumentFrequency(
@@ -82,16 +82,16 @@ object WikipediaTfidfContextExtractor {
 			}
 	}
 
-	//	def calcTfidf(bag: Bag[String, Double], df: Map[String, Int], maxDf: Double): List[(String, Double)] = {
-	//		bag.getCounts()
-	//			.filter(tf => df.contains(tf._1))
-	//			.toList
-	//			.map {
-	//				case (word, count) =>
-	//					val tfidf = Math.log(maxDf / df(word)) * count
-	//					(word, tfidf)
-	//			}
-	//	}
+	def calcTfidf(bag: Bag[String, Double], df: Map[String, Int], maxDf: Double): List[(String, Double)] = {
+		bag.getCounts()
+			.filter(tf => df.contains(tf._1))
+			.toList
+			.map {
+				case (word, count) =>
+					val tfidf = Math.log(maxDf / df(word)) * count
+					(word, tfidf)
+			}
+	}
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
