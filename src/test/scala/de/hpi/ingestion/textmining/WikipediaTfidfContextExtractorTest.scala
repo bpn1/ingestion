@@ -91,7 +91,7 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 	}
 
 	"Tf-Idf of link contexts" should "be extactly these tf-Idf values" in {
-		val documentFrequencyThreshold = 1
+		val documentFrequencyThreshold = 2
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.stemmedDocumentFrequenciesTestSet().toList)
