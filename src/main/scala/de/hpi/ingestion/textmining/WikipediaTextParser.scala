@@ -65,6 +65,11 @@ object WikipediaTextParser {
 		extractCategoryLinks(parsedEntry)
 	}
 
+	/**
+	  * Removes any unwanted HTML tags and inline Wikimarkup tags.
+	  * @param document Jsoup Document to clean
+	  * @return cleaned Document containing only text and anchor tags
+	  */
 	def removeTags(document: Document): Document = {
 		val documentContent = document
 			.select("p")
