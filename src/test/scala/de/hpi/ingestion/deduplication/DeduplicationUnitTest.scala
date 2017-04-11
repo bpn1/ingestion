@@ -97,7 +97,6 @@ class DeduplicationUnitTest
 		val expectedRelationNode1 = Map(subject3.id -> expectedRelation)
 		val expectedRelationNode2 = Map(subject4.id -> expectedRelation)
 		val version = deduplication.makeTemplateVersion()
-		
 		deduplication.buildDuplicatesClique(duplicates, version)
 
 		subject1.relations shouldEqual expectedRelationNode1
@@ -137,7 +136,7 @@ class DeduplicationUnitTest
 
 	def getSampleSubjects() : List[Subject] = {
 
-		List( 
+		List(
 			Subject(
 			name = Some("Volkswagen"),
 			properties = Map("city" -> List("Berlin"))),
