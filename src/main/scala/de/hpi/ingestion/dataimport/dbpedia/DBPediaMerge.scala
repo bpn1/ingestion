@@ -1,16 +1,12 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import java.util.{Date, UUID}
-
-import com.datastax.driver.core.utils.UUIDs
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.SubjectManager
-
-import scala.collection.mutable
 
 object DBPediaMerge {
 	val appName = "DBPediaMerge_v0.1"
@@ -21,21 +17,20 @@ object DBPediaMerge {
 	val subjectTable = "subject"
 	val outputTable = "subject_merged"
 
+	/**
+	  * Creates template version for versioning. This template contains data for the fields
+	  * version, program, datasources and timestamp.
+	  * @return template version
+	  */
 	def makeTemplateVersion(): Version = {
-		// create timestamp and TimeUUID for versioning
-		val timestamp = new Date()
-		val version = UUIDs.timeBased()
-
-		Version(version, appName, List[String](), Map[String, String](), dataSources, timestamp)
+		Version(program = appName, datasources = dataSources)
 	}
 
 	def mergeSubjects(subject: Subject, duplicates: List[Subject], version: Version): Subject = {
 		val sm = new SubjectManager(subject, version)
 		val prefixedProperties = subject
-		    .properties
-		    .keySet
-		    .map(key => s"wikidata.$key" -> subject.properties(key))
-			.toMap
+			.properties
+		    .map { case (key, value) => s"wikidata.$key" -> value }
 
 		val newProperties = duplicates
 			.foldLeft(Map[String, List[String]]()) {
@@ -55,15 +50,13 @@ object DBPediaMerge {
 			.keyBy(_.id)
 		    .join(duplicates.keyBy(_.subject_id))
 		    .values
-		    .map{
-				case (subject, candidates) => (subject, candidates.candidates.map(_._1))
-			}
+		    .map { case (subject, candidates) => (subject, candidates.candidates.map(_._1)) }
 	}
 
 	def extractIds(duplicates: RDD[DuplicateCandidates]): List[UUID] = {
 		duplicates
 		    .map(_.candidates.map(_._1.id))
-		    .reduce(_:::_)
+		    .reduce(_ ::: _)
 		    .distinct
 	}
 
@@ -85,7 +78,7 @@ object DBPediaMerge {
 
 		val joinedSubjects = joinSubjectsWithDuplicates(subjects, duplicates)
 			.map(x => mergeSubjects(x._1, x._2, version))
-		    .union(notDuplicates)
+			.union(notDuplicates)
 
 		joinedSubjects.saveToCassandra(keyspace, outputTable)
 	}
