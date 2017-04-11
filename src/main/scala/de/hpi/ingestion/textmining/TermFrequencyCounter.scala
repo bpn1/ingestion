@@ -5,7 +5,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
-object WikipediaTfidfContextExtractor {
+object TermFrequencyCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
@@ -163,7 +163,7 @@ object WikipediaTfidfContextExtractor {
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia tfIdf Context Extractor")
+			.setAppName("Term Frequency Counter")
 
 		val sc = new SparkContext(conf)
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
@@ -175,18 +175,18 @@ object WikipediaTfidfContextExtractor {
 			articles,
 			documentFrequencies,
 			numDocuments,
-			WikipediaDocumentFrequencyCounter.leastSignificantDocumentFrequency)
+			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
 		val contextTfidf = calculateContextTfidf(
 			articles,
 			documentFrequencies,
 			numDocuments,
-			WikipediaDocumentFrequencyCounter.leastSignificantDocumentFrequency)
+			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
 //		calculateArticleTfidf(
 //			articles,
 //			documentFrequencies,
-//			WikipediaDocumentFrequencyCounter.leastSignificantDocumentFrequency
+//			DocumentFrequencyCounter.leastSignificantDocumentFrequency
 //		).saveToCassandra(keyspace, outputTablename)
 
 		sc.stop()
