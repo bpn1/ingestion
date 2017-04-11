@@ -81,7 +81,7 @@ object DBPediaDeduplication {
 		dbpediaSameAsRDD.join(subjectWikiId)
 	}
 
-	def joinGoldenStandard(
+	def joinGoldStandard(
 		dbpediaRDD: RDD[(String, (Subject, Subject))],
 		subjectRDD: RDD[(String, (Subject, Subject))]
 	): RDD[Subject] = {
@@ -125,7 +125,7 @@ object DBPediaDeduplication {
 		val nameCandidates = nameJoined.map(translateToCandidate(_, inputTableName))
 		val idCandidates = idJoined.map(translateToCandidate(_, inputTableName))
 
-		joinGoldenStandard(nameJoined, idJoined).saveToCassandra(keyspace, "goldenstandard")
+		joinGoldStandard(nameJoined, idJoined).saveToCassandra(keyspace, "goldstandard")
 		joinCandidates(nameCandidates, idCandidates).saveToCassandra(keyspace, outputTable)
 
 		sc.stop()

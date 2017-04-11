@@ -40,12 +40,12 @@ class DBpediaDeduplicationUnitTest extends FlatSpec with SharedSparkContext with
 		assertRDDEquals(expected, joined)
 	}
 
-	"joinGoldenStandard" should "join two duplicate RDDs to a subject RDD containing all duplicate subjects" in {
+	"joinGoldStandard" should "join two duplicate RDDs to a subject RDD containing all duplicate subjects" in {
 		val subjects = TestData.subjectList()
 		val dbpedia = TestData.dbpediaSubjectList()
 		val nameJoined = TestData.nameJoinedRDD(sc, dbpedia, subjects)
 		val idJoined = TestData.idJoinedRDD(sc, dbpedia, subjects)
-		val joined = DBPediaDeduplication.joinGoldenStandard(nameJoined, idJoined)
+		val joined = DBPediaDeduplication.joinGoldStandard(nameJoined, idJoined)
 		val expected = TestData.joinedSubjectRDD(sc, dbpedia, subjects)
 		assertRDDEquals(expected, joined)
 	}

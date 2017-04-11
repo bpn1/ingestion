@@ -130,7 +130,7 @@ CREATE TABLE datalake.duplicatecandidates (
     candidates list<frozen<tuple<subject, text, double>>>
 );
 
-CREATE TABLE datalake.goldenstandard (
+CREATE TABLE datalake.goldstandard (
     id uuid PRIMARY KEY,
     aliases list<text>,
     aliases_history list<frozen<version>>,
