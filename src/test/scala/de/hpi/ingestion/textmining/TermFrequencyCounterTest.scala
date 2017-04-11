@@ -26,6 +26,16 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 		tfSet shouldEqual expectedTermFrequencies.map(_._2)
 	}
 
+	"Wikipedia articles with contexts" should "be exactly these wikipedia articles" in {
+		val expectedArticles = TestData.articlesWithContextTestSet()
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+			.filter(article => expectedArticles.exists(_.title == article.title))
+			.map(TermFrequencyCounter.addArticleContext)
+			.collect
+			.toSet
+		articles shouldEqual expectedArticles
+	}
+
 	"Inverse document frequencies" should "contain as many tokens as document frequencies" in {
 		val documentFrequencies = TestData.documentFrequenciesTestSet()
 		val numDocuments = 4

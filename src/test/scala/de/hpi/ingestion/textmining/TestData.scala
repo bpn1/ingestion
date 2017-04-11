@@ -75,6 +75,34 @@ object TestData {
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
+	def articlesWithContextTestSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
+				List(
+					Link("Audi", "Audi", 9)
+				),
+				List(),
+				List("Audi"),
+				context = Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)
+			),
+			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
+				List(),
+				List(),
+				List("Audi"),
+				context = Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)
+			),
+			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
+				List(
+					Link("Audi", "Audi", 7),
+					Link("Brachttal", "Brachttal", 13),
+					Link("historisches Jahr", "1377", 24)
+				),
+				List(),
+				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
+				context = Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)
+		))
+	}
+
 	def linkContexts(): Set[(Link, Bag[String, Int])] = {
 		Set(
 			(Link("Audi", "Audi", 9), Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)),

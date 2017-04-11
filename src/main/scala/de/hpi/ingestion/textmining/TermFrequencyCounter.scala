@@ -9,12 +9,13 @@ object TermFrequencyCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
-	val outputTablename = "wikipediatfidf"
+	val outputTablename = "parsedwikipedia"
 	val tokenizer = new CleanCoreNLPTokenizer
 	val contextSize = 20
 
 	/**
 	  * Extracts the stemmed terms of a Wikipedia article and their relative frequency (between 0.0 and 1.0).
+	  *
 	  * @param entry parsed Wikipedia entry which terms will be extracted
 	  * @return a Bag containing every term and its frequency
 	  */
@@ -24,7 +25,20 @@ object TermFrequencyCounter {
 	}
 
 	/**
+	  * Enriches a Wikipedia article with its bag of words (implemented as Map)
+	  *
+	  * @param entry parsed Wikipedia entry which terms will be extracted
+	  * @return parsed Wikipedia entry with additional context information
+	  */
+	def addArticleContext(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
+		var enrichedArticle = entry
+		enrichedArticle.context = extractBagOfWords(entry).getCounts()
+		enrichedArticle
+	}
+
+	/**
 	  * Extracts the stemmed terms of a list of tokens and their relative frequency (between 0.0 and 1.0).
+	  *
 	  * @param tokens list of tokens to be counted
 	  * @return a Bag containing every term and its frequency
 	  */
@@ -37,10 +51,11 @@ object TermFrequencyCounter {
 	/**
 	  * Transforms the term frequencies in a bag and an identifier for the term frequencies in a joinable format
 	  * so that a join can be performed on the terms to calculate the tfIdf.
+	  *
 	  * @param identifier identifier for the terms contained in the bag
-	  * @param tfBag Bag containing the terms with their frequencies
+	  * @param tfBag      Bag containing the terms with their frequencies
 	  * @tparam T type of the identifier (e.g. String for the article term frequencies and Link for the context
-	  * term frequencies.
+	  *           term frequencies.
 	  * @return list of tuples with the structure (term, (identifier, term frequency))
 	  */
 	def joinableTermFrequencies[T](identifier: T, tfBag: Bag[String, Int]): List[(String, (T, Int))] = {
@@ -53,7 +68,8 @@ object TermFrequencyCounter {
 	/**
 	  * Calculates the inverse document frequency (idf) for a given Document Frequency and the number of documents used
 	  * to calculate it.
-	  * @param df document frequency to use
+	  *
+	  * @param df      document frequency to use
 	  * @param numDocs number of documents used to compute the document frequency
 	  * @return tuple of term and calculated idf
 	  */
@@ -65,7 +81,8 @@ object TermFrequencyCounter {
 	/**
 	  * Calculates the inverse document frequency for a given document frequency and the number of documents used to
 	  * calculate it.
-	  * @param df document frequency to use
+	  *
+	  * @param df      document frequency to use
 	  * @param numDocs number of documents used to compute the document frequency
 	  * @return calculated inverse document frequency
 	  */
@@ -76,9 +93,10 @@ object TermFrequencyCounter {
 
 	/**
 	  * Calculates the tfidf of every term for every Wikipedia article.
-	  * @param articles RDD of parsed Wikipedia articles
-	  * @param documentFrequencies RDD of document frequencies
-	  * @param numDocuments number of documents that was used to calculate the document frequencies
+	  *
+	  * @param articles                   RDD of parsed Wikipedia articles
+	  * @param documentFrequencies        RDD of document frequencies
+	  * @param numDocuments               number of documents that was used to calculate the document frequencies
 	  * @param documentFrequencyThreshold lower threshold for document frequencies
 	  * @return RDD of tuples containing the page name and the tfIdfs of every term on that page
 	  */
@@ -102,9 +120,10 @@ object TermFrequencyCounter {
 
 	/**
 	  * Calculates the tfIdf for the context of every link.
-	  * @param articles RDD of parsed Wikipedia articles containing the links
-	  * @param documentFrequencies RDD of document frequencies
-	  * @param numDocuments number of documents that was used to calculate the document frequencies
+	  *
+	  * @param articles                   RDD of parsed Wikipedia articles containing the links
+	  * @param documentFrequencies        RDD of document frequencies
+	  * @param numDocuments               number of documents that was used to calculate the document frequencies
 	  * @param documentFrequencyThreshold lower threshold for document frequencies
 	  * @return RDD of tuples containing the link and the tfIdfs of ever term in its context
 	  */
@@ -142,8 +161,9 @@ object TermFrequencyCounter {
 	}
 
 	/**
-	  * Extracts context of the links of a given Wikipedia entry. The context are {@contextSize} tokens in front of
+	  * Extracts context of the links of a given Wikipedia entry. The context are {@contextSize } tokens in front of
 	  * and behind the location of the links alias in the tokenized text.
+	  *
 	  * @param entry Wikipedia entry containing the used links
 	  * @return list of tuples containing the link and its context
 	  */
@@ -169,25 +189,23 @@ object TermFrequencyCounter {
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
 
-		val numDocuments = articles.count
+		articles
+			.map(addArticleContext)
+			.saveToCassandra(keyspace, outputTablename)
 
-		val articleTfidf = calculateArticleTfidf(
-			articles,
-			documentFrequencies,
-			numDocuments,
-			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
-
-		val contextTfidf = calculateContextTfidf(
-			articles,
-			documentFrequencies,
-			numDocuments,
-			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
-
-//		calculateArticleTfidf(
-//			articles,
-//			documentFrequencies,
-//			DocumentFrequencyCounter.leastSignificantDocumentFrequency
-//		).saveToCassandra(keyspace, outputTablename)
+		//		val numDocuments = articles.count()
+		//
+		//		val articleTfidf = calculateArticleTfidf(
+		//			articles,
+		//			documentFrequencies,
+		//			numDocuments,
+		//			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
+		//
+		//		val contextTfidf = calculateContextTfidf(
+		//			articles,
+		//			documentFrequencies,
+		//			numDocuments,
+		//			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
 		sc.stop()
 	}
