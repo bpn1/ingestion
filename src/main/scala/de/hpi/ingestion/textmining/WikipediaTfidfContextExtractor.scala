@@ -18,7 +18,7 @@ object WikipediaTfidfContextExtractor {
 	  * @param entry parsed Wikipedia entry which terms will be extracted
 	  * @return a Bag containing every term and its frequency
 	  */
-	def extractBagOfWords(entry: ParsedWikipediaEntry): Bag[String, Double] = {
+	def extractBagOfWords(entry: ParsedWikipediaEntry): Bag[String, Int] = {
 		val tokens = tokenizer.tokenize(entry.getText())
 		extractBagOfWords(tokens)
 	}
@@ -28,11 +28,10 @@ object WikipediaTfidfContextExtractor {
 	  * @param tokens list of tokens to be counted
 	  * @return a Bag containing every term and its frequency
 	  */
-	def extractBagOfWords(tokens: List[String]): Bag[String, Double] = {
+	def extractBagOfWords(tokens: List[String]): Bag[String, Int] = {
 		val stemmer = new AccessibleGermanStemmer
 		val stemmedWords = tokens.map(stemmer.stem)
-		val bagOfWords = Bag[String, Int](stemmedWords)
-		bagOfWords.normalise()
+		Bag[String, Int](stemmedWords)
 	}
 
 	/**
@@ -44,7 +43,7 @@ object WikipediaTfidfContextExtractor {
 	  * term frequencies.
 	  * @return list of tuples with the structure (term, (identifier, term frequency))
 	  */
-	def joinableTermFrequencies[T](identifier: T, tfBag: Bag[String, Double]): List[(String, (T, Double))] = {
+	def joinableTermFrequencies[T](identifier: T, tfBag: Bag[String, Int]): List[(String, (T, Int))] = {
 		tfBag.getCounts()
 			.map { case (term, frequency) =>
 				(term, (identifier, frequency))
@@ -128,7 +127,7 @@ object WikipediaTfidfContextExtractor {
 	}
 
 	def calculateTfidf[T](
-		termFrequencies: RDD[(String, (T, Double))],
+		termFrequencies: RDD[(String, (T, Int))],
 		documentFrequencies: RDD[DocumentFrequency],
 		numDocuments: Long,
 		documentFrequencyThreshold: Int
@@ -148,7 +147,7 @@ object WikipediaTfidfContextExtractor {
 	  * @param entry Wikipedia entry containing the used links
 	  * @return list of tuples containing the link and its context
 	  */
-	def extractLinkContexts(entry: ParsedWikipediaEntry): List[(Link, Bag[String, Double])] = {
+	def extractLinkContexts(entry: ParsedWikipediaEntry): List[(Link, Bag[String, Int])] = {
 		val tokens = tokenizer.tokenize(entry.getText())
 		entry.allLinks()
 			.map { link =>
