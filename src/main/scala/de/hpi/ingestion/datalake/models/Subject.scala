@@ -78,13 +78,9 @@ case class Subject(
 		if(this.aliases.nonEmpty) properties += (s"$prefix.aliases" -> this.get("aliases"))
 		if(this.category.isDefined) properties += (s"$prefix.category" -> this.get("category"))
 
-		val prefixedProperties : Map[String, List[String]] = this.properties
-			.keySet
-			.map(key => s"$prefix.$key" -> this.properties(key))
-			.toMap
+		val prefixedProperties = this.properties.map { case (key, value) => s"$prefix.$key" -> value }
 
 		properties ++= prefixedProperties
-
 		properties.toMap
 	}
 }
