@@ -7,7 +7,7 @@ import org.apache.spark.rdd.RDD
 
 import scala.io.Source
 
-object WikipediaDocumentFrequencyCounter {
+object DocumentFrequencyCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputDocumentFrequenciesTablename = "wikipediadocfreq"
@@ -62,7 +62,7 @@ object WikipediaDocumentFrequencyCounter {
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Context Extractor")
+			.setAppName("Document Frequency Counter")
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)

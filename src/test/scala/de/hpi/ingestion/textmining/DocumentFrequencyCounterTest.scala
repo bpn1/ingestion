@@ -4,17 +4,17 @@ import de.hpi.ingestion.textmining.models.DocumentFrequency
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
-class WikipediaDocumentFrequencyCounterTest extends FlatSpec with PrettyTester with SharedSparkContext with Matchers {
+class DocumentFrequencyCounterTest extends FlatSpec with PrettyTester with SharedSparkContext with Matchers {
 	"Document frequencies" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val documentFrequencies = WikipediaDocumentFrequencyCounter
+		val documentFrequencies = DocumentFrequencyCounter
 			.countDocumentFrequencies(articles)
 		documentFrequencies should not be empty
 	}
 
 	they should "be greater than zero" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		WikipediaDocumentFrequencyCounter
+		DocumentFrequencyCounter
 			.countDocumentFrequencies(articles)
 			.collect
 			.foreach(df => df.count should be > 0)
@@ -22,7 +22,7 @@ class WikipediaDocumentFrequencyCounterTest extends FlatSpec with PrettyTester w
 
 	they should "contain these document frequencies" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val documentFrequencies = WikipediaDocumentFrequencyCounter.countDocumentFrequencies(articles)
+		val documentFrequencies = DocumentFrequencyCounter.countDocumentFrequencies(articles)
 			.collect
 			.toSet
 		documentFrequencies should contain allElementsOf TestData.documentFrequenciesTestSet()
@@ -30,7 +30,7 @@ class WikipediaDocumentFrequencyCounterTest extends FlatSpec with PrettyTester w
 
 	"Stemmed document frequencies" should "not contain unstemmed German words" in {
 		val documentFrequencies = sc.parallelize(TestData.unstemmedDocumentFrequenciesTestSet().toList)
-		val stemmedDF = WikipediaDocumentFrequencyCounter
+		val stemmedDF = DocumentFrequencyCounter
 			.stemDocumentFrequencies(documentFrequencies)
 			.map(_.word)
 			.collect
@@ -40,7 +40,7 @@ class WikipediaDocumentFrequencyCounterTest extends FlatSpec with PrettyTester w
 
 	they should "contain these document frequencies" in {
 		val documentFrequencies = sc.parallelize(TestData.unstemmedDocumentFrequenciesTestSet().toList)
-		val stemmedDF = WikipediaDocumentFrequencyCounter
+		val stemmedDF = DocumentFrequencyCounter
 			.stemDocumentFrequencies(documentFrequencies)
 			.collect
 			.toSet
@@ -49,7 +49,7 @@ class WikipediaDocumentFrequencyCounterTest extends FlatSpec with PrettyTester w
 
 	"Filtered document frequencies" should "not contain German stopwords" in {
 		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
-		val filteredWords = WikipediaDocumentFrequencyCounter
+		val filteredWords = DocumentFrequencyCounter
 			.filterDocumentFrequencies(documentFrequencies,
 				1,
 				TestData.germanStopwordsTestSet())
@@ -60,9 +60,9 @@ class WikipediaDocumentFrequencyCounterTest extends FlatSpec with PrettyTester w
 	}
 
 	they should "not contain infrequent words" in {
-		val threshold = WikipediaDocumentFrequencyCounter.leastSignificantDocumentFrequency
+		val threshold = DocumentFrequencyCounter.leastSignificantDocumentFrequency
 		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
-		val infrequentWords = WikipediaDocumentFrequencyCounter
+		val infrequentWords = DocumentFrequencyCounter
 			.filterDocumentFrequencies(documentFrequencies,
 				threshold,
 				Set[String]())
@@ -75,9 +75,9 @@ class WikipediaDocumentFrequencyCounterTest extends FlatSpec with PrettyTester w
 	they should "contain these document frequencies" in {
 		val threshold = 3
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val documentFrequencies = WikipediaDocumentFrequencyCounter
+		val documentFrequencies = DocumentFrequencyCounter
 			.countDocumentFrequencies(articles)
-		val filteredDocumentFrequencies = WikipediaDocumentFrequencyCounter
+		val filteredDocumentFrequencies = DocumentFrequencyCounter
 			.filterDocumentFrequencies(documentFrequencies,
 				threshold,
 				TestData.germanStopwordsTestSet())

@@ -13,7 +13,7 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import scala.io.Source
 
-object WikipediaTextparser {
+object TextParser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
@@ -186,7 +186,7 @@ object WikipediaTextparser {
 			escaped = character == '\\'
 		}
 
-		println("[Textparser WARN]	Template has no end!")
+		println("[TextParser WARN]	Template has no end!")
 		templateText
 	}
 
@@ -319,7 +319,7 @@ object WikipediaTextparser {
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Textparser")
+			.setAppName("Text Parser")
 		val sc = new SparkContext(conf)
 
 		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)

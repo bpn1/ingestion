@@ -3,11 +3,11 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
-class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContext with Matchers {
+class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Term frequencies" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val pagesTermFrequencies = articles
-			.map(WikipediaTfidfContextExtractor.extractBagOfWords)
+			.map(TermFrequencyCounter.extractBagOfWords)
 		pagesTermFrequencies should not be empty
 		pagesTermFrequencies
 			.map(_.getCounts())
@@ -20,7 +20,7 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.filter(article => expectedTermFrequencies.exists(_._1 == article.title))
 		val tfSet = articles
-			.map(WikipediaTfidfContextExtractor.extractBagOfWords)
+			.map(TermFrequencyCounter.extractBagOfWords)
 			.collect
 			.toSet
 		tfSet shouldEqual expectedTermFrequencies.map(_._2)
@@ -30,7 +30,7 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 		val documentFrequencies = TestData.documentFrequenciesTestSet()
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
-			.map(WikipediaTfidfContextExtractor.calculateIdf(_, numDocuments))
+			.map(TermFrequencyCounter.calculateIdf(_, numDocuments))
 		inverseDocumentFrequencies.size shouldEqual documentFrequencies.size
 	}
 
@@ -38,7 +38,7 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 		val documentFrequencies = TestData.documentFrequenciesTestSet()
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
-			.map(WikipediaTfidfContextExtractor.calculateIdf(_, numDocuments))
+			.map(TermFrequencyCounter.calculateIdf(_, numDocuments))
 		inverseDocumentFrequencies shouldEqual TestData.inverseDocumentFrequenciesTestSet()
 	}
 
@@ -47,7 +47,7 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
-		val contexts = WikipediaTfidfContextExtractor
+		val contexts = TermFrequencyCounter
 			.calculateArticleTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 			.collect
 		contexts should not be empty
@@ -62,7 +62,7 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 				.filter(_.title != "Streitberg (Brachttal)"))
 		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
-		val contexts = WikipediaTfidfContextExtractor
+		val contexts = TermFrequencyCounter
 			.calculateArticleTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 			.collect
 			.toSet
@@ -76,7 +76,7 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 			.filter(_.title != "Streitberg (Brachttal)")
 		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
-		val contexts = WikipediaTfidfContextExtractor
+		val contexts = TermFrequencyCounter
 			.calculateArticleTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 			.collect
 			.toSet
@@ -85,7 +85,7 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 
 	"Link contexts" should "be exactly these bag of words" in {
 		val linkContexts = TestData.parsedWikipediaTestSet()
-			.flatMap(WikipediaTfidfContextExtractor.extractLinkContexts)
+			.flatMap(TermFrequencyCounter.extractLinkContexts)
 		val expectedContexts = TestData.linkContexts()
 		linkContexts shouldBe expectedContexts
 	}
@@ -95,7 +95,7 @@ class WikipediaTfidfContextExtractorTest extends FlatSpec with SharedSparkContex
 	//		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 	//		val numDocuments = articles.count
 	//		val documentFrequencies = sc.parallelize(TestData.stemmedDocumentFrequenciesTestSet().toList)
-	//		val linkContextValues = WikipediaTfidfContextExtractor
+	//		val linkContextValues = TermFrequencyCounter
 	//			.calculateContextTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 	//			.collect
 	//			.toSet
