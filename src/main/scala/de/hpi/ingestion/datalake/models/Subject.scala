@@ -3,7 +3,7 @@ package de.hpi.ingestion.datalake.models
 import scala.reflect.runtime.universe._
 import java.util.{Date, UUID}
 
-case class Subject(
+case class Subject (
 
 	var id: UUID = UUID.randomUUID(),
 	var name: Option[String] = None,
@@ -18,7 +18,7 @@ case class Subject(
 	var properties_history: Map[String, List[Version]] = Map[String, List[Version]](),
 	var relations_history:
 		Map[UUID, Map[String, List[Version]]] = Map[UUID, Map[String, List[Version]]]()
-){
+) extends DLImportEntity {
 	/**
 	  * Compares the subject using its uuid
 	  * @param obj object to compare this subject to
