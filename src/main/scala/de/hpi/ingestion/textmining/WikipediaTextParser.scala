@@ -2,18 +2,21 @@ package de.hpi.ingestion.textmining
 
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
+
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Document, Element, TextNode}
 import java.net.URLDecoder
+
 import scala.collection.mutable.ListBuffer
-import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
+import de.hpi.ingestion.textmining.models._
+
 import scala.io.Source
 
-object WikipediaTextparser {
+object WikipediaTextParser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
@@ -62,6 +65,11 @@ object WikipediaTextparser {
 		extractCategoryLinks(parsedEntry)
 	}
 
+	/**
+	  * Removes any unwanted HTML tags and inline Wikimarkup tags.
+	  * @param document Jsoup Document to clean
+	  * @return cleaned Document containing only text and anchor tags
+	  */
 	def removeTags(document: Document): Document = {
 		val documentContent = document
 			.select("p")
@@ -75,8 +83,10 @@ object WikipediaTextparser {
 			.map(_.toString)
 			.mkString("\n")
 			.replaceAll("&lt;(/|)gallery&gt;", "") // removes gallery tags
-			.replaceAll("<(|/)([^a])>", "") // remove every tag other than anchors
-		Jsoup.parse(htmltext)
+		val doc = Jsoup.parse(htmltext)
+		val traverser = new WikipediaNodeVisitor()
+		doc.traverse(traverser)
+		Jsoup.parse(traverser.getCleanedDocument())
 	}
 
 	def parseUrl(url: String): String = {
@@ -136,7 +146,6 @@ object WikipediaTextparser {
 		for (element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
-					//assert(t.tag.toString == "a") // This may fail for strange reasons.
 					val target = parseUrl(t.attr("href"))
 					val source = if (t.text == "") target else t.text
 					val link = Link(source, target, offset)
@@ -246,8 +255,8 @@ object WikipediaTextparser {
 
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val cleanedEntry = cleanRedirects(entry)
-		var title = cleanedEntry.title
-		if (isDisambiguationPage(cleanedEntry) && !title.endsWith(disambiguationTitleSuffix)) {
+		var title = entry.title
+		if (isDisambiguationPage(entry) && !title.endsWith(disambiguationTitleSuffix)) {
 			title += disambiguationTitleSuffix
 		}
 		val html = wikipediaToHtml(cleanedEntry.getText())

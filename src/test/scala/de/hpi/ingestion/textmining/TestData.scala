@@ -8,9 +8,10 @@ import de.hpi.ingestion.textmining.models._
 import scala.io.Source
 
 // scalastyle:off number.of.methods
+// scalastyle:off line.size.limit
+// scalastyle:off method.length
+
 object TestData {
-	// scalastyle:off line.size.limit
-	// scalastyle:off method.length
 
 	def testSentences(): List[String] = {
 		List(
@@ -610,8 +611,18 @@ object TestData {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
 
-	// scalastyle:on method.length
-	// scalastyle:on line.size.limit
-}
+	def documentTestList(): List[String] = {
+		List(
+			"""<body><p><a href="/2._Juli" title="2. Juli">2. Juli</a>
+			  |<a href="/1852" title="1852">1852</a> im Stadtteil
+			  |<span class="math">bli</span> bla
+			  |<span class="math">blub</span>
+			  |<abbr title="Naturgesetze für Information">NGI</abbr>
+			  |</p></body>""".stripMargin
+		)
+	}
 
+}
+// scalastyle:on method.length
+// scalastyle:on line.size.limit
 // scalastyle:on number.of.methods
