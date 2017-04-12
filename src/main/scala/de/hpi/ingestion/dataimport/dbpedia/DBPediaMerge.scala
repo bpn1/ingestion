@@ -17,15 +17,6 @@ object DBPediaMerge {
 	val subjectTable = "subject"
 	val outputTable = "subject_merged"
 
-	/**
-	  * Creates template version for versioning. This template contains data for the fields
-	  * version, program, datasources and timestamp.
-	  * @return template version
-	  */
-	def makeTemplateVersion(): Version = {
-		Version(program = appName, datasources = dataSources)
-	}
-
 	def mergeSubjects(subject: Subject, duplicates: List[Subject], version: Version): Subject = {
 		val sm = new SubjectManager(subject, version)
 		val prefixedProperties = subject
@@ -66,7 +57,7 @@ object DBPediaMerge {
 
 		val sc = new SparkContext(conf)
 
-		val version = makeTemplateVersion()
+		val version = Version(appName, dataSources, sc)
 		val subjects = sc.cassandraTable[Subject](keyspace, subjectTable)
 		val dbpedia = sc.cassandraTable[Subject](keyspace, dbpediaTable)
 		val duplicates = sc.cassandraTable[DuplicateCandidates](keyspace, duplicateTable)

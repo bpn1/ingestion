@@ -27,15 +27,6 @@ object DBPediaDeduplication {
 		}
 	}
 
-	/**
-	  * Creates template version for versioning. This template contains data for the fields
-	  * version, program, datasources and timestamp.
-	  * @return template version
-	  */
-	def makeTemplateVersion(): Version = {
-		Version(program = appName, datasources = dataSources)
-	}
-
 	def keyBySingleProperty(rdd: RDD[Subject], property: String): RDD[(String, Subject)] = {
 		rdd
 			.filter(_.properties.contains(property))
@@ -113,7 +104,7 @@ object DBPediaDeduplication {
 		val conf = new SparkConf().setAppName(appName)
 		val sc = new SparkContext(conf)
 
-		val version = makeTemplateVersion()
+		val version = Version(appName, dataSources, sc)
 		val dbpedia = sc.cassandraTable[Subject](keyspace, inputTableName)
 		val subjects = sc.cassandraTable[Subject](keyspace, subjectTable)
 
