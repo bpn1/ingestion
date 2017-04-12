@@ -48,24 +48,25 @@ object TermFrequencyCounter {
 	}
 
 	/**
-	  * Extracts context of the links of a given Wikipedia entry. The context are {@contextSize } tokens in front of
+	  * Extracts context of the links of a given Wikipedia entry. The context are {@contextSize} tokens in front of
 	  * and behind the location of the links alias in the tokenized text.
 	  *
 	  * @param entry Wikipedia entry containing the used links
 	  * @return list of tuples containing the link and its context
 	  */
-	def extractLinkContexts(entry: ParsedWikipediaEntry): List[(Link, Bag[String, Int])] = {
+	def extractLinkContexts(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
 		val tokens = tokenizer.tokenize(entry.getText())
-		entry.allLinks()
-			.map { link =>
-				val aliasTokens = tokenizer.tokenize(link.alias)
-				val aliasIndex = tokens.indexOfSlice(aliasTokens)
-				val contextStart = Math.max(aliasIndex - contextSize, 0)
-				val contextEnd = Math.min(aliasIndex + contextSize, tokens.length)
-				val context = tokens.slice(contextStart, contextEnd)
-				val bag = extractBagOfWords(context)
-				(link, bag)
-			}
+		entry.linkswithcontext = entry.textlinks.map { link =>
+			val aliasTokens = tokenizer.tokenize(link.alias)
+			val aliasIndex = tokens.indexOfSlice(aliasTokens)
+			val contextStart = Math.max(aliasIndex - contextSize, 0)
+			val contextEnd = Math.min(aliasIndex + contextSize, tokens.length)
+			val context = tokens.slice(contextStart, contextEnd)
+			val bag = extractBagOfWords(context)
+			link.context = bag.getCounts()
+			link
+		}
+		entry
 	}
 
 	/**
@@ -75,18 +76,7 @@ object TermFrequencyCounter {
 	  * @return links with additional context information
 	  */
 	def addLinksContexts(articles: RDD[ParsedWikipediaEntry]): RDD[ParsedWikipediaEntry] = {
-		articles
-			.map { article =>
-				val links = extractLinkContexts(article)
-					.map { case (link, bag) =>
-						val enrichedLink = link
-						enrichedLink.context = bag.getCounts()
-						enrichedLink
-					}
-				val enrichedArticle = article
-				enrichedArticle.linkswithcontext = links
-				enrichedArticle
-			}
+		articles.map(extractLinkContexts)
 	}
 
 	def main(args: Array[String]): Unit = {

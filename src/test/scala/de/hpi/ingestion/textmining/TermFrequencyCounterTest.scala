@@ -38,9 +38,10 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 
 	"Link contexts" should "be exactly these bag of words" in {
 		val linkContexts = TestData.parsedWikipediaTestSet()
-			.flatMap(TermFrequencyCounter.extractLinkContexts)
+			.map(TermFrequencyCounter.extractLinkContexts)
+		    .flatMap(_.linkswithcontext)
 		val expectedContexts = TestData.linkContextsTestSet()
-		linkContexts shouldBe expectedContexts
+		linkContexts shouldEqual expectedContexts
 	}
 
 	"Articles with link context" should "contain exactly these link contexts" in {
