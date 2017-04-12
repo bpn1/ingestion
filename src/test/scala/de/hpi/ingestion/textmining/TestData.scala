@@ -85,37 +85,37 @@ object TestData {
 		))
 	}
 
-	def startAliasCounterTestRDD(sc: SparkContext): RDD[AliasCounter] = {
+	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {
 		sc.parallelize(List(
-			AliasCounter("Audi", 1, 1),
-			AliasCounter("Audi", 1, 1),
-			AliasCounter("Audi", 0, 1),
-			AliasCounter("Brachttal", 1, 1),
-			AliasCounter("Brachttal", 1, 1),
-			AliasCounter("Main-Kinzig-Kreis", 1, 1),
-			AliasCounter("Main-Kinzig-Kreis", 0, 1),
-			AliasCounter("Hessen", 1, 1),
-			AliasCounter("Hessen", 0, 1),
-			AliasCounter("1377", 1, 1),
-			AliasCounter("Büdinger Wald", 1, 1),
-			AliasCounter("Büdinger Wald", 0, 1),
-			AliasCounter("Backfisch", 0, 1),
-			AliasCounter("Streitberg", 0, 1),
-			AliasCounter("historisches Jahr", 1, 1)
+			Alias("Audi", Map(), 1, 1),
+			Alias("Audi", Map(), 1, 1),
+			Alias("Audi", Map(), 0, 1),
+			Alias("Brachttal", Map(), 1, 1),
+			Alias("Brachttal", Map(), 1, 1),
+			Alias("Main-Kinzig-Kreis", Map(), 1, 1),
+			Alias("Main-Kinzig-Kreis", Map(), 0, 1),
+			Alias("Hessen", Map(), 1, 1),
+			Alias("Hessen", Map(), 0, 1),
+			Alias("1377",Map(), 1, 1),
+			Alias("Büdinger Wald", Map(), 1, 1),
+			Alias("Büdinger Wald", Map(), 0, 1),
+			Alias("Backfisch", Map(), 0, 1),
+			Alias("Streitberg", Map(), 0, 1),
+			Alias("historisches Jahr", Map(), 1, 1)
 		))
 	}
 
-	def countedAliasesTestRDD(sc: SparkContext): RDD[AliasCounter] = {
+	def countedAliasesTestRDD(sc: SparkContext): RDD[Alias] = {
 		sc.parallelize(List(
-			AliasCounter("Audi", 2, 3),
-			AliasCounter("Brachttal", 2, 2),
-			AliasCounter("Main-Kinzig-Kreis", 1, 2),
-			AliasCounter("Hessen", 1, 2),
-			AliasCounter("1377", 1, 1),
-			AliasCounter("Büdinger Wald", 1, 2),
-			AliasCounter("Backfisch", 0, 1),
-			AliasCounter("Streitberg", 0, 1),
-			AliasCounter("historisches Jahr", 1, 1)
+			Alias("Audi", Map(), 2, 3),
+			Alias("Brachttal", Map(), 2, 2),
+			Alias("Main-Kinzig-Kreis", Map(), 1, 2),
+			Alias("Hessen", Map(), 1, 2),
+			Alias("1377", Map(), 1, 1),
+			Alias("Büdinger Wald", Map(), 1, 2),
+			Alias("Backfisch", Map(), 0, 1),
+			Alias("Streitberg", Map(), 0, 1),
+			Alias("historisches Jahr", Map(), 1, 1)
 		))
 	}
 

@@ -27,13 +27,10 @@ CREATE TABLE wikidumps.wikipedia (
     text text
 );
 
-CREATE TABLE wikidumps.wikipediaaliases (
+CREATE TABLE wikidumps.wikipedialinks (
     alias text PRIMARY KEY,
     link_occurences int,
-    total_occurences int
-);
-
-CREATE TABLE wikidumps.wikipedialinks (
+    total_occurences int,
     alias text PRIMARY KEY,
     pages map<text, int>
 );

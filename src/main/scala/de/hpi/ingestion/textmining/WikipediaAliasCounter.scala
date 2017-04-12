@@ -8,59 +8,65 @@ import de.hpi.ingestion.textmining.models._
 object WikipediaAliasCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
-	val outputTablename = "wikipediaaliases"
+	val inputLinksTablename = "wikipedialinks"
+	val outputTablename = "wikipedialinks"
 
 	/**
 	  * Calculates the probability that an alias is a link.
-	  * @param aliasCounter AliasCounter of a given alias
+	  *
+	  * @param aliasCounter Alias of a given alias
 	  * @return percentage of the occurences as link.
 	  */
-	def probabilityIsLink(aliasCounter: AliasCounter): Double = {
-		aliasCounter.linkoccurrences.toDouble / aliasCounter.totaloccurrences
+	def probabilityIsLink(aliasCounter: Alias): Double = {
+		aliasCounter.link_occurrences.toDouble / aliasCounter.total_occurrences
 	}
 
 	/**
 	  * Extracts list of link and general alias occurences for an article
+	  *
 	  * @param entry article from which the aliases will be extracted
 	  * @return list of aliases each with an occurence set to 1
 	  */
-	def extractAliasList(entry: ParsedWikipediaEntry): List[AliasCounter] = {
-		val linkSet = entry.allLinks
+	def extractAliasList(entry: ParsedWikipediaEntry): List[Alias] = {
+		val linkSet = entry.allLinks()
 			.map(_.alias)
 			.toSet
 
 		val links = linkSet
-		    .toList
-			.map(AliasCounter(_, 1, 1))
+			.toList
+			.map(Alias(_, Map(), 1, 1))
 
 		val aliases = entry.foundaliases
 			.toSet
 			.filterNot(linkSet)
 			.toList
-			.map(AliasCounter(_, 0, 1))
+			.map(Alias(_, Map(), 0, 1))
 
 		links ++ aliases
 	}
 
 	/**
 	  * Reduces two AliasCounters of the same alias.
-	  * @param alias1 first AliasCounter with the same alias as alias2
-	  * @param alias2 second AliasCounter with the same alias as alias1
-	  * @return AliasCounter with summed link and total occurences
+	  *
+	  * @param alias1 first Alias with the same alias as alias2
+	  * @param alias2 second Alias with the same alias as alias1
+	  * @return Alias with summed link and total occurences
 	  */
-	def aliasReduction(alias1: AliasCounter, alias2: AliasCounter): AliasCounter = {
-		AliasCounter(
+	def aliasReduction(alias1: Alias, alias2: Alias): Alias = {
+		Alias(
 			alias1.alias,
-			alias1.linkoccurrences + alias2.linkoccurrences,
-			alias1.totaloccurrences + alias2.totaloccurrences)
+			Map(),
+			alias1.link_occurrences + alias2.link_occurrences,
+			alias1.total_occurrences + alias2.total_occurrences)
 	}
 
 	/**
 	  * Counts link and total occurences of link aliases in Wikipedia articles.
+	  *
 	  * @param articles RDD containing parsed wikipedia articles
 	  * @return RDD containing alias counts for links and total occurences
 	  */
-	def countAliases(articles: RDD[ParsedWikipediaEntry]): RDD[AliasCounter] = {
+	def countAliases(articles: RDD[ParsedWikipediaEntry]): RDD[Alias] = {
 		articles.flatMap(extractAliasList)
 			.map(alias => (alias.alias, alias))
 			.reduceByKey(aliasReduction(_, _))

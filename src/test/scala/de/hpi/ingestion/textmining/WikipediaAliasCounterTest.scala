@@ -27,7 +27,7 @@ class WikipediaAliasCounterTest
 			.countAliases(articles)
 			.collect
 			.foreach(aliasCounter =>
-				aliasCounter.totaloccurrences should be > 0)
+				aliasCounter.total_occurrences should be > 0)
 	}
 
 	they should "have consistent counts" in {
@@ -36,9 +36,9 @@ class WikipediaAliasCounterTest
 			.countAliases(articles)
 			.collect
 			.foreach { aliasCounter =>
-				aliasCounter.linkoccurrences should be <= aliasCounter.totaloccurrences
-				aliasCounter.linkoccurrences should be >= 0
-				aliasCounter.totaloccurrences should be >= 0
+				aliasCounter.link_occurrences should be <= aliasCounter.total_occurrences
+				aliasCounter.link_occurrences should be >= 0
+				aliasCounter.total_occurrences should be >= 0
 			}
 	}
 
@@ -63,9 +63,9 @@ class WikipediaAliasCounterTest
 			.flatMap(WikipediaAliasCounter.extractAliasList)
 			.collect
 		    .foreach { alias =>
-				alias.linkoccurrences should be <= 1
-				alias.linkoccurrences should be >= 0
-				alias.totaloccurrences shouldBe 1
+				alias.link_occurrences should be <= 1
+				alias.link_occurrences should be >= 0
+				alias.total_occurrences shouldBe 1
 			}
 
 	}
