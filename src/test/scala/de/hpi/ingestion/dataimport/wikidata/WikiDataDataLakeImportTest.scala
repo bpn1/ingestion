@@ -8,7 +8,7 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 
 	"WikidataEntity" should "be translated into a Subject" in {
 		val subjects = TestData.completeWikidataEntities()
-		    .map(WikiDataDataLakeImport.translateToSubject(_, Version("WikiDataImportTest", List[String](), sc)))
+		    .map(WikiDataDataLakeImport.translateToSubject(_, Version("WikiDataDataLakeImportTest", List[String](), sc)))
 		    .map(subject => (subject.name, subject.aliases, subject.category, subject.properties))
 		val expectedSubjects = TestData.translatedSubjects()
 			.map(subject => (subject.name, subject.aliases, subject.category, subject.properties))
