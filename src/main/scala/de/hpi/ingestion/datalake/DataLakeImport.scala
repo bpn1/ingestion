@@ -94,7 +94,7 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 			.fromURL(url)
 			.getLines()
 			.mkString("\n"))
-		
+
 		(xml \\ "normalization" \ "attributeMapping" \ "attribute")
 			.toList
 			.map { attribute =>
