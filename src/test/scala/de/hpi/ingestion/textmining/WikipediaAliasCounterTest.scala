@@ -3,8 +3,7 @@ package de.hpi.ingestion.textmining
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{SharedSparkContext, RDDComparisons}
 
-class WikipediaAliasCounterTest
-	extends FlatSpec with RDDComparisons with SharedSparkContext with Matchers {
+class WikipediaAliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkContext with Matchers {
 	"Counted aliases" should "have the same size as all links" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val allAliases = TestData.allAliasesTestRDD(sc)
@@ -16,8 +15,8 @@ class WikipediaAliasCounterTest
 	they should "have the same aliases as all links" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val countedAliases = WikipediaAliasCounter
-				.countAliases(articles)
-				.map(_.alias)
+			.countAliases(articles)
+			.map(_.alias)
 		assertRDDEquals(countedAliases, TestData.allAliasesTestRDD(sc))
 	}
 
@@ -52,9 +51,9 @@ class WikipediaAliasCounterTest
 	"Extracted alias lists" should "contain all links and aliases" in {
 		val aliasListsRDD = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.map(WikipediaAliasCounter.extractAliasList)
-		    .map(_.map(_.alias).toSet)
+			.map(_.map(_.alias).toSet)
 		val testAliasLists = TestData.aliasOccurrencesInArticlesTestRDD(sc)
-		    .map(data => data.links ++ data.noLinks)
+			.map(data => data.links ++ data.noLinks)
 		assertRDDEquals(aliasListsRDD, testAliasLists)
 	}
 
@@ -62,12 +61,11 @@ class WikipediaAliasCounterTest
 		sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.flatMap(WikipediaAliasCounter.extractAliasList)
 			.collect
-		    .foreach { alias =>
+			.foreach { alias =>
 				alias.link_occurrences should be <= 1
 				alias.link_occurrences should be >= 0
 				alias.total_occurrences shouldBe 1
 			}
-
 	}
 
 	they should "be exactly the same Alias counters" in {
@@ -82,7 +80,7 @@ class WikipediaAliasCounterTest
 		val aliasCounterRDD = TestData.startAliasCounterTestRDD(sc)
 			.map(alias => (alias.alias, alias))
 			.reduceByKey(WikipediaAliasCounter.aliasReduction(_, _))
-		    .map(_._2)
+			.map(_._2)
 		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
 	}
 
@@ -93,4 +91,14 @@ class WikipediaAliasCounterTest
 		assertRDDEquals(linkProbabilities, TestData.linkProbabilitiesTestRDD(sc))
 	}
 
+	"Merged alias counts and links" should "be exactly these links" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val links = sc.parallelize(TestData.linksSet().toList)
+		val countedAliases = WikipediaAliasCounter.countAliases(articles)
+		val mergedLinks = WikipediaAliasCounter
+			.mergeAliasCountsAndLinks(countedAliases, links)
+			.collect
+			.toSet
+		mergedLinks shouldEqual TestData.mergedAliasCountsAndLinksSet()
+	}
 }

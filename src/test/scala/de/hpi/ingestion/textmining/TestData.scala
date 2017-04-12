@@ -119,6 +119,34 @@ object TestData {
 		))
 	}
 
+	def linksSet(): Set[Alias] = {
+		Set(
+			Alias("Audi", Map("Audi" -> 123)),
+			Alias("Brachttal", Map("Brachttal" -> 1)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1)),
+			Alias("Hessen", Map("Hessen" -> 1)),
+			Alias("1377", Map("1377" -> 1337)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1)),
+			Alias("Backfisch", Map("Backfisch" -> 1, "Promenade in Wismar" -> 12)),
+			Alias("Streitberg", Map("Streitberg" -> 1)),
+			Alias("historisches Jahr", Map("1337" -> 1, "1492" -> 2, "2017" -> 3))
+		)
+	}
+
+	def mergedAliasCountsAndLinksSet(): Set[Alias] = {
+		Set(
+			Alias("Audi", Map("Audi" -> 123), 2, 3),
+			Alias("Brachttal", Map("Brachttal" -> 1), 2, 2),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), 1, 2),
+			Alias("Hessen", Map("Hessen" -> 1), 1, 2),
+			Alias("1377", Map("1377" -> 1337), 1, 1),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), 1, 2),
+			Alias("Backfisch", Map("Backfisch" -> 1, "Promenade in Wismar" -> 12), 0, 1),
+			Alias("Streitberg", Map("Streitberg" -> 1), 0, 1),
+			Alias("historisches Jahr", Map("1337" -> 1, "1492" -> 2, "2017" -> 3), 1, 1)
+		)
+	}
+
 	def linkProbabilitiesTestRDD(sc: SparkContext): RDD[(String, Double)] = {
 		sc.parallelize(List(
 			("Audi", 2.0 / 3),

@@ -74,10 +74,19 @@ object WikipediaAliasCounter {
 			.filter(_.alias.nonEmpty)
 	}
 
+	/**
+	  * Joins the alias counts and links
+	  * @param aliases alias counts
+	  * @param links links with all their linked pages
+	  * @return links with their alias counts
+	  */
+	def mergeAliasCountsAndLinks(aliases: RDD[Alias], links: RDD[Alias]): RDD[Alias] = {
+		aliases
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Alias Counter")
-			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
 
