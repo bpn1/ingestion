@@ -1,6 +1,7 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
+import de.hpi.ingestion.datalake.models.Version
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -84,6 +85,24 @@ object TestData {
 			DBPediaEntity(dbpedianame="dbpedia-de:Liste_von_Autoren/T", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste")))
 		))
 	}
+
+	def makeTemplateVersion(): Version = {
+		Version(program = "DBPediaDataLakeImport", datasources = List("dataSources"))
+	}
+
+	val version = makeTemplateVersion()
+	val testEntity = DBPediaEntity(
+		dbpedianame = "dbpedia-de:List_von_Autoren",
+		label = Option("Liste von Autoren"),
+		data = Map(
+			"wikidata_id" -> List("Q123"),
+			"dbo:viafId" -> List("X123"),
+			"property-de:viaf" -> List("Y123"),
+			"geo:lat" -> List("52"),
+			"property-de:latitude" -> List("53"),
+			"geo:long" -> List("100")
+		)
+	)
 
 	// scalastyle:on line.size.limit
 }
