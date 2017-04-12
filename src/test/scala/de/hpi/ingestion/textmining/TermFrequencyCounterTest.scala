@@ -30,7 +30,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 		val expectedArticles = TestData.articlesWithContextTestSet()
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.filter(article => expectedArticles.exists(_.title == article.title))
-			.map(TermFrequencyCounter.addArticleContext)
+			.map(TermFrequencyCounter.extractArticleContext)
 			.collect
 			.toSet
 		articles shouldEqual expectedArticles

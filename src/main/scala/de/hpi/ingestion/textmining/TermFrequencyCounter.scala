@@ -24,18 +24,6 @@ object TermFrequencyCounter {
 	}
 
 	/**
-	  * Enriches a Wikipedia article with its bag of words (implemented as Map)
-	  *
-	  * @param entry parsed Wikipedia entry which terms will be extracted
-	  * @return parsed Wikipedia entry with additional context information
-	  */
-	def addArticleContext(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
-		var enrichedArticle = entry
-		enrichedArticle.context = extractBagOfWords(entry).getCounts()
-		enrichedArticle
-	}
-
-	/**
 	  * Extracts the stemmed terms of a list of tokens and their relative frequency (between 0.0 and 1.0).
 	  *
 	  * @param tokens list of tokens to be counted
@@ -48,6 +36,17 @@ object TermFrequencyCounter {
 	}
 
 	/**
+	  * Enriches a Wikipedia article with its bag of words (implemented as Map)
+	  *
+	  * @param entry parsed Wikipedia entry which terms will be extracted
+	  * @return parsed Wikipedia entry with additional context information
+	  */
+	def extractArticleContext(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
+		val context = extractBagOfWords(entry).getCounts()
+		entry.copy(context = context)
+	}
+
+	/**
 	  * Extracts context of the links of a given Wikipedia entry. The context are {@contextSize} tokens in front of
 	  * and behind the location of the links alias in the tokenized text.
 	  *
@@ -56,7 +55,7 @@ object TermFrequencyCounter {
 	  */
 	def extractLinkContexts(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
 		val tokens = tokenizer.tokenize(entry.getText())
-		entry.linkswithcontext = entry.textlinks.map { link =>
+		val contextLinks = entry.textlinks.map { link =>
 			val aliasTokens = tokenizer.tokenize(link.alias)
 			val aliasIndex = tokens.indexOfSlice(aliasTokens)
 			val contextStart = Math.max(aliasIndex - contextSize, 0)
@@ -66,7 +65,7 @@ object TermFrequencyCounter {
 			link.context = bag.getCounts()
 			link
 		}
-		entry
+		entry.copy(linkswithcontext = contextLinks)
 	}
 
 	/**
@@ -87,7 +86,7 @@ object TermFrequencyCounter {
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 
 		val articlesWithContext = articles
-			.map(addArticleContext)
+			.map(extractArticleContext)
 
 		addLinksContexts(articlesWithContext)
 			.saveToCassandra(keyspace, outputArticlesTablename)
