@@ -39,7 +39,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 				.toList
 				.filter(_.title != "Streitberg (Brachttal)"))
 		val numDocuments = articles.count
-		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSmallTestSet().toList)
 		val contexts = CosineContextComparator
 			.calculateArticleTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 			.collect
@@ -53,7 +53,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val articles = sc.parallelize(TestData.articlesWithContextTestSet().toList)
 			.filter(_.title != "Streitberg (Brachttal)")
 		val numDocuments = articles.count
-		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSmallTestSet().toList)
 		val contexts = CosineContextComparator
 			.calculateArticleTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 			.collect
@@ -61,16 +61,32 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		contexts shouldEqual TestData.tfidfContextsTestSet()
 	}
 
-	//	"Tf-Idf of link contexts" should "be extactly these tf-Idf values" in {
-	//		val documentFrequencyThreshold = 2
-	//		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-	//		val numDocuments = articles.count
-	//		val documentFrequencies = sc.parallelize(TestData.stemmedDocumentFrequenciesTestSet().toList)
-	//		val linkContextValues = TermFrequencyCounter
-	//			.calculateLinkContextsTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
-	//			.collect
-	//			.toSet
-	//		val expectedTfidf = TestData.linkContextsTfidf()
-	//		linkContextValues shouldBe expectedTfidf
-	//	}
+	"Tf-Idf of link contexts" should "exist" in {
+		val documentFrequencyThreshold = 2
+		val articles = sc.parallelize(TestData.articlesWithLinkContextsTestSet().toList)
+		val numDocuments = articles.count
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
+		val linkContextValues = CosineContextComparator
+			.calculateLinkContextsTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
+			.collect
+		linkContextValues should not be empty
+	}
+
+	they should "be exactly these tf-Idf values (disregarding the contexts)" in {
+		val documentFrequencyThreshold = 2
+		val articles = sc.parallelize(TestData.articlesWithLinkContextsTestSet().toList)
+		val numDocuments = articles.count
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
+		val linkContextValues = CosineContextComparator
+			.calculateLinkContextsTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
+			.map { case (link, tfidfContext) =>
+				val smallLink = link
+				smallLink.context = Map() // allows smaller test data
+				(smallLink, tfidfContext)
+			}
+			.collect
+			.toSet
+		val expectedTfidf = TestData.linkContextsTfidf()
+		linkContextValues shouldBe expectedTfidf
+	}
 }
