@@ -13,7 +13,6 @@ trait BlockingScheme extends Serializable {
 	  * Gets the attributes to generate the key with as input and converts them to a list
 	  * if required for the blocking scheme.
 	  * @param attrList Sequence of attributes to use.
-	  * @return List of attributes as list of strings.
 	  */
 	def setAttributes(attrList: String*): Unit = inputAttributes = attrList.toList
 

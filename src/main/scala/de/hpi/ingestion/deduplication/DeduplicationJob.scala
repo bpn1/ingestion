@@ -8,7 +8,7 @@ object DeduplicationJob {
 		val blockingScheme2 = new ListBlockingScheme
 		blockingScheme2.setAttributes("gen_sectory")
 		val blockingScheme3 = new SimpleBlockingScheme
-		val blockingSchemes: List[BlockingScheme] = List(
+		val blockingSchemes = List(
 			blockingScheme1,
 			blockingScheme2,
 			blockingScheme3)
