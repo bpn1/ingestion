@@ -30,12 +30,6 @@ trait DLImport[T] extends Serializable {
 	protected def translateToSubject(entity: T, version: Version): Subject
 
 	/**
-	  * Createds a new version for the import
-	  * @return a version reproducing to the details of the import
-	  */
-	protected def makeTemplateVersion(): Version
-
-	/**
 	  * A generic import from the new data table to the staging area table
 	  */
 	protected def importToCassandra(): Unit
@@ -58,28 +52,15 @@ abstract case class DataLakeImport[T](
 	inputKeyspace: String,
 	inputTable: String
 ) extends DLImport[T] {
-	protected def makeTemplateVersion(): Version = {
-		// create timestamp and TimeUUID for versioning
-		val timestamp = new Date()
-		val version = UUIDs.timeBased()
-
-		Version(version, appName, null, null, dataSources, timestamp)
-	}
 
 	protected def importToCassandra(): Unit = {
 		val conf = new SparkConf()
 			.setAppName(appName)
 		val sc = new SparkContext(conf)
 
-		val version = makeTemplateVersion()
+		val version = Version(appName, dataSources, sc)
 		val data = readInput(sc, version)
 		data.saveToCassandra(outputKeyspace, outputTable)
-
-		sc
-			.parallelize(
-				List((version.version, version.timestamp, version.datasources, version.program)))
-			.saveToCassandra(outputKeyspace,
-				versionTable, SomeColumns("version", "timestamp", "datasources", "program"))
 
 		sc.stop
 	}
