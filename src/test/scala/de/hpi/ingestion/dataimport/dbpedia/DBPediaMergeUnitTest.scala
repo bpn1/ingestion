@@ -1,6 +1,7 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
+import de.hpi.ingestion.datalake.models.Version
 import org.scalatest.{FlatSpec, Matchers}
 
 class DBPediaMergeUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
@@ -30,5 +31,5 @@ class DBPediaMergeUnitTest extends FlatSpec with SharedSparkContext with RDDComp
 		assertRDDEquals(expected, joined)
 	}
 
-	val version = DBPediaMerge.makeTemplateVersion()
+	val version = Version("DBPediaMergeUnitTest", Nil, sc)
 }
