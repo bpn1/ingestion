@@ -52,10 +52,23 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		subject.properties_history = historyBuffer.toMap
 	}
 
+	def removeProperties(): Unit = {
+		val historyBuffer = mutable.Map[String, List[Version]]()
+		historyBuffer ++= subject.properties_history
+
+		for(key <- subject.properties.keys) {
+			val oldHistory = historyBuffer.getOrElseUpdate(key, List[Version]())
+			historyBuffer.update(key, oldHistory ++ List(makeVersion(Nil)))
+		}
+
+		subject.properties = Map[String, List[String]]()
+		subject.properties_history = historyBuffer.toMap
+	}
+
 	def addRelations(
 		relations: Map[UUID, Map[String, String]],
 		validityMap: Map[UUID, Map[String, Map[String, String]]] = null
-	) {
+	): Unit = {
 		val buffer = mutable.Map[UUID, Map[String, String]]()
 		buffer ++= subject.relations
 
