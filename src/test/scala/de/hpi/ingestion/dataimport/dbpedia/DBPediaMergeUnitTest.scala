@@ -8,7 +8,7 @@ class DBPediaMergeUnitTest extends FlatSpec with SharedSparkContext with RDDComp
 	"mergeSubjects" should "merge a subject with his duplicates" in {
 		val subject = TestData.subjectList().head
 		val duplicate = TestData.dbpediaSubjectList().head
-		val merged = DBPediaMerge.mergeSubjects(subject, List(duplicate), version)
+		val merged = DBPediaMerge.mergeSubjects(subject, List(duplicate), version())
 		val expected = TestData.mergedSubject
 		expected.properties shouldEqual merged.properties
 	}
@@ -16,7 +16,7 @@ class DBPediaMergeUnitTest extends FlatSpec with SharedSparkContext with RDDComp
 	it should "keep all first level attributes of the old subject" in {
 		val subject = TestData.subjectList().head
 		val duplicate = TestData.dbpediaSubjectList().head
-		val merged = DBPediaMerge.mergeSubjects(subject, List(duplicate), version)
+		val merged = DBPediaMerge.mergeSubjects(subject, List(duplicate), version())
 		val expected = TestData.mergedSubject
 		expected.name shouldEqual merged.name
 	}
@@ -31,5 +31,5 @@ class DBPediaMergeUnitTest extends FlatSpec with SharedSparkContext with RDDComp
 		assertRDDEquals(expected, joined)
 	}
 
-	val version = Version("DBPediaMergeUnitTest", Nil, sc)
+	def version(): Version = Version("DBPediaMergeUnitTest", Nil, sc)
 }
