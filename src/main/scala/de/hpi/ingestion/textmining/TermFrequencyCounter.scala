@@ -56,7 +56,7 @@ object TermFrequencyCounter {
 	  */
 	def extractLinkContexts(entry: ParsedWikipediaEntry): List[(Link, Bag[String, Int])] = {
 		val tokens = tokenizer.tokenize(entry.getText())
-		entry.allLinks()
+		entry.textlinks
 			.map { link =>
 				val aliasTokens = tokenizer.tokenize(link.alias)
 				val aliasIndex = tokens.indexOfSlice(aliasTokens)
@@ -79,11 +79,11 @@ object TermFrequencyCounter {
 			.map { article =>
 				val links = extractLinkContexts(article)
 					.map { case (link, bag) =>
-						val enrichedLink = link
+						val enrichedLink = link.copy()
 						enrichedLink.context = bag.getCounts()
 						enrichedLink
 					}
-				val enrichedArticle = article
+				val enrichedArticle = article.copy()
 				enrichedArticle.linkswithcontext = links
 				enrichedArticle
 			}
