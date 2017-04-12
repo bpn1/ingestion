@@ -96,8 +96,18 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	"Link contexts" should "be exactly these bag of words" in {
 		val linkContexts = TestData.parsedWikipediaTestSet()
 			.flatMap(TermFrequencyCounter.extractLinkContexts)
-		val expectedContexts = TestData.linkContexts()
+		val expectedContexts = TestData.linkContextsTestSet()
 		linkContexts shouldBe expectedContexts
+	}
+
+	"Articles with link context" should "contain exactly these link contexts" in {
+		val expectedLinks = TestData.linksWithContextsTestSet()
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val enrichedLinks = TermFrequencyCounter.addLinksContexts(articles)
+			.flatMap(_.linkswithcontext)
+			.collect
+			.toSet
+		enrichedLinks shouldEqual expectedLinks
 	}
 
 	//	"Tf-Idf of link contexts" should "be extactly these tf-Idf values" in {
@@ -106,7 +116,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	//		val numDocuments = articles.count
 	//		val documentFrequencies = sc.parallelize(TestData.stemmedDocumentFrequenciesTestSet().toList)
 	//		val linkContextValues = TermFrequencyCounter
-	//			.calculateContextTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
+	//			.calculateLinkContextsTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 	//			.collect
 	//			.toSet
 	//		val expectedTfidf = TestData.linkContextsTfidf()

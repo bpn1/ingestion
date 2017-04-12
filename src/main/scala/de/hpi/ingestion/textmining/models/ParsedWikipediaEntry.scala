@@ -9,6 +9,7 @@ case class ParsedWikipediaEntry(
 	var categorylinks: List[Link] = List[Link](),
 	var disambiguationlinks: List[Link] = List[Link](),
 	var listlinks: List[Link] = List[Link](),
+	var linkswithcontext: List[Link] = List[Link](),
 	var context: Map[String, Int] = Map[String, Int]()
 ){
 	def setText(t: String): Unit = text = Option(t)

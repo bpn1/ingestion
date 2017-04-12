@@ -8,7 +8,8 @@ CREATE KEYSPACE wikidumps WITH REPLICATION = {
 CREATE TYPE wikidumps.link (
     alias text,
     page text,
-    offset int
+    offset int,
+    context map<text, int>
 );
 
 CREATE TABLE wikidumps.parsedwikipedia (
@@ -18,9 +19,10 @@ CREATE TABLE wikidumps.parsedwikipedia (
     categorylinks frozen<list<frozen<link>>>,
     disambiguationlinks frozen<list<frozen<link>>>,
     listlinks frozen<list<frozen<link>>>,
+	linkswithcontext frozen<list<frozen<link>>>,
     foundaliases list<text>,
     text text,
-	context map<text, int>
+	context map<text, int>,
 );
 
 CREATE TABLE wikidumps.wikipedia (

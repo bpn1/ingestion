@@ -9,7 +9,7 @@ object TermFrequencyCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
-	val outputTablename = "parsedwikipedia"
+	val outputArticlesTablename = "parsedwikipedia"
 	val tokenizer = new CleanCoreNLPTokenizer
 	val contextSize = 20
 
@@ -127,7 +127,7 @@ object TermFrequencyCounter {
 	  * @param documentFrequencyThreshold lower threshold for document frequencies
 	  * @return RDD of tuples containing the link and the tfIdfs of ever term in its context
 	  */
-	def calculateContextTfidf(
+	def calculateLinkContextsTfidf(
 		articles: RDD[ParsedWikipediaEntry],
 		documentFrequencies: RDD[DocumentFrequency],
 		numDocuments: Long,
@@ -181,6 +181,27 @@ object TermFrequencyCounter {
 			}
 	}
 
+	/**
+	  * Enriches links from all articles with their contexts (bag of words, implemented as Map)
+	  *
+	  * @param articles parsed Wikipedia articles which links will be enriched with their contexts
+	  * @return links with additional context information
+	  */
+	def addLinksContexts(articles: RDD[ParsedWikipediaEntry]): RDD[ParsedWikipediaEntry] = {
+		articles
+			.map { article =>
+				val links = extractLinkContexts(article)
+					.map { case (link, bag) =>
+						val enrichedLink = link
+						enrichedLink.context = bag.getCounts()
+						enrichedLink
+					}
+				val enrichedArticle = article
+				enrichedArticle.linkswithcontext = links
+				enrichedArticle
+			}
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Term Frequency Counter")
@@ -189,9 +210,11 @@ object TermFrequencyCounter {
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
 
-		articles
+		val articlesWithContext = articles
 			.map(addArticleContext)
-			.saveToCassandra(keyspace, outputTablename)
+
+		addLinksContexts(articlesWithContext)
+			.saveToCassandra(keyspace, outputArticlesTablename)
 
 		//		val numDocuments = articles.count()
 		//
@@ -201,7 +224,7 @@ object TermFrequencyCounter {
 		//			numDocuments,
 		//			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 		//
-		//		val contextTfidf = calculateContextTfidf(
+		//		val contextTfidf = calculateLinkContextsTfidf(
 		//			articles,
 		//			documentFrequencies,
 		//			numDocuments,
