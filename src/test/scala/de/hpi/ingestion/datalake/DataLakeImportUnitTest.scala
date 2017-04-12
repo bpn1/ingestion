@@ -1,8 +1,23 @@
 package de.hpi.ingestion.datalake
 
-/**
-  * Created by Lando on 12.04.17.
-  */
-class DataLakeImportUnitTest {
+import de.hpi.ingestion.datalake.mock.{Entity, Import}
+import org.scalatest.{FlatSpec, Matchers}
 
+class DataLakeImportUnitTest extends FlatSpec with Matchers {
+	"parseNormalizationConfig" should "generate a normalization mapping from a given path" in {
+		val mapping = Import.parseNormalizationConfig(Import.normalizationFile)
+		val expected = TestData.normalizationMapping
+		expected shouldEqual mapping
+	}
+
+	"normalizeProperties" should "normalize the properties of an entity" in {
+		val entity = TestData.testEntity
+		val mapping = TestData.normalizationMapping
+		val properties = Import.normalizeProperties(entity, mapping)
+		val expected = TestData.propertyMapping
+		expected shouldEqual properties
+	}
 }
+
+
+

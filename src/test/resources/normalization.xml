@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<normalization>
+    <attributeMapping>
+        <attribute>
+            <key>rootKey</key>
+            <mapping>root_value</mapping>
+        </attribute>
+        <attribute>
+            <key>nestedKey</key>
+            <mapping>nested_value:1</mapping>
+            <mapping>nested_value:2</mapping>
+            <mapping>nested_value:3</mapping>
+        </attribute>
+    </attributeMapping>
+</normalization>
