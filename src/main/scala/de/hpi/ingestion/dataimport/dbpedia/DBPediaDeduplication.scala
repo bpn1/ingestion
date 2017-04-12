@@ -78,7 +78,7 @@ object DBPediaDeduplication {
 	): RDD[Subject] = {
 		dbpediaRDD
 		    .union(subjectRDD)
-		    .flatMap(x => List(x._2._1, x._2._1))
+		    .flatMap(x => List(x._2._1, x._2._2))
 		    .distinct
 	}
 

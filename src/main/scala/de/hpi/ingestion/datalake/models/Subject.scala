@@ -77,7 +77,7 @@ case class Subject(
 
 		this.name.foreach(name => mappedProperties(s"$prefix.name") = List(name))
 		this.category.foreach(category => mappedProperties(s"$prefix.category") = List(category))
-		mappedProperties(s"$prefix.aliases") = this.aliases
+		if (this.aliases.nonEmpty) mappedProperties(s"$prefix.aliases") = this.aliases
 
 		val prefixedProperties = this.properties.map { case (key, value) => s"$prefix.$key" -> value }
 
