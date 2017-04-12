@@ -12,6 +12,7 @@ import scala.collection.mutable
 object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 	"WikiDataDataLakeImport_v1.0",
 	List("wikidata_20161117"),
+	"normalization_wikidata.xml",
 	"wikidumps",
 	"wikidata")
 {
@@ -34,7 +35,7 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 		if(entity.instancetype.isDefined) {
 			sm.setCategory(entity.instancetype.get)
 		}
-		val metadata = mutable.Map(("wikidata_id", List(entity.id)))
+		val metadata = mutable.Map[String, List[String]](("wikidata_id", List(entity.id)))
 		if(entity.wikiname.isDefined) {
 			metadata += "wikipedia_name" -> List(entity.wikiname.get)
 		}

@@ -3,12 +3,12 @@ package de.hpi.ingestion.datalake
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import java.util.Date
+import java.net.URL
 
 import org.apache.spark.rdd.RDD
 import com.datastax.driver.core.utils.UUIDs
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 
-import scala.collection.mutable
 import scala.io.Source
 import scala.xml.XML
 
@@ -36,10 +36,17 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 
 	/**
 	  * Parses the normalization config file into a Map
+	  * @param url the path to the config file
+	  * @return a Map containing the normalized attributes mapped to the new subject attributes
+	  */
+	protected def parseNormalizationConfig(url: URL): Map[String, List[String]]
+
+	/**
+	  * Parses the normalization config file into a Map
 	  * @param path the path to the config file
 	  * @return a Map containing the normalized attributes mapped to the new subject attributes
 	  */
-	protected def parseNormalizationConfig(path: String): Map[String, List[(String, String)]]
+	protected def parseNormalizationConfig(path: String): Map[String, List[String]]
 
 	/**
 	  * Normalizes a given entity into a map
@@ -82,22 +89,27 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 	inputKeyspace: String,
 	inputTable: String
 ) extends DLImport[T] {
-	protected def parseNormalizationConfig(path: String): Map[String, List[String]] = {
+	protected def parseNormalizationConfig(url: URL): Map[String, List[String]] = {
 		val xml = XML.loadString(Source
-			.fromURL(getClass.getResource(s"/$path"))
+			.fromURL(url)
 			.getLines()
 			.mkString("\n"))
-
-		(xml \\ "normalization" \ "attributeMapping")
+		
+		(xml \\ "normalization" \ "attributeMapping" \ "attribute")
 			.toList
 			.map { attribute =>
 				val key = (attribute \ "key").text
-				val values = (attribute \ "mappings")
+				val values = (attribute \ "mapping")
 					.toList
 					.map(_.text)
 				(key, values)
 			}
 			.toMap
+	}
+
+	protected def parseNormalizationConfig(path: String): Map[String, List[String]] = {
+		val url = getClass.getResource(s"/$path")
+		this.parseNormalizationConfig(url)
 	}
 
 	protected def normalizeProperties(
