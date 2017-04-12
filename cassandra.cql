@@ -110,3 +110,9 @@ CREATE TABLE datalake.object (
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>
 );
+
+CREATE TABLE datalake.deduplicationstats (
+    id uuid PRIMARY KEY,
+    comment text,
+    data map<frozen<list<text>>, int>
+);
