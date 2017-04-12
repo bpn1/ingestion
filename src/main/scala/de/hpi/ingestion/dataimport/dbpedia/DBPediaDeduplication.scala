@@ -57,9 +57,9 @@ object DBPediaDeduplication {
 	def translateToCandidate(
 		candidate: (String, (Subject, Subject)),
 		duplicate_table: String
-	): DuplicateCandidate = candidate match {
-		case (key, (subject1, subject2)) => DuplicateCandidate(subject1.id, subject2, duplicate_table)
-		case _ => null
+	): DuplicateCandidate = {
+		val (key, (subject1, subject2)) = candidate
+		DuplicateCandidate(subject1.id, subject2, duplicate_table)
 	}
 
 	def joinOnName(dbpediaRDD: RDD[Subject], subjectRDD: RDD[Subject]): RDD[(String, (Subject, Subject))] = {
@@ -99,11 +99,9 @@ object DBPediaDeduplication {
 		val keyedCandidate2 = candidate2.keyBy(_.subject_id)
 
 		keyedCandidate1
-		    .cogroup(keyedCandidate2)
-			.filter {
-				case (subject_id, (it1, it2)) => (it1 ++ it2).nonEmpty
-			}
-		    .map {
+			.cogroup(keyedCandidate2)
+			.filter { case (subject_id, (it1, it2)) => (it1 ++ it2).nonEmpty }
+			.map {
 				case (subject_id, (it1, it2)) => DuplicateCandidates(
 					subject_id,
 					(it1 ++ it2).toList.distinct.map(_.toTuple())

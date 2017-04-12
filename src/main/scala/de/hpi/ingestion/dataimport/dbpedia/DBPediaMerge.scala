@@ -30,7 +30,7 @@ object DBPediaMerge {
 		val sm = new SubjectManager(subject, version)
 		val prefixedProperties = subject
 			.properties
-		    .map { case (key, value) => s"wikidata.$key" -> value }
+			.map { case (key, value) => s"wikidata.$key" -> value }
 
 		val newProperties = duplicates
 			.foldLeft(Map[String, List[String]]()) {
@@ -48,16 +48,16 @@ object DBPediaMerge {
 	): RDD[(Subject, List[Subject])] = {
 		subjects
 			.keyBy(_.id)
-		    .join(duplicates.keyBy(_.subject_id))
-		    .values
-		    .map { case (subject, candidates) => (subject, candidates.candidates.map(_._1)) }
+			.join(duplicates.keyBy(_.subject_id))
+			.values
+			.map { case (subject, candidates) => (subject, candidates.candidates.map(_._1)) }
 	}
 
 	def extractIds(duplicates: RDD[DuplicateCandidates]): List[UUID] = {
 		duplicates
-		    .map(_.candidates.map(_._1.id))
-		    .reduce(_ ::: _)
-		    .distinct
+			.map(_.candidates.map(_._1.id))
+			.reduce(_ ::: _)
+			.distinct
 	}
 
 	def main(args: Array[String]): Unit = {

@@ -72,15 +72,16 @@ case class Subject(
 	}
 
 	def toProperties(prefix: String): Map[String, List[String]] = {
-		val properties = mutable.Map[String, List[String]]()
+		val mappedProperties = mutable.Map[String, List[String]]()
 
-		if(this.name.isDefined) properties += (s"$prefix.name" -> this.get("name"))
-		if(this.aliases.nonEmpty) properties += (s"$prefix.aliases" -> this.get("aliases"))
-		if(this.category.isDefined) properties += (s"$prefix.category" -> this.get("category"))
+
+		this.name.foreach(name => mappedProperties(s"$prefix.name") = List(name))
+		this.category.foreach(category => mappedProperties(s"$prefix.category") = List(category))
+		mappedProperties(s"$prefix.aliases") = this.aliases
 
 		val prefixedProperties = this.properties.map { case (key, value) => s"$prefix.$key" -> value }
 
-		properties ++= prefixedProperties
-		properties.toMap
+		mappedProperties ++= prefixedProperties
+		mappedProperties.toMap
 	}
 }
