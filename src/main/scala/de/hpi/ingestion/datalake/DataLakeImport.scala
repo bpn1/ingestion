@@ -104,17 +104,15 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 		entity: T,
 		mapping: Map[String, List[String]]
 	): Map[String, List[String]] = {
-		val properties = mutable.Map[String, List[String]]()
 		mapping
 		    .map {
-				case (key, values) => (key, getAllProperties(entity, values))
+				case (key, values) => (
+					key,
+					values
+					    .map(value => entity.get(value))
+					    .reduce(_ ::: _)
+				)
 			}
-	}
-
-	protected def getAllProperties(entity: T, keys: List[String]): List[String] = {
-		keys
-		    .map(key => entity.get(key))
-		    .reduce(_ ::: _)
 	}
 
 	protected def makeTemplateVersion(): Version = {
