@@ -49,7 +49,7 @@ object TrieBuilder {
 			.setAppName("TrieBuilder")
 			.set("spark.cassandra.connection.host", "odin01")
 		 	.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-			.set("spark.kryo.registrator", "TrieKryoRegistrator")
+			.set("spark.kryo.registrator", "de.hpi.ingestion.textmining.TrieKryoRegistrator")
 		val sc = new SparkContext(conf)
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 		val aliasList = parsedWikipedia
@@ -58,7 +58,7 @@ object TrieBuilder {
 			.distinct
 			.collect
 
-		val tokenizer = new CleanCoreNLPTokenizer()
+		val tokenizer = new CleanCoreNLPTokenizer
 
 		val localTrie = new TrieNode()
 		for(alias <- aliasList) {
