@@ -15,12 +15,12 @@
             <mapping>property-de:viaf</mapping>
         </attribute>
         <attribute>
-            <key>id_lccn</key><mappings>
+            <key>id_lccn</key>
             <mapping>dbo:lccn</mapping>
             <mapping>property-de:lccn</mapping>
         </attribute>
         <attribute>
-            <key>geo_postal</key><mappings>
+            <key>geo_postal</key>
             <mapping>property-de:plz</mapping>
             <mapping>property-de:postleitzahl</mapping>
         </attribute>
