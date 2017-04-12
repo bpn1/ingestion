@@ -3,6 +3,8 @@ package de.hpi.ingestion.datalake.models
 import scala.reflect.runtime.universe._
 import java.util.{Date, UUID}
 
+import scala.collection.mutable
+
 case class Subject(
 
 	var id: UUID = UUID.randomUUID(),
@@ -67,5 +69,19 @@ case class Subject(
 		} else {
 			properties.getOrElse(attribute, List[String]())
 		}
+	}
+
+	def toProperties(prefix: String): Map[String, List[String]] = {
+		val mappedProperties = mutable.Map[String, List[String]]()
+
+
+		this.name.foreach(name => mappedProperties(s"$prefix.name") = List(name))
+		this.category.foreach(category => mappedProperties(s"$prefix.category") = List(category))
+		if (this.aliases.nonEmpty) mappedProperties(s"$prefix.aliases") = this.aliases
+
+		val prefixedProperties = this.properties.map { case (key, value) => s"$prefix.$key" -> value }
+
+		mappedProperties ++= prefixedProperties
+		mappedProperties.toMap
 	}
 }
