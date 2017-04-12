@@ -1,6 +1,6 @@
 package de.hpi.ingestion.datalake
 
-import de.hpi.ingestion.datalake.mock.{Entity, Import}
+import de.hpi.ingestion.datalake.mock.Import
 import org.scalatest.{FlatSpec, Matchers}
 
 class DataLakeImportUnitTest extends FlatSpec with Matchers {

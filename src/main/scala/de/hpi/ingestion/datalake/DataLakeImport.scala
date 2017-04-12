@@ -123,8 +123,10 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 					values
 					    .map(value => entity.get(value))
 					    .reduce(_ ::: _)
+					    .distinct
 				)
 			}
+		    .filter { case (key, values) => values.nonEmpty }
 	}
 
 	protected def makeTemplateVersion(): Version = {
