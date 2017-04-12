@@ -31,7 +31,7 @@ object WikipediaRedirectResolver {
 		val sc = new SparkContext(conf)
 		val dict = mutable.Map[String, String]()
 
-		val redirectRegex = new Regex("REDIRECT[^\\s]")
+		val redirectRegex = new Regex("REDIRECT [^\\s]")
 		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
 		dataRDD
 			.filter(entry => redirectRegex.findFirstIn(entry.getText()).isDefined)

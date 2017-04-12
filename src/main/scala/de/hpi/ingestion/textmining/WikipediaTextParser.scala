@@ -31,7 +31,7 @@ object WikipediaTextParser {
 	}
 
 	def isRedirectPage(html: String): Boolean = {
-		val redirectRegex = new Regex("\\AWEITERLEITUNG")
+		val redirectRegex = new Regex("(?i)((\\AWEITERLEITUNG)|(\\AREDIRECT))")
 		val searchText = Jsoup.parse(html).body.text
 		redirectRegex.findFirstIn(searchText).isDefined
 	}
@@ -48,7 +48,7 @@ object WikipediaTextParser {
 		val parsedEntry = ParsedWikipediaEntry(title)
 		val document = Jsoup.parse(html)
 		if (isRedirectPage(html)) {
-			val text = document.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
+			val text = document.body.text.replaceAll("(?i)((\\AWEITERLEITUNG)|(\\AREDIRECT))", redirectText)
 			parsedEntry.setText(text)
 			parsedEntry.textlinks = extractRedirect(title, html, text)
 		} else if (title.endsWith(disambiguationTitleSuffix)) {
