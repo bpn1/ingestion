@@ -4,6 +4,7 @@ import java.util.UUID
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.datalake.models.Subject
+import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.similarity._
 import org.apache.spark.rdd.RDD
 import org.scalatest.{FlatSpec, Matchers}
@@ -36,9 +37,9 @@ class DeduplicationUnitTest
 		val deduplication = defaultDeduplication
 		deduplication.parseConfig()
 		val expected = List(
-			scoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8),
-			scoreConfig[String, SimilarityMeasure[String]]("name", JaroWinkler, 0.7),
-			scoreConfig[String, SimilarityMeasure[String]]("name", ExactMatchString, 0.2)
+			ScoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8),
+			ScoreConfig[String, SimilarityMeasure[String]]("name", JaroWinkler, 0.7),
+			ScoreConfig[String, SimilarityMeasure[String]]("name", ExactMatchString, 0.2)
 		)
 		deduplication.config shouldEqual expected
 	}
