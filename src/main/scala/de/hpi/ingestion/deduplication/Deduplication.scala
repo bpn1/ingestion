@@ -1,10 +1,11 @@
 package de.hpi.ingestion.deduplication
 
-import java.util.{Date, UUID}
+import java.util.Date
 
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.deduplication.similarity._
+import de.hpi.ingestion.deduplication.models._
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
@@ -14,49 +15,6 @@ import com.datastax.driver.core.utils.UUIDs
 import scala.xml.XML
 import scala.collection.mutable
 import scala.io.Source
-
-/**
-  * Case class for corresponding duplicatecandidates cassandra table.
-  * @param id unique UUID used as primary key
-  * @param subject_id UUID of subject in the existing subject table
-  * @param subject_name name of subject in the existing subject table
-  * @param duplicate_id UUID of duplicate subject
-  * @param duplicate_name name of duplicate subject
-  * @param duplicate_table source table of duplicate
-  */
-case class DuplicateCandidate(
-	id: UUID,
-	subject_id: UUID,
-	subject_name: Option[String] = None,
-	duplicate_id: UUID,
-	duplicate_name: Option[String] = None,
-	duplicate_table: String)
-
-/**
-  * Reproduces a configuration for a comparison of two Subjects
-  * @param key the attribute of a Subject to be compared
-  * @param similarityMeasure the similarity measure used for the comparison
-  * @param weight the weight of the result
-  * @param scale specifies the n-gram if the similarity measure has one
-  * @tparam A type of the attribute
-  * @tparam B type of the similarity measure
-  */
-case class scoreConfig[A, B <: SimilarityMeasure[A]](
-	key: String,
-	similarityMeasure: B,
-	weight: Double,
-	scale: Int = 1)
-/**
-  * Case class for corresponding block_evaluation cassandra table
-  *
-  * @param id      unique UUID used as primary key
-  * @param data    Map containing the information about the blocks sizes
-  * @param comment String containing a comment or description of the data
-  */
-case class BlockEvaluation(
-	id: UUID = UUID.randomUUID(),
-	data: Map[List[String], Int] = Map[List[String], Int](),
-	comment: Option[String] = None)
 
 /**
   * Abstract class containing generic methods for the deduplication
@@ -71,7 +29,7 @@ class Deduplication(
 	val dataSources: List[String],
 	val configFile: Option[String] = None
 ) extends Serializable {
-	var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
+	var config = List[ScoreConfig[String, SimilarityMeasure[String]]]()
 	val settings = mutable.Map[String, String]()
 
 	/**
@@ -127,7 +85,7 @@ class Deduplication(
 				val weight = (feature \ "weight").text
 				val scale = (feature \ "scale").text
 
-				scoreConfig[String, SimilarityMeasure[String]](
+				ScoreConfig[String, SimilarityMeasure[String]](
 					attribute,
 					Deduplication.dataTypes
 						.getOrElse(simMeasure, ExactMatchString)
