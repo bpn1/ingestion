@@ -6,7 +6,6 @@ import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-
 import scala.collection.mutable
 
 object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
@@ -37,7 +36,9 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 		val sm = new SubjectManager(subject, version)
 
 		if(entity.label.isDefined) {
-			sm.setName(entity.label.orNull)
+			// To avoid this KEMA@de . as a name
+			val label = entity.label.map(_.replaceAll("@de .$", "")).orNull
+			sm.setName(label)
 		}
 
 		sm.addProperties(entity.data ++ properties)

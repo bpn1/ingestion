@@ -142,15 +142,9 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 			.setAppName(appName)
 		val sc = new SparkContext(conf)
 
-		val version = makeTemplateVersion()
+		val version = Version(appName, dataSources, sc)
 		val data = readInput(sc, version)
 		data.saveToCassandra(outputKeyspace, outputTable)
-
-		sc
-			.parallelize(
-				List((version.version, version.timestamp, version.datasources, version.program)))
-			.saveToCassandra(outputKeyspace,
-				versionTable, SomeColumns("version", "timestamp", "datasources", "program"))
 
 		sc.stop
 	}

@@ -1,9 +1,7 @@
 package de.hpi.ingestion.deduplication
 
-import java.util.UUID
-
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.datalake.models.Subject
+import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.similarity._
 import org.apache.spark.rdd.RDD
 import org.scalatest.{FlatSpec, Matchers}
@@ -68,7 +66,7 @@ class DeduplicationUnitTest
 		val duplicates = sc.parallelize(List(
 			(subject1, subject4),
 			(subject2, subject3)))
-		val version = deduplication.makeTemplateVersion()
+		val version = Version("DeduplicationUnitTest", List[String](), sc)
 		val mergedSubject = deduplication.merging(duplicates, version)
 		val expected = sc.parallelize(List(
 			Subject(
@@ -95,7 +93,7 @@ class DeduplicationUnitTest
 	"addSymRelation" should "add a symmetric relation between two given nodes" in {
 		val deduplication = defaultDeduplication()
 		val sampleRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
-		val sampleVersion = deduplication.makeTemplateVersion()
+		val sampleVersion = Version("DeduplicationUnitTest", List[String](), sc)
 
 		val expectedRelationNode1 = Map(subject2.id -> sampleRelation)
 		val expectedRelationNode2 = Map(subject1.id -> sampleRelation)
