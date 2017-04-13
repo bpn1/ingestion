@@ -87,9 +87,14 @@ object WikipediaAliasCounter {
 
 		aliasCounts
 			.map(aliasCount => (aliasCount.alias, aliasCount))
-			.join(joinableLinks)
-			.map { case (alias, (aliasCount, link)) =>
-				Alias(alias, link.pages, aliasCount.link_occurrences, aliasCount.total_occurrences)
+			.fullOuterJoin(joinableLinks)
+			.map {
+				case (alias, (Some(aliasCount), Some(link))) =>
+					Alias(alias, link.pages, aliasCount.link_occurrences, aliasCount.total_occurrences)
+				case (alias, (Some(aliasCount), None)) =>
+					Alias(alias, Map(), aliasCount.link_occurrences, aliasCount.total_occurrences)
+				case (alias, (None, Some(link))) =>
+					Alias(alias, link.pages)
 			}
 	}
 

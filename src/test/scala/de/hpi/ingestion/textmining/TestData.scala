@@ -96,7 +96,7 @@ object TestData {
 			Alias("Main-Kinzig-Kreis", Map(), 0, 1),
 			Alias("Hessen", Map(), 1, 1),
 			Alias("Hessen", Map(), 0, 1),
-			Alias("1377",Map(), 1, 1),
+			Alias("1377", Map(), 1, 1),
 			Alias("Büdinger Wald", Map(), 1, 1),
 			Alias("Büdinger Wald", Map(), 0, 1),
 			Alias("Backfisch", Map(), 0, 1),
@@ -133,6 +133,20 @@ object TestData {
 		)
 	}
 
+	def unmatchedLinksSet(): Set[Alias] = {
+		// has missing and additional links compared to counted aliases
+		Set(
+			Alias("Brachttal", Map("Brachttal" -> 1)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1)),
+			Alias("1377", Map("1377" -> 1337)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1)),
+			Alias("Backfisch", Map("Backfisch" -> 1, "Promenade in Wismar" -> 12)),
+			Alias("historisches Jahr", Map("1337" -> 1, "1492" -> 2, "2017" -> 3)),
+			Alias("Baum", Map("Baum" -> 10, "Wald" -> 2, "Raumübergreifendes Großgrün" -> 5)),
+			Alias("Mensa", Map("Doch lieber Döner" -> 100))
+		)
+	}
+
 	def mergedAliasCountsAndLinksSet(): Set[Alias] = {
 		Set(
 			Alias("Audi", Map("Audi" -> 123), 2, 3),
@@ -144,6 +158,22 @@ object TestData {
 			Alias("Backfisch", Map("Backfisch" -> 1, "Promenade in Wismar" -> 12), 0, 1),
 			Alias("Streitberg", Map("Streitberg" -> 1), 0, 1),
 			Alias("historisches Jahr", Map("1337" -> 1, "1492" -> 2, "2017" -> 3), 1, 1)
+		)
+	}
+
+	def completelyMergedAliasCountsAndLinksSet(): Set[Alias] = {
+		Set(
+			Alias("Audi", Map(), 2, 3),
+			Alias("Brachttal", Map("Brachttal" -> 1), 2, 2),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), 1, 2),
+			Alias("Hessen", Map(), 1, 2),
+			Alias("1377", Map("1377" -> 1337), 1, 1),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), 1, 2),
+			Alias("Backfisch", Map("Backfisch" -> 1, "Promenade in Wismar" -> 12), 0, 1),
+			Alias("Streitberg", Map(), 0, 1),
+			Alias("historisches Jahr", Map("1337" -> 1, "1492" -> 2, "2017" -> 3), 1, 1),
+			Alias("Baum", Map("Baum" -> 10, "Wald" -> 2, "Raumübergreifendes Großgrün" -> 5), 0, 0),
+			Alias("Mensa", Map("Doch lieber Döner" -> 100), 0, 0)
 		)
 	}
 
@@ -651,6 +681,7 @@ object TestData {
 	}
 
 }
+
 // scalastyle:on method.length
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods

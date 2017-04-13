@@ -29,10 +29,9 @@ CREATE TABLE wikidumps.wikipedia (
 
 CREATE TABLE wikidumps.wikipedialinks (
     alias text PRIMARY KEY,
-    link_occurences int,
-    total_occurences int,
-    alias text PRIMARY KEY,
-    pages map<text, int>
+    pages map<text, int>,
+    link_occurrences int,
+    total_occurrences int
 );
 
 CREATE TABLE wikidumps.wikipediapages (
