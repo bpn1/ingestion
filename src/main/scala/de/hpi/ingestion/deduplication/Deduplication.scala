@@ -237,11 +237,16 @@ class Deduplication(
 	  * @param duplicates tuple of Subject
 	  * @return subjects containing the merged information of both duplicates
 	  */
-	def buildDuplicatesClique(duplicates: List[(Subject, Subject, Double)], version: Version): Unit = {
-		duplicates
-			.map { x =>
-				addSymRelation(x._1, x._2, Map("type" -> "isDuplicate", "confidence" -> (x._3).toString), version)
-			}
+	def buildDuplicatesSCC(duplicates: List[(Subject, Subject, Double)], version: Version): Unit = {
+
+		duplicates.foreach { scoredDuplicatePair =>
+			addSymRelation(
+				scoredDuplicatePair._1,
+				scoredDuplicatePair._2,
+				Map("type" -> "isDuplicate", "confidence" -> (scoredDuplicatePair._3).toString),
+				version
+			)
+		}
 	}
 
 	/**
