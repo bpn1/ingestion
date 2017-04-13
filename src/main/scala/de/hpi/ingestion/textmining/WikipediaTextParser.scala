@@ -22,7 +22,8 @@ object WikipediaTextParser {
 	val outputTablename = "parsedwikipedia"
 	val namespaceFile = "dewiki_namespaces"
 	val categoryNamespace = "Kategorie:"
-	val redirectText = "REDIRECT "
+	val parsableRedirect = "WEITERLEITUNG"
+	val redirectText = "REDIRECT"
 	val disambiguationTitleSuffix = " (Begriffsklärung)"
 
 	def wikipediaToHtml(wikiMarkup: String): String = {
@@ -31,9 +32,8 @@ object WikipediaTextParser {
 	}
 
 	def isRedirectPage(html: String): Boolean = {
-		val redirectRegex = new Regex("(?i)((\\AWEITERLEITUNG)|(\\AREDIRECT))")
 		val searchText = Jsoup.parse(html).body.text
-		redirectRegex.findFirstIn(searchText).isDefined
+		searchText.startsWith(parsableRedirect)
 	}
 
 	def extractRedirect(title: String, html: String, text: String): List[Link] = {
@@ -48,7 +48,7 @@ object WikipediaTextParser {
 		val parsedEntry = ParsedWikipediaEntry(title)
 		val document = Jsoup.parse(html)
 		if (isRedirectPage(html)) {
-			val text = document.body.text.replaceAll("(?i)((\\AWEITERLEITUNG)|(\\AREDIRECT))", redirectText)
+			val text = document.body.text.replaceAll("(?i)(\\A(WEITERLEITUNG|REDIRECT))", redirectText)
 			parsedEntry.setText(text)
 			parsedEntry.textlinks = extractRedirect(title, html, text)
 		} else if (title.endsWith(disambiguationTitleSuffix)) {
@@ -266,8 +266,10 @@ object WikipediaTextParser {
 	}
 
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
-		val redirectRegex = "(?i)((Weiterleitung:?)|(redirect))\\s?:?"
-		entry.setText(entry.getText().replaceAll(redirectRegex, "WEITERLEITUNG"))
+		val redirectRegex = "(?i)(weiterleitung|redirect)\\s?:?\\s?"
+		val replaceString = parsableRedirect + " "
+		val cleanedText = entry.getText().replaceAll(redirectRegex, replaceString)
+		entry.setText(cleanedText)
 		entry
 	}
 
