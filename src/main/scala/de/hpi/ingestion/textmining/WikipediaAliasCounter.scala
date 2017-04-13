@@ -10,6 +10,7 @@ object WikipediaAliasCounter {
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputLinksTablename = "wikipedialinks"
 	val outputTablename = "wikipedialinks"
+	val maximumAliasLength = 1000
 
 	/**
 	  * Calculates the probability that an alias is a link.
@@ -98,6 +99,19 @@ object WikipediaAliasCounter {
 			}
 	}
 
+	/**
+	  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages
+	  * @param articles parsed Wikipedia articles
+	  * @param links articles with their corresponding pages
+	  * @return merged links and alias counts
+	  */
+	def run(articles: RDD[ParsedWikipediaEntry], links: RDD[Alias]): RDD[Alias] = {
+		val aliasCounts = countAliases(articles)
+			.cache
+			.filter(_.alias.length <= maximumAliasLength)
+		mergeAliasCountsAndLinks(aliasCounts, links)
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Alias Counter")
@@ -105,9 +119,8 @@ object WikipediaAliasCounter {
 		val sc = new SparkContext(conf)
 
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		countAliases(articles).cache
-			.filter(_.alias.length <= 1000)
-			.saveToCassandra(keyspace, outputTablename)
+		val links = sc.cassandraTable[Alias](keyspace, inputLinksTablename)
+		run(articles, links).saveToCassandra(keyspace, outputTablename)
 
 		sc.stop()
 	}

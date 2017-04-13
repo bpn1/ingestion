@@ -94,9 +94,7 @@ class WikipediaAliasCounterTest extends FlatSpec with RDDComparisons with Shared
 	"Merged alias counts and links" should "be exactly these links" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val links = sc.parallelize(TestData.linksSet().toList)
-		val countedAliases = WikipediaAliasCounter.countAliases(articles)
-		val mergedLinks = WikipediaAliasCounter
-			.mergeAliasCountsAndLinks(countedAliases, links)
+		val mergedLinks = WikipediaAliasCounter.run(articles, links)
 			.collect
 			.toSet
 		mergedLinks shouldEqual TestData.mergedAliasCountsAndLinksSet()
@@ -105,9 +103,7 @@ class WikipediaAliasCounterTest extends FlatSpec with RDDComparisons with Shared
 	they should "support not discard incomplete entries" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val links = sc.parallelize(TestData.unmatchedLinksSet().toList)
-		val countedAliases = WikipediaAliasCounter.countAliases(articles)
-		val mergedLinks = WikipediaAliasCounter
-			.mergeAliasCountsAndLinks(countedAliases, links)
+		val mergedLinks = WikipediaAliasCounter.run(articles, links)
 			.collect
 			.toSet
 		mergedLinks shouldEqual TestData.completelyMergedAliasCountsAndLinksSet()
