@@ -137,8 +137,7 @@ class DeduplicationUnitTest
 	}
 
 	def getSampleVersion : Version = {
-		val version = new Version(new UUID(0L, 0L), "SomeTestApp")
-		version
+		Version("SomeTestApp", Nil, sc)
 	}
 
 	def testBlocks(testSubjects: List[Subject]): List[(List[String], List[Subject])] = {
