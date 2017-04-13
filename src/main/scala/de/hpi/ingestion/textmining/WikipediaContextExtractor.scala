@@ -27,9 +27,11 @@ object WikipediaContextExtractor {
 	): RDD[DocumentFrequency] = {
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
-			.flatMap(article => textToWordSet(article.getText(), tokenizer))
-			.filter(word => !stopwords.contains(word))
-			.map(word => stem(word))
+			.flatMap(article =>
+				textToWordSet(article.getText(), tokenizer)
+					.filter(word => !stopwords.contains(word))
+					.map(word => stem(word))
+			)
 			.map(word => (word, 1))
 			.reduceByKey(_ + _)
 			.map { case (word, count) => DocumentFrequency(word, count) }
