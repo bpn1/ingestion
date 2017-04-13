@@ -1,11 +1,10 @@
 package de.hpi.ingestion.deduplication
 
-import java.util.Date
-
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.deduplication.similarity._
 import de.hpi.ingestion.deduplication.models._
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
@@ -141,12 +140,6 @@ class Deduplication(
 	  * @return tuple of Subjects whose score is greater or equal a given threshold this.confidence
 	  */
 	def findDuplicates(block: List[Subject]): List[(Subject, Subject)] = {
-
-		// from http://stackoverflow.com/questions/14740199/cross-product-in-scala
-		implicit class Crossable[X](xs: Traversable[X]) {
-			def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
-		}
-
 		block
 			.cross(block)
 			.filter(tuple => tuple._1 != tuple._2)
