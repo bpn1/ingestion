@@ -88,21 +88,20 @@ object WikipediaAliasCounter {
 
 		aliasCounts
 			.map(aliasCount => (aliasCount.alias, aliasCount))
-			.fullOuterJoin(joinableLinks)
+			.leftOuterJoin(joinableLinks)
 			.map {
-				case (alias, (Some(aliasCount), Some(link))) =>
+				case (alias, (aliasCount, Some(link))) =>
 					Alias(alias, link.pages, aliasCount.link_occurrences, aliasCount.total_occurrences)
-				case (alias, (Some(aliasCount), None)) =>
+				case (alias, (aliasCount, None)) =>
 					Alias(alias, Map(), aliasCount.link_occurrences, aliasCount.total_occurrences)
-				case (alias, (None, Some(link))) =>
-					Alias(alias, link.pages)
 			}
 	}
 
 	/**
 	  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages
+	  *
 	  * @param articles parsed Wikipedia articles
-	  * @param links articles with their corresponding pages
+	  * @param links    articles with their corresponding pages
 	  * @return merged links and alias counts
 	  */
 	def run(articles: RDD[ParsedWikipediaEntry], links: RDD[Alias]): RDD[Alias] = {
