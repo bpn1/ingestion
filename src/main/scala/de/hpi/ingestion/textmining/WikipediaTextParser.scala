@@ -13,6 +13,7 @@ import java.net.URLDecoder
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.textmining.models._
+import org.apache.spark.rdd.RDD
 
 import scala.io.Source
 
@@ -328,14 +329,19 @@ object WikipediaTextParser {
 			.map(anchor => Link(anchor.text, parseUrl(anchor.attr("href"))))
 	}
 
+	def parseWikipedia(wikipedia: RDD[WikipediaEntry]): RDD[ParsedWikipediaEntry] = {
+		wikipedia
+			.filter(!isMetaPage(_))
+			.map(parseWikipediaEntry)
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Textparser")
 		val sc = new SparkContext(conf)
 
 		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
-		wikipedia
-			.map(parseWikipediaEntry)
+		parseWikipedia(wikipedia)
 			.saveToCassandra(keyspace, outputTablename)
 		sc.stop
 	}
