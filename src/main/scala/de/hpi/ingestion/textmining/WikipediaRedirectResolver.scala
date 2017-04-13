@@ -17,7 +17,7 @@ object WikipediaRedirectResolver {
 	def cleanLinkOfRedirects(link: Link, dict: mutable.Map[String, String]): Link = {
 		var lookupSet = Set[String]()
 		var lookupResult = dict.getOrElse(link.page, link.page)
-		while(dict.contains(lookupResult) && !lookupSet.contains(lookupResult)) {
+		while (dict.contains(lookupResult) && !lookupSet.contains(lookupResult)) {
 			lookupSet += lookupResult
 			lookupResult = dict.getOrElse(lookupResult, lookupResult)
 		}
@@ -31,7 +31,7 @@ object WikipediaRedirectResolver {
 		val sc = new SparkContext(conf)
 		val dict = mutable.Map[String, String]()
 
-		val redirectRegex = new Regex("REDIRECT [^\\s]")
+		val redirectRegex = new Regex("REDIRECT[^\\s]")
 		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
 		dataRDD
 			.filter(entry => redirectRegex.findFirstIn(entry.getText()).isDefined)
@@ -44,6 +44,8 @@ object WikipediaRedirectResolver {
 					}
 				}
 			}
+
+		sc.parallelize(dict.toSeq).saveAsTextFile("redirects")
 
 		val dictBroadcast = sc.broadcast(dict)
 		dataRDD
