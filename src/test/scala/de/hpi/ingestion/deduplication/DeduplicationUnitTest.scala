@@ -1,6 +1,9 @@
 package de.hpi.ingestion.deduplication
 
+import java.util.UUID
+
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
+import org.apache.spark.{SparkConf, SparkContext}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.similarity._
 import org.scalatest.{FlatSpec, Matchers}
@@ -77,7 +80,7 @@ class DeduplicationUnitTest
 		val expectedRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
 		val expectedRelationNode1 = Map(testSubjects(2).id -> expectedRelation)
 		val expectedRelationNode2 = Map(testSubjects(3).id -> expectedRelation)
-		val version = deduplication.makeTemplateVersion()
+		val version = getSampleVersion
 		deduplication.buildDuplicatesSCC(duplicates, version)
 
 		testSubjects(0).relations shouldEqual expectedRelationNode1
@@ -131,6 +134,11 @@ class DeduplicationUnitTest
 			Subject(
 				name = Some("Ferrari"))
 		)
+	}
+
+	def getSampleVersion : Version = {
+		val version = new Version(new UUID(0L, 0L), "SomeTestApp")
+		version
 	}
 
 	def testBlocks(testSubjects: List[Subject]): List[(List[String], List[Subject])] = {
