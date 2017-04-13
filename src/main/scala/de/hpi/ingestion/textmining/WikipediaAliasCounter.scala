@@ -76,12 +76,21 @@ object WikipediaAliasCounter {
 
 	/**
 	  * Joins the alias counts and links
-	  * @param aliases alias counts
-	  * @param links links with all their linked pages
+	  *
+	  * @param aliasCounts aliases with their respective numbers of occurrences
+	  * @param links       links with all their linked pages
 	  * @return links with their alias counts
 	  */
-	def mergeAliasCountsAndLinks(aliases: RDD[Alias], links: RDD[Alias]): RDD[Alias] = {
-		aliases
+	def mergeAliasCountsAndLinks(aliasCounts: RDD[Alias], links: RDD[Alias]): RDD[Alias] = {
+		val joinableLinks = links
+			.map(link => (link.alias, link))
+
+		aliasCounts
+			.map(aliasCount => (aliasCount.alias, aliasCount))
+			.join(joinableLinks)
+			.map { case (alias, (aliasCount, link)) =>
+				Alias(alias, link.pages, aliasCount.link_occurrences, aliasCount.total_occurrences)
+			}
 	}
 
 	def main(args: Array[String]): Unit = {
