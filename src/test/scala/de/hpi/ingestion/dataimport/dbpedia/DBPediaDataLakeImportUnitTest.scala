@@ -1,9 +1,10 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import org.scalatest.{FlatSpec, Matchers}
+import com.holdenkarau.spark.testing.SharedSparkContext
 
-class DBPediaDataLakeImportUnitTest extends FlatSpec with Matchers {
-	val version = TestData.version
+class DBPediaDataLakeImportUnitTest extends FlatSpec with Matchers with SharedSparkContext {
+	val version = TestData.version(sc)
 	val entity = TestData.testEntity
 	val subject = DataLakeImportDBpedia.translateToSubject(entity, version)
 

@@ -89,11 +89,8 @@ object TestData {
 		))
 	}
 
-	def makeTemplateVersion(): Version = {
-		Version(program = "DBPediaDataLakeImport", datasources = List("dataSources"))
-	}
+	def version(sc: SparkContext): Version = Version("DBPediaDataLakeImport", datasources = List("dataSources"), sc)
 
-	val version = makeTemplateVersion()
 	val testEntity = DBPediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
 		label = Option("Liste von Autoren"),

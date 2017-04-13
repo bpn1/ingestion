@@ -2,11 +2,8 @@ package de.hpi.ingestion.datalake
 
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
-import java.util.Date
 import java.net.URL
-
 import org.apache.spark.rdd.RDD
-import com.datastax.driver.core.utils.UUIDs
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 
 import scala.io.Source
@@ -57,12 +54,6 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 		entity: T,
 		mapping: Map[String, List[String]]
 	): Map[String, List[String]]
-
-	/**
-	  * Createds a new version for the import
-	  * @return a version reproducing to the details of the import
-	  */
-	protected def makeTemplateVersion(): Version
 
 	/**
 	  * A generic import from the new data table to the staging area table
@@ -127,14 +118,6 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 				)
 			}
 		    .filter { case (key, values) => values.nonEmpty }
-	}
-
-	protected def makeTemplateVersion(): Version = {
-		// create timestamp and TimeUUID for versioning
-		val timestamp = new Date()
-		val version = UUIDs.timeBased()
-
-		Version(version, appName, null, null, dataSources, timestamp)
 	}
 
 	protected def importToCassandra(): Unit = {
