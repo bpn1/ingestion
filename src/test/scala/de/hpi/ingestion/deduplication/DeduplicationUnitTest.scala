@@ -144,7 +144,7 @@ class DeduplicationUnitTest
 	def testBlocks(testSubjects: List[Subject]): List[(List[List[String]], List[Subject])] = {
     
 		List((List(List("Berlin")),  List(testSubjects(0), testSubjects(1), testSubjects(3))),
-			(List(List("New York")), List(testSubjects(2)),
+			(List(List("New York")), List(testSubjects(2))),
 			(List(List("undefined")), List(testSubjects(4), testSubjects(5))))
 	}
 
