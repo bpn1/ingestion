@@ -56,16 +56,16 @@ case class Subject(
 		if(this.fieldNames.contains(attribute)) {
 			val field = this.getClass().getDeclaredField(attribute)
 			field.setAccessible(true)
-			if(attribute == "name" || attribute == "category") {
-				val value = field.get(this).asInstanceOf[Option[String]]
-				List[String](value.getOrElse(""))
-			} else if(attribute == "aliases") {
-				field.get(this).asInstanceOf[List[String]]
-			} else {
-				List[String]()
+			attribute match {
+				case "name" | "category" => {
+					val value = field.get(this).asInstanceOf[Option[String]]
+					List(value.getOrElse(""))
+				}
+				case "aliases" => field.get(this).asInstanceOf[List[String]]
+				case _ => Nil
 			}
 		} else {
-			properties.getOrElse(attribute, List[String]())
+			properties.getOrElse(attribute, Nil)
 		}
 	}
 

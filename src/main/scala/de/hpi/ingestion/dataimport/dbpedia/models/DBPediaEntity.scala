@@ -30,10 +30,10 @@ case class DBPediaEntity(
 					val value = field.get(this).asInstanceOf[Option[String]]
 					List[String](value.getOrElse(""))
 				}
-				case _ => List[String]()
+				case _ => Nil
 			}
 		} else {
-			data.getOrElse(attribute, List[String]())
+			data.getOrElse(attribute, Nil)
 		}
 	}
 }
