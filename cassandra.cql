@@ -78,6 +78,20 @@ CREATE TYPE datalake.version (
     program text
 );
 
+CREATE TYPE datalake.subject (
+    id uuid,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
 CREATE TABLE datalake.subject (
     id uuid PRIMARY KEY,
     aliases list<text>,
@@ -109,4 +123,37 @@ CREATE TABLE datalake.object (
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>
+);
+
+CREATE TABLE datalake.duplicatecandidates (
+    subject_id uuid PRIMARY KEY,
+    candidates list<frozen<tuple<subject, text, double>>>
+);
+
+CREATE TABLE datalake.goldstandard (
+    id uuid PRIMARY KEY,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+CREATE TABLE datalake.subject_merged (
+    id uuid PRIMARY KEY,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );

@@ -138,17 +138,6 @@ class Deduplication(
 	}
 
 	/**
-	  * Creates timestamp and TimeUUID for versioning.
-	  * @return New current Version object.
-	  */
-	def makeTemplateVersion(): Version = {
-		val timestamp = new Date()
-		val version = UUIDs.timeBased()
-
-		Version(version, appName, null, null, dataSources, timestamp)
-	}
-
-	/**
 	  * Uses input blocking scheme to generate blocks of subjects.
 	  * @param subjects RDD to perform the blocking on.
 	  * @param blockingScheme blocking scheme to use to generate keys.
