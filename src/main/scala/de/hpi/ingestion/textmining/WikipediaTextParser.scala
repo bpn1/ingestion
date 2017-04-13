@@ -266,7 +266,7 @@ object WikipediaTextParser {
 	}
 
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
-		val redirectRegex = "(?i)#(weiterleitung|redirect) ?(: ?)?"
+		val redirectRegex = "(?i)((Weiterleitung:?)|(redirect))\\s?:?"
 		entry.setText(entry.getText().replaceAll(redirectRegex, "WEITERLEITUNG"))
 		entry
 	}
