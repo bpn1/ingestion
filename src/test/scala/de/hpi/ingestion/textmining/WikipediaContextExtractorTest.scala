@@ -63,55 +63,43 @@ class WikipediaContextExtractorTest
 	"Document frequencies" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val documentFrequencies = WikipediaContextExtractor
-			.countDocumentFrequencies(articles)
+			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
 		documentFrequencies should not be empty
 	}
 
 	they should "be greater than zero" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		WikipediaContextExtractor
-			.countDocumentFrequencies(articles)
+			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
 			.collect
 			.foreach(df => df.count should be > 0)
 	}
 
 	they should "contain these document frequencies" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val documentFrequencies = WikipediaContextExtractor.countDocumentFrequencies(articles)
+		val documentFrequencies = WikipediaContextExtractor
+			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
 			.collect
 			.toSet
 		documentFrequencies should contain allElementsOf TestData.documentFrequenciesTestSet()
 	}
-
-	"Stemmed document frequencies" should "not contain unstemmed German words" in {
-		val documentFrequencies = sc.parallelize(TestData.unstemmedDFTestSet().toList)
-		val stemmedDF = WikipediaContextExtractor
-			.stemDocumentFrequencies(documentFrequencies)
-			.map(_.word)
+	they should "be exactly these document frequencies" in {
+		val articles = sc.parallelize(TestData.unstemmedDFTestSet().toList)
+		val documentFrequencies = WikipediaContextExtractor
+			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
 			.collect
 			.toSet
-		stemmedDF should contain noElementsOf TestData.unstemmedGermanWordsTestList()
+		documentFrequencies should contain allElementsOf TestData.stemmedDFTestSet()
 	}
-
-	they should "contain these document frequencies" in {
-		val documentFrequencies = sc.parallelize(TestData.unstemmedDFTestSet().toList)
-		val stemmedDF = WikipediaContextExtractor
-			.stemDocumentFrequencies(documentFrequencies)
-			.collect
-			.toSet
-		stemmedDF should contain allElementsOf TestData.stemmedDFTestSet()
-	}
+	
 
 	"Filtered document frequencies" should "not contain German stopwords" in {
-		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
-		val filteredWords = WikipediaContextExtractor
-			.filterDocumentFrequencies(documentFrequencies,
-				1,
-				TestData.germanStopwordsTestSet())
-			.map(_.word)
+		val articles = sc.parallelize(TestData.unstemmedDFTestSet().toList)
+		val documentFrequencies = WikipediaContextExtractor
+			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
 			.collect
 			.toSet
-		filteredWords should contain noElementsOf TestData.germanStopwordsTestSet()
+		documentFrequencies should contain noElementsOf TestData.germanDFStopwordsTestSet()
 	}
 
 	they should "not contain infrequent words" in {
@@ -119,8 +107,7 @@ class WikipediaContextExtractorTest
 		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
 		val infrequentWords = WikipediaContextExtractor
 			.filterDocumentFrequencies(documentFrequencies,
-				threshold,
-				Set[String]())
+				threshold)
 			.filter(_.count < threshold)
 			.collect
 			.toSet
@@ -131,18 +118,16 @@ class WikipediaContextExtractorTest
 		val threshold = 3
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val documentFrequencies = WikipediaContextExtractor
-			.countDocumentFrequencies(articles)
+			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
 		val filteredDocumentFrequencies = WikipediaContextExtractor
 			.filterDocumentFrequencies(documentFrequencies,
-				threshold,
-				TestData.germanStopwordsTestSet())
+				threshold)
 			.collect
 			.toSet
 		val testFilteredDocumentFrequencies = TestData.filteredDocumentFrequenciesTestList()
 			.toSet
 		filteredDocumentFrequencies should contain allElementsOf testFilteredDocumentFrequencies
 	}
-
 	"Requested document frequency" should "be correct for known words or else (threshold - 1)" in {
 		val threshold = 3
 		val requestedDocumentFrequencies = TestData.documentFrequenciesTestSet()

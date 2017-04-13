@@ -171,29 +171,25 @@ object TestData {
 
 	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
-			DocumentFrequency("Audi", 3),
-			DocumentFrequency("Backfisch", 1),
-			DocumentFrequency("ist", 3),
-			DocumentFrequency("und", 2),
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("backfisch", 1),
 			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("einer", 1)
+			DocumentFrequency("ein", 1)
 		)
 	}
 
 	def filteredDocumentFrequenciesTestList(): List[DocumentFrequency] = {
 		List(
-			DocumentFrequency("Audi", 3)
+			DocumentFrequency("audi", 3)
 		)
 	}
 
 	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
-			DocumentFrequency("Audi", 3),
-			DocumentFrequency("Backfisch", 2),
-			DocumentFrequency("ist", 2),
-			DocumentFrequency("und", 2),
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("backfisch", 2),
 			DocumentFrequency("zugleich", 2),
-			DocumentFrequency("einer", 2)
+			DocumentFrequency("ein", 2)
 		)
 	}
 
@@ -218,7 +214,7 @@ object TestData {
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("ein", 5)
+			DocumentFrequency("ein", 3)
 		)
 	}
 
@@ -408,28 +404,51 @@ object TestData {
 		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
 	}
 
-	def unstemmedDFTestSet(): Set[DocumentFrequency] = {
+	def unstemmedDFTestSet(): Set[ParsedWikipediaEntry] = {
 		Set(
-			DocumentFrequency("Audi", 3),
-			DocumentFrequency("Backfisch", 1),
-			DocumentFrequency("ist", 3),
-			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("einer", 2),
-			DocumentFrequency("ein", 2),
-			DocumentFrequency("Einer", 1),
-			DocumentFrequency("Ein", 1)
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich einer ein Link."),
+				List(
+					Link("Audi", "Audi", 9)
+				),
+				List(),
+				List("Audi")
+			),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich einer Einer Link"),
+				List(
+					Link("Audi", "Audi", 9)
+				),
+				List(),
+				List("Audi")
+			),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich Ein Link."),
+				List(
+					Link("Audi", "Audi", 9)
+				),
+				List(),
+				List("Audi")
+			),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi audi aUdi auDi."),
+				List(
+					Link("Audi", "Audi", 9)
+				),
+				List(),
+				List("Audi")
+			)
 		)
 	}
 
 	def stemmedDFTestSet(): Set[DocumentFrequency] = {
 		Set(
-			DocumentFrequency("audi", 3),
-			DocumentFrequency("backfisch", 1),
+			DocumentFrequency("audi", 4),
+			DocumentFrequency("backfisch", 3),
+			DocumentFrequency("zugleich", 3),
+			DocumentFrequency("ein", 3)
+		)
+	}
+	def germanDFStopwordsTestSet(): Set[DocumentFrequency] = {
+		Set(
 			DocumentFrequency("ist", 3),
-			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("ein", 6)
+			DocumentFrequency("und", 3)
 		)
 	}
 
