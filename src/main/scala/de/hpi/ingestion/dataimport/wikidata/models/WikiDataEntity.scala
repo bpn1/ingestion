@@ -27,10 +27,16 @@ case class WikiDataEntity(
 			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {
-				case _ => List[String]()
+				case "id" => List(this.id)
+				case "description" | "entititype" | "wikiname" | "enwikiname" | "instancetype" | "label" => {
+					val value = field.get(this).asInstanceOf[Option[String]]
+					List(value.getOrElse(""))
+				}
+				case "aliases" => field.get(this).asInstanceOf[List[String]]
+				case _ => Nil
 			}
 		} else {
-			data.getOrElse(attribute, List[String]())
+			data.getOrElse(attribute, Nil)
 		}
 	}
 }

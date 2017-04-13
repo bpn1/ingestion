@@ -22,6 +22,15 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 	}
 
 	override def translateToSubject(entity: DBPediaEntity, version: Version): Subject = {
+		val subject = Subject()
+		val sm = new SubjectManager(subject, version)
+
+		if(entity.label.isDefined) {
+			// To avoid this KEMA@de . as a name
+			val label = entity.label.map(_.replaceAll("@de .$", "")).orNull
+			sm.setName(label)
+		}
+
 		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val normalizedProperties = normalizeProperties(entity, mapping)
 		val properties = mutable.Map[String, List[String]]()
@@ -31,15 +40,6 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 			normalizedProperties("geo_coords_lat").head,
 			normalizedProperties("geo_coords_long").head
 		))
-
-		val subject = Subject()
-		val sm = new SubjectManager(subject, version)
-
-		if(entity.label.isDefined) {
-			// To avoid this KEMA@de . as a name
-			val label = entity.label.map(_.replaceAll("@de .$", "")).orNull
-			sm.setName(label)
-		}
 
 		sm.addProperties(entity.data ++ properties)
 		subject

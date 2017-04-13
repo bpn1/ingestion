@@ -100,7 +100,8 @@ object TestData {
 			"property-de:viaf" -> List("Y123"),
 			"geo:lat" -> List("52"),
 			"property-de:latitude" -> List("53"),
-			"geo:long" -> List("100")
+			"geo:long" -> List("100"),
+			"testProperty" -> List("test")
 		)
 	)
 

@@ -26,23 +26,16 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
-		if(entity.label.isDefined) {
-			sm.setName(entity.label.get)
-		}
-		if(entity.aliases.nonEmpty) {
-			sm.addAliases(entity.aliases)
-		}
-		if(entity.instancetype.isDefined) {
-			sm.setCategory(entity.instancetype.get)
-		}
-		val metadata = mutable.Map[String, List[String]](("wikidata_id", List(entity.id)))
-		if(entity.wikiname.isDefined) {
-			metadata += "wikipedia_name" -> List(entity.wikiname.get)
-		}
-		if(entity.data.nonEmpty) {
-			metadata ++= entity.data
-		}
-		sm.addProperties(metadata.toMap)
+		if(entity.label.isDefined) sm.setName(entity.label.get)
+		if(entity.aliases.nonEmpty) sm.addAliases(entity.aliases)
+		if(entity.instancetype.isDefined) sm.setCategory(entity.instancetype.get)
+
+		val mapping = parseNormalizationConfig(this.normalizationFile)
+		val normalizedProperties = normalizeProperties(entity, mapping)
+		val properties = mutable.Map[String, List[String]]()
+		properties ++= (entity.data ++ normalizedProperties)
+
+		sm.addProperties(entity.data ++ properties)
 		subject
 	}
 
