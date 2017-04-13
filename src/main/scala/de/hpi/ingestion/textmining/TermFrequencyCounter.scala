@@ -59,11 +59,12 @@ object TermFrequencyCounter {
 			val aliasTokens = tokenizer.tokenize(link.alias)
 			val aliasIndex = tokens.indexOfSlice(aliasTokens)
 			val contextStart = Math.max(aliasIndex - contextSize, 0)
+			val preAliasContext = tokens.slice(contextStart, aliasIndex)
 			val contextEnd = Math.min(aliasIndex + contextSize, tokens.length)
-			val context = tokens.slice(contextStart, contextEnd)
+			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
+			val context = preAliasContext ++ postAliasContext
 			val bag = extractBagOfWords(context)
-			link.context = bag.getCounts()
-			link
+			link.copy(context = bag.getCounts())
 		}
 		entry.copy(linkswithcontext = contextLinks)
 	}

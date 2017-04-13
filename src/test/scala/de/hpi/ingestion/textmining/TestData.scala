@@ -16,16 +16,14 @@ object TestData {
 		List(
 			"This is a test sentence.",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen.",
-			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."
-		)
+			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.")
 	}
 
 	def tokenizedTestSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
-			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen")
-		)
+			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"))
 	}
 
 	def allAliasesTestRDD(sc: SparkContext): RDD[String] = {
@@ -38,8 +36,7 @@ object TestData {
 			"Büdinger Wald",
 			"Backfisch",
 			"Streitberg",
-			"historisches Jahr"
-		))
+			"historisches Jahr"))
 			.sortBy(identity)
 	}
 
@@ -50,13 +47,11 @@ object TestData {
 					Link("Audi", "Audi", 9)
 				),
 				List(),
-				List("Audi")
-			),
+				List("Audi")),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
 				List(),
-				List("Audi")
-			),
+				List("Audi")),
 			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
 					Link("Brachttal", "Brachttal", 55),
@@ -66,8 +61,7 @@ object TestData {
 					Link("Büdinger Wald", "Büdinger Wald", 546)
 				),
 				List(),
-				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald")
-			),
+				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald")),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
 					Link("Audi", "Audi", 7),
@@ -75,8 +69,7 @@ object TestData {
 					Link("historisches Jahr", "1377", 24)
 				),
 				List(),
-				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")
-			))
+				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
 	def articlesWithContextTestSet(): Set[ParsedWikipediaEntry] = {
@@ -103,21 +96,7 @@ object TestData {
 				),
 				List(),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
-				context = Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)
-		))
-	}
-
-	def linkContextsTestSet(): Set[Link] = {
-		Set(
-			Link("Audi", "Audi", 9, Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)),
-			Link("Brachttal", "Brachttal", 55, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-			Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-			Link("Hessen", "Hessen", 87, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "dem" -> 1, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-			Link("1377", "1377", 225, Map("einwohnerzahl" -> 1, "und" -> 1, "streidtburgk" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "dem" -> 1, "bezeichnung" -> 1, "ein" -> 2, "jahr" -> 3, "von" -> 2, "im" -> 1, "270" -> 1, "erst" -> 1, "stridberg" -> 1, "kleinst" -> 1, "die" -> 3, "stamm" -> 1, "auf" -> 1, "weit" -> 1, "tauch" -> 1, "1500" -> 1, "es" -> 1, "mit" -> 1, "1377" -> 1, "spa" -> 1, "namensvaria" -> 1, "ca." -> 1, "red" -> 1, "zugleich" -> 1)),
-			Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "und" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "der" -> 1, "im" -> 1, "-" -> 1, "ins" -> 1, "-rrb-" -> 1, "hatt" -> 1, "holx" -> 1, "buding" -> 1, "wald" -> 1, "ortsnam" -> 1, "vom" -> 1, "streitberg" -> 1, "mittelal" -> 1, "bis" -> 1)),
-			Link("Audi", "Audi", 7, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-			Link("Brachttal", "Brachttal", 13, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-			Link("historisches Jahr", "1377", 24, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+				context = Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
 	}
 
 	def linksWithContextsTestSet(): Set[Link] = {
@@ -208,8 +187,7 @@ object TestData {
 		Set(
 			("Audi Test mit Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)),
 			("Audi Test ohne Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)),
-			("Testartikel", Bag("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1))
-		)
+			("Testartikel", Bag("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
 	}
 
 	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
@@ -217,8 +195,7 @@ object TestData {
 			AliasOccurrencesInArticle(Set("Audi"), Set()),
 			AliasOccurrencesInArticle(Set(), Set("Audi")),
 			AliasOccurrencesInArticle(Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), Set("Streitberg")),
-			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
-		))
+			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
 	}
 
 	def startAliasCounterTestRDD(sc: SparkContext): RDD[AliasCounts] = {
@@ -237,8 +214,7 @@ object TestData {
 			AliasCounts("Büdinger Wald", 0, 1),
 			AliasCounts("Backfisch", 0, 1),
 			AliasCounts("Streitberg", 0, 1),
-			AliasCounts("historisches Jahr", 1, 1)
-		))
+			AliasCounts("historisches Jahr", 1, 1)))
 	}
 
 	def countedAliasesTestRDD(sc: SparkContext): RDD[AliasCounts] = {
@@ -251,8 +227,7 @@ object TestData {
 			AliasCounts("Büdinger Wald", 1, 2),
 			AliasCounts("Backfisch", 0, 1),
 			AliasCounts("Streitberg", 0, 1),
-			AliasCounts("historisches Jahr", 1, 1)
-		))
+			AliasCounts("historisches Jahr", 1, 1)))
 	}
 
 	def linkProbabilitiesTestRDD(sc: SparkContext): RDD[(String, Double)] = {
@@ -265,8 +240,7 @@ object TestData {
 			("Büdinger Wald", 1.0 / 2),
 			("Backfisch", 0.0),
 			("Streitberg", 0.0),
-			("historisches Jahr", 1.0)
-		))
+			("historisches Jahr", 1.0)))
 			.sortBy(_._1)
 	}
 
@@ -283,8 +257,7 @@ object TestData {
 			"Hessen",
 			"1377",
 			"Büdinger Wald",
-			"Audi"
-		))
+			"Audi"))
 			.sortBy(identity)
 	}
 
@@ -292,8 +265,7 @@ object TestData {
 		Set(
 			"Audi",
 			"Brachttal",
-			"1377"
-		)
+			"1377")
 	}
 
 	def articleContextwordSets(): Map[String, Set[String]] = {
@@ -313,14 +285,12 @@ object TestData {
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("einer", 1)
-		)
+			DocumentFrequency("einer", 1))
 	}
 
 	def filteredDocumentFrequenciesTestList(): List[DocumentFrequency] = {
 		List(
-			DocumentFrequency("Audi", 3)
-		)
+			DocumentFrequency("Audi", 3))
 	}
 
 	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
@@ -333,8 +303,7 @@ object TestData {
 			DocumentFrequency("einer", 2),
 			DocumentFrequency("ein", 2),
 			DocumentFrequency("Einer", 1),
-			DocumentFrequency("Ein", 1)
-		)
+			DocumentFrequency("Ein", 1))
 	}
 
 	def incorrectStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
@@ -367,8 +336,7 @@ object TestData {
 			DocumentFrequency("historisch", 1),
 			DocumentFrequency("kein", 1),
 			DocumentFrequency("backfisch", 1),
-			DocumentFrequency("nochmal", 1)
-		)
+			DocumentFrequency("nochmal", 1))
 	}
 
 	def filteredStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
@@ -383,8 +351,7 @@ object TestData {
 			DocumentFrequency("buding", 2),
 			DocumentFrequency("wald", 2),
 			DocumentFrequency("jahr", 2),
-			DocumentFrequency("und", 2)
-		)
+			DocumentFrequency("und", 2))
 	}
 
 	def filteredStemmedDocumentFrequenciesSmallTestSet(): Set[DocumentFrequency] = {
@@ -393,8 +360,7 @@ object TestData {
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("ist", 2),
 			DocumentFrequency("hier", 2),
-			DocumentFrequency("verlink", 2)
-		)
+			DocumentFrequency("verlink", 2))
 	}
 
 	def inverseDocumentFrequenciesTestSet(): Set[(String, Double)] = {
@@ -418,8 +384,7 @@ object TestData {
 		Set(
 			("Audi Test mit Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
 			("Audi Test ohne Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
-			("Testartikel", Map("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1))
-		)
+			("Testartikel", Map("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
 	def unstemmedGermanWordsTestSet(): Set[String] = {
@@ -520,8 +485,7 @@ object TestData {
 			WikipediaEntry("Zerfall", Option("""'''Zerfall''' steht für:\n* Radioaktiver Zerfall, siehe [[Radioaktivität]]\n* das [[Zerfallsgesetz]] einer radioaktiven Substanz\n* Exponentieller Zerfall, siehe [[Exponentielles Wachstum]]\n* den [[Zerfall (Soziologie)|Zerfall]] gesellschaftlicher Strukturen \n* ein Album der Band Eisregen, siehe [[Zerfall (Album)]]\n* den Film [[Raspad – Der Zerfall]]\n\n'''Siehe auch:'''\n{{Wiktionary}}\n\n{{Begriffsklärung}}""")),
 			WikipediaEntry("Fisch", Option("""'''Fisch''' steht für:\n\n* [[Fische]], im Wasser lebende Wirbeltiere \n* [[Speisefisch]], eine Lebensmittelkategorie\n* [[Fische (Sternbild)]]\n* [[Fische (Tierkreiszeichen)]]\n* [[Fisch (Christentum)]], religiöses Symbol\n* [[Fisch (Wappentier)]], gemeine Figur in der Heraldik\n\n'''Fisch''' ist der Name folgender Orte:\n\n* [[Fisch (Saargau)]], Ortsgemeinde in Rheinland-Pfalz\n\n{{Begriffsklärung}}""")),
 			WikipediaEntry("Zwilling (Begriffsklärung)", Option("""'''Zwilling''' bezeichnet:\n\n* den biologischen Zwilling, siehe [[Zwillinge]]\n* einen Begriff aus der Kristallkunde, siehe [[Kristallzwilling]]\n* [[Zwilling J. A. Henckels]], einen Hersteller von Haushaltswaren mit Sitz in Solingen\n\nin der Astronomie und Astrologie:\n\n* ein Sternbild, siehe [[Zwillinge (Sternbild)]]\n* eines der Tierkreiszeichen, siehe [[Zwillinge (Tierkreiszeichen)]]\n\n{{Begriffsklärung}}""")),
-			WikipediaEntry("Leadinstrument", Option("""#REDIRECT [[Lead (Musik)]]\n[[Kategorie:Musikinstrument nach Funktion]]"""))
-		)
+			WikipediaEntry("Leadinstrument", Option("""#REDIRECT [[Lead (Musik)]]\n[[Kategorie:Musikinstrument nach Funktion]]""")))
 	}
 
 	def wikipediaDisambiguationPagesTestSet(): Set[String] = {
@@ -539,8 +503,7 @@ object TestData {
 			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Alias("Bayern", Map("Bayern" -> 1)),
 			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Zerfall (Soziologie)" -> 1))
-		)
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Zerfall (Soziologie)" -> 1)))
 	}
 
 	def groupedPagesTestSet(): Set[Page] = {
@@ -549,8 +512,7 @@ object TestData {
 			Page("Bayern", Map("Bayern" -> 1)),
 			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
 			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
-			Page("Zerfall (Soziologie)", Map("Zerfall" -> 1))
-		)
+			Page("Zerfall (Soziologie)", Map("Zerfall" -> 1)))
 	}
 
 	def cleanedGroupedAliasesTestSet(): Set[Alias] = {
@@ -558,8 +520,7 @@ object TestData {
 			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Alias("Bayern", Map("Bayern" -> 1)),
 			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1))
-		)
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1)))
 	}
 
 	def cleanedGroupedPagesTestSet(): Set[Page] = {
@@ -567,8 +528,7 @@ object TestData {
 			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
 			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1))
-		)
+			Page("Zerfall (Album)", Map("Zerfall" -> 1)))
 	}
 
 	def probabilityReferences(): Map[String, Double] = {
@@ -576,8 +536,7 @@ object TestData {
 			"Ingolstadt" -> 0.0,
 			"Bayern" -> 1.0,
 			"Automobilhersteller" -> 0.0,
-			"Zerfall" -> 0.0
-		)
+			"Zerfall" -> 0.0)
 	}
 
 	def allPagesTestList(): List[String] = {
@@ -585,8 +544,7 @@ object TestData {
 			"Automobilhersteller",
 			"Ingolstadt",
 			"Bayern",
-			"Zerfall (Album)"
-		)
+			"Zerfall (Album)")
 	}
 
 	def smallerParsedWikipediaTestList(): List[ParsedWikipediaEntry] = {
@@ -598,10 +556,8 @@ object TestData {
 				Link("Zerfall", "Zerfall (Album)", 4711),
 				Link("Zerfall", "Zerfall (Soziologie)", 4711), // dead link
 				Link("", "page name with empty alias", 4711),
-				Link("alias with empty page name", "", 4711)
-			),
-				List()
-			))
+				Link("alias with empty page name", "", 4711)),
+				List()))
 	}
 
 	def germanStopwordsTestSet(): Set[String] = {
@@ -689,8 +645,7 @@ object TestData {
 			Link("August Horch", "Benutzer:August Horch", 0),
 			Link("August Horch", "Thema:August Horch", 0),
 			Link("August Horch", "HD:August Horch", 0),
-			Link("August Horch", "Kategorie:August Horch", 0)
-		)
+			Link("August Horch", "Kategorie:August Horch", 0))
 	}
 
 	def testListLinkPage(): String = {
@@ -725,8 +680,7 @@ object TestData {
 	def testCleanedNamespaceLinks(): List[Link] = {
 		List(
 			Link("August Horch", "August Horch", 0),
-			Link("August Horch", "Kategorie:August Horch", 0)
-		)
+			Link("August Horch", "Kategorie:August Horch", 0))
 	}
 
 	def testCategoryLinks(): List[Link] = {
