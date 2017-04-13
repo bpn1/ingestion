@@ -21,21 +21,15 @@ object WikipediaContextExtractor {
 		stemmer.stem(word)
 	}
 
-	def stemDocumentFrequencies(
-		documentFrequencies: RDD[DocumentFrequency]
-	): RDD[DocumentFrequency] = {
-		documentFrequencies
-			.map(df => (stem(df.word), df.count))
-			.reduceByKey(_ + _)
-			.map { case (word, count) => DocumentFrequency(word, count) }
-	}
-
 	def countDocumentFrequencies(
-		articles: RDD[ParsedWikipediaEntry]
+		articles: RDD[ParsedWikipediaEntry],
+		stopwords: Set[String]
 	): RDD[DocumentFrequency] = {
 		val tokenizer = new CleanCoreNLPTokenizer
 		articles
 			.flatMap(article => textToWordSet(article.getText(), tokenizer))
+			.filter(word => !stopwords.contains(word))
+			.map(word => stem(word))
 			.map(word => (word, 1))
 			.reduceByKey(_ + _)
 			.map { case (word, count) => DocumentFrequency(word, count) }
@@ -43,12 +37,10 @@ object WikipediaContextExtractor {
 
 	def filterDocumentFrequencies(
 		documentFrequencies: RDD[DocumentFrequency],
-		threshold: Int,
-		stopwords: Set[String]
+		threshold: Int
 	): RDD[DocumentFrequency] = {
 		documentFrequencies
-			.filter(documentFrequency => !stopwords.contains(documentFrequency.word) &&
-				documentFrequency.count >= threshold)
+			.filter(documentFrequency => documentFrequency.count >= threshold)
 	}
 
 	def textToWordSet(text: String, tokenizer: Tokenizer): Set[String] = {
@@ -112,14 +104,11 @@ object WikipediaContextExtractor {
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val stopwords = loadStopwords()
-		val documentFrequencies = countDocumentFrequencies(allArticles)
-		val filteredDocumentFrequencies = filterDocumentFrequencies(
+		val documentFrequencies = countDocumentFrequencies(allArticles, stopwords)
+		filterDocumentFrequencies(
 			documentFrequencies,
-			leastSignificantDocumentFrequency,
-			stopwords
+			leastSignificantDocumentFrequency
 		)
-		val stemmedDocuementFrequencies = stemDocumentFrequencies(filteredDocumentFrequencies)
-		stemmedDocuementFrequencies
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
 		//		extractAllContexts(allArticles)
 		//			.saveToCassandra(keyspace, outputContextsTablename)
