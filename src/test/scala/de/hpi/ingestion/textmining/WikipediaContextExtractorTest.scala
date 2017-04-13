@@ -89,7 +89,6 @@ class WikipediaContextExtractorTest
 			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
 			.collect
 			.toSet
-		print(documentFrequencies)
 		documentFrequencies should contain allElementsOf TestData.stemmedDFTestSet()
 	}
 
