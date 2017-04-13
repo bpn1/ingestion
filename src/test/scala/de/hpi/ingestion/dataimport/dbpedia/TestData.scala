@@ -91,7 +91,7 @@ object TestData {
 
 	def version(sc: SparkContext): Version = Version("DBPediaDataLakeImport", datasources = List("dataSources"), sc)
 
-	val testEntity = DBPediaEntity(
+	def testEntity(): DBPediaEntity = DBPediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
 		label = Option("Liste von Autoren"),
 		data = Map(

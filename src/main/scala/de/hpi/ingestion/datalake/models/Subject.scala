@@ -40,11 +40,7 @@ case class Subject(
 	  * @return list of field names
 	  */
 	def fieldNames(): List[String] = {
-		def classAccessors[T: TypeTag]: List[MethodSymbol] = typeOf[T].members.collect {
-			case m: MethodSymbol if m.isCaseAccessor => m
-		}.toList
-		val accessors = classAccessors[Subject]
-		accessors.map(_.name.toString)
+		super.fieldNames[Subject]()
 	}
 
 	/**
@@ -59,7 +55,7 @@ case class Subject(
 			attribute match {
 				case "name" | "category" => {
 					val value = field.get(this).asInstanceOf[Option[String]]
-					List(value.getOrElse(""))
+					value.map(List(_)).getOrElse(Nil)
 				}
 				case "aliases" => field.get(this).asInstanceOf[List[String]]
 				case _ => Nil

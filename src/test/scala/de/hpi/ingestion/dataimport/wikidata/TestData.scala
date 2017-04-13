@@ -269,7 +269,7 @@ object TestData {
 
 	def version(sc: SparkContext): Version = Version("DBPediaDataLakeImport", datasources = List("dataSources"), sc)
 
-	val testEntity = WikiDataEntity(
+	def testEntity(): WikiDataEntity = WikiDataEntity(
 		"Q21110253",
 		List("testalias"),
 		Option("human protein (annotated by UniProtKB/Swiss-Prot Q8N128)"),

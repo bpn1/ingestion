@@ -15,11 +15,7 @@ case class WikiDataEntity(
 	var data: Map[String, List[String]] = Map[String, List[String]]()
 ) extends DLImportEntity {
 	def fieldNames(): List[String] = {
-		def classAccessors[T: TypeTag]: List[MethodSymbol] = typeOf[T].members.collect {
-			case m: MethodSymbol if m.isCaseAccessor => m
-		}.toList
-		val accessors = classAccessors[WikiDataEntity]
-		accessors.map(_.name.toString)
+		super.fieldNames[WikiDataEntity]()
 	}
 
 	def get(attribute: String): List[String] = {
@@ -30,7 +26,7 @@ case class WikiDataEntity(
 				case "id" => List(this.id)
 				case "description" | "entititype" | "wikiname" | "enwikiname" | "instancetype" | "label" => {
 					val value = field.get(this).asInstanceOf[Option[String]]
-					List(value.getOrElse(""))
+					value.map(List(_)).getOrElse(Nil)
 				}
 				case "aliases" => field.get(this).asInstanceOf[List[String]]
 				case _ => Nil

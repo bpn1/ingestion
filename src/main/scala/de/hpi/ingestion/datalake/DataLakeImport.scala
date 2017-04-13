@@ -108,16 +108,8 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 		mapping: Map[String, List[String]]
 	): Map[String, List[String]] = {
 		mapping
-		    .map {
-				case (key, values) => (
-					key,
-					values
-					    .map(value => entity.get(value))
-					    .reduce(_ ::: _)
-					    .distinct
-				)
-			}
-		    .filter { case (key, values) => values.nonEmpty }
+		    .mapValues(_.map(value => entity.get(value)).reduce(_ ::: _).distinct)
+			.filter { case (key, values) => values.nonEmpty }
 	}
 
 	protected def importToCassandra(): Unit = {

@@ -7,7 +7,7 @@ class DataLakeImportUnitTest extends FlatSpec with Matchers {
 	"parseNormalizationConfig" should "generate a normalization mapping from a given path" in {
 		val mapping = Import.parseNormalizationConfig(Import.normalizationFile)
 		val expected = TestData.normalizationMapping
-		expected shouldEqual mapping
+		mapping shouldEqual expected
 	}
 
 	"normalizeProperties" should "normalize the properties of an entity" in {
@@ -15,7 +15,7 @@ class DataLakeImportUnitTest extends FlatSpec with Matchers {
 		val mapping = TestData.normalizationMapping
 		val properties = Import.normalizeProperties(entity, mapping)
 		val expected = TestData.propertyMapping
-		expected shouldEqual properties
+		properties shouldEqual expected
 	}
 }
 

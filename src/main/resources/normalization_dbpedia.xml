@@ -32,7 +32,7 @@
             <key>geo_street</key>
             <mapping>property-de:straße</mapping>
         </attribute>
-        <attribute>test
+        <attribute>
             <key>geo_city</key>
             <mapping>dbo:headquarter</mapping>
             <mapping>property-de:ort</mapping>
