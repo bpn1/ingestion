@@ -125,6 +125,12 @@ CREATE TABLE datalake.object (
     properties_history map<text, frozen<list<frozen<version>>>>
 );
 
+CREATE TABLE datalake.deduplicationstats (
+    id uuid PRIMARY KEY,
+    comment text,
+    data map<frozen<list<text>>, int>
+);
+
 CREATE TABLE datalake.duplicatecandidates (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<subject, text, double>>>

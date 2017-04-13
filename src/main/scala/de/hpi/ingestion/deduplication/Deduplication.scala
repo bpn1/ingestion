@@ -1,10 +1,11 @@
 package de.hpi.ingestion.deduplication
 
-import java.util.{Date, UUID}
+import java.util.Date
 
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.deduplication.similarity._
+import de.hpi.ingestion.deduplication.models._
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
@@ -14,49 +15,6 @@ import com.datastax.driver.core.utils.UUIDs
 import scala.xml.XML
 import scala.collection.mutable
 import scala.io.Source
-
-/**
-  * Case class for corresponding duplicatecandidates cassandra table.
-  * @param id unique UUID used as primary key
-  * @param subject_id UUID of subject in the existing subject table
-  * @param subject_name name of subject in the existing subject table
-  * @param duplicate_id UUID of duplicate subject
-  * @param duplicate_name name of duplicate subject
-  * @param duplicate_table source table of duplicate
-  */
-case class DuplicateCandidate(
-	id: UUID,
-	subject_id: UUID,
-	subject_name: Option[String] = None,
-	duplicate_id: UUID,
-	duplicate_name: Option[String] = None,
-	duplicate_table: String)
-
-/**
-  * Reproduces a configuration for a comparison of two Subjects
-  * @param key the attribute of a Subject to be compared
-  * @param similarityMeasure the similarity measure used for the comparison
-  * @param weight the weight of the result
-  * @param scale specifies the n-gram if the similarity measure has one
-  * @tparam A type of the attribute
-  * @tparam B type of the similarity measure
-  */
-case class scoreConfig[A, B <: SimilarityMeasure[A]](
-	key: String,
-	similarityMeasure: B,
-	weight: Double,
-	scale: Int = 1)
-/**
-  * Case class for corresponding block_evaluation cassandra table
-  *
-  * @param id      unique UUID used as primary key
-  * @param data    Map containing the information about the blocks sizes
-  * @param comment String containing a comment or description of the data
-  */
-case class BlockEvaluation(
-	id: UUID = UUID.randomUUID(),
-	data: Map[String, Int] = Map[String, Int](),
-	comment: Option[String] = None)
 
 /**
   * Abstract class containing generic methods for the deduplication
@@ -71,7 +29,7 @@ class Deduplication(
 	val dataSources: List[String],
 	val configFile: Option[String] = None
 ) extends Serializable {
-	var config = List[scoreConfig[String, SimilarityMeasure[String]]]()
+	var config = List[ScoreConfig[String, SimilarityMeasure[String]]]()
 	val settings = mutable.Map[String, String]()
 
 	/**
@@ -127,7 +85,7 @@ class Deduplication(
 				val weight = (feature \ "weight").text
 				val scale = (feature \ "scale").text
 
-				scoreConfig[String, SimilarityMeasure[String]](
+				ScoreConfig[String, SimilarityMeasure[String]](
 					attribute,
 					Deduplication.dataTypes
 						.getOrElse(simMeasure, ExactMatchString)
@@ -140,32 +98,32 @@ class Deduplication(
 	/**
 	  * Uses input blocking scheme to generate blocks of subjects.
 	  * @param subjects RDD to perform the blocking on.
-	  * @param blockingScheme blocking scheme to use to generate keys.
+	  * @param blockingSchemes blocking schemes to use to generate keys.
 	  * @return subjects grouped by blocking keys
 	  */
 	def blocking(
 		subjects: RDD[Subject],
-		blockingScheme: BlockingScheme
-	): RDD[(List[String], List[Subject])] = {
+		blockingSchemes: List[BlockingScheme]
+	): RDD[(List[List[String]], List[Subject])] = {
 		subjects
-			.map(subject => (blockingScheme.generateKey(subject), List(subject)))
-			.reduceByKey(_ ++ _)
+			.map(subject => (blockingSchemes.map(_.generateKey(subject)), List(subject)))
+			.reduceByKey(_ ++ _)	// ToDo: #182, better reduce function
 	}
 
 	/**
 	  * Creates blocks based on the input blocking scheme
 	  * @param subjects RDD to perform the blocking on
 	  * @param stagingSubjects RDD to perform the blocking on
-	  * @param blockingScheme blocking scheme to use to generate keys.
+	  * @param blockingSchemes blocking schemes to use to generate keys.
 	  * @return RDD of blocks.
 	  */
 	def blocking(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
-		blockingScheme: BlockingScheme = new SimpleBlockingScheme()
-	): RDD[(List[String], List[Subject])] = {
-		val subjectBlocks = blocking(subjects, blockingScheme)
-		val stagingBlocks = blocking(stagingSubjects, blockingScheme)
+		blockingSchemes: List[BlockingScheme]
+	): RDD[(List[List[String]], List[Subject])] = {
+		val subjectBlocks = blocking(subjects, blockingSchemes)
+		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
 		subjectBlocks
 			.fullOuterJoin(stagingBlocks)
 			.map {
@@ -246,32 +204,36 @@ class Deduplication(
 	  * @return Blocks with size-value and comment.
 	  */
 	def evaluateBlocks(
-		blocks: RDD[(List[String], List[Subject])],
+		blocks: RDD[(List[List[String]], List[Subject])],
 		comment: String
 	): BlockEvaluation = {
 		val dataMap = blocks
-			.map(block => (block._1.mkString(" "), block._2.size))
+			.map(block => (block._1.map(_.mkString(" ")), block._2.size))
 			.sortBy(_._2, false)
 			.collect()
 			.toMap
 		BlockEvaluation(data = dataMap, comment = Option(comment))
 	}
+
 	/**
 	  * Starts the deduplication process and writes the result to Cassandra.
+	  * @param blockingSchemes List of blocking schemes to be used on the data
 	  * @param merge boolean indicating whether or not the duplicates should be merged
 	  */
-	def run(merge: Boolean = false): Unit = {
+	def run(
+		blockingSchemes:  List[BlockingScheme] = List(new SimpleBlockingScheme),
+		merge: Boolean = false
+	): Unit = {
 		val conf = new SparkConf()
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
 		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
-		val blockingScheme = new SimpleBlockingScheme()
 		val blocks = if(merge) {
 			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable"))
-			blocking(subjects, staging, blockingScheme)
+			blocking(subjects, staging, blockingSchemes)
 		} else {
-			blocking(subjects, blockingScheme)
+			blocking(subjects, blockingSchemes)
 		}
 
 		val blockEvaluation = evaluateBlocks(blocks, this.appName)
