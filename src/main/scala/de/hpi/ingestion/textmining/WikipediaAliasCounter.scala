@@ -16,17 +16,17 @@ object WikipediaAliasCounter {
 	  * Calculates the probability that an alias is a link.
 	  *
 	  * @param aliasCounter Alias of a given alias
-	  * @return percentage of the occurences as link.
+	  * @return percentage of the occurrences as link.
 	  */
 	def probabilityIsLink(aliasCounter: Alias): Double = {
 		aliasCounter.link_occurrences.toDouble / aliasCounter.total_occurrences
 	}
 
 	/**
-	  * Extracts list of link and general alias occurences for an article
+	  * Extracts list of link and general alias occurrences for an article
 	  *
 	  * @param entry article from which the aliases will be extracted
-	  * @return list of aliases each with an occurence set to 1
+	  * @return list of aliases each with an occurrence set to 1
 	  */
 	def extractAliasList(entry: ParsedWikipediaEntry): List[Alias] = {
 		val linkSet = entry.allLinks()
@@ -51,7 +51,7 @@ object WikipediaAliasCounter {
 	  *
 	  * @param alias1 first Alias with the same alias as alias2
 	  * @param alias2 second Alias with the same alias as alias1
-	  * @return Alias with summed link and total occurences
+	  * @return Alias with summed link and total occurrences
 	  */
 	def aliasReduction(alias1: Alias, alias2: Alias): Alias = {
 		Alias(
@@ -62,10 +62,10 @@ object WikipediaAliasCounter {
 	}
 
 	/**
-	  * Counts link and total occurences of link aliases in Wikipedia articles.
+	  * Counts link and total occurrences of link aliases in Wikipedia articles.
 	  *
 	  * @param articles RDD containing parsed wikipedia articles
-	  * @return RDD containing alias counts for links and total occurences
+	  * @return RDD containing alias counts for links and total occurrences
 	  */
 	def countAliases(articles: RDD[ParsedWikipediaEntry]): RDD[Alias] = {
 		articles.flatMap(extractAliasList)

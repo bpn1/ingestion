@@ -75,7 +75,7 @@ class WikipediaAliasCounterTest extends FlatSpec with RDDComparisons with Shared
 		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
 	}
 
-	"Alias reduction function" should "properly add link occurences" in {
+	"Alias reduction function" should "properly add link occurrences" in {
 		val testAliasCounterData = TestData.countedAliasesTestRDD(sc)
 		val aliasCounterRDD = TestData.startAliasCounterTestRDD(sc)
 			.map(alias => (alias.alias, alias))
