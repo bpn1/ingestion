@@ -68,9 +68,10 @@ object WikipediaAliasCounter {
 	  * @return RDD containing alias counts for links and total occurrences
 	  */
 	def countAliases(articles: RDD[ParsedWikipediaEntry]): RDD[Alias] = {
-		articles.flatMap(extractAliasList)
+		articles
+			.flatMap(extractAliasList)
 			.map(alias => (alias.alias, alias))
-			.reduceByKey(aliasReduction(_, _))
+			.reduceByKey(aliasReduction)
 			.map(_._2)
 			.filter(_.alias.nonEmpty)
 	}

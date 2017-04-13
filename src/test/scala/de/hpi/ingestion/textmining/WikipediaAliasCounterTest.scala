@@ -105,6 +105,6 @@ class WikipediaAliasCounterTest extends FlatSpec with RDDComparisons with Shared
 		val links = sc.parallelize(TestData.linksSet().toList)
 		WikipediaAliasCounter.run(articles, links)
 			.collect
-			.foreach(link => link.link_occurrences shouldEqual link.pages.foldLeft(0)(_ + _._2))
+			.foreach(link => link.link_occurrences should be <= link.pages.foldLeft(0)(_ + _._2))
 	}
 }
