@@ -21,10 +21,10 @@ object DBPediaDeduplication {
 
 	/**
 	  * A candidate of a possible duplicate pair
-	  * @param subject_id
-	  * @param duplicate
-	  * @param duplicate_table
-	  * @param score
+	  * @param subject_id Id of the Subject
+	  * @param duplicate Possible duplicate of the Subject
+	  * @param duplicate_table Source of the new Subject
+	  * @param score Reliabilty score
 	  */
 	case class DuplicateCandidate(
 		subject_id : UUID,
