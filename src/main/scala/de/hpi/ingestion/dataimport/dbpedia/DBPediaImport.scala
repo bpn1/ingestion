@@ -6,12 +6,20 @@ import scala.util.matching.Regex
 import scala.io.Source
 import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
 
+/**
+  * Import-Job for importing DBPedia Triples to the dbpeida table
+  */
 object DBPediaImport {
 	val appName = "DBPediaImport_v1.0"
 	val dataSources = List("dbpedia_20161203")
 	val keyspace = "wikidumps"
 	val tablename = "dbpedia"
 
+	/**
+	  * Split a triple to its components
+	  * @param tripleString Turtle Triple
+	  * @return List of the tripe components
+	  */
 	def tokenize(tripleString: String): List[String] = {
 		val elementList = tripleString
 			.split("> ")
@@ -37,6 +45,12 @@ object DBPediaImport {
 		}
 	}
 
+	/**
+	  * Replacing a url by a prefix
+	  * @param str String containing the url
+	  * @param prefixes List of the url/prefix-Mapping
+	  * @return Cleaned String
+	  */
 	def cleanURL(str: String, prefixes: List[(String,String)]): String = {
 		var dataString = str.replaceAll("""[<>\"]""", "")
 		for (pair <- prefixes) {
@@ -45,6 +59,12 @@ object DBPediaImport {
 		dataString
 	}
 
+	/**
+	  * Translating Triples to DBpediaEntitiy
+	  * @param subject Subject of Triples
+	  * @param propertyData Predicates and Objects of the Triples
+	  * @return DBPediaEntity containing all data from the Triples
+	  */
 	def extractProperties(subject: String, propertyData: List[(String, String)]): DBPediaEntity = {
 		val entity = DBPediaEntity(subject)
 		val dbpediaPropertyName = Map[String, String](
