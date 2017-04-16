@@ -11,14 +11,9 @@ case class DBPediaEntity(
 	var instancetype: Option[String] = None,
 	var data: Map[String, List[String]] = Map[String, List[String]]()
 ) extends DLImportEntity {
-
-	def fieldNames(): List[String] = {
-		super.fieldNames[DBPediaEntity]()
-	}
-
 	def get(attribute: String): List[String] = {
-		if(this.fieldNames.contains(attribute)) {
-			val field = this.getClass().getDeclaredField(attribute)
+		if(this.fieldNames[DBPediaEntity].contains(attribute)) {
+			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {
 				case "dbpedianame" => List(this.dbpedianame)

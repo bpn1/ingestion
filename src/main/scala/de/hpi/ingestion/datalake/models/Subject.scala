@@ -36,21 +36,13 @@ case class Subject(
 	override def hashCode(): Int = this.id.hashCode()
 
 	/**
-	  * Returns the field names of this class.
-	  * @return list of field names
-	  */
-	def fieldNames(): List[String] = {
-		super.fieldNames[Subject]()
-	}
-
-	/**
 	  * Returns the values of an attribute given the name of the attribute.
 	  * @param attribute name of the attribute to retrieve
 	  * @return list of the attribute values
 	  */
 	def get(attribute: String): List[String] = {
-		if(this.fieldNames.contains(attribute)) {
-			val field = this.getClass().getDeclaredField(attribute)
+		if(this.fieldNames[Subject].contains(attribute)) {
+			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {
 				case "name" | "category" => {

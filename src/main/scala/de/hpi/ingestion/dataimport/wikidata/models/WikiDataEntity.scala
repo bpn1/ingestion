@@ -14,12 +14,8 @@ case class WikiDataEntity(
 	var label: Option[String] = None,
 	var data: Map[String, List[String]] = Map[String, List[String]]()
 ) extends DLImportEntity {
-	def fieldNames(): List[String] = {
-		super.fieldNames[WikiDataEntity]()
-	}
-
 	def get(attribute: String): List[String] = {
-		if(this.fieldNames.contains(attribute)) {
+		if(this.fieldNames[WikiDataEntity].contains(attribute)) {
 			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {

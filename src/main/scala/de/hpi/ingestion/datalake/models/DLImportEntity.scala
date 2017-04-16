@@ -7,7 +7,7 @@ trait DLImportEntity extends Serializable {
 	  * Returns the field names of this class.
 	  * @return list of field names
 	  */
-	def fieldNames[A <: DLImportEntity : TypeTag](): List[String] = {
+	protected def fieldNames[A <: DLImportEntity : TypeTag](): List[String] = {
 		def classAccessors[T: TypeTag]: List[MethodSymbol] = typeOf[T].members.collect {
 			case m: MethodSymbol if m.isCaseAccessor => m
 		}.toList
