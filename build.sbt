@@ -38,7 +38,7 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 
 // scala compiler flags for warnings
 // also sets source path for correct scala doc source links
-scalacOptions in ThisBuild ++= (baseDirectory.map { 
+scalacOptions in ThisBuild ++= (baseDirectory.map {
 	bd => Seq("-deprecation", "-feature", "-sourcepath", bd.getAbsolutePath, "-unchecked")
 }).value
 
