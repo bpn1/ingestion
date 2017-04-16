@@ -18,7 +18,7 @@
             <mapping>Freebase ID</mapping>
         </attribute>
         <attribute>
-            <key>id_wikimeda_commons</key>
+            <key>id_wikimedia_commons</key>
             <mapping>Commons category</mapping>
         </attribute>
         <attribute>
