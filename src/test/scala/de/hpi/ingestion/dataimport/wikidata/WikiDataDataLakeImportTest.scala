@@ -1,17 +1,32 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.datalake.models.Version
 import org.scalatest.{FlatSpec, Matchers}
 
 class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with Matchers {
+	val entity = TestData.testEntity()
 
-	"WikidataEntity" should "be translated into a Subject" in {
-		val subjects = TestData.completeWikidataEntities()
-		    .map(WikiDataDataLakeImport.translateToSubject(_, Version("WikiDataDataLakeImportTest", Nil, sc)))
-		    .map(subject => (subject.name, subject.aliases, subject.category, subject.properties))
-		val expectedSubjects = TestData.translatedSubjects()
-			.map(subject => (subject.name, subject.aliases, subject.category, subject.properties))
-		subjects shouldBe expectedSubjects
+	"translateToSubject" should "map label, aliases and category correctly" in {
+		val version = TestData.version(sc)
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version)
+		subject.name shouldEqual entity.label
+		subject.aliases shouldEqual entity.aliases
+		subject.category shouldEqual entity.instancetype
+	}
+
+	it should "normalize the data attributes" in {
+		val version = TestData.version(sc)
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version)
+		subject.properties("id_wikidata") shouldEqual List("Q21110253")
+		subject.properties("id_wikipedia") shouldEqual List("testwikiname")
+		subject.properties("id_dbpedia") shouldEqual List("testwikiname")
+		subject.properties("id_viaf") shouldEqual List("X123")
+		subject.properties shouldNot contain key "id_lccn"
+	}
+
+	it should "copy all old data attributes" in {
+		val version = TestData.version(sc)
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version)
+		subject.properties("testProperty") shouldEqual List("test")
 	}
 }
