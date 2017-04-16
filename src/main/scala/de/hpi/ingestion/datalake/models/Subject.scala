@@ -2,11 +2,9 @@ package de.hpi.ingestion.datalake.models
 
 import scala.reflect.runtime.universe._
 import java.util.{Date, UUID}
-
 import scala.collection.mutable
 
 case class Subject(
-
 	var id: UUID = UUID.randomUUID(),
 	var name: Option[String] = None,
 	var aliases: List[String] = List[String](),
@@ -20,7 +18,7 @@ case class Subject(
 	var properties_history: Map[String, List[Version]] = Map[String, List[Version]](),
 	var relations_history:
 		Map[UUID, Map[String, List[Version]]] = Map[UUID, Map[String, List[Version]]]()
-){
+) extends DLImportEntity {
 	/**
 	  * Compares the subject using its uuid
 	  * @param obj object to compare this subject to
@@ -38,36 +36,24 @@ case class Subject(
 	override def hashCode(): Int = this.id.hashCode()
 
 	/**
-	  * Returns the field names of this class.
-	  * @return list of field names
-	  */
-	def fieldNames(): List[String] = {
-		def classAccessors[T: TypeTag]: List[MethodSymbol] = typeOf[T].members.collect {
-			case m: MethodSymbol if m.isCaseAccessor => m
-		}.toList
-		val accessors = classAccessors[Subject]
-		accessors.map(_.name.toString)
-	}
-
-	/**
 	  * Returns the values of an attribute given the name of the attribute.
 	  * @param attribute name of the attribute to retrieve
 	  * @return list of the attribute values
 	  */
 	def get(attribute: String): List[String] = {
-		if(this.fieldNames.contains(attribute)) {
-			val field = this.getClass().getDeclaredField(attribute)
+		if(this.fieldNames[Subject].contains(attribute)) {
+			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
-			if(attribute == "name" || attribute == "category") {
-				val value = field.get(this).asInstanceOf[Option[String]]
-				List[String](value.getOrElse(""))
-			} else if(attribute == "aliases") {
-				field.get(this).asInstanceOf[List[String]]
-			} else {
-				List[String]()
+			attribute match {
+				case "name" | "category" => {
+					val value = field.get(this).asInstanceOf[Option[String]]
+					value.map(List(_)).getOrElse(Nil)
+				}
+				case "aliases" => field.get(this).asInstanceOf[List[String]]
+				case _ => Nil
 			}
 		} else {
-			properties.getOrElse(attribute, List[String]())
+			properties.getOrElse(attribute, Nil)
 		}
 	}
 

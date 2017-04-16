@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<normalization>
+    <attributeMapping>
+        <attribute>
+            <key>id_wikidata</key>
+            <mapping>id</mapping>
+        </attribute>
+        <attribute>
+            <key>id_dbpedia</key>
+            <mapping>wikiname</mapping>
+        </attribute>
+        <attribute>
+            <key>id_wikipedia</key>
+            <mapping>wikiname</mapping>
+        </attribute>
+        <attribute>
+            <key>id_freebase</key>
+            <mapping>Freebase ID</mapping>
+        </attribute>
+        <attribute>
+            <key>id_wikimedia_commons</key>
+            <mapping>Commons category</mapping>
+        </attribute>
+        <attribute>
+            <key>id_geonames</key>
+            <mapping>GeoNames ID</mapping>
+        </attribute>
+        <attribute>
+            <key>id_viaf</key>
+            <mapping>VIAF ID</mapping>
+        </attribute>
+        <attribute>
+            <key>sm_twitter</key>
+            <mapping>Twitter username</mapping>
+        </attribute>
+        <attribute>
+            <key>sm_facebook</key>
+            <mapping>Facebook ID</mapping>
+        </attribute>
+        <attribute>
+            <key>geo_postal</key>
+            <mapping>postal_code</mapping>
+        </attribute>
+        <attribute>
+            <key>geo_street</key>
+            <mapping>located at street address</mapping>
+        </attribute>
+        <attribute>
+            <key>geo_city</key>
+            <mapping>headquarters location</mapping>
+        </attribute>
+        <attribute>
+            <key>geo_country</key>
+            <mapping>country</mapping>
+            <mapping>located in the administrative territorial entity</mapping>
+        </attribute>
+        <attribute>
+            <key>geo_coords</key>
+            <mapping>coordinate location</mapping>
+        </attribute>
+        <attribute>
+            <key>date_founding</key>
+            <mapping>inception</mapping>
+        </attribute>
+        <attribute>
+            <key>gen_employees</key>
+            <mapping>employees</mapping>
+        </attribute>
+        <attribute>
+            <key>gen_sectors</key>
+            <mapping>industry</mapping>
+        </attribute>
+        <attribute>
+            <key>gen_urls</key>
+            <mapping>official website</mapping>
+        </attribute>
+        <attribute>
+            <key>gen_phones</key>
+            <mapping>phone number</mapping>
+        </attribute>
+        <attribute>
+            <key>gen_emails</key>
+            <mapping>e-mail</mapping>
+        </attribute>
+        <attribute>
+            <key>gen_legal</key>
+            <mapping>legal form</mapping>
+        </attribute>
+        <attribute>
+            <key>gen_founder</key>
+            <mapping>founder</mapping>
+        </attribute>
+    </attributeMapping>
+</normalization>
