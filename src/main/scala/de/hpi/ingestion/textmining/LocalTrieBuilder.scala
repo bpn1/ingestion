@@ -39,15 +39,18 @@ object LocalTrieBuilder {
 		kryo.register(classOf[TrieNode], trieSerializer)
 
 		val tokenizer = new CoreNLPTokenizer
-
 		val trie = new TrieNode()
-		val aliasFile = Source.fromURL(getClass.getResource("/aliaslist"))
-
-		val localTrie = new TrieNode()
+		val aliasFile = Source.fromFile("aliaslist")
+		var counter = 0
 		for(line <- aliasFile.getLines()) {
-			localTrie.append(tokenizer.tokenize(line))
+			trie.append(tokenizer.tokenize(line))
+			counter += 1
 		}
+		println(s"finished building trie with $counter elements\nnow serializing")
 		val trieBinary = new Output(new FileOutputStream("trie.bin"))
 		kryo.writeObject(trieBinary, trie)
+		println("finished serializing")
+		trieBinary.close()
+
 	}
 }
