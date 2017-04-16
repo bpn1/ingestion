@@ -8,6 +8,9 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.SubjectManager
 
+/**
+  * Merge-Job to merge DBPedia-Subjects and WikiData-Subjects.
+  */
 object DBPediaMerge {
 	val appName = "DBPediaMerge_v0.1"
 	val dataSources = List("dbpedia_20161203")
@@ -17,6 +20,13 @@ object DBPediaMerge {
 	val subjectTable = "subject"
 	val outputTable = "subject_merged"
 
+	/**
+	  * Merges a Subjects with its duplicates.
+	  * @param subject Subject to be merged
+	  * @param duplicates List of Subject declared as duplicates of the Subject
+	  * @param version Version (of the execution) used for versioning of the attributes
+	  * @return Subject containing the merged data of the original Subject and the duplicates
+	  */
 	def mergeSubjects(subject: Subject, duplicates: List[Subject], version: Version): Subject = {
 		val sm = new SubjectManager(subject, version)
 		val prefixedProperties = subject
@@ -33,6 +43,12 @@ object DBPediaMerge {
 		subject
 	}
 
+	/**
+	  * Joins Subjects with their DuplicateCandidates.
+	  * @param subjects RDD of Subjects
+	  * @param duplicates RDD of DuplicateCandidates
+	  * @return RDD containing Subjects and a list of its duplicates
+	  */
 	def joinSubjectsWithDuplicates(
 		subjects: RDD[Subject],
 		duplicates: RDD[DuplicateCandidates]
@@ -44,6 +60,11 @@ object DBPediaMerge {
 			.map { case (subject, candidates) => (subject, candidates.candidates.map(_._1)) }
 	}
 
+	/**
+	  * Extracts the UUIDs of all Subjects declared as duplicates.
+	  * @param duplicates RDD of DuplicateCandidates
+	  * @return List of the Subjects UUIDs
+	  */
 	def extractIds(duplicates: RDD[DuplicateCandidates]): List[UUID] = {
 		duplicates
 			.map(_.candidates.map(_._1.id))
