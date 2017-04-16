@@ -9,7 +9,7 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 
 /**
-  * Import-Job to import DBPedia Subjects to the staging table
+  * Import-Job to import DBPedia Subjects into the staging table of our datalake.
   */
 object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 	"DataLakeImportDBpedia_v1.0",

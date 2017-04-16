@@ -9,7 +9,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.SubjectManager
 
 /**
-  * Merge-Job to merge DBPedia-Subjects and WikiData-Subjects
+  * Merge-Job to merge DBPedia-Subjects and WikiData-Subjects.
   */
 object DBPediaMerge {
 	val appName = "DBPediaMerge_v0.1"
@@ -21,10 +21,10 @@ object DBPediaMerge {
 	val outputTable = "subject_merged"
 
 	/**
-	  * Merge a Subjects with its duplicates
+	  * Merges a Subjects with its duplicates.
 	  * @param subject Subject to be merged
 	  * @param duplicates List of Subject declared as duplicates of the Subject
-	  * @param version Version of the merge
+	  * @param version Version (of the execution) used for versioning of the attributes
 	  * @return Subject containing the merged data of the original Subject and the duplicates
 	  */
 	def mergeSubjects(subject: Subject, duplicates: List[Subject], version: Version): Subject = {
@@ -44,7 +44,7 @@ object DBPediaMerge {
 	}
 
 	/**
-	  * Joins Subjects with their DuplicateCandidates
+	  * Joins Subjects with their DuplicateCandidates.
 	  * @param subjects RDD of Subjects
 	  * @param duplicates RDD of DuplicateCandidates
 	  * @return RDD containing Subjects and a list of its duplicates
@@ -61,9 +61,9 @@ object DBPediaMerge {
 	}
 
 	/**
-	  * Extracting the Ids of all Subjects declared as duplicates
+	  * Extracts the UUIDs of all Subjects declared as duplicates.
 	  * @param duplicates RDD of DuplicateCandidates
-	  * @return List of Ids
+	  * @return List of the Subjects UUIDs
 	  */
 	def extractIds(duplicates: RDD[DuplicateCandidates]): List[UUID] = {
 		duplicates
