@@ -3,6 +3,7 @@ package de.hpi.ingestion.deduplication
 import java.util.UUID
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
+import de.hpi.ingestion.deduplication.models._
 import org.apache.spark.{SparkConf, SparkContext}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.similarity._
@@ -40,9 +41,9 @@ class DeduplicationUnitTest
 		val deduplication = defaultDeduplication
 		deduplication.parseConfig()
 		val expected = List(
-			scoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8),
-			scoreConfig[String, SimilarityMeasure[String]]("name", JaroWinkler, 0.7),
-			scoreConfig[String, SimilarityMeasure[String]]("name", ExactMatchString, 0.2)
+			ScoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8),
+			ScoreConfig[String, SimilarityMeasure[String]]("name", JaroWinkler, 0.7),
+			ScoreConfig[String, SimilarityMeasure[String]]("name", ExactMatchString, 0.2)
 		)
 		deduplication.config shouldEqual expected
 	}
@@ -51,9 +52,9 @@ class DeduplicationUnitTest
 		val testSubjects = getSampleSubjects()
 		val deduplication = defaultDeduplication
 		val subjects = sc.parallelize(testSubjects)
-		val blockingScheme = new ListBlockingScheme()
-		blockingScheme.setAttributes("city")
-		val blocks = deduplication.blocking(subjects, blockingScheme)
+		val blockingSchemes = List(new ListBlockingScheme())
+		blockingSchemes.foreach(_.setAttributes("city"))
+		val blocks = deduplication.blocking(subjects, blockingSchemes)
 		val expected = sc.parallelize(testBlocks(testSubjects))
 		assertRDDEquals(expected, blocks)
 	}
@@ -140,11 +141,10 @@ class DeduplicationUnitTest
 		Version("SomeTestApp", Nil, sc)
 	}
 
-	def testBlocks(testSubjects: List[Subject]): List[(List[String], List[Subject])] = {
-
-		List((List("Berlin"), List(testSubjects(0), testSubjects(1), testSubjects(3))),
-			(List("New York"), List(testSubjects(2))),
-			(List("undefined"), List(testSubjects(4), testSubjects(5))))
+	def testBlocks(testSubjects: List[Subject]): List[(List[List[String]], List[Subject])] = {
+		List((List(List("Berlin")),  List(testSubjects(0), testSubjects(1), testSubjects(3))),
+			(List(List("New York")), List(testSubjects(2))),
+			(List(List("undefined")), List(testSubjects(4), testSubjects(5))))
 	}
 
 	def defaultDeduplication(): Deduplication = {
@@ -153,7 +153,7 @@ class DeduplicationUnitTest
 
 	def evaluationTestData(): BlockEvaluation = {
 		BlockEvaluation(
-			data = Map("Berlin" -> 3, "undefined" -> 2, "New York" -> 1),
+			data = Map(List("Berlin") -> 3, List("undefined") -> 2, List("New York") -> 1),
 			comment = Option("Test comment"))
 	}
 }

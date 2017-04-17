@@ -4,9 +4,12 @@ import org.apache.spark.{SparkContext, SparkConf}
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.DuplicateCandidates
-import java.util.{Date, UUID}
+import java.util.UUID
 import org.apache.spark.rdd.RDD
 
+/**
+  * Deduplication-Job for merging DBPedia with WikiData subjects.
+  */
 object DBPediaDeduplication {
 
 	val appName = "DBPediaDeduplication_v0.1"
@@ -16,17 +19,34 @@ object DBPediaDeduplication {
 	val subjectTable = "subject"
 	val outputTable = "duplicatecandidates"
 
+	/**
+	  * A candidate of a possible duplicate pair.
+	  * @param subject_id Id of the Subject
+	  * @param duplicate Possible duplicate of the Subject
+	  * @param duplicate_table Source of the new Subject
+	  * @param score Reliabilty score
+	  */
 	case class DuplicateCandidate(
 		subject_id : UUID,
 		duplicate: Subject,
 		duplicate_table: String,
 		score: Double = 1.0
 	){
+		/**
+		  * Converts the duplicate candidate into a tuple
+		  * @return 3-Tuple containing the candidate, source table and a score
+		  */
 		def toTuple(): (Subject, String, Double) = {
 			(this.duplicate, this.duplicate_table, this.score)
 		}
 	}
 
+	/**
+	  * Keys Subjects by a property value
+	  * @param rdd Subjects
+	  * @param property Property to key by
+	  * @return RDD containing Subjects keyed by a value
+	  */
 	def keyBySingleProperty(rdd: RDD[Subject], property: String): RDD[(String, Subject)] = {
 		rdd
 			.filter(_.properties.contains(property))
@@ -36,6 +56,12 @@ object DBPediaDeduplication {
 			}
 	}
 
+	/**
+	  * Keys Subjects by a property value list
+	  * @param rdd RDD of Subjects
+	  * @param property property used to key the subjects
+	  * @return RDD containing 2-Tuples of Subjects keyed by a list of values in the form (valueList, Subject)
+	  */
 	def keyByProperty(rdd: RDD[Subject], property: String): RDD[(List[String], Subject)] = {
 		rdd
 		  	.filter(_.properties.contains(property))
@@ -45,6 +71,12 @@ object DBPediaDeduplication {
 			}
 	}
 
+	/**
+	  * Translates a possible duplicate pair into a DuplicateCandidate
+	  * @param candidate The duplicate pair (Subject, possible duplicate)
+	  * @param duplicate_table Source table of the possible duplicate
+	  * @return DuplicateCandidate of the duplicate pair
+	  */
 	def translateToCandidate(
 		candidate: (String, (Subject, Subject)),
 		duplicate_table: String
@@ -53,6 +85,12 @@ object DBPediaDeduplication {
 		DuplicateCandidate(subject1.id, subject2, duplicate_table)
 	}
 
+	/**
+	  * Joins DBPedia-Subjects with WikiData-Subjects on the wikipedia name
+	  * @param dbpediaRDD DBPedia-Subjects
+	  * @param subjectRDD WikiData-Subjects
+	  * @return RDD containing the joined subject pairs
+	  */
 	def joinOnName(dbpediaRDD: RDD[Subject], subjectRDD: RDD[Subject]): RDD[(String, (Subject, Subject))] = {
 		val dbpediaNameRDD = dbpediaRDD
 		  	.filter(_.name.isDefined)
@@ -65,6 +103,12 @@ object DBPediaDeduplication {
 		dbpediaNameRDD.join(subjectWikinameRDD)
 	}
 
+	/**
+	  * Joins DBPedia-Subjects with WikiData-Subjects on the wikidata id
+	  * @param dbpediaRDD DBPedia-Subjects
+	  * @param subjectRDD WikiData-Subjects
+	  * @return RDD containing the joined subject pairs
+	  */
 	def joinOnWikiId(dbpediaRDD: RDD[Subject], subjectRDD: RDD[Subject]): RDD[(String, (Subject, Subject))] = {
 		val dbpediaSameAsRDD = keyBySingleProperty(dbpediaRDD, "wikidata_id")
 		val subjectWikiId = keyBySingleProperty(subjectRDD, "wikidata_id")
@@ -72,6 +116,12 @@ object DBPediaDeduplication {
 		dbpediaSameAsRDD.join(subjectWikiId)
 	}
 
+	/**
+	  * Joins all duplicates found in one RDD
+	  * @param dbpediaRDD DBPedia-Subjects
+	  * @param subjectRDD WikiData-Subjects
+	  * @return RDD containing Subjects and their duplicates
+	  */
 	def joinGoldStandard(
 		dbpediaRDD: RDD[(String, (Subject, Subject))],
 		subjectRDD: RDD[(String, (Subject, Subject))]
@@ -82,6 +132,12 @@ object DBPediaDeduplication {
 		    .distinct
 	}
 
+	/**
+	  * Joins two RDDs of DuplicateCandidate together
+	  * @param candidate1 First Candiate RDD
+	  * @param candidate2 Second Candidate RDD
+	  * @return RDD containing DuplicateCandidates
+	  */
 	def joinCandidates(
 		candidate1: RDD[DuplicateCandidate],
 		candidate2: RDD[DuplicateCandidate]

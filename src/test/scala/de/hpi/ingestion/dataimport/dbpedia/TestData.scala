@@ -2,6 +2,7 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.dataimport.dbpedia.DBPediaDeduplication.DuplicateCandidate
 import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
+import de.hpi.ingestion.datalake.models.Version
 import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.SparkContext
@@ -87,6 +88,22 @@ object TestData {
 			DBPediaEntity(dbpedianame="dbpedia-de:Liste_von_Autoren/T", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste")))
 		))
 	}
+
+	def version(sc: SparkContext): Version = Version("DBPediaDataLakeImport", datasources = List("dataSources"), sc)
+
+	def testEntity(): DBPediaEntity = DBPediaEntity(
+		dbpedianame = "dbpedia-de:List_von_Autoren",
+		label = Option("Liste von Autoren"),
+		data = Map(
+			"wikidata_id" -> List("Q123"),
+			"dbo:viafId" -> List("X123"),
+			"property-de:viaf" -> List("Y123"),
+			"geo:lat" -> List("52"),
+			"property-de:latitude" -> List("53"),
+			"geo:long" -> List("100"),
+			"testProperty" -> List("test")
+		)
+	)
 
 	def dbpediaSubjectList(): List[Subject] = {
 		List(
@@ -181,6 +198,5 @@ object TestData {
 			DuplicateCandidates(subjects(2).id, List((dbpedia(2), "Test", 1.0)))
 		))
 	}
-
 	// scalastyle:on line.size.limit
 }
