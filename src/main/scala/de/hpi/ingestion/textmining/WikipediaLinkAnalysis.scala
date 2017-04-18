@@ -13,11 +13,6 @@ object WikipediaLinkAnalysis {
 	val outputAliasToPagesTablename = "wikipedialinks"
 	val outputPageToAliasesTablename = "wikipediapages"
 
-	def getAllPages(sc: SparkContext): RDD[String] = {
-		sc.cassandraTable[WikipediaEntry](keyspace, inputRawTablename)
-			.map(_.title)
-	}
-
 	def removeDeadLinks(links: RDD[Alias], allPages: RDD[String]): RDD[Alias] = {
 		links
 			.flatMap { link =>
@@ -79,14 +74,10 @@ object WikipediaLinkAnalysis {
 		references / totalReferences
 	}
 
-	def fillAliasToPagesTable(parsedWikiRDD: RDD[ParsedWikipediaEntry], sc: SparkContext): Unit = {
-		groupByAliases(parsedWikiRDD)
-			.saveToCassandra(keyspace, outputAliasToPagesTablename)
-	}
-
-	def fillPageToAliasesTable(parsedWikiRDD: RDD[ParsedWikipediaEntry], sc: SparkContext): Unit = {
-		groupByPageNames(parsedWikiRDD)
-			.saveToCassandra(keyspace, outputPageToAliasesTablename)
+	def run(articles: RDD[ParsedWikipediaEntry], allPages: RDD[String]): (RDD[Alias], RDD[Page]) = {
+		val aliases = removeDeadLinks(groupByAliases(articles), allPages)
+		val pages = removeDeadPages(groupByPageNames(articles), allPages)
+		(aliases, pages)
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -94,9 +85,13 @@ object WikipediaLinkAnalysis {
 			.setAppName("Wikipedia Link Analysis")
 		val sc = new SparkContext(conf)
 
-		val parsedWikiRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
-		fillPageToAliasesTable(parsedWikiRDD, sc)
-		fillAliasToPagesTable(parsedWikiRDD, sc)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
+		val allPages = sc.cassandraTable[WikipediaEntry](keyspace, inputRawTablename)
+			.map(_.title)
+		val (aliases, pages) = run(articles, allPages)
+		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename)
+		pages.saveToCassandra(keyspace, outputPageToAliasesTablename)
+
 		sc.stop
 	}
 }

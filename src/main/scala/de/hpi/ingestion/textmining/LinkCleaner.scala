@@ -13,6 +13,12 @@ object LinkCleaner {
 	val inputPagesTable = "wikipediapages"
 	val operatingTable = "parsedwikipedia"
 
+	/**
+	  * Groups existing page names by the article names in which their links occur.
+	  * @param articles all Wikipedia articles
+	  * @param existingPages names of all existing Wikipedia articles
+	  * @return
+	  */
 	def groupValidPages(
 		articles: RDD[ParsedWikipediaEntry],
 		existingPages: RDD[String]
@@ -29,6 +35,12 @@ object LinkCleaner {
 			.mapValues(_.toSet)
 	}
 
+	/**
+	  *
+	  * @param articles
+	  * @param validLinks
+	  * @return
+	  */
 	def filterArticleLinks(
 		articles: RDD[ParsedWikipediaEntry],
 		validLinks: RDD[(String, Set[String])]
@@ -42,8 +54,16 @@ object LinkCleaner {
 			}
 	}
 
-	def run(articles: RDD[ParsedWikipediaEntry], existingPages: RDD[String]):
-	RDD[ParsedWikipediaEntry] = {
+	/**
+	  *
+	  * @param articles
+	  * @param existingPages
+	  * @return
+	  */
+	def run(
+		articles: RDD[ParsedWikipediaEntry],
+		existingPages: RDD[String]
+	): RDD[ParsedWikipediaEntry] = {
 		val validPages = groupValidPages(articles, existingPages)
 		filterArticleLinks(articles, validPages)
 	}

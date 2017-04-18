@@ -110,4 +110,18 @@ class WikipediaLinkAnalysisTest extends FlatSpec with SharedSparkContext with Ma
 			.toSet
 		cleanedGroupedPages shouldEqual TestData.cleanedGroupedPagesTestSet()
 	}
+
+	"Grouped aliases and page names" should "be exactly these aliases and page names" in {
+		val articles = sc.parallelize(TestData.smallerParsedWikipediaList())
+		val allPages = sc.parallelize(TestData.allPagesTestList())
+		val (groupedAliases, groupedPages) = WikipediaLinkAnalysis.run(articles, allPages)
+		val groupedAliasesSet = groupedAliases
+			.collect
+			.toSet
+		val groupedPagesSet = groupedPages
+			.collect
+			.toSet
+		groupedAliasesSet shouldEqual TestData.cleanedGroupedAliasesTestSet()
+		groupedPagesSet shouldEqual TestData.cleanedGroupedPagesTestSet()
+	}
 }
