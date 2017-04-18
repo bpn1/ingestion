@@ -41,8 +41,8 @@ object CosineContextComparator {
 	}
 
 	/**
-	  * Calculates the inverse document frequency for a given document frequency and the number of documents used to
-	  * calculate it.
+	  * Calculates the inverse document frequency (idf) using the logarithm base 10 for a given Document Frequency and
+	  * the number of documents used to calculate it.
 	  *
 	  * @param df      document frequency to use
 	  * @param numDocs number of documents used to compute the document frequency
@@ -54,7 +54,7 @@ object CosineContextComparator {
 	}
 
 	/**
-	  * Calculates the tfidf of every term for every Wikipedia article.
+	  * Calculates the tfIdf of every term for every Wikipedia article.
 	  *
 	  * @param articles                   RDD of parsed Wikipedia articles with known term frequencies
 	  * @param documentFrequencies        RDD of document frequencies
@@ -108,6 +108,17 @@ object CosineContextComparator {
 			.reduceByKey(_ ++ _)
 	}
 
+	/**
+	  * Calculates the tfIdf for every term.
+	  * @param termFrequencies RDD of terms with their identifier and raw term frequency in the form
+	  *                        (term, (identifier, raw term frequency))
+	  * @param documentFrequencies RDD of Document Frequencies
+	  * @param numDocuments number of documents used to determine the Document Frequencies
+	  * @param documentFrequencyThreshold lower threshold used for Document Frequencies of terms without a
+	  *                                   precalculated one.
+	  * @tparam T type of the identifier for each term
+	  * @return RDD of identifiers and a Map containing the tfidf for each term as tuple
+	  */
 	def calculateTfidf[T](
 		termFrequencies: RDD[(String, (T, Int))],
 		documentFrequencies: RDD[DocumentFrequency],
@@ -144,6 +155,8 @@ object CosineContextComparator {
 			documentFrequencies,
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
+
+		// TODO: join RDDs and calculate cosine similarity (issue #34)
 
 		sc.stop()
 	}

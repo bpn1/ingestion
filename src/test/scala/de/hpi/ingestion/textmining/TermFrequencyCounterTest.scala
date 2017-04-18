@@ -5,13 +5,6 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Matchers {
 
-	implicit class SetDifference[X](xs: TraversableOnce[X]) {
-		def printDifference[Y](ys: TraversableOnce[Y]) = {
-			println(s"x - y:\n\t${xs.toSet.filterNot(ys.toSet).mkString("\n\t")}")
-			println(s"y - x:\n\t${ys.toSet.filterNot(xs.toSet).mkString("\n\t")}")
-		}
-	}
-
 	"Term frequencies" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val pagesTermFrequencies = articles
@@ -54,20 +47,25 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 
 	"Articles with link context" should "contain exactly these link contexts" in {
 		val expectedLinks = TestData.linksWithContextsTestSet()
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val enrichedLinks = TermFrequencyCounter.addLinksContexts(articles)
+		val enrichedLinks = TestData.parsedWikipediaTestSet()
+			.map(TermFrequencyCounter.extractLinkContexts)
 			.flatMap(_.linkswithcontext)
-			.collect
-			.toSet
 		enrichedLinks shouldEqual expectedLinks
 	}
 
 	they should "be exactly these articles" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val enrichedLinkArticles = TermFrequencyCounter.addLinksContexts(articles)
-			.collect
-			.toSet
+		val enrichedLinkArticles = TestData.parsedWikipediaTestSet()
+			.map(TermFrequencyCounter.extractLinkContexts)
 		val expectedArticles = TestData.articlesWithLinkContextsTestSet()
 		enrichedLinkArticles shouldEqual expectedArticles
+	}
+
+	"Articles without any context" should "be fully enriched with article and link contexts" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val enrichedArticles = TermFrequencyCounter.run(articles)
+			.collect
+			.toSet
+		val expectedArticles = TestData.articlesWithCompleteContexts()
+		enrichedArticles shouldEqual expectedArticles
 	}
 }

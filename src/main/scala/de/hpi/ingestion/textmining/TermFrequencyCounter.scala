@@ -70,13 +70,15 @@ object TermFrequencyCounter {
 	}
 
 	/**
-	  * Enriches links from all articles with their contexts (bag of words, implemented as Map)
-	  *
-	  * @param articles parsed Wikipedia articles which links will be enriched with their contexts
-	  * @return links with additional context information
+	  * Enriches articles with the term frequencies of the whole article (called context) and the term frequencies
+	  * for all link contexts (called link contexts).
+	  * @param articles RDD of Parsed Wikipedia Entries
+	  * @return RDD of articles with their contexts and the link contexts
 	  */
-	def addLinksContexts(articles: RDD[ParsedWikipediaEntry]): RDD[ParsedWikipediaEntry] = {
-		articles.map(extractLinkContexts)
+	def run(articles: RDD[ParsedWikipediaEntry]): RDD[ParsedWikipediaEntry] = {
+		articles
+			.map(extractArticleContext)
+			.map(extractLinkContexts)
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -86,10 +88,7 @@ object TermFrequencyCounter {
 		val sc = new SparkContext(conf)
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 
-		val articlesWithContext = articles
-			.map(extractArticleContext)
-
-		addLinksContexts(articlesWithContext)
+		run(articles)
 			.saveToCassandra(keyspace, outputArticlesTablename)
 
 		sc.stop()
