@@ -12,13 +12,13 @@
         <feature>
             <attribute>name</attribute>
             <similartyMeasure>MongeElkan</similartyMeasure>
-            <weight>0.5</weight>
+            <weight>0.8</weight>
             <scale>1</scale>
         </feature>
         <feature>
             <attribute>name</attribute>
             <similartyMeasure>JaroWinkler</similartyMeasure>
-            <weight>0.5</weight>
+            <weight>0.7</weight>
             <scale>1</scale>
         </feature>
         <feature>
@@ -27,66 +27,5 @@
             <weight>0.2</weight>
             <scale>1</scale>
         </feature>
-        <feature>
-            <attribute>cr_actice</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>0.2</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>cr_court</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>0.2</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>cr_number</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>0.9</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>cr_ids</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>0.2</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>cr_formerCourt</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>0.1</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>cr_type</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>0.005</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>id_implisense</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>1</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>id_wikidata</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>1</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>id_dbpedia</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>1</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>id_vat</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>1</weight>
-            <scale>1</scale>
-        </feature>
     </simMeasurements>
 </config>
-
