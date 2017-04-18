@@ -9,6 +9,9 @@ import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
 
+/**
+  * This job translates Wikidata entities into Subjects and writes them into a staging table.
+  */
 object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 	"WikiDataDataLakeImport_v1.0",
 	List("wikidata_20161117"),
@@ -32,10 +35,8 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 
 		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val normalizedProperties = normalizeProperties(entity, mapping)
-		val properties = mutable.Map[String, List[String]]()
-		properties ++= (entity.data ++ normalizedProperties)
 
-		sm.addProperties(entity.data ++ properties)
+		sm.addProperties(entity.data ++ normalizedProperties)
 		subject
 	}
 
