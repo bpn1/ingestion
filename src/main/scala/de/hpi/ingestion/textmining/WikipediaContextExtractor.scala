@@ -16,21 +16,16 @@ object WikipediaContextExtractor {
 	val stopwordsPath = "german_stopwords.txt"
 	val leastSignificantDocumentFrequency = 5
 
-	def stem(word: String): String = {
-		val stemmer = new AccessibleGermanStemmer
-		stemmer.stem(word)
-	}
-
 	def countDocumentFrequencies(
 		articles: RDD[ParsedWikipediaEntry],
 		stopwords: Set[String]
 	): RDD[DocumentFrequency] = {
 		val tokenizer = new CleanCoreNLPTokenizer
+		val cleaningStemmingTokenizer = new CleaningStemmingTokenizer(tokenizer, stopwords)
 		articles
 			.flatMap(article =>
-				textToWordSet(article.getText(), tokenizer)
-					.filter(word => !stopwords.contains(word))
-					.map(word => stem(word))
+				cleaningStemmingTokenizer.tokenizeRemoveStopwordsStem(article.getText())
+					.toSet
 			)
 			.map(word => (word, 1))
 			.reduceByKey(_ + _)
