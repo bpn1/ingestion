@@ -7,6 +7,14 @@ import de.hpi.ingestion.datalake.models.Subject
   */
 trait BlockingScheme extends Serializable {
 	val undefinedValue = List("undefined")
+	protected var inputAttributes: List[String] = List[String]()
+
+	/**
+	  * Gets the attributes to generate the key with as input and converts them to a list
+	  * if required for the blocking scheme.
+	  * @param attrList Sequence of attributes to use.
+	  */
+	def setAttributes(attrList: String*): Unit = inputAttributes = attrList.toList
 
 	/**
 	  * Generates key from the subject's properties.
@@ -34,18 +42,6 @@ class SimpleBlockingScheme extends BlockingScheme {
   * This class uses a list of input attributes as key.
   */
 class ListBlockingScheme extends BlockingScheme {
-	/**
-	  * This variable contains a list of attributes set by setAttributes.
-	  */
-	private var inputAttributes: List[String] = List[String]()
-
-	/**
-	  * Gets the attributes to generate the key with as input and converts them to a list.
-	  * @param attrList Sequence of attributes to use.
-	  * @return List of attributes as list of strings.
-	  */
-	def setAttributes(attrList: String*): Unit = inputAttributes = attrList.toList
-
 	override def generateKey(subject: Subject): List[String] = {
 		val key = inputAttributes.flatMap(subject.get)
 		if (key.isEmpty) {

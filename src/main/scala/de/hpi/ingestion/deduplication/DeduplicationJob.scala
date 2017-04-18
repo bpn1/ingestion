@@ -3,6 +3,15 @@ package de.hpi.ingestion.deduplication
 object DeduplicationJob {
 	def main(args: Array[String]): Unit = {
 		val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
-		deduplication.run()
+		val geoCountryBlockingScheme = new ListBlockingScheme
+		geoCountryBlockingScheme.setAttributes("geo_country")
+		val generalSectoryBlockingScheme = new ListBlockingScheme
+		generalSectoryBlockingScheme.setAttributes("gen_sectors")
+		val simpleBlockingScheme = new SimpleBlockingScheme
+		val blockingSchemes = List(
+			geoCountryBlockingScheme,
+			generalSectoryBlockingScheme,
+			simpleBlockingScheme)
+		deduplication.run(blockingSchemes)
 	}
 }

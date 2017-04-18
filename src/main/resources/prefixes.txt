@@ -236,3 +236,4 @@
 (http://yago-knowledge.org/resource/,yago-res:)
 (http://gdata.youtube.com/schemas/2007,yt:)
 (http://s.zemanta.com/ns#,zem:)
+(http://de.dbpedia.org/property/,property-de:)
