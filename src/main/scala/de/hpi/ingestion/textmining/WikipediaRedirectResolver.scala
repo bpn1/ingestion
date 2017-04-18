@@ -13,7 +13,7 @@ object WikipediaRedirectResolver {
 		title != link.page
 	}
 
-	def cleanLinkOfRedirects(link: Link, dict: mutable.Map[String, String]): Link = {
+	def cleanLinkOfRedirects(link: Link, dict: Map[String, String]): Link = {
 		var lookupSet = Set[String]()
 		var lookupResult = dict.getOrElse(link.page, link.page)
 		while (dict.contains(lookupResult) && !lookupSet.contains(lookupResult)) {
@@ -22,6 +22,13 @@ object WikipediaRedirectResolver {
 		}
 		link.page = lookupResult
 		link
+	}
+
+	def resolveRedirects(entry: ParsedWikipediaEntry, dict: Map[String, String]): ParsedWikipediaEntry = {
+		entry.allLinks().foreach { link =>
+			cleanLinkOfRedirects(link, dict)
+		}
+		entry
 	}
 
 	def main(args: Array[String]) {
@@ -45,17 +52,7 @@ object WikipediaRedirectResolver {
 		dataRDD
 			.mapPartitions({ entryRDD =>
 				val localDict = dictBroadcast.value
-				entryRDD.map { entry =>
-					entry.textlinks = entry.textlinks.map(link =>
-						cleanLinkOfRedirects(link, localDict))
-					entry.templatelinks = entry.templatelinks.map(link =>
-						cleanLinkOfRedirects(link, localDict))
-					entry.categorylinks = entry.categorylinks.map(link =>
-						cleanLinkOfRedirects(link, localDict))
-					entry.disambiguationlinks = entry.disambiguationlinks.map(link =>
-						cleanLinkOfRedirects(link, localDict))
-					entry
-				}
+				entryRDD.map(entry => resolveRedirects(entry, localDict.toMap))
 			}, true)
 			.saveToCassandra(keyspace, tablename)
 		sc.stop()
