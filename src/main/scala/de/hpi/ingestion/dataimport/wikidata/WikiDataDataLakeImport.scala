@@ -32,10 +32,8 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 
 		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val normalizedProperties = normalizeProperties(entity, mapping)
-		val properties = mutable.Map[String, List[String]]()
-		properties ++= (entity.data ++ normalizedProperties)
 
-		sm.addProperties(entity.data ++ properties)
+		sm.addProperties(entity.data ++ normalizedProperties)
 		subject
 	}
 
