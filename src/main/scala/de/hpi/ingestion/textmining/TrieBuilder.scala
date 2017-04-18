@@ -2,33 +2,57 @@ package de.hpi.ingestion.textmining
 
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
+import com.esotericsoftware.kryo.io.Input
 
 import scala.collection.mutable
 import de.hpi.ingestion.textmining.models._
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.serializer.KryoSerializer
 
 object TrieBuilder {
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
+	val defaultKey = "default"
+
+	def keyList(): List[String] = {
+		val upperCaseLetters = (65 to 90).map(_.toChar.toString).toList
+		val lowerCaseLetters = (97 to 122).map(_.toChar.toString).toList
+		val defaultKey = List("default")
+		upperCaseLetters ++ lowerCaseLetters ++ defaultKey
+	}
+
+	def fileName(key: String): String = {
+		s"trie_binaries/trie_$key.bin"
+	}
 
 	/**
 	  * Finds all occurences of aliases in the text of a Wikipedia entry
 	  * @param entry parsed Wikipedia entry to use
-	  * @param trie Trie containing the aliases we look for
+	  * @param trieMap Map of the Tries containing the aliases we look for
 	  * @param tokenizer Tokenizer used to tokenize the text of the entry
 	  * @return entry containing list of found aliases
 	  */
 	def matchEntry(
 		entry: ParsedWikipediaEntry,
-		trie: TrieNode,
+		trieMap: Map[String, TrieNode],
 		tokenizer: Tokenizer
-	): ParsedWikipediaEntry =
-	{
+	): ParsedWikipediaEntry = {
 		val resultList = mutable.ListBuffer[String]()
 		val tokens = tokenizer.tokenize(entry.getText())
 		for(i <- tokens.indices) {
 			val testTokens = tokens.slice(i, tokens.length)
-			val aliasMatches = trie.matchTokens(testTokens)
-			resultList ++= aliasMatches.map(tokenizer.reverse)
+			val firstChar = testTokens.headOption
+				.map(_.charAt(0))
+			if(firstChar.isDefined) {
+				val char = firstChar.get
+				val trie = if(char.isLetter && char <= 'z') {
+					trieMap(char.toString)
+				} else {
+					trieMap(defaultKey)
+				}
+				val aliasMatches = trie.matchTokens(testTokens)
+				resultList ++= aliasMatches.map(tokenizer.reverse)
+			}
 		}
 		entry.foundaliases = resultList
 			.filter(_ != "")
@@ -52,24 +76,42 @@ object TrieBuilder {
 			.set("spark.kryo.registrator", "de.hpi.ingestion.textmining.TrieKryoRegistrator")
 		val sc = new SparkContext(conf)
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
-		val aliasList = parsedWikipedia
-			.flatMap(_.allLinks)
-			.map(_.alias)
-			.distinct
-			.collect
+//		val aliasList = parsedWikipedia
+//			.flatMap(_.allLinks)
+//			.map(_.alias)
+//			.distinct
+//			.collect
+//
+//
+//		val localTrie = new TrieNode()
+//		for(alias <- aliasList) {
+//			localTrie.append(tokenizer.tokenize(alias))
+//		}
+//		val trieBroadcast = sc.broadcast(localTrie)
 
+		val fs = FileSystem.get(sc.hadoopConfiguration)
+
+		val trieMap = keyList()
+		    .map(key => (key, fileName(key)))
+			.toMap
+		    .mapValues(new Path(_))
+		    .mapValues(fs.open)
+			.map(identity)
+
+		val trieBroadcast = sc.broadcast(trieMap)
 		val tokenizer = new CleanCoreNLPTokenizer
-
-		val localTrie = new TrieNode()
-		for(alias <- aliasList) {
-			localTrie.append(tokenizer.tokenize(alias))
-		}
-		val trieBroadcast = sc.broadcast(localTrie)
+		val kryo = new KryoSerializer(conf).newKryo()
 
 		parsedWikipedia
 			.mapPartitions({ partition =>
-				val trie = trieBroadcast.value
-				partition.map(entry => matchEntry(entry, trie, tokenizer))
+				val localTrieMap = trieBroadcast.value
+					.mapValues { file =>
+						val inputStream = new Input(file)
+						val trie = kryo.readObject(inputStream, classOf[TrieNode])
+						inputStream.close()
+						trie
+					}.map(identity)
+				partition.map(entry => matchEntry(entry, localTrieMap, tokenizer))
 			}, true)
 			.saveToCassandra(keyspace, tablename)
 

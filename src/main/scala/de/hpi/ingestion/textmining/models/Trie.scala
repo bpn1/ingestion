@@ -16,7 +16,8 @@ sealed trait Trie extends Traversable[List[String]] with Serializable {
 	def findByPrefix(prefix: List[String]): scala.collection.Seq[List[String]]
 	def contains(word: List[String]): Boolean
 	def remove(word : List[String]): Boolean
-
+	def pathTo(word : List[String]): Option[ListBuffer[TrieNode]]
+	def matchTokens(tokens: List[String]): ListBuffer[List[String]]
 }
 
 class TrieNode(
@@ -116,7 +117,7 @@ class TrieNode(
 		}
 	}
 
-	def pathTo(word : List[String]): Option[ListBuffer[TrieNode]] = {
+	override def pathTo(word : List[String]): Option[ListBuffer[TrieNode]] = {
 
 		def helper(
 			buffer : ListBuffer[TrieNode],
@@ -139,7 +140,7 @@ class TrieNode(
 		helper(new ListBuffer[TrieNode](), 0, this)
 	}
 
-	def matchTokens(tokens: List[String]): ListBuffer[List[String]] = {
+	override def matchTokens(tokens: List[String]): ListBuffer[List[String]] = {
 		@tailrec def helper(
 			currentIndex: Int,
 			node: TrieNode,
@@ -162,24 +163,4 @@ class TrieNode(
 	}
 
 	override def toString(): String = s"Trie(token=$token,word=$word)"
-
-	def printableString(level: Int): String = {
-		def helper(
-			currentIndex: Int,
-			node: TrieNode,
-			outputStringBuffer: ListBuffer[String]
-		): Unit =
-		{
-			val nodeDesc = s"Trie(token=$token,word=$word)"
-			val indent = "\t" * currentIndex
-			outputStringBuffer += indent + nodeDesc
-			for(child <- node.children) {
-				helper(currentIndex + 1, child._2, outputStringBuffer)
-			}
-		}
-		val output = ListBuffer[String]()
-		helper(0, this, output)
-		output.mkString("\n")
-	}
-
 }
