@@ -20,7 +20,7 @@ class WhitespaceTokenizer() extends Tokenizer {
 
 class CleanWhitespaceTokenizer() extends Tokenizer {
 	def stripAll(s: String, bad: String): String = {
-		// http://stackoverflow.com/questions/17995260/trimming-strings-in-scala
+		// Source: http://stackoverflow.com/a/17995434
 		@tailrec def start(n: Int): String = {
 			if (n == s.length) {
 				""
