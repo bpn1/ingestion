@@ -26,7 +26,7 @@ object DocumentFrequencyCounter {
 		documentFrequencies
 			.map(df => (stem(df.word), df.count))
 			.reduceByKey(_ + _)
-			.map { case (word, count) => DocumentFrequency(word, count) }
+			.map(DocumentFrequency.tupled)
 	}
 
 	def countDocumentFrequencies(
@@ -37,7 +37,7 @@ object DocumentFrequencyCounter {
 			.flatMap(article => tokenizer.tokenize(article.getText()).toSet)
 			.map(word => (word, 1))
 			.reduceByKey(_ + _)
-			.map { case (word, count) => DocumentFrequency(word, count) }
+			.map(DocumentFrequency.tupled)
 	}
 
 	def filterDocumentFrequencies(
