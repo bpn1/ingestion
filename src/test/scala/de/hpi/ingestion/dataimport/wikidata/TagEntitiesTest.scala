@@ -9,34 +9,34 @@ class TagEntitiesTest extends FlatSpec with SharedSparkContext with Matchers {
 		val newClasses = TestData.newClassMap()
 		val classMap = TagEntities.addShorterPaths(newClasses, oldClasses)
 		val expectedMap = TestData.classMap()
-		classMap shouldBe expectedMap
+		classMap shouldEqual expectedMap
 	}
 
 	"Subclass map" should "be built" in {
 		val entries = sc.parallelize(TestData.subclassOfProperties())
 		val classMap = TagEntities.buildSubclassMap(entries, TestData.classesToTag())
 		val expectedMap = TestData.classMap()
-		classMap shouldBe expectedMap
+		classMap shouldEqual expectedMap
 	}
 
 	"Wikidata entity" should "be properly translated into SubclassEntry" in {
 		val entries = TestData.classWikidataEntities()
 		    .map(TagEntities.translateToSubclassEntry)
 		val expectedEntries = TestData.subclassEntries()
-		entries shouldBe expectedEntries
+		entries shouldEqual expectedEntries
 	}
 
 	"Instance-of property" should "be checked correctly" in {
 		val entries = TestData.subclassEntries()
 			.filter(TagEntities.isInstanceOf(_, TestData.classMap()))
 		val expectedEntries = TestData.validInstanceOfProperties()
-		entries shouldBe expectedEntries
+		entries shouldEqual expectedEntries
 	}
 
 	it should "be updated correctly" in {
 		val entries = TestData.validInstanceOfProperties()
 			.map(TagEntities.updateInstanceOfProperty(_, TestData.classMap()))
 		val expectedEntries = TestData.updatedInstanceOfProperties()
-		entries shouldBe expectedEntries
+		entries shouldEqual expectedEntries
 	}
 }

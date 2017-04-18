@@ -9,6 +9,10 @@ import org.apache.spark.rdd._
 import scala.language.postfixOps
 import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikiDataEntity}
 
+/**
+  * This job builds the subclass hierarchy of selected Wikidata classes and tags every Wikidata entity, that is an
+  * instance of one of the subclasses, with the top level class.
+  */
 object TagEntities {
 	val keyspace = "wikidumps"
 	val tablename = "wikidata"

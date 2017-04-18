@@ -8,6 +8,9 @@ import play.api.libs.json._
 
 import scala.collection.mutable.ListBuffer
 
+/**
+  * This job parses a Wikidata JSON dump into Wikidata entities and imports them into the Cassandra.
+  */
 object WikiDataImport {
 	val defaultInputFile = "wikidata.json"
 	val language = "de"
@@ -24,7 +27,12 @@ object WikiDataImport {
 		json.replaceAll("^\\[|,$|, $|\\]$", "")
 	}
 
-	// TODO: use *parameter
+	/**
+	  * Extracts a JSON value from a JSON object.
+	  * @param json JSON object containing the data
+	  * @param path JSON path of the object fields to traverse
+	  * @return JSON value of the JSON field
+	  */
 	def getValue(json: JsValue, path: List[String]): Option[JsValue] = {
 		var element = json
 		for(pathSegment <- path) {
@@ -41,21 +49,45 @@ object WikiDataImport {
 		}
 	}
 
+	/**
+	  * Extracts a String value from a JSON object.
+	  * @param json JSON object containing the data
+	  * @param path JSON path of the object fields to traverse
+	  * @return String value of the JSON field
+	  */
 	def extractString(json: JsValue, path: List[String]): Option[String] = {
 		val value = getValue(json, path)
 		value.map(_.as[String])
 	}
 
+	/**
+	  * Extracts a JSON array as List from a JSON object.
+	  * @param json JSON object containing the data
+	  * @param path JSON path of the object fields to traverse
+	  * @return JSON array as List
+	  */
 	def extractList(json: JsValue, path: List[String]): List[JsValue] = {
 		val value = getValue(json, path).map(_.as[List[JsValue]])
 		value.getOrElse(List[JsValue]())
 	}
 
+	/**
+	  * Extracts a JSON object as Map from a JSON object.
+	  * @param json JSON object containing the data
+	  * @param path JSON path of the object fields to traverse
+	  * @return JSON object as Map
+	  */
 	def extractMap(json: JsValue, path: List[String]): Map[String, JsValue] = {
 		val value = getValue(json, path).map(_.as[Map[String, JsValue]])
 		value.getOrElse(Map[String, JsValue]())
 	}
 
+	/**
+	  * Extracts a Double value from a JSON object.
+	  * @param json JSON object containing the data
+	  * @param path JSON path of the object fields to traverse
+	  * @return Double value of the JSON field as String
+	  */
 	def extractDouble(json: JsValue, path: List[String]): Option[String] = {
 		val value = getValue(json, path)
 		value.map(_.as[Double].toString)

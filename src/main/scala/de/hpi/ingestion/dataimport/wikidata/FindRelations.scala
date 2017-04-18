@@ -11,6 +11,10 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 
+/**
+  * This job finds wikidata relations between subjects, translates the Wikidata Id relations into Subject UUID relations
+  * and replaces the Wikidata Ids with their names.
+  */
 object FindRelations {
 	val appname = "FindRelations_v1.1"
 	val datasources = List("wikidata_20161117")
