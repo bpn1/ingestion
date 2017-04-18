@@ -49,8 +49,6 @@ object BagCounter {
 class Bag[A, B <% BagCounter[B] : ClassTag](
 	private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] with Set[A]
 {
-	// http://stackoverflow.com/questions/15065070/implement-a-multiset-bag-as-scala-collection
-
 	def getCounts(): Map[A, B] = counts
 
 	override def +(elem: A): Bag[A, B] = {
