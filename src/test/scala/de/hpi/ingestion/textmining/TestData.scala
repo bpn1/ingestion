@@ -131,18 +131,17 @@ object TestData {
 		)
 	}
 
-	def mergedAliasCountsAndLinksSet(): Set[Alias] = {
+	def aliasCountsSet(): Set[(String, Int, Int)] = {
 		Set(
-			Alias("Audi", Map("Audi" -> 2), 2, 3),
-			Alias("Brachttal", Map("Brachttal" -> 2), 2, 2),
-			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), 1, 2),
-			Alias("Hessen", Map("Hessen" -> 1), 1, 2),
-			Alias("1377", Map("1377" -> 1), 1, 1),
-			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), 1, 2),
-			Alias("Backfisch", Map(), 0, 1),
-			Alias("Streitberg", Map(), 0, 1),
-			Alias("historisches Jahr", Map("1337" -> 1), 1, 1)
-		)
+			("Audi", 2, 3),
+			("Brachttal", 2, 2),
+			("Main-Kinzig-Kreis", 1, 2),
+			("Hessen", 1, 2),
+			("1377", 1, 1),
+			("Büdinger Wald", 1, 2),
+			("Backfisch", 0, 1),
+			("Streitberg", 0, 1),
+			("historisches Jahr", 1, 1))
 	}
 
 	def linkProbabilitiesTestRDD(sc: SparkContext): RDD[(String, Double)] = {

@@ -76,39 +76,17 @@ object WikipediaAliasCounter {
 	}
 
 	/**
-	  * Joins the alias counts and links
-	  *
-	  * @param aliasCounts aliases with their respective numbers of occurrences
-	  * @param links       links with all their linked pages
-	  * @return links with their alias counts
-	  */
-	def mergeAliasCountsAndLinks(aliasCounts: RDD[Alias], links: RDD[Alias]): RDD[Alias] = {
-		val joinableLinks = links
-			.map(link => (link.alias, link))
-
-		aliasCounts
-			.map(aliasCount => (aliasCount.alias, aliasCount))
-			.leftOuterJoin(joinableLinks)
-			.map {
-				case (alias, (aliasCount, Some(link))) =>
-					Alias(alias, link.pages, aliasCount.linkoccurrences, aliasCount.totaloccurrences)
-				case (alias, (aliasCount, None)) =>
-					Alias(alias, Map(), aliasCount.linkoccurrences, aliasCount.totaloccurrences)
-			}
-	}
-
-	/**
 	  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages
 	  *
 	  * @param articles parsed Wikipedia articles
 	  * @param links    articles with their corresponding pages
 	  * @return merged links and alias counts
 	  */
-	def run(articles: RDD[ParsedWikipediaEntry], links: RDD[Alias]): RDD[Alias] = {
-		val aliasCounts = countAliases(articles)
+	def run(articles: RDD[ParsedWikipediaEntry], links: RDD[Alias]): RDD[(String, Int, Int)] = {
+		countAliases(articles)
 			.cache
 			.filter(_.alias.length <= maximumAliasLength)
-		mergeAliasCountsAndLinks(aliasCounts, links)
+			.map(entry => (entry.alias, entry.linkoccurrences, entry.totaloccurrences))
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -119,7 +97,8 @@ object WikipediaAliasCounter {
 
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val links = sc.cassandraTable[Alias](keyspace, linksTablename)
-		run(articles, links).saveToCassandra(keyspace, linksTablename)
+		run(articles, links)
+			.saveToCassandra(keyspace, linksTablename, SomeColumns("alias", "linkoccurrences", "totaloccurrences"))
 
 		sc.stop()
 	}

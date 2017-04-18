@@ -91,20 +91,23 @@ class WikipediaAliasCounterTest extends FlatSpec with RDDComparisons with Shared
 		assertRDDEquals(linkProbabilities, TestData.linkProbabilitiesTestRDD(sc))
 	}
 
-	"Merged alias counts and links" should "be exactly these links" in {
+	"Alias counts" should "be exactly these tuples" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val links = sc.parallelize(TestData.linksSet().toList)
 		val mergedLinks = WikipediaAliasCounter.run(articles, links)
 			.collect
 			.toSet
-		mergedLinks shouldEqual TestData.mergedAliasCountsAndLinksSet()
+		mergedLinks shouldEqual TestData.aliasCountsSet()
 	}
 
 	"Counted number of link occurrences" should "equal number of page references" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val links = sc.parallelize(TestData.linksSet().toList)
+		val expectedOccurences = TestData.linksSet()
+			.map(link => (link.alias, link.pages.foldLeft(0)(_ + _._2)))
+			.toMap
 		WikipediaAliasCounter.run(articles, links)
 			.collect
-			.foreach(link => link.linkoccurrences should be <= link.pages.foldLeft(0)(_ + _._2))
+			.foreach(link => link._2 should be <= expectedOccurences.getOrElse(link._1, 0))
 	}
 }
