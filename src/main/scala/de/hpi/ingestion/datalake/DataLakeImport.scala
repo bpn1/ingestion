@@ -15,7 +15,7 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 	val versionTable = "version"
 
 	/**
-	  * Reads the data of the datasoure to import and transforms the entries to Subjects
+	  * Reads the data of the datasource to import and transforms the entries to Subjects.
 	  *
 	  * @param sc      the SparkContext of the program
 	  * @param version the version of the new Subjects
@@ -24,7 +24,7 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 	protected def readInput(sc: SparkContext, version: Version): RDD[Subject]
 
 	/**
-	  * Translates an object to the schema of the staging table
+	  * Translates an entity of the datasource into a Subject, which is the schema of the staging table.
 	  * @param entity  the object to be converted to a Subject
 	  * @param version the version of the new Subject
 	  * @return a new Subject created from the given object
@@ -32,7 +32,7 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 	protected def translateToSubject(entity: T, version: Version): Subject
 
 	/**
-	  * Parses the normalization config file into a Map
+	  * Parses the normalization config file into a Map.
 	  * @param url the path to the config file
 	  * @return a Map containing the normalized attributes mapped to the new subject attributes
 	  */

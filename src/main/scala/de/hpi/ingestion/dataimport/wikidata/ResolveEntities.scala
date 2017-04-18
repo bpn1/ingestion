@@ -7,7 +7,7 @@ import scala.util.matching.Regex
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 
 /**
-  * This Job resolves the Wikidata Ids in the properties of each Wikidata entity. Entities labeled
+  * This job resolves the Wikidata Ids in the properties of each Wikidata entity. Entities labeled
   * with an instancetype in the TagEntities job are not resolved.
   */
 object ResolveEntities {
