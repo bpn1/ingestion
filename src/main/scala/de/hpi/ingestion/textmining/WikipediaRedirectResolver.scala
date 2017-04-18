@@ -34,7 +34,7 @@ object WikipediaRedirectResolver {
 		val redirectRegex = new Regex("REDIRECT[^\\s]")
 		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
 		dataRDD
-			.filter(entry => redirectRegex.findFirstIn(entry.getText()).isDefined)
+			.filter(_.getText().startsWith(WikipediaTextParser.redirectText))
 			.map(entry => (entry.title, entry.textlinks))
 			.collect()
 			.foreach { case (title, links) =>
