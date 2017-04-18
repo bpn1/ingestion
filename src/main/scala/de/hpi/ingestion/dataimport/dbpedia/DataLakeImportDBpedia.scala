@@ -38,7 +38,7 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 			.zip(normalizedProperties("geo_coords_long"))
 		    .flatMap(x => List(x._1, x._2))
 
-		sm.addProperties(entity.data ++ properties)
+		sm.addProperties(properties.toMap)
 		subject
 	}
 

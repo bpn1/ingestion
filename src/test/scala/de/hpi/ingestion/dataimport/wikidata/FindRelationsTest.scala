@@ -12,14 +12,14 @@ class FindRelationsTest extends FlatSpec with SharedSparkContext with Matchers {
 			.map(subject => (subject.id, subject.name, subject.properties, subject.relations))
 		val expectedSubjects = TestData.resolvedSubjects()
 			.map(subject => (subject.id, subject.name, subject.properties, subject.relations))
-		subjects shouldBe expectedSubjects
+		subjects shouldEqual expectedSubjects
 	}
 
 	"Name resolve map" should "contain all resolvable names" in {
 		val subjects = sc.parallelize(TestData.unresolvedSubjects())
 		val resolvedNames = FindRelations.resolvableNamesMap(subjects)
 		val expectedMap = TestData.resolvedNameMap()
-		resolvedNames shouldBe expectedMap
+		resolvedNames shouldEqual expectedMap
 	}
 
 }
