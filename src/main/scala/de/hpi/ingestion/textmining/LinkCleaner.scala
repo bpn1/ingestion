@@ -1,47 +1,51 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.textmining.models.{Alias, Page, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.models.{Page, ParsedWikipediaEntry}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
-import de.hpi.ingestion.textmining.WikipediaLinkAnalysis.{inputRawTablename, keyspace}
 
 /**
   * Removes dead links that do not point to an existing page
   */
 object LinkCleaner {
 	val keyspace = "wikidumps"
+	val inputPagesTable = "wikipediapages"
 	val operatingTable = "parsedwikipedia"
 
-	def getAllPages(sc: SparkContext): RDD[String] = {
-		sc.cassandraTable[WikipediaEntry](keyspace, inputRawTablename)
-			.map(_.title)
+	def groupValidPages(
+		articles: RDD[ParsedWikipediaEntry],
+		existingPages: RDD[String]
+	): RDD[(String, Set[String])] = {
+		articles
+			.flatMap { article =>
+				article
+					.allLinks()
+					.map(link => (link.page, article.title))
+			}
+			.join(existingPages.map(page => (page, page)).keyBy(_._1))
+			.map { case (page, (title, (page1, page2))) => (title, page) }
+			.groupByKey
+			.mapValues(_.toSet)
 	}
 
-	//	def removeDeadLinks(links: RDD[Alias], allPages: RDD[String]): RDD[Alias] = {
-	//		links
-	//			.flatMap { link =>
-	//				link.pages
-	//					.map(page => (link.alias, page._1, page._2))
-	//			}
-	//			.keyBy { case (alias, pageName, count) => pageName }
-	//			.join(allPages.map(entry => (entry, entry)).keyBy(_._1)) // ugly, but working
-	//			.map { case (pageName, (link, doublePageName)) => link }
-	//			.map { case (alias, pageName, count) => (alias, Map((pageName, count))) }
-	//			.reduceByKey(_ ++ _)
-	//			.map { case (alias, links) => Alias(alias, links) }
-	//	}
-	//
-	//	def removeDeadPages(pages: RDD[Page], allPages: RDD[String]): RDD[Page] = {
-	//		pages
-	//			.keyBy(_.page)
-	//			.join(allPages.map(entry => (entry, entry)).keyBy(_._1))
-	//			.map { case (pageName, (page, doublePageName)) => page }
-	//	}
-
-	def run(articles: RDD[ParsedWikipediaEntry]): RDD[ParsedWikipediaEntry] = {
+	def filterArticleLinks(
+		articles: RDD[ParsedWikipediaEntry],
+		validLinks: RDD[(String, Set[String])]
+	): RDD[ParsedWikipediaEntry] = {
 		articles
+			.map(article => (article.title, article))
+			.join(validLinks)
+			.map { case (title, (article, links)) =>
+				article.filterLinks(link => links.contains(link.page))
+				article
+			}
+	}
+
+	def run(articles: RDD[ParsedWikipediaEntry], existingPages: RDD[String]):
+	RDD[ParsedWikipediaEntry] = {
+		val validPages = groupValidPages(articles, existingPages)
+		filterArticleLinks(articles, validPages)
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -50,7 +54,10 @@ object LinkCleaner {
 		val sc = new SparkContext(conf)
 
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, operatingTable)
-		run(articles)
+		val existingPages = sc.cassandraTable[Page](keyspace, inputPagesTable)
+			.map(_.page)
+
+		run(articles, existingPages)
 			.saveToCassandra(keyspace, operatingTable)
 
 		sc.stop

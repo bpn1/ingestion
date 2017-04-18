@@ -15,4 +15,12 @@ case class ParsedWikipediaEntry(
 	def allLinks(): List[Link] = {
 		textlinks ++ templatelinks ++ categorylinks ++ listlinks ++ disambiguationlinks
 	}
+
+	def filterLinks(filterFunction: Link => Boolean) : Unit = {
+		textlinks = textlinks.filter(filterFunction)
+		templatelinks = templatelinks.filter(filterFunction)
+		categorylinks = categorylinks.filter(filterFunction)
+		disambiguationlinks = disambiguationlinks.filter(filterFunction)
+		listlinks = listlinks.filter(filterFunction)
+	}
 }
