@@ -6,7 +6,7 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 
-object WikipediaLinkAnalysis {
+object LinkAnalysis {
 	val keyspace = "wikidumps"
 	val inputRawTablename = "wikipedia"
 	val inputParsedTablename = "parsedwikipedia"
@@ -91,7 +91,7 @@ object WikipediaLinkAnalysis {
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Link Analysis")
+			.setAppName("Link Analysis")
 			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
 

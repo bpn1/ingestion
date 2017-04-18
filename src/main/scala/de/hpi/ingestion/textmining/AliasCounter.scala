@@ -5,17 +5,17 @@ import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 
-object WikipediaAliasCounter {
+object AliasCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputTablename = "wikipediaaliases"
 
 	/**
 	  * Calculates the probability that an alias is a link.
-	  * @param aliasCounter AliasCounter of a given alias
+	  * @param aliasCounter AliasCounts of a given alias
 	  * @return percentage of the occurences as link.
 	  */
-	def probabilityIsLink(aliasCounter: AliasCounter): Double = {
+	def probabilityIsLink(aliasCounter: AliasCounts): Double = {
 		aliasCounter.linkoccurrences.toDouble / aliasCounter.totaloccurrences
 	}
 
@@ -24,32 +24,32 @@ object WikipediaAliasCounter {
 	  * @param entry article from which the aliases will be extracted
 	  * @return list of aliases each with an occurence set to 1
 	  */
-	def extractAliasList(entry: ParsedWikipediaEntry): List[AliasCounter] = {
+	def extractAliasList(entry: ParsedWikipediaEntry): List[AliasCounts] = {
 		val linkSet = entry.allLinks
 			.map(_.alias)
 			.toSet
 
 		val links = linkSet
 		    .toList
-			.map(AliasCounter(_, 1, 1))
+			.map(AliasCounts(_, 1, 1))
 
 		val aliases = entry.foundaliases
 			.toSet
 			.filterNot(linkSet)
 			.toList
-			.map(AliasCounter(_, 0, 1))
+			.map(AliasCounts(_, 0, 1))
 
 		links ++ aliases
 	}
 
 	/**
 	  * Reduces two AliasCounters of the same alias.
-	  * @param alias1 first AliasCounter with the same alias as alias2
-	  * @param alias2 second AliasCounter with the same alias as alias1
-	  * @return AliasCounter with summed link and total occurences
+	  * @param alias1 first AliasCounts with the same alias as alias2
+	  * @param alias2 second AliasCounts with the same alias as alias1
+	  * @return AliasCounts with summed link and total occurences
 	  */
-	def aliasReduction(alias1: AliasCounter, alias2: AliasCounter): AliasCounter = {
-		AliasCounter(
+	def aliasReduction(alias1: AliasCounts, alias2: AliasCounts): AliasCounts = {
+		AliasCounts(
 			alias1.alias,
 			alias1.linkoccurrences + alias2.linkoccurrences,
 			alias1.totaloccurrences + alias2.totaloccurrences)
@@ -60,7 +60,7 @@ object WikipediaAliasCounter {
 	  * @param articles RDD containing parsed wikipedia articles
 	  * @return RDD containing alias counts for links and total occurences
 	  */
-	def countAliases(articles: RDD[ParsedWikipediaEntry]): RDD[AliasCounter] = {
+	def countAliases(articles: RDD[ParsedWikipediaEntry]): RDD[AliasCounts] = {
 		articles.flatMap(extractAliasList)
 			.map(alias => (alias.alias, alias))
 			.reduceByKey(aliasReduction(_, _))
@@ -70,7 +70,7 @@ object WikipediaAliasCounter {
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Alias Counter")
+			.setAppName("Alias Counter")
 			.set("spark.cassandra.connection.host", "odin01")
 
 		val sc = new SparkContext(conf)
