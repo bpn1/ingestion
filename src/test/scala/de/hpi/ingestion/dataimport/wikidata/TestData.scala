@@ -3,7 +3,8 @@ package de.hpi.ingestion.dataimport.wikidata
 import java.util.UUID
 
 import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikiDataEntity}
-import de.hpi.ingestion.datalake.models.Subject
+import de.hpi.ingestion.datalake.models.{Subject, Version}
+import org.apache.spark.SparkContext
 
 import scala.io.Source
 
@@ -265,6 +266,25 @@ object TestData {
 			List(),
 			List())
 	}
+
+	def version(sc: SparkContext): Version = Version("DBPediaDataLakeImport", datasources = List("dataSources"), sc)
+
+	def testEntity(): WikiDataEntity = WikiDataEntity(
+		"Q21110253",
+		List("testalias"),
+		Option("human protein (annotated by UniProtKB/Swiss-Prot Q8N128)"),
+		Option("item"),
+		Option("testwikiname"),
+		Option("en_testwikiname"),
+		Option("test_instancetype"),
+		Option("Protein FAM177A1"),
+		Map(
+			"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
+			"subclass of" -> List("Protein", "FAM177 family"),
+			"VIAF ID" -> List("X123"),
+			"testProperty" -> List("test")
+		)
+	)
 
 	// scalastyle:on line.size.limit
 }

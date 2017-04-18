@@ -4,7 +4,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
 import org.scalatest.FlatSpec
 
-class DBpediaUnitTest extends FlatSpec with SharedSparkContext {
+class DBpediaImportUnitTest extends FlatSpec with SharedSparkContext {
 
 	"tokenize" should "return a three element long list" in {
 		assert(DBPediaImport.tokenize(TestData.line()).length == 3)
