@@ -1,7 +1,7 @@
 -- Wikidumps
 CREATE KEYSPACE wikidumps WITH REPLICATION = {
-	'class' : 'SimpleStrategy',
-	'replication_factor' : 3
+    'class' : 'SimpleStrategy',
+    'replication_factor' : 3
 };
 
 -- Wikidumps.Wikipedia
@@ -19,10 +19,10 @@ CREATE TABLE wikidumps.parsedwikipedia (
     categorylinks frozen<list<frozen<link>>>,
     disambiguationlinks frozen<list<frozen<link>>>,
     listlinks frozen<list<frozen<link>>>,
-	linkswithcontext frozen<list<frozen<link>>>,
+    linkswithcontext frozen<list<frozen<link>>>,
     foundaliases list<text>,
     text text,
-	context map<text, int>,
+    context map<text, int>,
 );
 
 CREATE TABLE wikidumps.wikipedia (
