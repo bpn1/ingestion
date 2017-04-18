@@ -13,7 +13,7 @@ class Bag[A, B <% BagCounter[B] : ClassTag](
 private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] with Set[A] with Serializable {
 
 	def getCounts(): Map[A, B] = counts
-g
+
 	override def +(elem: A): Bag[A, B] = {
 		val count = this.counts.get(elem) match {
 			case Some(x) => {
