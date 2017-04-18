@@ -15,7 +15,8 @@ object LinkCleaner {
 
 	/**
 	  * Groups existing page names by the article names in which their links occur.
-	  * @param articles all Wikipedia articles
+	  *
+	  * @param articles      all Wikipedia articles
 	  * @param existingPages names of all existing Wikipedia articles
 	  * @return Wikipedia page names and their corresponding valid referenced page names
 	  */
@@ -37,7 +38,8 @@ object LinkCleaner {
 
 	/**
 	  * Filters links of Wikipedia articles and discards links that do not point to a valid page.
-	  * @param articles all Wikipedia articles
+	  *
+	  * @param articles   all Wikipedia articles
 	  * @param validPages Wikipedia page names and their corresponding valid referenced page names
 	  * @return Wikipedia articles without links to non-existing pages
 	  */
@@ -47,16 +49,20 @@ object LinkCleaner {
 	): RDD[ParsedWikipediaEntry] = {
 		articles
 			.map(article => (article.title, article))
-			.join(validPages)
-			.map { case (title, (article, links)) => // todo: left outer join
-				article.filterLinks(link => links.contains(link.page))
-				article
+			.leftOuterJoin(validPages)
+			.map {
+				case (title, (article, Some(links))) =>
+					article.filterLinks(link => links.contains(link.page))
+					article
+				case (title, (article, None)) =>
+					article
 			}
 	}
 
 	/**
 	  * Removes dead links that do not point to an existing page.
-	  * @param articles all Wikipedia articles
+	  *
+	  * @param articles      all Wikipedia articles
 	  * @param existingPages names of all existing Wikipedia articles
 	  * @return Wikipedia articles without links to non-existing pages
 	  */

@@ -409,12 +409,39 @@ object TestData {
 					Link("Zerfall", "Zerfall (Soziologie)", 4711), // dead link
 					Link("", "page name with empty alias", 4711),
 					Link("alias with empty page name", "", 4711)
-				)
-			))
+				)))
 	}
 
-	def cleanedSmallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
-		List(
+	def parsedArticlesWithoutLinksSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
+	def parsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Ingolstadt", "Ingolstadt", 55),
+					Link("Bayern", "Bayern", 69),
+					Link("Automobilhersteller", "Automobilhersteller", 94),
+					Link("Zerfall", "Zerfall (Album)", 4711),
+					Link("Zerfall", "Zerfall (Soziologie)", 4711), // dead link
+					Link("", "page name with empty alias", 4711),
+					Link("alias with empty page name", "", 4711)
+				)),
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
+	def cleanedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
 			ParsedWikipediaEntry(
 				"Audi",
 				Option("dummy text"),
@@ -423,8 +450,11 @@ object TestData {
 					Link("Bayern", "Bayern", 69),
 					Link("Automobilhersteller", "Automobilhersteller", 94),
 					Link("Zerfall", "Zerfall (Album)", 4711)
-				)
-			))
+				)),
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
 	}
 
 	def germanStopwordsTestSet(): Set[String] = {
