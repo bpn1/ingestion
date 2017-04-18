@@ -26,7 +26,7 @@ class WikipediaAliasCounterTest extends FlatSpec with RDDComparisons with Shared
 			.countAliases(articles)
 			.collect
 			.foreach(aliasCounter =>
-				aliasCounter.total_occurrences should be > 0)
+				aliasCounter.totaloccurrences should be > 0)
 	}
 
 	they should "have consistent counts" in {
@@ -35,9 +35,9 @@ class WikipediaAliasCounterTest extends FlatSpec with RDDComparisons with Shared
 			.countAliases(articles)
 			.collect
 			.foreach { aliasCounter =>
-				aliasCounter.link_occurrences should be <= aliasCounter.total_occurrences
-				aliasCounter.link_occurrences should be >= 0
-				aliasCounter.total_occurrences should be >= 0
+				aliasCounter.linkoccurrences should be <= aliasCounter.totaloccurrences
+				aliasCounter.linkoccurrences should be >= 0
+				aliasCounter.totaloccurrences should be >= 0
 			}
 	}
 
@@ -62,9 +62,9 @@ class WikipediaAliasCounterTest extends FlatSpec with RDDComparisons with Shared
 			.flatMap(WikipediaAliasCounter.extractAliasList)
 			.collect
 			.foreach { alias =>
-				alias.link_occurrences should be <= 1
-				alias.link_occurrences should be >= 0
-				alias.total_occurrences shouldBe 1
+				alias.linkoccurrences should be <= 1
+				alias.linkoccurrences should be >= 0
+				alias.totaloccurrences shouldBe 1
 			}
 	}
 
@@ -105,6 +105,6 @@ class WikipediaAliasCounterTest extends FlatSpec with RDDComparisons with Shared
 		val links = sc.parallelize(TestData.linksSet().toList)
 		WikipediaAliasCounter.run(articles, links)
 			.collect
-			.foreach(link => link.link_occurrences should be <= link.pages.foldLeft(0)(_ + _._2))
+			.foreach(link => link.linkoccurrences should be <= link.pages.foldLeft(0)(_ + _._2))
 	}
 }

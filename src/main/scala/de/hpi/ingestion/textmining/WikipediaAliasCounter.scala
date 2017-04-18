@@ -8,8 +8,7 @@ import de.hpi.ingestion.textmining.models._
 object WikipediaAliasCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
-	val inputLinksTablename = "wikipedialinks"
-	val outputTablename = "wikipedialinks"
+	val linksTablename = "wikipedialinks"
 	val maximumAliasLength = 1000
 
 	/**
@@ -19,7 +18,7 @@ object WikipediaAliasCounter {
 	  * @return percentage of the occurrences as link.
 	  */
 	def probabilityIsLink(aliasCounter: Alias): Double = {
-		aliasCounter.link_occurrences.toDouble / aliasCounter.total_occurrences
+		aliasCounter.linkoccurrences.toDouble / aliasCounter.totaloccurrences
 	}
 
 	/**
@@ -56,9 +55,9 @@ object WikipediaAliasCounter {
 	def aliasReduction(alias1: Alias, alias2: Alias): Alias = {
 		Alias(
 			alias1.alias,
-			Map(),
-			alias1.link_occurrences + alias2.link_occurrences,
-			alias1.total_occurrences + alias2.total_occurrences)
+			alias1.pages ++ alias2.pages,
+			alias1.linkoccurrences + alias2.linkoccurrences,
+			alias1.totaloccurrences + alias2.totaloccurrences)
 	}
 
 	/**
@@ -92,9 +91,9 @@ object WikipediaAliasCounter {
 			.leftOuterJoin(joinableLinks)
 			.map {
 				case (alias, (aliasCount, Some(link))) =>
-					Alias(alias, link.pages, aliasCount.link_occurrences, aliasCount.total_occurrences)
+					Alias(alias, link.pages, aliasCount.linkoccurrences, aliasCount.totaloccurrences)
 				case (alias, (aliasCount, None)) =>
-					Alias(alias, Map(), aliasCount.link_occurrences, aliasCount.total_occurrences)
+					Alias(alias, Map(), aliasCount.linkoccurrences, aliasCount.totaloccurrences)
 			}
 	}
 
@@ -119,8 +118,8 @@ object WikipediaAliasCounter {
 		val sc = new SparkContext(conf)
 
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val links = sc.cassandraTable[Alias](keyspace, inputLinksTablename)
-		run(articles, links).saveToCassandra(keyspace, outputTablename)
+		val links = sc.cassandraTable[Alias](keyspace, linksTablename)
+		run(articles, links).saveToCassandra(keyspace, linksTablename)
 
 		sc.stop()
 	}
