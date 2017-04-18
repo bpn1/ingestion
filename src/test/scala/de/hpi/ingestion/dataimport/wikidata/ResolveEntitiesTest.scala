@@ -9,42 +9,42 @@ class ResolveEntitiesTest
 		val entities = TestData.unresolvedWikidataEntities()
 			.flatMap(ResolveEntities.flattenWikidataEntity)
 		val expectedEntities = TestData.flattenedWikidataEntries()
-		entities shouldBe expectedEntities
+		entities shouldEqual expectedEntities
 	}
 
 	"Wikidata id regex" should "find wikidata id values" in {
 		val entries = TestData.flattenedWikidataEntries()
 			.filter(ResolveEntities.containsWikidataIdValue)
 		val expectedEntries = TestData.wikidataIdEntries()
-		entries shouldBe expectedEntries
+		entries shouldEqual expectedEntries
 	}
 
 	"Wikidata unit if regex" should "find wikidata ids as measurement units" in {
 		val entries = TestData.flattenedWikidataEntries()
 			.filter(ResolveEntities.hasUnitValue)
 		val expectedEntries = TestData.unitWikidataIdEntries()
-		entries shouldBe expectedEntries
+		entries shouldEqual expectedEntries
 	}
 
 	"Wikidata unit values" should "be split into a joinable format" in {
 		val entries = TestData.unitWikidataIdEntries()
 			.map(ResolveEntities.splitUnitValue)
 		val expectedEntries = TestData.splitUnitWikidataIdEntries()
-		entries shouldBe expectedEntries
+		entries shouldEqual expectedEntries
 	}
 
 	"Wikidata entities to resolve" should "be found" in {
 		val entries = TestData.unfilteredWikidataEntities()
 			.filter(ResolveEntities.shouldBeResolved)
 		val expectedEntries = TestData.filteredWikidataEntities()
-		entries shouldBe expectedEntries
+		entries shouldEqual expectedEntries
 	}
 
 	"Wikidata name data" should "be extracted" in {
 		val entities = TestData.unfilteredWikidataEntities()
 		    .map(ResolveEntities.extractNameData)
 		val expectedEntries = TestData.entityNameData()
-		entities shouldBe expectedEntries
+		entities shouldEqual expectedEntries
 	}
 
 	"Wikidata id rdd" should "be joined with name rdd" in {
@@ -72,6 +72,6 @@ class ResolveEntitiesTest
 		val expected = TestData.unresolvedWikidataEntities()
 			.map(_.data)
 		    .head
-		rebuiltData shouldBe expected
+		rebuiltData shouldEqual expected
 	}
 }

@@ -18,7 +18,7 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 		claimJson.value.foreach { case (dataType, jsonData) =>
 			val extractedData = WikiDataImport.parseDataType(Option(dataType), jsonData)
 			val expectedValue = TestData.dataTypeValues(dataType)
-			extractedData shouldBe expectedValue
+			extractedData shouldEqual expectedValue
 		}
 	}
 
@@ -26,21 +26,21 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 		val testEntities = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
 			.map(value => WikiDataImport.extractLabels(value, WikiDataImport.extractString(value, List("type"))))
 		val expectedLabels = TestData.entityLabels()
-		testEntities shouldBe expectedLabels
+		testEntities shouldEqual expectedLabels
 	}
 
 	"Aliases" should "be extracted" in {
 		val testAliases = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
 			.map(WikiDataImport.extractAliases)
 		val expectedAliases = TestData.entityAliases()
-		testAliases shouldBe expectedAliases
+		testAliases shouldEqual expectedAliases
 	}
 
 	"Entity values" should "be filled in" in {
 		val testEntities = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
 		    .map(WikiDataImport.fillEntityValues)
 		val expectedEntities = TestData.filledWikidataEntities()
-		testEntities shouldBe expectedEntities
+		testEntities shouldEqual expectedEntities
 	}
 
 	"Claim values" should "be extracted" in {
@@ -48,7 +48,7 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 		claimJson.value.foreach { case (dataType, jsonData) =>
 			val extractedData = WikiDataImport.extractClaimValues(jsonData)
 			val expectedValue = TestData.dataTypeValues(dataType)
-			extractedData shouldBe expectedValue
+			extractedData shouldEqual expectedValue
 		}
 	}
 
@@ -57,7 +57,7 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 		    .map(_.toString)
 		    .map(WikiDataImport.parseEntity)
 		val expectedEntities = TestData.parsedWikidataEntities()
-		testEntities shouldBe expectedEntities
+		testEntities shouldEqual expectedEntities
 	}
 
 	"Property ids" should "be translated" in {
@@ -65,13 +65,13 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 		val testEntities = TestData.parsedWikidataEntities()
 		    .map(WikiDataImport.translatePropertyIDs(_, propertyMap))
 		val expectedEntities = TestData.translatedWikidataEntities()
-		testEntities shouldBe expectedEntities
+		testEntities shouldEqual expectedEntities
 	}
 
 	"Property map" should "be built" in {
 		val properties = sc.parallelize(TestData.propertyEntities())
 		val propertyMap = WikiDataImport.buildPropertyMap(properties)
 		val expectedMap = TestData.propertyMap()
-		propertyMap shouldBe expectedMap
+		propertyMap shouldEqual expectedMap
 	}
 }
