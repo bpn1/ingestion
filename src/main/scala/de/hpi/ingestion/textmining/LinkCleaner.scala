@@ -6,7 +6,7 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 
 /**
-  * Removes dead links that do not point to an existing page
+  * Removes dead links that do not point to an existing page.
   */
 object LinkCleaner {
 	val keyspace = "wikidumps"
@@ -17,7 +17,7 @@ object LinkCleaner {
 	  * Groups existing page names by the article names in which their links occur.
 	  * @param articles all Wikipedia articles
 	  * @param existingPages names of all existing Wikipedia articles
-	  * @return
+	  * @return Wikipedia page names and their corresponding valid referenced page names
 	  */
 	def groupValidPages(
 		articles: RDD[ParsedWikipediaEntry],
@@ -36,29 +36,29 @@ object LinkCleaner {
 	}
 
 	/**
-	  *
-	  * @param articles
-	  * @param validLinks
-	  * @return
+	  * Filters links of Wikipedia articles and discards links that do not point to a valid page.
+	  * @param articles all Wikipedia articles
+	  * @param validPages Wikipedia page names and their corresponding valid referenced page names
+	  * @return Wikipedia articles without links to non-existing pages
 	  */
 	def filterArticleLinks(
 		articles: RDD[ParsedWikipediaEntry],
-		validLinks: RDD[(String, Set[String])]
+		validPages: RDD[(String, Set[String])]
 	): RDD[ParsedWikipediaEntry] = {
 		articles
 			.map(article => (article.title, article))
-			.join(validLinks)
-			.map { case (title, (article, links)) =>
+			.join(validPages)
+			.map { case (title, (article, links)) => // todo: left outer join
 				article.filterLinks(link => links.contains(link.page))
 				article
 			}
 	}
 
 	/**
-	  *
-	  * @param articles
-	  * @param existingPages
-	  * @return
+	  * Removes dead links that do not point to an existing page.
+	  * @param articles all Wikipedia articles
+	  * @param existingPages names of all existing Wikipedia articles
+	  * @return Wikipedia articles without links to non-existing pages
 	  */
 	def run(
 		articles: RDD[ParsedWikipediaEntry],
