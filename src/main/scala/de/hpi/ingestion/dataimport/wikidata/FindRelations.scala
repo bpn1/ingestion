@@ -11,6 +11,10 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 
+/**
+  * This job finds wikidata relations between subjects, translates the Wikidata Id relations into Subject UUID relations
+  * and replaces the Wikidata Ids with their names.
+  */
 object FindRelations {
 	val appname = "FindRelations_v1.1"
 	val datasources = List("wikidata_20161117")
@@ -65,30 +69,6 @@ object FindRelations {
 	}
 
 	/**
-	  * Creates template version for versioning. This template contains data for the fields
-	  * version, program, datasources and timestamp.
-	  * @return template version
-	  */
-	def makeTemplateVersion(): Version = {
-		Version(program = appname, datasources = datasources)
-	}
-
-	/**
-	  * Writes version to the Cassandra version table.
-	  * @param version Version to write to the Cassandra.
-	  * @param sc spark context to use for database access
-	  */
-	def writeVersion(version: Version, sc: SparkContext): Unit = {
-		val versionRDD = sc.parallelize(
-			List((version.version, version.timestamp, version.datasources, version.program)))
-
-		versionRDD.saveToCassandra(
-			keyspace,
-			versionTablename,
-			SomeColumns("version", "timestamp", "datasources", "program"))
-	}
-
-	/**
 	  * Creates map containing the wikidata id as key and the corresponding subjects id and name
 	  * as value.
 	  * @param subjects RDD of subjects
@@ -115,10 +95,9 @@ object FindRelations {
 
 		val nameResolveMap = resolvableNamesMap(subjects)
 
-		val version = makeTemplateVersion()
+		val version = Version(appname, datasources, sc)
 		subjects
 			.map(findRelations(_, nameResolveMap, version))
 			.saveToCassandra(keyspace, tablename)
-		writeVersion(version, sc)
 	}
 }
