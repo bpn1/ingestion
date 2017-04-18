@@ -622,6 +622,21 @@ object TestData {
 		)
 	}
 
+	def parsedEntriesWithRedirects(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page")),
+			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page")),
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page")),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page")),
+			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")))
+	}
+
+	def parsedRedirectEntries():  Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page")),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page")))
+	}
+
 }
 // scalastyle:on method.length
 // scalastyle:on line.size.limit

@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining
 
 import org.apache.spark.{SparkConf, SparkContext}
-import scala.util.matching.Regex
 import com.datastax.spark.connector._
 import scala.collection.mutable
 import de.hpi.ingestion.textmining.models._
@@ -31,21 +30,16 @@ object WikipediaRedirectResolver {
 		val sc = new SparkContext(conf)
 		val dict = mutable.Map[String, String]()
 
-		val redirectRegex = new Regex("REDIRECT[^\\s]")
 		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
 		dataRDD
-			.filter(_.getText().startsWith(WikipediaTextParser.redirectText))
+			.filter(WikipediaTextParser.isRedirectPage)
 			.map(entry => (entry.title, entry.textlinks))
 			.collect()
 			.foreach { case (title, links) =>
-				links.foreach { link =>
-					if (isValidRedirect(link, title)) {
-						dict(title) = link.page
-					}
-				}
+				links
+					.filter(isValidRedirect(_, title))
+					.foreach(link => dict(title) = link.page)
 			}
-
-		sc.parallelize(dict.toSeq).saveAsTextFile("redirects")
 
 		val dictBroadcast = sc.broadcast(dict)
 		dataRDD
@@ -64,6 +58,11 @@ object WikipediaRedirectResolver {
 				}
 			}, true)
 			.saveToCassandra(keyspace, tablename)
+
+		// remove redirect entries
+		dataRDD
+			.filter(WikipediaTextParser.isRedirectPage)
+			.deleteFromCassandra(keyspace, tablename)
 		sc.stop()
 	}
 }

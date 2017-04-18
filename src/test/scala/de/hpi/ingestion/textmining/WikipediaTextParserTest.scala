@@ -224,6 +224,13 @@ class WikipediaTextParserTest extends FlatSpec with SharedSparkContext with Matc
 				and not include "</p>" and not include "</abbr>"))
 	}
 
+	"Redirect page entries" should "be identifies as such" in {
+		val entries = TestData.parsedEntriesWithRedirects()
+			.filter(WikipediaTextParser.isRedirectPage)
+		val expectedEntries = TestData.parsedRedirectEntries()
+		entries shouldEqual expectedEntries
+	}
+
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
 		val substring = text.substring(link.offset, link.offset + link.alias.length)
 		substring == link.alias
