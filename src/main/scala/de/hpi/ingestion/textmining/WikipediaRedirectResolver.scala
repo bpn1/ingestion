@@ -58,11 +58,6 @@ object WikipediaRedirectResolver {
 				}
 			}, true)
 			.saveToCassandra(keyspace, tablename)
-
-		// remove redirect entries
-		dataRDD
-			.filter(WikipediaTextParser.isRedirectPage)
-			.deleteFromCassandra(keyspace, tablename)
 		sc.stop()
 	}
 }
