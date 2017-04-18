@@ -9,6 +9,9 @@ import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
 
+/**
+  * This job translates Wikidata entities into Subjects and writes them into a staging table.
+  */
 object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 	"WikiDataDataLakeImport_v1.0",
 	List("wikidata_20161117"),
