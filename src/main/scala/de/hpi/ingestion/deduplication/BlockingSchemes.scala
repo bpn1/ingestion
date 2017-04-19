@@ -29,24 +29,26 @@ trait BlockingScheme extends Serializable {
 }
 
 /**
-  * This class uses the result of the CompSplit.jar on the name property as key.
+  * This class uses the result from compSplit on the name property as key.
+  *
   */
 class DefaultBlockingScheme extends BlockingScheme {
-	/*override def generateKey(subject: Subject): List[String] = {
+	override def generateKey(subject: Subject): List[String] = {
 		val fileStream = getClass.getResource("/bin/StanfordCRFClassifier-Tag.bin").openStream()
 		val classifier = In.stream(fileStream).readObject[AClassifier[Tag]]()
 		val taggedName = classifier.getTags(subject.get("name").head)
 		val tagsToCheck = List(Tag.LEGAL_FORM, Tag.PERSON_LAST_NAME, Tag.SECTOR)
 
-		var key: List[String] = List()
-		for (tuple <- taggedName.sortBy(_.getRight)) {
-			if (tagsToCheck.contains(tuple.getRight)) {
-				key ++= List(tuple.toString())
-			}
+		val key = taggedName
+			.filter(tuple => tagsToCheck.contains(tuple.getRight))
+			.map(_.toString())
+			.toList
+		if (key.isEmpty) {
+			undefinedValue
+		} else {
+			key
 		}
-		key
-	}*/
-	override def generateKey(subject: Subject): List[String] = List("lol")
+	}
 }
 
 /**
