@@ -82,6 +82,7 @@ object TrieBuilder {
 			.set("spark.cassandra.connection.host", "odin01")
 		 	.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 			.set("spark.kryo.registrator", "de.hpi.ingestion.textmining.TrieKryoRegistrator")
+			.set("spark.default.parallelism", "8")
 		val sc = new SparkContext(conf)
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 
