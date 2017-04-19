@@ -12,6 +12,7 @@ object ClassifierTraining {
 
 	/**
 	  * Uses 60% of the entries to train a Naive Bayes model and tests the model with the other 40% of the data.
+	  * Used the example: https://spark.apache.org/docs/latest/mllib-naive-bayes.html
 	  * @param entries RDD of Feature Entries
 	  * @return a Naive Bayes Model trained on the data
 	  */
