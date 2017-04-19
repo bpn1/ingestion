@@ -5,6 +5,13 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 
 class ParsedWikipediaEntryTest extends FlatSpec with SharedSparkContext with Matchers {
 	"All links" should "be exactly these links" in {
-		val entry = TestData.parsedTestEntry()
+		val entry = TestData.parsedEntryWithDifferentLinkTypes()
+		entry.allLinks() shouldEqual TestData.allLinksListFromEntryList()
+	}
+
+	"Filtered links" should "be exactly these links" in {
+		val entry = TestData.parsedEntryWithDifferentLinkTypes()
+		entry.filterLinks(link => link.alias == link.page)
+		entry shouldEqual TestData.parsedEntryWithFilteredLinks()
 	}
 }

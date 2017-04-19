@@ -7,8 +7,8 @@ case class ParsedWikipediaEntry(
 	var templatelinks: List[Link] = List[Link](),
 	var foundaliases: List[String] = List[String](),
 	var categorylinks: List[Link] = List[Link](),
-	var disambiguationlinks: List[Link] = List[Link](),
 	var listlinks: List[Link] = List[Link](),
+	var disambiguationlinks: List[Link] = List[Link](),
 	var linkswithcontext: List[Link] = List[Link](),
 	var context: Map[String, Int] = Map[String, Int]()
 ) {
