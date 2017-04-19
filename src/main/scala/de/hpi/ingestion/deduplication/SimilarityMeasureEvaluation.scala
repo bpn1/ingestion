@@ -1,41 +1,30 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
-import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 
-class SimilarityMeasureEvaluation(
-	appName: String,
-	numberOfBuckets: Int = 10
-) {
-	def getLabel(subject: UUID, duplicate: UUID)(implicit rdd: RDD[DuplicateCandidates]): Double = {
-		implicit def doubleToBool(bool: Boolean): Double = if bool 0 else 1
-		rdd
-			.filter(_.subject_id == subject)
-			.filter { case DuplicateCandidates(id, candidates) =>
-				candidates.map(_._1.id).contains(duplicate)
-			}
-		    .collect
-		    .isEmpty:Double
-	}
+object SimilarityMeasureEvaluation {
+	val appName = "SimilarityMeasureEvaluation"
+	val numberOfBuckets = 10
 
 	def generatePredictionAndLabels(
-		training: RDD[DuplicateCandidates],
-		test: RDD[DuplicateCandidates]
+		training: RDD[((UUID, UUID), Double)],
+		test: RDD[((UUID, UUID), Double)]
 	): RDD[(Double, Double)] = {
-		implicit val rdd = training
-		test
-			.map { case DuplicateCandidates(id, candidates) =>
-				((id, candidates.head._1.id), candidates.head._3)
+		training
+		    .fullOuterJoin(test)
+		    .mapValues {
+				// True Positives
+				case (Some(prediction), Some(1)) => (prediction, 1)
+				// False Positives
+				case (Some(prediction), None) => (prediction, 0:Double)
+				// False negatives
+				case (None, Some(1)) => (0:Double, 1)
 			}
-		    .map { case ((subject, duplicate), label) =>
-				(getLabel(subject, duplicate), label)
-			}
+		    .values
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -43,8 +32,10 @@ class SimilarityMeasureEvaluation(
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 
-		val training = sc.cassandraTable[DuplicateCandidates]("datalake", "goldstandard")
-		val test = sc.cassandraTable[DuplicateCandidates]("datalake", "duplicatecandidates")
+		val training = sc.cassandraTable[((UUID, UUID), Double)]("datalake", "goldstandard")
+		val test = sc
+			.cassandraTable[(UUID, UUID)]("datalake", "duplicatecandidates")
+		    .map(pair => (pair, 1:Double))
 
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
