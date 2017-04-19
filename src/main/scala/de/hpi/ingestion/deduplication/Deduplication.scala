@@ -257,5 +257,7 @@ object Deduplication {
 		"Jaro" -> Jaro,
 		"JaroWinkler" -> JaroWinkler,
 		"N-Gram" -> NGram,
-		"Overlap" -> Overlap)
+		"Overlap" -> Overlap,
+		"DeviantNumbers" -> DeviantNumbers
+	)
 }
