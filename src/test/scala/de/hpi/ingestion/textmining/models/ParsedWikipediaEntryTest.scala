@@ -1,7 +1,8 @@
-package de.hpi.ingestion.textmining
+package de.hpi.ingestion.textmining.models
 
-import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.textmining.TestData
+import org.scalatest.{FlatSpec, Matchers}
 
 class ParsedWikipediaEntryTest extends FlatSpec with SharedSparkContext with Matchers {
 	"All links" should "be exactly these links" in {
