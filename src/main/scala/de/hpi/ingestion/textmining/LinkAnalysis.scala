@@ -7,7 +7,7 @@ import de.hpi.ingestion.textmining.models._
 
 /**
   * Groups link aliases by page names and vice versa. Also removes dead links (no corresponding page).
- */
+  */
 object LinkAnalysis {
 	val keyspace = "wikidumps"
 	val inputRawTablename = "wikipedia"
@@ -78,6 +78,7 @@ object LinkAnalysis {
 
 	/**
 	  * Groups link aliases by page names and vice versa. Also removes dead links (no corresponding page).
+	  *
 	  * @param articles all Wikipedia articles
 	  * @return Grouped aliases and page names
 	  */

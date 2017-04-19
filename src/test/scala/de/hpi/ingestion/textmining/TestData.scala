@@ -581,7 +581,7 @@ object TestData {
 			Page("Zerfall (Album)", Map("Zerfall" -> 1)))
 	}
 
-	def groupedValiPagesSet(): Set[(String, Set[String])] = {
+	def groupedValidPagesSet(): Set[(String, Set[String])] = {
 		Set(
 			("Audi", Set("Ingolstadt", "Bayern", "Automobilhersteller", "Zerfall (Album)"))
 		)
@@ -647,6 +647,29 @@ object TestData {
 		)
 	}
 
+	def closedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Ingolstadt", "Ingolstadt", 55),
+					Link("Bayern", "Bayern", 69),
+					Link("Automobilhersteller", "Automobilhersteller", 94),
+					Link("Zerfall", "Zerfall (Album)", 4711),
+					Link("Zerfall", "Zerfall (Soziologie)", 4711), // dead link
+					Link("", "page name with empty alias", 4711),
+					Link("alias with empty page name", "", 4711),
+					Link("Konkurrent", "Volvo", 4711),
+					Link("Opel", "Opel", 4711),
+					Link("DB", "Deutsche Bahn", 4711)
+				)),
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
 	def cleanedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry(
@@ -657,6 +680,22 @@ object TestData {
 					Link("Bayern", "Bayern", 69),
 					Link("Automobilhersteller", "Automobilhersteller", 94),
 					Link("Zerfall", "Zerfall (Album)", 4711)
+				)),
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
+	def cleanedClosedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Konkurrent", "Volvo", 4711),
+					Link("Opel", "Opel", 4711),
+					Link("DB", "Deutsche Bahn", 4711)
 				)),
 			ParsedWikipediaEntry("Volvo", Option("lorem")),
 			ParsedWikipediaEntry("Opel", Option("ipsum")),

@@ -51,6 +51,7 @@ object LinkCleaner {
 					article.filterLinks(link => links.contains(link.page))
 					article
 				case (title, (article, None)) =>
+					article.filterLinks(link => false)
 					article
 			}
 	}
@@ -58,14 +59,11 @@ object LinkCleaner {
 	/**
 	  * Removes dead links that do not point to an existing page.
 	  *
-	  * @param articles      all Wikipedia articles
-	  * @param existingPages names of all existing Wikipedia articles
+	  * @param articles all Wikipedia articles
 	  * @return Wikipedia articles without links to non-existing pages
 	  */
-	def run(
-		articles: RDD[ParsedWikipediaEntry],
-		existingPages: RDD[String]
-	): RDD[ParsedWikipediaEntry] = {
+	def run(articles: RDD[ParsedWikipediaEntry]): RDD[ParsedWikipediaEntry] = {
+		val existingPages = articles.map(_.title)
 		val validPages = groupValidPages(articles, existingPages)
 		filterArticleLinks(articles, validPages)
 	}
@@ -76,11 +74,7 @@ object LinkCleaner {
 		val sc = new SparkContext(conf)
 
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, operatingTable)
-		val existingPages = sc.cassandraTable[Page](keyspace, inputPagesTable)
-			.map(_.page)
-
-		run(articles, existingPages)
-			.saveToCassandra(keyspace, operatingTable)
+		run(articles).saveToCassandra(keyspace, operatingTable)
 
 		sc.stop
 	}
