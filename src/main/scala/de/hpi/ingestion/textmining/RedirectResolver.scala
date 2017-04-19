@@ -6,7 +6,7 @@ import com.datastax.spark.connector._
 import scala.collection.mutable
 import de.hpi.ingestion.textmining.models._
 
-object WikipediaRedirectResolver {
+object RedirectResolver {
 	val tablename = "parsedwikipedia"
 	val keyspace = "wikidumps"
 
@@ -27,7 +27,7 @@ object WikipediaRedirectResolver {
 
 	def main(args: Array[String]) {
 		val conf = new SparkConf()
-			.setAppName("WikipediaRedirectResolver")
+			.setAppName("Redirect Resolver")
 		val sc = new SparkContext(conf)
 		val dict = mutable.Map[String, String]()
 

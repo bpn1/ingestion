@@ -2,21 +2,18 @@ package de.hpi.ingestion.textmining
 
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
-
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Document, Element, TextNode}
 import java.net.URLDecoder
-
 import scala.collection.mutable.ListBuffer
-import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.textmining.models._
-
+import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import scala.io.Source
 
-object WikipediaTextParser {
+object TextParser {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
@@ -65,11 +62,6 @@ object WikipediaTextParser {
 		extractCategoryLinks(parsedEntry)
 	}
 
-	/**
-	  * Removes any unwanted HTML tags and inline Wikimarkup tags.
-	  * @param document Jsoup Document to clean
-	  * @return cleaned Document containing only text and anchor tags
-	  */
 	def removeTags(document: Document): Document = {
 		val documentContent = document
 			.select("p")
@@ -83,10 +75,8 @@ object WikipediaTextParser {
 			.map(_.toString)
 			.mkString("\n")
 			.replaceAll("&lt;(/|)gallery&gt;", "") // removes gallery tags
-		val doc = Jsoup.parse(htmltext)
-		val traverser = new WikipediaNodeVisitor()
-		doc.traverse(traverser)
-		Jsoup.parse(traverser.getCleanedDocument())
+			.replaceAll("<(|/)([^a])>", "") // remove every tag other than anchors
+		Jsoup.parse(htmltext)
 	}
 
 	def parseUrl(url: String): String = {
@@ -146,6 +136,7 @@ object WikipediaTextParser {
 		for (element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
+					//assert(t.tag.toString == "a") // This may fail for strange reasons.
 					val target = parseUrl(t.attr("href"))
 					val source = if (t.text == "") target else t.text
 					val link = Link(source, target, offset)
@@ -195,7 +186,7 @@ object WikipediaTextParser {
 			escaped = character == '\\'
 		}
 
-		println("[Textparser WARN]	Template has no end!")
+		println("[TextParser WARN]	Template has no end!")
 		templateText
 	}
 
@@ -255,8 +246,8 @@ object WikipediaTextParser {
 
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val cleanedEntry = cleanRedirects(entry)
-		var title = entry.title
-		if (isDisambiguationPage(entry) && !title.endsWith(disambiguationTitleSuffix)) {
+		var title = cleanedEntry.title
+		if (isDisambiguationPage(cleanedEntry) && !title.endsWith(disambiguationTitleSuffix)) {
 			title += disambiguationTitleSuffix
 		}
 		val html = wikipediaToHtml(cleanedEntry.getText())
@@ -328,7 +319,7 @@ object WikipediaTextParser {
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Textparser")
+			.setAppName("Text Parser")
 		val sc = new SparkContext(conf)
 
 		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
