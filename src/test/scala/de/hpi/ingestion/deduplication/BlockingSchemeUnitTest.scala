@@ -8,39 +8,39 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 
 	"DefaultBlockingScheme" should "generate proper keys" in {
 		val blockingScheme = new DefaultBlockingScheme()
-		val keys = testSubjects.map(blockingScheme.generateKey)
-		keys.toSet shouldEqual simpleTestKeys
+		val keys = testSubjects().map(blockingScheme.generateKey)
+		keys.toSet shouldEqual defaultTestKeys
 	}
 
 	it should "generate an undefined block for subjects without names" in {
 		val blockingScheme = new DefaultBlockingScheme()
 		val keys = testUndefinedSubjects().map(blockingScheme.generateKey)
-		keys.toSet shouldEqual simpleUndefinedTestKeys
+		keys.toSet shouldEqual defaultUndefinedTestKeys
 	}
 
 	"ListBlockingScheme" should "generate proper keys" in {
 		val blockingScheme = new ListBlockingScheme()
 		blockingScheme.setAttributes("name", "aliases", "category", "city")
-		val keys = testSubjects.map(blockingScheme.generateKey)
+		val keys = testSubjects().map(blockingScheme.generateKey)
 		keys.toSet shouldEqual listTestKeys
 	}
 
-	it should "generate an undefined block for subjects with an empty key" in {
+	it should "generate an undefined block for subjects with empty attributes" in {
 		val blockingScheme = new ListBlockingScheme()
 		blockingScheme.setAttributes("city")
-		val keys = testSubjects.map(blockingScheme.generateKey)
+		val keys = testUndefinedSubjects().map(blockingScheme.generateKey)
 		keys.toSet shouldEqual listUndefinedTestKeys
 	}
 
 
 	def testSubjects(): List[Subject] = {
 		List(Subject(
-			name = Option("Audi"),
+			name = Option("Audi AG"),
 			category = Option("Cars"),
 			properties = Map("city" -> List("Berlin", "New York"))),
 			Subject(
-				name = Option("BMW"),
-				aliases = List("bwm", "Bayerische Motoren Werke"),
+				name = Option("Bayerische Motoren Werke AG"),
+				aliases = List("bwm", "BMW"),
 				category = Option("Cars")),
 			Subject(
 				name = Option("Lamborghini"),
@@ -83,17 +83,30 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 				properties = Map("city" -> List("Berlin", "Potsdam"))))
 	}
 
-	def simpleTestKeys(): Set[List[String]] = {
-		Set(List("Aud"), List("BMW"), List("Lam"), List("Ope"), List("Por"), List("VW"))
+	def defaultTestKeys(): Set[List[String]] = {
+		Set(List("({AG|null},LEGAL_FORM)"),
+			List("({AG|null},LEGAL_FORM)",
+				"({Bayerische|null},SECTOR)",
+				"({Motoren|null},SECTOR)",
+				"({Werke|null},SECTOR)"),
+			List("({Lamborghini|null},PERSON_LAST_NAME)"),
+			List("({Opel|null},PERSON_LAST_NAME)"),
+			List("({Porsche|null},PERSON_LAST_NAME)"),
+			List("undefined"))
 	}
 
-	def simpleUndefinedTestKeys(): Set[List[String]] = {
-		Set(List("undefined"), List("BMW"), List("Lam"), List("Ope"), List("VW"))
+	def defaultUndefinedTestKeys(): Set[List[String]] = {
+		Set(List("undefined"),
+			List("undefined"),
+			List("({Lamborghini|null},PERSON_LAST_NAME)"),
+			List("({Opel|null},PERSON_LAST_NAME)"),
+			List("undefined"),
+			List("undefined"))
 	}
 
 	def listTestKeys(): Set[List[String]] = {
-		Set(List("Audi", "Cars", "Berlin", "New York"),
-			List("BMW", "bwm", "Bayerische Motoren Werke", "Cars"),
+		Set(List("Audi AG", "Cars", "Berlin", "New York"),
+			List("Bayerische Motoren Werke AG", "bwm", "BMW", "Cars"),
 			List("Lamborghini", "Cars"),
 			List("Opel", "Cars"),
 			List("Porsche", "Cars"),

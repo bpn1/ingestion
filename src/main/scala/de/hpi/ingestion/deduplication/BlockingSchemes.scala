@@ -30,7 +30,6 @@ trait BlockingScheme extends Serializable {
 
 /**
   * This class uses the result from compSplit on the name property as key.
-  *
   */
 class DefaultBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject): List[String] = {
@@ -41,6 +40,7 @@ class DefaultBlockingScheme extends BlockingScheme {
 
 		val key = taggedName
 			.filter(tuple => tagsToCheck.contains(tuple.getRight))
+			.sortBy(_.getRight)
 			.map(_.toString())
 			.toList
 		if (key.isEmpty) {
