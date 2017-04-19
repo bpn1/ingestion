@@ -254,36 +254,63 @@ object TestData {
 			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
 	}
 
-	def startAliasCounterTestRDD(sc: SparkContext): RDD[AliasCounts] = {
+	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {
 		sc.parallelize(List(
-			AliasCounts("Audi", 1, 1),
-			AliasCounts("Audi", 1, 1),
-			AliasCounts("Audi", 0, 1),
-			AliasCounts("Brachttal", 1, 1),
-			AliasCounts("Brachttal", 1, 1),
-			AliasCounts("Main-Kinzig-Kreis", 1, 1),
-			AliasCounts("Main-Kinzig-Kreis", 0, 1),
-			AliasCounts("Hessen", 1, 1),
-			AliasCounts("Hessen", 0, 1),
-			AliasCounts("1377", 1, 1),
-			AliasCounts("Büdinger Wald", 1, 1),
-			AliasCounts("Büdinger Wald", 0, 1),
-			AliasCounts("Backfisch", 0, 1),
-			AliasCounts("Streitberg", 0, 1),
-			AliasCounts("historisches Jahr", 1, 1)))
+			Alias("Audi", Map(), 1, 1),
+			Alias("Audi", Map(), 1, 1),
+			Alias("Audi", Map(), 0, 1),
+			Alias("Brachttal", Map(), 1, 1),
+			Alias("Brachttal", Map(), 1, 1),
+			Alias("Main-Kinzig-Kreis", Map(), 1, 1),
+			Alias("Main-Kinzig-Kreis", Map(), 0, 1),
+			Alias("Hessen", Map(), 1, 1),
+			Alias("Hessen", Map(), 0, 1),
+			Alias("1377", Map(), 1, 1),
+			Alias("Büdinger Wald", Map(), 1, 1),
+			Alias("Büdinger Wald", Map(), 0, 1),
+			Alias("Backfisch", Map(), 0, 1),
+			Alias("Streitberg", Map(), 0, 1),
+			Alias("historisches Jahr", Map(), 1, 1)
+		))
 	}
 
-	def countedAliasesTestRDD(sc: SparkContext): RDD[AliasCounts] = {
+	def countedAliasesTestRDD(sc: SparkContext): RDD[Alias] = {
 		sc.parallelize(List(
-			AliasCounts("Audi", 2, 3),
-			AliasCounts("Brachttal", 2, 2),
-			AliasCounts("Main-Kinzig-Kreis", 1, 2),
-			AliasCounts("Hessen", 1, 2),
-			AliasCounts("1377", 1, 1),
-			AliasCounts("Büdinger Wald", 1, 2),
-			AliasCounts("Backfisch", 0, 1),
-			AliasCounts("Streitberg", 0, 1),
-			AliasCounts("historisches Jahr", 1, 1)))
+			Alias("Audi", Map(), 2, 3),
+			Alias("Brachttal", Map(), 2, 2),
+			Alias("Main-Kinzig-Kreis", Map(), 1, 2),
+			Alias("Hessen", Map(), 1, 2),
+			Alias("1377", Map(), 1, 1),
+			Alias("Büdinger Wald", Map(), 1, 2),
+			Alias("Backfisch", Map(), 0, 1),
+			Alias("Streitberg", Map(), 0, 1),
+			Alias("historisches Jahr", Map(), 1, 1)
+		))
+	}
+
+	def linksSet(): Set[Alias] = {
+		Set(
+			Alias("Audi", Map("Audi" -> 2)),
+			Alias("Brachttal", Map("Brachttal" -> 2)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1)),
+			Alias("Hessen", Map("Hessen" -> 1)),
+			Alias("1377", Map("1377" -> 1)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1)),
+			Alias("historisches Jahr", Map("1337" -> 1))
+		)
+	}
+
+	def aliasCountsSet(): Set[(String, Int, Int)] = {
+		Set(
+			("Audi", 2, 3),
+			("Brachttal", 2, 2),
+			("Main-Kinzig-Kreis", 1, 2),
+			("Hessen", 1, 2),
+			("1377", 1, 1),
+			("Büdinger Wald", 1, 2),
+			("Backfisch", 0, 1),
+			("Streitberg", 0, 1),
+			("historisches Jahr", 1, 1))
 	}
 
 	def linkProbabilitiesTestRDD(sc: SparkContext): RDD[(String, Double)] = {
@@ -805,8 +832,8 @@ object TestData {
 			  |</p></body>""".stripMargin
 		)
 	}
-
 }
+
 // scalastyle:on method.length
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods
