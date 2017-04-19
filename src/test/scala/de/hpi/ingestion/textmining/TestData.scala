@@ -591,10 +591,6 @@ object TestData {
 			Link("Zwickau", "Zwickau", 0))
 	}
 
-	def testRedirectCornerCaseEntries(): Set[ParsedWikipediaEntry] = {
-		Set(ParsedWikipediaEntry("?", Option("#WEITERLEITUNG [[?]]"), List[Link](Link("?", "?", 0))))
-	}
-
 	def testRedirectDict(): Map[String, String] = {
 		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
 	}
@@ -635,6 +631,43 @@ object TestData {
 		Set(
 			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page")),
 			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page")))
+	}
+
+	def redirectMap(): Map[String, String] = {
+		Map(
+			"Site 1" -> "Site 3",
+			"Site 3" -> "Site 6",
+			"Site 4" -> "Site 5",
+			"Site 5" -> "Site 4",
+			"Site 7" -> "Site 7")
+	}
+
+	def cleanedRedirectMap(): Map[String, String] = {
+		Map(
+			"Site 1" -> "Site 6",
+			"Site 3" -> "Site 6")
+	}
+
+	def entriesWithRedirects():  Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1",
+				textlinks = List(Link("Alias 1", "Site 1")),
+				disambiguationlinks = List(Link("Alias 2", "Site 2")),
+				listlinks = List(Link("Alias 3", "Site 3")),
+				categorylinks = List(Link("Alias 4", "Site 4")),
+				templatelinks = List(Link("Alias 5", "Site 5"))),
+			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))))
+	}
+
+	def entriesWithResolvedRedirects():  Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1",
+				textlinks = List(Link("Alias 1", "Site 6")),
+				disambiguationlinks = List(Link("Alias 2", "Site 2")),
+				listlinks = List(Link("Alias 3", "Site 6")),
+				categorylinks = List(Link("Alias 4", "Site 4")),
+				templatelinks = List(Link("Alias 5", "Site 5"))),
+			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))))
 	}
 
 }

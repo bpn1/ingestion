@@ -2,57 +2,78 @@ package de.hpi.ingestion.textmining
 
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
-import scala.collection.mutable
+import org.apache.spark.rdd.RDD
+
 import de.hpi.ingestion.textmining.models._
+import de.hpi.ingestion.implicits.TupleImplicits._
 
 object WikipediaRedirectResolver {
 	val tablename = "parsedwikipedia"
 	val keyspace = "wikidumps"
 
-	def isValidRedirect(link: Link, title: String): Boolean = {
-		title != link.page
-	}
-
-	def cleanLinkOfRedirects(link: Link, dict: Map[String, String]): Link = {
-		var lookupSet = Set[String]()
-		var lookupResult = dict.getOrElse(link.page, link.page)
-		while (dict.contains(lookupResult) && !lookupSet.contains(lookupResult)) {
-			lookupSet += lookupResult
-			lookupResult = dict.getOrElse(lookupResult, lookupResult)
-		}
-		link.page = lookupResult
-		link
-	}
-
+	/**
+	  * Resolves all redirects in the links of an articles. It does so by replacing the target page with the page the
+	  * redirect points to.
+	  * @param entry Parsed Wikipedia Entry containing the links that will be cleaned
+	  * @param dict Map containing all redirects
+	  * @return Parsed Wikipedia Entry with no redirect pages as target of a link
+	  */
 	def resolveRedirects(entry: ParsedWikipediaEntry, dict: Map[String, String]): ParsedWikipediaEntry = {
 		entry.allLinks().foreach { link =>
-			cleanLinkOfRedirects(link, dict)
+			link.page = dict.getOrElse(link.page, link.page)
 		}
 		entry
+	}
+
+	/**
+	  * Builds Map of redirects from redirect articles.
+	  * @param articles RDD of Parsed Wikipedia Articles
+	  * @return Map containing the redirects in the form redirect page -> target page
+	  */
+	def buildRedirectDict(articles: RDD[ParsedWikipediaEntry]): Map[String, String] = {
+		articles.filter(WikipediaTextParser.isRedirectPage)
+			//.flatMap(entry => entry.textlinks.map((entry.title, _)))
+			.map(entry => (entry.title, entry.textlinks.head.page))
+			.filter(t => t._1 != t._2)
+			.collect()
+			.toMap
+	}
+
+	/**
+	  * Resolves transitive redirects by replacing the target page with the transitive target page. Also removes
+	  * all reflexive entries.
+	  * @param dict Map containing the redirects that will be cleaned
+	  * @return Map containing the cleaned redirects
+	  */
+	def resolveTransitiveRedirects(dict: Map[String, String]): Map[String, String] = {
+		var newDict = dict
+		var resolvableEntries = Map[String, String]()
+		var visited = Set[String]()
+		do {
+			newDict ++= resolvableEntries.map(_.map(identity, newDict))
+			newDict = newDict.filter(t => t._1 != t._2)
+
+			visited ++= resolvableEntries.values
+			resolvableEntries = newDict
+				.filter(t => newDict.contains(t._2))
+				.filter(t => !visited.contains(t._2))
+		} while(resolvableEntries.nonEmpty)
+		newDict
 	}
 
 	def main(args: Array[String]) {
 		val conf = new SparkConf()
 			.setAppName("WikipediaRedirectResolver")
 		val sc = new SparkContext(conf)
-		val dict = mutable.Map[String, String]()
 
-		val dataRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
-		dataRDD
-			.filter(WikipediaTextParser.isRedirectPage)
-			.map(entry => (entry.title, entry.textlinks))
-			.collect()
-			.foreach { case (title, links) =>
-				links
-					.filter(isValidRedirect(_, title))
-					.foreach(link => dict(title) = link.page)
-			}
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
+		val redirectMap = buildRedirectDict(articles)
+		val dictBroadcast = sc.broadcast(redirectMap)
 
-		val dictBroadcast = sc.broadcast(dict)
-		dataRDD
-			.mapPartitions({ entryRDD =>
+		articles
+			.mapPartitions({ entryPartition =>
 				val localDict = dictBroadcast.value
-				entryRDD.map(entry => resolveRedirects(entry, localDict.toMap))
+				entryPartition.map(entry => resolveRedirects(entry, localDict))
 			}, true)
 			.saveToCassandra(keyspace, tablename)
 		sc.stop()
