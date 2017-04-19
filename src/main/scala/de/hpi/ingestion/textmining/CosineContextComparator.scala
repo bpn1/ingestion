@@ -142,7 +142,7 @@ object CosineContextComparator {
 				val totalProb = alias.linkoccurrences.toDouble / alias.totaloccurrences.toDouble
 				val numPages = alias.pages.values.sum.toDouble
 				val pageProb = alias.pages.mapValues(_.toDouble / numPages)
-				alias.pages.keySet.map(page => (alias.alias, (page, totalProb, pageProb(page)))
+				alias.pages.keySet.map(page => (alias.alias, (page, totalProb, pageProb(page))))
 			}
 	}
 
