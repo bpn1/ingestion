@@ -4,8 +4,8 @@ import java.lang.Math._
 
 
 /**
-	* A hybrid similarity measure comparing strings corresponding to the jaccard algorithm
-	*/
+  * A hybrid similarity measure comparing strings corresponding to the jaccard algorithm
+  */
 object DeviantNumbers  extends SimilarityMeasure[String] {
 
 	/**
@@ -16,9 +16,8 @@ object DeviantNumbers  extends SimilarityMeasure[String] {
 	  * @return a normalized similarity score between 1.0 and 0.0 or
 	  */
 	override def compare(s: String, t: String, u: Int = 1) : Double = {
-
-			val max = Math.max(s.toDouble, t.toDouble)
-			val min = Math.min(s.toDouble, t.toDouble)
-			min / max
+		val max = Math.max(s.toDouble, t.toDouble)
+		val min = Math.min(s.toDouble, t.toDouble)
+		min / max
 	 }
 }
