@@ -5,26 +5,22 @@ import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
-import scala.io.Source
-
 object WikipediaContextExtractor {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputDocumentFrequenciesTablename = "wikipediadocfreq"
 	val outputContextsTablename = "wikipediacontexts"
 	val removeStopwords = true
-	val stopwordsPath = "german_stopwords.txt"
 	val leastSignificantDocumentFrequency = 5
 
 	def countDocumentFrequencies(
-		articles: RDD[ParsedWikipediaEntry],
-		stopwords: Set[String]
+		articles: RDD[ParsedWikipediaEntry]
 	): RDD[DocumentFrequency] = {
 		val tokenizer = new CleanCoreNLPTokenizer
-		val cleaningStemmingTokenizer = new CleaningStemmingTokenizer(tokenizer, stopwords)
+		val ingestionTokenizer = new IngestionTokenizer(tokenizer, removeStopwords, true)
 		articles
 			.flatMap(article =>
-				cleaningStemmingTokenizer.tokenizeRemoveStopwordsStem(article.getText())
+				ingestionTokenizer.process(article.getText())
 					.toSet
 			)
 			.map(word => (word, 1))
@@ -40,16 +36,14 @@ object WikipediaContextExtractor {
 			.filter(documentFrequency => documentFrequency.count >= threshold)
 	}
 
-	def textToWordSet(text: String, tokenizer: Tokenizer): Set[String] = {
-		tokenizer.tokenize(text).toSet
-	}
 
 	def extractLinkContextsFromArticle(
 		article: ParsedWikipediaEntry,
 		tokenizer: Tokenizer): Set[LinkContext] = {
 		// Do not initialize tokenizer here so it is initialized only once.
 		// (probably important for good performance of CoreNLP)
-		val wordSet = textToWordSet(article.getText(), tokenizer)
+		val ingestionTokenizer = new IngestionTokenizer(tokenizer, false, false)
+		val wordSet = ingestionTokenizer.process(article.getText()).toSet
 		article.allLinks
 			.map(link => LinkContext(link.page, wordSet))
 			.toSet
@@ -62,16 +56,6 @@ object WikipediaContextExtractor {
 			.map(linkContext => (linkContext.pagename, linkContext.words))
 			.reduceByKey(_ ++ _)
 			.map { case (pagename, contextSum) => LinkContext(pagename, contextSum) }
-	}
-
-	def loadStopwords(): Set[String] = {
-		var stopwords = Set[String]()
-		if (removeStopwords) {
-			stopwords = Source.fromURL(getClass.getResource(s"/$stopwordsPath"))
-				.getLines()
-				.toSet
-		}
-		stopwords
 	}
 
 	def getDocumentFrequency(
@@ -100,8 +84,7 @@ object WikipediaContextExtractor {
 
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val stopwords = loadStopwords()
-		val documentFrequencies = countDocumentFrequencies(allArticles, stopwords)
+		val documentFrequencies = countDocumentFrequencies(allArticles)
 		filterDocumentFrequencies(
 			documentFrequencies,
 			leastSignificantDocumentFrequency

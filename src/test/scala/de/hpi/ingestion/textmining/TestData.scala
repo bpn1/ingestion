@@ -173,9 +173,7 @@ object TestData {
 	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
-			DocumentFrequency("backfisch", 1),
-			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("ein", 1)
+			DocumentFrequency("backfisch", 1)
 		)
 	}
 
@@ -188,9 +186,7 @@ object TestData {
 	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
-			DocumentFrequency("backfisch", 2),
-			DocumentFrequency("zugleich", 2),
-			DocumentFrequency("ein", 2)
+			DocumentFrequency("backfisch", 2)
 		)
 	}
 
@@ -401,9 +397,6 @@ object TestData {
 			))
 	}
 
-	def germanStopwordsTestSet(): Set[String] = {
-		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
-	}
 
 	def unstemmedDFTestSet(): Set[ParsedWikipediaEntry] = {
 		Set(
@@ -441,9 +434,7 @@ object TestData {
 	def stemmedDFTestSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 4),
-			DocumentFrequency("backfisch", 3),
-			DocumentFrequency("zugleich", 3),
-			DocumentFrequency("ein", 3)
+			DocumentFrequency("backfisch", 3)
 		)
 	}
 	def germanDFStopwordsTestSet(): Set[DocumentFrequency] = {

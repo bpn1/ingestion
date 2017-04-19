@@ -54,23 +54,22 @@ class WikipediaContextExtractorTest
 		val articleTitle = "Testartikel"
 		val testWords = TestData.articleContextwordSets()(articleTitle)
 		val article = TestData.getArticle(articleTitle)
-		val wordSet = WikipediaContextExtractor.textToWordSet(
-			article.getText(),
-			new CleanCoreNLPTokenizer)
+		val ingestionTokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer, false, false)
+		val wordSet = ingestionTokenizer.process(article.getText()).toSet
 		wordSet shouldEqual testWords
 	}
 
 	"Document frequencies" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val documentFrequencies = WikipediaContextExtractor
-			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
+			.countDocumentFrequencies(articles)
 		documentFrequencies should not be empty
 	}
 
 	they should "be greater than zero" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		WikipediaContextExtractor
-			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
+			.countDocumentFrequencies(articles)
 			.collect
 			.foreach(df => df.count should be > 0)
 	}
@@ -78,7 +77,7 @@ class WikipediaContextExtractorTest
 	they should "contain these document frequencies" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val documentFrequencies = WikipediaContextExtractor
-			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
+			.countDocumentFrequencies(articles)
 			.collect
 			.toSet
 		documentFrequencies should contain allElementsOf TestData.documentFrequenciesTestSet()
@@ -86,7 +85,7 @@ class WikipediaContextExtractorTest
 	they should "count stemmed words only once" in {
 		val articles = sc.parallelize(TestData.unstemmedDFTestSet().toList)
 		val documentFrequencies = WikipediaContextExtractor
-			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
+			.countDocumentFrequencies(articles)
 			.collect
 			.toSet
 		documentFrequencies should contain allElementsOf TestData.stemmedDFTestSet()
@@ -96,7 +95,7 @@ class WikipediaContextExtractorTest
 	"Filtered document frequencies" should "not contain German stopwords" in {
 		val articles = sc.parallelize(TestData.unstemmedDFTestSet().toList)
 		val documentFrequencies = WikipediaContextExtractor
-			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
+			.countDocumentFrequencies(articles)
 			.collect
 			.toSet
 		documentFrequencies should contain noElementsOf TestData.germanDFStopwordsTestSet()
@@ -118,7 +117,7 @@ class WikipediaContextExtractorTest
 		val threshold = 3
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val documentFrequencies = WikipediaContextExtractor
-			.countDocumentFrequencies(articles, TestData.germanStopwordsTestSet())
+			.countDocumentFrequencies(articles)
 		val filteredDocumentFrequencies = WikipediaContextExtractor
 			.filterDocumentFrequencies(documentFrequencies,
 				threshold)
