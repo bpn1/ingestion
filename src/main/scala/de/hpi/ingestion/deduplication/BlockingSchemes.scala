@@ -33,20 +33,24 @@ trait BlockingScheme extends Serializable {
   */
 class DefaultBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject): List[String] = {
-		val fileStream = getClass.getResource("/bin/StanfordCRFClassifier-Tag.bin").openStream()
-		val classifier = In.stream(fileStream).readObject[AClassifier[Tag]]()
-		val taggedName = classifier.getTags(subject.get("name").head)
-		val tagsToCheck = List(Tag.LEGAL_FORM, Tag.PERSON_LAST_NAME, Tag.SECTOR)
+		if (subject.name.isDefined) {
+			val fileStream = getClass.getResource("/bin/StanfordCRFClassifier-Tag.bin").openStream()
+			val classifier = In.stream(fileStream).readObject[AClassifier[Tag]]()
+			val taggedName = classifier.getTags(subject.get("name").head)
+			val tagsToCheck = List(Tag.LEGAL_FORM, Tag.PERSON_LAST_NAME, Tag.SECTOR)
 
-		val key = taggedName
-			.filter(tuple => tagsToCheck.contains(tuple.getRight))
-			.sortBy(_.getRight)
-			.map(_.toString())
-			.toList
-		if (key.isEmpty) {
-			undefinedValue
+			val key = taggedName
+				.filter(tuple => tagsToCheck.contains(tuple.getRight))
+				.sortBy(_.getRight)
+				.map(_.toString())
+				.toList
+			if (key.nonEmpty) {
+				key
+			} else {
+				undefinedValue
+			}
 		} else {
-			key
+			undefinedValue
 		}
 	}
 }
