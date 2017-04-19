@@ -5,6 +5,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.ingestion.deduplication.models.SimilarityMeasureStats
 
 object SimilarityMeasureEvaluation {
 	val appName = "SimilarityMeasureEvaluation"
@@ -18,11 +19,12 @@ object SimilarityMeasureEvaluation {
 		    .fullOuterJoin(test)
 		    .mapValues {
 				// True Positives
-				case (Some(prediction), Some(1)) => (prediction, 1)
+				case (Some(prediction), Some(label)) => (prediction, label)
 				// False Positives
 				case (Some(prediction), None) => (prediction, 0:Double)
 				// False negatives
-				case (None, Some(1)) => (0:Double, 1)
+				case (None, Some(label)) => (0:Double, label)
+				case _ => (-1:Double, -1:Double)
 			}
 		    .values
 	}
@@ -43,5 +45,13 @@ object SimilarityMeasureEvaluation {
 		val precision = metrics.precisionByThreshold
 		val recall = metrics.recallByThreshold
 		val f1Score = metrics.fMeasureByThreshold
+
+		precision
+			.join(recall)
+		    .join(f1Score)
+		    .map { case (threshold, ((precision, recall), f1Score)) =>
+				(threshold, precision, recall, f1Score)
+			}
+		    .saveToCassandra("datalake", "similaritymeasurestats")
 	}
 }

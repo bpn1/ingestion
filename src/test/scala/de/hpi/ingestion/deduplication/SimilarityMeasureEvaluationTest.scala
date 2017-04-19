@@ -28,7 +28,7 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 			.filter { case (prediction, label) =>
 				prediction > 0 && label == 0
 			}
-		val expected = TestData.truePositives(sc)
+		val expected = TestData.falsePositives(sc)
 		assertRDDEquals(expected, falsePositives)
 	}
 
@@ -40,7 +40,7 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 			.filter { case (prediction, label) =>
 				prediction == 0 && label == 1
 			}
-		val expected = TestData.truePositives(sc)
+		val expected = TestData.falseNegatives(sc)
 		assertRDDEquals(expected, falseNegatives)
 	}
 }

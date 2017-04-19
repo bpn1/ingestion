@@ -5,7 +5,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 object TestData {
-	val idList = List.fill(9)(UUID.randomUUID())
+	val idList = List.fill(8)(UUID.randomUUID())
 	def testData(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
 		sc.parallelize(Seq(
 			((idList.head, idList(1)), 1:Double),
@@ -20,7 +20,7 @@ object TestData {
 			((idList.head, idList(1)), 0.7),
 			((idList(2), idList(3)), 0.8),
 			((idList(4), idList(7)), 0.5),
-			((idList(6), idList(9)), 0.6)
+			((idList(6), idList(5)), 0.6)
 		))
 	}
 
