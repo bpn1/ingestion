@@ -90,14 +90,12 @@ object LinkAnalysis {
 	}
 
 	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Link Analysis")
-
+		val conf = new SparkConf().setAppName("Link Analysis")
 		val sc = new SparkContext(conf)
 
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
 		val (aliases, pages) = run(articles)
-		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename)
+		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))
 		pages.saveToCassandra(keyspace, outputPageToAliasesTablename)
 
 		sc.stop

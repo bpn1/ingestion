@@ -53,7 +53,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 			.map(AliasCounter.extractAliasList)
 		    .map(_.map(_.alias).toSet)
 		val testAliasLists = TestData.aliasOccurrencesInArticlesTestRDD(sc)
-		    .map(data => data.links ++ data.noLinks)
+			.map(data => data.links ++ data.noLinks)
 		assertRDDEquals(aliasListsRDD, testAliasLists)
 	}
 
@@ -61,12 +61,11 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 		sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.flatMap(AliasCounter.extractAliasList)
 			.collect
-		    .foreach { alias =>
+			.foreach { alias =>
 				alias.linkoccurrences should be <= 1
 				alias.linkoccurrences should be >= 0
 				alias.totaloccurrences shouldBe 1
 			}
-
 	}
 
 	they should "be exactly the same Alias counters" in {
@@ -76,11 +75,11 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
 	}
 
-	"Alias reduction function" should "properly add link occurences" in {
+	"Alias reduction function" should "properly add link occurrences" in {
 		val testAliasCounterData = TestData.countedAliasesTestRDD(sc)
 		val aliasCounterRDD = TestData.startAliasCounterTestRDD(sc)
 			.map(alias => (alias.alias, alias))
-			.reduceByKey(AliasCounter.aliasReduction(_, _))
+			.reduceByKey(AliasCounter.aliasReduction)
 		    .map(_._2)
 		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
 	}
@@ -92,4 +91,23 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 		assertRDDEquals(linkProbabilities, TestData.linkProbabilitiesTestRDD(sc))
 	}
 
+	"Alias counts" should "be exactly these tuples" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val links = sc.parallelize(TestData.linksSet().toList)
+		val mergedLinks = AliasCounter.run(articles, links)
+			.collect
+			.toSet
+		mergedLinks shouldEqual TestData.aliasCountsSet()
+	}
+
+	"Counted number of link occurrences" should "equal number of page references" in {
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val links = sc.parallelize(TestData.linksSet().toList)
+		val expectedOccurences = TestData.linksSet()
+			.map(link => (link.alias, link.pages.foldLeft(0)(_ + _._2)))
+			.toMap
+		AliasCounter.run(articles, links)
+			.collect
+			.foreach(link => link._2 should be <= expectedOccurences.getOrElse(link._1, 0))
+	}
 }
