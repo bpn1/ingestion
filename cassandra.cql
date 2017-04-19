@@ -1,14 +1,15 @@
 -- Wikidumps
 CREATE KEYSPACE wikidumps WITH REPLICATION = {
-	'class' : 'SimpleStrategy',
-	'replication_factor' : 3
+    'class' : 'SimpleStrategy',
+    'replication_factor' : 3
 };
 
 -- Wikidumps.Wikipedia
 CREATE TYPE wikidumps.link (
     alias text,
     page text,
-    offset int
+    offset int,
+    context map<text, int>
 );
 
 CREATE TABLE wikidumps.parsedwikipedia (
@@ -18,8 +19,10 @@ CREATE TABLE wikidumps.parsedwikipedia (
     categorylinks frozen<list<frozen<link>>>,
     disambiguationlinks frozen<list<frozen<link>>>,
     listlinks frozen<list<frozen<link>>>,
+    linkswithcontext frozen<list<frozen<link>>>,
     foundaliases list<text>,
-    text text
+    text text,
+    context map<text, int>,
 );
 
 CREATE TABLE wikidumps.wikipedia (
@@ -41,6 +44,16 @@ CREATE TABLE wikidumps.wikipedialinks (
 CREATE TABLE wikidumps.wikipediapages (
     page text PRIMARY KEY,
     aliases map<text, int>
+);
+
+CREATE TABLE wikidumps.wikipediadocfreq (
+    word text PRIMARY KEY,
+    count int
+);
+
+CREATE TABLE wikidumps.wikipediatfidf (
+    page text PRIMARY KEY,
+    tokens map<text, double>
 );
 
 -- Wikidumps.Wikidata
