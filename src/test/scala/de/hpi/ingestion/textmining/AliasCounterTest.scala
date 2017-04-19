@@ -79,7 +79,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 		val testAliasCounterData = TestData.countedAliasesTestRDD(sc)
 		val aliasCounterRDD = TestData.startAliasCounterTestRDD(sc)
 			.map(alias => (alias.alias, alias))
-			.reduceByKey(AliasCounter.aliasReduction(_, _))
+			.reduceByKey(AliasCounter.aliasReduction)
 		    .map(_._2)
 		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
 	}
