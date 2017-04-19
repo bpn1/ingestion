@@ -7,7 +7,7 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.TupleImplicits._
 
-object WikipediaRedirectResolver {
+object RedirectResolver {
 	val tablename = "parsedwikipedia"
 	val keyspace = "wikidumps"
 
@@ -61,7 +61,7 @@ object WikipediaRedirectResolver {
 
 	def main(args: Array[String]) {
 		val conf = new SparkConf()
-			.setAppName("WikipediaRedirectResolver")
+			.setAppName("Redirect Resolver")
 		val sc = new SparkContext(conf)
 
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
