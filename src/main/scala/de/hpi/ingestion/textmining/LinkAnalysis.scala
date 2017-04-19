@@ -20,7 +20,7 @@ object LinkAnalysis {
 					.map(page => (link.alias, page._1, page._2))
 			}
 			.keyBy { case (alias, pageName, count) => pageName }
-			.join(allPages.map(entry => (entry, entry)).keyBy(_._1)) // ugly, but working
+			.join(allPages.map(entry => Tuple2(entry, entry)))
 			.map { case (pageName, (link, doublePageName)) => link }
 			.map { case (alias, pageName, count) => (alias, Map((pageName, count))) }
 			.reduceByKey(_ ++ _)

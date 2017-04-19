@@ -11,14 +11,26 @@ case class ParsedWikipediaEntry(
 	var listlinks: List[Link] = List[Link](),
 	var linkswithcontext: List[Link] = List[Link](),
 	var context: Map[String, Int] = Map[String, Int]()
-){
+) {
 	def setText(t: String): Unit = text = Option(t)
+
 	def getText(): String = text.getOrElse("")
+
+	/**
+	  * Concatenates all link lists extracted from the Wikipedia article.
+	  *
+	  * @return all links
+	  */
 	def allLinks(): List[Link] = {
 		textlinks ++ templatelinks ++ categorylinks ++ listlinks ++ disambiguationlinks
 	}
 
-	def filterLinks(filterFunction: Link => Boolean) : Unit = {
+	/**
+	  * Executes a filter function on all link lists.
+	  *
+	  * @param filterFunction filter function
+	  */
+	def filterLinks(filterFunction: Link => Boolean): Unit = {
 		textlinks = textlinks.filter(filterFunction)
 		templatelinks = templatelinks.filter(filterFunction)
 		categorylinks = categorylinks.filter(filterFunction)
