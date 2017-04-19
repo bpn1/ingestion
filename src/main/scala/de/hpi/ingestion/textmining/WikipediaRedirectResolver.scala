@@ -19,9 +19,7 @@ object WikipediaRedirectResolver {
 	  * @return Parsed Wikipedia Entry with no redirect pages as target of a link
 	  */
 	def resolveRedirects(entry: ParsedWikipediaEntry, dict: Map[String, String]): ParsedWikipediaEntry = {
-		entry.allLinks().foreach { link =>
-			link.page = dict.getOrElse(link.page, link.page)
-		}
+		entry.allLinks().foreach(link => link.page = dict.getOrElse(link.page, link.page))
 		entry
 	}
 
@@ -31,8 +29,8 @@ object WikipediaRedirectResolver {
 	  * @return Map containing the redirects in the form redirect page -> target page
 	  */
 	def buildRedirectDict(articles: RDD[ParsedWikipediaEntry]): Map[String, String] = {
-		articles.filter(WikipediaTextParser.isRedirectPage)
-			//.flatMap(entry => entry.textlinks.map((entry.title, _)))
+		articles
+			.filter(WikipediaTextParser.isRedirectPage)
 			.map(entry => (entry.title, entry.textlinks.head.page))
 			.filter(t => t._1 != t._2)
 			.collect()
@@ -42,23 +40,23 @@ object WikipediaRedirectResolver {
 	/**
 	  * Resolves transitive redirects by replacing the target page with the transitive target page. Also removes
 	  * all reflexive entries.
-	  * @param dict Map containing the redirects that will be cleaned
+	  * @param redirectMap Map containing the redirects that will be cleaned
 	  * @return Map containing the cleaned redirects
 	  */
-	def resolveTransitiveRedirects(dict: Map[String, String]): Map[String, String] = {
-		var newDict = dict
+	def resolveTransitiveRedirects(redirectMap: Map[String, String]): Map[String, String] = {
+		var resolvedRedirects = redirectMap
 		var resolvableEntries = Map[String, String]()
 		var visited = Set[String]()
 		do {
-			newDict ++= resolvableEntries.map(_.map(identity, newDict))
-			newDict = newDict.filter(t => t._1 != t._2)
+			resolvedRedirects ++= resolvableEntries.map(_.map(identity, resolvedRedirects))
+			resolvedRedirects = resolvedRedirects.filter(t => t._1 != t._2)
 
 			visited ++= resolvableEntries.values
-			resolvableEntries = newDict
-				.filter(t => newDict.contains(t._2))
+			resolvableEntries = resolvedRedirects
+				.filter(t => resolvedRedirects.contains(t._2))
 				.filter(t => !visited.contains(t._2))
 		} while(resolvableEntries.nonEmpty)
-		newDict
+		resolvedRedirects
 	}
 
 	def main(args: Array[String]) {

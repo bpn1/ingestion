@@ -333,6 +333,11 @@ object WikipediaTextParser {
 			.map(anchor => Link(anchor.text, parseUrl(anchor.attr("href"))))
 	}
 
+	/**
+	  * Parses all Wikipedia Entries and removes metapages.
+	  * @param wikipedia RDD of Wikipedia Entries
+	  * @return RDD of Parsed Wikipedia Entries
+	  */
 	def parseWikipedia(wikipedia: RDD[WikipediaEntry]): RDD[ParsedWikipediaEntry] = {
 		wikipedia
 			.filter(!isMetaPage(_))
