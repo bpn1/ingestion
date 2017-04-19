@@ -164,7 +164,11 @@ object CosineContextComparator {
 	}
 
 	def calculateCosineSimilarity(linkContext: Map[String, Double], pageContext: Map[String, Double]): Double = {
-		0.0
+		val length = linkContext.values.map(t => t * t).sum * pageContext.values.map(t => t * t).sum
+		val dotProduct = linkContext.keySet.intersect(pageContext.keySet)
+			.map(key => linkContext(key) * pageContext(key))
+			.sum
+		dotProduct / length
 	}
 
 	def main(args: Array[String]): Unit = {
