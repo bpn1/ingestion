@@ -7,13 +7,13 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 
 	"SimpleBlockingScheme" should "generate proper keys" in {
-		val blockingScheme = new SimpleBlockingScheme()
+		val blockingScheme = new DefaultBlockingScheme()
 		val keys = testSubjects.map(blockingScheme.generateKey)
 		keys.toSet shouldEqual simpleTestKeys
 	}
 
 	it should "generate an undefined block for subjects without names" in {
-		val blockingScheme = new SimpleBlockingScheme()
+		val blockingScheme = new DefaultBlockingScheme()
 		val keys = testUndefinedSubjects().map(blockingScheme.generateKey)
 		keys.toSet shouldEqual simpleUndefinedTestKeys
 	}
