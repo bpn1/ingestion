@@ -4,6 +4,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.serializer.KryoSerializer
 import com.datastax.spark.connector._
 import com.esotericsoftware.kryo.io.Input
+import com.esotericsoftware.kryo.serializers.FieldSerializer
 import com.twitter.chill.Kryo
 import de.hpi.ingestion.implicits.CharImplicits._
 import de.hpi.ingestion.textmining.models._
@@ -86,7 +87,6 @@ object TrieBuilder {
 
 		val tokenizer = new CleanCoreNLPTokenizer
 
-		val kryoSerializer = new KryoSerializer(conf)
 		val files = defaultKeys()
 			.map(key => (key, fileName(key)))
 			.toMap
@@ -97,10 +97,32 @@ object TrieBuilder {
 			.mapPartitions({ partition =>
 				val trieMap = fileBroadcast.value
 					.mapValues { file =>
+						val kryo = new Kryo()
+						kryo.register(classOf[mutable.Map[_, _]], new MutableMapSerializer())
+						kryo.register(classOf[Option[_]], new OptionSerializer())
+
+						val trieSerializer = new FieldSerializer(kryo, classOf[TrieNode])
+						trieSerializer
+							.getField("children")
+							.setClass(
+								classOf[mutable.Map[_, _]],
+								kryo.getSerializer(classOf[mutable.Map[_, _]]))
+						trieSerializer
+							.getField("token")
+							.setClass(
+								classOf[Option[_]],
+								kryo.getSerializer(classOf[Option[_]]))
+						trieSerializer
+							.getField("word")
+							.setClass(
+								classOf[Option[_]],
+								kryo.getSerializer(classOf[Option[_]]))
+						kryo.register(classOf[TrieNode], trieSerializer)
+
 						val hadoopConf = new Configuration()
 						val fs = FileSystem.get(hadoopConf)
 						val inputStream = new Input(fs.open(new Path(file)))
-						val kryo = kryoSerializer.newKryo()
+
 						val trie = kryo.readObject(inputStream, classOf[TrieNode])
 						inputStream.close()
 						trie
