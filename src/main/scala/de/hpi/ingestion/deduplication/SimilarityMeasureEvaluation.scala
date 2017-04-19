@@ -5,7 +5,6 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import de.hpi.ingestion.deduplication.models.SimilarityMeasureStats
 
 object SimilarityMeasureEvaluation {
 	val appName = "SimilarityMeasureEvaluation"
