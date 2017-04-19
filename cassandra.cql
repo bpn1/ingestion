@@ -92,6 +92,12 @@ CREATE TYPE datalake.subject (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
+CREATE TYPE datalake.simmeasurestats (
+    precision text,
+    recall text,
+    f_score text
+)
+
 CREATE TABLE datalake.subject (
     id uuid PRIMARY KEY,
     aliases list<text>,
@@ -163,3 +169,9 @@ CREATE TABLE datalake.subject_merged (
     relations map<uuid, frozen<map<text, text>>>,
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
+
+CREATE TABLE datalake.simmeasureevaluation (
+    id uuid PRIMARY KEY,
+    data map<text, list<frozen<tuple<simmeasurestats, double>>>>,
+    comment text
+)
