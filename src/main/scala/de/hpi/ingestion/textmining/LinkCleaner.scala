@@ -25,15 +25,11 @@ object LinkCleaner {
 		existingPages: RDD[String]
 	): RDD[(String, Set[String])] = {
 		articles
-			.flatMap { article =>
-				article
-					.allLinks()
-					.map(link => (link.page, article.title))
-			}
-			.join(existingPages.map(page => (page, page)).keyBy(_._1))
-			.map { case (page, (title, (page1, page2))) => (title, page) }
-			.groupByKey
-			.mapValues(_.toSet)
+			.flatMap(article => article.allLinks().map(link => (link.page, article.title)))
+			.join(existingPages.map(page => Tuple2(page, page)))
+			.values
+			.map { case (title, page) => (title, Set(page)) }
+			.reduceByKey(_ ++ _)
 	}
 
 	/**
