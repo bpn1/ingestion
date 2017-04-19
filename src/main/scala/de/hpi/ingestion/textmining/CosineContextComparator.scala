@@ -9,6 +9,8 @@ object CosineContextComparator {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
+	val linksTable = "wikipedialinks"
+	val featureEntryTable = "featureentries"
 
 	/**
 	  * Transforms the term frequencies in a bag and an identifier for the term frequencies in a joinable format
@@ -134,6 +136,37 @@ object CosineContextComparator {
 			}
 	}
 
+	def joinablePages(aliases: RDD[Alias]): RDD[(String, (String, Double, Double))] = {
+		aliases
+			.flatMap { alias =>
+				val totalProb = alias.linkoccurrences.toDouble / alias.totaloccurrences.toDouble
+				val numPages = alias.pages.values.sum.toDouble
+				val pageProb = alias.pages.mapValues(_.toDouble / numPages)
+				alias.pages.keySet.map(page => (alias.alias, (page, totalProb, pageProb(page)))
+			}
+	}
+
+	def compareLinksWithArticles(
+		linkContexts: RDD[(Link, Map[String, Double])],
+		pages: RDD[(String, (String, Double, Double))],
+		articleContexts: RDD[(String, Map[String, Double])]
+	): RDD[FeatureEntry] = {
+		linkContexts
+			.map(t => (t._1.alias, t))
+			.join(pages)
+			.map { case (alias, ((link, context), (page, totalProb, pageProb))) =>
+				(page, (alias, link, context, totalProb, pageProb))
+			}.join(articleContexts)
+			.map { case (page, ((alias, link, linkContext, totalProb, pageProb), pageContext)) =>
+				val cosineSim = calculateCosineSimilarity(linkContext, pageContext)
+				FeatureEntry(alias, page, totalProb, pageProb, cosineSim, link.page == page)
+			}
+	}
+
+	def calculateCosineSimilarity(linkContext: Map[String, Double], pageContext: Map[String, Double]): Double = {
+		0.0
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Cosine Context Comparator")
@@ -156,7 +189,10 @@ object CosineContextComparator {
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
-		// TODO: join RDDs and calculate cosine similarity (issue #34)
+		val pages = joinablePages(sc.cassandraTable[Alias](keyspace, linksTable))
+
+		compareLinksWithArticles(contextTfidf, pages, articleTfidf)
+			.saveToCassandra(keyspace, featureEntryTable)
 
 		sc.stop()
 	}
