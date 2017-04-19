@@ -32,7 +32,7 @@ trait BlockingScheme extends Serializable {
   * This class uses the result of the CompSplit.jar on the name property as key.
   */
 class DefaultBlockingScheme extends BlockingScheme {
-	override def generateKey(subject: Subject): List[String] = {
+	/*override def generateKey(subject: Subject): List[String] = {
 		val fileStream = getClass.getResource("/bin/StanfordCRFClassifier-Tag.bin").openStream()
 		val classifier = In.stream(fileStream).readObject[AClassifier[Tag]]()
 		val taggedName = classifier.getTags(subject.get("name").head)
@@ -45,7 +45,8 @@ class DefaultBlockingScheme extends BlockingScheme {
 			}
 		}
 		key
-	}
+	}*/
+	override def generateKey(subject: Subject): List[String] = List("lol")
 }
 
 /**
