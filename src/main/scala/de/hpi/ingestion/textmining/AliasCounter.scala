@@ -5,7 +5,7 @@ import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 
-object WikipediaAliasCounter {
+object AliasCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val linksTablename = "wikipedialinks"
@@ -91,7 +91,7 @@ object WikipediaAliasCounter {
 
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
-			.setAppName("Wikipedia Alias Counter")
+			.setAppName("Alias Counter")
 
 		val sc = new SparkContext(conf)
 
