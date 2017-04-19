@@ -45,14 +45,11 @@ object LinkCleaner {
 	): RDD[ParsedWikipediaEntry] = {
 		articles
 			.map(article => (article.title, article))
-			.leftOuterJoin(validPages)
-			.map {
-				case (title, (article, Some(links))) =>
-					article.filterLinks(link => links.contains(link.page))
-					article
-				case (title, (article, None)) =>
-					article.filterLinks(link => false)
-					article
+			.join(validPages)
+			.values
+			.map { case (article, links) =>
+				article.filterLinks(link => links.contains(link.page))
+				article
 			}
 	}
 

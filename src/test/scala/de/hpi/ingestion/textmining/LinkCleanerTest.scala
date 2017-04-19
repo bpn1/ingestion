@@ -48,16 +48,16 @@ class LinkCleanerTest extends FlatSpec with SharedSparkContext with Matchers {
 			.foreach(_.allLinks() shouldBe empty)
 	}
 
-	"Wikipedia articles without links" should "not be removed" in {
+	"Wikipedia articles without links" should "be removed" in {
 		val articles = sc.parallelize(TestData.parsedArticlesWithoutLinksSet().toList)
 		val cleanedArticles = LinkCleaner.run(articles)
-		cleanedArticles should not be empty
+		cleanedArticles shouldBe empty
 	}
 
-	"Cleaned Wikipedia articles from incomplete article set" should "not be empty" in {
+	"Cleaned Wikipedia articles from incomplete article set" should "be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		val cleanedArticles = LinkCleaner.run(articles)
-		cleanedArticles should not be empty
+		cleanedArticles shouldBe empty
 	}
 
 	they should "not contain links" in {

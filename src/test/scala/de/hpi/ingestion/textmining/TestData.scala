@@ -680,11 +680,7 @@ object TestData {
 					Link("Bayern", "Bayern", 69),
 					Link("Automobilhersteller", "Automobilhersteller", 94),
 					Link("Zerfall", "Zerfall (Album)", 4711)
-				)),
-			ParsedWikipediaEntry("Volvo", Option("lorem")),
-			ParsedWikipediaEntry("Opel", Option("ipsum")),
-			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
-		)
+				)))
 	}
 
 	def cleanedClosedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
@@ -696,11 +692,7 @@ object TestData {
 					Link("Konkurrent", "Volvo", 4711),
 					Link("Opel", "Opel", 4711),
 					Link("DB", "Deutsche Bahn", 4711)
-				)),
-			ParsedWikipediaEntry("Volvo", Option("lorem")),
-			ParsedWikipediaEntry("Opel", Option("ipsum")),
-			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
-		)
+				)))
 	}
 
 	def germanStopwordsTestSet(): Set[String] = {
