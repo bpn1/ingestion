@@ -111,17 +111,14 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		cleanedGroupedPages shouldEqual TestData.cleanedGroupedPagesTestSet()
 	}
 
-	"Grouped aliases and page names" should "be exactly these aliases and page names" in {
+	"Grouped aliases and page names from incomplete article set" should "be empty" in {
 		val articles = sc.parallelize(TestData.smallerParsedWikipediaList())
-		val allPages = sc.parallelize(TestData.allPagesTestList())
-		val (groupedAliases, groupedPages) = LinkAnalysis.run(articles, allPages)
+		val (groupedAliases, groupedPages) = LinkAnalysis.run(articles)
 		val groupedAliasesSet = groupedAliases
 			.collect
-			.toSet
 		val groupedPagesSet = groupedPages
 			.collect
-			.toSet
-		groupedAliasesSet shouldEqual TestData.cleanedGroupedAliasesTestSet()
-		groupedPagesSet shouldEqual TestData.cleanedGroupedPagesTestSet()
+		groupedAliasesSet shouldBe empty
+		groupedPagesSet shouldBe empty
 	}
 }
