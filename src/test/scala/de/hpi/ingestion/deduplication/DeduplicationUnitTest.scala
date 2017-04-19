@@ -19,9 +19,9 @@ class DeduplicationUnitTest
 		deduplication.parseConfig()
 		val score = deduplication.compare(testSubjects(0), testSubjects(1))
 		val simScores = List (
-			 MongeElkan.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.8,
-			 JaroWinkler.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.7,
-			 ExactMatchString.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.2
+			MongeElkan.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.8,
+			JaroWinkler.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.7,
+			ExactMatchString.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.2
 		)
 
 		val expectedScore = simScores.sum / 3

@@ -1,6 +1,6 @@
 package de.hpi.ingestion.deduplication.similarity
 
-import scala.collection.TraversableOnce
+import java.lang.Math._
 
 
 /**
@@ -8,14 +8,8 @@ import scala.collection.TraversableOnce
 	*/
 object DeviantNumbers  extends SimilarityMeasure[String] {
 
-	// stackoverflow.com/questions/23564120/min-max-of-collections-containing-nan-handling-incomparability-in-ordering
-	implicit class MinMaxNanAware(t: TraversableOnce[Double]) {
-			def nanAwareMin = t.minBy(x => if (x.isNaN) Double.PositiveInfinity else x)
-			def nanAwareMax = t.maxBy(x => if (x.isNaN) Double.NegativeInfinity else x)
-	}
-
 	/**
-	  * Calculates the deviant similarity score for two given doubles
+	  * Calculates how close are two given numbers to each other in terms of percentage
 	  * @param s double to be compared to t
 	  * @param t double to be compared to s
 	  * @param u has no specific use in here
@@ -23,14 +17,8 @@ object DeviantNumbers  extends SimilarityMeasure[String] {
 	  */
 	override def compare(s: String, t: String, u: Int = 1) : Double = {
 
-			val givenValues = List(s.toDouble, t.toDouble)
-			val max = givenValues.nanAwareMax
-			val min = givenValues.nanAwareMin
-			println("max: ", max)
-			println("min: ", min)
-			val quotient = min / max
-			println("quotient: ", quotient)
-			val score = quotient
-			score
+			val max = Math.max(s.toDouble, t.toDouble)
+			val min = Math.min(s.toDouble, t.toDouble)
+			min / max
 	 }
 }
