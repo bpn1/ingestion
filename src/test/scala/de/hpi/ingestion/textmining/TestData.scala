@@ -111,7 +111,8 @@ object TestData {
 			Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "und" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "der" -> 1, "im" -> 1, "-" -> 1, "ins" -> 1, "-rrb-" -> 1, "hatt" -> 1, "holx" -> 1, "ortsnam" -> 1, "vom" -> 1, "streitberg" -> 1, "mittelal" -> 1, "bis" -> 1)),
 			Link("Audi", "Audi", 7, Map("link" -> 2, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
 			Link("Brachttal", "Brachttal", 13, Map("link" -> 2, "audi" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-			Link("historisches Jahr", "1377", 24, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+			Link("historisches Jahr", "1377", 24, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1))
+		)
 	}
 
 	def articlesWithLinkContextsTestSet(): Set[ParsedWikipediaEntry] = {
@@ -235,7 +236,8 @@ object TestData {
 			(Link("Büdinger Wald", "Büdinger Wald", 546), Map("waldrech" -> tf1df1, "und" -> tf1df2, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "der" -> tf1df1, "im" -> tf1df1, "-" -> tf1df1, "ins" -> tf1df1, "-rrb-" -> tf1df1, "hatt" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "vom" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1, "bis" -> tf1df1)),
 			(Link("Audi", "Audi", 7), Map("link" -> tf2df1, "brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)),
 			(Link("Brachttal", "Brachttal", 13), Map("link" -> tf2df1, "audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)),
-			(Link("historisches Jahr", "1377", 24), Map("link" -> tf2df1, "audi" -> tf1df3, "brachttal" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)))
+			(Link("historisches Jahr", "1377", 24), Map("link" -> tf2df1, "audi" -> tf1df3, "brachttal" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1))
+		)
 	}
 
 	def termFrequenciesTestSet(): Set[(String, Bag[String, Int])] = {
@@ -295,7 +297,7 @@ object TestData {
 			Alias("Hessen", Map("Hessen" -> 1)),
 			Alias("1377", Map("1377" -> 1)),
 			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1)),
-			Alias("historisches Jahr", Map("1337" -> 1))
+			Alias("historisches Jahr", Map("1377" -> 1))
 		)
 	}
 
@@ -309,7 +311,20 @@ object TestData {
 			("Büdinger Wald", 1, 2),
 			("Backfisch", 0, 1),
 			("Streitberg", 0, 1),
-			("historisches Jahr", 1, 1))
+			("historisches Jahr", 1, 1)
+		)
+	}
+
+	def finalAliasesSet(): Set[Alias] = {
+		Set(
+			Alias("Audi", Map("Audi" -> 2), 2, 3),
+			Alias("Brachttal", Map("Brachttal" -> 2), 2, 2),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), 1, 2),
+			Alias("Hessen", Map("Hessen" -> 1), 1, 2),
+			Alias("1377", Map("1377" -> 1), 1, 1),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), 1, 2),
+			Alias("historisches Jahr", Map("1377" -> 1), 1, 1)
+		)
 	}
 
 	def linkProbabilitiesRDD(sc: SparkContext): RDD[(String, Double)] = {
@@ -468,7 +483,8 @@ object TestData {
 		Set(
 			("Audi Test mit Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
 			("Audi Test ohne Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
-			("Testartikel", Map("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1)))
+			("Testartikel", Map("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1))
+		)
 	}
 
 	def unstemmedGermanWordsTestSet(): Set[String] = {
@@ -613,10 +629,13 @@ object TestData {
 
 	def aliasProbabilitiesSet(): Set[(String, (String, Double, Double))] = {
 		Set(
-			("Ingolstadt", ("Ingolstadt", 1.0, 1.0)),
-			("Bayern", ("Bayern", 1.0, 1.0)),
-			("Automobilhersteller", ("Automobilhersteller", 1.0, 1.0)),
-			("Zerfall",("Zerfall (Album)", 1.0, 1.0))
+			("Audi", ("Audi", 0.6666666666666666, 1.0)),
+			("Brachttal", ("Brachttal", 1.0, 1.0)),
+			("Main-Kinzig-Kreis", ("Main-Kinzig-Kreis", 0.5, 1.0)),
+			("Hessen", ("Hessen", 0.5, 1.0)),
+			("1377", ("1377", 1.0, 1.0)),
+			("Büdinger Wald", ("Büdinger Wald", 0.5, 1.0)),
+			("historisches Jahr", ("1377", 1.0, 1.0))
 		)
 	}
 
@@ -643,7 +662,8 @@ object TestData {
 			"Automobilhersteller",
 			"Ingolstadt",
 			"Bayern",
-			"Zerfall (Album)")
+			"Zerfall (Album)"
+		)
 	}
 
 	def smallerParsedWikipediaTestList(): List[ParsedWikipediaEntry] = {

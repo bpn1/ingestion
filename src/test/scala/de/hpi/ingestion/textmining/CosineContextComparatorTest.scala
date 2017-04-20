@@ -91,7 +91,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	"Alias probabilities" should "not be empty" in {
-		val aliases = sc.parallelize(TestData.cleanedGroupedAliasesSet().toList)
+		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
 		val pages = CosineContextComparator
 			.joinablePages(aliases)
 			.collect
@@ -99,7 +99,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "be exactly these probabilites" in {
-		val aliases = sc.parallelize(TestData.cleanedGroupedAliasesSet().toList)
+		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
 		val pages = CosineContextComparator
 			.joinablePages(aliases)
 			.collect
@@ -107,19 +107,20 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		pages shouldEqual TestData.aliasProbabilitiesSet()
 	}
 
-	//	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
-	//		val articleTfidf = sc.parallelize(TestData.tfidfContextsTestSet())
-	//		val pages =
-	//		val featureEntries = CosineContextComparator
-	//			.compareLinksWithArticles(articleTfidf, pages, contextTfidf)
-	//			.collect
-	//		featureEntries should not be empty
-	//	}
+	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
+		val articleTfidf = sc.parallelize(TestData.tfidfContextsTestSet().toList)
+		val pages = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
+		val contextTfidf = sc.parallelize(TestData.linkContextsTfidf().toList)
+		val featureEntries = CosineContextComparator
+			.compareLinksWithArticles(contextTfidf, pages, articleTfidf)
+			.collect
+		featureEntries should not be empty
+	}
 
 	"Extracted feature entries" should "not be empty" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
-		val aliases = sc.parallelize(TestData.cleanedGroupedAliasesSet().toList)
+		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
 		val featureEntries = CosineContextComparator
 			.run(articles, documentFrequencies, aliases)
 			.collect

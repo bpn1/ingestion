@@ -94,10 +94,10 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	"Alias counts" should "be exactly these tuples" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val links = sc.parallelize(TestData.linksSet().toList)
-		val mergedLinks = AliasCounter.run(articles, links)
+		val aliasCounts = AliasCounter.run(articles, links)
 			.collect
 			.toSet
-		mergedLinks shouldEqual TestData.aliasCountsSet()
+		aliasCounts shouldEqual TestData.aliasCountsSet()
 	}
 
 	"Counted number of link occurrences" should "equal number of page references" in {
