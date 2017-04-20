@@ -48,6 +48,19 @@ class DeduplicationUnitTest
 		deduplication.config shouldEqual expected
 	}
 
+	"EuclidianDistance" should "compute the distnace between two points in terms of kilometers" in {
+			val testSubjects = getSampleSubjects()
+			val expectedDistance = 111.70485139435159
+			val computedDistance = EuclidianDistance.computeDistance(
+				testSubjects(4).properties("geoCoords")(0).toDouble,
+				testSubjects(4).properties("geoCoords")(1).toDouble,
+				testSubjects(5).properties("geoCoords")(0).toDouble,
+				testSubjects(5).properties("geoCoords")(1).toDouble
+				)
+
+			expectedDistance shouldEqual computedDistance
+	}
+
 	"blocking" should "partition subjects regarding the value of the given key" in {
 		val testSubjects = getSampleSubjects()
 		val deduplication = defaultDeduplication
@@ -131,9 +144,17 @@ class DeduplicationUnitTest
 				name = Some("Volkswagen AG"),
 				properties = Map("city" -> List("Berlin"))),
 			Subject(
-				name = Some("Porsche")),
+				name = Some("Porsche"),
+				properties = Map(
+					"geoCoords" -> List("52","13")
+					)
+				),
 			Subject(
-				name = Some("Ferrari"))
+				name = Some("Ferrari"),
+				properties = Map(
+					"geoCoords" -> List("53","14")
+					)
+				)
 		)
 	}
 
