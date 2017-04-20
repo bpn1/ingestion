@@ -21,30 +21,27 @@ object GoldStandard {
 	  * @return RDD containing Subjects keyed by a value
 	  */
 	def keyBySingleProperty(rdd: RDD[Subject], property: String): RDD[(String, Subject)] = {
-		rdd
-			.filter(_.properties.contains(property))
-			.map { subject =>
-				val keyOpt = subject.properties(property).headOption
-				(keyOpt.getOrElse(""), subject)
-			}
+		for {
+			subject <- rdd
+			if subject.properties.contains(property)
+			keyOpt = subject.properties(property).headOption
+		} yield (keyOpt.getOrElse(""), subject)
 	}
 
 	/**
 	  * Join DBPedia and WikiData together on a property.
 	  * @param property The property to be joined on.
-	  * @param rdds The rdds to be joined
 	  * @return RDD containing pairs of UUIDs
 	  */
-	def joinBySingleProperty(property: String)(implicit rdds: (RDD[Subject], RDD[Subject])): RDD[(UUID, UUID)] = {
-		val (dbpedia, wikidata) = rdds
+	def joinBySingleProperty(property: String, dbpedia: RDD[Subject], wikidata: RDD[Subject]): RDD[(UUID, UUID)] = {
 		val propertyKeyDBPedia = keyBySingleProperty(dbpedia, property)
 		val propertyKeyWikiData = keyBySingleProperty(wikidata, property)
 		propertyKeyDBPedia
-		    .join(propertyKeyWikiData)
-		    .mapValues { case (dbpediaSubject, wikidataSubject) =>
+			.join(propertyKeyWikiData)
+			.values
+			.map { case (dbpediaSubject, wikidataSubject) =>
 				(dbpediaSubject.id, wikidataSubject.id)
 			}
-		    .values
 	}
 
 	/**
@@ -54,9 +51,8 @@ object GoldStandard {
 	  * @return RDD containing pairs of UUIDs
 	  */
 	def join(dbpedia: RDD[Subject], wikidata: RDD[Subject]): RDD[(UUID, UUID)] = {
-		implicit val rdds = (dbpedia, wikidata)
-		val dbpediaIdJoined = joinBySingleProperty("id_dbpedia")
-		val wikidataIdJoined = joinBySingleProperty("id_wikidata")
+		val dbpediaIdJoined = joinBySingleProperty("id_dbpedia", dbpedia, wikidata)
+		val wikidataIdJoined = joinBySingleProperty("id_wikidata", dbpedia, wikidata)
 		dbpediaIdJoined.union(wikidataIdJoined).distinct
 	}
 
