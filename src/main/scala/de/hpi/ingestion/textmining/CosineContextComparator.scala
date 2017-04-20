@@ -5,6 +5,9 @@ import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
+/**
+  *
+  */
 object CosineContextComparator {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
@@ -171,14 +174,18 @@ object CosineContextComparator {
 		dotProduct / length
 	}
 
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Cosine Context Comparator")
-
-		val sc = new SparkContext(conf)
-		val articlesWithTermFrequencies = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
-
+	/**
+	  *
+	  * @param articlesWithTermFrequencies
+	  * @param documentFrequencies
+	  * @param aliases
+	  * @return
+	  */
+	def run(
+		articlesWithTermFrequencies: RDD[ParsedWikipediaEntry],
+		documentFrequencies: RDD[DocumentFrequency],
+		aliases: RDD[Alias]
+	): RDD[FeatureEntry] = {
 		val numDocuments = articlesWithTermFrequencies.count()
 
 		val articleTfidf = calculateArticleTfidf(
@@ -193,10 +200,19 @@ object CosineContextComparator {
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
-		val pages = joinablePages(sc.cassandraTable[Alias](keyspace, linksTable))
-
+		val pages = joinablePages(aliases)
 		compareLinksWithArticles(contextTfidf, pages, articleTfidf)
-			.saveToCassandra(keyspace, featureEntryTable)
+	}
+
+	def main(args: Array[String]): Unit = {
+		val conf = new SparkConf().setAppName("Cosine Context Comparator")
+		val sc = new SparkContext(conf)
+
+		val articlesWithTermFrequencies = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
+		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
+
+		run(articlesWithTermFrequencies, documentFrequencies, aliases).saveToCassandra(keyspace, featureEntryTable)
 
 		sc.stop()
 	}
