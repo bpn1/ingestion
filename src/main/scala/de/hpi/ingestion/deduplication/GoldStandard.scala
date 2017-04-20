@@ -9,10 +9,10 @@ import org.apache.spark.rdd.RDD
 object GoldStandard {
 	val appName = "GoldStandard_v1.0"
 	val dataSource = List("DBPedia", "Wikidata")
-	val keyspace = "datalake"
+	val keyspace = "evaluation"
 	val inputDBPedia = "subject_dbpedia"
 	val inputWikiData = "subject_wikidata"
-	val output = "subject_goldstandard"
+	val output = "goldstandard"
 
 	/**
 	  * Keys Subjects by a property value
