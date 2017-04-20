@@ -89,4 +89,22 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val expectedTfidf = TestData.linkContextsTfidf()
 		linkContextValues shouldBe expectedTfidf
 	}
+
+	"Joinable pages" should "not be empty" in {
+		val aliases = sc.parallelize(TestData.cleanedGroupedAliasesSet().toList)
+		val pages = CosineContextComparator
+			.joinablePages(aliases)
+			.collect
+		pages should not be empty
+	}
+
+	//	"Extracted feature entries" should "not be empty" in {
+	//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+	//		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
+	//		val aliases = sc.parallelize(TestData.cleanedGroupedAliasesSet().toList)
+	//		val featureEntries = CosineContextComparator
+	//			.run(articles, documentFrequencies, aliases)
+	//			.collect
+	//		featureEntries should not be empty
+	//	}
 }

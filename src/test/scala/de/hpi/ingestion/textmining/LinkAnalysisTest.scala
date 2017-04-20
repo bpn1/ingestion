@@ -41,7 +41,7 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 			.map(alias => (alias.alias, alias.pages))
 			.collect
 			.toSet
-		val groupedAliasesTest = TestData.groupedAliasesTestSet()
+		val groupedAliasesTest = TestData.groupedAliasesSet()
 			.map(alias => (alias.alias, alias.pages))
 		groupedAliases shouldEqual groupedAliasesTest
 	}
@@ -82,12 +82,12 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 			.groupByPageNames(sc.parallelize(TestData.smallerParsedWikipediaTestList()))
 			.collect
 			.toSet
-		groupedPages shouldEqual TestData.groupedPagesTestSet()
+		groupedPages shouldEqual TestData.groupedPagesSet()
 	}
 
 	"Probability that link directs to page" should "be computed correctly" in {
 		val references = TestData.probabilityReferences()
-		TestData.cleanedGroupedAliasesTestSet()
+		TestData.cleanedGroupedAliasesSet()
 			.map(link =>
 				(link.alias, LinkAnalysis.probabilityLinkDirectsToPage(link, "Bayern")))
 			.foreach { case (alias, probability) => probability shouldEqual references(alias) }
@@ -95,19 +95,19 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	"Dead links and only dead links" should "be removed" in {
 		val cleanedGroupedAliases = LinkAnalysis.removeDeadLinks(
-			sc.parallelize(TestData.groupedAliasesTestSet().toList),
+			sc.parallelize(TestData.groupedAliasesSet().toList),
 			sc.parallelize(TestData.allPagesTestList()))
 			.collect
 			.toSet
-		cleanedGroupedAliases shouldEqual TestData.cleanedGroupedAliasesTestSet()
+		cleanedGroupedAliases shouldEqual TestData.cleanedGroupedAliasesSet()
 	}
 
 	"Dead pages and only dead pages" should "be removed" in {
 		val cleanedGroupedPages = LinkAnalysis.removeDeadPages(
-			sc.parallelize(TestData.groupedPagesTestSet().toList),
+			sc.parallelize(TestData.groupedPagesSet().toList),
 			sc.parallelize(TestData.allPagesTestList()))
 			.collect
 			.toSet
-		cleanedGroupedPages shouldEqual TestData.cleanedGroupedPagesTestSet()
+		cleanedGroupedPages shouldEqual TestData.cleanedGroupedPagesSet()
 	}
 }
