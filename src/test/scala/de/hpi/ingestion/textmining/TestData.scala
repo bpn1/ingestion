@@ -835,13 +835,16 @@ object TestData {
 			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page")),
 			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page")),
 			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page")),
-			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")))
+			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
 	}
 
 	def parsedRedirectEntries():  Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page")),
-			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page")))
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page")),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT")))
 	}
 
 	def redirectMap(): Map[String, String] = {
@@ -850,13 +853,15 @@ object TestData {
 			"Site 3" -> "Site 6",
 			"Site 4" -> "Site 5",
 			"Site 5" -> "Site 4",
-			"Site 7" -> "Site 7")
+			"Site 7" -> "Site 7",
+			"EU" -> "Europäische Union")
 	}
 
 	def cleanedRedirectMap(): Map[String, String] = {
 		Map(
 			"Site 1" -> "Site 6",
-			"Site 3" -> "Site 6")
+			"Site 3" -> "Site 6",
+			"EU" -> "Europäische Union")
 	}
 
 	def entriesWithRedirects():  Set[ParsedWikipediaEntry] = {
@@ -867,7 +872,8 @@ object TestData {
 				listlinks = List(Link("Alias 3", "Site 3")),
 				categorylinks = List(Link("Alias 4", "Site 4")),
 				templatelinks = List(Link("Alias 5", "Site 5"))),
-			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))))
+			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "EU"))))
 	}
 
 	def entriesWithResolvedRedirects():  Set[ParsedWikipediaEntry] = {
@@ -878,7 +884,8 @@ object TestData {
 				listlinks = List(Link("Alias 3", "Site 6")),
 				categorylinks = List(Link("Alias 4", "Site 4")),
 				templatelinks = List(Link("Alias 5", "Site 5"))),
-			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))))
+			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union"))))
 	}
 
 }

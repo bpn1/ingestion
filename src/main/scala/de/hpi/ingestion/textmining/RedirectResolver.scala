@@ -29,10 +29,12 @@ object RedirectResolver {
 	  * @return Map containing the redirects in the form redirect page -> target page
 	  */
 	def buildRedirectDict(articles: RDD[ParsedWikipediaEntry]): Map[String, String] = {
-		articles
-			.filter(WikipediaTextParser.isRedirectPage)
-			.map(entry => (entry.title, entry.textlinks.head.page))
-			.filter(t => t._1 != t._2)
+		val redirects = articles.filter(WikipediaTextParser.isRedirectPage).cache
+		assert(redirects.filter(_.title == "EU").collect.nonEmpty, "EU article is missing")
+		redirects
+			.map(entry => (entry.title, entry.textlinks.headOption.map(_.page)))
+			.filter(t => t._2.isDefined && t._1 != t._2.get)
+			.map(_.map(identity, _.get))
 			.collect()
 			.toMap
 	}
@@ -66,7 +68,8 @@ object RedirectResolver {
 
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
 		val redirectMap = buildRedirectDict(articles)
-		val dictBroadcast = sc.broadcast(redirectMap)
+		val cleanedRedirectMap = resolveTransitiveRedirects(redirectMap)
+		val dictBroadcast = sc.broadcast(cleanedRedirectMap)
 
 		articles
 			.mapPartitions({ entryPartition =>
