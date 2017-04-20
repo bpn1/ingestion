@@ -33,12 +33,12 @@ class DeduplicationUnitTest
 			val expectedScore1 = 0.98
 			val expectedScore2 = 0.02
 
-			val computedScore1 = RoughlyEqualnNumbers.compare(
+			val computedScore1 = RoughlyEqualNumbers.compare(
 				testSubjects(0).properties("grossIncome").head,
 				testSubjects(1).properties("grossIncome").head
 			)
 
-			val computedScore2 = RoughlyEqualnNumbers.compare(
+			val computedScore2 = RoughlyEqualNumbers.compare(
 				testSubjects(2).properties("grossIncome").head,
 				testSubjects(3).properties("grossIncome").head
 			)
