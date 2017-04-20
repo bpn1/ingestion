@@ -10,7 +10,6 @@ import com.datastax.spark.connector._
   */
 object LinkCleaner {
 	val keyspace = "wikidumps"
-	val inputPagesTable = "wikipediapages"
 	val operatingTable = "parsedwikipedia"
 
 	/**
