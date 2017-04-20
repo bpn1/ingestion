@@ -831,10 +831,21 @@ object TestData {
 
 	def parsedEntriesWithRedirects(): Set[ParsedWikipediaEntry] = {
 		Set(
-			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page")),
-			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page")),
-			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page")),
-			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page")),
+			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "Test Redirect Entry 1"))),
+			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "Test Redirect Entry 2"), Link("alias 3", "EU"))),
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
+			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
+	}
+
+	def parsedEntriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "test page"))),
+			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "test page 2"), Link("alias 3", "Europäische Union"))),
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
 			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")),
 			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
 		)
@@ -842,9 +853,16 @@ object TestData {
 
 	def parsedRedirectEntries():  Set[ParsedWikipediaEntry] = {
 		Set(
-			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page")),
-			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page")),
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
 			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT")))
+	}
+
+	def redirectDict(): Map[String, String] = {
+		Map(
+			"Test Redirect Entry 1" -> "test page",
+			"Test Redirect Entry 2" ->"test page 2",
+			"EU" -> "Europäische Union")
 	}
 
 	def redirectMap(): Map[String, String] = {

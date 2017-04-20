@@ -1,11 +1,11 @@
 package de.hpi.ingestion.textmining
 
-import com.holdenkarau.spark.testing.SharedSparkContext
+import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import org.scalatest.{FlatSpec, Matchers}
 
 
-class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matchers {
+class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"All redirects in an entry" should "be resolved" in {
 		val dict = TestData.testRedirectDict()
 		val links = TestData.testLinksWithRedirects()
@@ -28,6 +28,20 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 			.map(RedirectResolver.resolveRedirects(_, redirectMap))
 		val expectedEntries = TestData.entriesWithResolvedRedirects()
 		entries shouldEqual expectedEntries
+	}
+
+	"Redirect dictionary" should "be built" in {
+		val redirectEntries = sc.parallelize(TestData.parsedRedirectEntries().toList)
+		val redirectDict = RedirectResolver.buildRedirectDict(redirectEntries)
+		val expectedDict = TestData.redirectDict()
+		redirectDict shouldEqual expectedDict
+	}
+
+	"Redirect resolver" should "resolve all redirects" in {
+		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
+		val resolvedEntries = RedirectResolver.run(unresolvedEntries, sc)
+		val expectedEntries = sc.parallelize(TestData.parsedEntriesWithResolvedRedirects().toList)
+		assertRDDEquals(resolvedEntries, expectedEntries)
 	}
 
 }

@@ -29,9 +29,8 @@ object RedirectResolver {
 	  * @return Map containing the redirects in the form redirect page -> target page
 	  */
 	def buildRedirectDict(articles: RDD[ParsedWikipediaEntry]): Map[String, String] = {
-		val redirects = articles.filter(WikipediaTextParser.isRedirectPage).cache
-		assert(redirects.filter(_.title == "EU").collect.nonEmpty, "EU article is missing")
-		redirects
+		articles
+			.filter(WikipediaTextParser.isRedirectPage)
 			.map(entry => (entry.title, entry.textlinks.headOption.map(_.page)))
 			.filter(t => t._2.isDefined && t._1 != t._2.get)
 			.map(_.map(identity, _.get))
@@ -61,12 +60,14 @@ object RedirectResolver {
 		resolvedRedirects
 	}
 
-	def main(args: Array[String]) {
-		val conf = new SparkConf()
-			.setAppName("Redirect Resolver")
-		val sc = new SparkContext(conf)
-
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
+	/**
+	  * Finds all redirects, resolves transitive redirects and then replaces links to redirect pages with links to the
+	  * page the redirect directs to.
+	  * @param articles RDD of Parsed Wikipedia Entries
+	  * @param sc Spark Context used to broadcast the redirect dictionary
+	  * @return RDD of parsed Wikipedia Entries with resolved redirect links
+	  */
+	def run(articles: RDD[ParsedWikipediaEntry], sc: SparkContext): RDD[ParsedWikipediaEntry] = {
 		val redirectMap = buildRedirectDict(articles)
 		val cleanedRedirectMap = resolveTransitiveRedirects(redirectMap)
 		val dictBroadcast = sc.broadcast(cleanedRedirectMap)
@@ -76,7 +77,15 @@ object RedirectResolver {
 				val localDict = dictBroadcast.value
 				entryPartition.map(entry => resolveRedirects(entry, localDict))
 			}, true)
-			.saveToCassandra(keyspace, tablename)
+	}
+
+	def main(args: Array[String]) {
+		val conf = new SparkConf()
+			.setAppName("Redirect Resolver")
+		val sc = new SparkContext(conf)
+
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
+		run(articles, sc).saveToCassandra(keyspace, tablename)
 		sc.stop()
 	}
 }
