@@ -9,6 +9,10 @@ import com.datastax.spark.connector._
 object SimilarityMeasureEvaluation {
 	val appName = "SimilarityMeasureEvaluation"
 	val numberOfBuckets = 10
+	val keyspace = "evaluation"
+	val inputTest = "goldstandard"
+	val inputTraining = "dbpedia_wikidata_deduplication"
+	val output = "sim_measure_stats"
 
 	def generatePredictionAndLabels(
 		training: RDD[((UUID, UUID), Double)],
@@ -33,9 +37,9 @@ object SimilarityMeasureEvaluation {
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 
-		val training = sc.cassandraTable[((UUID, UUID), Double)]("datalake", "goldstandard")
+		val training = sc.cassandraTable[((UUID, UUID), Double)](this.keyspace, this.inputTraining)
 		val test = sc
-			.cassandraTable[(UUID, UUID)]("datalake", "duplicatecandidates")
+			.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
 		    .map(pair => (pair, 1:Double))
 
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
@@ -51,6 +55,6 @@ object SimilarityMeasureEvaluation {
 		    .map { case (threshold, ((precision, recall), f1Score)) =>
 				(threshold, precision, recall, f1Score)
 			}
-		    .saveToCassandra("datalake", "similaritymeasurestats")
+		    .saveToCassandra(this.keyspace, this.output)
 	}
 }
