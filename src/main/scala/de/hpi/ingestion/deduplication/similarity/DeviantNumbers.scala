@@ -6,7 +6,7 @@ import java.lang.Math._
 /**
   * A hybrid similarity measure comparing strings corresponding to the jaccard algorithm
   */
-object DeviantNumbers  extends SimilarityMeasure[String] {
+object RoughlyEqualnNumbers  extends SimilarityMeasure[String] {
 
 	/**
 	  * Calculates how close are two given numbers to each other in terms of percentage
