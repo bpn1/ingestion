@@ -66,8 +66,7 @@ object LinkCleaner {
 	}
 
 	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Link Cleaner")
+		val conf = new SparkConf().setAppName("Link Cleaner")
 		val sc = new SparkContext(conf)
 
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, operatingTable)

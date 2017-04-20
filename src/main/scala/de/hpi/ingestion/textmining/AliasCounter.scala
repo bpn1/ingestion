@@ -5,6 +5,9 @@ import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 
+/**
+  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages.
+  */
 object AliasCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
@@ -76,7 +79,7 @@ object AliasCounter {
 	}
 
 	/**
-	  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages
+	  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages.
 	  *
 	  * @param articles parsed Wikipedia articles
 	  * @param links    articles with their corresponding pages
@@ -90,9 +93,7 @@ object AliasCounter {
 	}
 
 	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Alias Counter")
-
+		val conf = new SparkConf().setAppName("Alias Counter")
 		val sc = new SparkContext(conf)
 
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
