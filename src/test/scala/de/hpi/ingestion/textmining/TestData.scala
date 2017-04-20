@@ -216,7 +216,6 @@ object TestData {
 	}
 
 
-
 	def linkContextsTfidf(): Set[(Link, Map[String, Double])] = {
 		// retrieved from 4 documents
 		val tf1df1 = 0.6020599913279624
@@ -313,7 +312,7 @@ object TestData {
 			("historisches Jahr", 1, 1))
 	}
 
-	def linkProbabilitiesTestRDD(sc: SparkContext): RDD[(String, Double)] = {
+	def linkProbabilitiesRDD(sc: SparkContext): RDD[(String, Double)] = {
 		sc.parallelize(List(
 			("Audi", 2.0 / 3),
 			("Brachttal", 1.0),
@@ -323,7 +322,8 @@ object TestData {
 			("Büdinger Wald", 1.0 / 2),
 			("Backfisch", 0.0),
 			("Streitberg", 0.0),
-			("historisches Jahr", 1.0)))
+			("historisches Jahr", 1.0)
+		))
 			.sortBy(_._1)
 	}
 
@@ -608,6 +608,15 @@ object TestData {
 			Alias("Bayern", Map("Bayern" -> 1)),
 			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
 			Alias("Zerfall", Map("Zerfall (Album)" -> 1))
+		)
+	}
+
+	def aliasProbabilitiesSet(): Set[(String, (String, Double, Double))] = {
+		Set(
+			("Ingolstadt", ("Ingolstadt", 1.0, 1.0)),
+			("Bayern", ("Bayern", 1.0, 1.0)),
+			("Automobilhersteller", ("Automobilhersteller", 1.0, 1.0)),
+			("Zerfall",("Zerfall (Album)", 1.0, 1.0))
 		)
 	}
 

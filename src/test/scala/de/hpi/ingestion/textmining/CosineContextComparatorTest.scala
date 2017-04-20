@@ -90,7 +90,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		linkContextValues shouldBe expectedTfidf
 	}
 
-	"Joinable pages" should "not be empty" in {
+	"Alias probabilities" should "not be empty" in {
 		val aliases = sc.parallelize(TestData.cleanedGroupedAliasesSet().toList)
 		val pages = CosineContextComparator
 			.joinablePages(aliases)
@@ -98,13 +98,31 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		pages should not be empty
 	}
 
-	//	"Extracted feature entries" should "not be empty" in {
-	//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-	//		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
-	//		val aliases = sc.parallelize(TestData.cleanedGroupedAliasesSet().toList)
+	they should "be exactly these probabilites" in {
+		val aliases = sc.parallelize(TestData.cleanedGroupedAliasesSet().toList)
+		val pages = CosineContextComparator
+			.joinablePages(aliases)
+			.collect
+			.toSet
+		pages shouldEqual TestData.aliasProbabilitiesSet()
+	}
+
+	//	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
+	//		val articleTfidf = sc.parallelize(TestData.tfidfContextsTestSet())
+	//		val pages =
 	//		val featureEntries = CosineContextComparator
-	//			.run(articles, documentFrequencies, aliases)
+	//			.compareLinksWithArticles(articleTfidf, pages, contextTfidf)
 	//			.collect
 	//		featureEntries should not be empty
 	//	}
+
+	"Extracted feature entries" should "not be empty" in {
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesTestSet().toList)
+		val aliases = sc.parallelize(TestData.cleanedGroupedAliasesSet().toList)
+		val featureEntries = CosineContextComparator
+			.run(articles, documentFrequencies, aliases)
+			.collect
+		featureEntries should not be empty
+	}
 }

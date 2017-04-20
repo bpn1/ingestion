@@ -88,7 +88,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 		val linkProbabilities = TestData.countedAliasesTestRDD(sc)
 			.map(countedAlias =>
 				(countedAlias.alias, AliasCounter.probabilityIsLink(countedAlias)))
-		assertRDDEquals(linkProbabilities, TestData.linkProbabilitiesTestRDD(sc))
+		assertRDDEquals(linkProbabilities, TestData.linkProbabilitiesRDD(sc))
 	}
 
 	"Alias counts" should "be exactly these tuples" in {
