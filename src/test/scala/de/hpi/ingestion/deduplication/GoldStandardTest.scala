@@ -18,7 +18,7 @@ class GoldStandardTest extends FlatSpec
 	"joinBySingleProperty" should "join DBPedia and WikiData on a given property" in {
 		val dbpedia = sc.parallelize(TestData.dbpediaList)
 		val wikidata = sc.parallelize(TestData.wikidataList)
-		val joinedRDD = GoldStandard.joinBySingleProperty("id_wikidata")(dbpedia, wikidata)
+		val joinedRDD = GoldStandard.joinBySingleProperty("id_wikidata", dbpedia, wikidata)
 		val expected = TestData.joinedWikiData(sc)
 		assertRDDEquals(expected, joinedRDD)
 	}
