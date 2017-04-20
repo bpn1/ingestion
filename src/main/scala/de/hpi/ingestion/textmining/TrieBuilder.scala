@@ -69,6 +69,31 @@ object TrieBuilder {
 		upperCaseLetters ++ lowerCaseLetters ++ List(defaultKey)
 	}
 
+	def trieKryo(): Kryo = {
+		val kryo = new Kryo()
+		kryo.register(classOf[mutable.Map[_, _]], new MutableMapSerializer())
+		kryo.register(classOf[Option[_]], new OptionSerializer())
+
+		val trieSerializer = new FieldSerializer(kryo, classOf[TrieNode])
+		trieSerializer
+			.getField("children")
+			.setClass(
+				classOf[mutable.Map[_, _]],
+				kryo.getSerializer(classOf[mutable.Map[_, _]]))
+		trieSerializer
+			.getField("token")
+			.setClass(
+				classOf[Option[_]],
+				kryo.getSerializer(classOf[Option[_]]))
+		trieSerializer
+			.getField("word")
+			.setClass(
+				classOf[Option[_]],
+				kryo.getSerializer(classOf[Option[_]]))
+		kryo.register(classOf[TrieNode], trieSerializer)
+		kryo
+	}
+
 	// recommended spark-submit flags
 	// --driver-memory 16G				<< needed for building the Trie
 	// --driver-java-options -Xss1g		<< needed for serialization of Trie
@@ -82,7 +107,6 @@ object TrieBuilder {
 			.set("spark.cassandra.connection.host", "odin01")
 		 	.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 			.set("spark.kryo.registrator", "de.hpi.ingestion.textmining.TrieKryoRegistrator")
-			.set("spark.default.parallelism", "8")
 		val sc = new SparkContext(conf)
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 
@@ -95,31 +119,11 @@ object TrieBuilder {
 		val fileBroadcast = sc.broadcast(files)
 
 		parsedWikipedia
+			.coalesce(8)
 			.mapPartitions({ partition =>
 				val trieMap = fileBroadcast.value
 					.mapValues { file =>
-						val kryo = new Kryo()
-						kryo.register(classOf[mutable.Map[_, _]], new MutableMapSerializer())
-						kryo.register(classOf[Option[_]], new OptionSerializer())
-
-						val trieSerializer = new FieldSerializer(kryo, classOf[TrieNode])
-						trieSerializer
-							.getField("children")
-							.setClass(
-								classOf[mutable.Map[_, _]],
-								kryo.getSerializer(classOf[mutable.Map[_, _]]))
-						trieSerializer
-							.getField("token")
-							.setClass(
-								classOf[Option[_]],
-								kryo.getSerializer(classOf[Option[_]]))
-						trieSerializer
-							.getField("word")
-							.setClass(
-								classOf[Option[_]],
-								kryo.getSerializer(classOf[Option[_]]))
-						kryo.register(classOf[TrieNode], trieSerializer)
-
+						val kryo = trieKryo()
 						val hadoopConf = new Configuration()
 						val fs = FileSystem.get(hadoopConf)
 						val inputStream = new Input(fs.open(new Path(file)))
