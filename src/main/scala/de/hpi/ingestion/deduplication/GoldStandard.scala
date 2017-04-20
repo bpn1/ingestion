@@ -1,7 +1,7 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-import de.hpi.ingestion.datalake.models.{Subject, Version}
+import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
@@ -64,7 +64,6 @@ object GoldStandard {
 		val conf = new SparkConf().setAppName(this.appName)
 		val sc = new SparkContext(conf)
 
-		val version = Version(this.appName, this.dataSource, sc)
 		val dbpedia = sc.cassandraTable[Subject](this.keyspace, this.inputDBPedia)
 		val wikidata = sc.cassandraTable[Subject](this.keyspace, this.inputWikiData)
 
