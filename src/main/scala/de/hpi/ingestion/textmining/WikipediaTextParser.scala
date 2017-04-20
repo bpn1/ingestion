@@ -13,6 +13,7 @@ import java.net.URLDecoder
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.textmining.models._
+import org.apache.spark.rdd.RDD
 
 import scala.io.Source
 
@@ -22,7 +23,8 @@ object WikipediaTextParser {
 	val outputTablename = "parsedwikipedia"
 	val namespaceFile = "dewiki_namespaces"
 	val categoryNamespace = "Kategorie:"
-	val redirectText = "REDIRECT "
+	val parsableRedirect = "WEITERLEITUNG"
+	val redirectText = "REDIRECT"
 	val disambiguationTitleSuffix = " (Begriffsklärung)"
 
 	def wikipediaToHtml(wikiMarkup: String): String = {
@@ -31,9 +33,12 @@ object WikipediaTextParser {
 	}
 
 	def isRedirectPage(html: String): Boolean = {
-		val redirectRegex = new Regex("\\AWEITERLEITUNG")
 		val searchText = Jsoup.parse(html).body.text
-		redirectRegex.findFirstIn(searchText).isDefined
+		searchText.startsWith(parsableRedirect)
+	}
+
+	def isRedirectPage(entry: ParsedWikipediaEntry): Boolean = {
+		entry.getText().startsWith(redirectText)
 	}
 
 	def extractRedirect(title: String, html: String, text: String): List[Link] = {
@@ -48,7 +53,7 @@ object WikipediaTextParser {
 		val parsedEntry = ParsedWikipediaEntry(title)
 		val document = Jsoup.parse(html)
 		if (isRedirectPage(html)) {
-			val text = document.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
+			val text = document.body.text.replaceAll("(?i)(\\A(WEITERLEITUNG|REDIRECT))", redirectText)
 			parsedEntry.setText(text)
 			parsedEntry.textlinks = extractRedirect(title, html, text)
 		} else if (title.endsWith(disambiguationTitleSuffix)) {
@@ -266,8 +271,10 @@ object WikipediaTextParser {
 	}
 
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
-		val redirectRegex = "(?i)#(weiterleitung|redirect) ?(: ?)?"
-		entry.setText(entry.getText().replaceAll(redirectRegex, "WEITERLEITUNG"))
+		val redirectRegex = "(?i)(weiterleitung|redirect)\\s?:?\\s?"
+		val replaceString = parsableRedirect + " "
+		val cleanedText = entry.getText().replaceAll(redirectRegex, replaceString)
+		entry.setText(cleanedText)
 		entry
 	}
 
@@ -326,14 +333,24 @@ object WikipediaTextParser {
 			.map(anchor => Link(anchor.text, parseUrl(anchor.attr("href"))))
 	}
 
+	/**
+	  * Parses all Wikipedia Entries and removes metapages.
+	  * @param wikipedia RDD of Wikipedia Entries
+	  * @return RDD of Parsed Wikipedia Entries
+	  */
+	def parseWikipedia(wikipedia: RDD[WikipediaEntry]): RDD[ParsedWikipediaEntry] = {
+		wikipedia
+			.filter(!isMetaPage(_))
+			.map(parseWikipediaEntry)
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Wikipedia Textparser")
 		val sc = new SparkContext(conf)
 
 		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
-		wikipedia
-			.map(parseWikipediaEntry)
+		parseWikipedia(wikipedia)
 			.saveToCassandra(keyspace, outputTablename)
 		sc.stop
 	}

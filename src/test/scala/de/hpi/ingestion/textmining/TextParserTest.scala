@@ -4,6 +4,7 @@ import TextParser.disambiguationTitleSuffix
 import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.textmining.models.{Link, ParsedWikipediaEntry}
+import org.jsoup.Jsoup
 
 import scala.util.matching.Regex
 import org.scalatest._
@@ -213,6 +214,22 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.extractCategoryLinks(testEntry)
 			.categorylinks
 			.foreach(link => link.offset shouldBe 0)
+	}
+
+	"Cleaned Wikipedia document" should "not contain other tags than anchors" in {
+		TestData.documentTestList()
+			.map(Jsoup.parse)
+			.map(WikipediaTextParser.removeTags)
+			.map(_.toString)
+			.foreach(document => document should (not include "</span>"
+				and not include "</p>" and not include "</abbr>"))
+	}
+
+	"Redirect page entries" should "be identified as such" in {
+		val entries = TestData.parsedEntriesWithRedirects()
+			.filter(WikipediaTextParser.isRedirectPage)
+		val expectedEntries = TestData.parsedRedirectEntries()
+		entries shouldEqual expectedEntries
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
