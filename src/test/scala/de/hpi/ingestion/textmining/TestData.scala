@@ -802,10 +802,6 @@ object TestData {
 			Link("Zwickau", "Zwickau", 0))
 	}
 
-	def testRedirectCornerCaseEntries(): Set[ParsedWikipediaEntry] = {
-		Set(ParsedWikipediaEntry("?", Option("#WEITERLEITUNG [[?]]"), List[Link](Link("?", "?", 0))))
-	}
-
 	def testRedirectDict(): Map[String, String] = {
 		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
 	}
@@ -832,6 +828,84 @@ object TestData {
 			  |</p></body>""".stripMargin
 		)
 	}
+
+	def parsedEntriesWithRedirects(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "Test Redirect Entry 1"))),
+			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "Test Redirect Entry 2"), Link("alias 3", "EU"))),
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
+			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
+	}
+
+	def parsedEntriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "test page"))),
+			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "test page 2"), Link("alias 3", "Europäische Union"))),
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
+			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
+	}
+
+	def parsedRedirectEntries():  Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT")))
+	}
+
+	def redirectDict(): Map[String, String] = {
+		Map(
+			"Test Redirect Entry 1" -> "test page",
+			"Test Redirect Entry 2" ->"test page 2",
+			"EU" -> "Europäische Union")
+	}
+
+	def redirectMap(): Map[String, String] = {
+		Map(
+			"Site 1" -> "Site 3",
+			"Site 3" -> "Site 6",
+			"Site 4" -> "Site 5",
+			"Site 5" -> "Site 4",
+			"Site 7" -> "Site 7",
+			"EU" -> "Europäische Union")
+	}
+
+	def cleanedRedirectMap(): Map[String, String] = {
+		Map(
+			"Site 1" -> "Site 6",
+			"Site 3" -> "Site 6",
+			"EU" -> "Europäische Union")
+	}
+
+	def entriesWithRedirects():  Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1",
+				textlinks = List(Link("Alias 1", "Site 1")),
+				disambiguationlinks = List(Link("Alias 2", "Site 2")),
+				listlinks = List(Link("Alias 3", "Site 3")),
+				categorylinks = List(Link("Alias 4", "Site 4")),
+				templatelinks = List(Link("Alias 5", "Site 5"))),
+			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "EU"))))
+	}
+
+	def entriesWithResolvedRedirects():  Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1",
+				textlinks = List(Link("Alias 1", "Site 6")),
+				disambiguationlinks = List(Link("Alias 2", "Site 2")),
+				listlinks = List(Link("Alias 3", "Site 6")),
+				categorylinks = List(Link("Alias 4", "Site 4")),
+				templatelinks = List(Link("Alias 5", "Site 5"))),
+			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union"))))
+	}
+
 }
 
 // scalastyle:on method.length
