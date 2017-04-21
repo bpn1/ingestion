@@ -67,7 +67,6 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.map(TextParser.parseWikipediaEntry)
 			.filter(_.disambiguationlinks.isEmpty)
 			.map(_.textlinks)
-			.collect
 			.foreach(textLinks => textLinks should not be empty)
 	}
 
@@ -75,17 +74,14 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		TestData.wikipediaEntries()
 			.map(TextParser.parseWikipediaEntry)
 			.flatMap(_.textlinks)
-			.collect
 			.foreach(link => assert(isLinkValid(link)))
 	}
 
 	they should "be exactly these links" in {
-		val wikipedia = sc.parallelize(TestData.wikipediaEntriesList())
 		val textLinks = TestData.wikipediaTestTextLinks()
 		TestData.wikipediaEntries()
 			.map(TextParser.parseWikipediaEntry)
 			.filter(entry => textLinks.contains(entry.title))
-			.collect
 			.foreach(entry => entry.textlinks shouldEqual textLinks(entry.title))
 	}
 
