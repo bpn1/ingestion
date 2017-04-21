@@ -29,29 +29,25 @@ trait BlockingScheme extends Serializable {
 }
 
 /**
-  * This class uses the result from compSplit on the name property as key.
+  * This class uses the name property as key. For every word in the name, it creates a pair of the
+  * word and a fitting tag and filters these after the tags to check.
   */
 class DefaultBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject): List[String] = {
-		if (subject.name.isDefined) {
+		subject.name.map { name =>
 			val fileStream = getClass.getResource("/bin/StanfordCRFClassifier-Tag.bin").openStream()
 			val classifier = In.stream(fileStream).readObject[AClassifier[Tag]]()
-			val taggedName = classifier.getTags(subject.get("name").head)
+			val taggedName = classifier.getTags(name)
 			val tagsToCheck = List(Tag.LEGAL_FORM, Tag.PERSON_LAST_NAME, Tag.SECTOR)
 
-			val key = taggedName
+			taggedName
 				.filter(tuple => tagsToCheck.contains(tuple.getRight))
 				.sortBy(_.getRight)
-				.map(_.toString())
+				.map(_.toString)
 				.toList
-			if (key.nonEmpty) {
-				key
-			} else {
-				undefinedValue
-			}
-		} else {
-			undefinedValue
-		}
+
+			}.filter(_.nonEmpty)
+		.getOrElse(undefinedValue)
 	}
 }
 
