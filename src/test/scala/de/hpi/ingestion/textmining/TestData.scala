@@ -216,7 +216,6 @@ object TestData {
 	}
 
 
-
 	def linkContextsTfidf(): Set[(Link, Map[String, Double])] = {
 		// retrieved from 4 documents
 		val tf1df1 = 0.6020599913279624
@@ -325,12 +324,6 @@ object TestData {
 			("Streitberg", 0.0),
 			("historisches Jahr", 1.0)))
 			.sortBy(_._1)
-	}
-
-	def getArticle(title: String): ParsedWikipediaEntry = {
-		parsedWikipediaTestSet()
-			.filter(_.title == title)
-			.head
 	}
 
 	def allPageNamesTestRDD(sc: SparkContext): RDD[String] = {
@@ -475,7 +468,7 @@ object TestData {
 	}
 
 	def wikipediaTestTextLinks(): Map[String, List[Link]] = {
-		// extracted text links from Article abstracts
+		// extracted text links from article abstracts
 		Map(
 			"Audi" -> List(
 				Link("Ingolstadt", "Ingolstadt", 55),
@@ -514,8 +507,8 @@ object TestData {
 				Link("President of the United States", "President of the United States", 29)),
 
 			"Leadinstrument" -> List(
-				// Redirect links
-				Link("Leadinstrument", "Lead (Musik)")))
+				Link("Leadinstrument", "Lead (Musik)")) // Redirect link
+		)
 	}
 
 	def wikipediaTestTemplateLinks(): Map[String, List[Link]] = {
@@ -557,7 +550,7 @@ object TestData {
 		Set("Audi", "Electronic Arts", "Postbank-Hochhaus (Berlin)", "Abraham Lincoln")
 	}
 
-	def wikipediaEntriesTestList(): List[WikipediaEntry] = {
+	def wikipediaEntriesList(): List[WikipediaEntry] = {
 		// extracted from Wikipedia
 		List(
 			WikipediaEntry("Audi", Option("""{{Begriffsklärungshinweis}}\n{{Coordinate |NS=48/46/59.9808/N |EW=11/25/4.926/E |type=landmark |region=DE-BY }}\n{{Infobox Unternehmen\n| Name   = Audi AG\n| Logo   = Audi-Logo 2016.svg\n| Unternehmensform = [[Aktiengesellschaft]]\n| Gründungsdatum = 16. Juli 1909 in [[Zwickau]] (Audi)<br /><!--\n-->29. Juni 1932 in [[Chemnitz]] (Auto Union)<br /><!--\n-->3.&nbsp;September&nbsp;1949&nbsp;in&nbsp;[[Ingolstadt]]&nbsp;(Neugründung)<br /><!--\n-->10. März 1969 in [[Neckarsulm]] (Fusion)\n| ISIN   = DE0006757008\n| Sitz   = [[Ingolstadt]], [[Deutschland]]\n| Leitung  =\n* [[Rupert Stadler]],<br />[[Vorstand]]svorsitzender\n* [[Matthias Müller (Manager)|Matthias Müller]],<br />[[Aufsichtsrat]]svorsitzender\n| Mitarbeiterzahl = 82.838 <small>(31. Dez. 2015)</small><ref name="kennzahlen" />\n| Umsatz  = 58,42 [[Milliarde|Mrd.]] [[Euro|EUR]] <small>(2015)</small><ref name="kennzahlen" />\n| Branche  = [[Automobilhersteller]]\n| Homepage  = www.audi.de\n}}\n\n[[Datei:Audi Ingolstadt.jpg|mini|Hauptsitz in Ingolstadt]]\n[[Datei:Neckarsulm 20070725.jpg|mini|Audi-Werk in Neckarsulm (Bildmitte)]]\n[[Datei:Michèle Mouton, Audi Quattro A1 - 1983 (11).jpg|mini|Kühlergrill mit Audi-Emblem <small>[[Audi quattro]] (Rallye-Ausführung, Baujahr 1983)</small>]]\n[[Datei:Audi 2009 logo.svg|mini|Logo bis April 2016]]\n\nDie '''Audi AG''' ({{Audio|Audi AG.ogg|Aussprache}}, Eigenschreibweise: ''AUDI AG'') mit Sitz in [[Ingolstadt]] in [[Bayern]] ist ein deutscher [[Automobilhersteller]], der dem [[Volkswagen AG|Volkswagen]]-Konzern angehört.\n\nDer Markenname ist ein [[Wortspiel]] zur Umgehung der [[Marke (Recht)|Namensrechte]] des ehemaligen Kraftfahrzeugherstellers ''[[Horch|A. Horch & Cie. Motorwagenwerke Zwickau]]''. Unternehmensgründer [[August Horch]], der „seine“ Firma nach Zerwürfnissen mit dem Finanzvorstand verlassen hatte, suchte einen Namen für sein neues Unternehmen und fand ihn im Vorschlag des Zwickauer Gymnasiasten Heinrich Finkentscher (Sohn des mit A. Horch befreundeten Franz Finkentscher), der ''Horch'' ins [[Latein]]ische übersetzte.<ref>Film der Audi AG: ''Die Silberpfeile aus Zwickau.'' Interview mit August Horch, Video 1992.</ref> ''Audi'' ist der [[Imperativ (Modus)|Imperativ]] Singular von ''audire'' (zu Deutsch ''hören'', ''zuhören'') und bedeutet „Höre!“ oder eben „Horch!“. Am 25. April 1910 wurde die ''Audi Automobilwerke GmbH Zwickau'' in das Handelsregister der Stadt [[Zwickau]] eingetragen.\n\n1928 übernahm die [[Zschopau]]er ''Motorenwerke J. S. Rasmussen AG'', bekannt durch ihre Marke ''[[DKW]]'', die Audi GmbH. Audi wurde zur Tochtergesellschaft und 1932 mit der Übernahme der Horchwerke AG sowie einem Werk des Unternehmens ''[[Wanderer (Unternehmen)|Wanderer]]'' Teil der neu gegründeten ''[[Auto Union|Auto Union AG]]'' mit Sitz in [[Chemnitz]], die folglich die vier verschiedenen Marken unter einem Dach anboten. Daraus entstand auch das heutige aus vier Ringen bestehende Logo von Audi, das darin ursprünglich nur für einen der Ringe gestanden hatte.\n\nNach dem [[Zweiter Weltkrieg|Zweiten Weltkrieg]] wurde 1949 die ''Auto Union GmbH'' nun mit Sitz in [[Ingolstadt]] neugegründet. Nachdem diese sich zunächst auf die Marke ''DKW'' konzentriert hatte, wurde 1965 erstmals wieder die Marke ''Audi'' verwendet. Im Zuge der Fusion 1969 mit der ''[[NSU Motorenwerke|NSU Motorenwerke AG]]'' zur ''Audi NSU Auto Union AG'' wurde die Marke ''Audi'' zum ersten Mal nach 37 Jahren als prägender Bestandteil in den Firmennamen der Auto Union aufgenommen. Hauptsitz war, dem Fusionspartner entsprechend, bis 1985 in [[Neckarsulm]], bevor der Unternehmensname der ehemaligen Auto Union infolge des Auslaufens der Marke NSU auf ''Audi AG'' verkürzt wurde und der Sitz wieder zurück nach Ingolstadt wechselte.""")),
@@ -568,7 +561,8 @@ object TestData {
 			WikipediaEntry("Zerfall", Option("""'''Zerfall''' steht für:\n* Radioaktiver Zerfall, siehe [[Radioaktivität]]\n* das [[Zerfallsgesetz]] einer radioaktiven Substanz\n* Exponentieller Zerfall, siehe [[Exponentielles Wachstum]]\n* den [[Zerfall (Soziologie)|Zerfall]] gesellschaftlicher Strukturen \n* ein Album der Band Eisregen, siehe [[Zerfall (Album)]]\n* den Film [[Raspad – Der Zerfall]]\n\n'''Siehe auch:'''\n{{Wiktionary}}\n\n{{Begriffsklärung}}""")),
 			WikipediaEntry("Fisch", Option("""'''Fisch''' steht für:\n\n* [[Fische]], im Wasser lebende Wirbeltiere \n* [[Speisefisch]], eine Lebensmittelkategorie\n* [[Fische (Sternbild)]]\n* [[Fische (Tierkreiszeichen)]]\n* [[Fisch (Christentum)]], religiöses Symbol\n* [[Fisch (Wappentier)]], gemeine Figur in der Heraldik\n\n'''Fisch''' ist der Name folgender Orte:\n\n* [[Fisch (Saargau)]], Ortsgemeinde in Rheinland-Pfalz\n\n{{Begriffsklärung}}""")),
 			WikipediaEntry("Zwilling (Begriffsklärung)", Option("""'''Zwilling''' bezeichnet:\n\n* den biologischen Zwilling, siehe [[Zwillinge]]\n* einen Begriff aus der Kristallkunde, siehe [[Kristallzwilling]]\n* [[Zwilling J. A. Henckels]], einen Hersteller von Haushaltswaren mit Sitz in Solingen\n\nin der Astronomie und Astrologie:\n\n* ein Sternbild, siehe [[Zwillinge (Sternbild)]]\n* eines der Tierkreiszeichen, siehe [[Zwillinge (Tierkreiszeichen)]]\n\n{{Begriffsklärung}}""")),
-			WikipediaEntry("Leadinstrument", Option("""#REDIRECT [[Lead (Musik)]]\n[[Kategorie:Musikinstrument nach Funktion]]""")))
+			WikipediaEntry("Leadinstrument", Option("""#REDIRECT [[Lead (Musik)]]\n[[Kategorie:Musikinstrument nach Funktion]]"""))
+		)
 	}
 
 	def wikipediaDisambiguationPagesTestSet(): Set[String] = {
@@ -614,6 +608,12 @@ object TestData {
 			Page("Zerfall (Album)", Map("Zerfall" -> 1)))
 	}
 
+	def groupedValidPagesSet(): Set[(String, Set[String])] = {
+		Set(
+			("Audi", Set("Ingolstadt", "Bayern", "Automobilhersteller", "Zerfall (Album)"))
+		)
+	}
+
 	def probabilityReferences(): Map[String, Double] = {
 		Map(
 			"Ingolstadt" -> 0.0,
@@ -630,17 +630,96 @@ object TestData {
 			"Zerfall (Album)")
 	}
 
-	def smallerParsedWikipediaTestList(): List[ParsedWikipediaEntry] = {
+	def smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
 		List(
-			ParsedWikipediaEntry("Audi", Option("dummy text"), List(
-				Link("Ingolstadt", "Ingolstadt", 55),
-				Link("Bayern", "Bayern", 69),
-				Link("Automobilhersteller", "Automobilhersteller", 94),
-				Link("Zerfall", "Zerfall (Album)", 4711),
-				Link("Zerfall", "Zerfall (Soziologie)", 4711), // dead link
-				Link("", "page name with empty alias", 4711),
-				Link("alias with empty page name", "", 4711)),
-				List()))
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Ingolstadt", "Ingolstadt", 55),
+					Link("Bayern", "Bayern", 69),
+					Link("Automobilhersteller", "Automobilhersteller", 94),
+					Link("Zerfall", "Zerfall (Album)", 4711),
+					Link("Zerfall", "Zerfall (Soziologie)", 4711), // dead link
+					Link("", "page name with empty alias", 4711),
+					Link("alias with empty page name", "", 4711)
+				)))
+	}
+
+	def parsedArticlesWithoutLinksSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
+	def parsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Ingolstadt", "Ingolstadt", 55),
+					Link("Bayern", "Bayern", 69),
+					Link("Automobilhersteller", "Automobilhersteller", 94),
+					Link("Zerfall", "Zerfall (Album)", 4711),
+					Link("Zerfall", "Zerfall (Soziologie)", 4711), // dead link
+					Link("", "page name with empty alias", 4711),
+					Link("alias with empty page name", "", 4711)
+				)),
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
+	def closedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Ingolstadt", "Ingolstadt", 55),
+					Link("Bayern", "Bayern", 69),
+					Link("Automobilhersteller", "Automobilhersteller", 94),
+					Link("Zerfall", "Zerfall (Album)", 4711),
+					Link("Zerfall", "Zerfall (Soziologie)", 4711), // dead link
+					Link("", "page name with empty alias", 4711),
+					Link("alias with empty page name", "", 4711),
+					Link("Konkurrent", "Volvo", 4711),
+					Link("Opel", "Opel", 4711),
+					Link("DB", "Deutsche Bahn", 4711)
+				)),
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
+	def cleanedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Ingolstadt", "Ingolstadt", 55),
+					Link("Bayern", "Bayern", 69),
+					Link("Automobilhersteller", "Automobilhersteller", 94),
+					Link("Zerfall", "Zerfall (Album)", 4711)
+				)))
+	}
+
+	def cleanedClosedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Konkurrent", "Volvo", 4711),
+					Link("Opel", "Opel", 4711),
+					Link("DB", "Deutsche Bahn", 4711)
+				)))
 	}
 
 	def germanStopwordsTestSet(): Set[String] = {
@@ -658,12 +737,47 @@ object TestData {
 			"deutschla", "baum", "brauch", "such", "konn")
 	}
 
-	def parsedTestEntry(): ParsedWikipediaEntry = {
+	def parsedEntry(): ParsedWikipediaEntry = {
 		ParsedWikipediaEntry(
 			"Schwarzer Humor",
 			Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod. Hier hat sich jemand einen makabren Scherz erlaubt. Als schwarzer Humor wird Humor bezeichnet, der Verbrechen, Krankheit, Tod und ähnliche Themen, für die gewöhnlich eine Abhandlung in ernster Form erwartet wird, in satirischer oder bewusst verharmlosender Weise verwendet. Oft bezieht er sich auf Zeitthemen. Schwarzer Humor bedient sich häufig paradoxer Stilfiguren. Nicht selten löst er Kontroversen aus darüber, ob man sich über die genannten Dinge lustig machen dürfe und wo die Grenzen des guten Geschmacks lägen; besonders ist dies der Fall, wenn religiöse und sexuelle Themen und tragische Ereignisse zum Gegenstand genommen werden. In der darstellenden Kunst nennt man auf schwarzen Humor setzende Werke schwarze Komödien. Der Begriff wurde durch den Surrealisten André Breton erstmals 1940 in seiner Schrift Anthologie de l’humour noir näher umrissen, wird jedoch seit den 1960er Jahren zum Teil deutlich anders verstanden, indem Kennzeichen der Desillusion und des Nihilismus hinzutraten. In dem Vorwort seines Werkes nennt Breton unter anderem Quellen von Freud und Hegel, die seiner Meinung nach in die Begriffsentwicklung eingeflossen sind. Ursprünge des ‚schwarzen Humors‘ sah Breton in seiner Anthologie bei einigen Werken des irischen Satirikers Jonathan Swift wie Directions to Servants, A Modest Proposal, A Meditation on a Broom-Stick und einige seiner Aphorismen. In den öffentlichen Gebrauch kam der Begriff erst in den 1960er Jahren insbesondere im angloamerikanischen Raum (‚black humour‘) durch die Rezeption von Schriftstellern wie Nathanael West, Vladimir Nabokov und Joseph Heller. So gilt Catch-22 (1961) als ein bekanntes Beispiel dieser Stilart, in dem die Absurdität des Militarismus im Zweiten Weltkrieg satirisch überspitzt wurde. Weitere Beispiele sind Kurt Vonnegut, Slaughterhouse Five (1969), Thomas Pynchon, V. (1963) und Gravity’s Rainbow (1973), sowie im Film Stanley Kubrick’s Dr. Strangelove (1964) und im Absurden Theater insbesondere bei Eugène Ionesco zu finden. Der Begriff black comedy (dtsch. „schwarze Komödie“), der in der englischen Sprache schon für einige Stücke Shakespeares angewandt wurde, weist nach dem Lexikon der Filmbegriffe der Christian-Albrechts-Universität zu Kiel als Komödientyp durch „manchmal sarkastischen, absurden und morbiden ‚schwarzen‘ Humor“ aus, der sich sowohl auf „ernste oder tabuisierte Themen wie Krankheit, Behinderung, Tod, Krieg, Verbrechen“ wie auch auf „für sakrosankt gehaltene Dinge“ richten kann und dabei „auch vor politischen Unkorrektheiten, derben Späßen, sexuellen und skatologischen Anzüglichkeiten nicht zurückschreckt.“ Dabei stehe „hinter der Fassade zynischer Grenzüberschreitungen“ häufig ein „aufrichtiges Anliegen, falsche Hierarchien, Konventionen und Verlogenheiten innerhalb einer Gesellschaft mit den Mitteln filmischer Satire zu entlarven.“ Als filmische Beispiele werden angeführt: Robert Altmans M*A*S*H (USA 1970), Mike Nichols’ Catch-22 (USA 1970), nach Joseph Heller) sowie in der Postmoderne Quentin Tarantinos Pulp Fiction (USA 1994) und Lars von Triers Idioterne (Dänemark 1998). Der Essayist François Bondy schrieb 1971 in Die Zeit: „Der schwarze Humor ist nicht zu verwechseln mit dem ‚kranken Humor‘, der aus den Staaten kam, mit seinen ‚sick jokes‘“ und nannte als Beispiel den Witz: „Mama, ich mag meinen kleinen Bruder nicht. – Schweig, iß, was man dir vorsetzt“. Witz und Humor seien jedoch nicht dasselbe und letzteres „eine originale Geschichte in einer besonderen Tonart“. Humor im Sinne von einer – wie der Duden definiert – „vorgetäuschten Heiterkeit mit der jemand einer unangenehmen oder verzweifelten Lage, in der er sich befindet, zu begegnen“ versucht, nennt man auch Galgenhumor."""),
-			List[Link](Link("Hickelkasten", "Hickelkasten", 0), Link("Humor", "Humor", 182), Link("satirischer", "Satire", 321), Link("paradoxer", "Paradoxon", 451), Link("Stilfiguren", "Rhetorische Figur", 461), Link("Kontroversen", "Kontroverse", 495), Link("guten Geschmacks", "Geschmack (Kultur)", 601), Link("Surrealisten", "Surrealismus", 865), Link("André Breton", "André Breton", 878), Link("Desillusion", "Desillusion", 1061), Link("Nihilismus", "Nihilismus", 1081), Link("Freud", "Sigmund Freud", 1173), Link("Hegel", "Georg Wilhelm Friedrich Hegel", 1183), Link("Anthologie", "Anthologie", 1314), Link("Jonathan Swift", "Jonathan Swift", 1368), Link("Directions to Servants", "Directions to Servants", 1387), Link("A Modest Proposal", "A Modest Proposal", 1411), Link("A Meditation on a Broom-Stick", "A Meditation on a Broom-Stick", 1430), Link("Aphorismen", "Aphorismus", 1478), Link("Nathanael West", "Nathanael West", 1663), Link("Vladimir Nabokov", "Vladimir Nabokov", 1679), Link("Joseph Heller", "Joseph Heller", 1700), Link("Catch-22", "Catch-22", 1723), Link("Kurt Vonnegut", "Kurt Vonnegut", 1893), Link("Slaughterhouse Five", "Schlachthof 5 oder Der Kinderkreuzzug", 1908), Link("Thomas Pynchon", "Thomas Pynchon", 1936), Link("V.", "V.", 1952), Link("Gravity’s Rainbow", "Die Enden der Parabel", 1966), Link("Stanley Kubrick", "Stanley Kubrick", 2006), Link("Dr. Strangelove", "Dr. Seltsam oder: Wie ich lernte, die Bombe zu lieben", 2024), Link("Absurden Theater", "Absurdes Theater", 2054), Link("Eugène Ionesco", "Eugène Ionesco", 2088), Link("Shakespeares", "Shakespeare", 2222), Link("Christian-Albrechts-Universität zu Kiel", "Christian-Albrechts-Universität zu Kiel", 2296), Link("Komödientyp", "Komödie", 2340), Link("sarkastischen", "Sarkasmus", 2368), Link("absurden", "Absurdität", 2383), Link("morbiden", "Morbidität", 2396), Link("tabuisierte", "Tabuisierung", 2462), Link("sakrosankt", "Sakrosankt", 2551), Link("politischen Unkorrektheiten", "Politische Korrektheit", 2612), Link("sexuellen und skatologischen", "Vulgärsprache", 2656), Link("zynischer", "Zynismus", 2756), Link("Satire", "Satire", 2933), Link("Robert Altmans", "Robert Altman", 2997), Link("M*A*S*H", "MASH (Film)", 3012), Link("Mike Nichols", "Mike Nichols", 3032), Link("Catch-22", "Catch-22 – Der böse Trick", 3046), Link("Joseph Heller", "Joseph Heller", 3071), Link("Postmoderne", "Postmoderne", 3099), Link("Quentin Tarantinos", "Quentin Tarantino", 3111), Link("Pulp Fiction", "Pulp Fiction", 3130), Link("Lars von Triers", "Lars von Trier", 3158), Link("Idioterne", "Idioten", 3174), Link("François Bondy", "François Bondy", 3214), Link("Die Zeit", "Die Zeit", 3245), Link("Witz", "Witz", 3491), Link("Duden", "Duden", 3639), Link("Galgenhumor", "Galgenhumor", 3806)),
-			List())
+			List(Link("Hickelkasten", "Hickelkasten", 0), Link("Humor", "Humor", 182), Link("satirischer", "Satire", 321), Link("paradoxer", "Paradoxon", 451), Link("Stilfiguren", "Rhetorische Figur", 461), Link("Kontroversen", "Kontroverse", 495), Link("guten Geschmacks", "Geschmack (Kultur)", 601), Link("Surrealisten", "Surrealismus", 865), Link("André Breton", "André Breton", 878), Link("Desillusion", "Desillusion", 1061), Link("Nihilismus", "Nihilismus", 1081), Link("Freud", "Sigmund Freud", 1173), Link("Hegel", "Georg Wilhelm Friedrich Hegel", 1183), Link("Anthologie", "Anthologie", 1314), Link("Jonathan Swift", "Jonathan Swift", 1368), Link("Directions to Servants", "Directions to Servants", 1387), Link("A Modest Proposal", "A Modest Proposal", 1411), Link("A Meditation on a Broom-Stick", "A Meditation on a Broom-Stick", 1430), Link("Aphorismen", "Aphorismus", 1478), Link("Nathanael West", "Nathanael West", 1663), Link("Vladimir Nabokov", "Vladimir Nabokov", 1679), Link("Joseph Heller", "Joseph Heller", 1700), Link("Catch-22", "Catch-22", 1723), Link("Kurt Vonnegut", "Kurt Vonnegut", 1893), Link("Slaughterhouse Five", "Schlachthof 5 oder Der Kinderkreuzzug", 1908), Link("Thomas Pynchon", "Thomas Pynchon", 1936), Link("V.", "V.", 1952), Link("Gravity’s Rainbow", "Die Enden der Parabel", 1966), Link("Stanley Kubrick", "Stanley Kubrick", 2006), Link("Dr. Strangelove", "Dr. Seltsam oder: Wie ich lernte, die Bombe zu lieben", 2024), Link("Absurden Theater", "Absurdes Theater", 2054), Link("Eugène Ionesco", "Eugène Ionesco", 2088), Link("Shakespeares", "Shakespeare", 2222), Link("Christian-Albrechts-Universität zu Kiel", "Christian-Albrechts-Universität zu Kiel", 2296), Link("Komödientyp", "Komödie", 2340), Link("sarkastischen", "Sarkasmus", 2368), Link("absurden", "Absurdität", 2383), Link("morbiden", "Morbidität", 2396), Link("tabuisierte", "Tabuisierung", 2462), Link("sakrosankt", "Sakrosankt", 2551), Link("politischen Unkorrektheiten", "Politische Korrektheit", 2612), Link("sexuellen und skatologischen", "Vulgärsprache", 2656), Link("zynischer", "Zynismus", 2756), Link("Satire", "Satire", 2933), Link("Robert Altmans", "Robert Altman", 2997), Link("M*A*S*H", "MASH (Film)", 3012), Link("Mike Nichols", "Mike Nichols", 3032), Link("Catch-22", "Catch-22 – Der böse Trick", 3046), Link("Joseph Heller", "Joseph Heller", 3071), Link("Postmoderne", "Postmoderne", 3099), Link("Quentin Tarantinos", "Quentin Tarantino", 3111), Link("Pulp Fiction", "Pulp Fiction", 3130), Link("Lars von Triers", "Lars von Trier", 3158), Link("Idioterne", "Idioten", 3174), Link("François Bondy", "François Bondy", 3214), Link("Die Zeit", "Die Zeit", 3245), Link("Witz", "Witz", 3491), Link("Duden", "Duden", 3639), Link("Galgenhumor", "Galgenhumor", 3806))
+		)
+	}
+
+	def parsedEntryWithDifferentLinkTypes(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Origineller Titel",
+			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
+			textlinks = List(Link("Apfel", "Apfel", 0), Link("Baum", "Baum", 4)),
+			templatelinks = List(Link("Charlie", "Charlie C.")),
+			categorylinks = List(Link("Dora", "Dora")),
+			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
+			disambiguationlinks = List(Link("Esel", "Esel"))
+		)
+	}
+
+	def allLinksListFromEntryList(): List[Link] = {
+		List(
+			Link("Apfel", "Apfel", 0),
+			Link("Baum", "Baum", 4),
+			Link("Charlie", "Charlie C."),
+			Link("Dora", "Dora"),
+			Link("Fund", "Fund"),
+			Link("Grieß", "Brei"),
+			Link("Esel", "Esel")
+		)
+	}
+
+	def parsedEntryWithFilteredLinks(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Origineller Titel",
+			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
+			textlinks = List(Link("Apfel", "Apfel", 0), Link("Baum", "Baum", 4)),
+			categorylinks = List(Link("Dora", "Dora")),
+			listlinks = List(Link("Fund", "Fund")),
+			disambiguationlinks = List(Link("Esel", "Esel"))
+		)
 	}
 
 	def testNamespacePages(): List[WikipediaEntry] = {
