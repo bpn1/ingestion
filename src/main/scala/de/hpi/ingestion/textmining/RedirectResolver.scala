@@ -83,7 +83,7 @@ object RedirectResolver {
 		val conf = new SparkConf().setAppName("Redirect Resolver")
 		val sc = new SparkContext(conf)
 
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename).cache
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 		run(articles, sc).saveToCassandra(keyspace, tablename)
 		sc.stop()
 	}
