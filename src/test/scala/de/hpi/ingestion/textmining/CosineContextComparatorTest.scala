@@ -107,14 +107,32 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		pages shouldEqual TestData.aliasProbabilitiesSet()
 	}
 
+	"Cosine similarity between contexts" should "be exactly this value" in {
+		val linkContext = TestData.shortLinkContextsTfidfList().head._2
+		val pageContext = TestData.articleWordsTfidfList().head._2
+		val cosineSimilarity = CosineContextComparator.calculateCosineSimilarity(linkContext, pageContext)
+		cosineSimilarity shouldBe 0.608944778982726
+	}
+
 	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
-		val contextTfidf = sc.parallelize(TestData.linkContextsTfidf().toList)
+		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
 		val aliasPageProbabilities = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
-		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfSet().toList)
+		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfList())
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
 			.collect
 		featureEntries should not be empty
+	}
+
+	they should "be exactly these feature entries" in {
+		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
+		val aliasPageProbabilities = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
+		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfList())
+		val featureEntries = CosineContextComparator
+			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.collect
+			.toSet
+		featureEntries shouldEqual TestData.featureEntriesSet()
 	}
 
 	"Extracted feature entries" should "not be empty" in {

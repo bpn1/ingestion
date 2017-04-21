@@ -244,7 +244,8 @@ object TestData {
 		Set(
 			("Audi Test mit Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)),
 			("Audi Test ohne Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)),
-			("Testartikel", Bag("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+			("Testartikel", Bag("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1))
+		)
 	}
 
 	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
@@ -252,7 +253,8 @@ object TestData {
 			AliasOccurrencesInArticle(Set("Audi"), Set()),
 			AliasOccurrencesInArticle(Set(), Set("Audi")),
 			AliasOccurrencesInArticle(Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), Set("Streitberg")),
-			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
+			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
+		))
 	}
 
 	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {
@@ -360,20 +362,20 @@ object TestData {
 	}
 
 	def allPageNamesOfTestArticleList(): Set[String] = {
-		Set(
-			"Audi",
+		Set("Audi",
 			"Brachttal",
 			"1377")
 	}
 
-	def articleContextwordSets(): Map[String, Set[String]] = {
+	def articleContextWordSets(): Map[String, Set[String]] = {
 		Map(
 			"Testartikel" -> Set("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine",
 				"Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
 			"Streitberg (Brachttal)" ->
 				Set("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde",
 					"Im", "Jahre", "1500", "ist", "von", "Stridberg", "die", "Vom", "Mittelalter",
-					"bis", "ins", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte"))
+					"bis", "ins", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte")
+		)
 	}
 
 	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
@@ -383,12 +385,14 @@ object TestData {
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("einer", 1))
+			DocumentFrequency("einer", 1)
+		)
 	}
 
 	def filteredDocumentFrequenciesTestList(): List[DocumentFrequency] = {
 		List(
-			DocumentFrequency("Audi", 3))
+			DocumentFrequency("Audi", 3)
+		)
 	}
 
 	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
@@ -401,7 +405,8 @@ object TestData {
 			DocumentFrequency("einer", 2),
 			DocumentFrequency("ein", 2),
 			DocumentFrequency("Einer", 1),
-			DocumentFrequency("Ein", 1))
+			DocumentFrequency("Ein", 1)
+		)
 	}
 
 	def incorrectStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
@@ -434,7 +439,8 @@ object TestData {
 			DocumentFrequency("historisch", 1),
 			DocumentFrequency("kein", 1),
 			DocumentFrequency("backfisch", 1),
-			DocumentFrequency("nochmal", 1))
+			DocumentFrequency("nochmal", 1)
+		)
 	}
 
 	def filteredStemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
@@ -489,16 +495,56 @@ object TestData {
 		)
 	}
 
-	def articleWordsTfidfSet()(): Set[(String, Map[String, Double])] = {
-		// 7 documents
+	def articleWordsTfidfList(): List[(String, Map[String, Double])] = {
+		// considered to be retrieved from 7 documents
+		val tf1df1 = 0.845
+		val tf1df2 = 0.544
+		val tf1df3 = 0.368
+		List(
+			("Audi", Map("audi" -> tf1df1, "ist" -> tf1df3, "ein" -> tf1df3, "automobilhersteller" -> tf1df1)),
+			("Brachttal", Map("brachttal" -> tf1df1, "ist" -> tf1df3, "irgendein" -> tf1df1, "ortsteil" -> tf1df1)),
+			("Main-Kinzig-Kreis", Map("der" -> tf1df2, "main-kinzig-kreis" -> tf1df2, "hat" -> tf1df1, "ein" -> tf1df3, "hohe" -> tf1df1, "einwohnerzahl" -> tf1df1)),
+			("Hessen", Map("hessen" -> tf1df1, "ist" -> tf1df3, "größer" -> tf1df1, "als" -> tf1df1, "der" -> tf1df2, "main-kinzig-kreis" -> tf1df2)),
+			("1377", Map("ein" -> tf1df3, "jahr" -> tf1df2)),
+			("Büdinger Wald", Map("waldrech" -> tf1df1)),
+			("historisches Jahr", Map("jahr" -> tf1df2))
+		)
+	}
+
+	def shortLinkContextsTfidfList(): List[(Link, Map[String, Double])] = {
+		// considered to be retrieved from 7 documents
+		val tf1df1 = 0.845
+		val tf1df2 = 0.544
+		val tf1df3 = 0.368
+		List(
+			(Link("Audi", "Audi", 9), Map("hier" -> tf1df2, "ist" -> tf1df3, "automobilhersteller" -> tf1df1)),
+			(Link("Audi", "Audi", 7), Map("audi" -> tf1df2, "ein" -> tf1df3)),
+			(Link("Brachttal", "Brachttal", 55), Map("ist" -> tf1df3, "ortsteil" -> tf1df1)),
+			(Link("Brachttal", "Brachttal", 13), Map("tal" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66), Map("einwohnerzahl" -> tf1df1, "ein" -> tf1df3, "hessen" -> tf1df2)),
+			(Link("Hessen", "Hessen", 87), Map("main-kinzig-kreis" -> tf1df2)),
+			(Link("1377", "1377", 225), Map("jahr" -> tf1df2)),
+			(Link("Büdinger Wald", "Büdinger Wald", 546), Map("waldrech" -> tf1df1)),
+			(Link("historisches Jahr", "1377", 24), Map("jahr" -> tf1df2))
+		)
+	}
+
+	def aliasProbabilitiesSet(): Set[(String, (String, Double, Double))] = {
 		Set(
-			("Audi", Map()),
-			("Brachttal", Map()),
-			("Main-Kinzig-Kreis", Map()),
-			("Hessen", Map()),
-			("1377", Map()),
-			("Büdinger Wald", Map()),
-			("historisches Jahr", Map())
+			("Audi", ("Audi", 0.6666666666666666, 1.0)),
+			("Brachttal", ("Brachttal", 1.0, 1.0)),
+			("Main-Kinzig-Kreis", ("Main-Kinzig-Kreis", 0.5, 1.0)),
+			("Hessen", ("Hessen", 0.5, 1.0)),
+			("1377", ("1377", 1.0, 1.0)),
+			("Büdinger Wald", ("Büdinger Wald", 0.5, 1.0)),
+			("historisches Jahr", ("1377", 1.0, 1.0))
+		)
+	}
+
+	def featureEntriesSet(): Set[FeatureEntry] = {
+		Set(
+			FeatureEntry("Audi", "Audi", 0.0, 0.0, 0.0, true),
+			FeatureEntry("Audi", "Audi", 0.0, 0.0, 0.0, false)
 		)
 	}
 
@@ -639,18 +685,6 @@ object TestData {
 			Alias("Bayern", Map("Bayern" -> 1)),
 			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
 			Alias("Zerfall", Map("Zerfall (Album)" -> 1))
-		)
-	}
-
-	def aliasProbabilitiesSet(): Set[(String, (String, Double, Double))] = {
-		Set(
-			("Audi", ("Audi", 0.6666666666666666, 1.0)),
-			("Brachttal", ("Brachttal", 1.0, 1.0)),
-			("Main-Kinzig-Kreis", ("Main-Kinzig-Kreis", 0.5, 1.0)),
-			("Hessen", ("Hessen", 0.5, 1.0)),
-			("1377", ("1377", 1.0, 1.0)),
-			("Büdinger Wald", ("Büdinger Wald", 0.5, 1.0)),
-			("historisches Jahr", ("1377", 1.0, 1.0))
 		)
 	}
 

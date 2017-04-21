@@ -115,10 +115,11 @@ object CosineContextComparator {
 
 	/**
 	  * Calculates the tfIdf for every term.
-	  * @param termFrequencies RDD of terms with their identifier and raw term frequency in the form
-	  *                        (term, (identifier, raw term frequency))
-	  * @param documentFrequencies RDD of Document Frequencies
-	  * @param numDocuments number of documents used to determine the Document Frequencies
+	  *
+	  * @param termFrequencies            RDD of terms with their identifier and raw term frequency in the form
+	  *                                   (term, (identifier, raw term frequency))
+	  * @param documentFrequencies        RDD of Document Frequencies
+	  * @param numDocuments               number of documents used to determine the Document Frequencies
 	  * @param documentFrequencyThreshold lower threshold used for Document Frequencies of terms without a
 	  *                                   precalculated one.
 	  * @tparam T type of the identifier for each term
@@ -166,12 +167,30 @@ object CosineContextComparator {
 			}
 	}
 
-	def calculateCosineSimilarity(linkContext: Map[String, Double], pageContext: Map[String, Double]): Double = {
-		val length = linkContext.values.map(t => t * t).sum * pageContext.values.map(t => t * t).sum
-		val dotProduct = linkContext.keySet.intersect(pageContext.keySet)
-			.map(key => linkContext(key) * pageContext(key))
+	/**
+	  * Calculates the length of a vector.
+	  *
+	  * @param vector vector
+	  * @return length
+	  */
+	def calculateLength(vector: Iterable[Double]): Double = {
+		math.sqrt(vector.map(t => t * t).sum)
+	}
+
+	/**
+	  * Calculate the cosine similarity between two vectors with possibly different dimensions.
+	  *
+	  * @param vectorA vector with dimension keys
+	  * @param vectorB vector with dimension keys
+	  * @return cosine similarity
+	  */
+	def calculateCosineSimilarity[T](vectorA: Map[T, Double], vectorB: Map[T, Double]): Double = {
+		val lengthA = calculateLength(vectorA.values)
+		val lengthB = calculateLength(vectorB.values)
+		val dotProduct = vectorA.keySet.intersect(vectorB.keySet)
+			.map(key => vectorA(key) * vectorB(key))
 			.sum
-		dotProduct / length
+		dotProduct / (lengthA * lengthB)
 	}
 
 	/**
