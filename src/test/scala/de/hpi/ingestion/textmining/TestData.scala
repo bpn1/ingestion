@@ -333,10 +333,10 @@ object TestData {
 	def aliasesWithExistingPagesSet(): Set[Alias] = {
 		// these pages do not fit to the aliases but are required for the tests
 		Set(
-			Alias("Audi", Map("Audi mit Link" -> 2), 2, 3),
-			Alias("Brachttal", Map("Audi ohne Link" -> 2), 2, 2),
-			Alias("Main-Kinzig-Kreis", Map("Streitburg (Brachttal)" -> 1), 1, 2),
-			Alias("Hessen", Map("Streitburg (Brachttal)" -> 1), 1, 2),
+			Alias("Audi", Map("Audi Test mit Link" -> 2), 2, 3),
+			Alias("Brachttal", Map("Audi Test ohne Link" -> 2), 2, 2),
+			Alias("Main-Kinzig-Kreis", Map("Streitberg (Brachttal)" -> 1), 1, 2),
+			Alias("Hessen", Map("Streitberg (Brachttal)" -> 1), 1, 2),
 			Alias("1377", Map("Testartikel" -> 1), 1, 1),
 			Alias("Büdinger Wald", Map("Testartikel" -> 1), 1, 2),
 			Alias("historisches Jahr", Map("Testartikel" -> 1), 1, 1)

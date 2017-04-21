@@ -154,4 +154,15 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.collect
 		featureEntries should not be empty
 	}
+
+	they should "be the same amount as links" in {
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
+		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
+		val featureEntries = CosineContextComparator
+			.run(articles, documentFrequencies, aliases)
+			.collect
+		val linkCount = articles.flatMap(_.allLinks()).count
+		featureEntries.length shouldBe linkCount
+	}
 }
