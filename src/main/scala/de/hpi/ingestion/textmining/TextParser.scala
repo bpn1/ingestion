@@ -26,7 +26,7 @@ object TextParser {
 	val outputTablename = "parsedwikipedia"
 	val namespaceFile = "dewiki_namespaces"
 	val categoryNamespace = "Kategorie:"
-	val redirectText = "REDIRECT "
+	val redirectText = "REDIRECT"
 	val disambiguationTitleSuffix = " (Begriffsklärung)"
 
 	def wikipediaToHtml(wikiMarkup: String): String = {
@@ -86,8 +86,10 @@ object TextParser {
 			.map(_.toString)
 			.mkString("\n")
 			.replaceAll("&lt;(/|)gallery&gt;", "") // removes gallery tags
-			.replaceAll("<(|/)([^a])>", "") // remove every tag other than anchors
-		Jsoup.parse(htmltext)
+		val doc = Jsoup.parse(htmltext)
+		val traverser = new WikipediaNodeVisitor()
+		doc.traverse(traverser)
+		Jsoup.parse(traverser.getCleanedDocument())
 	}
 
 	def parseUrl(url: String): String = {
