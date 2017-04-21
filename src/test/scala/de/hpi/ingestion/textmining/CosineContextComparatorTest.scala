@@ -22,7 +22,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Tf-idf contexts for parsed Wikipedia articles with complete document frequencies" should "not be empty" in {
 		val documentFrequencyThreshold = 2
-		val articles = sc.parallelize(TestData.articlesWithContextTestSet().toList)
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val contexts = CosineContextComparator
@@ -35,7 +35,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	they should "be exactly these contexts" in {
 		val documentFrequencyThreshold = 2
 		val articles = sc.parallelize(
-			TestData.articlesWithContextTestSet()
+			TestData.articlesWithCompleteContexts()
 				.toList
 				.filter(_.title != "Streitberg (Brachttal)"))
 		val numDocuments = articles.count
@@ -50,7 +50,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	"Tf-idf contexts for parsed Wikipedia articles with missing document frequencies" should
 		"be exactly these contexts" in {
 		val documentFrequencyThreshold = 2
-		val articles = sc.parallelize(TestData.articlesWithContextTestSet().toList)
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 			.filter(_.title != "Streitberg (Brachttal)")
 		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSmallTestSet().toList)
@@ -63,7 +63,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Tf-Idf of link contexts" should "exist" in {
 		val documentFrequencyThreshold = 2
-		val articles = sc.parallelize(TestData.articlesWithLinkContextsTestSet().toList)
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val linkContextValues = CosineContextComparator
@@ -74,7 +74,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	they should "be exactly these tf-Idf values (disregarding the contexts)" in {
 		val documentFrequencyThreshold = 2
-		val articles = sc.parallelize(TestData.articlesWithLinkContextsTestSet().toList)
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val linkContextValues = CosineContextComparator

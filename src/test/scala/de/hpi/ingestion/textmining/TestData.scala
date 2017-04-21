@@ -74,7 +74,7 @@ object TestData {
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
-	def articlesWithContextTestSet(): Set[ParsedWikipediaEntry] = {
+	def articlesWithContextSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
@@ -115,7 +115,7 @@ object TestData {
 		)
 	}
 
-	def articlesWithLinkContextsTestSet(): Set[ParsedWikipediaEntry] = {
+	def articlesWithLinkContextsSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
