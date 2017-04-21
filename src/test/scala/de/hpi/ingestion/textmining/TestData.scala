@@ -503,8 +503,8 @@ object TestData {
 		List(
 			("Audi", Map("audi" -> tf1df1, "ist" -> tf1df3, "ein" -> tf1df3, "automobilhersteller" -> tf1df1)),
 			("Brachttal", Map("brachttal" -> tf1df1, "ist" -> tf1df3, "irgendein" -> tf1df1, "ortsteil" -> tf1df1)),
-			("Main-Kinzig-Kreis", Map("der" -> tf1df2, "main-kinzig-kreis" -> tf1df2, "hat" -> tf1df1, "ein" -> tf1df3, "hohe" -> tf1df1, "einwohnerzahl" -> tf1df1)),
-			("Hessen", Map("hessen" -> tf1df1, "ist" -> tf1df3, "größer" -> tf1df1, "als" -> tf1df1, "der" -> tf1df2, "main-kinzig-kreis" -> tf1df2)),
+			("Main-Kinzig-Kreis", Map("der" -> tf1df2, "main-kinzig-kreis" -> tf1df2, "ein" -> tf1df3, "einwohnerzahl" -> tf1df1)),
+			("Hessen", Map("hessen" -> tf1df1, "ist" -> tf1df3, "der" -> tf1df2, "main-kinzig-kreis" -> tf1df2)),
 			("1377", Map("ein" -> tf1df3, "jahr" -> tf1df2)),
 			("Büdinger Wald", Map("waldrech" -> tf1df1)),
 			("historisches Jahr", Map("jahr" -> tf1df2))
@@ -543,8 +543,15 @@ object TestData {
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
 		Set(
-			FeatureEntry("Audi", "Audi", 0.0, 0.0, 0.0, true),
-			FeatureEntry("Audi", "Audi", 0.0, 0.0, 0.0, false)
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true),
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, true),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, true),
+			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true),
+			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, true),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true),
+			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true)
 		)
 	}
 
