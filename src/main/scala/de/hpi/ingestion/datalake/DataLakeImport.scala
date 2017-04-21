@@ -10,8 +10,8 @@ import scala.io.Source
 import scala.xml.XML
 
 trait DLImport[T <: DLImportEntity] extends Serializable {
-	val outputKeyspace = "datalake"
-	val outputTable = "subject_temp"
+	val outputKeyspace = "evaluation"
+	val outputTable = "subject_dbpedia"
 	val versionTable = "version"
 
 	/**
