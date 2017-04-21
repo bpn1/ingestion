@@ -568,7 +568,8 @@ object TestData {
 			WikipediaEntry("Zerfall", Option("""'''Zerfall''' steht für:\n* Radioaktiver Zerfall, siehe [[Radioaktivität]]\n* das [[Zerfallsgesetz]] einer radioaktiven Substanz\n* Exponentieller Zerfall, siehe [[Exponentielles Wachstum]]\n* den [[Zerfall (Soziologie)|Zerfall]] gesellschaftlicher Strukturen \n* ein Album der Band Eisregen, siehe [[Zerfall (Album)]]\n* den Film [[Raspad – Der Zerfall]]\n\n'''Siehe auch:'''\n{{Wiktionary}}\n\n{{Begriffsklärung}}""")),
 			WikipediaEntry("Fisch", Option("""'''Fisch''' steht für:\n\n* [[Fische]], im Wasser lebende Wirbeltiere \n* [[Speisefisch]], eine Lebensmittelkategorie\n* [[Fische (Sternbild)]]\n* [[Fische (Tierkreiszeichen)]]\n* [[Fisch (Christentum)]], religiöses Symbol\n* [[Fisch (Wappentier)]], gemeine Figur in der Heraldik\n\n'''Fisch''' ist der Name folgender Orte:\n\n* [[Fisch (Saargau)]], Ortsgemeinde in Rheinland-Pfalz\n\n{{Begriffsklärung}}""")),
 			WikipediaEntry("Zwilling (Begriffsklärung)", Option("""'''Zwilling''' bezeichnet:\n\n* den biologischen Zwilling, siehe [[Zwillinge]]\n* einen Begriff aus der Kristallkunde, siehe [[Kristallzwilling]]\n* [[Zwilling J. A. Henckels]], einen Hersteller von Haushaltswaren mit Sitz in Solingen\n\nin der Astronomie und Astrologie:\n\n* ein Sternbild, siehe [[Zwillinge (Sternbild)]]\n* eines der Tierkreiszeichen, siehe [[Zwillinge (Tierkreiszeichen)]]\n\n{{Begriffsklärung}}""")),
-			WikipediaEntry("Leadinstrument", Option("""#REDIRECT [[Lead (Musik)]]\n[[Kategorie:Musikinstrument nach Funktion]]""")))
+			WikipediaEntry("Leadinstrument", Option("""#REDIRECT [[Lead (Musik)]]\n[[Kategorie:Musikinstrument nach Funktion]]""")),
+			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
 	}
 
 	def wikipediaDisambiguationPagesTestSet(): Set[String] = {
