@@ -8,13 +8,13 @@ class DBPediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 
 	"translateToSubject" should "map the entity label on subject name" in {
 		val version = TestData.version(sc)
-		val subject = DataLakeImportDBpedia.translateToSubject(entity, version)
+		val subject = DBPediaDataLakeImport.translateToSubject(entity, version)
 		subject.name shouldEqual entity.label
 	}
 
 	it should "normalize the data attributes" in {
 		val version = TestData.version(sc)
-		val subject = DataLakeImportDBpedia.translateToSubject(entity, version)
+		val subject = DBPediaDataLakeImport.translateToSubject(entity, version)
 		subject.properties("id_wikidata") shouldEqual List("Q123")
 		subject.properties("id_wikipedia") shouldEqual List("dbpedia-de:List_von_Autoren")
 		subject.properties("id_dbpedia") shouldEqual List("dbpedia-de:List_von_Autoren")
@@ -24,13 +24,13 @@ class DBPediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 
 	it should "copy all old data attributes" in {
 		val version = TestData.version(sc)
-		val subject = DataLakeImportDBpedia.translateToSubject(entity, version)
+		val subject = DBPediaDataLakeImport.translateToSubject(entity, version)
 		subject.properties("testProperty") shouldEqual List("test")
 	}
 
 	it should "properly merge coordinates" in {
 		val version = TestData.version(sc)
-		val subject = DataLakeImportDBpedia.translateToSubject(entity, version)
+		val subject = DBPediaDataLakeImport.translateToSubject(entity, version)
 		subject.properties("geo_coords") shouldEqual List("52", "100")
 	}
 }

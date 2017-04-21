@@ -145,7 +145,28 @@ CREATE TABLE datalake.duplicatecandidates (
     candidates list<frozen<tuple<subject, text, double>>>
 );
 
-CREATE TABLE datalake.goldstandard (
+-- Evaluation
+CREATE KEYSPACE evaluation WITH REPLICATION = {
+    'class' : 'SimpleStrategy',
+    'replication_factor' : 3
+};
+
+-- Types
+CREATE TYPE evaluation.version (
+    version timeuuid,
+    value frozen<list<text>>,
+    validity frozen<map<text, text>>,
+    datasources frozen<list<text>>,
+    timestamp timestamp,
+    program text
+);
+
+-- Tables
+CREATE TABLE evaluation.goldstandard (
+    id frozen<tuple <uuid, uuid>> PRIMARY KEY
+);
+
+CREATE TABLE evaluation.subject_dbpedia (
     id uuid PRIMARY KEY,
     aliases list<text>,
     aliases_history list<frozen<version>>,
@@ -159,7 +180,7 @@ CREATE TABLE datalake.goldstandard (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
-CREATE TABLE datalake.subject_merged (
+CREATE TABLE evaluation.subject_wikidata (
     id uuid PRIMARY KEY,
     aliases list<text>,
     aliases_history list<frozen<version>>,
@@ -171,4 +192,11 @@ CREATE TABLE datalake.subject_merged (
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+CREATE TABLE evaluation.version (
+    version timeuuid PRIMARY KEY,
+    datasources list<text>,
+    program text,
+    timestamp timestamp
 );

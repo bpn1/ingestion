@@ -11,7 +11,7 @@ import scala.collection.mutable
 /**
   * Import-Job to import DBPedia Subjects into the staging table of our datalake.
   */
-object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
+object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 	"DataLakeImportDBpedia_v1.0",
 	List("dbpedia"),
 	"normalization_dbpedia.xml",
