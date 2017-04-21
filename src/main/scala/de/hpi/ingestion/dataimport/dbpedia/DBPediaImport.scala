@@ -124,7 +124,7 @@ object DBPediaImport {
 			.map(pair => (pair(0), pair(1)))
 		val prefixesBroadcast = sc.broadcast(prefixes)
 
-		val rdfTypFile = Source.fromURL(getClass.getResource("/rdf_types.xml"))
+		val rdfTypFile = Source.fromURL(this.getClass.getResource("/rdf_types.xml"))
 		val rdfTypes = XML.loadString(rdfTypFile.getLines.mkString("\n"))
 		val organisations = for {
 			organisation <- (rdfTypes \\ "types" \ "organisation").toList

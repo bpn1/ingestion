@@ -4,7 +4,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
 
 class DBPediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkContext {
-	val entity = TestData.testEntity()
+	val entity = TestData.testEntity
 
 	"translateToSubject" should "map the entity label on subject name" in {
 		val version = TestData.version(sc)
