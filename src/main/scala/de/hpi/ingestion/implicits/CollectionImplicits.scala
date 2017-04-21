@@ -1,5 +1,8 @@
 package de.hpi.ingestion.implicits
 
+/**
+  * Contains the implicit classes for collection type methods.
+  */
 object CollectionImplicits {
 
 	/**

@@ -21,7 +21,7 @@ class TrieBuilderTest extends FlatSpec {
 	}
 
 	def testEntryFoundAliases(): ParsedWikipediaEntry = {
-		val entry = TestData.parsedTestEntry()
+		val entry = TestData.parsedEntry()
 		val trie = new TrieNode()
 		val tokenizer = new WhitespaceTokenizer()
 		for(link <- entry.allLinks) {
