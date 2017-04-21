@@ -110,7 +110,7 @@ object TrieBuilder {
 		val sc = new SparkContext(conf)
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 
-		val tokenizer = new CleanCoreNLPTokenizer
+		val tokenizer = new CoreNLPTokenizer
 
 		val files = defaultKeys()
 			.map(key => (key, fileName(key)))
@@ -119,7 +119,7 @@ object TrieBuilder {
 		val fileBroadcast = sc.broadcast(files)
 
 		parsedWikipedia
-			.coalesce(8)
+			.coalesce(16)
 			.mapPartitions({ partition =>
 				val trieMap = fileBroadcast.value
 					.mapValues { file =>
