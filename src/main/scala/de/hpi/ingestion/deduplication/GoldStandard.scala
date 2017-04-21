@@ -31,6 +31,8 @@ object GoldStandard {
 	/**
 	  * Join DBPedia and WikiData together on a property.
 	  * @param property The property to be joined on.
+	  * @param dbpedia Subjects from DBPedia
+	  * @param wikidata Subjects from WikiData
 	  * @return RDD containing pairs of UUIDs
 	  */
 	def joinBySingleProperty(property: String, dbpedia: RDD[Subject], wikidata: RDD[Subject]): RDD[(UUID, UUID)] = {
