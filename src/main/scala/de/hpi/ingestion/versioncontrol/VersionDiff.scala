@@ -19,7 +19,7 @@ import org.apache.spark.rdd.RDD
 object VersionDiff {
 	val keyspace = "datalake"
 	val tablename = "subject"
-	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
+	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
 
 	/**
 	  * Extracts the time component of a TimeUUID.
