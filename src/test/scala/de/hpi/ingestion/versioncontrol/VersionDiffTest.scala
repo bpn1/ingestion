@@ -10,8 +10,12 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
     val newVersion = UUID.fromString("7ce032b0-c567-11e6-8252-5f2c06e3b302")
 
 	"Version diff" should "be created" in {
-		// run
-		assert(false)
+		val subjects = sc.parallelize(TestData.diffSubjects())
+		val (oldV, newV) = TestData.versionsToCompare()
+		val versions = Array(oldV.toString, newV.toString)
+		val versionDiff = VersionDiff.run(subjects, versions)
+		val expectedDiff = sc.parallelize(TestData.jsonDiff())
+		assertRDDEquals(versionDiff, expectedDiff)
 	}
 
 	"Versions" should "be ordered correctly" in {
@@ -38,8 +42,10 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 	}
 
 	"History entry" should "be diffed and serialized as JSON" in {
-		// diffToJson
-		assert(false)
+		val diff = TestData.historyEntries()
+			.map(VersionDiff.diffToJson)
+		val expectedDiff = TestData.jsonDiff()
+		diff shouldEqual expectedDiff
 	}
 
 	"Value lists" should "be created from two versions" in {

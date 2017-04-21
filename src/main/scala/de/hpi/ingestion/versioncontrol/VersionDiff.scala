@@ -74,7 +74,7 @@ object VersionDiff {
 	  * @return Option of the JSON object with "-" and "+" field. Returns None if valueLists None or there
 	  *         are no changes in the data.
 	  */
-	def diffLists(valueLists : Option[(List[String], List[String])]) : Option[JsValue] = {
+	def diffLists(valueLists: Option[(List[String], List[String])]): Option[JsValue] = {
 		valueLists.map { case (oldValues, newValues) =>
 			val removals = oldValues.filterNot(newValues.toSet)
 			val additions = newValues.filterNot(oldValues.toSet)
@@ -117,13 +117,14 @@ object VersionDiff {
 		diffLists(entry.name).foreach(name => jsonObject("name") = name)
 		diffLists(entry.aliases).foreach(aliases => jsonObject("aliases") = aliases)
 		diffLists(entry.category).foreach(category => jsonObject("category") = category)
-		jsonObject("properties") = Json.toJson(entry.properties.mapValues(diffLists).filter(_._2.nonEmpty))
+		val propertyDiff = entry.properties.mapValues(diffLists).filter(_._2.nonEmpty)
+		if(propertyDiff.nonEmpty) jsonObject("properties") = Json.toJson(propertyDiff)
 		val relationsMap = entry.relations
 			.mapValues(_.mapValues(diffLists))
 			.map(_.map(_.toString, _.filter(_._2.nonEmpty).mapValues(_.get)))
 			.filter(_._2.nonEmpty)
 			.mapValues(Json.toJson(_))
-		jsonObject("relations") = Json.toJson(relationsMap)
+		if(relationsMap.nonEmpty) jsonObject("relations") = Json.toJson(relationsMap)
 		Json.toJson(jsonObject.toMap)
 	}
 
@@ -144,29 +145,26 @@ object VersionDiff {
 	/**
 	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
 	  * @param subjects RDD of Subjects
-	  * @param oldVersion TimeUUID of the older version
-	  * @param newVersion TimeUUID of the newer version
+	  * @param args command line arguments of the program containing the TimeUUIDs of the two versions to compare
 	  * @return RDD of JSON objects containing the diff for each subject
 	  */
-	def run(subjects: RDD[Subject], oldVersion: UUID, newVersion: UUID): RDD[JsValue] = {
+	def run(subjects: RDD[Subject], args: Array[String]): RDD[JsValue] = {
+		val (oldVersion, newVersion) = versionOrder(UUID.fromString(args(0)), UUID.fromString(args(1)))
 		subjects
 			.map(retrieveVersions(_, oldVersion, newVersion))
 			.map(diffToJson)
 	}
 
-	def main(args : Array[String]): Unit = {
+	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("VersionDiff")
 		val sc = new SparkContext(conf)
 
-		// stop if we don't have two versions to compare
 		if(args.length < 2) {
 			return
 		}
-		val (oldVersion, newVersion) = versionOrder(UUID.fromString(args(0)), UUID.fromString(args(1)))
     	val subjects = sc.cassandraTable[Subject](keyspace, tablename)
-		run(subjects, oldVersion, newVersion)
-			.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
+		run(subjects, args).saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
 		sc.stop
     }
 }

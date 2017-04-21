@@ -7,6 +7,8 @@ import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.versioncontrol.models.HistoryEntry
 import play.api.libs.json.{JsValue, Json}
 
+import scala.io.Source
+
 object TestData {
 
 	val timeFormatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSSZZZZZ")
@@ -113,7 +115,20 @@ object TestData {
 				category_history = versions()(2),
 				properties_history = Map("test property" -> versions()(3)),
 				relations_history = Map(
-					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> versions()(4)))))
+					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> versions()(4)))),
+			Subject(
+				id = UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				name_history = versions()(4),
+				aliases_history = versions()(4),
+				category_history = versions()(4),
+				properties_history = Map("test property" -> versions().head),
+				relations_history = Map(
+					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(1)))))
+	}
+
+	def jsonDiff(): List[JsValue] = {
+		val rawJson = Source.fromURL(getClass.getResource("/versioncontrol/diff.json")).getLines().mkString("\n")
+		Json.parse(rawJson).as[List[JsValue]]
 	}
 
 	def historyEntries(): List[HistoryEntry] = {
@@ -124,6 +139,13 @@ object TestData {
 				dataLists()(1),
 				dataLists()(2),
 				Map("test property" -> dataLists()(3)),
-				Map(UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> dataLists()(4)))))
+				Map(UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> dataLists()(4)))),
+			HistoryEntry(
+				UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				None,
+				None,
+				None,
+				Map("test property" -> dataLists().head),
+				Map(UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> dataLists()(1)))))
 	}
 }
