@@ -266,8 +266,8 @@ object TextParser {
 
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val cleanedEntry = cleanRedirects(entry)
-		var title = entry.title
-		if (isDisambiguationPage(entry) && !title.endsWith(disambiguationTitleSuffix)) {
+		var title = cleanedEntry.title
+		if (isDisambiguationPage(cleanedEntry) && !title.endsWith(disambiguationTitleSuffix)) {
 			title += disambiguationTitleSuffix
 		}
 		val html = wikipediaToHtml(cleanedEntry.getText())
