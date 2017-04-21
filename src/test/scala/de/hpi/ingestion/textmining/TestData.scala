@@ -437,7 +437,7 @@ object TestData {
 			DocumentFrequency("nochmal", 1))
 	}
 
-	def filteredStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def filteredStemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("audi", 3),
@@ -459,7 +459,8 @@ object TestData {
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("ist", 2),
 			DocumentFrequency("hier", 2),
-			DocumentFrequency("verlink", 2))
+			DocumentFrequency("verlink", 2)
+		)
 	}
 
 	def inverseDocumentFrequenciesTestSet(): Set[(String, Double)] = {
@@ -472,10 +473,11 @@ object TestData {
 			("ist", threeOccurrences),
 			("und", twoOccurrences),
 			("zugleich", oneOccurrence),
-			("einer", oneOccurrence))
+			("einer", oneOccurrence)
+		)
 	}
 
-	def tfidfContextsTestSet(): Set[(String, Map[String, Double])] = {
+	def tfidfContextsSet(): Set[(String, Map[String, Double])] = {
 		val tf1df1 = 0.47712125471966244
 		val tf1df2 = 0.17609125905568124
 		val tf2df1 = 0.9542425094393249
@@ -484,6 +486,19 @@ object TestData {
 			("Audi Test mit Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
 			("Audi Test ohne Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
 			("Testartikel", Map("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1))
+		)
+	}
+
+	def articleWordsTfidfSet()(): Set[(String, Map[String, Double])] = {
+		// 7 documents
+		Set(
+			("Audi", Map()),
+			("Brachttal", Map()),
+			("Main-Kinzig-Kreis", Map()),
+			("Hessen", Map()),
+			("1377", Map()),
+			("Büdinger Wald", Map()),
+			("historisches Jahr", Map())
 		)
 	}
 

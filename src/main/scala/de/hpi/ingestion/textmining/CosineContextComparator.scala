@@ -151,12 +151,12 @@ object CosineContextComparator {
 
 	def compareLinksWithArticles(
 		linkContexts: RDD[(Link, Map[String, Double])],
-		pages: RDD[(String, (String, Double, Double))],
+		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
 		linkContexts
 			.map(t => (t._1.alias, t))
-			.join(pages)
+			.join(aliasPageProbabilities)
 			.map { case (alias, ((link, context), (page, totalProb, pageProb))) =>
 				(page, (alias, link, context, totalProb, pageProb))
 			}.join(articleContexts)
@@ -200,8 +200,8 @@ object CosineContextComparator {
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
-		val pages = joinablePages(aliases)
-		compareLinksWithArticles(contextTfidf, pages, articleTfidf)
+		val aliasPageProbabilities = joinablePages(aliases)
+		compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
 	}
 
 	def main(args: Array[String]): Unit = {
