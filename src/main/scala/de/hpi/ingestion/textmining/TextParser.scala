@@ -355,7 +355,6 @@ object TextParser {
 			.map(parseWikipediaEntry)
 	}
 
-
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Text Parser")
