@@ -254,36 +254,63 @@ object TestData {
 			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
 	}
 
-	def startAliasCounterTestRDD(sc: SparkContext): RDD[AliasCounts] = {
+	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {
 		sc.parallelize(List(
-			AliasCounts("Audi", 1, 1),
-			AliasCounts("Audi", 1, 1),
-			AliasCounts("Audi", 0, 1),
-			AliasCounts("Brachttal", 1, 1),
-			AliasCounts("Brachttal", 1, 1),
-			AliasCounts("Main-Kinzig-Kreis", 1, 1),
-			AliasCounts("Main-Kinzig-Kreis", 0, 1),
-			AliasCounts("Hessen", 1, 1),
-			AliasCounts("Hessen", 0, 1),
-			AliasCounts("1377", 1, 1),
-			AliasCounts("Büdinger Wald", 1, 1),
-			AliasCounts("Büdinger Wald", 0, 1),
-			AliasCounts("Backfisch", 0, 1),
-			AliasCounts("Streitberg", 0, 1),
-			AliasCounts("historisches Jahr", 1, 1)))
+			Alias("Audi", Map(), 1, 1),
+			Alias("Audi", Map(), 1, 1),
+			Alias("Audi", Map(), 0, 1),
+			Alias("Brachttal", Map(), 1, 1),
+			Alias("Brachttal", Map(), 1, 1),
+			Alias("Main-Kinzig-Kreis", Map(), 1, 1),
+			Alias("Main-Kinzig-Kreis", Map(), 0, 1),
+			Alias("Hessen", Map(), 1, 1),
+			Alias("Hessen", Map(), 0, 1),
+			Alias("1377", Map(), 1, 1),
+			Alias("Büdinger Wald", Map(), 1, 1),
+			Alias("Büdinger Wald", Map(), 0, 1),
+			Alias("Backfisch", Map(), 0, 1),
+			Alias("Streitberg", Map(), 0, 1),
+			Alias("historisches Jahr", Map(), 1, 1)
+		))
 	}
 
-	def countedAliasesTestRDD(sc: SparkContext): RDD[AliasCounts] = {
+	def countedAliasesTestRDD(sc: SparkContext): RDD[Alias] = {
 		sc.parallelize(List(
-			AliasCounts("Audi", 2, 3),
-			AliasCounts("Brachttal", 2, 2),
-			AliasCounts("Main-Kinzig-Kreis", 1, 2),
-			AliasCounts("Hessen", 1, 2),
-			AliasCounts("1377", 1, 1),
-			AliasCounts("Büdinger Wald", 1, 2),
-			AliasCounts("Backfisch", 0, 1),
-			AliasCounts("Streitberg", 0, 1),
-			AliasCounts("historisches Jahr", 1, 1)))
+			Alias("Audi", Map(), 2, 3),
+			Alias("Brachttal", Map(), 2, 2),
+			Alias("Main-Kinzig-Kreis", Map(), 1, 2),
+			Alias("Hessen", Map(), 1, 2),
+			Alias("1377", Map(), 1, 1),
+			Alias("Büdinger Wald", Map(), 1, 2),
+			Alias("Backfisch", Map(), 0, 1),
+			Alias("Streitberg", Map(), 0, 1),
+			Alias("historisches Jahr", Map(), 1, 1)
+		))
+	}
+
+	def linksSet(): Set[Alias] = {
+		Set(
+			Alias("Audi", Map("Audi" -> 2)),
+			Alias("Brachttal", Map("Brachttal" -> 2)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1)),
+			Alias("Hessen", Map("Hessen" -> 1)),
+			Alias("1377", Map("1377" -> 1)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1)),
+			Alias("historisches Jahr", Map("1337" -> 1))
+		)
+	}
+
+	def aliasCountsSet(): Set[(String, Int, Int)] = {
+		Set(
+			("Audi", 2, 3),
+			("Brachttal", 2, 2),
+			("Main-Kinzig-Kreis", 1, 2),
+			("Hessen", 1, 2),
+			("1377", 1, 1),
+			("Büdinger Wald", 1, 2),
+			("Backfisch", 0, 1),
+			("Streitberg", 0, 1),
+			("historisches Jahr", 1, 1))
 	}
 
 	def linkProbabilitiesTestRDD(sc: SparkContext): RDD[(String, Double)] = {
@@ -775,10 +802,6 @@ object TestData {
 			Link("Zwickau", "Zwickau", 0))
 	}
 
-	def testRedirectCornerCaseEntries(): Set[ParsedWikipediaEntry] = {
-		Set(ParsedWikipediaEntry("?", Option("#WEITERLEITUNG [[?]]"), List[Link](Link("?", "?", 0))))
-	}
-
 	def testRedirectDict(): Map[String, String] = {
 		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
 	}
@@ -806,7 +829,85 @@ object TestData {
 		)
 	}
 
+	def parsedEntriesWithRedirects(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "Test Redirect Entry 1"))),
+			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "Test Redirect Entry 2"), Link("alias 3", "EU"))),
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
+			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
+	}
+
+	def parsedEntriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "test page"))),
+			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "test page 2"), Link("alias 3", "Europäische Union"))),
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
+			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
+	}
+
+	def parsedRedirectEntries():  Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT")))
+	}
+
+	def redirectDict(): Map[String, String] = {
+		Map(
+			"Test Redirect Entry 1" -> "test page",
+			"Test Redirect Entry 2" ->"test page 2",
+			"EU" -> "Europäische Union")
+	}
+
+	def redirectMap(): Map[String, String] = {
+		Map(
+			"Site 1" -> "Site 3",
+			"Site 3" -> "Site 6",
+			"Site 4" -> "Site 5",
+			"Site 5" -> "Site 4",
+			"Site 7" -> "Site 7",
+			"EU" -> "Europäische Union")
+	}
+
+	def cleanedRedirectMap(): Map[String, String] = {
+		Map(
+			"Site 1" -> "Site 6",
+			"Site 3" -> "Site 6",
+			"EU" -> "Europäische Union")
+	}
+
+	def entriesWithRedirects():  Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1",
+				textlinks = List(Link("Alias 1", "Site 1")),
+				disambiguationlinks = List(Link("Alias 2", "Site 2")),
+				listlinks = List(Link("Alias 3", "Site 3")),
+				categorylinks = List(Link("Alias 4", "Site 4")),
+				templatelinks = List(Link("Alias 5", "Site 5"))),
+			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "EU"))))
+	}
+
+	def entriesWithResolvedRedirects():  Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1",
+				textlinks = List(Link("Alias 1", "Site 6")),
+				disambiguationlinks = List(Link("Alias 2", "Site 2")),
+				listlinks = List(Link("Alias 3", "Site 6")),
+				categorylinks = List(Link("Alias 4", "Site 4")),
+				templatelinks = List(Link("Alias 5", "Site 5"))),
+			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union"))))
+	}
+
 }
+
 // scalastyle:on method.length
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods

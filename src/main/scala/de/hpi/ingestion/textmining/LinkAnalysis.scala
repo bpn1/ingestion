@@ -81,7 +81,8 @@ object LinkAnalysis {
 
 	def fillAliasToPagesTable(parsedWikiRDD: RDD[ParsedWikipediaEntry], sc: SparkContext): Unit = {
 		removeDeadLinks(groupByAliases(parsedWikiRDD), getAllPages(sc))
-			.saveToCassandra(keyspace, outputAliasToPagesTablename)
+			.map(alias => (alias.alias, alias.pages))
+			.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))
 	}
 
 	def fillPageToAliasesTable(parsedWikiRDD: RDD[ParsedWikipediaEntry], sc: SparkContext): Unit = {
@@ -92,7 +93,6 @@ object LinkAnalysis {
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("Link Analysis")
-			.set("spark.cassandra.connection.host", "odin01")
 		val sc = new SparkContext(conf)
 
 		val parsedWikiRDD = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
