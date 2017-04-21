@@ -26,6 +26,7 @@ object TextParser {
 	val outputTablename = "parsedwikipedia"
 	val namespaceFile = "dewiki_namespaces"
 	val categoryNamespace = "Kategorie:"
+	val parsableRedirect = "WEITERLEITUNG"
 	val redirectText = "REDIRECT"
 	val disambiguationTitleSuffix = " (Begriffsklärung)"
 
@@ -35,9 +36,8 @@ object TextParser {
 	}
 
 	def isRedirectPage(html: String): Boolean = {
-		val redirectRegex = new Regex("\\AWEITERLEITUNG")
 		val searchText = Jsoup.parse(html).body.text
-		redirectRegex.findFirstIn(searchText).isDefined
+		searchText.startsWith(parsableRedirect)
 	}
 
 	def isRedirectPage(entry: ParsedWikipediaEntry): Boolean = {
@@ -47,7 +47,13 @@ object TextParser {
 	def extractRedirect(title: String, html: String, text: String): List[Link] = {
 		val anchorList = Jsoup.parse(html).select("a")
 		val linksList = anchorList
-			.map(anchor => Link(title, parseUrl(anchor.attr("href"))))
+			.map { anchor =>
+				val target = parseUrl(anchor.attr("href"))
+				val source = if(anchor.text.isEmpty) target else anchor.text
+				val redirectLink = Link(title, target)
+				val defaultLink = Link(source, target)
+				if(isCategoryLink(defaultLink)) defaultLink else redirectLink
+			}
 			.toList
 		cleanMetapageLinks(linksList)
 	}
@@ -55,8 +61,8 @@ object TextParser {
 	def parseHtml(title: String, html: String): ParsedWikipediaEntry = {
 		val parsedEntry = ParsedWikipediaEntry(title)
 		val document = Jsoup.parse(html)
-		if(isRedirectPage(html)) {
-			val text = document.body.text.replaceAll("\\AWEITERLEITUNG", redirectText)
+		if (isRedirectPage(html)) {
+			val text = document.body.text.replaceAll("(?i)(\\A(WEITERLEITUNG|REDIRECT))", redirectText)
 			parsedEntry.setText(text)
 			parsedEntry.textlinks = extractRedirect(title, html, text)
 		} else if(title.endsWith(disambiguationTitleSuffix)) {
@@ -73,6 +79,11 @@ object TextParser {
 		extractCategoryLinks(parsedEntry)
 	}
 
+	/**
+	  * Removes any unwanted HTML tags and inline Wikimarkup tags.
+	  * @param document Jsoup Document to clean
+	  * @return cleaned Document containing only text and anchor tags
+	  */
 	def removeTags(document: Document): Document = {
 		val documentContent = document
 			.select("p")
@@ -149,7 +160,6 @@ object TextParser {
 		for(element <- children.slice(startIndex, children.length)) {
 			element match {
 				case t: Element =>
-					//assert(t.tag.toString == "a") // This may fail for strange reasons.
 					val target = parseUrl(t.attr("href"))
 					val source = if(t.text == "") target else t.text
 					val link = Link(source, target, offset)
@@ -199,7 +209,7 @@ object TextParser {
 			escaped = character == '\\'
 		}
 
-		println("[TextParser WARN]	Template has no end!")
+		println("[Textparser WARN]	Template has no end!")
 		templateText
 	}
 
@@ -270,8 +280,10 @@ object TextParser {
 	}
 
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
-		val redirectRegex = "(?i)#(weiterleitung|redirect) ?(: ?)?"
-		entry.setText(entry.getText().replaceAll(redirectRegex, "WEITERLEITUNG"))
+		val redirectRegex = "(?i)(weiterleitung|redirect)\\s?:?\\s?"
+		val replaceString = parsableRedirect + " "
+		val cleanedText = entry.getText().replaceAll(redirectRegex, replaceString)
+		entry.setText(cleanedText)
 		entry
 	}
 
@@ -282,7 +294,7 @@ object TextParser {
 	  */
 	def badNamespaces(): List[String] = {
 		val namespaces = Source
-			.fromURL(getClass().getResource(s"/$namespaceFile"))
+			.fromURL(getClass.getResource(s"/$namespaceFile"))
 			.getLines()
 			.toList
 		val usedNamespaces = List("Kategorie:")
@@ -296,7 +308,7 @@ object TextParser {
 	  * @return true if entry starts with a namespace
 	  */
 	def isMetaPage(entry: WikipediaEntry): Boolean = {
-		badNamespaces.exists(entry.title.startsWith)
+		badNamespaces().exists(entry.title.startsWith)
 	}
 
 	/**
@@ -306,17 +318,20 @@ object TextParser {
 	  * @return list of links without links to unused namespace pages.
 	  */
 	def cleanMetapageLinks(linkList: List[Link]): List[Link] = {
-		linkList.filterNot(link => badNamespaces.exists(link.page.startsWith))
+		linkList.filterNot(link => badNamespaces().exists(link.page.startsWith))
+	}
+
+	def isCategoryLink(link: Link): Boolean = {
+		link.alias.startsWith(categoryNamespace) || link.page.startsWith(categoryNamespace)
 	}
 
 	def extractCategoryLinks(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
-		val categoryLinks = entry.textlinks.filter(entry =>
-			entry.alias.startsWith(categoryNamespace) || entry.page.startsWith(categoryNamespace))
+		val categoryLinks = entry.textlinks.filter(isCategoryLink)
 		entry.textlinks = entry.textlinks.filterNot(categoryLinks.toSet)
 		entry.categorylinks = categoryLinks.map { link =>
 			val alias = link.alias.replaceFirst(categoryNamespace, "")
 			val page = link.page.replaceFirst(categoryNamespace, "")
-			Link(alias, page, 0)
+			Link(alias, page)
 		}
 		entry
 	}
