@@ -44,7 +44,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 				TextParser.parseHtml(entry.title, html).getText()
 			}
 			.foreach { element =>
-				for (tag <- tagBlacklist) {
+				for(tag <- tagBlacklist) {
 					val tagRegex = new Regex("(</" + tag + ">)|(<" + tag + "(>| .*?>))")
 					tagRegex.findFirstIn(element) shouldBe empty
 				}
@@ -67,6 +67,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.map(TextParser.parseWikipediaEntry)
 			.filter(_.disambiguationlinks.isEmpty)
 			.map(_.textlinks)
+			.collect
 			.foreach(textLinks => textLinks should not be empty)
 	}
 
@@ -74,14 +75,17 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		TestData.wikipediaEntries()
 			.map(TextParser.parseWikipediaEntry)
 			.flatMap(_.textlinks)
+			.collect
 			.foreach(link => assert(isLinkValid(link)))
 	}
 
 	they should "be exactly these links" in {
+		val wikipedia = sc.parallelize(TestData.wikipediaEntriesList())
 		val textLinks = TestData.wikipediaTestTextLinks()
 		TestData.wikipediaEntries()
 			.map(TextParser.parseWikipediaEntry)
 			.filter(entry => textLinks.contains(entry.title))
+			.collect
 			.foreach(entry => entry.textlinks shouldEqual textLinks(entry.title))
 	}
 
@@ -91,7 +95,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.filter(!_.getText().startsWith(TextParser.redirectText))
 			.foreach { element =>
 				element.textlinks.foreach { link =>
-					if (!isTextLinkConsistent(link, element.getText())) {
+					if(!isTextLinkConsistent(link, element.getText())) {
 						println(link)
 						println(element.getText())
 					}
@@ -121,9 +125,11 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Wikipedia disambiguation links" should "be found" in {
-		TestData.wikipediaEntries()
+		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
 			.filter(entry => TestData.wikipediaDisambiguationPagesTestSet().contains(entry.title))
-			.map(TextParser.parseWikipediaEntry)
+		TextParser
+			.run(wikipedia)
+			.collect
 			.foreach { entry =>
 				entry.disambiguationlinks should not be empty
 			}
@@ -131,9 +137,11 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	they should "direct from the page name itself (without '" +
 		TextParser.disambiguationTitleSuffix + "') to another page" in {
-		TestData.wikipediaEntries()
+		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
 			.filter(entry => TestData.wikipediaDisambiguationPagesTestSet().contains(entry.title))
-			.map(TextParser.parseWikipediaEntry)
+		TextParser
+			.run(wikipedia)
+			.collect
 			.foreach { entry =>
 				entry.disambiguationlinks.foreach { link =>
 					val cleanTitle = entry.title.stripSuffix(disambiguationTitleSuffix)
@@ -145,10 +153,12 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	"Template links" should "not be empty" in {
 		val templateArticlesTest = TestData.wikipediaTestTemplateArticles()
-		TestData.wikipediaEntries()
+		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
 			.filter(entry => templateArticlesTest.contains(entry.title))
-			.map(TextParser.parseWikipediaEntry)
+		TextParser
+			.run(wikipedia)
 			.map(_.templatelinks)
+			.collect
 			.foreach(templateLinks => templateLinks should not be empty)
 	}
 
@@ -162,12 +172,13 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	they should "be exactly these links" in {
+		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
 		val templateLinks = TestData.wikipediaTestTemplateLinks()
-		TestData.wikipediaEntries()
-			.map(TextParser.parseWikipediaEntry)
+		TextParser
+			.run(wikipedia)
 			.filter(entry => templateLinks.contains(entry.title))
-			.foreach(entry =>
-				entry.templatelinks shouldEqual templateLinks(entry.title))
+			.collect
+			.foreach(entry => entry.templatelinks shouldEqual templateLinks(entry.title))
 	}
 
 	"Bad namespace pages" should "be filtered" in {
@@ -201,9 +212,9 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		TextParser
 			.extractCategoryLinks(testEntry)
 			.categorylinks
-		    .foreach { link =>
-				link.alias shouldNot startWith (TextParser.categoryNamespace)
-				link.page shouldNot startWith (TextParser.categoryNamespace)
+			.foreach { link =>
+				link.alias shouldNot startWith(TextParser.categoryNamespace)
+				link.page shouldNot startWith(TextParser.categoryNamespace)
 			}
 	}
 
@@ -247,7 +258,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	def isLinkValid(link: Link): Boolean = {
 		val result = link.alias.nonEmpty && link.page.nonEmpty
-		if (!result) {
+		if(!result) {
 			println(link)
 		}
 		result
