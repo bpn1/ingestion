@@ -8,8 +8,8 @@ class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 
 	"Triples" should "be tokenized into three elements" in {
 		TestData.turtleRDD(sc)
-		    .map(DBPediaImport.tokenize)
-		    .collect
+			.map(DBPediaImport.tokenize)
+			.collect
 			.foreach { tripleList =>
 				tripleList should have length 3
 			}
@@ -19,7 +19,7 @@ class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 		val prefixesList = TestData.prefixesList
 		val parsed = TestData.turtleRDD(sc)
 			.map(DBPediaImport.tokenize)
-		    .map { tripleList =>
+			.map { tripleList =>
 				tripleList.map(DBPediaImport.cleanURL(_, prefixesList))
 			}
 			.map { case List(a, b, c) => (a, b, c) }
@@ -33,7 +33,7 @@ class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 		val entities = TestData.tripleRDD(sc)
 			.groupByKey
 			.map(tuple => DBPediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
-		    .map(identity)
+			.map(identity)
 		entities should not be empty
 	}
 
@@ -42,7 +42,7 @@ class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 		val entities = TestData.tripleRDD(sc)
 			.groupByKey
 			.map(tuple => DBPediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
-		    .map(identity)
+			.map(identity)
 		val expected = TestData.entityRDD(sc)
 		assertRDDEquals(expected, entities)
 	}

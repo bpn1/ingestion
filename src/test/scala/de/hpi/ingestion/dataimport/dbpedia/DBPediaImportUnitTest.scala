@@ -33,9 +33,7 @@ class DBPediaImportUnitTest extends FlatSpec with SharedSparkContext with Matche
 	"cleanURL" should "replace all prefixes" in {
 		val tokens = TestData.lineTokens
 		val prefixList = TestData.prefixesList
-		val cleanList = tokens.map { token =>
-			DBPediaImport.cleanURL(token, prefixList)
-		}
+		val cleanList = tokens.map(DBPediaImport.cleanURL(_, prefixList))
 		cleanList.head should startWith ("dbpedia-de:")
 		cleanList(1) should startWith ("dct:")
 		cleanList(2) should startWith ("dbpedia-de:")
