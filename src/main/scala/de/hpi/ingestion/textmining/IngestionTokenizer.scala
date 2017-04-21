@@ -4,7 +4,7 @@ import scala.io.Source
 
 /**
   * An advanced tokenizer that uses a given tokenizer, removes stopwords if flag is set and stems the tokens
-  * @param tokenizer
+  * @param tokenizer Tokenizer to use
   * @param removeStopwords flag for removing stopwords
   */
 class IngestionTokenizer(tokenizer: Tokenizer, removeStopwords: Boolean) extends Serializable {
