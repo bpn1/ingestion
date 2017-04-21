@@ -17,7 +17,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(CosineContextComparator.calculateIdf(_, numDocuments))
-		inverseDocumentFrequencies shouldEqual TestData.inverseDocumentFrequenciesTestSet()
+		inverseDocumentFrequencies shouldEqual TestData.inverseDocumentFrequenciesSet()
 	}
 
 	"Tf-idf contexts for parsed Wikipedia articles with complete document frequencies" should "not be empty" in {
@@ -39,7 +39,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 				.toList
 				.filter(_.title != "Streitberg (Brachttal)"))
 		val numDocuments = articles.count
-		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSmallTestSet().toList)
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSmallSet().toList)
 		val contexts = CosineContextComparator
 			.calculateArticleTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 			.collect
@@ -53,7 +53,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 			.filter(_.title != "Streitberg (Brachttal)")
 		val numDocuments = articles.count
-		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSmallTestSet().toList)
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSmallSet().toList)
 		val contexts = CosineContextComparator
 			.calculateArticleTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
 			.collect
@@ -135,10 +135,20 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		featureEntries shouldEqual TestData.featureEntriesSet()
 	}
 
-	"Extracted feature entries" should "not be empty" in {
+	"Extracted feature entries from links with missing pages" should "be empty" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
+		val featureEntries = CosineContextComparator
+			.run(articles, documentFrequencies, aliases)
+			.collect
+		featureEntries shouldBe empty
+	}
+
+	"Extracted feature entries from links with existing pages" should "not be empty" in {
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
+		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val featureEntries = CosineContextComparator
 			.run(articles, documentFrequencies, aliases)
 			.collect

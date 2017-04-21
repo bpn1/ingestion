@@ -213,7 +213,8 @@ object TestData {
 					Link("Brachttal", "Brachttal", 13, Map("link" -> 2, "audi" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
 					Link("historisches Jahr", "1377", 24, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1))),
 				context = Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)
-			))
+			)
+		)
 	}
 
 
@@ -326,6 +327,19 @@ object TestData {
 			Alias("1377", Map("1377" -> 1), 1, 1),
 			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), 1, 2),
 			Alias("historisches Jahr", Map("1377" -> 1), 1, 1)
+		)
+	}
+
+	def aliasesWithExistingPagesSet(): Set[Alias] = {
+		// these pages do not fit to the aliases but are required for the tests
+		Set(
+			Alias("Audi", Map("Audi mit Link" -> 2), 2, 3),
+			Alias("Brachttal", Map("Audi ohne Link" -> 2), 2, 2),
+			Alias("Main-Kinzig-Kreis", Map("Streitburg (Brachttal)" -> 1), 1, 2),
+			Alias("Hessen", Map("Streitburg (Brachttal)" -> 1), 1, 2),
+			Alias("1377", Map("Testartikel" -> 1), 1, 1),
+			Alias("Büdinger Wald", Map("Testartikel" -> 1), 1, 2),
+			Alias("historisches Jahr", Map("Testartikel" -> 1), 1, 1)
 		)
 	}
 
@@ -459,7 +473,7 @@ object TestData {
 		)
 	}
 
-	def filteredStemmedDocumentFrequenciesSmallTestSet(): Set[DocumentFrequency] = {
+	def filteredStemmedDocumentFrequenciesSmallSet(): Set[DocumentFrequency] = {
 		// without article about Streitburg
 		Set(
 			DocumentFrequency("audi", 3),
@@ -469,7 +483,7 @@ object TestData {
 		)
 	}
 
-	def inverseDocumentFrequenciesTestSet(): Set[(String, Double)] = {
+	def inverseDocumentFrequenciesSet(): Set[(String, Double)] = {
 		val oneOccurrence = 0.6020599913279624
 		val twoOccurrences = 0.3010299956639812
 		val threeOccurrences = 0.12493873660829993
