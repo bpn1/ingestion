@@ -30,7 +30,7 @@ object RedirectResolver {
 	  */
 	def buildRedirectDict(articles: RDD[ParsedWikipediaEntry]): Map[String, String] = {
 		articles
-			.filter(WikipediaTextParser.isRedirectPage)
+			.filter(TextParser.isRedirectPage)
 			.map(entry => (entry.title, entry.textlinks.headOption.map(_.page)))
 			.filter(t => t._2.isDefined && t._1 != t._2.get)
 			.map(_.map(identity, _.get))
