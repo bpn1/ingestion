@@ -3,9 +3,9 @@ package de.hpi.ingestion.textmining
 import scala.io.Source
 
 /**
-  * An advanced tokenizer that uses a given tokenizer, removes stopwords if flag is set and stems the tokens
+  * An advanced tokenizer that uses a given tokenizer, removes stop words if flag is set and stems the tokens
   * @param tokenizer Tokenizer to use
-  * @param removeStopwords flag for removing stopwords
+  * @param removeStopwords flag for removing stop words
   */
 class IngestionTokenizer(tokenizer: Tokenizer, removeStopwords: Boolean) extends Serializable {
 	val stopwordsPath = "german_stopwords.txt"
