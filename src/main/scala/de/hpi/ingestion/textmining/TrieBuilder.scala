@@ -22,26 +22,28 @@ object TrieBuilder {
 	/**
 	  * Finds all occurences of aliases in the text of a Wikipedia entry
 	  * @param entry parsed Wikipedia entry to use
-	  * @param trieMap Partitioned Trie containing the aliases we look for
+	  * @param trie Partitioned Trie containing the aliases we look for
 	  * @param tokenizer Tokenizer used to tokenize the text of the entry
 	  * @return entry containing list of found aliases
 	  */
 	def matchEntry(
 		entry: ParsedWikipediaEntry,
-		trieMap: Map[String, TrieNode],
+		//trieMap: Map[String, TrieNode],
+		trie: TrieNode,
 		tokenizer: Tokenizer
 	): ParsedWikipediaEntry = {
 		val resultList = mutable.ListBuffer[String]()
 		val tokens = tokenizer.tokenize(entry.getText())
 		for(i <- tokens.indices) {
 			val testTokens = tokens.slice(i, tokens.length)
-			val key = tokens.headOption
-				.filter(_.nonEmpty)
-				.map(_.charAt(0))
-				.filter(_.isASCIILetter)
-				.map(_.toString)
-				.getOrElse(defaultKey)
-			val aliasMatches = trieMap(key).matchTokens(testTokens)
+//			val key = tokens.headOption
+//				.filter(_.nonEmpty)
+//				.map(_.charAt(0))
+//				.filter(_.isASCIILetter)
+//				.map(_.toString)
+//				.getOrElse(defaultKey)
+//			val aliasMatches = trieMap(key).matchTokens(testTokens)
+			val aliasMatches = trie.matchTokens(testTokens)
 			resultList ++= aliasMatches.map(tokenizer.reverse)
 		}
 		entry.foundaliases = resultList
@@ -104,7 +106,6 @@ object TrieBuilder {
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName("TrieBuilder")
-			.set("spark.cassandra.connection.host", "odin01")
 		 	.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 			.set("spark.kryo.registrator", "de.hpi.ingestion.textmining.TrieKryoRegistrator")
 		val sc = new SparkContext(conf)
@@ -112,27 +113,33 @@ object TrieBuilder {
 
 		val tokenizer = new CoreNLPTokenizer
 
-		val files = defaultKeys()
-			.map(key => (key, fileName(key)))
-			.toMap
-
-		val fileBroadcast = sc.broadcast(files)
+//		val files = defaultKeys()
+//			.map(key => (key, fileName(key)))
+//			.toMap
+//
+//		val fileBroadcast = sc.broadcast(files)
 
 		parsedWikipedia
-			.coalesce(16)
+//			.coalesce(16)
 			.mapPartitions({ partition =>
-				val trieMap = fileBroadcast.value
-					.mapValues { file =>
-						val kryo = trieKryo()
-						val hadoopConf = new Configuration()
-						val fs = FileSystem.get(hadoopConf)
-						val inputStream = new Input(fs.open(new Path(file)))
-
-						val trie = kryo.readObject(inputStream, classOf[TrieNode])
-						inputStream.close()
-						trie
-					}.map(identity)
-				partition.map(matchEntry(_, trieMap, tokenizer))
+//				val trieMap = fileBroadcast.value
+//					.mapValues { file =>
+//						val kryo = trieKryo()
+//						val hadoopConf = new Configuration()
+//						val fs = FileSystem.get(hadoopConf)
+//						val inputStream = new Input(fs.open(new Path(file)))
+//
+//						val trie = kryo.readObject(inputStream, classOf[TrieNode])
+//						inputStream.close()
+//						trie
+//					}.map(identity)
+				val kryo = trieKryo()
+				val hadoopConf = new Configuration()
+				val fs = FileSystem.get(hadoopConf)
+				val inputStream = new Input(fs.open(new Path("trie_full.bin")))
+				val trie = kryo.readObject(inputStream, classOf[TrieNode])
+				inputStream.close()
+				partition.map(matchEntry(_, trie, tokenizer))
 			}, true)
 			.saveToCassandra(keyspace, tablename)
 

@@ -41,40 +41,33 @@ object LocalTrieBuilder {
 	}
 
 	def main(args: Array[String]): Unit = {
-		val kryo = new Kryo
-		kryo.register(classOf[mutable.Map[_, _]], new MutableMapSerializer())
-		kryo.register(classOf[Option[_]], new OptionSerializer())
-
-		val trieSerializer = new FieldSerializer(kryo, classOf[TrieNode])
-		trieSerializer
-			.getField("children")
-			.setClass(
-				classOf[mutable.Map[_, _]],
-				kryo.getSerializer(classOf[mutable.Map[_, _]]))
-		trieSerializer
-			.getField("token")
-			.setClass(
-				classOf[Option[_]],
-				kryo.getSerializer(classOf[Option[_]]))
-		trieSerializer
-			.getField("word")
-			.setClass(
-				classOf[Option[_]],
-				kryo.getSerializer(classOf[Option[_]]))
-		kryo.register(classOf[TrieNode], trieSerializer)
+		val kryo = TrieBuilder.trieKryo()
 
 		val tokenizer = new CoreNLPTokenizer
 		val aliasFile = Source.fromFile("aliaslist")
 		var counter = 0
-		val trieMap = mutable.Map[String, TrieNode]()
-		trieMap(defaultKey) = new TrieNode()
+
+		val trie = new TrieNode()
 		for(line <- aliasFile.getLines()) {
 			val tokens = tokenizer.tokenize(line)
-			addTokensToTrie(tokens, trieMap)
+			trie.append(tokens)
 			counter += 1
 		}
-		println(s"serializing ${trieMap.keySet.size} tries for $counter aliases")
-		serializeTries(kryo, trieMap)
-		println(s"finished serializing tries")
+		println(s"serializing trie for $counter aliases")
+		val fileName = s"trie_full.bin"
+		val trieBinary = new Output(new FileOutputStream(fileName))
+		kryo.writeObject(trieBinary, trie)
+		trieBinary.close()
+		println(s"finished serializing trie")
+//		val trieMap = mutable.Map[String, TrieNode]()
+//		trieMap(defaultKey) = new TrieNode()
+//		for(line <- aliasFile.getLines()) {
+//			val tokens = tokenizer.tokenize(line)
+//			addTokensToTrie(tokens, trieMap)
+//			counter += 1
+//		}
+//		println(s"serializing ${trieMap.keySet.size} tries for $counter aliases")
+//		serializeTries(kryo, trieMap)
+//		println(s"finished serializing tries")
 	}
 }
