@@ -28,7 +28,7 @@ object TestData {
 	def truePositives(sc: SparkContext): RDD[(Double, Double)] = {
 		sc.parallelize(List((0.7, 1:Double), (0.8, 1:Double)))
 	}
-	
+
 	def falsePositives(sc: SparkContext): RDD[(Double, Double)] = {
 		sc.parallelize(List((0.5, 0:Double), (0.6, 0:Double)))
 	}
@@ -37,7 +37,7 @@ object TestData {
 		sc.parallelize(List.fill(2)((0: Double, 1: Double)))
 	}
 
-	def dbpediaList: List[Subject] = List(
+	val dbpediaList = List(
 		Subject(
 			name = Option("dbpedia_1"),
 			properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List("Q1"))
@@ -53,7 +53,7 @@ object TestData {
 		Subject(name = Option("dbpedia_4"))
 	)
 
-	def wikidataList: List[Subject] = List(
+	val wikidataList = List(
 			Subject(
 				name = Option("wikidata_1"),
 				properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List(""))
