@@ -28,6 +28,14 @@ object TestData {
 			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"))
 	}
 
+	def reversedSentences(): List[String] = {
+		List(
+			"This is a test sentence",
+			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen")
+	}
+
+
 	def allAliasesTestRDD(sc: SparkContext): RDD[String] = {
 		sc.parallelize(List(
 			"Audi",

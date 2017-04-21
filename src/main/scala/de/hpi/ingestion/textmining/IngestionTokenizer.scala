@@ -52,4 +52,11 @@ class IngestionTokenizer(
 	def onlyTokenize(text: String): List[String] = {
 		tokenizer.tokenize(text)
 	}
+
+	/**
+	  * Reverts the tokenization step. Only useful when the tokens were not stemmed and the stopwords were not filtered.
+	  * @param tokens List of tokens to join
+	  * @return String of the tokens joined
+	  */
+	def reverse(tokens: List[String]): String = tokenizer.reverse(tokens)
 }
