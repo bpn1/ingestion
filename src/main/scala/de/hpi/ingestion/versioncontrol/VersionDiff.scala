@@ -161,7 +161,7 @@ object VersionDiff {
 		val sc = new SparkContext(conf)
 
 		if(args.length < 2) {
-			return
+			System.exit(1)
 		}
     	val subjects = sc.cassandraTable[Subject](keyspace, tablename)
 		run(subjects, args).saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
