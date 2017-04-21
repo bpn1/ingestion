@@ -3,7 +3,6 @@ package de.hpi.ingestion.dataimport.dbpedia
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
-import org.apache.spark.rdd.RDD
 
 class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 
@@ -34,17 +33,8 @@ class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 		val entities = TestData.tripleRDD(sc)
 			.groupByKey
 			.map(tuple => DBPediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
+		    .map(identity)
 		entities should not be empty
-	}
-
-	they should "be instances of DBpediaEntitiy" in {
-		val organisations = TestData.organisations
-		TestData.tripleRDD(sc)
-			.groupByKey
-			.map(tuple => DBPediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
-		    .foreach { entity =>
-				entity shouldBe a[DBPediaEntity]
-			}
 	}
 
 	they should "contain the same information as the triples" in {
@@ -52,6 +42,7 @@ class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 		val entities = TestData.tripleRDD(sc)
 			.groupByKey
 			.map(tuple => DBPediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
+		    .map(identity)
 		val expected = TestData.entityRDD(sc)
 		assertRDDEquals(expected, entities)
 	}

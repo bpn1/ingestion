@@ -109,7 +109,12 @@ object DBPediaImport {
 		entity.instancetype = extractInstancetype(
 			data.getOrElse(dbpediaPropertyName("instancetype"), List()),
 			organisations)
-		entity.data = data
+
+		// Remove values from data which are empty or contain only one element
+		val redundant = dbpediaPropertyName.values
+			.filter(value => data.getOrElse(value, Nil).length < 2)
+		entity.data = data -- redundant
+
 		entity
 	}
 

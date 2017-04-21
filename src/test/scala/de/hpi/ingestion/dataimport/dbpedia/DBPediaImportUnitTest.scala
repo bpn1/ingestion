@@ -10,12 +10,6 @@ class DBPediaImportUnitTest extends FlatSpec with SharedSparkContext with Matche
 		tokens should have length 3
 	}
 
-	it should "tokenize the triple correctly" in {
-		val parsedTokens = DBPediaImport.tokenize(TestData.line)
-		val expected = TestData.lineTokens
-		parsedTokens shouldEqual expected
-	}
-
 	it should "return a three element long list with a shorter input" in {
 		TestData.shorterLineList.foreach{ line =>
 			val tokens = DBPediaImport.tokenize(line)
@@ -28,6 +22,12 @@ class DBPediaImportUnitTest extends FlatSpec with SharedSparkContext with Matche
 			val tokens = DBPediaImport.tokenize(line)
 			tokens should have length 3
 		}
+	}
+
+	it should "tokenize the triple correctly" in {
+		val parsedTokens = DBPediaImport.tokenize(TestData.line)
+		val expected = TestData.lineTokens
+		parsedTokens shouldEqual expected
 	}
 
 	"cleanURL" should "replace all prefixes" in {

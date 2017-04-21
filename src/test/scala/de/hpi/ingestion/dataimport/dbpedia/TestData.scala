@@ -66,9 +66,6 @@ object TestData {
 		Option("Lorem Ipsum"),
 		Option("Company"),
 		Map(
-			"dbo:wikiPageID" -> List("1"),
-			"rdfs:label" -> List("Anschluss"),
-			"dbo:abstract" -> List("Lorem Ipsum"),
 			"rdf:type" -> List("dbo:Organisation", "dbo:Company", "dbo:Airline"),
 			"dbp:founded" -> List("1926-04-15", "Chicago, Illinois"),
 			"dbp:headquarters" -> List("CentrePort, Fort Worth, Texas, United States")
