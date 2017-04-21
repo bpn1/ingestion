@@ -106,10 +106,10 @@ class WikipediaTextParserTest extends FlatSpec with SharedSparkContext with Matc
 		testLinks shouldBe expectedLinks
 	}
 
-	"All redirects" should "contain WEITERLEITUNG link" in {
+	"All redirects" should "contain #WEITERLEITUNG link" in {
 		val entries = TestData.testEntriesWithBadRedirects()
 		entries.map(entry => WikipediaTextParser.cleanRedirects(entry))
-			.map(entry => entry.getText should startWith("WEITERLEITUNG"))
+			.map(entry => entry.getText should startWith("#WEITERLEITUNG"))
 	}
 
 	"Wikipedia disambiguation pages" should "be recognized as such" in {
@@ -222,6 +222,13 @@ class WikipediaTextParserTest extends FlatSpec with SharedSparkContext with Matc
 			.map(_.toString)
 			.foreach(document => document should (not include "</span>"
 				and not include "</p>" and not include "</abbr>"))
+	}
+
+	"Redirect page entries" should "be identifies as such" in {
+		val entries = TestData.parsedEntriesWithRedirects()
+			.filter(WikipediaTextParser.isRedirectPage)
+		val expectedEntries = TestData.parsedRedirectEntries()
+		entries shouldEqual expectedEntries
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
