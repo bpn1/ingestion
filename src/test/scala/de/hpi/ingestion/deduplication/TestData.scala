@@ -1,15 +1,11 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-<<<<<<< HEAD
-=======
 import de.hpi.ingestion.datalake.models.Subject
->>>>>>> 57d76b578471897384c9639b715b7d3b5e3c7be9
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 object TestData {
-<<<<<<< HEAD
 	val idList = List.fill(8)(UUID.randomUUID())
 	def testData(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
 		sc.parallelize(Seq(
@@ -32,29 +28,32 @@ object TestData {
 	def truePositives(sc: SparkContext): RDD[(Double, Double)] = {
 		sc.parallelize(List((0.7, 1:Double), (0.8, 1:Double)))
 	}
+	
 	def falsePositives(sc: SparkContext): RDD[(Double, Double)] = {
 		sc.parallelize(List((0.5, 0:Double), (0.6, 0:Double)))
 	}
+
 	def falseNegatives(sc: SparkContext): RDD[(Double, Double)] = {
-		sc.parallelize(List.fill(2)((0:Double, 1:Double)))
-=======
-	val dbpediaList = List(
-			Subject(
-				name = Option("dbpedia_1"),
-				properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List("Q1"))
-			),
-			Subject(
-				name = Option("dbpedia_2"),
-				properties = Map("id_dbpedia" -> List("dbpedia_2"), "id_wikidata" -> List("Q2"))
-			),
-			Subject(
-				name = Option("dbpedia_3"),
-				properties = Map("id_wikidata" -> List("Q3"))
-			),
-			Subject(name = Option("dbpedia_4"))
+		sc.parallelize(List.fill(2)((0: Double, 1: Double)))
+	}
+
+	def dbpediaList: List[Subject] = List(
+		Subject(
+			name = Option("dbpedia_1"),
+			properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List("Q1"))
+		),
+		Subject(
+			name = Option("dbpedia_2"),
+			properties = Map("id_dbpedia" -> List("dbpedia_2"), "id_wikidata" -> List("Q2"))
+		),
+		Subject(
+			name = Option("dbpedia_3"),
+			properties = Map("id_wikidata" -> List("Q3"))
+		),
+		Subject(name = Option("dbpedia_4"))
 	)
 
-	val wikidataList = List(
+	def wikidataList: List[Subject] = List(
 			Subject(
 				name = Option("wikidata_1"),
 				properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List(""))
@@ -90,6 +89,5 @@ object TestData {
 			(dbpediaList(1).id, wikidataList(1).id),
 			(dbpediaList(2).id, wikidataList(2).id)
 		))
->>>>>>> 57d76b578471897384c9639b715b7d3b5e3c7be9
 	}
 }
