@@ -9,7 +9,7 @@ object TermFrequencyCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputArticlesTablename = "parsedwikipedia"
-	val tokenizer = new CleanCoreNLPTokenizer
+	val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
 	val contextSize = 20
 
 	/**
@@ -19,7 +19,7 @@ object TermFrequencyCounter {
 	  * @return a Bag containing every term and its frequency
 	  */
 	def extractBagOfWords(entry: ParsedWikipediaEntry): Bag[String, Int] = {
-		val tokens = tokenizer.tokenize(entry.getText())
+		val tokens = tokenizer.process(entry.getText())
 		extractBagOfWords(tokens)
 	}
 
@@ -30,9 +30,7 @@ object TermFrequencyCounter {
 	  * @return a Bag containing every term and its frequency
 	  */
 	def extractBagOfWords(tokens: List[String]): Bag[String, Int] = {
-		val stemmer = new AccessibleGermanStemmer
-		val stemmedWords = tokens.map(stemmer.stem)
-		Bag[String, Int](stemmedWords)
+		Bag[String, Int](tokens)
 	}
 
 	/**
@@ -54,16 +52,16 @@ object TermFrequencyCounter {
 	  * @return list of tuples containing the link and its context
 	  */
 	def extractLinkContexts(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
-		val tokens = tokenizer.tokenize(entry.getText())
+		val tokens = tokenizer.onlyTokenize(entry.getText())
 		val contextLinks = entry.textlinks.map { link =>
-			val aliasTokens = tokenizer.tokenize(link.alias)
+			val aliasTokens = tokenizer.onlyTokenize(link.alias)
 			val aliasIndex = tokens.indexOfSlice(aliasTokens)
 			val contextStart = Math.max(aliasIndex - contextSize, 0)
 			val preAliasContext = tokens.slice(contextStart, aliasIndex)
 			val contextEnd = Math.min(aliasIndex + contextSize, tokens.length)
 			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
 			val context = preAliasContext ++ postAliasContext
-			val bag = extractBagOfWords(context)
+			val bag = extractBagOfWords(tokenizer.process(context))
 			link.copy(context = bag.getCounts())
 		}
 		entry.copy(linkswithcontext = contextLinks)

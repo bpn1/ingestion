@@ -2,6 +2,7 @@ package de.hpi.ingestion.textmining
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Matchers {
 

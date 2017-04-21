@@ -10,15 +10,15 @@ object DocumentFrequencyCounter {
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputDocumentFrequenciesTablename = "wikipediadocfreq"
 	val removeStopwords = true
+	val stem = true
 	val leastSignificantDocumentFrequency = 5
 
 	def countDocumentFrequencies(
 		articles: RDD[ParsedWikipediaEntry]
 	): RDD[DocumentFrequency] = {
-		val tokenizer = new CleanCoreNLPTokenizer
-		val ingestionTokenizer = new IngestionTokenizer(tokenizer, removeStopwords)
+		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer, removeStopwords, stem)
 		articles
-			.flatMap(article => ingestionTokenizer.process(article.getText()).toSet)
+			.flatMap(article => tokenizer.process(article.getText()).toSet)
 			.map(word => (word, 1))
 			.reduceByKey(_ + _)
 			.map(DocumentFrequency.tupled)
@@ -39,10 +39,7 @@ object DocumentFrequencyCounter {
 		val sc = new SparkContext(conf)
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val documentFrequencies = countDocumentFrequencies(allArticles)
-		filterDocumentFrequencies(
-			documentFrequencies,
-			leastSignificantDocumentFrequency
-		)
+		filterDocumentFrequencies(documentFrequencies, leastSignificantDocumentFrequency)
 			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
 
 		sc.stop()
