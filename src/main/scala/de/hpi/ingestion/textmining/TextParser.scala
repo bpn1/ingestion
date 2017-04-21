@@ -331,13 +331,16 @@ object TextParser {
 	}
 
 	/**
-	  * Parses all Wikipedia articles from Wikitext to raw text and extracts its links.
+	  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links. Also removes all metapages
+	  * except {@categoryNamespace} pages.
 	  *
 	  * @param rawArticles all Wikipedia articles as Wikitext
 	  * @return Wikipedia articles with extracted links
 	  */
 	def run(rawArticles: RDD[WikipediaEntry]): RDD[ParsedWikipediaEntry] = {
-		rawArticles.map(parseWikipediaEntry)
+		rawArticles
+			.filter(!isMetaPage(_))
+			.map(parseWikipediaEntry)
 	}
 
 	def main(args: Array[String]): Unit = {
