@@ -234,7 +234,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Cleaned Wikipedia document" should "not contain other tags than anchors" in {
 		TestData.documentTestList()
 			.map(Jsoup.parse)
-			.map(WikipediaTextParser.removeTags)
+			.map(TextParser.removeTags)
 			.map(_.toString)
 			.foreach(document => document should (not include "</span>"
 				and not include "</p>" and not include "</abbr>"))
@@ -242,7 +242,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	"Redirect page entries" should "be identified as such" in {
 		val entries = TestData.parsedEntriesWithRedirects()
-			.filter(WikipediaTextParser.isRedirectPage)
+			.filter(TextParser.isRedirectPage)
 		val expectedEntries = TestData.parsedRedirectEntries()
 		entries shouldEqual expectedEntries
 	}

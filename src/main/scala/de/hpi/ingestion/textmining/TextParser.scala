@@ -40,6 +40,10 @@ object TextParser {
 		redirectRegex.findFirstIn(searchText).isDefined
 	}
 
+	def isRedirectPage(entry: ParsedWikipediaEntry): Boolean = {
+		entry.getText().startsWith(redirectText)
+	}
+
 	def extractRedirect(title: String, html: String, text: String): List[Link] = {
 		val anchorList = Jsoup.parse(html).select("a")
 		val linksList = anchorList
