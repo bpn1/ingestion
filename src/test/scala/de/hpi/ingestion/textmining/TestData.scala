@@ -251,19 +251,17 @@ object TestData {
 		val tf1df3 = 0.12493873660829993
 		val tf2df1 = 1.2041199826559248
 		val tf2df2 = 0.6020599913279624
-		val tf2df3 = 0.24987747321659987
-		val tf3df1 = 1.806179973983887
 		val tf3df2 = 0.9030899869919435
 		Set(
-			(Link("Audi", "Audi", 9), Map("hier" -> tf1df2, "ist" -> tf1df3, "verlink" -> tf1df2)),
-			(Link("Brachttal", "Brachttal", 55), Map("einwohnerzahl" -> tf1df1, "in" -> tf1df1, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf2df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "ein" -> tf2df1, "von" -> tf2df1, "270" -> tf1df1, "erst" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf1df1, "hess" -> tf1df2, "sech" -> tf1df1, "gemei" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1, "ca." -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66), Map("einwohnerzahl" -> tf1df1, "in" -> tf1df1, "brachttal" -> tf1df2, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf2df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "ein" -> tf2df1, "von" -> tf2df1, "270" -> tf1df1, "erst" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf1df1, "stamm" -> tf1df1, "hess" -> tf1df2, "sech" -> tf1df1, "gemei" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "streitberg" -> tf1df1, "ca." -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("Hessen", "Hessen", 87), Map("einwohnerzahl" -> tf1df1, "in" -> tf1df1, "brachttal" -> tf1df2, "aus" -> tf1df1, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf2df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "dem" -> tf1df1, "ein" -> tf2df1, "von" -> tf2df1, "270" -> tf1df1, "erst" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf1df1, "stamm" -> tf1df1, "sech" -> tf1df1, "gemei" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1, "ca." -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("1377", "1377", 225), Map("einwohnerzahl" -> tf1df1, "und" -> tf1df2, "streidtburgk" -> tf1df1, "aus" -> tf1df1, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf1df1, "dem" -> tf1df1, "bezeichnung" -> tf1df1, "ein" -> tf2df1, "jahr" -> tf3df2, "von" -> tf2df1, "im" -> tf1df1, "270" -> tf1df1, "erst" -> tf1df1, "stridberg" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf3df1, "stamm" -> tf1df1, "auf" -> tf1df1, "weit" -> tf1df1, "tauch" -> tf1df1, "1500" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "spa" -> tf1df1, "namensvaria" -> tf1df1, "ca." -> tf1df1, "red" -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("Büdinger Wald", "Büdinger Wald", 546), Map("waldrech" -> tf1df1, "und" -> tf1df2, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "der" -> tf1df1, "im" -> tf1df1, "-" -> tf1df1, "ins" -> tf1df1, "-rrb-" -> tf1df1, "hatt" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "vom" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1, "bis" -> tf1df1)),
-			(Link("Audi", "Audi", 7), Map("link" -> tf2df1, "brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)),
-			(Link("Brachttal", "Brachttal", 13), Map("link" -> tf2df1, "audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)),
-			(Link("historisches Jahr", "1377", 24), Map("link" -> tf2df1, "audi" -> tf1df3, "brachttal" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)))
+			(Link("Audi", "Audi", 9), Map("verlink" -> tf1df2)),
+			(Link("Brachttal", "Brachttal", 55), Map("einwohnerzahl" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66), Map("einwohnerzahl" -> tf1df1,"brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "streitberg" -> tf1df1)),
+			(Link("Hessen", "Hessen", 87), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
+			(Link("1377", "1377", 225), Map("einwohnerzahl" -> tf1df1, "streidtburgk" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf1df1, "bezeichnung" -> tf1df1, "jahr" -> tf3df2, "270" -> tf1df1, "stridberg" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "tauch" -> tf1df1, "1500" -> tf1df1, "namensvaria" -> tf1df1, "red" -> tf1df1)),
+			(Link("Büdinger Wald", "Büdinger Wald", 546), Map("waldrech" -> tf1df1, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "-" -> tf1df1, "-rrb-" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1)),
+			(Link("Audi", "Audi", 7), Map("brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
+			(Link("Brachttal", "Brachttal", 13), Map("audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
+			(Link("historisches Jahr", "1377", 24), Map( "audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
 	def termFrequenciesTestSet(): Set[(String, Bag[String, Int])] = {
@@ -474,7 +472,6 @@ object TestData {
 
 	def inverseDocumentFrequenciesTestSet(): Set[(String, Double)] = {
 		val oneOccurrence = 0.6020599913279624
-		val twoOccurrences = 0.3010299956639812
 		val threeOccurrences = 0.12493873660829993
 		Set(
 			("audi", threeOccurrences),
@@ -487,9 +484,9 @@ object TestData {
 		val tf2df1 = 0.9542425094393249
 		val df3 = 0.0
 		Set(
-			("Audi Test mit Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
-			("Audi Test ohne Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
-			("Testartikel", Map("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1)))
+			("Audi Test mit Link", Map("audi" -> df3, "verlink" -> tf1df2)),
+			("Audi Test ohne Link", Map("audi" -> df3, "verlink" -> tf1df2)),
+			("Testartikel", Map("audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
 	def unstemmedGermanWordsTestSet(): Set[String] = {
