@@ -40,19 +40,26 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	"Input tokens" should "be processed" in {
 		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)
-		assert(false)
+		val tokens = TestData.tokenizedTestSentences()
+			.map(tokenizer.process)
+		val expectedTokens = TestData.stemmedAndFilteredSentences()
+		tokens shouldEqual expectedTokens
 	}
 
 	they should "keep stopwords" in {
 		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, false, true)
-		val stemmedWords = tokenizer.process(TestData.unstemmedGermanWordsTestList())
-		val expectedWords = TestData.stemmedGermanWordsTestList()
-		stemmedWords shouldEqual expectedWords
+		val tokens = TestData.tokenizedTestSentences()
+			.map(tokenizer.process)
+		val expectedTokens = TestData.stemmedTokenizedSentences()
+		tokens shouldEqual expectedTokens
 	}
 
 	they should "not be stemmed" in {
 		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true)
-		assert(false)
+		val tokens = TestData.tokenizedTestSentences()
+			.map(tokenizer.process)
+		val expectedTokens = TestData.filteredTokenizedSentences()
+		tokens shouldEqual expectedTokens
 	}
 
 	they should "remain unchanged" in {
