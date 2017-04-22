@@ -1,22 +1,33 @@
 package de.hpi.ingestion.textmining
 
 import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	"Input String" should "be processed" in {
-		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)
-		assert(false)
+		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+		val tokens = TestData.testSentences()
+			.map(tokenizer.process)
+		val expectedTokens = TestData.stemmedAndFilteredSentences()
+		tokens shouldEqual expectedTokens
 	}
 
 	it should "keep stopwords" in {
-		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, false, true)
-		assert(false)
+		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer, false, true)
+		val tokens = TestData.testSentences()
+			.map(tokenizer.process)
+		val expectedTokens = TestData.stemmedTokenizedSentences()
+		tokens shouldEqual expectedTokens
+
 	}
 
 	it should "not be stemmed" in {
-		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true)
-		assert(false)
+		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer, true, false)
+		val tokens = TestData.testSentences()
+			.map(tokenizer.process)
+		val expectedTokens = TestData.filteredTokenizedSentences()
+		tokens shouldEqual expectedTokens
 	}
 
 	it should "only be tokenized" in {
@@ -34,7 +45,9 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	they should "keep stopwords" in {
 		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, false, true)
-		assert(false)
+		val stemmedWords = tokenizer.process(TestData.unstemmedGermanWordsTestList())
+		val expectedWords = TestData.stemmedGermanWordsTestList()
+		stemmedWords shouldEqual expectedWords
 	}
 
 	they should "not be stemmed" in {

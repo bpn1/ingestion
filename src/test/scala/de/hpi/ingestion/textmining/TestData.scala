@@ -28,6 +28,27 @@ object TestData {
 			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"))
 	}
 
+	def filteredTokenizedSentences(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence"),
+			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "Hessen"),
+			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"))
+	}
+
+	def stemmedTokenizedSentences(): List[List[String]] = {
+		List(
+			List("thi", "is", "a", "test", "sentenc"),
+			List("streitberg", "ist", "ein", "von", "sech", "ortsteil", "der", "gemei", "brachttal", "main-kinzig-kreis", "in", "hess"),
+			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"))
+	}
+
+	def stemmedAndFilteredSentences(): List[List[String]] = {
+		List(
+			List("thi", "is", "a", "test", "sentenc"),
+			List("streitberg", "ortsteil", "gemei", "brachttal", "main-kinzig-kreis", "hess"),
+			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"))
+	}
+
 	def reversedSentences(): List[String] = {
 		List(
 			"This is a test sentence",
