@@ -93,7 +93,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	"Alias probabilities" should "not be empty" in {
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
 		val pages = CosineContextComparator
-			.joinablePages(aliases)
+			.computeAliasProbabilities(aliases)
 			.collect
 		pages should not be empty
 	}
@@ -101,7 +101,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	they should "be exactly these probabilites" in {
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
 		val pages = CosineContextComparator
-			.joinablePages(aliases)
+			.computeAliasProbabilities(aliases)
 			.collect
 			.toSet
 		pages shouldEqual TestData.aliasProbabilitiesSet()

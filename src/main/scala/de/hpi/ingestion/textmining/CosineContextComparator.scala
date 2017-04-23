@@ -6,7 +6,7 @@ import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
 /**
-  *
+  * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
   */
 object CosineContextComparator {
 	val keyspace = "wikidumps"
@@ -140,7 +140,13 @@ object CosineContextComparator {
 			}
 	}
 
-	def joinablePages(aliases: RDD[Alias]): RDD[(String, (String, Double, Double))] = {
+	/**
+	  * Computes probability that alias is a link and that it refers to a specific page for all aliases.
+	  *
+	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
+	  * @return aliases with probability features
+	  */
+	def computeAliasProbabilities(aliases: RDD[Alias]): RDD[(String, (String, Double, Double))] = {
 		aliases
 			.flatMap { alias =>
 				val totalProb = alias.linkoccurrences.toDouble / alias.totaloccurrences.toDouble
@@ -150,6 +156,13 @@ object CosineContextComparator {
 			}
 	}
 
+	/** Adds the cosine similarity feature value to the alias probability feature values.
+	  *
+	  * @param linkContexts           links with their contexts
+	  * @param aliasPageProbabilities both alias probabilities feature values
+	  * @param articleContexts        article names with their bags of words
+	  * @return feature entries containing alias probabilities and cosine similarity
+	  */
 	def compareLinksWithArticles(
 		linkContexts: RDD[(Link, Map[String, Double])],
 		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
@@ -194,11 +207,14 @@ object CosineContextComparator {
 	}
 
 	/**
+	  * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
 	  *
-	  * @param articlesWithTermFrequencies
-	  * @param documentFrequencies
-	  * @param aliases
-	  * @return
+	  * @param articlesWithTermFrequencies Wikipedia articles with their bags of words
+	  * @param documentFrequencies         Document frequencies of known tokens, used for tf-idf computation
+	  * @param aliases                     known aliases and pages they may refer to
+	  * @return Feature entries. They contain the probability that the alias is a link, that it refers to the respective
+	  *         page and the cosine similarity between the link context and the page words. A feature entry may also be
+	  *         denoted as false, which means that the actual link did not point to that page.
 	  */
 	def run(
 		articlesWithTermFrequencies: RDD[ParsedWikipediaEntry],
@@ -219,7 +235,7 @@ object CosineContextComparator {
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
-		val aliasPageProbabilities = joinablePages(aliases)
+		val aliasPageProbabilities = computeAliasProbabilities(aliases)
 		compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
 	}
 
