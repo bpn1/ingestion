@@ -326,7 +326,8 @@ object TestData {
 			Alias("Hessen", Map("Hessen" -> 1), 1, 2),
 			Alias("1377", Map("1377" -> 1), 1, 1),
 			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), 1, 2),
-			Alias("historisches Jahr", Map("1377" -> 1), 1, 1)
+			Alias("historisches Jahr", Map("1377" -> 1), 1, 1),
+			Alias("Büdinger Wald", Map("Audi" -> 1), 1, 2) // negative example
 		)
 	}
 
@@ -551,7 +552,8 @@ object TestData {
 			("Hessen", ("Hessen", 0.5, 1.0)),
 			("1377", ("1377", 1.0, 1.0)),
 			("Büdinger Wald", ("Büdinger Wald", 0.5, 1.0)),
-			("historisches Jahr", ("1377", 1.0, 1.0))
+			("historisches Jahr", ("1377", 1.0, 1.0)),
+			("Büdinger Wald", ("Audi", 0.5, 1.0))
 		)
 	}
 
@@ -565,7 +567,8 @@ object TestData {
 			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true),
 			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, true),
 			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true),
-			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true)
+			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false)
 		)
 	}
 
