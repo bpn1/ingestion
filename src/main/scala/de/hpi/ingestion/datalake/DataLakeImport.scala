@@ -102,10 +102,10 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 		)
 
 		val configSettings = xml \\ "config" \ "sourceSettings"
-		this.settings("outputKeyspace") = (configSettings \ "outputKeyspace").text
-		this.settings("outputTable") = (configSettings \ "outputTable").text
-		this.settings("versionTable") = (configSettings \ "versionTable").text
+		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
+			settings(node.label) = node.text
 	}
+
 	protected def parseConfig(path: String): Unit = {
 		val url = getClass.getResource(s"/$path")
 		this.parseConfig(url)
