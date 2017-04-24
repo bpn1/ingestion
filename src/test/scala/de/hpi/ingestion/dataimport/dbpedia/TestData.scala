@@ -6,11 +6,12 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.io.Source
+import scala.xml.XML
 
 object TestData {
 	// scalastyle:off line.size.limit
 
-	def prefixesList(): List[(String,String)] = {
+	def prefixesList: List[(String,String)] = {
 		val prefixFile = Source.fromURL(getClass.getResource("/prefixes.txt"))
 		val prefixes = prefixFile.getLines.toList
 			.map(_.trim.replaceAll("""[()]""", "").split(","))
@@ -18,45 +19,58 @@ object TestData {
 		prefixes
 	}
 
-	def line(): String = {
-		"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> ."""
+	def organisations: List[String] = {
+		val rdfTypFile = Source.fromURL(this.getClass.getResource("/rdf_types.xml"))
+		val rdfTypes = XML.loadString(rdfTypFile.getLines.mkString("\n"))
+		for {
+			organisation <- (rdfTypes \\ "types" \ "organisation").toList
+			label = (organisation \ "label").text
+		} yield label
 	}
 
-	def shorterLineList(): List[String] = {
-		List(
+	def line: String = """<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> ."""
+
+	def shorterLineList: List[String] = List(
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> .""",
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> .""",
-			"")
-	}
+			""
+	)
 
-	def longerLineList(): List[String] = {
-		List(
+	def longerLineList: List[String] = List(
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> .""",
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://purl.org/dc/terms/subject> ."""
-		)
-	}
+	)
 
-	def lineTokens(): List[String] =  {
-		List(
-			"http://de.dbpedia.org/resource/Anschluss_(Soziologie)",
-			"http://purl.org/dc/terms/subject",
-			"http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie"
-		)
-	}
+	def lineTokens: List[String] = List(
+		"http://de.dbpedia.org/resource/Anschluss_(Soziologie)",
+		"http://purl.org/dc/terms/subject",
+		"http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie"
+	)
 
-	def properties(): List[(String, String)] =  {
-		List(
-			("dbo:wikiPageID", "1"),
-			("rdfs:label", "Anschluss"),
-			("dbo:abstract", "Der Anschluss ist der Anschluss zum Anschluss"),
-			("rdf:type", "Typ 0"),
-			("ist", "klein"),
-			("ist", "mittel"),
-			("hat", "Namen"),
-			("hat", "Nachnamen"),
-			("kennt", "alle")
+	def properties: List[(String, String)] = List(
+		("dbo:wikiPageID", "1"),
+		("rdfs:label", "Anschluss"),
+		("dbo:abstract", "Lorem Ipsum"),
+		("rdf:type", "dbo:Organisation"),
+		("rdf:type", "dbo:Company"),
+		("rdf:type", "dbo:Airline"),
+		("dbp:founded", "1926-04-15"),
+		("dbp:founded", "Chicago, Illinois"),
+		("dbp:headquarters", "CentrePort, Fort Worth, Texas, United States")
+	)
+
+	def parsedEntity(name: String) = DBPediaEntity(
+		name,
+		Option("1"),
+		Option("Anschluss"),
+		Option("Lorem Ipsum"),
+		Option("Company"),
+		Map(
+			"rdf:type" -> List("dbo:Organisation", "dbo:Company", "dbo:Airline"),
+			"dbp:founded" -> List("1926-04-15", "Chicago, Illinois"),
+			"dbp:headquarters" -> List("CentrePort, Fort Worth, Texas, United States")
 		)
-	}
+	)
 
 	def turtleRDD(sc: SparkContext): RDD[String] = {
 		sc.parallelize(List(
@@ -88,7 +102,7 @@ object TestData {
 
 	def version(sc: SparkContext): Version = Version("DBPediaDataLakeImport", datasources = List("dataSources"), sc)
 
-	def testEntity(): DBPediaEntity = DBPediaEntity(
+	def testEntity: DBPediaEntity = DBPediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
 		label = Option("Liste von Autoren"),
 		data = Map(
