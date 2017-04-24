@@ -23,8 +23,28 @@ class DeduplicationUnitTest
 			JaroWinkler.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.7,
 			ExactMatchString.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.2
 		)
+
 		val expectedScore = simScores.sum / 3
 		score shouldEqual expectedScore
+	}
+
+	"RoughlyEqualNumbers" should "calculate the similarity of two numbers, but not as strings" in {
+			val testSubjects = getSampleSubjects()
+			val expectedScore1 = 0.98
+			val expectedScore2 = 0.02
+
+			val computedScore1 = RoughlyEqualNumbers.compare(
+				testSubjects(0).properties("grossIncome").head,
+				testSubjects(1).properties("grossIncome").head
+			)
+
+			val computedScore2 = RoughlyEqualNumbers.compare(
+				testSubjects(2).properties("grossIncome").head,
+				testSubjects(3).properties("grossIncome").head
+			)
+
+			computedScore1 shouldEqual expectedScore1
+			computedScore2 shouldEqual computedScore2
 	}
 
 	it should "just return the weighted score if the configuration contains only one element" in {
@@ -200,26 +220,33 @@ class DeduplicationUnitTest
 				name = Some("Volkswagen"),
 				properties = Map(
 					"city" -> List("Berlin"),
-					"geoCoords" -> List("52","11")
+					"geoCoords" -> List("52","11"),
+					"grossIncome" -> List("1000000")
 				)
 			),
 			Subject(
 				name = Some("Audi GmbH"),
 				properties = Map(
 					 "city" -> List("Berlin"),
-					 "geoCoords" -> List("52","14")
+					 "geoCoords" -> List("52","14"),
+					 "grossIncome" -> List("980000")
 				)
 			),
 			Subject(
 				name = Some("Audy GmbH"),
 				properties = Map(
 					 "city" -> List("New York"),
-					 "geoCoords" -> List("52","13")
+					 "geoCoords" -> List("52","13"),
+					 "grossIncome" -> List("600")
 					)
 			),
 			Subject(
 				name = Some("Volkswagen AG"),
-				properties = Map("city" -> List("Berlin"))),
+				properties = Map(
+					"city" -> List("Berlin"),
+					"grossIncome" -> List("12")
+					)
+				),
 			Subject(
 				name = Some("Porsche"),
 				properties = Map(

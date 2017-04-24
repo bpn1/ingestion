@@ -22,7 +22,12 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = {
 		sc
 			.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
+			.filter(filterEntities)
 			.map(translateToSubject(_, version))
+	}
+
+	override def filterEntities(entity: WikiDataEntity): Boolean = {
+		entity.instancetype.isDefined
 	}
 
 	override def translateToSubject(entity: WikiDataEntity, version: Version): Subject = {
@@ -30,7 +35,7 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 		val sm = new SubjectManager(subject, version)
 
 		entity.label.foreach(label => sm.setName(label))
-		entity.instancetype.foreach(instancetyp => sm.setCategory(instancetyp))
+		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 		if(entity.aliases.nonEmpty) sm.addAliases(entity.aliases)
 
 		val mapping = parseNormalizationConfig(this.normalizationFile)
