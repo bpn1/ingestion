@@ -29,6 +29,7 @@ object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 		val sm = new SubjectManager(subject, version)
 
 		entity.label.foreach(label => sm.setName(label.replaceAll("@de .$", "")))
+		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 
 		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val normalizedProperties = normalizeProperties(entity, mapping)
