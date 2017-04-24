@@ -167,6 +167,20 @@ CREATE TYPE evaluation.version (
     program text
 );
 
+CREATE TYPE evaluation.subject (
+    id uuid,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
 -- Tables
 CREATE TABLE evaluation.goldstandard (
     id frozen<tuple <uuid, uuid>> PRIMARY KEY
@@ -211,4 +225,9 @@ CREATE TABLE evaluation.version (
     datasources list<text>,
     program text,
     timestamp timestamp
+);
+
+CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
+    subject_id uuid PRIMARY KEY,
+    candidates list<frozen<tuple<subject, text, double>>>
 );
