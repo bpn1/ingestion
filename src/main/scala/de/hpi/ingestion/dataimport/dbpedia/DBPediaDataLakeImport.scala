@@ -20,24 +20,28 @@ object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 	"dbpedia"
 ){
 	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = {
+		val mapping = parseNormalizationConfig(this.normalizationFile)
 		sc
 			.cassandraTable[DBPediaEntity](inputKeyspace, inputTable)
 			.filter(filterEntities)
-			.map(translateToSubject(_, version))
+			.map(translateToSubject(_, version, mapping))
 	}
 
 	override def filterEntities(entity: DBPediaEntity): Boolean = {
 		entity.instancetype.isDefined
 	}
 
-	override def translateToSubject(entity: DBPediaEntity, version: Version): Subject = {
+	override def translateToSubject(
+		entity: DBPediaEntity,
+		version: Version,
+		mapping: Map[String, List[String]]
+	): Subject = {
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
 		entity.label.foreach(label => sm.setName(label.replaceAll("@de .$", "")))
 		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 
-		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val normalizedProperties = normalizeProperties(entity, mapping)
 		val properties = mutable.Map[String, List[String]]()
 		properties ++= (entity.data ++ normalizedProperties)

@@ -35,7 +35,7 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 	  * @param version the version of the new Subject
 	  * @return a new Subject created from the given object
 	  */
-	protected def translateToSubject(entity: T, version: Version): Subject
+	protected def translateToSubject(entity: T, version: Version, mapping: Map[String, List[String]]): Subject
 
 	/**
 	  * Parses the config file into a Map.
