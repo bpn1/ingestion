@@ -232,7 +232,7 @@ object CosineContextComparator {
 
 		val contextTfidf = calculateLinkContextsTfidf(
 			articlesWithTermFrequencies,
-			documentFrequencies,git 
+			documentFrequencies,
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
