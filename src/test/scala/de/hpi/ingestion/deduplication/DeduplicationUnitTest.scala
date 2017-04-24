@@ -134,17 +134,6 @@ class DeduplicationUnitTest
 		val computedValue25 = EuclidianDistance.turnDistanceIntoScore(testValues(4), testScale2)
 
 		val expectedValues = List(1.0,1.0,0.75,0.5,0.0,1.0,1.0,1.0,0.75,0.0)
-		val expectedValue11 = 1.0
-		val expectedValue12 = 1.0
-		val expectedValue13 = 0.75
-		val expectedValue14 = 0.5
-		val expectedValue15 = 0.0
-
-		val expectedValue21 = 1.0
-		val expectedValue22 = 1.0
-		val expectedValue23 = 1.0
-		val expectedValue24 = 0.75
-		val expectedValue25 = 0.0
 
 		computedValue11 shouldEqual expectedValues(0)
 		computedValue12 shouldEqual expectedValues(1)
