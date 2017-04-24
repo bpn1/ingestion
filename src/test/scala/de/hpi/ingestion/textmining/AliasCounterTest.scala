@@ -26,7 +26,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 			.countAliases(articles)
 			.collect
 			.foreach(aliasCounter =>
-				aliasCounter.totaloccurrences should be > 0)
+				aliasCounter.totaloccurrences.get should be > 0)
 	}
 
 	they should "have consistent counts" in {
@@ -35,9 +35,9 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 			.countAliases(articles)
 			.collect
 			.foreach { aliasCounter =>
-				aliasCounter.linkoccurrences should be <= aliasCounter.totaloccurrences
-				aliasCounter.linkoccurrences should be >= 0
-				aliasCounter.totaloccurrences should be >= 0
+				aliasCounter.linkoccurrences.get should be <= aliasCounter.totaloccurrences.get
+				aliasCounter.linkoccurrences.get should be >= 0
+				aliasCounter.totaloccurrences.get should be >= 0
 			}
 	}
 
@@ -62,9 +62,9 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 			.flatMap(AliasCounter.extractAliasList)
 			.collect
 			.foreach { alias =>
-				alias.linkoccurrences should be <= 1
-				alias.linkoccurrences should be >= 0
-				alias.totaloccurrences shouldBe 1
+				alias.linkoccurrences.get should be <= 1
+				alias.linkoccurrences.get should be >= 0
+				alias.totaloccurrences.get shouldBe 1
 			}
 	}
 

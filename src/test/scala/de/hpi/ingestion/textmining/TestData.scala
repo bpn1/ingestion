@@ -260,35 +260,35 @@ object TestData {
 
 	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {
 		sc.parallelize(List(
-			Alias("Audi", Map(), 1, 1),
-			Alias("Audi", Map(), 1, 1),
-			Alias("Audi", Map(), 0, 1),
-			Alias("Brachttal", Map(), 1, 1),
-			Alias("Brachttal", Map(), 1, 1),
-			Alias("Main-Kinzig-Kreis", Map(), 1, 1),
-			Alias("Main-Kinzig-Kreis", Map(), 0, 1),
-			Alias("Hessen", Map(), 1, 1),
-			Alias("Hessen", Map(), 0, 1),
-			Alias("1377", Map(), 1, 1),
-			Alias("Büdinger Wald", Map(), 1, 1),
-			Alias("Büdinger Wald", Map(), 0, 1),
-			Alias("Backfisch", Map(), 0, 1),
-			Alias("Streitberg", Map(), 0, 1),
-			Alias("historisches Jahr", Map(), 1, 1)
+			Alias("Audi", Map(), Option(1), Option(1)),
+			Alias("Audi", Map(), Option(1), Option(1)),
+			Alias("Audi", Map(), Option(0), Option(1)),
+			Alias("Brachttal", Map(), Option(1), Option(1)),
+			Alias("Brachttal", Map(), Option(1), Option(1)),
+			Alias("Main-Kinzig-Kreis", Map(), Option(1), Option(1)),
+			Alias("Main-Kinzig-Kreis", Map(), Option(0), Option(1)),
+			Alias("Hessen", Map(), Option(1), Option(1)),
+			Alias("Hessen", Map(), Option(0), Option(1)),
+			Alias("1377", Map(), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map(), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map(), Option(0), Option(1)),
+			Alias("Backfisch", Map(), Option(0), Option(1)),
+			Alias("Streitberg", Map(), Option(0), Option(1)),
+			Alias("historisches Jahr", Map(), Option(1), Option(1))
 		))
 	}
 
 	def countedAliasesTestRDD(sc: SparkContext): RDD[Alias] = {
 		sc.parallelize(List(
-			Alias("Audi", Map(), 2, 3),
-			Alias("Brachttal", Map(), 2, 2),
-			Alias("Main-Kinzig-Kreis", Map(), 1, 2),
-			Alias("Hessen", Map(), 1, 2),
-			Alias("1377", Map(), 1, 1),
-			Alias("Büdinger Wald", Map(), 1, 2),
-			Alias("Backfisch", Map(), 0, 1),
-			Alias("Streitberg", Map(), 0, 1),
-			Alias("historisches Jahr", Map(), 1, 1)
+			Alias("Audi", Map(), Option(2), Option(3)),
+			Alias("Brachttal", Map(), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map(), Option(1), Option(2)),
+			Alias("Hessen", Map(), Option(1), Option(2)),
+			Alias("1377", Map(), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map(), Option(1), Option(2)),
+			Alias("Backfisch", Map(), Option(0), Option(1)),
+			Alias("Streitberg", Map(), Option(0), Option(1)),
+			Alias("historisches Jahr", Map(), Option(1), Option(1))
 		))
 	}
 
@@ -320,27 +320,28 @@ object TestData {
 
 	def finalAliasesSet(): Set[Alias] = {
 		Set(
-			Alias("Audi", Map("Audi" -> 2), 2, 3),
-			Alias("Brachttal", Map("Brachttal" -> 2), 2, 2),
-			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), 1, 2),
-			Alias("Hessen", Map("Hessen" -> 1), 1, 2),
-			Alias("1377", Map("1377" -> 1), 1, 1),
-			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), 1, 2),
-			Alias("historisches Jahr", Map("1377" -> 1), 1, 1),
-			Alias("Büdinger Wald", Map("Audi" -> 1), 1, 2) // negative example
+			Alias("Audi", Map("Audi" -> 2), Option(2), Option(3)),
+			Alias("Brachttal", Map("Brachttal" -> 2), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Option(1), Option(2)),
+			Alias("Hessen", Map("Hessen" -> 1), Option(1), Option(2)),
+			Alias("1377", Map("1377" -> 1), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("1377" -> 1), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Audi" -> 1), Option(1), Option(2)), // negative example
+			Alias("historisches Jahr", Map("1377" -> 1)) // incomplete table entry
 		)
 	}
 
 	def aliasesWithExistingPagesSet(): Set[Alias] = {
 		// these pages do not fit to the aliases but are required for the tests
 		Set(
-			Alias("Audi", Map("Audi Test mit Link" -> 2), 2, 3),
-			Alias("Brachttal", Map("Audi Test ohne Link" -> 2), 2, 2),
-			Alias("Main-Kinzig-Kreis", Map("Streitberg (Brachttal)" -> 1), 1, 2),
-			Alias("Hessen", Map("Streitberg (Brachttal)" -> 1), 1, 2),
-			Alias("1377", Map("Testartikel" -> 1), 1, 1),
-			Alias("Büdinger Wald", Map("Testartikel" -> 1), 1, 2),
-			Alias("historisches Jahr", Map("Testartikel" -> 1), 1, 1)
+			Alias("Audi", Map("Audi Test mit Link" -> 2), Option(2), Option(3)),
+			Alias("Brachttal", Map("Audi Test ohne Link" -> 2), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Streitberg (Brachttal)" -> 1), Option(1), Option(2)),
+			Alias("Hessen", Map("Streitberg (Brachttal)" -> 1), Option(1), Option(2)),
+			Alias("1377", Map("Testartikel" -> 1), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Testartikel" -> 1), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("Testartikel" -> 1), Option(1), Option(1))
 		)
 	}
 

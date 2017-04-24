@@ -148,8 +148,9 @@ object CosineContextComparator {
 	  */
 	def computeAliasProbabilities(aliases: RDD[Alias]): RDD[(String, (String, Double, Double))] = {
 		aliases
+			.filter(alias => alias.linkoccurrences.isDefined && alias.totaloccurrences.isDefined)
 			.flatMap { alias =>
-				val totalProb = alias.linkoccurrences.toDouble / alias.totaloccurrences.toDouble
+				val totalProb = alias.linkoccurrences.get.toDouble / alias.totaloccurrences.get.toDouble
 				val numPages = alias.pages.values.sum.toDouble
 				val pageProb = alias.pages.mapValues(_.toDouble / numPages)
 				alias.pages.keySet.map(page => (alias.alias, (page, totalProb, pageProb(page))))

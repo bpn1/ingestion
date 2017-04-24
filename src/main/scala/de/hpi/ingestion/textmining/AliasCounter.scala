@@ -18,7 +18,8 @@ object AliasCounter {
 	  * @return percentage of the occurrences as link.
 	  */
 	def probabilityIsLink(aliasCounter: Alias): Double = {
-		aliasCounter.linkoccurrences.toDouble / aliasCounter.totaloccurrences
+		// dead method
+		aliasCounter.linkoccurrences.get.toDouble / aliasCounter.totaloccurrences.get
 	}
 
 	/**
@@ -34,13 +35,13 @@ object AliasCounter {
 
 		val links = linkSet
 			.toList
-			.map(Alias(_, Map(), 1, 1))
+			.map(Alias(_, Map(), Option(1), Option(1)))
 
 		val aliases = entry.foundaliases
 			.toSet
 			.filterNot(linkSet)
 			.toList
-			.map(Alias(_, Map(), 0, 1))
+			.map(Alias(_, Map(), Option(0), Option(1)))
 
 		links ++ aliases
 	}
@@ -56,8 +57,8 @@ object AliasCounter {
 		Alias(
 			alias1.alias,
 			alias1.pages ++ alias2.pages,
-			alias1.linkoccurrences + alias2.linkoccurrences,
-			alias1.totaloccurrences + alias2.totaloccurrences)
+			Option(alias1.linkoccurrences.get + alias2.linkoccurrences.get),
+			Option(alias1.totaloccurrences.get + alias2.totaloccurrences.get))
 	}
 
 	/**
@@ -86,7 +87,7 @@ object AliasCounter {
 		countAliases(articles)
 			.cache
 			.filter(_.alias.length <= maximumAliasLength)
-			.map(entry => (entry.alias, entry.linkoccurrences, entry.totaloccurrences))
+			.map(entry => (entry.alias, entry.linkoccurrences.get, entry.totaloccurrences.get))
 	}
 
 	def main(args: Array[String]): Unit = {
