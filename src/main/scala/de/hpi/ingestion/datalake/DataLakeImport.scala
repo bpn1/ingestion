@@ -16,12 +16,18 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 
 	/**
 	  * Reads the data of the datasource to import and transforms the entries to Subjects.
-	  *
 	  * @param sc      the SparkContext of the program
 	  * @param version the version of the new Subjects
 	  * @return a RDD of new Subjects created from the given objects
 	  */
 	protected def readInput(sc: SparkContext, version: Version): RDD[Subject]
+
+	/**
+	  * A filter for filtering non companies
+	  * @param entity the entity to be filtered
+	  * @return Boolean if the entity matches the filter
+	  */
+	protected def filterEntities(entity: T): Boolean
 
 	/**
 	  * Translates an entity of the datasource into a Subject, which is the schema of the staging table.
