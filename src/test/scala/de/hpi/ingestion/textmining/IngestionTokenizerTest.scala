@@ -6,7 +6,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	"Input String" should "be processed" in {
-		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
 		val tokens = TestData.testSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.stemmedAndFilteredSentences()
@@ -14,7 +14,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	}
 
 	it should "keep stopwords" in {
-		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer, false, true)
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, false, true)
 		val tokens = TestData.testSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.stemmedTokenizedSentences()
@@ -23,7 +23,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	}
 
 	it should "not be stemmed" in {
-		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer, true, false)
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, false)
 		val tokens = TestData.testSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.filteredTokenizedSentences()
@@ -31,7 +31,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	}
 
 	it should "only be tokenized" in {
-		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer)
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer)
 		val tokens = TestData.testSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.tokenizedTestSentences()
@@ -47,7 +47,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	}
 
 	they should "keep stopwords" in {
-		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, false, true)
+		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, false, true)
 		val tokens = TestData.tokenizedTestSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.stemmedTokenizedSentences()
@@ -55,7 +55,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	}
 
 	they should "not be stemmed" in {
-		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true)
+		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, true)
 		val tokens = TestData.tokenizedTestSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.filteredTokenizedSentences()
@@ -63,7 +63,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	}
 
 	they should "remain unchanged" in {
-		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer)
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer)
 		val tokens = TestData.tokenizedTestSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.tokenizedTestSentences()
@@ -71,7 +71,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	}
 
 	"Only tokenize" should "only tokenize the input" in {
-		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer)
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer)
 		val tokens = TestData.testSentences()
 			.map(tokenizer.onlyTokenize)
 		val expectedTokens = TestData.tokenizedTestSentences()
@@ -79,7 +79,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	}
 
 	"Reverse" should "revert the input tokens" in {
-		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer)
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer)
 		val sentences = TestData.tokenizedTestSentences()
 			.map(tokenizer.reverse)
 		val expectedSentences = TestData.reversedSentences()

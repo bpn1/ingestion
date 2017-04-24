@@ -90,7 +90,7 @@ object IngestionTokenizer {
 	  * @param stem flag for stemming
 	  * @return returns tokenizer which uses the CoreNLPTokenizer and removes stopwords and stems according to the flags
 	  */
-	def apply(tokenizer: Tokenizer, stopWords: Boolean, stem: Boolean): IngestionTokenizer = {
+	def apply(tokenizer: Tokenizer, stopWords: Boolean = false, stem: Boolean = false): IngestionTokenizer = {
 		new IngestionTokenizer(tokenizer, stopWords, stem)
 	}
 }
