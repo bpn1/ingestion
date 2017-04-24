@@ -30,7 +30,7 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 		val sm = new SubjectManager(subject, version)
 
 		entity.label.foreach(label => sm.setName(label))
-		entity.instancetype.foreach(instancetyp => sm.setCategory(instancetyp))
+		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 		if(entity.aliases.nonEmpty) sm.addAliases(entity.aliases)
 
 		val mapping = parseNormalizationConfig(this.normalizationFile)
