@@ -11,7 +11,7 @@ import scala.collection.mutable
 /**
   * Import-Job to import DBPedia Subjects into the staging table of our datalake.
   */
-object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
+object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 	"DataLakeImportDBpedia_v1.0",
 	List("dbpedia"),
 	"normalization_dbpedia.xml",
@@ -21,7 +21,12 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = {
 		sc
 			.cassandraTable[DBPediaEntity](inputKeyspace, inputTable)
+			.filter(filterEntities)
 			.map(translateToSubject(_, version))
+	}
+
+	override def filterEntities(entity: DBPediaEntity): Boolean = {
+		entity.instancetype.isDefined
 	}
 
 	override def translateToSubject(entity: DBPediaEntity, version: Version): Subject = {
@@ -29,6 +34,7 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 		val sm = new SubjectManager(subject, version)
 
 		entity.label.foreach(label => sm.setName(label.replaceAll("@de .$", "")))
+		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 
 		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val normalizedProperties = normalizeProperties(entity, mapping)
