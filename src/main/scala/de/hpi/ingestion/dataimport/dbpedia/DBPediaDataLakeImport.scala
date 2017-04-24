@@ -45,9 +45,12 @@ object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 		val normalizedProperties = normalizeProperties(entity, mapping)
 		val properties = mutable.Map[String, List[String]]()
 		properties ++= (entity.data ++ normalizedProperties)
-		properties("geo_coords") = normalizedProperties("geo_coords_lat")
-			.zip(normalizedProperties("geo_coords_long"))
-		    .flatMap(x => List(x._1, x._2))
+
+		if (normalizedProperties.contains("geo_coords_lat") && normalizedProperties.contains("geo_coords_long")) {
+			properties("geo_coords") = normalizedProperties("geo_coords_lat")
+				.zip(normalizedProperties("geo_coords_long"))
+				.flatMap(x => List(x._1, x._2))
+		}
 
 		sm.addProperties(properties.toMap)
 		subject
