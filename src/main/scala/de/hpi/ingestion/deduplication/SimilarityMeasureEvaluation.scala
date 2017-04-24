@@ -1,10 +1,12 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
+
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 
 object SimilarityMeasureEvaluation {
 	val appName = "SimilarityMeasureEvaluation"
@@ -37,7 +39,12 @@ object SimilarityMeasureEvaluation {
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 
-		val training = sc.cassandraTable[((UUID, UUID), Double)](this.keyspace, this.inputTraining)
+		val training = sc
+			.cassandraTable[DuplicateCandidates](this.keyspace, this.inputTraining)
+		    .flatMap { case DuplicateCandidates(subject_id, candidates) =>
+				candidates.map(candidate => ((subject_id, candidate._1.id), candidate._3))
+			}
+		    .distinct
 		val test = sc
 			.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
 		    .map(pair => (pair, 1:Double))
