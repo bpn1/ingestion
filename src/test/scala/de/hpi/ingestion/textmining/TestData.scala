@@ -28,6 +28,35 @@ object TestData {
 			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"))
 	}
 
+	def filteredTokenizedSentences(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence"),
+			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "Hessen"),
+			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"))
+	}
+
+	def stemmedTokenizedSentences(): List[List[String]] = {
+		List(
+			List("thi", "is", "a", "test", "sentenc"),
+			List("streitberg", "ist", "ein", "von", "sech", "ortsteil", "der", "gemei", "brachttal", "main-kinzig-kreis", "in", "hess"),
+			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"))
+	}
+
+	def stemmedAndFilteredSentences(): List[List[String]] = {
+		List(
+			List("thi", "is", "a", "test", "sentenc"),
+			List("streitberg", "ortsteil", "gemei", "brachttal", "main-kinzig-kreis", "hess"),
+			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"))
+	}
+
+	def reversedSentences(): List[String] = {
+		List(
+			"This is a test sentence",
+			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen")
+	}
+
+
 	def allAliasesTestRDD(sc: SparkContext): RDD[String] = {
 		sc.parallelize(List(
 			"Audi",
@@ -82,13 +111,13 @@ object TestData {
 				),
 				List(),
 				List("Audi"),
-				context = Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)
+				context = Map("audi" -> 1, "verlink" -> 1)
 			),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
 				List(),
 				List("Audi"),
-				context = Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)
+				context = Map("audi" -> 1, "verlink" -> 1)
 			),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
@@ -98,20 +127,20 @@ object TestData {
 				),
 				List(),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
-				context = Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
 	def linksWithContextsTestSet(): Set[Link] = {
 		Set(
-			Link("Audi", "Audi", 9, Map("hier" -> 1, "ist" -> 1, "verlink" -> 1)),
-			Link("Brachttal", "Brachttal", 55, Map("einwohnerzahl" -> 1, "in" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-			Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-			Link("Hessen", "Hessen", 87, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "dem" -> 1, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-			Link("1377", "1377", 225, Map("einwohnerzahl" -> 1, "und" -> 1, "streidtburgk" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "dem" -> 1, "bezeichnung" -> 1, "ein" -> 2, "jahr" -> 3, "von" -> 2, "im" -> 1, "270" -> 1, "erst" -> 1, "stridberg" -> 1, "kleinst" -> 1, "die" -> 3, "stamm" -> 1, "auf" -> 1, "weit" -> 1, "tauch" -> 1, "1500" -> 1, "es" -> 1, "mit" -> 1, "spa" -> 1, "namensvaria" -> 1, "ca." -> 1, "red" -> 1, "zugleich" -> 1)),
-			Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "und" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "der" -> 1, "im" -> 1, "-" -> 1, "ins" -> 1, "-rrb-" -> 1, "hatt" -> 1, "holx" -> 1, "ortsnam" -> 1, "vom" -> 1, "streitberg" -> 1, "mittelal" -> 1, "bis" -> 1)),
-			Link("Audi", "Audi", 7, Map("link" -> 2, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-			Link("Brachttal", "Brachttal", 13, Map("link" -> 2, "audi" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-			Link("historisches Jahr", "1377", 24, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+			Link("Audi", "Audi", 9, Map("verlink" -> 1)),
+			Link("Brachttal", "Brachttal", 55, Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+			Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66, Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
+			Link("Hessen", "Hessen", 87, Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+			Link("1377", "1377", 225, Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
+			Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)),
+			Link("Audi", "Audi", 7, Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			Link("Brachttal", "Brachttal", 13, Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			Link("historisches Jahr", "1377", 24, Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
 	def articlesWithLinkContextsTestSet(): Set[ParsedWikipediaEntry] = {
@@ -122,7 +151,7 @@ object TestData {
 				),
 				List(),
 				List("Audi"),
-				linkswithcontext = List(Link("Audi", "Audi", 9, Map("hier" -> 1, "ist" -> 1, "verlink" -> 1)))
+				linkswithcontext = List(Link("Audi", "Audi", 9, Map("verlink" -> 1)))
 			),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
@@ -141,12 +170,11 @@ object TestData {
 				List(),
 				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"),
 				linkswithcontext = List(
-					Link("Brachttal", "Brachttal", 55, Map("einwohnerzahl" -> 1, "in" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("Hessen", "Hessen", 87, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "dem" -> 1, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("1377", "1377", 225, Map("einwohnerzahl" -> 1, "und" -> 1, "streidtburgk" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "dem" -> 1, "bezeichnung" -> 1, "ein" -> 2, "jahr" -> 3, "von" -> 2, "im" -> 1, "270" -> 1, "erst" -> 1, "stridberg" -> 1, "kleinst" -> 1, "die" -> 3, "stamm" -> 1, "auf" -> 1, "weit" -> 1, "tauch" -> 1, "1500" -> 1, "es" -> 1, "mit" -> 1, "spa" -> 1, "namensvaria" -> 1, "ca." -> 1, "red" -> 1, "zugleich" -> 1)),
-					Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "und" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "der" -> 1, "im" -> 1, "-" -> 1, "ins" -> 1, "-rrb-" -> 1, "hatt" -> 1, "holx" -> 1, "ortsnam" -> 1, "vom" -> 1, "streitberg" -> 1, "mittelal" -> 1, "bis" -> 1))
-				)
+					Link("Brachttal", "Brachttal", 55, Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66, Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
+					Link("Hessen", "Hessen", 87, Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+					Link("1377", "1377", 225, Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
+					Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)))
 			),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
@@ -157,9 +185,9 @@ object TestData {
 				List(),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
 				linkswithcontext = List(
-					Link("Audi", "Audi", 7, Map("link" -> 2, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-					Link("Brachttal", "Brachttal", 13, Map("link" -> 2, "audi" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-					Link("historisches Jahr", "1377", 24, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+					Link("Audi", "Audi", 7, Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("Brachttal", "Brachttal", 13, Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("historisches Jahr", "1377", 24, Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 			))
 	}
 
@@ -171,15 +199,15 @@ object TestData {
 				),
 				List(),
 				List("Audi"),
-				linkswithcontext = List(Link("Audi", "Audi", 9, Map("hier" -> 1, "ist" -> 1, "verlink" -> 1))),
-				context = Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)
+				linkswithcontext = List(Link("Audi", "Audi", 9, Map("verlink" -> 1))),
+				context = Map("audi" -> 1, "verlink" -> 1)
 			),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
 				List(),
 				List("Audi"),
 				linkswithcontext = List(),
-				context = Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)
+				context = Map("audi" -> 1, "verlink" -> 1)
 			),
 			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
@@ -192,12 +220,12 @@ object TestData {
 				List(),
 				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"),
 				linkswithcontext = List(
-					Link("Brachttal", "Brachttal", 55, Map("einwohnerzahl" -> 1, "in" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("Hessen", "Hessen", 87, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "dem" -> 1, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("1377", "1377", 225, Map("einwohnerzahl" -> 1, "und" -> 1, "streidtburgk" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "dem" -> 1, "bezeichnung" -> 1, "ein" -> 2, "jahr" -> 3, "von" -> 2, "im" -> 1, "270" -> 1, "erst" -> 1, "stridberg" -> 1, "kleinst" -> 1, "die" -> 3, "stamm" -> 1, "auf" -> 1, "weit" -> 1, "tauch" -> 1, "1500" -> 1, "es" -> 1, "mit" -> 1, "spa" -> 1, "namensvaria" -> 1, "ca." -> 1, "red" -> 1, "zugleich" -> 1)),
-					Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "und" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "der" -> 1, "im" -> 1, "-" -> 1, "ins" -> 1, "-rrb-" -> 1, "hatt" -> 1, "holx" -> 1, "ortsnam" -> 1, "vom" -> 1, "streitberg" -> 1, "mittelal" -> 1, "bis" -> 1))),
-				context = Map("1554" -> 1, "waldrech" -> 1, "einwohnerzahl" -> 1, "und" -> 3, "streidtburgk" -> 1, "in" -> 1, "19" -> 1, "brachttal" -> 1, "aus" -> 1, "ist" -> 3, "ort" -> 1, "jahrhu" -> 1, "nachweislich" -> 1, "-lrb-" -> 3, "huterech" -> 1, "eingeburg" -> 1, "der" -> 4, "steytberg" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "dem" -> 1, "bezeichnung" -> 1, "ein" -> 3, "sind" -> 1, "jahr" -> 3, "von" -> 3, "im" -> 2, "270" -> 1, "sich" -> 1, "-" -> 1, "ins" -> 1, "erst" -> 1, "hat" -> 1, "stridberg" -> 1, "kleinst" -> 1, "die" -> 3, "-rrb-" -> 3, "stamm" -> 1, "hess" -> 1, "hatt" -> 1, "holx" -> 1, "auf" -> 1, "buding" -> 1, "weit" -> 1, "tauch" -> 1, "sech" -> 1, "stripurgk" -> 1, "1500" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "danach" -> 1, "1377" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "1528" -> 1, "spa" -> 1, "namensvaria" -> 1, "ortsnam" -> 1, "vom" -> 1, "streitberg" -> 2, "mittelal" -> 1, "ca." -> 1, "bis" -> 1, "red" -> 1, "zugleich" -> 1)
+					Link("Brachttal", "Brachttal", 55, Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66, Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
+					Link("Hessen", "Hessen", 87, Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+					Link("1377", "1377", 225, Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
+					Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1))),
+				context = Map("1554" -> 1, "waldrech" -> 1, "einwohnerzahl" -> 1, "streidtburgk" -> 1, "19" -> 1, "brachttal" -> 1, "ort" -> 1, "jahrhu" -> 1, "nachweislich" -> 1, "-lrb-" -> 3, "huterech" -> 1, "eingeburg" -> 1, "steytberg" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "-" -> 1, "stridberg" -> 1, "kleinst" -> 1, "-rrb-" -> 3, "stamm" -> 1, "hess" -> 1, "holx" -> 1, "buding" -> 1, "tauch" -> 1, "stripurgk" -> 1, "1500" -> 1, "gemei" -> 1, "1377" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "1528" -> 1, "namensvaria" -> 1, "ortsnam" -> 1, "streitberg" -> 2, "mittelal" -> 1, "red" -> 1)
 			),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
@@ -208,10 +236,10 @@ object TestData {
 				List(),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
 				linkswithcontext = List(
-					Link("Audi", "Audi", 7, Map("link" -> 2, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-					Link("Brachttal", "Brachttal", 13, Map("link" -> 2, "audi" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-					Link("historisches Jahr", "1377", 24, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1))),
-				context = Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)
+					Link("Audi", "Audi", 7, Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("Brachttal", "Brachttal", 13, Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("historisches Jahr", "1377", 24, Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1))),
+				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)
 			))
 	}
 
@@ -223,26 +251,24 @@ object TestData {
 		val tf1df3 = 0.12493873660829993
 		val tf2df1 = 1.2041199826559248
 		val tf2df2 = 0.6020599913279624
-		val tf2df3 = 0.24987747321659987
-		val tf3df1 = 1.806179973983887
 		val tf3df2 = 0.9030899869919435
 		Set(
-			(Link("Audi", "Audi", 9), Map("hier" -> tf1df2, "ist" -> tf1df3, "verlink" -> tf1df2)),
-			(Link("Brachttal", "Brachttal", 55), Map("einwohnerzahl" -> tf1df1, "in" -> tf1df1, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf2df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "ein" -> tf2df1, "von" -> tf2df1, "270" -> tf1df1, "erst" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf1df1, "hess" -> tf1df2, "sech" -> tf1df1, "gemei" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1, "ca." -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66), Map("einwohnerzahl" -> tf1df1, "in" -> tf1df1, "brachttal" -> tf1df2, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf2df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "ein" -> tf2df1, "von" -> tf2df1, "270" -> tf1df1, "erst" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf1df1, "stamm" -> tf1df1, "hess" -> tf1df2, "sech" -> tf1df1, "gemei" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "streitberg" -> tf1df1, "ca." -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("Hessen", "Hessen", 87), Map("einwohnerzahl" -> tf1df1, "in" -> tf1df1, "brachttal" -> tf1df2, "aus" -> tf1df1, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf2df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "dem" -> tf1df1, "ein" -> tf2df1, "von" -> tf2df1, "270" -> tf1df1, "erst" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf1df1, "stamm" -> tf1df1, "sech" -> tf1df1, "gemei" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1, "ca." -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("1377", "1377", 225), Map("einwohnerzahl" -> tf1df1, "und" -> tf1df2, "streidtburgk" -> tf1df1, "aus" -> tf1df1, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf1df1, "dem" -> tf1df1, "bezeichnung" -> tf1df1, "ein" -> tf2df1, "jahr" -> tf3df2, "von" -> tf2df1, "im" -> tf1df1, "270" -> tf1df1, "erst" -> tf1df1, "stridberg" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf3df1, "stamm" -> tf1df1, "auf" -> tf1df1, "weit" -> tf1df1, "tauch" -> tf1df1, "1500" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "spa" -> tf1df1, "namensvaria" -> tf1df1, "ca." -> tf1df1, "red" -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("Büdinger Wald", "Büdinger Wald", 546), Map("waldrech" -> tf1df1, "und" -> tf1df2, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "der" -> tf1df1, "im" -> tf1df1, "-" -> tf1df1, "ins" -> tf1df1, "-rrb-" -> tf1df1, "hatt" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "vom" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1, "bis" -> tf1df1)),
-			(Link("Audi", "Audi", 7), Map("link" -> tf2df1, "brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)),
-			(Link("Brachttal", "Brachttal", 13), Map("link" -> tf2df1, "audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)),
-			(Link("historisches Jahr", "1377", 24), Map("link" -> tf2df1, "audi" -> tf1df3, "brachttal" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)))
+			(Link("Audi", "Audi", 9), Map("verlink" -> tf1df2)),
+			(Link("Brachttal", "Brachttal", 55), Map("einwohnerzahl" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66), Map("einwohnerzahl" -> tf1df1,"brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "streitberg" -> tf1df1)),
+			(Link("Hessen", "Hessen", 87), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
+			(Link("1377", "1377", 225), Map("einwohnerzahl" -> tf1df1, "streidtburgk" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf1df1, "bezeichnung" -> tf1df1, "jahr" -> tf3df2, "270" -> tf1df1, "stridberg" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "tauch" -> tf1df1, "1500" -> tf1df1, "namensvaria" -> tf1df1, "red" -> tf1df1)),
+			(Link("Büdinger Wald", "Büdinger Wald", 546), Map("waldrech" -> tf1df1, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "-" -> tf1df1, "-rrb-" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1)),
+			(Link("Audi", "Audi", 7), Map("brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
+			(Link("Brachttal", "Brachttal", 13), Map("audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
+			(Link("historisches Jahr", "1377", 24), Map( "audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
 	def termFrequenciesTestSet(): Set[(String, Bag[String, Int])] = {
 		Set(
-			("Audi Test mit Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)),
-			("Audi Test ohne Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)),
-			("Testartikel", Bag("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+			("Audi Test mit Link", Bag("audi" -> 1, "verlink" -> 1)),
+			("Audi Test ohne Link", Bag("audi" -> 1, "verlink" -> 1)),
+			("Testartikel", Bag("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
 	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
@@ -356,17 +382,22 @@ object TestData {
 
 	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
-			DocumentFrequency("Audi", 3),
-			DocumentFrequency("Backfisch", 1),
-			DocumentFrequency("ist", 3),
-			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("einer", 1))
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("backfisch", 1)
+		)
 	}
 
 	def filteredDocumentFrequenciesTestList(): List[DocumentFrequency] = {
 		List(
-			DocumentFrequency("Audi", 3))
+			DocumentFrequency("audi", 3)
+		)
+	}
+
+	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("backfisch", 2)
+		)
 	}
 
 	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
@@ -390,7 +421,7 @@ object TestData {
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("ein", 6)
+			DocumentFrequency("ein", 3)
 		)
 	}
 
@@ -441,15 +472,10 @@ object TestData {
 
 	def inverseDocumentFrequenciesTestSet(): Set[(String, Double)] = {
 		val oneOccurrence = 0.6020599913279624
-		val twoOccurrences = 0.3010299956639812
 		val threeOccurrences = 0.12493873660829993
 		Set(
-			("Audi", threeOccurrences),
-			("Backfisch", oneOccurrence),
-			("ist", threeOccurrences),
-			("und", twoOccurrences),
-			("zugleich", oneOccurrence),
-			("einer", oneOccurrence))
+			("audi", threeOccurrences),
+			("backfisch", oneOccurrence))
 	}
 
 	def tfidfContextsTestSet(): Set[(String, Map[String, Double])] = {
@@ -458,9 +484,9 @@ object TestData {
 		val tf2df1 = 0.9542425094393249
 		val df3 = 0.0
 		Set(
-			("Audi Test mit Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
-			("Audi Test ohne Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
-			("Testartikel", Map("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1)))
+			("Audi Test mit Link", Map("audi" -> df3, "verlink" -> tf1df2)),
+			("Audi Test ohne Link", Map("audi" -> df3, "verlink" -> tf1df2)),
+			("Testartikel", Map("audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
 	def unstemmedGermanWordsTestSet(): Set[String] = {
@@ -741,6 +767,51 @@ object TestData {
 		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
 	}
 
+	def unstemmedDFTestSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich einer ein Link."),
+				List(
+					Link("Audi", "Audi", 9)
+				),
+				List(),
+				List("Audi")
+			),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich einer Einer Link"),
+				List(
+					Link("Audi", "Audi", 9)
+				),
+				List(),
+				List("Audi")
+			),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich Ein Link."),
+				List(
+					Link("Audi", "Audi", 9)
+				),
+				List(),
+				List("Audi")
+			),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi audi aUdi auDi."),
+				List(
+					Link("Audi", "Audi", 9)
+				),
+				List(),
+				List("Audi")
+			)
+		)
+	}
+
+	def stemmedDFTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("audi", 4),
+			DocumentFrequency("backfisch", 3)
+		)
+	}
+	def germanDFStopwordsTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 3)
+		)
+	}
 	def unstemmedGermanWordsTestList(): List[String] = {
 		List("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "Streitberg", "Braunschweig",
 			"Deutschland", "Baum", "brauchen", "suchen", "könnte")
