@@ -141,7 +141,7 @@ class DeduplicationUnitTest
 		val testScale1 = 1
 		val testScale2 = 2
 
-		val computetValues = List(
+		val computedValues = List(
 			EuclidianDistance.turnDistanceIntoScore(testValues(0), testScale1),
 			EuclidianDistance.turnDistanceIntoScore(testValues(1), testScale1),
 			EuclidianDistance.turnDistanceIntoScore(testValues(2), testScale1),
@@ -156,11 +156,11 @@ class DeduplicationUnitTest
 
 		val expectedValues = List(1.0,1.0,0.75,0.5,0.0,1.0,1.0,1.0,0.75,0.0)
 
-		(computetValues,expectedValues).zipped.foreach((x,y) => x shouldEqual y)
+		(computedValues,expectedValues).zipped.foreach((x,y) => x shouldEqual y)
 
 	}
 
-	 "computeDistance" should "compute the distnace between two points in terms of kilometers" in {
+	 "computedDistance" should "compute the distnace between two points in terms of kilometers" in {
 		val testSubjects = getSampleSubjects()
 		val expectedDistance = 111.70485139435159
 		val computedDistance = EuclidianDistance.computeDistance(
