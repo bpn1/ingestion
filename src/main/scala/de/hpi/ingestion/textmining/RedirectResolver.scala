@@ -7,6 +7,9 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.TupleImplicits._
 
+/**
+  * Resolves all existing Redirects
+  */
 object RedirectResolver {
 	val tablename = "parsedwikipedia"
 	val keyspace = "wikidumps"
