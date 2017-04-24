@@ -60,3 +60,37 @@ class IngestionTokenizer(
 	  */
 	def reverse(tokens: List[String]): String = tokenizer.reverse(tokens)
 }
+
+/**
+  * Companion Object for IngestionTokenizer class implementing apply methods for a default tokenizer.
+  */
+object IngestionTokenizer {
+	/**
+	  * Creates default tokenizer which uses the CoreNLPTokenizer, removes stopwords and stems.
+	  * @return returns tokenizer which uses the CoreNLPTokenizer, removes stopwords and stems
+	  */
+	def apply(): IngestionTokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)
+
+	/**
+	  * Creates default tokenizer which uses the CoreNLPTokenizer and takes parameters for removing stopwords and
+	  * stemming.
+	  * @param stopWords flag for removing stopwords
+	  * @param stem flag for stemming
+	  * @return returns tokenizer which uses the CoreNLPTokenizer and removes stopwords and stems according to the flags
+	  */
+	def apply(stopWords: Boolean, stem: Boolean): IngestionTokenizer = {
+		new IngestionTokenizer(new CoreNLPTokenizer, stopWords, stem)
+	}
+
+	/**
+	  * Uses default constructor to create a tokenizer with the given tokenizer which removes stopwords and stems
+	  * according to the flags.
+	  * @param tokenizer tokenizer to use
+	  * @param stopWords flag for removing stopwords
+	  * @param stem flag for stemming
+	  * @return returns tokenizer which uses the CoreNLPTokenizer and removes stopwords and stems according to the flags
+	  */
+	def apply(tokenizer: Tokenizer, stopWords: Boolean, stem: Boolean): IngestionTokenizer = {
+		new IngestionTokenizer(tokenizer, stopWords, stem)
+	}
+}

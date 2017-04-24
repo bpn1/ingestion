@@ -9,7 +9,6 @@ object TermFrequencyCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputArticlesTablename = "parsedwikipedia"
-//	val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)
 	val contextSize = 20
 
 	/**
@@ -18,8 +17,7 @@ object TermFrequencyCounter {
 	  * @param entry parsed Wikipedia entry which terms will be extracted
 	  * @return a Bag containing every term and its frequency
 	  */
-	def extractBagOfWords(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)): Bag[String, Int] = {
-		//val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)
+	def extractBagOfWords(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): Bag[String, Int] = {
 		val tokens = tokenizer.process(entry.getText())
 		extractBagOfWords(tokens)
 	}
@@ -40,7 +38,7 @@ object TermFrequencyCounter {
 	  * @param entry parsed Wikipedia entry which terms will be extracted
 	  * @return parsed Wikipedia entry with additional context information
 	  */
-	def extractArticleContext(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)): ParsedWikipediaEntry = {
+	def extractArticleContext(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): ParsedWikipediaEntry = {
 		val context = extractBagOfWords(entry, tokenizer).getCounts()
 		entry.copy(context = context)
 	}
@@ -52,8 +50,7 @@ object TermFrequencyCounter {
 	  * @param entry Wikipedia entry containing the used links
 	  * @return list of tuples containing the link and its context
 	  */
-	def extractLinkContexts(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)): ParsedWikipediaEntry = {
-//		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)
+	def extractLinkContexts(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): ParsedWikipediaEntry = {
 		val tokens = tokenizer.onlyTokenize(entry.getText())
 		val contextLinks = entry.textlinks.map { link =>
 			val aliasTokens = tokenizer.onlyTokenize(link.alias)
@@ -75,8 +72,10 @@ object TermFrequencyCounter {
 	  * @param articles RDD of Parsed Wikipedia Entries
 	  * @return RDD of articles with their contexts and the link contexts
 	  */
-	def run(articles: RDD[ParsedWikipediaEntry]): RDD[ParsedWikipediaEntry] = {
-		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)
+	def run(
+		articles: RDD[ParsedWikipediaEntry],
+		tokenizer: IngestionTokenizer = IngestionTokenizer()
+	): RDD[ParsedWikipediaEntry] = {
 		articles
 			.map(extractArticleContext(_, tokenizer))
 			.map(extractLinkContexts(_, tokenizer))

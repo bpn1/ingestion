@@ -39,7 +39,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	}
 
 	"Input tokens" should "be processed" in {
-		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, true, true)
+		val tokenizer = IngestionTokenizer()
 		val tokens = TestData.tokenizedTestSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.stemmedAndFilteredSentences()
