@@ -36,6 +36,10 @@ object LocalTrieBuilder {
 		trieBinary.close()
 	}
 
+	// recommended scala flags
+	// -J-Xmx16g
+	// -J-Xss1g
+	// -classpath ingestion-assembly-1.0.jar de.hpi.ingestion.textmining.LocalTrieBuilder
 	def main(args: Array[String]): Unit = {
 		serializeTrie(Source.fromFile(aliasFileName), new FileOutputStream(trieFileName))
 	}
