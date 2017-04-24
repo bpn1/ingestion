@@ -48,70 +48,76 @@ object CompareStrategy extends Serializable {
 	)*/
 
 	private def compare(
-		attribute1: String,
-		attribute2: String,
+		leftAttribute: String,
+		rightAttribute: String,
 		simMeasure: SimilarityMeasure[String],
 		weight: Double,
 		scale: Int = 1
 	): Double = {
-		val score = simMeasure.compare(attribute1, attribute2, scale)
+		val score = simMeasure.compare(leftAttribute, rightAttribute, scale)
 		score * weight
 	}
 
 	private def singleStringCompare(
-		attribute1: List[String],
-		attribute2: List[String],
+		leftAttribute: List[String],
+		rightAttribute: List[String],
 		simMeasure: SimilarityMeasure[String],
 		weight: Double,
 		scale: Int = 1
 	): Double = {
-		compare(attribute1.head, attribute2.head, simMeasure, weight, scale)
+		compare(leftAttribute.head, rightAttribute.head, simMeasure, weight, scale)
 	}
 
-	private def tupleCompare(
-		attribute1: List[String],
-		attribute2: List[String],
+	private def coordinatesCompare(
+		leftAttributes: List[String],
+		rightAttributes: List[String],
 		simMeasure: SimilarityMeasure[String],
 		weight: Double,
 		scale: Int = 1
 	): Double = {
+		val leftX = leftAttributes.head
+		val rightX = rightAttributes.head
+		val leftY = leftAttributes.last
+		val rightY = rightAttributes.last
 
-		1.0
+		val firstScore = compare(leftX, rightX, simMeasure, weight, scale)
+		val secondScore = compare(leftY, rightY, simMeasure, weight, scale)
+		(firstScore + secondScore) / 2
 	}
 
 	private def stringListCompare(
-		attributes1: List[String],
-		attributes2: List[String],
+		leftAttributes: List[String],
+		rightAttributes: List[String],
 		simMeasure: SimilarityMeasure[String],
 		weight: Double,
 		scale: Int = 1
 	): Double = {
-		val scoreSum = attributes1.map(
-			attribute1 => attributes2.map(
-				attribute2 => compare(attribute1, attribute2, simMeasure, weight, scale)
+		val scoreSum = leftAttributes.map(
+			leftAttribute => rightAttributes.map(
+				rightAttribute => compare(leftAttribute, rightAttribute, simMeasure, weight, scale)
 			).sum
 		).sum
-		scoreSum / (attributes1.size * attributes2.size)
+		scoreSum / (leftAttributes.size * rightAttributes.size)
 	}
 
 	private def defaultCompare(
-		attributes1: List[String],
-		attributes2: List[String],
+		leftAttributes: List[String],
+		rightAttributes: List[String],
 		simMeasure: SimilarityMeasure[String],
 		weight: Double,
 		scale: Int = 1
 	): Double = {
-		if (attributes1.size == 1 && attributes2.size == 1) {
-			compare(attributes1.head, attributes2.head, simMeasure, weight, scale)
+		if (leftAttributes.size == 1 && rightAttributes.size == 1) {
+			compare(leftAttributes.head, rightAttributes.head, simMeasure, weight, scale)
 		} else {
-			stringListCompare(attributes1, attributes2, simMeasure, weight, scale)
+			stringListCompare(leftAttributes, rightAttributes, simMeasure, weight, scale)
 		}
 	}
 
 	def apply(attribute: String): (List[String], List[String], SimilarityMeasure[String], Double, Int) => Double = {
 		attribute match {
 			case "name" | "category" | "city" => singleStringCompare
-			case "geolocation" => tupleCompare
+			case "geolocation" => coordinatesCompare
 			case "aliases" => stringListCompare
 			case default => defaultCompare
 		}
