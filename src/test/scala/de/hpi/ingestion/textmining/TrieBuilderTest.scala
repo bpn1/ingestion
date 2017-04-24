@@ -27,7 +27,7 @@ class TrieBuilderTest extends FlatSpec with Matchers with SharedSparkContext {
 	}
 
 	def testEntryFoundAliases(): ParsedWikipediaEntry = {
-		val entry = TestData.parsedTestEntry()
+		val entry = TestData.parsedEntry()
 		val trie = new TrieNode()
 		val tokenizer = new WhitespaceTokenizer()
 		for(link <- entry.allLinks) {

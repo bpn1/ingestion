@@ -20,7 +20,7 @@ object TrieBuilder {
 	val defaultKey = "default"
 
 	/**
-	  * Finds all occurences of aliases in the text of a Wikipedia entry
+	  * Finds all occurrences of aliases in the text of a Wikipedia entry
 	  * @param entry parsed Wikipedia entry to use
 	  * @param trie Partitioned Trie containing the aliases we look for
 	  * @param tokenizer Tokenizer used to tokenize the text of the entry
