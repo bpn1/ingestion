@@ -11,7 +11,7 @@ import scala.collection.mutable
 /**
   * Import-Job to import DBPedia Subjects into the staging table of our datalake.
   */
-object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
+object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 	"DataLakeImportDBpedia_v1.0",
 	List("dbpedia"),
 	"normalization_dbpedia.xml",
@@ -29,6 +29,7 @@ object DataLakeImportDBpedia extends DataLakeImport[DBPediaEntity](
 		val sm = new SubjectManager(subject, version)
 
 		entity.label.foreach(label => sm.setName(label.replaceAll("@de .$", "")))
+		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 
 		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val normalizedProperties = normalizeProperties(entity, mapping)
