@@ -128,6 +128,53 @@ class DeduplicationUnitTest
 		 testSubjects(1).relations shouldEqual expectedRelationNode2
 	}
 
+	"turnDistanceIntoScore" should "compute the right score for given distances and scale factors" in {
+		 val testValue1 = 0.0
+		 val testValue2 = 1.0
+		 val testValue3 = 5.1
+		 val testValue4 = 21.0
+		 val testValue5 = 312.0
+
+		 val testScale1 = 1
+		 val testScale2 = 2
+
+		 val computedValue11 = EuclidianDistance.turnDistanceIntoScore(testValue1, testScale1)
+		 val computedValue12 = EuclidianDistance.turnDistanceIntoScore(testValue2, testScale1)
+		 val computedValue13 = EuclidianDistance.turnDistanceIntoScore(testValue3, testScale1)
+		 val computedValue14 = EuclidianDistance.turnDistanceIntoScore(testValue4, testScale1)
+		 val computedValue15 = EuclidianDistance.turnDistanceIntoScore(testValue5, testScale1)
+
+		 val computedValue21 = EuclidianDistance.turnDistanceIntoScore(testValue1, testScale2)
+		 val computedValue22 = EuclidianDistance.turnDistanceIntoScore(testValue2, testScale2)
+		 val computedValue23 = EuclidianDistance.turnDistanceIntoScore(testValue3, testScale2)
+		 val computedValue24 = EuclidianDistance.turnDistanceIntoScore(testValue4, testScale2)
+		 val computedValue25 = EuclidianDistance.turnDistanceIntoScore(testValue5, testScale2)
+
+		 val expectedValue11 = 1.0
+		 val expectedValue12 = 1.0
+		 val expectedValue13 = 0.75
+		 val expectedValue14 = 0.5
+		 val expectedValue15 = 0.0
+
+		 val expectedValue21 = 1.0
+		 val expectedValue22 = 1.0
+		 val expectedValue23 = 1.0
+		 val expectedValue24 = 0.75
+		 val expectedValue25 = 0.0
+
+		 computedValue11 shouldEqual expectedValue11
+		 computedValue12 shouldEqual expectedValue12
+		 computedValue13 shouldEqual expectedValue13
+		 computedValue14 shouldEqual expectedValue14
+		 computedValue15 shouldEqual expectedValue15
+
+		 computedValue21 shouldEqual expectedValue21
+		 computedValue22 shouldEqual expectedValue22
+		 computedValue23 shouldEqual expectedValue23
+		 computedValue24 shouldEqual expectedValue24
+		 computedValue25 shouldEqual expectedValue25
+	}
+
 	def getSampleSubjects() : List[Subject] = {
 
 		List(
