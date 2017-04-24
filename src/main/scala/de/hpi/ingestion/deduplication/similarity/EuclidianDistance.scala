@@ -17,13 +17,10 @@ object EuclidianDistance extends SimilarityMeasure[String] {
 	  * @return a metric (km) distance
 	  */
 	def computeDistance(lat1: Double, lng1: Double, lat2: Double, lng2: Double) : Double = {
-			println("Geo1 " + lat1 + " " + lng1)
-			println("Geo2 " + lat2 + " " + lng2)
 			val degreeLength = 110.25
 			val x = lat2 - lat1
 			val y = (lng2 - lng1)* Math.cos(lat1)
 			val distance = degreeLength * sqrt(x * x + y * y)
-			println("Errechnete Distanz" + distance)
 			distance
 	}
 
@@ -34,7 +31,6 @@ object EuclidianDistance extends SimilarityMeasure[String] {
 	  * @return a similarity score
 	  */
 	def turnDistanceIntoScore(distance: Double, scale: Int = 1): Double = {
-			println("Bekommene Distanz" + distance)
 			scale.toDouble
 			distance match {
 				case x if x <= (5.0 * scale) => 1.0
