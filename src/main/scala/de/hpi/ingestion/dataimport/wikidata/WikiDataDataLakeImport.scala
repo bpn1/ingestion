@@ -15,6 +15,7 @@ import scala.collection.mutable
 object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 	"WikiDataDataLakeImport_v1.0",
 	List("wikidata_20161117"),
+	Option("datalakeimport_config.xml"),
 	"normalization_wikidata.xml",
 	"wikidumps",
 	"wikidata")

@@ -3,16 +3,16 @@ package de.hpi.ingestion.datalake
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import java.net.URL
+
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 
+import scala.collection.mutable
 import scala.io.Source
 import scala.xml.XML
 
 trait DLImport[T <: DLImportEntity] extends Serializable {
-	val outputKeyspace = "datalake"
-	val outputTable = "subject_temp"
-	val versionTable = "version"
+	val settings = mutable.Map[String, String]()
 
 	/**
 	  * Reads the data of the datasource to import and transforms the entries to Subjects.
@@ -30,6 +30,18 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 	  * @return a new Subject created from the given object
 	  */
 	protected def translateToSubject(entity: T, version: Version): Subject
+
+	/**
+	  * Parses the config file into a Map.
+	  * @param url the path to the config file
+	  */
+	protected def parseConfig(url: URL): Unit
+
+	/**
+	  * Parses the config file into a Map.
+	  * @param path the path to the config file
+	  */
+	protected def parseConfig(path: String): Unit
 
 	/**
 	  * Parses the normalization config file into a Map.
@@ -68,6 +80,7 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
   *              and an inputTable
   * @param appName       		the name of the importing job
   * @param dataSources   		list of the sources where the new data is fetched from
+  * @param configFile 			name of config file in resource folder
   * @param normalizationFile 	name of normalization file in resource folder
   * @param inputKeyspace 		the name of the keyspace where the new data is saved in the database
   * @param inputTable    		the name of the table where the new data is saved in the database
@@ -76,10 +89,28 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 abstract case class DataLakeImport[T <: DLImportEntity](
 	appName: String,
 	dataSources: List[String],
+	configFile: Option[String],
 	normalizationFile: String,
 	inputKeyspace: String,
 	inputTable: String
 ) extends DLImport[T] {
+	protected def parseConfig(url: URL): Unit = {
+		val xml = XML.loadString(Source
+			.fromURL(url)
+			.getLines()
+			.mkString("\n")
+		)
+
+		val configSettings = xml \\ "config" \ "sourceSettings"
+		this.settings("outputKeyspace") = (configSettings \ "outputKeyspace").text
+		this.settings("outputTable") = (configSettings \ "outputTable").text
+		this.settings("versionTable") = (configSettings \ "versionTable").text
+	}
+	protected def parseConfig(path: String): Unit = {
+		val url = getClass.getResource(s"/$path")
+		this.parseConfig(url)
+	}
+
 	protected def parseNormalizationConfig(url: URL): Map[String, List[String]] = {
 		val xml = XML.loadString(Source
 			.fromURL(url)
@@ -117,9 +148,12 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 			.setAppName(appName)
 		val sc = new SparkContext(conf)
 
+		val path = this.configFile.getOrElse("datalakeimport_config.xml")
+		this.parseConfig(path)
+
 		val version = Version(appName, dataSources, sc)
 		val data = readInput(sc, version)
-		data.saveToCassandra(outputKeyspace, outputTable)
+		data.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
 
 		sc.stop
 	}

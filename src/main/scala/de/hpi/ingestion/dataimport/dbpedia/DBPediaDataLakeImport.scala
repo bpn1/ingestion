@@ -14,6 +14,7 @@ import scala.collection.mutable
 object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 	"DataLakeImportDBpedia_v1.0",
 	List("dbpedia"),
+	Option("datalakeimport_config.xml"),
 	"normalization_dbpedia.xml",
 	"wikidumps",
 	"dbpedia"
