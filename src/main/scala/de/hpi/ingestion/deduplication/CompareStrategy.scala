@@ -80,28 +80,31 @@ object CompareStrategy extends Serializable {
 	}
 
 	private def stringListCompare(
-		attribute1: List[String],
-		attribute2: List[String],
+		attributes1: List[String],
+		attributes2: List[String],
 		simMeasure: SimilarityMeasure[String],
 		weight: Double,
 		scale: Int = 1
 	): Double = {
-
-
-		1.0
+		val scoreSum = attributes1.map(
+			attribute1 => attributes2.map(
+				attribute2 => compare(attribute1, attribute2, simMeasure, weight, scale)
+			).sum
+		).sum
+		scoreSum / (attributes1.size * attributes2.size)
 	}
 
 	private def defaultCompare(
-		attribute1: List[String],
-		attribute2: List[String],
+		attributes1: List[String],
+		attributes2: List[String],
 		simMeasure: SimilarityMeasure[String],
 		weight: Double,
 		scale: Int = 1
 	): Double = {
-		if (attribute1.size == 1 && attribute2.size == 1) {
-			compare(attribute1.head, attribute2.head, simMeasure, weight, scale)
+		if (attributes1.size == 1 && attributes2.size == 1) {
+			compare(attributes1.head, attributes2.head, simMeasure, weight, scale)
 		} else {
-			stringListCompare(attribute1, attribute2, simMeasure, weight, scale)
+			stringListCompare(attributes1, attributes2, simMeasure, weight, scale)
 		}
 	}
 
