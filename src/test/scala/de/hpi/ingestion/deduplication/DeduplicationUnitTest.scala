@@ -131,8 +131,8 @@ class DeduplicationUnitTest
 
 		deduplication.addSymRelation(testSubjects(0), testSubjects(1), sampleRelation, sampleVersion)
 
-		 testSubjects(0).relations shouldEqual expectedRelationNode1
-		 testSubjects(1).relations shouldEqual expectedRelationNode2
+		testSubjects(0).relations shouldEqual expectedRelationNode1
+		testSubjects(1).relations shouldEqual expectedRelationNode2
 	}
 
 	"turnDistanceIntoScore" should "compute the right score for given distances and scale factors" in {
@@ -141,31 +141,23 @@ class DeduplicationUnitTest
 		val testScale1 = 1
 		val testScale2 = 2
 
-		val computedValue11 = EuclidianDistance.turnDistanceIntoScore(testValues(0), testScale1)
-		val computedValue12 = EuclidianDistance.turnDistanceIntoScore(testValues(1), testScale1)
-		val computedValue13 = EuclidianDistance.turnDistanceIntoScore(testValues(2), testScale1)
-		val computedValue14 = EuclidianDistance.turnDistanceIntoScore(testValues(3), testScale1)
-		val computedValue15 = EuclidianDistance.turnDistanceIntoScore(testValues(4), testScale1)
-
-		val computedValue21 = EuclidianDistance.turnDistanceIntoScore(testValues(0), testScale2)
-		val computedValue22 = EuclidianDistance.turnDistanceIntoScore(testValues(1), testScale2)
-		val computedValue23 = EuclidianDistance.turnDistanceIntoScore(testValues(2), testScale2)
-		val computedValue24 = EuclidianDistance.turnDistanceIntoScore(testValues(3), testScale2)
-		val computedValue25 = EuclidianDistance.turnDistanceIntoScore(testValues(4), testScale2)
+		val computetValues = List(
+			EuclidianDistance.turnDistanceIntoScore(testValues(0), testScale1),
+			EuclidianDistance.turnDistanceIntoScore(testValues(1), testScale1),
+			EuclidianDistance.turnDistanceIntoScore(testValues(2), testScale1),
+			EuclidianDistance.turnDistanceIntoScore(testValues(3), testScale1),
+			EuclidianDistance.turnDistanceIntoScore(testValues(4), testScale1),
+			EuclidianDistance.turnDistanceIntoScore(testValues(0), testScale2),
+			EuclidianDistance.turnDistanceIntoScore(testValues(1), testScale2),
+			EuclidianDistance.turnDistanceIntoScore(testValues(2), testScale2),
+			EuclidianDistance.turnDistanceIntoScore(testValues(3), testScale2),
+			EuclidianDistance.turnDistanceIntoScore(testValues(4), testScale2)
+		)
 
 		val expectedValues = List(1.0,1.0,0.75,0.5,0.0,1.0,1.0,1.0,0.75,0.0)
 
-		computedValue11 shouldEqual expectedValues(0)
-		computedValue12 shouldEqual expectedValues(1)
-		computedValue13 shouldEqual expectedValues(2)
-		computedValue14 shouldEqual expectedValues(3)
-		computedValue15 shouldEqual expectedValues(4)
+		(computetValues,expectedValues).zipped.foreach((x,y) => x shouldEqual y)
 
-		computedValue21 shouldEqual expectedValues(5)
-		computedValue22 shouldEqual expectedValues(6)
-		computedValue23 shouldEqual expectedValues(7)
-		computedValue24 shouldEqual expectedValues(8)
-		computedValue25 shouldEqual expectedValues(9)
 	}
 
 	 "computeDistance" should "compute the distnace between two points in terms of kilometers" in {
