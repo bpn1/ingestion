@@ -21,11 +21,12 @@ object GoldStandard {
 	  * @return RDD containing Subjects keyed by a value
 	  */
 	def keyBySingleProperty(rdd: RDD[Subject], property: String): RDD[(String, Subject)] = {
-		for {
-			subject <- rdd
-			if subject.properties.contains(property)
-			keyOpt = subject.properties(property).headOption
-		} yield (keyOpt.getOrElse(""), subject)
+		rdd
+			.filter(_.properties.contains(property))
+			.map { subject =>
+				val keyOpt = subject.properties(property).headOption
+				(keyOpt.getOrElse(""), subject)
+			}
 	}
 
 	/**
