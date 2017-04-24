@@ -30,7 +30,7 @@ object VersionDiff {
 	def timeFromUUID(uuid: UUID): Long = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000
 
 	/**
-	  * Returns list of values of the given version or the last version before it that changed the given field.
+	  * Returns list of values of the given version or a previous version that changed the given field.
 	  * @param queryVersion TimeUUID of the wanted version of the attributes
 	  * @param versionList list of all existing versions of the field
 	  * @return value of the field at the point of the queried version
@@ -61,10 +61,9 @@ object VersionDiff {
 	): Option[(List[String], List[String])] = {
 		val oldValues = findValues(oldVersion, versionList)
 		val newValues = findValues(newVersion, versionList)
-		if(oldValues.isEmpty && newValues.isEmpty) {
-			None
-		} else {
-			Option((oldValues, newValues))
+		(oldValues, newValues) match {
+			case (Nil, Nil) => None
+			case t => Option(t)
 		}
 	}
 
