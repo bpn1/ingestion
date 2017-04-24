@@ -16,7 +16,7 @@ object DocumentFrequencyCounter {
 	def countDocumentFrequencies(
 		articles: RDD[ParsedWikipediaEntry]
 	): RDD[DocumentFrequency] = {
-		val tokenizer = new IngestionTokenizer(new CleanCoreNLPTokenizer, removeStopwords, stem)
+		val tokenizer = new IngestionTokenizer(new CoreNLPTokenizer, removeStopwords, stem)
 		articles
 			.flatMap(article => tokenizer.process(article.getText()).toSet)
 			.map(word => (word, 1))
