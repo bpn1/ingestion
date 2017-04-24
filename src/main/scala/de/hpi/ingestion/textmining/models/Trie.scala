@@ -163,4 +163,20 @@ class TrieNode(
 	}
 
 	override def toString(): String = s"Trie(token=$token,word=$word)"
+
+	def canEqual(other: Any): Boolean = other.isInstanceOf[TrieNode]
+
+	override def equals(other: Any): Boolean = other match {
+		case that: TrieNode =>
+			(that canEqual this) &&
+				children == that.children &&
+				token == that.token &&
+				word == that.word
+		case _ => false
+	}
+
+	override def hashCode(): Int = {
+		val state = Seq(children, token, word)
+		state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+	}
 }

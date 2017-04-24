@@ -1,73 +1,42 @@
 package de.hpi.ingestion.textmining
 
-import java.io.FileOutputStream
+import java.io.{FileOutputStream, OutputStream}
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Output
-import com.esotericsoftware.kryo.serializers.FieldSerializer
 import de.hpi.ingestion.textmining.models.TrieNode
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 
-import scala.collection.mutable
-
+/**
+  * Creates a Trie of a given list of aliases and serializes it to the filesystem.
+  */
 object LocalTrieBuilder {
-	val defaultKey = "default"
+	val aliasFileName = "aliaslist"
+	val trieFileName = "trie_full.bin"
 
-	def addTokensToTrie(tokens: List[String], trieMap: mutable.Map[String, TrieNode]): Unit = {
-		if(tokens.nonEmpty) {
-			val firstChar = tokens.head.charAt(0)
-			if(firstChar.isLetter && firstChar <= 'z') {
-				val key = firstChar.toString
-				if(!trieMap.contains(key)) {
-					trieMap(key) = new TrieNode()
-				}
-				trieMap(key).append(tokens)
-			} else {
-				trieMap(defaultKey).append(tokens)
-			}
-		}
-	}
+	/**
+	  * Creates Trie of the aliases in the given file and serializes it to a binary of the given name.
+	  * @param aliasStream stream of the file containing the aliases with one alias per line
+	  * @param trieStream output stream of the binary file of the trie
+	  */
+	def serializeTrie(aliasStream: BufferedSource, trieStream: OutputStream): Unit = {
+		val kryo = new Kryo()
+		TrieKryoRegistrator.register(kryo)
+		val tokenizer = IngestionTokenizer(false, false)
+		val trie = new TrieNode()
 
-	def serializeTries(kryo: Kryo, trieMap: mutable.Map[String, TrieNode]): Unit = {
-		trieMap.foreach { case (key, trie) =>
-			val fileName = s"trie_$key.bin"
-			val trieBinary = new Output(new FileOutputStream(fileName))
-			println(s"serializing trie for key $key")
-			kryo.writeObject(trieBinary, trie)
-			println(s"finished serializing trie for key $key")
-			trieBinary.close()
+		for(line <- aliasStream.getLines()) {
+			val tokens = tokenizer.process(line)
+			trie.append(tokens)
 		}
+
+		val trieBinary = new Output(trieStream)
+		kryo.writeObject(trieBinary, trie)
+		trieBinary.close()
 	}
 
 	def main(args: Array[String]): Unit = {
-		val kryo = TrieBuilder.trieKryo()
-
-		val tokenizer = new CoreNLPTokenizer
-		val aliasFile = Source.fromFile("aliaslist")
-		var counter = 0
-
-		val trie = new TrieNode()
-		for(line <- aliasFile.getLines()) {
-			val tokens = tokenizer.tokenize(line)
-			trie.append(tokens)
-			counter += 1
-		}
-		println(s"serializing trie for $counter aliases")
-		val fileName = s"trie_full.bin"
-		val trieBinary = new Output(new FileOutputStream(fileName))
-		kryo.writeObject(trieBinary, trie)
-		trieBinary.close()
-		println(s"finished serializing trie")
-//		val trieMap = mutable.Map[String, TrieNode]()
-//		trieMap(defaultKey) = new TrieNode()
-//		for(line <- aliasFile.getLines()) {
-//			val tokens = tokenizer.tokenize(line)
-//			addTokensToTrie(tokens, trieMap)
-//			counter += 1
-//		}
-//		println(s"serializing ${trieMap.keySet.size} tries for $counter aliases")
-//		serializeTries(kryo, trieMap)
-//		println(s"finished serializing tries")
+		serializeTrie(Source.fromFile(aliasFileName), new FileOutputStream(trieFileName))
 	}
 }
