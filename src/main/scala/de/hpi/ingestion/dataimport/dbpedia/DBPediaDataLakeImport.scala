@@ -50,6 +50,6 @@ object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 	}
 
 	def main(args: Array[String]) {
-		importToCassandra()
+		importToCassandra(args.headOption)
 	}
 }

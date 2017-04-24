@@ -76,7 +76,7 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 	/**
 	  * A generic import from the new data table to the staging area table
 	  */
-	protected def importToCassandra(): Unit
+	protected def importToCassandra(path: Option[String]): Unit
 }
 
 /**
@@ -149,13 +149,13 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 			.filter { case (key, values) => values.nonEmpty }
 	}
 
-	protected def importToCassandra(): Unit = {
+	protected def importToCassandra(path: Option[String] = None): Unit = {
 		val conf = new SparkConf()
 			.setAppName(appName)
 		val sc = new SparkContext(conf)
 
-		val path = this.configFile.getOrElse("datalakeimport_config.xml")
-		this.parseConfig(path)
+		val configPath = path.orElse(this.configFile).getOrElse("datalakeimport_config.xml")
+		this.parseConfig(configPath)
 
 		val version = Version(appName, dataSources, sc)
 		val data = readInput(sc, version)

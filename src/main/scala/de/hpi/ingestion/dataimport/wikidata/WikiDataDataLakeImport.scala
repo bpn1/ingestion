@@ -47,7 +47,7 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 	}
 
 	def main(args: Array[String]): Unit = {
-		importToCassandra()
+		importToCassandra(args.headOption)
 	}
 
 }
