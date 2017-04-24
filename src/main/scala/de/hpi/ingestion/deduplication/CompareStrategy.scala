@@ -47,57 +47,67 @@ object CompareStrategy extends Serializable {
 			simMeasure: SimilarityMeasure) => Double)
 	)*/
 
-	def stringCompare(
+	private def compare(
+		attribute1: String,
+		attribute2: String,
+		simMeasure: SimilarityMeasure[String],
+		weight: Double,
+		scale: Int = 1
+	): Double = {
+		val score = simMeasure.compare(attribute1, attribute2, scale)
+		score * weight
+	}
+
+	private def singleStringCompare(
 		attribute1: List[String],
 		attribute2: List[String],
 		simMeasure: SimilarityMeasure[String],
 		weight: Double,
 		scale: Int = 1
 	): Double = {
-		if(attribute1.nonEmpty && attribute2.nonEmpty) {
-			val score = simMeasure.compare(attribute1.head, attribute2.head, scale)
-			score * weight
+		compare(attribute1.head, attribute2.head, simMeasure, weight, scale)
+	}
+
+	private def tupleCompare(
+		attribute1: List[String],
+		attribute2: List[String],
+		simMeasure: SimilarityMeasure[String],
+		weight: Double,
+		scale: Int = 1
+	): Double = {
+
+		1.0
+	}
+
+	private def stringListCompare(
+		attribute1: List[String],
+		attribute2: List[String],
+		simMeasure: SimilarityMeasure[String],
+		weight: Double,
+		scale: Int = 1
+	): Double = {
+
+
+		1.0
+	}
+
+	private def defaultCompare(
+		attribute1: List[String],
+		attribute2: List[String],
+		simMeasure: SimilarityMeasure[String],
+		weight: Double,
+		scale: Int = 1
+	): Double = {
+		if (attribute1.size == 1 && attribute2.size == 1) {
+			compare(attribute1.head, attribute2.head, simMeasure, weight, scale)
 		} else {
-			-1.0
+			stringListCompare(attribute1, attribute2, simMeasure, weight, scale)
 		}
-	}
-
-	def tupleCompare(
-		attribute1: List[String],
-		attribute2: List[String],
-		simMeasure: SimilarityMeasure[String],
-		weight: Double,
-		scale: Int = 1
-	): Double = {
-
-		1.0
-	}
-
-	def stringListCompare(
-		attribute1: List[String],
-		attribute2: List[String],
-		simMeasure: SimilarityMeasure[String],
-		weight: Double,
-		scale: Int = 1
-	): Double = {
-
-		1.0
-	}
-
-	def defaultCompare(
-		attribute1: List[String],
-		attribute2: List[String],
-		simMeasure: SimilarityMeasure[String],
-		weight: Double,
-		scale: Int = 1
-	): Double = {
-
-		1.0
 	}
 
 	def apply(attribute: String): (List[String], List[String], SimilarityMeasure[String], Double, Int) => Double = {
 		attribute match {
-			case "name" | "category" | "city" => stringCompare
+			case "name" | "category" | "city" => singleStringCompare
 			case "geolocation" => tupleCompare
 			case "aliases" => stringListCompare
 			case default => defaultCompare

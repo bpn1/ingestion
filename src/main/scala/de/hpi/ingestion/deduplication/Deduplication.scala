@@ -45,13 +45,19 @@ class Deduplication(
 		val scoreList = this.config
 			.map { feature =>
 				val attribute = feature.key
-				CompareStrategy(attribute)(
-					subject1.get(attribute),
-					subject2.get(attribute),
-					feature.similarityMeasure,
-					feature.weight,
-					scale
-				)
+				val valueSubject1 = subject1.get(attribute)
+				val valueSubject2 = subject2.get(attribute)
+				if (valueSubject1.nonEmpty && valueSubject2.nonEmpty) {
+					CompareStrategy(attribute)(
+						valueSubject1,
+						valueSubject2,
+						feature.similarityMeasure,
+						feature.weight,
+						scale
+					)
+				} else {
+					-1.0
+				}
 			}.filter(_ != -1.0)
 		scoreList.sum / Math.max(1, scoreList.length)
 	}
