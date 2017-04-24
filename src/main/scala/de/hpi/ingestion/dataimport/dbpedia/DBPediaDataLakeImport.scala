@@ -21,7 +21,12 @@ object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = {
 		sc
 			.cassandraTable[DBPediaEntity](inputKeyspace, inputTable)
+			.filter(filterEntities)
 			.map(translateToSubject(_, version))
+	}
+
+	override def filterEntities(entity: DBPediaEntity): Boolean = {
+		entity.instancetype.isDefined
 	}
 
 	override def translateToSubject(entity: DBPediaEntity, version: Version): Subject = {
