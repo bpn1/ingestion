@@ -232,7 +232,7 @@ object CosineContextComparator {
 
 		val contextTfidf = calculateLinkContextsTfidf(
 			articlesWithTermFrequencies,
-			documentFrequencies,
+			documentFrequencies,git 
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
@@ -245,7 +245,7 @@ object CosineContextComparator {
 			.setAppName("Cosine Context Comparator")
 			.set("spark.shuffle.blockTransferService", "nio")
 		// http://stackoverflow.com/questions/29781489/apache-spark-network-errors-between-executors
-		
+
 		val sc = new SparkContext(conf)
 
 		val articlesWithTermFrequencies = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
