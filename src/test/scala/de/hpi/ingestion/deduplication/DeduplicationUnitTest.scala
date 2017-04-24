@@ -162,7 +162,6 @@ class DeduplicationUnitTest
 	}
 
 	"EuclidianDistance" should "compute correct score for two given points" in {
-		
 		val testSubjects = getSampleSubjects()
 
 		val testGeoPoint1 = testSubjects(1).properties("geoCoords").mkString(",")
