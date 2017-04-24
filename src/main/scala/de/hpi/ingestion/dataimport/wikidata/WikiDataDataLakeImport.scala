@@ -22,7 +22,12 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = {
 		sc
 			.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
+			.filter(filterEntities)
 			.map(translateToSubject(_, version))
+	}
+
+	override def filterEntities(entity: WikiDataEntity): Boolean = {
+		entity.instancetype.isDefined
 	}
 
 	override def translateToSubject(entity: WikiDataEntity, version: Version): Subject = {
