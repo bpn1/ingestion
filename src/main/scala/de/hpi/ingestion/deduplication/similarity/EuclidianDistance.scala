@@ -7,36 +7,42 @@ import java.lang.Math.sqrt
   */
 object EuclidianDistance extends SimilarityMeasure[String] {
 
-	 /**
-		 * Computes a metric (km) distance from twi given geographical points according to
-		 * http://jonisalonen.com/2014/computing-distance-between-coordinates-can-be-simple-and-fast/
-		 * @param lat1 X-coord of geographical point 1
-		 * @param lng1 Y-coord of geographical point 1
-		 * @param lat2 X-coord of geographical point 2
-		 * @param lng2 Y-coord of geographical point 2
-		 * @return a metric (km) distance
-		 */
-	 def computeDistance(lat1: Double, lng1: Double, lat2: Double, lng2: Double) : Double = {
+	/**
+	  * Computes a metric (km) distance from twi given geographical points according to
+	  * http://jonisalonen.com/2014/computing-distance-between-coordinates-can-be-simple-and-fast/
+	  * @param lat1 X-coord of geographical point 1
+	  * @param lng1 Y-coord of geographical point 1
+	  * @param lat2 X-coord of geographical point 2
+	  * @param lng2 Y-coord of geographical point 2
+	  * @return a metric (km) distance
+	  */
+	def computeDistance(lat1: Double, lng1: Double, lat2: Double, lng2: Double) : Double = {
+			println("Geo1 " + lat1 + " " + lng1)
+			println("Geo2 " + lat2 + " " + lng2)
 			val degreeLength = 110.25
 			val x = lat2 - lat1
 			val y = (lng2 - lng1)* Math.cos(lat1)
-			degreeLength * sqrt(x * x + y * y)
-	 }
+			val distance = degreeLength * sqrt(x * x + y * y)
+			println("Errechnete Distanz" + distance)
+			distance
+	}
 
-	 /**
-		 * Classifies the computed Distance into a similarity score regarding to a given scale factor
-		 * @param distance a geographical distance in kilometers
-		 * @param scale a scale up factor for the hardcoded distance thresholds
-		 * @return a similarity score
-		 */
-	 def turnDistanceIntoScore(distance: Double, scale: Int = 1): Double = {
+	/**
+	  * Classifies the computed Distance into a similarity score regarding to a given scale factor
+	  * @param distance a geographical distance in kilometers
+	  * @param scale a scale up factor for the hardcoded distance thresholds
+	  * @return a similarity score
+	  */
+	def turnDistanceIntoScore(distance: Double, scale: Int = 1): Double = {
+			println("Bekommene Distanz" + distance)
+			scale.toDouble
 			distance match {
-				 case x if x <= (5.0 * scale) => 1.0
-				 case x if x > (5.0 * scale) && x <= (20.0 * scale) => 0.75
-				 case x if x > (20.0 * scale) && x <= (100.0 * scale) => 0.5
-				 case _ => 0.0
+				case x if x <= (5.0 * scale) => 1.0
+				case x if x > (5.0 * scale) && x <= (20.0 * scale) => 0.75
+				case x if x > (20.0 * scale) && x <= (100.0 * scale) => 0.5
+				case _ => 0.0
 			}
-	 }
+	}
 
 	/**
 	  * Calculates the euclidian distance for two given geocodes
@@ -47,9 +53,9 @@ object EuclidianDistance extends SimilarityMeasure[String] {
 	  * 0.0 as default value if one of the input strings is empty
 	  */
 	override def compare(s: String, t: String, u: Int = 1) : Double = {
-		 val geoPoint1 = s.toList
-		 val geoPoint2 = t.toList
-		 val distance = computeDistance(geoPoint1(0),geoPoint1(1),geoPoint2(0),geoPoint2(1))
-		 turnDistanceIntoScore(distance,u)
+		val geoPoint1 = s.toList
+		val geoPoint2 = t.toList
+		val distance = computeDistance(geoPoint1(0),geoPoint1(1),geoPoint2(0),geoPoint2(1))
+		turnDistanceIntoScore(distance,u)
 	}
 }
