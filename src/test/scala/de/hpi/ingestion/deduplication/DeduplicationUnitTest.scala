@@ -116,27 +116,24 @@ class DeduplicationUnitTest
 	}
 
 	"turnDistanceIntoScore" should "compute the right score for given distances and scale factors" in {
-		val testValue1 = 0.0
-		val testValue2 = 1.0
-		val testValue3 = 5.1
-		val testValue4 = 21.0
-		val testValue5 = 312.0
+		val testValues = List(0.0,1.0,5.1,21.0,312.0)
 
 		val testScale1 = 1
 		val testScale2 = 2
 
-		val computedValue11 = EuclidianDistance.turnDistanceIntoScore(testValue1, testScale1)
-		val computedValue12 = EuclidianDistance.turnDistanceIntoScore(testValue2, testScale1)
-		val computedValue13 = EuclidianDistance.turnDistanceIntoScore(testValue3, testScale1)
-		val computedValue14 = EuclidianDistance.turnDistanceIntoScore(testValue4, testScale1)
-		val computedValue15 = EuclidianDistance.turnDistanceIntoScore(testValue5, testScale1)
+		val computedValue11 = EuclidianDistance.turnDistanceIntoScore(testValues(0), testScale1)
+		val computedValue12 = EuclidianDistance.turnDistanceIntoScore(testValues(1), testScale1)
+		val computedValue13 = EuclidianDistance.turnDistanceIntoScore(testValues(2), testScale1)
+		val computedValue14 = EuclidianDistance.turnDistanceIntoScore(testValues(3), testScale1)
+		val computedValue15 = EuclidianDistance.turnDistanceIntoScore(testValues(4), testScale1)
 
-		val computedValue21 = EuclidianDistance.turnDistanceIntoScore(testValue1, testScale2)
-		val computedValue22 = EuclidianDistance.turnDistanceIntoScore(testValue2, testScale2)
-		val computedValue23 = EuclidianDistance.turnDistanceIntoScore(testValue3, testScale2)
-		val computedValue24 = EuclidianDistance.turnDistanceIntoScore(testValue4, testScale2)
-		val computedValue25 = EuclidianDistance.turnDistanceIntoScore(testValue5, testScale2)
+		val computedValue21 = EuclidianDistance.turnDistanceIntoScore(testValues(0), testScale2)
+		val computedValue22 = EuclidianDistance.turnDistanceIntoScore(testValues(1), testScale2)
+		val computedValue23 = EuclidianDistance.turnDistanceIntoScore(testValues(2), testScale2)
+		val computedValue24 = EuclidianDistance.turnDistanceIntoScore(testValues(3), testScale2)
+		val computedValue25 = EuclidianDistance.turnDistanceIntoScore(testValues(4), testScale2)
 
+		val expectedValues = List(1.0,1.0,0.75,0.5,0.0,1.0,1.0,1.0,0.75,0.0)
 		val expectedValue11 = 1.0
 		val expectedValue12 = 1.0
 		val expectedValue13 = 0.75
@@ -149,17 +146,17 @@ class DeduplicationUnitTest
 		val expectedValue24 = 0.75
 		val expectedValue25 = 0.0
 
-		computedValue11 shouldEqual expectedValue11
-		computedValue12 shouldEqual expectedValue12
-		computedValue13 shouldEqual expectedValue13
-		computedValue14 shouldEqual expectedValue14
-		computedValue15 shouldEqual expectedValue15
+		computedValue11 shouldEqual expectedValues(0)
+		computedValue12 shouldEqual expectedValues(1)
+		computedValue13 shouldEqual expectedValues(2)
+		computedValue14 shouldEqual expectedValues(3)
+		computedValue15 shouldEqual expectedValues(4)
 
-		computedValue21 shouldEqual expectedValue21
-		computedValue22 shouldEqual expectedValue22
-		computedValue23 shouldEqual expectedValue23
-		computedValue24 shouldEqual expectedValue24
-		computedValue25 shouldEqual expectedValue25
+		computedValue21 shouldEqual expectedValues(5)
+		computedValue22 shouldEqual expectedValues(6)
+		computedValue23 shouldEqual expectedValues(7)
+		computedValue24 shouldEqual expectedValues(8)
+		computedValue25 shouldEqual expectedValues(9)
 	}
 
 	 "computeDistance" should "compute the distnace between two points in terms of kilometers" in {
@@ -176,20 +173,35 @@ class DeduplicationUnitTest
 	}
 
 	"EuclidianDistance" should "compute correct score for two given points" in {
-		 //val testSubjects = getSampleSubjects()
+		
+		val testSubjects = getSampleSubjects()
 
-//		 val testGeoPoint1 = testSubjects(1).properties("geoCoords")(0).toString +
-		 // "," + testSubjects(1).properties("geoCoords")(1).toString
-//		 val testGeoPoint2 = testSubjects(2).properties("geoCoords")(0).toString +
-		 // "," + testSubjects(2).properties("geoCoords")(1).toString
-//		 val computedScore = EuclidianDistance.compare(
-//				testGeoPoint1,
-//				testGeoPoint2
-//		 )
-//		 val expectedScore = 0.5
-//		 //31.273755951
-//
-//		 computedScore shouldEqual expectedScore
+		val testGeoPoint1 = testSubjects(1).properties("geoCoords").mkString(",")
+		val testGeoPoint2 = testSubjects(2).properties("geoCoords").mkString(",")
+		val testGeoPoint3 = testSubjects(0).properties("geoCoords").mkString(",")
+
+		val computedScore1 = EuclidianDistance.compare(
+			testGeoPoint1,
+			testGeoPoint2
+		)
+
+		val computedScore2 = EuclidianDistance.compare(
+			testGeoPoint1,
+			testGeoPoint3
+		)
+
+		val computedScore3 = EuclidianDistance.compare(
+			testGeoPoint1,
+			testGeoPoint1
+		)
+
+		val expectedScore1 = 0.75
+		val expectedScore2 = 0.5
+		val expectedScore3 = 1.0
+
+		computedScore1 shouldEqual expectedScore1
+		computedScore2 shouldEqual expectedScore2
+		computedScore3 shouldEqual expectedScore3
 
 	}
 
@@ -198,7 +210,11 @@ class DeduplicationUnitTest
 		List(
 			Subject(
 				name = Some("Volkswagen"),
-				properties = Map("city" -> List("Berlin"))),
+				properties = Map(
+					"city" -> List("Berlin"),
+					"geoCoords" -> List("52","11")
+				)
+			),
 			Subject(
 				name = Some("Audi GmbH"),
 				properties = Map(
