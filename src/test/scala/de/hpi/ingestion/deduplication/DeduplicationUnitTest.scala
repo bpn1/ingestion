@@ -28,17 +28,17 @@ class DeduplicationUnitTest
 		score shouldEqual expectedScore
 	}
 
-	"DeviantNumbers" should "calculate the similiarity of two numbers, but not as strings" in {
+	"RoughlyEqualNumbers" should "calculate the similarity of two numbers, but not as strings" in {
 			val testSubjects = getSampleSubjects()
 			val expectedScore1 = 0.98
 			val expectedScore2 = 0.02
 
-			val computedScore1 = DeviantNumbers.compare(
+			val computedScore1 = RoughlyEqualNumbers.compare(
 				testSubjects(0).properties("grossIncome").head,
 				testSubjects(1).properties("grossIncome").head
 			)
 
-			val computedScore2 = DeviantNumbers.compare(
+			val computedScore2 = RoughlyEqualNumbers.compare(
 				testSubjects(2).properties("grossIncome").head,
 				testSubjects(3).properties("grossIncome").head
 			)
