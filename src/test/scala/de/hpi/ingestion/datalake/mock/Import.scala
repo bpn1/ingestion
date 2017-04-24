@@ -13,6 +13,7 @@ object Import extends DataLakeImport[Entity](
 	"inputTable"
 ){
 	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = sc.parallelize(Seq(Subject()))
+	override def filterEntities(entity: Entity): Boolean = true
 	override def translateToSubject(entity: Entity, version: Version): Subject = Subject()
 	override def parseNormalizationConfig(path: String): Map[String, List[String]] = {
 		val url = getClass.getResource(s"/$path")

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<types>
+    <organisation><label>Broadcaster</label></organisation>
+    <organisation>
+        <label>Company</label>
+        <subOrganisation>Airline</subOrganisation>
+        <subOrganisation>Bank</subOrganisation>
+        <subOrganisation>Brewery</subOrganisation>
+        <subOrganisation>BusCompany</subOrganisation>
+        <subOrganisation>Caterer</subOrganisation>
+        <subOrganisation>LawFirm</subOrganisation>
+        <subOrganisation>Publisher</subOrganisation>
+        <subOrganisation>RecordLabel</subOrganisation>
+        <subOrganisation>Winery</subOrganisation>
+    </organisation>
+    <organisation><label>EducationalInstitution</label></organisation>
+    <organisation><label>EmployersOrganisation</label></organisation>
+    <organisation><label>GeopoliticalOrganisation</label></organisation>
+    <organisation><label>GovernmentAgency</label></organisation>
+    <organisation><label>InternationalOrganisation</label></organisation>
+    <organisation><label>Legislature</label></organisation>
+    <organisation><label>MilitaryUnit</label></organisation>
+    <organisation><label>Non-ProfitOrganisation</label></organisation>
+    <organisation><label>Parliament</label></organisation>
+    <organisation><label>PoliticalParty</label></organisation>
+    <organisation><label>PublicTransitSystem</label></organisation>
+    <organisation><label>ReligiousOrganisation</label></organisation>
+    <organisation><label>SambaSchool</label></organisation>
+    <organisation><label>SportsClub</label></organisation>
+    <organisation><label>SportsLeague</label></organisation>
+    <organisation><label>SportsTeam</label></organisation>
+    <organisation><label>TermOfOffice</label></organisation>
+    <organisation><label>TradeUnion</label></organisation>
+</types>
