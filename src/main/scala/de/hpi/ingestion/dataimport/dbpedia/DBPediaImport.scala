@@ -71,10 +71,7 @@ object DBPediaImport {
 	  */
 	def extractWikiDataId(list: List[String]): Option[String] = {
 		val idOption = list.find(_.startsWith("wikidata:"))
-		idOption match {
-			case Some(id) => Some(id.drop(9))
-			case _ => None
-		}
+		idOption.map(id => id.drop(9))
 	}
 
 	/**

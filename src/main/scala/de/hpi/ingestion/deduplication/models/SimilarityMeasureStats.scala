@@ -1,6 +1,7 @@
 package de.hpi.ingestion.deduplication.models
 
 import java.util.UUID
+import com.datastax.driver.core.utils.UUIDs
 
 /**
   * Case class for corresponding sim_measure_stats cassandra table
@@ -9,7 +10,7 @@ import java.util.UUID
   * @param comment	String containing a comment or description of the data
   */
 case class SimilarityMeasureStats(
-	id: UUID = UUID.randomUUID(),
+	id: UUID = UUIDs.timeBased(),
 	data: Array[(Double, Double, Double, Double)],
 	comment: Option[String]
 )

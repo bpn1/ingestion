@@ -31,10 +31,10 @@ object SimilarityMeasureEvaluation {
 				// True Positives
 				case (Some(prediction), Some(label)) => (prediction, label)
 				// False Positives
-				case (Some(prediction), None) => (prediction, 0:Double)
+				case (Some(prediction), None) => (prediction, 0.0)
 				// False negatives
-				case (None, Some(label)) => (0:Double, label)
-				case _ => (-1:Double, -1:Double)
+				case (None, Some(label)) => (0.0, label)
+				case _ => (-1.0, -1.0)
 			}
 			.values
 	}
@@ -51,7 +51,7 @@ object SimilarityMeasureEvaluation {
 			}.distinct
 		val test = sc
 			.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
-			.map(pair => (pair, 1:Double))
+			.map(pair => (pair, 1.0))
 
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
