@@ -7,8 +7,6 @@ import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import scala.collection.mutable
-
 /**
   * This job translates Wikidata entities into Subjects and writes them into a staging table.
   */

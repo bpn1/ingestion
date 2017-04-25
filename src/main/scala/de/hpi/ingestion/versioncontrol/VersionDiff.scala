@@ -146,19 +146,21 @@ object VersionDiff extends SparkJob {
 
 	/**
 	  * Loads subjects from the Cassandra.
-	  * @return first element of the four-tuple contains the subject RDD
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext): List[RDD[Any]] = {
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
 		List(subjects.asInstanceOf[RDD[Any]])
 	}
 
 	/**
 	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
-	  * @param input four-tuple of RDD-Options containing the input data
+	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program
-	  * @return four-tuple of RDD-Options containing the output data
+	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val (oldVersion, newVersion) = versionOrder(UUID.fromString(args(0)), UUID.fromString(args(1)))
@@ -173,13 +175,21 @@ object VersionDiff extends SparkJob {
 	/**
 	  * Writes the JSON diff to the HDFS.
 	  * @param output first element is the RDD of JSON diffs
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext): Unit = {
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
 			.fromAnyRDD[JsValue]()
-			.foreach(_.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000))
+			.head
+			.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
 	}
 
+	/**
+	  * Asserts that two versions are given as program arguments.
+	  * @param args arguments of the program
+	  * @return true if there are at least two arguments provided
+	  */
 	override def assertConditions(args: Array[String]): Boolean = {
 		args.length >= 2
 	}

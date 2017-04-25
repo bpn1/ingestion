@@ -15,9 +15,10 @@ trait SparkJob {
 	/**
 	  * Loads a four-tuple of RDD-Options used in the job.
 	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
-	def load(sc: SparkContext): List[RDD[Any]]
+	def load(sc: SparkContext, args: Array[String]): List[RDD[Any]]
 
 	/**
 	  * Executes the data processing of this job and produces the output data.
@@ -32,14 +33,15 @@ trait SparkJob {
 	  * Saves the output data to e.g. the Cassandra or the HDFS.
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
 	  */
-	def save(output: List[RDD[Any]], sc: SparkContext): Unit
+	def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit
 
 	/**
 	  * Called before running the job. Used to assert specifics of the input arguments. Returns false if the program
 	  * should be terminated.
 	  * @param args arguments of the program
-	  * @return true of the program can continue, false if it should be terminated
+	  * @return true if the program can continue, false if it should be terminated
 	  */
 	def assertConditions(args: Array[String]): Boolean = true
 
@@ -73,8 +75,8 @@ trait SparkJob {
 			return
 		}
 		val sc = sparkContext()
-		val data = load(sc)
+		val data = load(sc, args)
 		val results = run(data, sc, args)
-		save(results, sc)
+		save(results, sc, args)
 	}
 }

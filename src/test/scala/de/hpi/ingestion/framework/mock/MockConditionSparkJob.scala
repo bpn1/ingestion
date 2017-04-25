@@ -22,7 +22,7 @@ class MockConditionSparkJob extends FlatSpec with SparkJob with SharedSparkConte
 		args.isEmpty
 	}
 
-	override def load(sc: SparkContext): List[RDD[Any]] = {
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		methodCalls += "load"
 		Nil
 	}
@@ -32,7 +32,7 @@ class MockConditionSparkJob extends FlatSpec with SparkJob with SharedSparkConte
 		Nil
 	}
 
-	override def save(output: List[RDD[Any]], sc: SparkContext): Unit = {
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		methodCalls += "save"
 	}
 
