@@ -3,7 +3,7 @@ package de.hpi.ingestion.deduplication.similarity
 import java.lang.Math.sqrt
 
 /**
-  * A hybrid similarity measure comparing strings corresponding to the jaccard algorithm
+  * A similarity measure to classify the distance of two points into a score
   */
 object EuclidianDistance extends SimilarityMeasure[String] {
 
@@ -32,8 +32,8 @@ object EuclidianDistance extends SimilarityMeasure[String] {
 	def turnDistanceIntoScore(distance: Double, scale: Int = 1): Double = {
 			distance match {
 				case x if x <= (5.0 * scale) => 1.0
-				case x if x > (5.0 * scale) && x <= (20.0 * scale) => 0.75
-				case x if x > (20.0 * scale) && x <= (100.0 * scale) => 0.5
+				case x if x <= (20.0 * scale) => 0.75
+				case x if x <= (100.0 * scale) => 0.5
 				case _ => 0.0
 			}
 	}
@@ -47,13 +47,13 @@ object EuclidianDistance extends SimilarityMeasure[String] {
 	  * 0.0 as default value if one of the input strings is empty
 	  */
 	override def compare(s: String, t: String, u: Int = 1) : Double = {
-		val geoPoint1 = s.split(",").toList
-		val geoPoint2 = t.split(",").toList
+		val geoPoint1 = s.split(",").toList.map(_.toDouble)
+		val geoPoint2 = t.split(",").toList.map(_.toDouble)
 		val distance = computeDistance(
-			geoPoint1(0).toDouble,
-			geoPoint1(1).toDouble,
-			geoPoint2(0).toDouble,
-			geoPoint2(1).toDouble
+			geoPoint1(0),
+			geoPoint1(1),
+			geoPoint2(0),
+			geoPoint2(1)
 		)
 		turnDistanceIntoScore(distance,u)
 	}
