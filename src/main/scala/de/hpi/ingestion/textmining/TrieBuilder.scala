@@ -7,16 +7,17 @@ import scala.collection.mutable
 import de.hpi.ingestion.textmining.models._
 
 /**
-  * Builds trie from aliases
+  * Builds trie from aliases.
   */
 object TrieBuilder {
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
 
 	/**
-	  * Finds all occurrences of aliases in the text of a Wikipedia entry
-	  * @param entry parsed Wikipedia entry to use
-	  * @param trie Trie containing the aliases we look for
+	  * Finds all occurrences of aliases in the text of a Wikipedia entry.
+	  *
+	  * @param entry     parsed Wikipedia entry to use
+	  * @param trie      Trie containing the aliases we look for
 	  * @param tokenizer Tokenizer used to tokenize the text of the entry
 	  * @return entry containing list of found aliases
 	  */
@@ -24,8 +25,7 @@ object TrieBuilder {
 		entry: ParsedWikipediaEntry,
 		trie: TrieNode,
 		tokenizer: Tokenizer
-	): ParsedWikipediaEntry =
-	{
+	): ParsedWikipediaEntry = {
 		val resultList = mutable.ListBuffer[String]()
 		val tokens = tokenizer.tokenize(entry.getText())
 		for(i <- tokens.indices) {
@@ -51,7 +51,7 @@ object TrieBuilder {
 		val conf = new SparkConf()
 			.setAppName("TrieBuilder")
 			.set("spark.cassandra.connection.host", "odin01")
-		 	.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+			.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 			.set("spark.kryo.registrator", "de.hpi.ingestion.textmining.TrieKryoRegistrator")
 		val sc = new SparkContext(conf)
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)

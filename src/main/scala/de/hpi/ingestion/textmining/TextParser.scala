@@ -436,8 +436,8 @@ object TextParser {
 	/**
 	  * Extracts all category links from parsed Wikipedia entry
 	  *
-	  * @param entry
-	  * @return
+	  * @param entry without category links
+	  * @return entry with category links
 	  */
 	def extractCategoryLinks(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
 		val categoryLinks = entry.textlinks.filter(isCategoryLink)

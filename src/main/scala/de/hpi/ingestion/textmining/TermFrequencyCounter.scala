@@ -6,7 +6,7 @@ import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
 /**
-  * Calculate term frequency per article and link
+  * Calculates term frequency per article and link.
   */
 object TermFrequencyCounter {
 	val keyspace = "wikidumps"
@@ -39,7 +39,7 @@ object TermFrequencyCounter {
 	}
 
 	/**
-	  * Enriches a Wikipedia article with its bag of words (implemented as Map)
+	  * Enriches a Wikipedia article with its bag of words (implemented as Map).
 	  *
 	  * @param entry parsed Wikipedia entry which terms will be extracted
 	  * @return parsed Wikipedia entry with additional context information
@@ -50,7 +50,7 @@ object TermFrequencyCounter {
 	}
 
 	/**
-	  * Extracts context of the links of a given Wikipedia entry. The context are {@contextSize} tokens in front of
+	  * Extracts context of the links of a given Wikipedia entry. The contexts are {@contextSize } tokens in front of
 	  * and behind the location of the links alias in the tokenized text.
 	  *
 	  * @param entry Wikipedia entry containing the used links
@@ -75,6 +75,7 @@ object TermFrequencyCounter {
 	/**
 	  * Enriches articles with the term frequencies of the whole article (called context) and the term frequencies
 	  * for all link contexts (called link contexts).
+	  *
 	  * @param articles RDD of Parsed Wikipedia Entries
 	  * @return RDD of articles with their contexts and the link contexts
 	  */

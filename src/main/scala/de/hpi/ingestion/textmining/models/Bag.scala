@@ -5,7 +5,6 @@ import scala.collection.SetLike
 import scala.collection.mutable.Builder
 import scala.language.implicitConversions
 import scala.reflect.{ClassTag, classTag}
-import scala.math.BigDecimal
 
 
 class Bag[A, B <% BagCounter[B] : ClassTag](
