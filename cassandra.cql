@@ -102,12 +102,6 @@ CREATE TYPE datalake.subject (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
-CREATE TYPE datalake.simmeasurestats (
-    precision text,
-    recall text,
-    f_score text
-)
-
 CREATE TABLE datalake.subject (
     id uuid PRIMARY KEY,
     aliases list<text>,

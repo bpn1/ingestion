@@ -1,7 +1,6 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
@@ -16,13 +15,19 @@ object SimilarityMeasureEvaluation {
 	val inputTraining = "dbpedia_wikidata_deduplication"
 	val output = "sim_measure_stats"
 
+	/**
+	  * Generate (prediction, label) tuples for evaluation
+	  * @param training Precictions from the training data
+	  * @param test		Labels from the testdata
+	  * @return			RDD containing (prediction, label) tuples
+	  */
 	def generatePredictionAndLabels(
 		training: RDD[((UUID, UUID), Double)],
 		test: RDD[((UUID, UUID), Double)]
 	): RDD[(Double, Double)] = {
 		training
-		    .fullOuterJoin(test)
-		    .mapValues {
+			.fullOuterJoin(test)
+			.mapValues {
 				// True Positives
 				case (Some(prediction), Some(label)) => (prediction, label)
 				// False Positives
@@ -31,7 +36,7 @@ object SimilarityMeasureEvaluation {
 				case (None, Some(label)) => (0:Double, label)
 				case _ => (-1:Double, -1:Double)
 			}
-		    .values
+			.values
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -41,13 +46,12 @@ object SimilarityMeasureEvaluation {
 
 		val training = sc
 			.cassandraTable[DuplicateCandidates](this.keyspace, this.inputTraining)
-		    .flatMap { case DuplicateCandidates(subject_id, candidates) =>
+			.flatMap { case DuplicateCandidates(subject_id, candidates) =>
 				candidates.map(candidate => ((subject_id, candidate._1.id), candidate._3))
-			}
-		    .distinct
+			}.distinct
 		val test = sc
 			.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
-		    .map(pair => (pair, 1:Double))
+			.map(pair => (pair, 1:Double))
 
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
@@ -58,14 +62,14 @@ object SimilarityMeasureEvaluation {
 
 		val data = precision
 			.join(recall)
-		    .join(f1Score)
-		    .map { case (threshold, ((precision, recall), f1Score)) =>
+			.join(f1Score)
+			.map { case (threshold, ((precision, recall), f1Score)) =>
 				(threshold, precision, recall, f1Score)
 			}.collect
 		val stats = SimilarityMeasureStats(data = data, comment = Option("Naiv Deduplication"))
 
 		sc
-		    .parallelize(Seq(stats))
+			.parallelize(Seq(stats))
 			.saveToCassandra(this.keyspace, this.output)
 	}
 }

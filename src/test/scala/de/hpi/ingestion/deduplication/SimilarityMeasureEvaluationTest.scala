@@ -13,7 +13,7 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 		val training = TestData.trainigsData(sc)
 		val truePositives = SimilarityMeasureEvaluation
 			.generatePredictionAndLabels(training, test)
-		    .filter { case (prediction, label) =>
+			.filter { case (prediction, label) =>
 				prediction > 0 && label == 1
 			}
 		val expected = TestData.truePositives(sc)
