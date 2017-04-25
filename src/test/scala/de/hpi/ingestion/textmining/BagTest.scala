@@ -4,7 +4,6 @@ import de.hpi.ingestion.textmining.models.Bag
 import org.scalatest.{FlatSpec, Matchers}
 
 class BagTest extends FlatSpec with Matchers {
-	// http://stackoverflow.com/questions/15065070/implement-a-Bag-bag-as-scala-collection
 
 	"Bag" should "add elements properly" in {
 		Bag("X" -> 3, "Y" -> 1) + "X" shouldEqual Bag("X" -> 4, "Y" -> 1)
