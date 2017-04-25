@@ -70,11 +70,8 @@ class Deduplication(
 			.mkString("\n"))
 
 		val configSettings = xml \\ "config" \ "sourceSettings"
-		settings("keyspace") = (configSettings \ "keyspace").text
-		settings("stagingTable") = (configSettings \ "stagingTable").text
-		settings("subjectTable") = (configSettings \ "subjectTable").text
-		settings("duplicatesTable") = (configSettings \ "duplicatesTable").text
-		settings("versionTable") = (configSettings \ "versionTable").text
+		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
+			settings(node.label) = node.text
 
 		config = (xml \\ "config" \ "simMeasurements" \ "feature")
 			.toList
