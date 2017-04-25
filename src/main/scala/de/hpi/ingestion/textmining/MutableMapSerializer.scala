@@ -20,8 +20,7 @@ class MutableMapSerializer() extends Serializer[mutable.Map[_, _]] {
 		kryo: Kryo,
 		input: Input,
 		typ: Class[mutable.Map[_, _]]
-	): mutable.Map[_, _] =
-	{
+	): mutable.Map[_, _] = {
 		val mapLength = input.readInt(true)
 		val resultMap = mutable.Map[Any, Any]()
 		if (mapLength != 0) {

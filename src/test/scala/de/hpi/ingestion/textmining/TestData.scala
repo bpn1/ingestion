@@ -1,11 +1,14 @@
 package de.hpi.ingestion.textmining
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.net.URI
+
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -932,7 +935,7 @@ object TestData {
 	}
 
 	def testListLinkPage(): String = {
-		Source.fromURL(getClass.getResource("/test_data.html")).getLines().mkString("\n")
+		Source.fromURL(getClass.getResource("/textmining/test_data.html")).getLines().mkString("\n")
 	}
 
 	def testExtractedListLinks(): List[Link] = {
@@ -1106,6 +1109,43 @@ object TestData {
 			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union"))))
 	}
 
+	def aliasFileStream(): BufferedSource = {
+		Source.fromURL(getClass.getResource("/textmining/aliasfile"))
+	}
+
+	def deserializedTrie(): TrieNode = {
+		val trie = new TrieNode()
+		val tokenizer = IngestionTokenizer(false, false)
+		val aliasList = List("test alias abc", "this is a second alias", "a third alias", "test alias bcs", "this is a different sentence")
+		for(alias <- aliasList) {
+			trie.append(tokenizer.process(alias))
+		}
+		trie
+	}
+
+	def testDataTrie(tokenizer: IngestionTokenizer): TrieNode = {
+		val trie = new TrieNode()
+		val aliasList = Source.fromURL(getClass.getResource("/textmining/triealiases")).getLines()
+		for(alias <- aliasList) {
+			trie.append(tokenizer.process(alias))
+		}
+		trie
+	}
+
+	def uncleanedFoundAliaes(): List[String] = {
+		List("Alias 1", "", "Alias 2", "Alias 1", "Alias 3")
+	}
+
+	def cleanedFoundAliaes(): List[String] = {
+		List("Alias 1", "Alias 2", "Alias 3")
+	}
+
+	def binaryTrieStream(): ByteArrayInputStream = {
+		val aliasStream = TestData.aliasFileStream()
+		val trieStream = new ByteArrayOutputStream(1024)
+		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
+		new ByteArrayInputStream(trieStream.toByteArray)
+	}
 }
 
 // scalastyle:on method.length
