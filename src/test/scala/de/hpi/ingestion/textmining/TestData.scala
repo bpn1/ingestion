@@ -511,19 +511,19 @@ object TestData {
 		)
 	}
 
-	def articleWordsTfidfList(): List[(String, Map[String, Double])] = {
+	def articleWordsTfidfMap(): Map[String, Map[String, Double]] = {
 		// considered to be retrieved from 7 documents
 		val tf1df1 = 0.845
 		val tf1df2 = 0.544
 		val tf1df3 = 0.368
-		List(
-			("Audi", Map("audi" -> tf1df1, "ist" -> tf1df3, "ein" -> tf1df3, "automobilhersteller" -> tf1df1)),
-			("Brachttal", Map("brachttal" -> tf1df1, "ist" -> tf1df3, "irgendein" -> tf1df1, "ortsteil" -> tf1df1)),
-			("Main-Kinzig-Kreis", Map("der" -> tf1df2, "main-kinzig-kreis" -> tf1df2, "ein" -> tf1df3, "einwohnerzahl" -> tf1df1)),
-			("Hessen", Map("hessen" -> tf1df1, "ist" -> tf1df3, "der" -> tf1df2, "main-kinzig-kreis" -> tf1df2)),
-			("1377", Map("ein" -> tf1df3, "jahr" -> tf1df2)),
-			("Büdinger Wald", Map("waldrech" -> tf1df1)),
-			("historisches Jahr", Map("jahr" -> tf1df2))
+		Map(
+			"Audi" -> Map("audi" -> tf1df1, "ist" -> tf1df3, "ein" -> tf1df3, "automobilhersteller" -> tf1df1),
+			"Brachttal" -> Map("brachttal" -> tf1df1, "ist" -> tf1df3, "irgendein" -> tf1df1, "ortsteil" -> tf1df1),
+			"Main-Kinzig-Kreis" -> Map("der" -> tf1df2, "main-kinzig-kreis" -> tf1df2, "ein" -> tf1df3, "einwohnerzahl" -> tf1df1),
+			"Hessen" -> Map("hessen" -> tf1df1, "ist" -> tf1df3, "der" -> tf1df2, "main-kinzig-kreis" -> tf1df2),
+			"1377" -> Map("ein" -> tf1df3, "jahr" -> tf1df2),
+			"Büdinger Wald" -> Map("waldrech" -> tf1df1),
+			"historisches Jahr" -> Map("jahr" -> tf1df2)
 		)
 	}
 

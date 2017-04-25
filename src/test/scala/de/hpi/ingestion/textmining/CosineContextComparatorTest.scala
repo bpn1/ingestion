@@ -109,7 +109,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Cosine similarity between contexts" should "be exactly this value" in {
 		val linkContext = TestData.shortLinkContextsTfidfList().head._2
-		val pageContext = TestData.articleWordsTfidfList().head._2
+		val pageContext = TestData.articleWordsTfidfMap().head._2
 		val cosineSimilarity = CosineContextComparator.calculateCosineSimilarity(linkContext, pageContext)
 		cosineSimilarity shouldBe 0.608944778982726
 	}
@@ -117,9 +117,9 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
 		val aliasPageProbabilities = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
-		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfList())
+		val articleTfidf = TestData.articleWordsTfidfMap()
 		val featureEntries = CosineContextComparator
-			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf, sc)
 			.collect
 		featureEntries should not be empty
 	}
@@ -127,9 +127,9 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	they should "be exactly these feature entries" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
 		val aliasPageProbabilities = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
-		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfList())
+		val articleTfidf = TestData.articleWordsTfidfMap()
 		val featureEntries = CosineContextComparator
-			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf, sc)
 			.collect
 			.toSet
 		featureEntries shouldEqual TestData.featureEntriesSet()
@@ -140,7 +140,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
 		val featureEntries = CosineContextComparator
-			.run(articles, documentFrequencies, aliases)
+			.run(articles, documentFrequencies, aliases, sc)
 			.collect
 		featureEntries shouldBe empty
 	}
@@ -150,7 +150,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val featureEntries = CosineContextComparator
-			.run(articles, documentFrequencies, aliases)
+			.run(articles, documentFrequencies, aliases, sc)
 			.collect
 		featureEntries should not be empty
 	}
@@ -160,7 +160,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val featureEntries = CosineContextComparator
-			.run(articles, documentFrequencies, aliases)
+			.run(articles, documentFrequencies, aliases, sc)
 			.collect
 		val linkCount = articles.flatMap(_.allLinks()).count
 		featureEntries.length shouldBe linkCount
