@@ -131,10 +131,19 @@ class Deduplication(
 		subjectBlocks
 	}
 
+	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
+		subjectPairs
+			.map { case (subject1, subject2, score) =>
+				subject1.id -> List((subject2, settings("stagingTable"), score))
+			}
+			.reduceByKey { case (accumulator, candidate) => candidate ::: accumulator}
+			.map (DuplicateCandidates.tupled)
+	}
+
 	/**
 	  * Finds the duplicates of each block
 	  * @param block List of Subjects where the duplicates are searched in
-	  * @return tuple of Subjects whose score is greater or equal a given threshold this.confidence
+	  * @return tuple of Subjects with it's score, which is greater or equal a given threshold this.confidence
 	  */
 	def findDuplicates(block: List[Subject]): List[(Subject, Subject, Double)] = {
 		block
@@ -232,15 +241,10 @@ class Deduplication(
 			.parallelize(Seq(blockEvaluation))
 			.saveToCassandra(settings("keyspace"), settings("statsTable"))
 
-		blocks
-			.flatMap(block => findDuplicates(block._2))
-			.map { case (subject1, subject2, score) =>
-				subject1.id -> List((subject2, settings("stagingTable"), score))
-			}
-			.reduceByKey { case (accum, candidate) =>
-				candidate ::: accum
-			}
-			.map { case (subject_id, candidates) => DuplicateCandidates(subject_id, candidates)}
+		createDuplicateCandidates(
+			blocks
+				.flatMap(block => findDuplicates(block._2))
+		)
 		.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
 	}
 }
