@@ -6,7 +6,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import de.hpi.ingestion.deduplication.models.DuplicateCandidates
+import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, SimilarityMeasureStats}
 
 object SimilarityMeasureEvaluation {
 	val appName = "SimilarityMeasureEvaluation"
@@ -56,12 +56,16 @@ object SimilarityMeasureEvaluation {
 		val recall = metrics.recallByThreshold
 		val f1Score = metrics.fMeasureByThreshold
 
-		precision
+		val data = precision
 			.join(recall)
 		    .join(f1Score)
 		    .map { case (threshold, ((precision, recall), f1Score)) =>
 				(threshold, precision, recall, f1Score)
-			}
-		    .saveToCassandra(this.keyspace, this.output)
+			}.collect
+		val stats = SimilarityMeasureStats(data = data, comment = Option("Naiv Deduplication"))
+
+		sc
+		    .parallelize(Seq(stats))
+			.saveToCassandra(this.keyspace, this.output)
 	}
 }

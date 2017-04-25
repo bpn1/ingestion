@@ -216,11 +216,11 @@ CREATE TABLE evaluation.subject_wikidata (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
-CREATE TABLE evaluation.simmeasureevaluation (
+CREATE TABLE evaluation.sim_measure_stats (
     id uuid PRIMARY KEY,
-    data map<text, list<frozen<tuple<simmeasurestats, double>>>>,
+    data list<frozen<tuple<double, double, double, double>>>,
     comment text
-)
+);
 
 CREATE TABLE evaluation.version (
     version timeuuid PRIMARY KEY,
