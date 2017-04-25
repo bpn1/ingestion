@@ -68,7 +68,6 @@ object SimilarityMeasureEvaluation {
 			}
 			.collect
 		    .toList
-
 		val stats = SimilarityMeasureStats(data = data, comment = Option("Naiv Deduplication"))
 
 		sc
