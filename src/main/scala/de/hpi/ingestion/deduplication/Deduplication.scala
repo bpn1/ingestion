@@ -234,12 +234,13 @@ class Deduplication(
 
 		blocks
 			.flatMap(block => findDuplicates(block._2))
-		    .map { case (subject1, subject2, score) =>
-				DuplicateCandidates(
-					subject1.id,
-					List((subject2, settings("stagingTable"), score))
-				)
+			.map { case (subject1, subject2, score) =>
+				subject1.id -> List((subject2, settings("stagingTable"), score))
 			}
+			.reduceByKey { case (accum, candidate) =>
+				candidate ::: accum
+			}
+			.map { case (subject_id, candidates) => DuplicateCandidates(subject_id, candidates)}
 		.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
 	}
 }
