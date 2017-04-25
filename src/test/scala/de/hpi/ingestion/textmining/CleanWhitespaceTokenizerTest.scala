@@ -1,19 +1,19 @@
 package de.hpi.ingestion.textmining
 
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Matchers}
 
-class CleanWhitespaceTokenizerTest extends FlatSpec with PrettyTester {
+class CleanWhitespaceTokenizerTest extends FlatSpec with Matchers {
 	"Cleaned tokenized sentences" should "contain multiple tokens" in {
 		val tokenizer = new CleanWhitespaceTokenizer
 		TestData.testSentences()
 			.map(tokenizer.tokenize)
-			.foreach(tokens => assert(tokens.length > 1))
+			.foreach(tokens => tokens.length should be > 1)
 	}
 
 	they should "be exactly these token lists" in {
 		val tokenizer = new CleanWhitespaceTokenizer
 		val tokenizedSentences = TestData.testSentences()
 			.map(tokenizer.tokenize)
-		assert(areListsEqual(tokenizedSentences, TestData.tokenizedTestSentences()))
+		tokenizedSentences shouldEqual TestData.tokenizedTestSentences()
 	}
 }

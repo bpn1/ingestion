@@ -80,9 +80,13 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	"Reverse" should "revert the input tokens" in {
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer)
+		val tokenizer2 = IngestionTokenizer(new CoreNLPTokenizer)
 		val sentences = TestData.tokenizedTestSentences()
 			.map(tokenizer.reverse)
+		val sentences2 = TestData.tokenizedTestSentences()
+			.map(tokenizer2.reverse)
 		val expectedSentences = TestData.reversedSentences()
 		sentences shouldEqual expectedSentences
+		sentences2 shouldEqual expectedSentences
 	}
 }
