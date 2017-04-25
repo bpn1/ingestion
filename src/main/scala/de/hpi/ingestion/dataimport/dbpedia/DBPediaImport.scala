@@ -70,8 +70,9 @@ object DBPediaImport {
 	  * @return The wikidata id or None if the id could not be found
 	  */
 	def extractWikiDataId(list: List[String]): Option[String] = {
-		val idOption = list.find(_.startsWith("wikidata:"))
-		idOption.map(id => id.drop(9))
+		val prefix = "wikidata:"
+		val idOption = list.find(_.startsWith(prefix))
+		idOption.map(id => id.drop(prefix.length))
 	}
 
 	/**
