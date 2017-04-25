@@ -1,6 +1,6 @@
 package de.hpi.ingestion.dataimport.wikidata
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import java.util.UUID
 
 import de.hpi.ingestion.implicits.CollectionImplicits._

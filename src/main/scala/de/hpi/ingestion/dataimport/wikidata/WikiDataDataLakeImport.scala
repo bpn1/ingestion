@@ -4,6 +4,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.datalake.{DataLakeImport, SubjectManager}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
+import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -17,11 +18,10 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 	"wikidumps",
 	"wikidata")
 {
-	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = {
-		sc
-			.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
-			.filter(filterEntities)
-			.map(translateToSubject(_, version))
+
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val wikidata = sc.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
+		List(wikidata).toAnyRDD()
 	}
 
 	override def filterEntities(entity: WikiDataEntity): Boolean = {
@@ -41,10 +41,6 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 
 		sm.addProperties(entity.data ++ normalizedProperties)
 		subject
-	}
-
-	def main(args: Array[String]): Unit = {
-		importToCassandra()
 	}
 
 }

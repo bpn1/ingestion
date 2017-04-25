@@ -6,6 +6,8 @@ import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.ingestion.implicits.CollectionImplicits._
+
 import scala.collection.mutable
 
 /**
@@ -18,11 +20,10 @@ object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 	"wikidumps",
 	"dbpedia"
 ){
-	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = {
-		sc
-			.cassandraTable[DBPediaEntity](inputKeyspace, inputTable)
-			.filter(filterEntities)
-			.map(translateToSubject(_, version))
+
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val wikidata = sc.cassandraTable[DBPediaEntity](inputKeyspace, inputTable)
+		List(wikidata).toAnyRDD()
 	}
 
 	override def filterEntities(entity: DBPediaEntity): Boolean = {
@@ -48,7 +49,4 @@ object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 		subject
 	}
 
-	def main(args: Array[String]) {
-		importToCassandra()
-	}
 }
