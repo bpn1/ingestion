@@ -7,6 +7,9 @@ import org.apache.spark.rdd.RDD
 
 import scala.io.Source
 
+/**
+  * Calculate document frequency over all articles
+  */
 object DocumentFrequencyCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"

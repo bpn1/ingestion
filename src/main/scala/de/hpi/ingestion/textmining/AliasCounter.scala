@@ -17,15 +17,15 @@ object AliasCounter {
 	/**
 	  * Calculates the probability that an alias is a link.
 	  *
-	  * @param aliasCounts Alias of a given alias
-	  * @return percentage of the occurrences as link.
+	  * @param aliasCounts alias of a given alias
+	  * @return percentage of the occurrences as link
 	  */
 	def probabilityIsLink(aliasCounts: Alias): Double = {
 		aliasCounts.linkoccurrences.toDouble / aliasCounts.totaloccurrences
 	}
 
 	/**
-	  * Extracts list of link and general alias occurrences for an article
+	  * Extracts list of link and general alias occurrences for an article.
 	  *
 	  * @param entry article from which the aliases will be extracted
 	  * @return list of aliases each with an occurrence set to 1
@@ -53,7 +53,7 @@ object AliasCounter {
 	  *
 	  * @param alias1 first Alias with the same alias as alias2
 	  * @param alias2 second Alias with the same alias as alias1
-	  * @return Alias with summed link and total occurrences
+	  * @return alias with summed link and total occurrences
 	  */
 	def aliasReduction(alias1: Alias, alias2: Alias): Alias = {
 		Alias(

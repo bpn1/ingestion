@@ -6,6 +6,9 @@ import com.datastax.spark.connector._
 import scala.collection.mutable
 import de.hpi.ingestion.textmining.models._
 
+/**
+  * Builds trie from aliases
+  */
 object TrieBuilder {
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"

@@ -15,6 +15,13 @@ object LinkAnalysis {
 	val outputAliasToPagesTablename = "wikipedialinks"
 	val outputPageToAliasesTablename = "wikipediapages"
 
+	/**
+	  * Removes links that do not point to an existing page.
+	  *
+	  * @param links    links to be filtered
+	  * @param allPages every page in Wikipedia
+	  * @return filtered RDD of links
+	  */
 	def removeDeadLinks(links: RDD[Alias], allPages: RDD[String]): RDD[Alias] = {
 		links
 			.flatMap { link =>
@@ -29,6 +36,13 @@ object LinkAnalysis {
 			.map { case (alias, links) => Alias(alias, links) }
 	}
 
+	/**
+	  * Removes non existing pages.
+	  *
+	  * @param pages    pages to be filtered
+	  * @param allPages all existing pages
+	  * @return filtered RDD of pages
+	  */
 	def removeDeadPages(pages: RDD[Page], allPages: RDD[String]): RDD[Page] = {
 		pages
 			.keyBy(_.page)
@@ -36,6 +50,12 @@ object LinkAnalysis {
 			.map { case (pageName, (page, doublePageName)) => page }
 	}
 
+	/**
+	  * Create RDD of aliases with corresponding pages.
+	  *
+	  * @param parsedWikipedia RDD of parsed Wikipedia entries to be processed
+	  * @return RDD of aliases
+	  */
 	def groupByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Alias] = {
 		parsedWikipedia
 			.flatMap(_.allLinks())
@@ -52,6 +72,12 @@ object LinkAnalysis {
 			.filter(alias => alias.alias.nonEmpty && alias.pages.nonEmpty)
 	}
 
+	/**
+	  * Create RDD of pages with corresponding aliases.
+	  *
+	  * @param parsedWikipedia RDD of parsed Wikipedia entries to be processed
+	  * @return RDD of pages
+	  */
 	def groupByPageNames(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Page] = {
 		parsedWikipedia
 			.flatMap(_.allLinks())
@@ -68,6 +94,13 @@ object LinkAnalysis {
 			.filter(page => page.page.nonEmpty && page.aliases.nonEmpty)
 	}
 
+	/**
+	  * Calculating probability for alias pointing to page.
+	  *
+	  * @param alias    alias to be processed
+	  * @param pageName pagename that is being pointed to
+	  * @return probability for alias pointing to page
+	  */
 	def probabilityLinkDirectsToPage(alias: Alias, pageName: String): Double = {
 		val totalReferences = alias
 			.pages
@@ -80,7 +113,7 @@ object LinkAnalysis {
 	  * Groups link aliases by page names and vice versa. Also removes dead links (no corresponding page).
 	  *
 	  * @param articles all Wikipedia articles
-	  * @return Grouped aliases and page names
+	  * @return grouped aliases and page names
 	  */
 	def run(articles: RDD[ParsedWikipediaEntry]): (RDD[Alias], RDD[Page]) = {
 		val allPages = articles.map(_.title)

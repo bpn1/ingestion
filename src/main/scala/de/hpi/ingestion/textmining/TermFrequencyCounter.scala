@@ -5,6 +5,9 @@ import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
+/**
+  * Calculate term frequency per article and link
+  */
 object TermFrequencyCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"

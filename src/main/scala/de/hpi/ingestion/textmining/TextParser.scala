@@ -172,9 +172,9 @@ object TextParser {
 	/**
 	  * Extracts all links from a disambiguation page.
 	  *
-	  * @param title Title of Wikipedia article
-	  * @param body  Html body of Wikipedia article
-	  * @return Tuple of html text and list of all links
+	  * @param title title of Wikipedia article
+	  * @param body  html body of Wikipedia article
+	  * @return tuple of html text and list of all links
 	  */
 	def extractDisambiguationLinks(title: String, body: Element): (String, List[Link]) = {
 		val linksList = ListBuffer[Link]()
@@ -191,8 +191,8 @@ object TextParser {
 	/**
 	  * Extract all links with offset from text.
 	  *
-	  * @param body Html body of Wikipedia article
-	  * @return Tuple of html text and list of all text links
+	  * @param body html body of Wikipedia article
+	  * @return tuple of html text and list of all text links
 	  */
 	def extractTextLinks(body: Element): (String, List[Link]) = {
 		val linksList = ListBuffer[Link]()
@@ -260,7 +260,7 @@ object TextParser {
 	  * Extracts and checks if Wikipedia template is correct.
 	  *
 	  * @param wikitext   Wikimarkup text to be extracted from
-	  * @param startIndex StartIndex of template
+	  * @param startIndex startIndex of template
 	  * @return full template text
 	  */
 	def extractTemplate(wikitext: String, startIndex: Int): String = {
@@ -289,7 +289,7 @@ object TextParser {
 	  * Extract all templates in Wikipedia article.
 	  *
 	  * @param wikitext Wikimarkup text to be extracted from
-	  * @return Template text containing all the templates concatenated
+	  * @return template text containing all the templates concatenated
 	  */
 	def extractAllTemplates(wikitext: String): String = {
 		var templateText = ""
@@ -314,8 +314,8 @@ object TextParser {
 	/**
 	  * Constructs a link from regex match.
 	  *
-	  * @param linkMatch Regex match containing link
-	  * @return Link constructed from regex
+	  * @param linkMatch regex match containing link
+	  * @return link constructed from regex
 	  */
 	def constructLinkFromRegexMatch(linkMatch: Regex.Match): Link = {
 		val page = linkMatch.group(1)
@@ -336,7 +336,7 @@ object TextParser {
 	}
 
 	/**
-	  * Extract all links from Wikipedia template
+	  * Extract all links from Wikipedia template.
 	  *
 	  * @param wikitext Wikimarkup text to be extracted from
 	  * @return list of all links in the template
@@ -358,10 +358,10 @@ object TextParser {
 	}
 
 	/**
-	  * Parses a Wikipedia entry meanwhile removing Wikimarkup and extracting all links
+	  * Parses a Wikipedia entry meanwhile removing Wikimarkup and extracting all links.
 	  *
-	  * @param entry Raw Wikipedia entry
-	  * @return Parsed Wikipedia entry thats been processed
+	  * @param entry raw Wikipedia entry
+	  * @return parsed Wikipedia entry thats been processed
 	  */
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val cleanedEntry = cleanRedirects(entry)
@@ -376,7 +376,7 @@ object TextParser {
 	}
 
 	/**
-	  * Cleaning all kinds of redirects so they will get parsed by the Wikiparser
+	  * Cleaning all kinds of redirects so they will get parsed by the Wikiparser.
 	  *
 	  * @param entry raw Wikipedia entry
 	  * @return raw Wikipedia entry with cleaned redirect keywords
@@ -426,8 +426,8 @@ object TextParser {
 	/**
 	  * Checks if a link is a category link.
 	  *
-	  * @param link Link to be checked
-	  * @return Boolean if the link is a category link
+	  * @param link link to be checked
+	  * @return boolean if the link is a category link
 	  */
 	def isCategoryLink(link: Link): Boolean = {
 		link.alias.startsWith(categoryNamespace) || link.page.startsWith(categoryNamespace)
@@ -452,8 +452,9 @@ object TextParser {
 
 	/**
 	  * Extracts all links in list items from html
-	  * @param html Html text to be extracted from
-	  * @return List of all links extracted from list items
+	  *
+	  * @param html html text to be extracted from
+	  * @return list of all links extracted from list items
 	  */
 	def extractListLinks(html: String): List[Link] = {
 		val document = Jsoup.parse(html)
