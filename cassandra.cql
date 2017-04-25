@@ -72,7 +72,8 @@ CREATE TABLE wikidumps.dbpedia (
     description text,
     instancetype text,
     label text,
-    wikipageid text
+    wikipageid text,
+    wikidataid text
 );
 
 -- Datalake
