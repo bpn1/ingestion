@@ -131,6 +131,11 @@ class Deduplication(
 		subjectBlocks
 	}
 
+	/**
+	  * Creates candidates for the Deduplication for each element from the output of findDuplicates
+	  * @param subjectPairs Pairs of subjects for all possible duplicates
+	  * @return all actual candidates to save to the cassandra
+	  */
 	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
 		subjectPairs
 			.map { case (subject1, subject2, score) =>
