@@ -136,7 +136,7 @@ class Deduplication(
 	  * @param block List of Subjects where the duplicates are searched in
 	  * @return tuple of Subjects whose score is greater or equal a given threshold this.confidence
 	  */
-	def findDuplicates(block: List[Subject]): List[(Subject, Subject)] = {
+	def findDuplicates(block: List[Subject]): List[(Subject, Subject, Double)] = {
 		block
 			.cross(block)
 			.filter(tuple => tuple._1 != tuple._2)
@@ -144,7 +144,8 @@ class Deduplication(
 			.toList
 			.distinct
 			.map(_.head)
-			.filter(tuple => compare(tuple._1, tuple._2) >= this.confidence)
+			.map(tuple => Tuple3(tuple._1, tuple._2, compare(tuple._1, tuple._2)))
+			.filter(tuple => tuple._3 >= this.confidence)
 	}
 
 	/**
@@ -233,15 +234,13 @@ class Deduplication(
 
 		blocks
 			.flatMap(block => findDuplicates(block._2))
-		    .map { case (subject1, subject2) =>
-				DuplicateCandidate(
-					UUIDs.random(),
+		    .map { case (subject1, subject2, score) =>
+				DuplicateCandidates(
 					subject1.id,
-					subject1.name,
-					subject2.id,
-					subject2.name,
-					settings("stagingTable"))
-			}.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
+					List((subject2, settings("stagingTable"), score))
+				)
+			}
+		.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
 	}
 }
 
