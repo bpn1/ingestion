@@ -1,14 +1,15 @@
 -- Wikidumps
 CREATE KEYSPACE wikidumps WITH REPLICATION = {
-	'class' : 'SimpleStrategy',
-	'replication_factor' : 3
+    'class' : 'SimpleStrategy',
+    'replication_factor' : 3
 };
 
 -- Wikidumps.Wikipedia
 CREATE TYPE wikidumps.link (
     alias text,
     page text,
-    offset int
+    offset int,
+    context map<text, int>
 );
 
 CREATE TABLE wikidumps.parsedwikipedia (
@@ -18,8 +19,10 @@ CREATE TABLE wikidumps.parsedwikipedia (
     categorylinks frozen<list<frozen<link>>>,
     disambiguationlinks frozen<list<frozen<link>>>,
     listlinks frozen<list<frozen<link>>>,
+    linkswithcontext frozen<list<frozen<link>>>,
     foundaliases list<text>,
-    text text
+    text text,
+    context map<text, int>,
 );
 
 CREATE TABLE wikidumps.wikipedia (
@@ -27,20 +30,26 @@ CREATE TABLE wikidumps.wikipedia (
     text text
 );
 
-CREATE TABLE wikidumps.wikipediaaliases (
-    alias text PRIMARY KEY,
-    link_occurences int,
-    total_occurences int
-);
-
 CREATE TABLE wikidumps.wikipedialinks (
     alias text PRIMARY KEY,
-    pages map<text, int>
+    pages map<text, int>,
+    linkoccurrences int,
+    totaloccurrences int
 );
 
 CREATE TABLE wikidumps.wikipediapages (
     page text PRIMARY KEY,
     aliases map<text, int>
+);
+
+CREATE TABLE wikidumps.wikipediadocfreq (
+    word text PRIMARY KEY,
+    count int
+);
+
+CREATE TABLE wikidumps.wikipediatfidf (
+    page text PRIMARY KEY,
+    tokens map<text, double>
 );
 
 -- Wikidumps.Wikidata
@@ -125,12 +134,39 @@ CREATE TABLE datalake.object (
     properties_history map<text, frozen<list<frozen<version>>>>
 );
 
+CREATE TABLE datalake.deduplicationstats (
+    id uuid PRIMARY KEY,
+    comment text,
+    data map<frozen<list<text>>, int>
+);
+
 CREATE TABLE datalake.duplicatecandidates (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<subject, text, double>>>
 );
 
-CREATE TABLE datalake.goldstandard (
+-- Evaluation
+CREATE KEYSPACE evaluation WITH REPLICATION = {
+    'class' : 'SimpleStrategy',
+    'replication_factor' : 3
+};
+
+-- Types
+CREATE TYPE evaluation.version (
+    version timeuuid,
+    value frozen<list<text>>,
+    validity frozen<map<text, text>>,
+    datasources frozen<list<text>>,
+    timestamp timestamp,
+    program text
+);
+
+-- Tables
+CREATE TABLE evaluation.goldstandard (
+    id frozen<tuple <uuid, uuid>> PRIMARY KEY
+);
+
+CREATE TABLE evaluation.subject_dbpedia (
     id uuid PRIMARY KEY,
     aliases list<text>,
     aliases_history list<frozen<version>>,
@@ -144,7 +180,7 @@ CREATE TABLE datalake.goldstandard (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
-CREATE TABLE datalake.subject_merged (
+CREATE TABLE evaluation.subject_wikidata (
     id uuid PRIMARY KEY,
     aliases list<text>,
     aliases_history list<frozen<version>>,
@@ -156,4 +192,11 @@ CREATE TABLE datalake.subject_merged (
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+CREATE TABLE evaluation.version (
+    version timeuuid PRIMARY KEY,
+    datasources list<text>,
+    program text,
+    timestamp timestamp
 );

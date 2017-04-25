@@ -19,6 +19,7 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
 	"org.apache.spark" % "spark-core_2.11" % "2.1.0" % "provided" exclude("org.scalatest", "scalatest_2.11"),
 	"org.apache.spark" % "spark-sql_2.11" % "2.1.0" % "provided",
+	"org.apache.spark" % "spark-mllib_2.11" % "2.1.0" % "provided",
 	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.1",
 	"org.scalactic" % "scalactic_2.11" % "3.0.1" % "provided",
 	"org.scalatest" % "scalatest_2.11" % "3.0.1" % "provided",
@@ -38,7 +39,7 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 
 // scala compiler flags for warnings
 // also sets source path for correct scala doc source links
-scalacOptions in ThisBuild ++= (baseDirectory.map { 
+scalacOptions in ThisBuild ++= (baseDirectory.map {
 	bd => Seq("-deprecation", "-feature", "-sourcepath", bd.getAbsolutePath, "-unchecked")
 }).value
 

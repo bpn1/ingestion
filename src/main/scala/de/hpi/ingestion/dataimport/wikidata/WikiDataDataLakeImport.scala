@@ -9,44 +9,49 @@ import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
 
+/**
+  * This job translates Wikidata entities into Subjects and writes them into a staging table.
+  */
 object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 	"WikiDataDataLakeImport_v1.0",
 	List("wikidata_20161117"),
+	Option("datalakeimport_config.xml"),
+	"normalization_wikidata.xml",
 	"wikidumps",
 	"wikidata")
 {
 	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = {
+		val mapping = parseNormalizationConfig(this.normalizationFile)
 		sc
 			.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
-			.map(translateToSubject(_, version))
+			.filter(filterEntities)
+			.map(translateToSubject(_, version, mapping))
 	}
 
-	override def translateToSubject(entity: WikiDataEntity, version: Version): Subject = {
+	override def filterEntities(entity: WikiDataEntity): Boolean = {
+		entity.instancetype.isDefined
+	}
+
+	override def translateToSubject(
+		entity: WikiDataEntity,
+		version: Version,
+		mapping: Map[String, List[String]]
+	): Subject = {
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
-		if(entity.label.isDefined) {
-			sm.setName(entity.label.get)
-		}
-		if(entity.aliases.nonEmpty) {
-			sm.addAliases(entity.aliases)
-		}
-		if(entity.instancetype.isDefined) {
-			sm.setCategory(entity.instancetype.get)
-		}
-		val metadata = mutable.Map(("wikidata_id", List(entity.id)))
-		if(entity.wikiname.isDefined) {
-			metadata += "wikipedia_name" -> List(entity.wikiname.get)
-		}
-		if(entity.data.nonEmpty) {
-			metadata ++= entity.data
-		}
-		sm.addProperties(metadata.toMap)
+		entity.label.foreach(label => sm.setName(label))
+		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
+		if(entity.aliases.nonEmpty) sm.addAliases(entity.aliases)
+
+		val normalizedProperties = normalizeProperties(entity, mapping)
+
+		sm.addProperties(entity.data ++ normalizedProperties)
 		subject
 	}
 
 	def main(args: Array[String]): Unit = {
-		importToCassandra()
+		importToCassandra(args.headOption)
 	}
 
 }
