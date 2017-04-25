@@ -1,10 +1,9 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.textmining.models.DocumentFrequency
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
-class DocumentFrequencyCounterTest extends FlatSpec with PrettyTester with SharedSparkContext with Matchers {
+class DocumentFrequencyCounterTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Document frequencies" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val documentFrequencies = DocumentFrequencyCounter
