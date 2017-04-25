@@ -39,6 +39,24 @@ class DBPediaImportUnitTest extends FlatSpec with SharedSparkContext with Matche
 		cleanList(2) should startWith ("dbpedia-de:")
 	}
 
+	"extractWikiDataId" should "extract the wikidata id from a list" in {
+		val owlSameAs = List("yago:X", "wikidata:123", "wikpedia:5")
+		val id = DBPediaImport.extractWikiDataId(owlSameAs)
+		val expected = Option("123")
+		id shouldEqual expected
+	}
+
+	it should "return None if list is empty" in {
+		val id = DBPediaImport.extractWikiDataId(Nil)
+		id shouldEqual None
+	}
+
+	it should "return None if it could not be found" in {
+		val owlSameAs = List("yago:X", "wikipedia:5")
+		val id = DBPediaImport.extractWikiDataId(owlSameAs)
+		id shouldEqual None
+	}
+
 	"extractInstancetype" should "extract the right type from a list" in {
 		val rdfTypes = List("owl:Thing", "dbo:Agent", "dbo:Organisation", "dbo:Company")
 		val organisations = TestData.organisations

@@ -183,7 +183,8 @@ CREATE TYPE evaluation.subject (
 
 -- Tables
 CREATE TABLE evaluation.goldstandard (
-    id frozen<tuple <uuid, uuid>> PRIMARY KEY
+    id1 uuid PRIMARY KEY,
+    id2 uuid
 );
 
 CREATE TABLE evaluation.subject_dbpedia (

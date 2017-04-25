@@ -65,6 +65,19 @@ object DBPediaImport {
 	}
 
 	/**
+	  * Extracts the wikidata Id if present
+	  * @param list owl:sameAs List
+	  * @return The wikidata id or None if the id could not be found
+	  */
+	def extractWikiDataId(list: List[String]): Option[String] = {
+		val idOption = list.find(_.startsWith("wikidata:"))
+		idOption match {
+			case Some(id) => Some(id.drop(9))
+			case _ => None
+		}
+	}
+
+	/**
 	  * Extracts the instancetype from a given list.
 	  * @param list rdf:type List
 	  * @param organisations List of all organisation subclasses
@@ -93,9 +106,11 @@ object DBPediaImport {
 		propertyData: List[(String, String)],
 		organisations: List[String]
 	): DBPediaEntity = {
-		val entity = DBPediaEntity(subject)
+		val name = subject.replaceAll("dbpedia-de:", "")
+		val entity = DBPediaEntity(name)
 		val dbpediaPropertyName = Map[String, String](
 			"wikipageid" -> "dbo:wikiPageID",
+			"wikidataid" -> "owl:sameAs",
 			"label" -> "rdfs:label",
 			"description" -> "dbo:abstract",
 			"instancetype" -> "rdf:type")
@@ -104,6 +119,9 @@ object DBPediaImport {
 			.mapValues(_.map(_._2).toList)
 
 		entity.wikipageid = data.getOrElse(dbpediaPropertyName("wikipageid"), List()).headOption
+		entity.wikidataid = extractWikiDataId(
+			data.getOrElse(dbpediaPropertyName("wikidataid"), List())
+		)
 		entity.label = data.getOrElse(dbpediaPropertyName("label"), List()).headOption
 		entity.description = data.getOrElse(dbpediaPropertyName("description"), List()).headOption
 		entity.instancetype = extractInstancetype(
