@@ -13,6 +13,10 @@ import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
 
+/**
+  * Finds all occurrences of the aliases in the given trie in all Wikipedia articles and writes them to the
+  * foundaliases column.
+  */
 object AliasTrieSearch {
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
