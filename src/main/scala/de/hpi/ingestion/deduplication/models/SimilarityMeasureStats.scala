@@ -11,6 +11,6 @@ import com.datastax.driver.core.utils.UUIDs
   */
 case class SimilarityMeasureStats(
 	id: UUID = UUIDs.timeBased(),
-	data: Array[(Double, Double, Double, Double)],
+	data: List[(Double, Double, Double, Double)],
 	comment: Option[String]
 )

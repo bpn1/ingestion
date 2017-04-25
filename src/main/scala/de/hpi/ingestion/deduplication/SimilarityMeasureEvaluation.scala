@@ -65,7 +65,10 @@ object SimilarityMeasureEvaluation {
 			.join(f1Score)
 			.map { case (threshold, ((precision, recall), f1Score)) =>
 				(threshold, precision, recall, f1Score)
-			}.collect
+			}
+			.collect
+		    .toList
+		
 		val stats = SimilarityMeasureStats(data = data, comment = Option("Naiv Deduplication"))
 
 		sc
