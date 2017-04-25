@@ -115,5 +115,14 @@ object TestData {
 			"testProperty" -> List("test")
 		)
 	)
+
+	def mapping: Map[String, List[String]] = Map(
+		"id_wikidata" -> List("wikidata_id"),
+		"id_dbpedia" -> List("dbpedianame"),
+		"id_wikipedia" -> List("dbpedianame"),
+		"id_viaf" -> List("dbo:viafId", "property-de:viaf"),
+		"geo_coords_lat" -> List("geo:lat", "property-de:latitude", "property-de:breitengrad"),
+		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad")
+	)
 	// scalastyle:on line.size.limit
 }
