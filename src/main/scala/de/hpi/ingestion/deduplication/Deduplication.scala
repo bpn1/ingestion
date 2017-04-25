@@ -232,16 +232,16 @@ class Deduplication(
 			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 
 		blocks
-			.flatMap(block => findDuplicates(block._2))
-		    .map { case (subject1, subject2) =>
-				DuplicateCandidate(
-					UUIDs.random(),
-					subject1.id,
-					subject1.name,
-					subject2.id,
-					subject2.name,
-					settings("stagingTable"))
-			}.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
+		.flatMap(block => findDuplicates(block._2))
+		.map { case (subject1, subject2) =>
+			DuplicateCandidate(
+				UUIDs.random(),
+				subject1.id,
+				subject1.name,
+				subject2.id,
+				subject2.name,
+				settings("stagingTable"))
+		}.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 }
 
