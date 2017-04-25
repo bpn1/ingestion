@@ -6,7 +6,7 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 
 /**
-  * Groups link aliases by page names and vice versa. Also removes dead links (no corresponding page).
+  * Groups link Aliases by page names and vice versa. Also removes dead links (no corresponding page).
   */
 object LinkAnalysis {
 	val keyspace = "wikidumps"
@@ -51,10 +51,10 @@ object LinkAnalysis {
 	}
 
 	/**
-	  * Create RDD of aliases with corresponding pages.
+	  * Create RDD of Aliases with corresponding pages.
 	  *
 	  * @param parsedWikipedia RDD of parsed Wikipedia entries to be processed
-	  * @return RDD of aliases
+	  * @return RDD of Aliases
 	  */
 	def groupByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Alias] = {
 		parsedWikipedia
@@ -73,7 +73,7 @@ object LinkAnalysis {
 	}
 
 	/**
-	  * Create RDD of pages with corresponding aliases.
+	  * Create RDD of pages with corresponding Aliases.
 	  *
 	  * @param parsedWikipedia RDD of parsed Wikipedia entries to be processed
 	  * @return RDD of pages
@@ -95,11 +95,11 @@ object LinkAnalysis {
 	}
 
 	/**
-	  * Calculating probability for alias pointing to page.
+	  * Calculating probability for Alias pointing to page.
 	  *
-	  * @param alias    alias to be processed
+	  * @param alias    Alias to be processed
 	  * @param pageName pagename that is being pointed to
-	  * @return probability for alias pointing to page
+	  * @return probability for Alias pointing to page
 	  */
 	def probabilityLinkDirectsToPage(alias: Alias, pageName: String): Double = {
 		val totalReferences = alias
@@ -110,10 +110,10 @@ object LinkAnalysis {
 	}
 
 	/**
-	  * Groups link aliases by page names and vice versa. Also removes dead links (no corresponding page).
+	  * Groups link Aliases by page names and vice versa. Also removes dead links (no corresponding page).
 	  *
 	  * @param articles all Wikipedia articles
-	  * @return grouped aliases and page names
+	  * @return grouped Aliases and page names
 	  */
 	def run(articles: RDD[ParsedWikipediaEntry]): (RDD[Alias], RDD[Page]) = {
 		val allPages = articles.map(_.title)
