@@ -77,7 +77,7 @@ class Deduplication(
 			.toList
 			.map { feature =>
 				val attribute = (feature \ "attribute").text
-				val simMeasure = (feature \ "similartyMeasure").text
+				val simMeasure = (feature \ "similarityMeasure").text
 				val weight = (feature \ "weight").text
 				val scale = (feature \ "scale").text
 

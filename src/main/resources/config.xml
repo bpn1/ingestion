@@ -15,19 +15,19 @@
     <simMeasurements>
         <feature>
             <attribute>name</attribute>
-            <similartyMeasure>MongeElkan</similartyMeasure>
+            <similarityMeasure>MongeElkan</similarityMeasure>
             <weight>0.8</weight>
             <scale>1</scale>
         </feature>
         <feature>
             <attribute>name</attribute>
-            <similartyMeasure>JaroWinkler</similartyMeasure>
+            <similarityMeasure>JaroWinkler</similarityMeasure>
             <weight>0.7</weight>
             <scale>1</scale>
         </feature>
         <feature>
             <attribute>name</attribute>
-            <similartyMeasure>ExactMatchString</similartyMeasure>
+            <similarityMeasure>ExactMatchString</similarityMeasure>
             <weight>0.2</weight>
             <scale>1</scale>
         </feature>
