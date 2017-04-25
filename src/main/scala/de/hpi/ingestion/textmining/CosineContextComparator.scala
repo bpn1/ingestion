@@ -177,13 +177,10 @@ object CosineContextComparator {
 			.map { case (alias, ((link, context), (page, totalProb, pageProb))) =>
 				(page, (alias, link, context, totalProb, pageProb))
 			}.mapPartitions({ partition =>
-				println("FFFFF")
 				val localArticles = articleContextsBroadcast.value
-				println("GGGGGG")
 				partition.map { case (page, (alias, link, linkContext, totalProb, pageProb)) =>
 					localArticles.get(page).map{ pageContext =>
 						val cosineSim = calculateCosineSimilarity(linkContext, pageContext)
-						println("HHHHHHHH")
 						FeatureEntry(alias, page, totalProb, pageProb, cosineSim, link.page == page)
 					}}}, true)
 			.filter (_.isDefined)
@@ -239,19 +236,15 @@ object CosineContextComparator {
 			documentFrequencies,
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
-		println("AAAAAAAA")
 
 		val contextTfidf = calculateLinkContextsTfidf(
 			articlesWithTermFrequencies,
 			documentFrequencies,
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
-		println("BBBBBBBBB")
 
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
-		println("CCCCCCCCC")
 		val articleTfidfMap = articleTfidf.collect.toMap
-		println("DDDDDDDDD")
 		compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidfMap, sc)
 	}
 
@@ -260,8 +253,10 @@ object CosineContextComparator {
 			.setAppName("Cosine Context Comparator")
 			.set("spark.shuffle.blockTransferService", "nio")
 			.set("spark.network.timeout", "600s")
+			.set("spark.driver.maxResultSize", "4g")
 		// http://stackoverflow.com/questions/29781489/apache-spark-network-errors-between-executors
 		// http://stackoverflow.com/questions/40740750/timeout-exception-in-apache-spark-during-program-execution
+		// https://qubole.zendesk.com/hc/en-us/articles/215181846-How-To-Increase-spark-driver-maxResultSize-value
 
 		val sc = new SparkContext(conf)
 
