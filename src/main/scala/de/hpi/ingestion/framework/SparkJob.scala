@@ -3,12 +3,14 @@ package de.hpi.ingestion.framework
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
+import scala.collection.mutable
+
 /**
   * Spark Job framework trait implementing the main method and defining the load, run and save methods.
   */
 trait SparkJob {
 	var appName = "Ingestion Spark Job"
-	var sparkOptions = Map[String, String]()
+	val sparkOptions = mutable.Map[String, String]()
 
 	/**
 	  * Loads a four-tuple of RDD-Options used in the job.
@@ -42,16 +44,25 @@ trait SparkJob {
 	def assertConditions(args: Array[String]): Boolean = true
 
 	/**
+	  * Creates the Spark Conf and sets extra options. {@appName} is used as name and {@sparkOptions} is used as
+	  * extra Spark options.
+	  * @return Spark Conf with the extra values set.
+	  */
+	def createSparkConf(): SparkConf = {
+		new SparkConf()
+			.setAppName(appName)
+			.setAll(sparkOptions.toList)
+	}
+
+	// $COVERAGE-OFF$
+	/**
 	  * Creates a Spark Context used for the rest of the program. Can be overwritten for e.g. tests.
-	  * It will use {@appName} as name and {@sparkOptions} as extra Spark options.
 	  * @return Spark Context used for the rest of the job
 	  */
 	def sparkContext(): SparkContext = {
-		val conf = new SparkConf()
-			.setAppName(appName)
-			.setAll(sparkOptions.toList)
-		new SparkContext(conf)
+		new SparkContext(createSparkConf())
 	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Spark job main method which first asserts definable conditions and then loads, processes and saves the data.

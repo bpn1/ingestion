@@ -19,7 +19,7 @@ class MockSparkJob extends FlatSpec with SparkJob with SharedSparkContext {
 
 	override def assertConditions(args: Array[String]): Boolean = {
 		methodCalls += "assertConditions"
-		args.isEmpty
+		super.assertConditions(args)
 	}
 
 	override def load(sc: SparkContext): List[RDD[Any]] = {
