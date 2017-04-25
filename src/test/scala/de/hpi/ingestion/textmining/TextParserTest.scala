@@ -248,7 +248,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
-		val substring = text.substring(link.offset, link.offset + link.alias.length)
+		val substring = text.substring(link.offset.get, link.offset.get + link.alias.length)
 		substring == link.alias
 	}
 

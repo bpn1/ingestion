@@ -255,6 +255,7 @@ object Deduplication {
 		"JaroWinkler" -> JaroWinkler,
 		"N-Gram" -> NGram,
 		"Overlap" -> Overlap,
+		"EuclidianDistance" -> EuclidianDistance,
 		"RoughlyEqualNumbers" -> RoughlyEqualNumbers
 	)
 }
