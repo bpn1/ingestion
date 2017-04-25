@@ -68,7 +68,7 @@ object SimilarityMeasureEvaluation {
 			}
 			.collect
 		    .toList
-		val stats = SimilarityMeasureStats(data = data, comment = Option("Naiv Deduplication"))
+		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
 
 		sc
 			.parallelize(Seq(stats))
