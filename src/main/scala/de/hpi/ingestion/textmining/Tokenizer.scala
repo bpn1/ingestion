@@ -20,7 +20,7 @@ class WhitespaceTokenizer() extends Tokenizer {
 
 class CleanWhitespaceTokenizer() extends Tokenizer {
 	def stripAll(s: String, bad: String): String = {
-		// http://stackoverflow.com/questions/17995260/trimming-strings-in-scala
+		// Source: http://stackoverflow.com/a/17995434
 		@tailrec def start(n: Int): String = {
 			if (n == s.length) {
 				""
@@ -82,9 +82,4 @@ class CoreNLPTokenizer() extends Tokenizer {
 	}
 
 	def reverse(tokens: List[String]) = tokens.mkString(" ")
-}
-
-class SentenceTokenizer() extends Tokenizer {
-	def tokenize(txt: String) = txt.split("\\.").toList.map(_.trim)
-	def reverse(tokens: List[String]) = tokens.mkString(". ").trim
 }
