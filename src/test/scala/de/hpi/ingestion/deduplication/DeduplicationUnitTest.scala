@@ -79,7 +79,8 @@ class DeduplicationUnitTest
 		assertRDDEquals(expected, blocks)
 	}
 
-/*	"findDuplicates" should "return a list of tuple of duplicates" in {
+
+	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
 		val testSubjects = getSampleSubjects()
 
 		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
@@ -87,10 +88,10 @@ class DeduplicationUnitTest
 		val duplicates = testBlocks(testSubjects)
 			.map(_._2)
 			.flatMap(deduplication.findDuplicates)
-		val expected = List((testSubjects(0), testSubjects(3)))
+		val expected = List((testSubjects(0), testSubjects(3), 0.3558974358974359))
 		duplicates shouldEqual expected
 	}
-*/
+
 	"buildDuplicatesClique" should "should add isDuplicate relation with a confidence for a list of tuples" in {
 		val testSubjects = getSampleSubjects()
 
