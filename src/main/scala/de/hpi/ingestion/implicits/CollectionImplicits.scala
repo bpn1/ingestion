@@ -3,7 +3,7 @@ package de.hpi.ingestion.implicits
 import org.apache.spark.rdd.RDD
 
 /**
-  * Contains the implicit classes for collection type methods.
+  * Contains implicit classes extending Scala collections.
   */
 object CollectionImplicits {
 
@@ -15,7 +15,7 @@ object CollectionImplicits {
 	implicit class Crossable[X](xs: Traversable[X]) {
 		/**
 		  * Returns the cross product of both collections: xs X ys.
-		  * Source: http://stackoverflow.com/questions/14740199/cross-product-in-scala
+		  * Source: http://stackoverflow.com/a/14740340
 		  * @param ys the collection to create the cross product with
 		  * @tparam Y the type of the objects contained in the collection
 		  * @return the cross product of xs and ys

@@ -4,7 +4,10 @@ import java.net.URL
 
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 
+import scala.collection.mutable
+
 trait DLImport[T <: DLImportEntity] extends Serializable {
+	val settings = mutable.Map[String, String]()
 	val outputKeyspace = "datalake"
 	val outputTable = "subject_temp"
 	val versionTable = "version"
@@ -20,9 +23,10 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 	  * Translates an entity of the datasource into a Subject, which is the schema of the staging table.
 	  * @param entity  the object to be converted to a Subject
 	  * @param version the version of the new Subject
+	  * @param mapping Map of the attribute renaming schema for the attribute normalization
 	  * @return a new Subject created from the given object
 	  */
-	protected def translateToSubject(entity: T, version: Version): Subject
+	protected def translateToSubject(entity: T, version: Version, mapping: Map[String, List[String]]): Subject
 
 	/**
 	  * Parses the normalization config file into a Map.

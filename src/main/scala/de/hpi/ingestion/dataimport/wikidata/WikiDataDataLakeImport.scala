@@ -14,11 +14,11 @@ import org.apache.spark.rdd.RDD
 object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 	"WikiDataDataLakeImport_v1.0",
 	List("wikidata_20161117"),
+	Option("datalakeimport_config.xml"),
 	"normalization_wikidata.xml",
 	"wikidumps",
 	"wikidata")
 {
-
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val wikidata = sc.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
 		List(wikidata).toAnyRDD()
@@ -28,7 +28,11 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 		entity.instancetype.isDefined
 	}
 
-	override def translateToSubject(entity: WikiDataEntity, version: Version): Subject = {
+	override def translateToSubject(
+		entity: WikiDataEntity,
+		version: Version,
+		mapping: Map[String, List[String]]
+	): Subject = {
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
@@ -36,7 +40,6 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 		if(entity.aliases.nonEmpty) sm.addAliases(entity.aliases)
 
-		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val normalizedProperties = normalizeProperties(entity, mapping)
 
 		sm.addProperties(entity.data ++ normalizedProperties)

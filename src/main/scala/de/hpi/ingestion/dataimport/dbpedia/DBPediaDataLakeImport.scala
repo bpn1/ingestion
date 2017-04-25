@@ -16,6 +16,7 @@ import scala.collection.mutable
 object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 	"DataLakeImportDBpedia_v1.0",
 	List("dbpedia"),
+	Option("datalakeimport_config.xml"),
 	"normalization_dbpedia.xml",
 	"wikidumps",
 	"dbpedia"
@@ -30,23 +31,28 @@ object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 		entity.instancetype.isDefined
 	}
 
-	override def translateToSubject(entity: DBPediaEntity, version: Version): Subject = {
+	override def translateToSubject(
+		entity: DBPediaEntity,
+		version: Version,
+		mapping: Map[String, List[String]]
+	): Subject = {
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
 		entity.label.foreach(label => sm.setName(label.replaceAll("@de .$", "")))
 		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 
-		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val normalizedProperties = normalizeProperties(entity, mapping)
 		val properties = mutable.Map[String, List[String]]()
 		properties ++= (entity.data ++ normalizedProperties)
-		properties("geo_coords") = normalizedProperties("geo_coords_lat")
-			.zip(normalizedProperties("geo_coords_long"))
-		    .flatMap(x => List(x._1, x._2))
+
+		if (normalizedProperties.contains("geo_coords_lat") && normalizedProperties.contains("geo_coords_long")) {
+			properties("geo_coords") = normalizedProperties("geo_coords_lat")
+				.zip(normalizedProperties("geo_coords_long"))
+				.flatMap(x => List(x._1, x._2))
+		}
 
 		sm.addProperties(properties.toMap)
 		subject
 	}
-
 }

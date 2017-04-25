@@ -1,11 +1,12 @@
 package de.hpi.ingestion.datalake
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import java.net.URL
 
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
+import org.scalatest.path
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -19,6 +20,7 @@ import scala.xml.XML
   *              and an inputTable
   * @param appName       		the name of the importing job
   * @param dataSources   		list of the sources where the new data is fetched from
+  * @param configFile 			name of config file in resource folder
   * @param normalizationFile 	name of normalization file in resource folder
   * @param inputKeyspace 		the name of the keyspace where the new data is saved in the database
   * @param inputTable    		the name of the table where the new data is saved in the database
@@ -27,10 +29,28 @@ import scala.xml.XML
 abstract case class DataLakeImport[T <: DLImportEntity](
 	override var appName: String,
 	dataSources: List[String],
+	configFile: Option[String],
 	normalizationFile: String,
 	inputKeyspace: String,
 	inputTable: String
 ) extends DLImport[T] with SparkJob {
+	protected def parseConfig(url: URL): Unit = {
+		val xml = XML.loadString(Source
+			.fromURL(url)
+			.getLines()
+			.mkString("\n")
+		)
+
+		val configSettings = xml \\ "config" \ "sourceSettings"
+		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
+			settings(node.label) = node.text
+	}
+
+	protected def parseConfig(path: String): Unit = {
+		val url = getClass.getResource(s"/$path")
+		this.parseConfig(url)
+	}
+
 	protected def parseNormalizationConfig(url: URL): Map[String, List[String]] = {
 		val xml = XML.loadString(Source
 			.fromURL(url)
@@ -70,13 +90,17 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val path = args.headOption
+		val configPath = path.orElse(this.configFile).getOrElse("datalakeimport_config.xml")
+		this.parseConfig(configPath)
 		val version = Version(appName, dataSources, sc)
+		val mapping = parseNormalizationConfig(this.normalizationFile)
 		input
 			.fromAnyRDD[T]()
 			.map(rdd =>
 				rdd
 					.filter(filterEntities)
-					.map(translateToSubject(_, version)))
+					.map(translateToSubject(_, version, mapping)))
 			.toAnyRDD()
 	}
 
@@ -90,6 +114,6 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 		output
 			.fromAnyRDD[Subject]()
 			.head
-			.saveToCassandra(outputKeyspace, outputTable)
+			.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
 	}
 }
