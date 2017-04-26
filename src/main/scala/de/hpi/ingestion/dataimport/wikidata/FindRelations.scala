@@ -25,6 +25,32 @@ object FindRelations extends SparkJob {
 	val versionTablename = "version"
 	val wikiDataIdKey = "wikidata_id"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads the Subjects from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
+		List(subjects).toAnyRDD()
+	}
+
+	/**
+	  * Saves the Subjects with the new relations to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[Subject]()
+			.head
+			.saveToCassandra(keyspace, tablename)
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Finds relations of a Subject to Wikidata ids, resolves the name of the ids and adds a
 	  * relation to the subject with the corresponding Wikidata id.
@@ -89,17 +115,6 @@ object FindRelations extends SparkJob {
 	}
 
 	/**
-	  * Loads the Subjects from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
-		List(subjects).toAnyRDD()
-	}
-
-	/**
 	  * Transforms the Wikidata relations to Subject relations.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -112,18 +127,5 @@ object FindRelations extends SparkJob {
 		val version = Version(appName, datasources, sc)
 		val subjectsWithRelations = subjects.map(findRelations(_, nameResolveMap, version))
 		List(subjectsWithRelations).toAnyRDD()
-	}
-
-	/**
-	  * Saves the Subjects with the new relations to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Subject]()
-			.head
-			.saveToCassandra(keyspace, tablename)
 	}
 }

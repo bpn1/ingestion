@@ -18,6 +18,32 @@ object ResolveEntities extends SparkJob {
 	val keyspace = "wikidumps"
 	val tablename = "wikidata"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads the Wikidata entities from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val wikidata = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
+		List(wikidata).toAnyRDD()
+	}
+
+	/**
+	  * Saves the Wikidata entities with resolved ids to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[(String, Map[String, List[String]])]()
+			.head
+			.saveToCassandra(keyspace, tablename, SomeColumns("id", "data"))
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Flattens Wikidata entitiy into triples of entity id, property key and property value.
 	  * @param entity Wikidata entity to flatten
@@ -145,17 +171,6 @@ object ResolveEntities extends SparkJob {
 	}
 
 	/**
-	  * Loads the Wikidata entities from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
-		List(wikidata).toAnyRDD()
-	}
-
-	/**
 	  * Resolves the Wikidata id of untagged entities in the properties of every Wikidata Entity.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -189,18 +204,5 @@ object ResolveEntities extends SparkJob {
 
 		val resolvedTuples = rebuildProperties(resolvedData)
 		List(resolvedTuples).toAnyRDD()
-	}
-
-	/**
-	  * Saves the Wikidata entities with resolved ids to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[(String, Map[String, List[String]])]()
-			.head
-			.saveToCassandra(keyspace, tablename, SomeColumns("id", "data"))
 	}
 }

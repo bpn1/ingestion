@@ -34,6 +34,37 @@ class Deduplication(
 	var blockingSchemes = List[BlockingScheme](new SimpleBlockingScheme)
 	appName = importName
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads the Subjects and if needed the staged Subjects from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val subjects = List(sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable")))
+		val staging = if(merge) {
+			List(sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable")))
+		} else {
+			Nil
+		}
+		(subjects ++ staging).toAnyRDD()
+	}
+
+	/**
+	  * Saves the duplicates and block evaluation to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		val duplicates = output.head.asInstanceOf[RDD[Subject]]
+		val evaluation = output(1).asInstanceOf[RDD[BlockEvaluation]]
+		duplicates.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
+		evaluation.saveToCassandra(settings("keyspace"), settings("statsTable"))
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Compares to subjects regarding the configuration
 	  * @param subject1 subjects to be compared to subject2
@@ -207,22 +238,6 @@ class Deduplication(
 	}
 
 	/**
-	  * Loads the Subjects and if needed the staged Subjects from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = List(sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable")))
-		val staging = if(merge) {
-			List(sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable")))
-		} else {
-			Nil
-		}
-		(subjects ++ staging).toAnyRDD()
-	}
-
-	/**
 	  * Blocks the Subjects and finds duplicates between them between the Subjects and staged Subjects.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -255,19 +270,6 @@ class Deduplication(
 					settings("stagingTable"))
 			}
 		List(duplicates).toAnyRDD() ++ List(evaluation).toAnyRDD()
-	}
-
-	/**
-	  * Saves the duplicates and block evaluation to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val duplicates = output.head.asInstanceOf[RDD[Subject]]
-		val evaluation = output(1).asInstanceOf[RDD[BlockEvaluation]]
-		duplicates.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
-		evaluation.saveToCassandra(settings("keyspace"), settings("statsTable"))
 	}
 }
 

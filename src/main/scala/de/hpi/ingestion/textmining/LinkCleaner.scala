@@ -15,6 +15,32 @@ object LinkCleaner extends SparkJob {
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
+		List(articles).toAnyRDD()
+	}
+
+	/**
+	  * Saves cleaned Parsed Wikipedia entries to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.saveToCassandra(keyspace, tablename)
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Groups existing page names by the article names in which their links occur.
 	  *
@@ -56,17 +82,6 @@ object LinkCleaner extends SparkJob {
 	}
 
 	/**
-	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
-		List(articles).toAnyRDD()
-	}
-
-	/**
 	  * Removes dead links that do not point to an existing page from the Parsed Wikipedia entries.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -78,18 +93,5 @@ object LinkCleaner extends SparkJob {
 		val existingPages = articles.map(_.title)
 		val validPages = groupValidPages(articles, existingPages)
 		List(filterArticleLinks(articles, validPages)).toAnyRDD()
-	}
-
-	/**
-	  * Saves cleaned Parsed Wikipedia entries to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
-			.saveToCassandra(keyspace, tablename)
 	}
 }

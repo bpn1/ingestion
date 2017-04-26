@@ -25,6 +25,32 @@ object TagEntities extends SparkJob {
 	val subclassProperty = "subclass of"
 	val wikidataPathProperty = "wikidata_path"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Reads the Wikidata entities from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val wikidata = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
+		List(wikidata).toAnyRDD()
+	}
+
+	/**
+	  * Saves the tagged Wikidata entities to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[(String, String, Map[String, List[String]])]()
+			.head
+			.saveToCassandra(keyspace, tablename, SomeColumns("id", "instancetype", "data" append))
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Adds entries of new class path map to the old map if they are new or shorter than the
 	  * current path.
@@ -125,17 +151,6 @@ object TagEntities extends SparkJob {
 	}
 
 	/**
-	  * Reads the Wikidata entities from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
-		List(wikidata).toAnyRDD()
-	}
-
-	/**
 	  * Tags the Wikidata entities with their superclass.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -153,18 +168,5 @@ object TagEntities extends SparkJob {
 			.filter(isInstanceOf(_, subclasses))
 			.map(updateInstanceOfProperty(_, subclasses))
 		List(updatedEntities).toAnyRDD()
-	}
-
-	/**
-	  * Saves the tagged Wikidata entities to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[(String, String, Map[String, List[String]])]()
-			.head
-			.saveToCassandra(keyspace, tablename, SomeColumns("id", "instancetype", "data" append))
 	}
 }

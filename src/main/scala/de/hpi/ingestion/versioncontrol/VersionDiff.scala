@@ -24,6 +24,32 @@ object VersionDiff extends SparkJob {
 	val tablename = "subject"
 	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads subjects from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
+		List(subjects.asInstanceOf[RDD[Any]])
+	}
+
+	/**
+	  * Writes the JSON diff to the HDFS.
+	  * @param output first element is the RDD of JSON diffs
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[JsValue]()
+			.head
+			.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Extracts the time component of a TimeUUID.
 	  * Source: https://git.io/vSxjU
@@ -145,17 +171,6 @@ object VersionDiff extends SparkJob {
 	}
 
 	/**
-	  * Loads subjects from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
-		List(subjects.asInstanceOf[RDD[Any]])
-	}
-
-	/**
 	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -170,19 +185,6 @@ object VersionDiff extends SparkJob {
 					.map(retrieveVersions(_, oldVersion, newVersion))
 					.map(diffToJson))
 			.toAnyRDD()
-	}
-
-	/**
-	  * Writes the JSON diff to the HDFS.
-	  * @param output first element is the RDD of JSON diffs
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[JsValue]()
-			.head
-			.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
 	}
 
 	/**

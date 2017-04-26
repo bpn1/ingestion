@@ -9,7 +9,7 @@ import scala.util.Try
   * @param removeStopwords flag for removing stop words
   * @param stem flag for stemming
   */
-class IngestionTokenizer(
+case class IngestionTokenizer(
 	tokenizer: Tokenizer,
 	removeStopwords: Boolean = false,
 	stem: Boolean = false
@@ -84,18 +84,6 @@ object IngestionTokenizer {
 	}
 
 	/**
-	  * Uses default constructor to create a tokenizer with the given tokenizer which removes stopwords and stems
-	  * according to the flags.
-	  * @param tokenizer tokenizer to use
-	  * @param stopWords flag for removing stopwords
-	  * @param stem flag for stemming
-	  * @return returns tokenizer which uses the CoreNLPTokenizer and removes stopwords and stems according to the flags
-	  */
-	def apply(tokenizer: Tokenizer, stopWords: Boolean = false, stem: Boolean = false): IngestionTokenizer = {
-		new IngestionTokenizer(tokenizer, stopWords, stem)
-	}
-
-	/**
 	  * Parses an Array of String arguments to create a Tokenizer. If the arguments are not well-formed the default
 	  * values of the default Tokenizer will be used.
 	  * @param args Array of arguments
@@ -106,8 +94,8 @@ object IngestionTokenizer {
 			new CoreNLPTokenizer
 		} else {
 			args.head match {
-				case "WhiteSpaceTokenizer" => new WhitespaceTokenizer
-				case "CleanWhiteSpaceTokenizer" => new CleanWhitespaceTokenizer
+				case "WhitespaceTokenizer" => new WhitespaceTokenizer
+				case "CleanWhitespaceTokenizer" => new CleanWhitespaceTokenizer
 				case "CleanCoreNLPTokenizer" => new CleanCoreNLPTokenizer
 				case "CoreNLPTokenizer" | _ => new CoreNLPTokenizer
 			}

@@ -13,6 +13,30 @@ object CosineContextComparator extends SparkJob {
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries with their term frequencies and loads the document frequencies from the
+	  * Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
+		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD()
+	}
+	/**
+	  * Saves the Feature Entries to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Transforms the term frequencies in a bag and an identifier for the term frequencies in a joinable format
 	  * so that a join can be performed on the terms to calculate the tfIdf.
@@ -138,19 +162,6 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
-	  * Loads Parsed Wikipedia entries with their term frequencies and loads the document frequencies from the
-	  * Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
-		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD()
-	}
-
-	/**
 	  * Calculates the Cosine Similarities for every alias and creates feature entries containing the other two
 	  * features as well.
 	  * @param input List of RDDs containing the input data
@@ -178,15 +189,5 @@ object CosineContextComparator extends SparkJob {
 		// TODO: join RDDs and calculate cosine similarity (issue #34)
 
 		Nil
-	}
-
-	/**
-	  * Saves the Feature Entries to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-
 	}
 }

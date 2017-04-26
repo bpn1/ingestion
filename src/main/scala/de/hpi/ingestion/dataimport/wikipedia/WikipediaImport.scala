@@ -17,18 +17,7 @@ object WikipediaImport extends SparkJob {
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 
-	/**
-	  * Parses Wikipedia XML to Wikipedia entries.
-	  * @param xmlString XML data as String
-	  * @return Wikipedia Entry containing the title and text
-	  */
-	def parseXML(xmlString: String): WikipediaEntry = {
-		val xmlDocument = XML.loadString(xmlString)
-		val title = (xmlDocument \ "title").text
-		val text = Option((xmlDocument \\ "text").text)
-		WikipediaEntry(title, text)
-	}
-
+	// $COVERAGE-OFF$
 	/**
 	  * Reads Wikipedia XML dump from HDFS.
 	  * Config source: https://git.io/v9q24
@@ -46,6 +35,31 @@ object WikipediaImport extends SparkJob {
 	}
 
 	/**
+	  * Saves Wikipedia Entries to Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[WikipediaEntry]()
+			.head
+			.saveToCassandra(keyspace, tablename)
+	}
+	// $COVERAGE-ON$
+	/**
+	  * Parses Wikipedia XML to Wikipedia entries.
+	  * @param xmlString XML data as String
+	  * @return Wikipedia Entry containing the title and text
+	  */
+	def parseXML(xmlString: String): WikipediaEntry = {
+		val xmlDocument = XML.loadString(xmlString)
+		val title = (xmlDocument \ "title").text
+		val text = Option((xmlDocument \\ "text").text)
+		WikipediaEntry(title, text)
+	}
+
+	/**
 	  * Parses Wikipedia XML dump to Wikipedia Entries.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -57,18 +71,5 @@ object WikipediaImport extends SparkJob {
 			.fromAnyRDD[String]()
 			.map(_.map(parseXML))
 			.toAnyRDD()
-	}
-
-	/**
-	  * Saves Wikipedia Entries to Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[WikipediaEntry]()
-			.head
-			.saveToCassandra(keyspace, tablename)
 	}
 }

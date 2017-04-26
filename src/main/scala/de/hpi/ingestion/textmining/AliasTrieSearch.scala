@@ -30,6 +30,42 @@ object AliasTrieSearch extends SparkJob {
 	val trieName = "trie_full.bin"
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.TrieKryoRegistrator"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
+		List(parsedWikipedia).toAnyRDD()
+	}
+
+	/**
+	  * Saves Parsed Wikipedia entries with the found aliases to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.saveToCassandra(keyspace, tablename)
+	}
+
+	/**
+	  * Opens a HDFS file stream pointing to the trie binary.
+	  * @return Input Stream pointing to the file in the HDFS
+	  */
+	def hdfsFileStream(): FSDataInputStream = {
+		val hadoopConf = new Configuration()
+		val fs = FileSystem.get(hadoopConf)
+		fs.open(new Path(trieName))
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Finds all occurrences of aliases in the text of a Wikipedia entry.
 	  * @param entry parsed Wikipedia entry to use
@@ -79,27 +115,6 @@ object AliasTrieSearch extends SparkJob {
 	}
 
 	/**
-	  * Opens a HDFS file stream pointing to the trie binary.
-	  * @return Input Stream pointing to the file in the HDFS
-	  */
-	def hdfsFileStream(): FSDataInputStream = {
-		val hadoopConf = new Configuration()
-		val fs = FileSystem.get(hadoopConf)
-		fs.open(new Path(trieName))
-	}
-
-	/**
-	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
-		List(parsedWikipedia).toAnyRDD()
-	}
-
-	/**
 	  * Uses a pre-built Trie to find aliases in the text of articles and writes them into the foundaliases field.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -117,18 +132,5 @@ object AliasTrieSearch extends SparkJob {
 						partition.map(matchEntry(_, trie, tokenizer))
 					}, true))
 			.toAnyRDD()
-	}
-
-	/**
-	  * Saves Parsed Wikipedia entries with the found aliases to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
-			.saveToCassandra(keyspace, tablename)
 	}
 }

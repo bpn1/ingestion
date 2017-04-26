@@ -16,6 +16,32 @@ object DocumentFrequencyCounter extends SparkJob {
 	val stem = true
 	val leastSignificantDocumentFrequency = 5
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		List(articles).toAnyRDD()
+	}
+
+	/**
+	  * Saves Document Frequencies to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[DocumentFrequency]()
+			.head
+			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
+	}
+	// $COVERAGE-ON$
+
 	def countDocumentFrequencies(
 		articles: RDD[ParsedWikipediaEntry]
 	): RDD[DocumentFrequency] = {
@@ -36,17 +62,6 @@ object DocumentFrequencyCounter extends SparkJob {
 	}
 
 	/**
-	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		List(articles).toAnyRDD()
-	}
-
-	/**
 	  * Calculates the Document Frequencies.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -58,18 +73,5 @@ object DocumentFrequencyCounter extends SparkJob {
 		val documentFrequencies = countDocumentFrequencies(articles)
 		val filteredDFs = filterDocumentFrequencies(documentFrequencies, leastSignificantDocumentFrequency)
 		List(filteredDFs).toAnyRDD()
-	}
-
-	/**
-	  * Saves Document Frequencies to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[DocumentFrequency]()
-			.head
-			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
 	}
 }

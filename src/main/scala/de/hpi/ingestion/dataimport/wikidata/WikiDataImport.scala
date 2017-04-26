@@ -19,6 +19,32 @@ object WikiDataImport extends SparkJob {
 	val keyspace = "wikidumps"
 	val tablename = "wikidata"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Reads the Wikidata JSON dump from the HDFS.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val inputFile = if(args.length > 0) args.head else defaultInputFile
+		List(sc.textFile(inputFile)).toAnyRDD()
+	}
+
+	/**
+	  * Saves the parsed Wikidata Entities to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[WikiDataEntity]()
+			.head
+			.saveToCassandra(keyspace, tablename)
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Removes array syntax from Json for parallel parsing of the JSON objects.
 	  * @param json JSON String to clean
@@ -246,17 +272,6 @@ object WikiDataImport extends SparkJob {
 	}
 
 	/**
-	  * Reads the Wikidata JSON dump from the HDFS.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val inputFile = if(args.length > 0) args.head else defaultInputFile
-		List(sc.textFile(inputFile)).toAnyRDD()
-	}
-
-	/**
 	  * Parses the JSON Wikidata dump into Wikidata Entities.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -277,18 +292,5 @@ object WikiDataImport extends SparkJob {
 			partition.map(translatePropertyIDs(_, localPropertyMap))
 		}, true)
 		List(resolvedWikiData).toAnyRDD()
-	}
-
-	/**
-	  * Saves the parsed Wikidata Entities to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[WikiDataEntity]()
-			.head
-			.saveToCassandra(keyspace, tablename)
 	}
 }

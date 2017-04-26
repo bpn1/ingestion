@@ -17,6 +17,32 @@ object AliasCounter extends SparkJob {
 	val linksTablename = "wikipedialinks"
 	val maximumAliasLength = 1000
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia and Aliases from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		List(articles).toAnyRDD()
+	}
+
+	/**
+	  * Saves Alias occurrence counts to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[(String, Int, Int)]()
+			.head
+			.saveToCassandra(keyspace, linksTablename, SomeColumns("alias", "linkoccurrences", "totaloccurrences"))
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Calculates the probability that an alias is a link.
 	  *
@@ -82,17 +108,6 @@ object AliasCounter extends SparkJob {
 	}
 
 	/**
-	  * Loads Parsed Wikipedia and Aliases from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		List(articles).toAnyRDD()
-	}
-
-	/**
 	  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -105,18 +120,5 @@ object AliasCounter extends SparkJob {
 			.filter(_.alias.length <= maximumAliasLength)
 			.map(entry => (entry.alias, entry.linkoccurrences, entry.totaloccurrences))
 		List(countTuples).toAnyRDD()
-	}
-
-	/**
-	  * Saves Alias occurrence counts to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[(String, Int, Int)]()
-			.head
-			.saveToCassandra(keyspace, linksTablename, SomeColumns("alias", "linkoccurrences", "totaloccurrences"))
 	}
 }

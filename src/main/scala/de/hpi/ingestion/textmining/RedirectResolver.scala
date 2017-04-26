@@ -13,6 +13,32 @@ object RedirectResolver extends SparkJob {
 	val tablename = "parsedwikipedia"
 	val keyspace = "wikidumps"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
+		List(articles).toAnyRDD()
+	}
+
+	/**
+	  * Saves Parsed Wikipedia entries with resolved redirects to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.saveToCassandra(keyspace, tablename)
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Resolves all redirects in the links of an articles. It does so by replacing the target page with the page the
 	  * redirect points to.
@@ -63,17 +89,6 @@ object RedirectResolver extends SparkJob {
 	}
 
 	/**
-	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
-		List(articles).toAnyRDD()
-	}
-
-	/**
 	  * Resolves redirects for every Parsed Wikipedia entry. It finds all redirects, resolves transitive redirects
 	  * and then replaces links to redirect pages with links to the page the redirect directs to.
 	  * @param input List of RDDs containing the input data
@@ -93,18 +108,5 @@ object RedirectResolver extends SparkJob {
 				entryPartition.map(entry => resolveRedirects(entry, localDict))
 			}, true)
 		List(resolvedArticles).toAnyRDD()
-	}
-
-	/**
-	  * Saves Parsed Wikipedia entries with resolved redirects to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
-			.saveToCassandra(keyspace, tablename)
 	}
 }

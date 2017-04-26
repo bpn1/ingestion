@@ -18,6 +18,33 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	val inputTraining = "dbpedia_wikidata_deduplication"
 	val output = "sim_measure_stats"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads training and test data from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val training = sc.cassandraTable[DuplicateCandidates](this.keyspace, this.inputTraining)
+		val test = sc.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
+		List(training).toAnyRDD() ++ List(test).toAnyRDD()
+	}
+
+	/**
+	  * Saves the Similarity Measure Stats to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[SimilarityMeasureStats]()
+			.head
+			.saveToCassandra(this.keyspace, this.output)
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Generate (prediction, label) tuples for evaluation
 	  * @param training Precictions from the training data
@@ -40,18 +67,6 @@ object SimilarityMeasureEvaluation extends SparkJob {
 				case _ => (-1.0, -1.0)
 			}
 			.values
-	}
-
-	/**
-	  * Loads training and test data from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val training = sc.cassandraTable[DuplicateCandidates](this.keyspace, this.inputTraining)
-		val test = sc.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
-		List(training).toAnyRDD() ++ List(test).toAnyRDD()
 	}
 
 	/**
@@ -88,18 +103,5 @@ object SimilarityMeasureEvaluation extends SparkJob {
 		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
 
 		List(sc.parallelize(Seq(stats))).toAnyRDD()
-	}
-
-	/**
-	  * Saves the Similarity Measure Stats to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[SimilarityMeasureStats]()
-			.head
-			.saveToCassandra(this.keyspace, this.output)
 	}
 }

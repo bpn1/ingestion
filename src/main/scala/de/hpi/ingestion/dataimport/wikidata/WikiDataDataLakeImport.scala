@@ -20,10 +20,12 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 ){
 	appName = s"WikiDataDataLakeImport_v1.0_${System.currentTimeMillis()}"
 
+	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val wikidata = sc.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
 		List(wikidata).toAnyRDD()
 	}
+	// $COVERAGE-ON$
 
 	override def filterEntities(entity: WikiDataEntity): Boolean = {
 		entity.instancetype.isDefined

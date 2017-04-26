@@ -21,6 +21,32 @@ object DBPediaImport extends SparkJob {
 	val keyspace = "wikidumps"
 	val tablename = "dbpedia"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads DBPedia turtle dump from the HDFS.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val dbpedia = sc.textFile("dbpedia_de_clean.ttl")
+		List(dbpedia).toAnyRDD()
+	}
+
+	/**
+	  * Saves the DBPedia entities to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[DBPediaEntity]()
+			.head
+			.saveToCassandra(keyspace, tablename)
+	}
+	// $COVERAGE-ON$
+
 	/**
 	  * Splits a triple into its components. The triple is split by the closing chevron. If the resulting list of
 	  * elements contains more then three elements only the first three are taken. If the resulting list contains less
@@ -138,17 +164,6 @@ object DBPediaImport extends SparkJob {
 	}
 
 	/**
-	  * Loads DBPedia turtle dump from the HDFS.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.textFile("dbpedia_de_clean.ttl")
-		List(dbpedia).toAnyRDD()
-	}
-
-	/**
 	  * Parses the DBPedia turtle dump to DBPedia Entities.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -183,18 +198,5 @@ object DBPediaImport extends SparkJob {
 				extractProperties(subject, propertyData, organisations)
 			}
 		List(entities).toAnyRDD()
-	}
-
-	/**
-	  * Saves the DBPedia entities to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[DBPediaEntity]()
-			.head
-			.saveToCassandra(keyspace, tablename)
 	}
 }

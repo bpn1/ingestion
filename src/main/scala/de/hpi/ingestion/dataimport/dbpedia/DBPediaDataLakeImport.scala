@@ -22,10 +22,18 @@ object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 ){
 	appName = s"DataLakeImportDBpedia_v1.0_${System.currentTimeMillis()}"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads the DBPedia entities from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val wikidata = sc.cassandraTable[DBPediaEntity](inputKeyspace, inputTable)
 		List(wikidata).toAnyRDD()
 	}
+	// $COVERAGE-ON$
 
 	override def filterEntities(entity: DBPediaEntity): Boolean = {
 		entity.instancetype.isDefined

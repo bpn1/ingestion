@@ -18,6 +18,32 @@ object LinkAnalysis extends SparkJob {
 	val outputAliasToPagesTablename = "wikipedialinks"
 	val outputPageToAliasesTablename = "wikipediapages"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
+		List(articles).toAnyRDD()
+	}
+
+	/**
+	  * Saves the grouped aliases and links to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		val aliases = output.head.asInstanceOf[RDD[Alias]]
+		val pages = output(1).asInstanceOf[RDD[Page]]
+		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))
+		pages.saveToCassandra(keyspace, outputPageToAliasesTablename)
+	}
+	// $COVERAGE-ON$
+
 	def removeDeadLinks(links: RDD[Alias], allPages: RDD[String]): RDD[Alias] = {
 		links
 			.flatMap { link =>
@@ -93,17 +119,6 @@ object LinkAnalysis extends SparkJob {
 	}
 
 	/**
-	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
-		List(articles).toAnyRDD()
-	}
-
-	/**
 	  * Groups the links once on the aliases and once on the pages.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -116,18 +131,5 @@ object LinkAnalysis extends SparkJob {
 		val aliases = removeDeadLinks(groupByAliases(articles), allPages)
 		val pages = removeDeadPages(groupByPageNames(articles), allPages)
 		List(aliases).toAnyRDD() ++ List(pages).toAnyRDD()
-	}
-
-	/**
-	  * Saves the grouped aliases and links to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val aliases = output.head.asInstanceOf[RDD[Alias]]
-		val pages = output(1).asInstanceOf[RDD[Page]]
-		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))
-		pages.saveToCassandra(keyspace, outputPageToAliasesTablename)
 	}
 }

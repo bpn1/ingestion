@@ -101,6 +101,7 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 			.toAnyRDD()
 	}
 
+	// $COVERAGE-OFF$
 	/**
 	  * Writes the Subjects to the {@outputTable} table in keyspace {@outputKeyspace}.
 	  * @param output List of RDDs containing the output of the job
@@ -113,4 +114,5 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 			.head
 			.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
 	}
+	// $COVERAGE-ON$
 }
