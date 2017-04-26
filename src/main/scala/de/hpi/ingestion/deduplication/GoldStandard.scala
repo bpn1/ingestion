@@ -38,7 +38,7 @@ object GoldStandard extends SparkJob {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD()
+			.fromAnyRDD[(UUID, UUID)]()
 			.head
 			.saveToCassandra(this.keyspace, this.output)
 	}
