@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
     <sourceSettings>
-        <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
-        <subjectTable>testsubject</subjectTable>
-        <keyspaceStagingTable>datalake</keyspaceStagingTable>
-        <stagingTable>subject_temp</stagingTable>
-        <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
-        <duplicatesTable>duplicatecandidates</duplicatesTable>
-        <keyspaceVersionTable>datalake</keyspaceVersionTable>
+        <keyspaceSubjectTable>evaluation</keyspaceSubjectTable>
+        <subjectTable>subject_dbpedia</subjectTable>
+        <keyspaceStagingTable>evaluation</keyspaceStagingTable>
+        <stagingTable>subject_wikidata</stagingTable>
+        <keyspaceDuplicatesTable>evaluation</keyspaceDuplicatesTable>
+        <duplicatesTable>dbpedia_wikidata_deduplication</duplicatesTable>
+        <keyspaceVersionTable>evaluation</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
         <statsTable>deduplicationstats</statsTable>
@@ -15,18 +15,84 @@
     <simMeasurements>
         <feature>
             <attribute>name</attribute>
-            <similarityMeasure>MongeElkan</similarityMeasure>
-            <weight>0.8</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>name</attribute>
-            <similarityMeasure>JaroWinkler</similarityMeasure>
+            <similartyMeasure>MongeElkan</similartyMeasure>
             <weight>0.7</weight>
             <scale>1</scale>
         </feature>
         <feature>
             <attribute>name</attribute>
+            <similartyMeasure>JaroWinkler</similartyMeasure>
+            <weight>0.5</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>name</attribute>
+            <similartyMeasure>ExactMatchString</similartyMeasure>
+            <weight>1</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_postal</attribute>
+            <similarityMeasure>ExactMatchString</similarityMeasure>
+            <weight>0.7</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_postal</attribute>
+            <similarityMeasure>JaroWinkler</similarityMeasure>
+            <weight>0.4</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_street</attribute>
+            <similarityMeasure>ExactMatchString</similarityMeasure>
+            <weight>0.7</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_city</attribute>
+            <similarityMeasure>ExactMatchString</similarityMeasure>
+            <weight>0.7</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_city</attribute>
+            <similarityMeasure>JaroWinkler</similarityMeasure>
+            <weight>0.5</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_country</attribute>
+            <similarityMeasure>ExactMatchString</similarityMeasure>
+            <weight>0.5</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_country</attribute>
+            <similarityMeasure>JaroWinkler</similarityMeasure>
+            <weight>0.25</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_county</attribute>
+            <similarityMeasure>ExactMatchString</similarityMeasure>
+            <weight>0.8</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_county</attribute>
+            <similarityMeasure>JaroWinkler</similarityMeasure>
+            <weight>0.5</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_coords</attribute>
+            <similarityMeasure>ExactMatchString</similarityMeasure>
+            <weight>1</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>geo_quality</attribute>
             <similarityMeasure>ExactMatchString</similarityMeasure>
             <weight>0.2</weight>
             <scale>1</scale>
