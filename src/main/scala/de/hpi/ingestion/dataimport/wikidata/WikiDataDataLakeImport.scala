@@ -12,13 +12,14 @@ import org.apache.spark.rdd.RDD
   * This job translates Wikidata entities into Subjects and writes them into a staging table.
   */
 object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
-	"WikiDataDataLakeImport_v1.0",
 	List("wikidata_20161117"),
 	Option("datalakeimport_config.xml"),
 	"normalization_wikidata.xml",
 	"wikidumps",
-	"wikidata")
-{
+	"wikidata"
+){
+	appName = s"WikiDataDataLakeImport_v1.0_${System.currentTimeMillis()}"
+
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val wikidata = sc.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
 		List(wikidata).toAnyRDD()

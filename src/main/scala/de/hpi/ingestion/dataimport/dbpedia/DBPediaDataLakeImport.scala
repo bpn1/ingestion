@@ -14,13 +14,13 @@ import scala.collection.mutable
   * Import-Job to import DBPedia Subjects into the staging table of our datalake.
   */
 object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
-	"DataLakeImportDBpedia_v1.0",
 	List("dbpedia"),
 	Option("datalakeimport_config.xml"),
 	"normalization_dbpedia.xml",
 	"wikidumps",
 	"dbpedia"
 ){
+	appName = s"DataLakeImportDBpedia_v1.0_${System.currentTimeMillis()}"
 
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val wikidata = sc.cassandraTable[DBPediaEntity](inputKeyspace, inputTable)

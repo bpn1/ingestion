@@ -6,7 +6,6 @@ import java.net.URL
 
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
-import org.scalatest.path
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -18,7 +17,6 @@ import scala.xml.XML
   *
   * @constructor create a new DataLakeImport with an appName, dataSources, an inputKeyspace
   *              and an inputTable
-  * @param appName       		the name of the importing job
   * @param dataSources   		list of the sources where the new data is fetched from
   * @param configFile 			name of config file in resource folder
   * @param normalizationFile 	name of normalization file in resource folder
@@ -27,7 +25,6 @@ import scala.xml.XML
   * @tparam T the type of Objects of the new data
   */
 abstract case class DataLakeImport[T <: DLImportEntity](
-	override var appName: String,
 	dataSources: List[String],
 	configFile: Option[String],
 	normalizationFile: String,
