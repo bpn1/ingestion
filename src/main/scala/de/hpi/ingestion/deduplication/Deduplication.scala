@@ -42,9 +42,9 @@ class Deduplication(
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = List(sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable")))
+		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
 		val staging = if(merge) {
-			List(sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable")))
+			List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
 		} else {
 			Nil
 		}
@@ -60,8 +60,8 @@ class Deduplication(
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val duplicates = output.head.asInstanceOf[RDD[Subject]]
 		val evaluation = output(1).asInstanceOf[RDD[BlockEvaluation]]
-		duplicates.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
-		evaluation.saveToCassandra(settings("keyspace"), settings("statsTable"))
+		duplicates.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
+		evaluation.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -111,7 +111,7 @@ class Deduplication(
 			.toList
 			.map { feature =>
 				val attribute = (feature \ "attribute").text
-				val simMeasure = (feature \ "similartyMeasure").text
+				val simMeasure = (feature \ "similarityMeasure").text
 				val weight = (feature \ "weight").text
 				val scale = (feature \ "scale").text
 
@@ -254,9 +254,7 @@ class Deduplication(
 		} else {
 			blocking(subjects, blockingSchemes)
 		}
-
-		val blockEvaluation = evaluateBlocks(blocks, appName)
-		val evaluation = sc.parallelize(Seq(blockEvaluation))
+		val blockEvaluation = sc.parallelize(Seq(evaluateBlocks(blocks, appName)))
 
 		val duplicates = blocks
 			.flatMap(block => findDuplicates(block._2))
@@ -269,7 +267,7 @@ class Deduplication(
 					subject2.name,
 					settings("stagingTable"))
 			}
-		List(duplicates).toAnyRDD() ++ List(evaluation).toAnyRDD()
+		List(duplicates).toAnyRDD() ++ List(blockEvaluation).toAnyRDD()
 	}
 }
 

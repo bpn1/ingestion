@@ -1,29 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
     <sourceSettings>
-        <keyspace>datalake</keyspace>
+        <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
         <subjectTable>testsubject</subjectTable>
+        <keyspaceStagingTable>datalake</keyspaceStagingTable>
         <stagingTable>subject_temp</stagingTable>
+        <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
         <duplicatesTable>duplicatecandidates</duplicatesTable>
+        <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
+        <keyspaceStatsTable>datalake</keyspaceStatsTable>
         <statsTable>deduplicationstats</statsTable>
     </sourceSettings>
     <simMeasurements>
         <feature>
             <attribute>name</attribute>
-            <similartyMeasure>MongeElkan</similartyMeasure>
+            <similarityMeasure>MongeElkan</similarityMeasure>
             <weight>0.8</weight>
             <scale>1</scale>
         </feature>
         <feature>
             <attribute>name</attribute>
-            <similartyMeasure>JaroWinkler</similartyMeasure>
+            <similarityMeasure>JaroWinkler</similarityMeasure>
             <weight>0.7</weight>
             <scale>1</scale>
         </feature>
         <feature>
             <attribute>name</attribute>
-            <similartyMeasure>ExactMatchString</similartyMeasure>
+            <similarityMeasure>ExactMatchString</similarityMeasure>
             <weight>0.2</weight>
             <scale>1</scale>
         </feature>
