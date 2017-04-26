@@ -1,11 +1,15 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-import de.hpi.ingestion.datalake.models.Subject
+
+import de.hpi.ingestion.datalake.models.{Subject, Version}
+import de.hpi.ingestion.deduplication.models.{BlockEvaluation, ScoreConfig}
+import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler, MongeElkan, SimilarityMeasure}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 object TestData {
+	// scalastyle:off line.size.limit
 	val idList = List.fill(8)(UUID.randomUUID())
 	def testData(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
 		sc.parallelize(Seq(
@@ -90,4 +94,44 @@ object TestData {
 			(dbpediaList(2).id, wikidataList(2).id)
 		))
 	}
+
+	def testSubjects: List[Subject] = List(
+		Subject(name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52","11"), "gen_income" -> List("1234"))),
+		Subject(name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin"), "gen_income" -> List("12"))),
+		Subject(name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52","13"), "gen_income" -> List("33"))),
+		Subject(name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York"), "geo_coords" -> List("53","14"), "gen_income" -> List("600"))),
+		Subject(name = Some("Porsche"), properties = Map("geo_coords" -> List("52","13"))),
+		Subject(name = Some("Ferrari"), properties = Map("geo_coords" -> List("53","14")))
+	)
+
+	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
+
+	def testConfig: List[ScoreConfig[String, SimilarityMeasure[String]]] = List(
+		ScoreConfig(key = "name", similarityMeasure = MongeElkan, weight= 0.8),
+		ScoreConfig(key = "name", similarityMeasure = JaroWinkler, weight= 0.7),
+		ScoreConfig(key = "name", similarityMeasure = ExactMatchString, weight= 0.2)
+	)
+
+	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
+			MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
+			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7,
+			ExactMatchString.compare(subject1.name.get, subject2.name.get) * 0.2
+	).sum / 3
+
+	def cityBlockingScheme: ListBlockingScheme = {
+		val scheme = new ListBlockingScheme()
+		scheme.setAttributes("geo_city")
+		scheme
+	}
+
+	def cityBlock(testSubjects: List[Subject]): List[(List[List[String]], List[Subject])] = List(
+		(List(List("Berlin")),  List(testSubjects.head, testSubjects(1), testSubjects(2))),
+		(List(List("New York")), List(testSubjects(3))),
+		(List(List("undefined")), List(testSubjects(4), testSubjects(5)))
+	)
+
+	def defaultDeduplication: Deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
+
+	def evaluationTestData: BlockEvaluation = BlockEvaluation(data = Map(List("Berlin") -> 3,  List("New York") -> 1, List("undefined") -> 2), comment = Option("Test comment"))
+	// scalastyle:on line.size.limit
 }
