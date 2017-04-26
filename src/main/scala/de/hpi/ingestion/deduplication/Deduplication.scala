@@ -142,7 +142,7 @@ class Deduplication(
 				subject1.id -> List((subject2, settings("stagingTable"), score))
 			}
 			.reduceByKey { case (accumulator, candidate) => candidate ::: accumulator}
-			.map (DuplicateCandidates.tupled)
+			.map(DuplicateCandidates.tupled)
 	}
 
 	/**
@@ -158,7 +158,7 @@ class Deduplication(
 			.toList
 			.distinct
 			.map(_.head)
-			.map(tuple => Tuple3(tuple._1, tuple._2, compare(tuple._1, tuple._2)))
+			.map(tuple => (tuple._1, tuple._2, compare(tuple._1, tuple._2)))
 			.filter(tuple => tuple._3 >= this.confidence)
 	}
 
@@ -247,11 +247,9 @@ class Deduplication(
 			.parallelize(Seq(blockEvaluation))
 			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 
-		createDuplicateCandidates(
-			blocks
-				.flatMap(block => findDuplicates(block._2))
-		)
-		.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
+		val subjectPairs = blocks.flatMap(block => findDuplicates(block._2))
+		createDuplicateCandidates(subjectPairs)
+			.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 }
 
