@@ -65,10 +65,13 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
 		deduplication.parseConfig()
 		val subjects = TestData.testSubjects
-//		val duplicates = TestData.cityBlock(subjects).map(_._2).flatMap(deduplication.findDuplicates)
-//		val duplicates = TestData.blocks(sc, subjects).map(_._2).flatMap(deduplication.findDuplicates)
-//		val expected = List((subjects.head, subjects(1), 0.3558974358974359))
-//		duplicates shouldEqual expected
+		val duplicates = TestData.blocks(sc, subjects)
+			.map(_.map(_._2).flatMap(deduplication.findDuplicates))
+			.reduce(_.union(_))
+			.collect
+			.toList
+		val expected = List((subjects.head, subjects(1), 0.3558974358974359))
+		duplicates shouldEqual expected
 	}
 
 	"buildDuplicatesClique" should "should add isDuplicate relation with a confidence for a list of tuples" in {
@@ -86,16 +89,16 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 	}
 
-	/**"evaluateBlocks" should "evaluate each block sorted by its size" in {
+	"evaluateBlocks" should "evaluate each block sorted by its size" in {
 		val deduplication = TestData.defaultDeduplication
 		val subjects = TestData.testSubjects
-		val blocks = sc.parallelize(TestData.cityBlock(subjects))
-		val evaluation = deduplication.evaluateBlocks(blocks, "Test comment")
-		val expected = TestData.evaluationTestData
-
-		evaluation.data shouldEqual expected.data
-		evaluation.comment shouldEqual expected.comment
-	}**/
+		val blocks = TestData.blocks(sc, subjects)
+		val blockingSchemes = List(TestData.cityBlockingScheme, new SimpleBlockingScheme)
+		val evaluationList = deduplication.evaluateBlocks(blocks, "Test comment", blockingSchemes)
+		val evaluationData = evaluationList.map(blockingData => (blockingData.data, blockingData.comment))
+		val expected = TestData.evaluationTestData.map(blockingData => (blockingData.data, blockingData.comment))
+		evaluationData shouldEqual expected
+	}
 
 	"addSymRelation" should "add a symmetric relation between two given nodes" in {
 		val deduplication = TestData.defaultDeduplication

@@ -5,12 +5,14 @@ object DeduplicationJob {
 		val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 		val geoCountryBlockingScheme = new ListBlockingScheme
 		geoCountryBlockingScheme.setAttributes("geo_city")
-		val generalSectoryBlockingScheme = new ListBlockingScheme
-		generalSectoryBlockingScheme.setAttributes("gen_sectors")
+		geoCountryBlockingScheme.tag = "geo Country BlockingScheme"
+		val generalSectorBlockingScheme = new ListBlockingScheme
+		generalSectorBlockingScheme.setAttributes("gen_sectors")
+		generalSectorBlockingScheme.tag = "general Sector BlockingScheme"
 		val simpleBlockingScheme = new SimpleBlockingScheme
 		val blockingSchemes = List(
 			geoCountryBlockingScheme,
-			generalSectoryBlockingScheme,
+			generalSectorBlockingScheme,
 			simpleBlockingScheme)
 		deduplication.run(blockingSchemes)
 	}

@@ -10,5 +10,5 @@ import java.util.UUID
   */
 case class BlockEvaluation(
 	id: UUID = UUID.randomUUID(),
-	data: Map[String, Long] = Map[String, Long](),
+	data: Map[String, Int] = Map[String, Int](),
 	comment: Option[String] = None)

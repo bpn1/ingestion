@@ -121,30 +121,38 @@ object TestData {
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()
 		scheme.setAttributes("geo_city")
+		scheme.tag = "test city blocking scheme"
 		scheme
 	}
 
-	def blocks(sc: SparkContext, testSubjects: List[Subject]): List[RDD[(String, List[Subject])]] = List(
-		sc.parallelize(Seq(
-			("Berlin", List(testSubjects.head, testSubjects(1), testSubjects(2))),
-			("Hamburg", List(testSubjects.head, testSubjects(3))),
-			("New York", List(testSubjects(1), testSubjects(3))),
-			("undefined", List(testSubjects(4), testSubjects(5)))
-		)),
-		sc.parallelize(Seq(
-			("Vol", List(testSubjects.head, testSubjects(1))),
-			("Aud", List(testSubjects(2), testSubjects(3))),
-			("Por", List(testSubjects(4))),
-			("Ferr", List(testSubjects(5)))
-		))
-	)
+	def blocks(sc: SparkContext, testSubjects: List[Subject]): List[RDD[(String, List[Subject])]] = {
+		List(
+			sc.parallelize(Seq(
+				("Berlin", List(testSubjects.head, testSubjects(1), testSubjects(2))),
+				("Hamburg", List(testSubjects.head, testSubjects(3))),
+				("New York", List(testSubjects(1), testSubjects(3))),
+				("undefined", List(testSubjects(4), testSubjects(5)))
+			)),
+			sc.parallelize(Seq(
+				("Vol", List(testSubjects.head, testSubjects(1))),
+				("Aud", List(testSubjects(2), testSubjects(3))),
+				("Por", List(testSubjects(4))),
+				("Fer", List(testSubjects(5)))
+			))
+		)
+	}
 
 	def defaultDeduplication: Deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 
-	def evaluationTestData: BlockEvaluation = {
-		BlockEvaluation(
-			data = Map("Berlin" -> 3L,  "New York" -> 1L, "undefined" -> 2L),
-			comment = Option("Test city blocking scheme"))
+	def evaluationTestData: List[BlockEvaluation] = {
+		List(
+			BlockEvaluation(
+				data = Map("Berlin" -> 3,  "New York" -> 2, "undefined" -> 2, "Hamburg" -> 2),
+				comment = Option("Test comment_test city blocking scheme")),
+			BlockEvaluation(
+				data = Map("Vol" -> 2,  "Aud" -> 2, "Por" -> 1, "Fer" -> 1),
+				comment = Option("Test comment_SimpleBlockingScheme")))
+
 	}
 	// scalastyle:on line.size.limit
 }
