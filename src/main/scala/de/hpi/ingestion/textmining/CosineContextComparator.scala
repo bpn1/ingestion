@@ -173,7 +173,7 @@ object CosineContextComparator {
 		val articleContextsBroadcast = sc.broadcast(articleContexts)
 		linkContexts
 			.map(t => (t._1.alias, t))
-			.join(aliasPageProbabilities)
+			.join(aliasPageProbabilities, 128)
 			.map { case (alias, ((link, context), (page, totalProb, pageProb))) =>
 				(page, (alias, link, context, totalProb, pageProb))
 			}.mapPartitions({ partition =>
