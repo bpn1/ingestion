@@ -253,7 +253,7 @@ object CosineContextComparator {
 			.setAppName("Cosine Context Comparator")
 			.set("spark.shuffle.blockTransferService", "nio")
 			.set("spark.network.timeout", "600s")
-			.set("spark.driver.maxResultSize", "4g")
+			.set("spark.driver.maxResultSize", "8g")
 		// http://stackoverflow.com/questions/29781489/apache-spark-network-errors-between-executors
 		// http://stackoverflow.com/questions/40740750/timeout-exception-in-apache-spark-during-program-execution
 		// https://qubole.zendesk.com/hc/en-us/articles/215181846-How-To-Increase-spark-driver-maxResultSize-value
