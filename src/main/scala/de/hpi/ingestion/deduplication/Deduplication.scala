@@ -77,7 +77,7 @@ class Deduplication(
 			.toList
 			.map { feature =>
 				val attribute = (feature \ "attribute").text
-				val simMeasure = (feature \ "similartyMeasure").text
+				val simMeasure = (feature \ "similarityMeasure").text
 				val weight = (feature \ "weight").text
 				val scale = (feature \ "scale").text
 
@@ -218,9 +218,9 @@ class Deduplication(
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
-		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
+		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
 		val blocks = if(merge) {
-			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable"))
+			val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
 			blocking(subjects, staging, blockingSchemes)
 		} else {
 			blocking(subjects, blockingSchemes)
@@ -229,19 +229,19 @@ class Deduplication(
 		val blockEvaluation = evaluateBlocks(blocks, this.appName)
 		sc
 			.parallelize(Seq(blockEvaluation))
-			.saveToCassandra(settings("keyspace"), settings("statsTable"))
+			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 
 		blocks
-			.flatMap(block => findDuplicates(block._2))
-		    .map { case (subject1, subject2) =>
-				DuplicateCandidate(
-					UUIDs.random(),
-					subject1.id,
-					subject1.name,
-					subject2.id,
-					subject2.name,
-					settings("stagingTable"))
-			}.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
+		.flatMap(block => findDuplicates(block._2))
+		.map { case (subject1, subject2) =>
+			DuplicateCandidate(
+				UUIDs.random(),
+				subject1.id,
+				subject1.name,
+				subject2.id,
+				subject2.name,
+				settings("stagingTable"))
+		}.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 }
 

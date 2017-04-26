@@ -49,6 +49,8 @@ object TestData {
 
 	def properties: List[(String, String)] = List(
 		("dbo:wikiPageID", "1"),
+		("owl:sameAs", "wikidata:Q1"),
+		("owl:sameAs", "yago:X"),
 		("rdfs:label", "Anschluss"),
 		("dbo:abstract", "Lorem Ipsum"),
 		("rdf:type", "dbo:Organisation"),
@@ -62,13 +64,15 @@ object TestData {
 	def parsedEntity(name: String) = DBPediaEntity(
 		name,
 		Option("1"),
+		Option("Q1"),
 		Option("Anschluss"),
 		Option("Lorem Ipsum"),
 		Option("Company"),
 		Map(
 			"rdf:type" -> List("dbo:Organisation", "dbo:Company", "dbo:Airline"),
 			"dbp:founded" -> List("1926-04-15", "Chicago, Illinois"),
-			"dbp:headquarters" -> List("CentrePort, Fort Worth, Texas, United States")
+			"dbp:headquarters" -> List("CentrePort, Fort Worth, Texas, United States"),
+			"owl:sameAs" -> List("wikidata:Q1", "yago:X")
 		)
 	)
 
@@ -94,9 +98,9 @@ object TestData {
 
 	def entityRDD(sc: SparkContext): RDD[DBPediaEntity] = {
 		sc.parallelize(List(
-			DBPediaEntity(dbpedianame="dbpedia-de:Liste_von_Autoren/V", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste"))),
-			DBPediaEntity(dbpedianame="dbpedia-de:Anschluss_(Soziologie)", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Soziologische_Systemtheorie"))),
-			DBPediaEntity(dbpedianame="dbpedia-de:Liste_von_Autoren/T", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste")))
+			DBPediaEntity(dbpedianame="Liste_von_Autoren/V", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste"))),
+			DBPediaEntity(dbpedianame="Anschluss_(Soziologie)", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Soziologische_Systemtheorie"))),
+			DBPediaEntity(dbpedianame="Liste_von_Autoren/T", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste")))
 		))
 	}
 
