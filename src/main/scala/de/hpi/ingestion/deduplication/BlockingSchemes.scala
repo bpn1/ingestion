@@ -14,7 +14,7 @@ trait BlockingScheme extends Serializable {
 	  * if required for the blocking scheme.
 	  * @param attrList Sequence of attributes to use.
 	  */
-	protected def setAttributes(attrList: String*): Unit = inputAttributes = attrList.toList
+	def setAttributes(attrList: String*): Unit = inputAttributes = attrList.toList
 
 	/**
 	  * Generates key from the subject's properties.

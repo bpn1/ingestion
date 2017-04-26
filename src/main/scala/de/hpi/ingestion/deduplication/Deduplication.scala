@@ -100,12 +100,13 @@ class Deduplication(
 	def blocking(
 		subjects: RDD[Subject],
 		blockingSchemes: List[BlockingScheme]
-	): RDD[(List[List[String]], List[Subject])] = {
-		subjects
-			.map { subject =>
-				(blockingSchemes.map(_.generateKey(subject)), List(subject))
-			}
-			.reduceByKey(_ ++ _)	// ToDo: #182, better reduce function
+	): List[RDD[(String, List[Subject])]] = {
+		blockingSchemes.map { scheme =>
+			subjects.flatMap { subject =>
+				val keyValues = scheme.generateKey(subject).distinct
+				keyValues.map((_, List(subject)))
+			}.reduceByKey(_ ++ _)
+		}
 	}
 
 	/**
@@ -119,7 +120,7 @@ class Deduplication(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
 		blockingSchemes: List[BlockingScheme]
-	): RDD[(List[List[String]], List[Subject])] = {
+	): List[RDD[(String, List[Subject])]] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes)
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
 		subjectBlocks
@@ -228,7 +229,7 @@ class Deduplication(
 			blocking(subjects, blockingSchemes)
 		}
 
-		val blockEvaluation = evaluateBlocks(blocks, this.appName)
+		/**val blockEvaluation = evaluateBlocks(blocks, this.appName)
 		sc
 			.parallelize(Seq(blockEvaluation))
 			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
@@ -243,7 +244,7 @@ class Deduplication(
 				subject2.id,
 				subject2.name,
 				settings("stagingTable"))
-		}.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
+		}.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))**/
 	}
 }
 
