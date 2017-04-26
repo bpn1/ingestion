@@ -71,6 +71,12 @@ object CompareStrategy extends Serializable {
 		(firstScore + secondScore) / 2
 	}
 
+	def maximum(values: List[Double]): Double = {
+		var temp = 0.0
+		values.foreach(value => temp = math.max(temp, value))
+		temp
+	}
+
 	/**
 	  * This method compares two string-lists by default.
 	  * @param leftValues List of strings to be compared with rightValues.
@@ -88,11 +94,9 @@ object CompareStrategy extends Serializable {
 		scale: Int = 1
 	): Double = {
 		val scoreSum = leftValues.map(
-			leftValue => rightValues.map(
-				rightValue => compare(leftValue, rightValue, simMeasure, weight, scale)
-			).sum
-		).sum
-		scoreSum / (leftValues.size * rightValues.size)
+			leftValue => rightValues.map(rightValue => compare(leftValue, rightValue, simMeasure, weight, scale))
+				.reduce(math.max)).sum
+		scoreSum / leftValues.size
 	}
 
 	/**
@@ -102,9 +106,13 @@ object CompareStrategy extends Serializable {
 	  */
 	def apply(attribute: String): (List[String], List[String], SimilarityMeasure[String], Double, Int) => Double = {
 		attribute match {
-			case "name" | "category" | "city" => singleStringCompare
-			case "geolocation" => coordinatesCompare
-			case default => defaultCompare
+			case "name"
+				 | "category"
+				 | "geo_city"
+				 | "geo_postal"
+				 | "geo_country" => singleStringCompare
+			case "geo_coords" => coordinatesCompare
+			case _ => defaultCompare
 		}
 
 	}
