@@ -79,6 +79,13 @@ class DeduplicationUnitTest
 		assertRDDEquals(expected, blocks)
 	}
 
+	"createDuplicateCandidates" should "build an RDD containing for each subject all candidates for deduplication" in {
+		val testSubjects = getSampleSubjects()
+		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
+		val testDuplicateCandidates = deduplication.
+			createDuplicateCandidates(sc.parallelize((testSubjects(0), testSubjects(3), 0.5)))
+		val expect = "MMMMM"
+	}
 
 	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
 		val testSubjects = getSampleSubjects()

@@ -233,9 +233,9 @@ class Deduplication(
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
-		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
+		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
 		val blocks = if(merge) {
-			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable"))
+			val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
 			blocking(subjects, staging, blockingSchemes)
 		} else {
 			blocking(subjects, blockingSchemes)
@@ -244,13 +244,13 @@ class Deduplication(
 		val blockEvaluation = evaluateBlocks(blocks, this.appName)
 		sc
 			.parallelize(Seq(blockEvaluation))
-			.saveToCassandra(settings("keyspace"), settings("statsTable"))
+			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 
 		createDuplicateCandidates(
 			blocks
 				.flatMap(block => findDuplicates(block._2))
 		)
-		.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
+		.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 }
 
