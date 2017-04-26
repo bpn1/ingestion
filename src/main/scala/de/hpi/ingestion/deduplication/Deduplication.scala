@@ -77,7 +77,7 @@ class Deduplication(
 			.toList
 			.map { feature =>
 				val attribute = (feature \ "attribute").text
-				val simMeasure = (feature \ "similartyMeasure").text
+				val simMeasure = (feature \ "similarityMeasure").text
 				val weight = (feature \ "weight").text
 				val scale = (feature \ "scale").text
 
@@ -233,7 +233,6 @@ class Deduplication(
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
-
 		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
 		val blocks = if(merge) {
 			val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
@@ -263,6 +262,7 @@ object Deduplication {
 		"JaroWinkler" -> JaroWinkler,
 		"N-Gram" -> NGram,
 		"Overlap" -> Overlap,
+		"EuclidianDistance" -> EuclidianDistance,
 		"RoughlyEqualNumbers" -> RoughlyEqualNumbers
 	)
 }

@@ -14,6 +14,7 @@ import de.hpi.ingestion.datalake.models.DLImportEntity
 case class DBPediaEntity(
 	dbpedianame: String,
 	var wikipageid: Option[String] = None,
+	var wikidataid: Option[String] = None,
 	var label: Option[String] = None,
 	var description: Option[String] = None,
 	var instancetype: Option[String] = None,
@@ -25,7 +26,7 @@ case class DBPediaEntity(
 			field.setAccessible(true)
 			attribute match {
 				case "dbpedianame" => List(this.dbpedianame)
-				case "wikipageid" | "label" | "description" | "instancetype" => {
+				case "wikipageid" | "wikidataid" | "label" | "description" | "instancetype" => {
 					val value = field.get(this).asInstanceOf[Option[String]]
 					value.map(List(_)).getOrElse(Nil)
 				}

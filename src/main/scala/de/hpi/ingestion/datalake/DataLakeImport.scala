@@ -3,10 +3,8 @@ package de.hpi.ingestion.datalake
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import java.net.URL
-
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
-
 import scala.collection.mutable
 import scala.io.Source
 import scala.xml.XML
