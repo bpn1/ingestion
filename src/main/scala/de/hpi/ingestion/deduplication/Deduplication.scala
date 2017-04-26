@@ -225,12 +225,12 @@ class Deduplication(
 		val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
 		val blocks = blocking(subjects, staging, blockingSchemes)
 
-		/**val blockEvaluation = evaluateBlocks(blocks, this.appName)
+		val blockEvaluation = evaluateBlocks(blocks, this.appName)
 		sc
 			.parallelize(Seq(blockEvaluation))
 			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 
-		blocks
+		/**blocks
 		.flatMap(block => findDuplicates(block._2))
 		.map { case (subject1, subject2) =>
 			DuplicateCandidate(
