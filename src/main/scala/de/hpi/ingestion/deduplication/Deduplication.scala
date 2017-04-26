@@ -233,6 +233,7 @@ class Deduplication(
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
+
 		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
 		val blocks = if(merge) {
 			val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
