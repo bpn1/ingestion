@@ -35,5 +35,4 @@ class MockSparkJob extends FlatSpec with SparkJob with SharedSparkContext {
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		methodCalls += "save"
 	}
-
 }

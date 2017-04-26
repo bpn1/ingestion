@@ -1,13 +1,16 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-import de.hpi.ingestion.datalake.models.Subject
-import org.apache.spark.{SparkConf, SparkContext}
-import com.datastax.spark.connector._
-import org.apache.spark.rdd.RDD
 
-object GoldStandard {
-	val appName = "GoldStandard_v1.0"
+import de.hpi.ingestion.datalake.models.Subject
+import org.apache.spark.SparkContext
+import com.datastax.spark.connector._
+import de.hpi.ingestion.framework.SparkJob
+import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.implicits.CollectionImplicits._
+
+object GoldStandard extends SparkJob {
+	appName = "GoldStandard_v1.0"
 	val dataSource = List("DBPedia", "Wikidata")
 	val keyspace = "evaluation"
 	val inputDBPedia = "subject_dbpedia"
@@ -59,13 +62,41 @@ object GoldStandard {
 		dbpediaIdJoined.union(wikidataIdJoined).distinct
 	}
 
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf().setAppName(this.appName)
-		val sc = new SparkContext(conf)
-
+	/**
+	  * Loads DBPedia and Wikidata from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val dbpedia = sc.cassandraTable[Subject](this.keyspace, this.inputDBPedia)
 		val wikidata = sc.cassandraTable[Subject](this.keyspace, this.inputWikiData)
+		List[RDD[Subject]](dbpedia, wikidata).toAnyRDD()
+	}
 
-		join(dbpedia, wikidata).saveToCassandra(this.keyspace, this.output)
+	/**
+	  * Joins DBPedia and Wikidata.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val data = input.fromAnyRDD[Subject]()
+		val results = join(data.head, data(1))
+		List(results).toAnyRDD()
+	}
+
+	/**
+	  * Saves joined DBPedia and Wikidata to {@output} table in keyspace {@keyspace}.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD()
+			.head
+			.saveToCassandra(this.keyspace, this.output)
 	}
 }

@@ -4,12 +4,12 @@ import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.deduplication.similarity._
 import de.hpi.ingestion.deduplication.models._
-import de.hpi.ingestion.implicits.CollectionImplicits._
-
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import com.datastax.driver.core.utils.UUIDs
+import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 import scala.xml.XML
 import scala.collection.mutable
@@ -18,18 +18,21 @@ import scala.io.Source
 /**
   * Abstract class containing generic methods for the deduplication
   * @param confidence minimum confidence for two subjects to be identified as duplicates
-  * @param appName name of the deduplication
+  * @param importName name of the deduplication
   * @param dataSources sources where the new data is retrieved from
   * @param configFile name of config file in resource folder
   */
 class Deduplication(
 	val confidence: Double,
-	val appName: String,
+	val importName: String,
 	val dataSources: List[String],
-	val configFile: Option[String] = None
-) extends Serializable {
+	val configFile: Option[String] = None,
+	val merge: Boolean = false
+) extends Serializable with SparkJob {
 	var config = List[ScoreConfig[String, SimilarityMeasure[String]]]()
 	val settings = mutable.Map[String, String]()
+	var blockingSchemes = List[BlockingScheme](new SimpleBlockingScheme)
+	appName = importName
 
 	/**
 	  * Compares to subjects regarding the configuration
@@ -127,8 +130,6 @@ class Deduplication(
 				case (key, (None, Some(x))) => (key, x)
 				case (key, (Some(x), Some(y))) => (key, (x ++ y).distinct)
 			}
-		println(subjects.count.toString)
-		subjectBlocks
 	}
 
 	/**
@@ -206,34 +207,45 @@ class Deduplication(
 	}
 
 	/**
-	  * Starts the deduplication process and writes the result to Cassandra.
-	  * @param blockingSchemes List of blocking schemes to be used on the data
-	  * @param merge boolean indicating whether or not the duplicates should be merged
+	  * Loads the Subjects and if needed the staged Subjects from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
 	  */
-	def run(
-		blockingSchemes:  List[BlockingScheme] = List(new SimpleBlockingScheme),
-		merge: Boolean = false
-	): Unit = {
-		val conf = new SparkConf()
-			.setAppName(this.appName)
-		val sc = new SparkContext(conf)
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val subjects = List[RDD[Subject]](sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable")))
+		val staging = if(merge) {
+			List[RDD[Subject]](sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable")))
+		} else {
+			Nil
+		}
+		(subjects ++ staging).toAnyRDD()
+	}
+
+	/**
+	  * Blocks the Subjects and finds duplicates between them between the Subjects and staged Subjects.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		parseConfig()
-		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
+		val inputData = input.fromAnyRDD[Subject]()
+		val subjects = inputData.head
 		val blocks = if(merge) {
-			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable"))
+			val staging = inputData(1)
 			blocking(subjects, staging, blockingSchemes)
 		} else {
 			blocking(subjects, blockingSchemes)
 		}
 
-		val blockEvaluation = evaluateBlocks(blocks, this.appName)
-		sc
-			.parallelize(Seq(blockEvaluation))
-			.saveToCassandra(settings("keyspace"), settings("statsTable"))
+		val blockEvaluation = evaluateBlocks(blocks, appName)
+		val evaluation = sc.parallelize(Seq(blockEvaluation))
 
-		blocks
+		val duplicates = blocks
 			.flatMap(block => findDuplicates(block._2))
-		    .map { case (subject1, subject2) =>
+			.map { case (subject1, subject2) =>
 				DuplicateCandidate(
 					UUIDs.random(),
 					subject1.id,
@@ -241,7 +253,21 @@ class Deduplication(
 					subject2.id,
 					subject2.name,
 					settings("stagingTable"))
-			}.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
+			}
+		List(duplicates).toAnyRDD() ++ List(evaluation).toAnyRDD()
+	}
+
+	/**
+	  * Saves the duplicates and block evaluation to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		val duplicates = output.head.asInstanceOf[RDD[Subject]]
+		val evaluation = output(1).asInstanceOf[RDD[BlockEvaluation]]
+		duplicates.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
+		evaluation.saveToCassandra(settings("keyspace"), settings("statsTable"))
 	}
 }
 
