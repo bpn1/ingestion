@@ -86,7 +86,8 @@ class DeduplicationUnitTest
 		val testSubject2 = testSubjects(3)
 		val testSubjectPair = List((testSubject1, testSubject2, 0.5))
 		val testDuplicateCandidates = deduplication.createDuplicateCandidates(sc.parallelize(testSubjectPair))
-		val expected = sc.parallelize(List((testSubject1.id, List(testSubject2, "subject_wikidata", 0.5))))
+		val expectedCandidate = new DuplicateCandidates(testSubject1.id, List((testSubject2, "subject_wikidata", 0.5)))
+		val expected = sc.parallelize(List(expectedCandidate))
 		assertRDDEquals(testDuplicateCandidates, expected)
 	}
 
