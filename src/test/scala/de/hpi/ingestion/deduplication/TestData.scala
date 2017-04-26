@@ -141,6 +141,10 @@ object TestData {
 
 	def defaultDeduplication: Deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 
-	def evaluationTestData: BlockEvaluation = BlockEvaluation(data = Map(List("Berlin") -> 3,  List("New York") -> 1, List("undefined") -> 2), comment = Option("Test comment"))
+	def evaluationTestData: BlockEvaluation = {
+		BlockEvaluation(
+			data = Map("Berlin" -> 3L,  "New York" -> 1L, "undefined" -> 2L),
+			comment = Option("Test city blocking scheme"))
+	}
 	// scalastyle:on line.size.limit
 }

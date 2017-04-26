@@ -136,11 +136,25 @@ class Deduplication(
 	}
 
 	/**
+	  * Creates candidates for the Deduplication for each element from the output of findDuplicates
+	  * @param subjectPairs Pairs of subjects for all possible duplicates
+	  * @return all actual candidates to save to the cassandra
+	  */
+	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
+		subjectPairs
+			.map { case (subject1, subject2, score) =>
+				subject1.id -> List((subject2, settings("stagingTable"), score))
+			}
+			.reduceByKey { case (accumulator, candidate) => candidate ::: accumulator}
+			.map(DuplicateCandidates.tupled)
+	}
+
+	/**
 	  * Finds the duplicates of each block
 	  * @param block List of Subjects where the duplicates are searched in
-	  * @return tuple of Subjects whose score is greater or equal a given threshold this.confidence
+	  * @return tuple of Subjects with it's score, which is greater or equal a given threshold this.confidence
 	  */
-	def findDuplicates(block: List[Subject]): List[(Subject, Subject)] = {
+	def findDuplicates(block: List[Subject]): List[(Subject, Subject, Double)] = {
 		block
 			.cross(block)
 			.filter(tuple => tuple._1 != tuple._2)
@@ -148,7 +162,8 @@ class Deduplication(
 			.toList
 			.distinct
 			.map(_.head)
-			.filter(tuple => compare(tuple._1, tuple._2) >= this.confidence)
+			.map(tuple => (tuple._1, tuple._2, compare(tuple._1, tuple._2)))
+			.filter(tuple => tuple._3 >= this.confidence)
 	}
 
 	/**
@@ -184,7 +199,7 @@ class Deduplication(
 			addSymRelation(
 				scoredDuplicatePair._1,
 				scoredDuplicatePair._2,
-				Map("type" -> "isDuplicate", "confidence" -> (scoredDuplicatePair._3).toString),
+				Map("type" -> "isDuplicate", "confidence" -> scoredDuplicatePair._3.toString),
 				version
 			)
 		}
@@ -230,17 +245,9 @@ class Deduplication(
 			.parallelize(Seq(blockEvaluation))
 			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 
-		/**blocks
-		.flatMap(block => findDuplicates(block._2))
-		.map { case (subject1, subject2) =>
-			DuplicateCandidate(
-				UUIDs.random(),
-				subject1.id,
-				subject1.name,
-				subject2.id,
-				subject2.name,
-				settings("stagingTable"))
-		}.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))**/
+//		val subjectPairs = blocks.flatMap(block => findDuplicates(block._2))
+//		createDuplicateCandidates(subjectPairs)
+//			.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 }
 
