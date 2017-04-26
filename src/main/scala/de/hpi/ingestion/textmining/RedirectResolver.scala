@@ -8,7 +8,7 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.TupleImplicits._
 
 /**
-  * Resolves all existing Redirects
+  * Resolves all redirects in Parsed Wikipedia entries by replacing them with the pages they point to.
   */
 object RedirectResolver {
 	val tablename = "parsedwikipedia"

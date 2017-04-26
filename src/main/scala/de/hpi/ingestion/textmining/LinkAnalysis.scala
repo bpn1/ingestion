@@ -6,7 +6,7 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 
 /**
-  * Groups link Aliases by page names and vice versa. Also removes dead links (no corresponding page).
+  * Groups link Aliases by page names and vice versa without counting dead links.
   */
 object LinkAnalysis {
 	val keyspace = "wikidumps"
@@ -51,7 +51,7 @@ object LinkAnalysis {
 	}
 
 	/**
-	  * Create RDD of Aliases with corresponding pages.
+	  * Creates RDD of Aliases with corresponding pages.
 	  *
 	  * @param parsedWikipedia RDD of parsed Wikipedia entries to be processed
 	  * @return RDD of Aliases
@@ -73,7 +73,7 @@ object LinkAnalysis {
 	}
 
 	/**
-	  * Create RDD of pages with corresponding Aliases.
+	  * Creates RDD of pages with corresponding Aliases.
 	  *
 	  * @param parsedWikipedia RDD of parsed Wikipedia entries to be processed
 	  * @return RDD of pages
@@ -95,7 +95,7 @@ object LinkAnalysis {
 	}
 
 	/**
-	  * Calculating probability for Alias pointing to page.
+	  * Calculates probability for Alias pointing to page.
 	  *
 	  * @param alias    Alias to be processed
 	  * @param pageName pagename that is being pointed to

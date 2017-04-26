@@ -6,7 +6,8 @@ import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
 /**
-  * Calculate cosine similarity for contexts of every term and link.
+  * Calculate cosine similarity for contexts of every term and link and
+  * writes it with the other features as Feature Entries to the Cassandra.
   */
 object CosineContextComparator {
 	val keyspace = "wikidumps"

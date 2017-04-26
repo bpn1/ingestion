@@ -7,7 +7,8 @@ import scala.collection.mutable
 import de.hpi.ingestion.textmining.models._
 
 /**
-  * Builds trie from aliases.
+  * Finds all occurrences of the aliases in the given trie in all Wikipedia articles and writes them to the
+  * foundaliases column.
   */
 object TrieBuilder {
 	val keyspace = "wikidumps"
