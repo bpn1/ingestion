@@ -124,10 +124,19 @@ object TestData {
 		scheme
 	}
 
-	def cityBlock(testSubjects: List[Subject]): List[(List[List[String]], List[Subject])] = List(
-		(List(List("Berlin")),  List(testSubjects.head, testSubjects(1), testSubjects(2))),
-		(List(List("New York")), List(testSubjects(3))),
-		(List(List("undefined")), List(testSubjects(4), testSubjects(5)))
+	def blocks(sc: SparkContext, testSubjects: List[Subject]): List[RDD[(String, List[Subject])]] = List(
+		sc.parallelize(Seq(
+			("Berlin", List(testSubjects.head, testSubjects(1), testSubjects(2))),
+			("Hamburg", List(testSubjects.head, testSubjects(3))),
+			("New York", List(testSubjects(1), testSubjects(3))),
+			("undefined", List(testSubjects(4), testSubjects(5)))
+		)),
+		sc.parallelize(Seq(
+			("Vol", List(testSubjects.head, testSubjects(1))),
+			("Aud", List(testSubjects(2), testSubjects(3))),
+			("Por", List(testSubjects(4))),
+			("Ferr", List(testSubjects(5)))
+		))
 	)
 
 	def defaultDeduplication: Deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))

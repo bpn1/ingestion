@@ -123,15 +123,16 @@ class Deduplication(
 	): List[RDD[(String, List[Subject])]] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes)
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
-		subjectBlocks
-			.fullOuterJoin(stagingBlocks)
-			.map {
-				case (key, (Some(x), None)) => (key, x)
-				case (key, (None, Some(x))) => (key, x)
-				case (key, (Some(x), Some(y))) => (key, (x ++ y).distinct)
-			}
-		println(subjects.count.toString)
-		subjectBlocks
+
+		(subjectBlocks, stagingBlocks).zipped.map { case (subjectBlock, stagingBlock) =>
+			subjectBlock
+				.fullOuterJoin(stagingBlock)
+				.mapValues { case (subjectList, stagingList) =>
+					val subjectOpt = subjectList.getOrElse(Nil)
+					val stagingOpt = stagingList.getOrElse(Nil)
+					subjectOpt.union(stagingOpt).distinct
+				}
+		}
 	}
 
 	/**
@@ -197,37 +198,32 @@ class Deduplication(
 	  * @return Blocks with size-value and comment.
 	  */
 	def evaluateBlocks(
-		blocks: RDD[(List[List[String]], List[Subject])],
+		blocks: List[RDD[(String, List[Subject])]],
 		comment: String
 	): BlockEvaluation = {
 		val dataMap = blocks
-			.map(block => (block._1.map(_.mkString(" ")), block._2.size))
-			.sortBy(_._2, false)
-			.collect()
-			.toMap
+		    .flatMap { block =>
+				block
+					.keys
+					.collect
+					.toList
+				    .map(key => (key, block.values.count))
+			}.toMap
 		BlockEvaluation(data = dataMap, comment = Option(comment))
 	}
 
 	/**
 	  * Starts the deduplication process and writes the result to Cassandra.
 	  * @param blockingSchemes List of blocking schemes to be used on the data
-	  * @param merge boolean indicating whether or not the duplicates should be merged
 	  */
-	def run(
-		blockingSchemes:  List[BlockingScheme] = List(new SimpleBlockingScheme),
-		merge: Boolean = false
-	): Unit = {
+	def run(blockingSchemes:  List[BlockingScheme] = List(new SimpleBlockingScheme)): Unit = {
 		val conf = new SparkConf()
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
 		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
-		val blocks = if(merge) {
-			val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
-			blocking(subjects, staging, blockingSchemes)
-		} else {
-			blocking(subjects, blockingSchemes)
-		}
+		val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
+		val blocks = blocking(subjects, staging, blockingSchemes)
 
 		/**val blockEvaluation = evaluateBlocks(blocks, this.appName)
 		sc
