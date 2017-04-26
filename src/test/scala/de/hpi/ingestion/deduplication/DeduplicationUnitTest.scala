@@ -82,6 +82,7 @@ class DeduplicationUnitTest
 	"createDuplicateCandidates" should "build an RDD containing all candidates for deduplication for each subject" in {
 		val testSubjects = getSampleSubjects()
 		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
+		deduplication.settings("stagingTable")= "subject_wikidata"
 		val testSubject1 = testSubjects(0)
 		val testSubject2 = testSubjects(3)
 		val testSubjectPair = List((testSubject1, testSubject2, 0.5))
