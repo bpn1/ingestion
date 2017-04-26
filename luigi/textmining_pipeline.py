@@ -1,38 +1,33 @@
 from __future__ import print_function
 import luigi
-import commands
+import subprocess
 import os
 
 ingestion_jar = '/home/bp2016n1/jars/ingestion-assembly-1.0.jar'
 package_prefix = 'de.hpi.ingestion.textmining.'
 
-programs = [
-    'TextParser',
-    'LinkCleaner'
-    'RedirectResolver'
-    'LinkAnalysis',
-    'LocalTrieBuilder',
-    'AliasTrieSearch',  
-    'AliasCounter',
-    'DocumentFrequencyCounter',
-    'TermFrequencyCounter',
-    'CosineContextExtractor']
+programs = ['TextParser',
+            'LinkCleaner',
+            'RedirectResolver'
+            'LinkAnalysis',
+            'AliasTrieSearch',
+            'AliasCounter',
+            'DocumentFrequencyCounter',
+            'TermFrequencyCounter',
+            'CosineContextExtractor']
 
 
 def create_command(program):
-    return '/home/bp2016n1/scripts/spark.sh yarn ' + package_prefix + program + ' 8 ' + ingestion_jar
+    return 'ssh bp2016n1@sopedu "/home/bp2016n1/scripts/spark.sh yarn ' + package_prefix + program + ' 8 ' \
+           + ingestion_jar + '"'
 
 
 def make_operator_chain(programs, force_execution):
-    last_task = None
+    last_task = ''
     for program in programs:
-        last_task = IngestionTask(name=program, command=create_command(program), upstream_task=last_task,
-                                  force=force_execution)
+        last_task = TextminingTask(name=program, command=create_command(program), upstream_task=last_task,
+                                   force=force_execution)
     return last_task
-
-
-def execute_command(command):
-    return commands.getstatusoutput(command)
 
 
 class ForceableTask(luigi.Task):
@@ -49,12 +44,14 @@ class ForceableTask(luigi.Task):
                     os.remove(self.output().path)
 
 
-class IngestionTask(ForceableTask):
+class TextminingTask(ForceableTask):
     name = luigi.Parameter()
     command = luigi.Parameter()
-    upstream_task = luigi.Parameter(default=None)
+    upstream_task = luigi.Parameter(default='')
 
     def requires(self):
+        if self.upstream_task is '':
+            return None
         return self.upstream_task
 
     def output(self):
@@ -62,9 +59,9 @@ class IngestionTask(ForceableTask):
 
     def output_path(self):
         if self.requires() is not None:
-            prefix = self.input().path + '.'
+            prefix = self.input() + '.'
         else:
-            prefix = '/home/bp2016n1/luigi/'
+            prefix = '/home/luigi/pipeline/logs/'
         return prefix + self.name + '.log'
 
     def has_upstream_completed(self):
@@ -76,7 +73,7 @@ class IngestionTask(ForceableTask):
 
     def execute_command(self):
         with self.output().open('w') as outfile:
-            status, output = commands.getstatusoutput(self.command)
+            status, output = subprocess.call(self.command, shell=True)
             outfile.write(str(status))
             outfile.write('\n')
             outfile.write(output)
@@ -97,8 +94,8 @@ class IngestionTask(ForceableTask):
             print('-----  Task aborted  -----')
 
 
-class IngestionWorkflow(luigi.Task):
-    name = 'IngestionWorkflow'
+class TextminingWorkflow(luigi.Task):
+    name = 'TextminingWorkflow'
     force_execution = luigi.BoolParameter(default=False)
     upstream_task = make_operator_chain(programs, force_execution)
 
@@ -110,4 +107,4 @@ class IngestionWorkflow(luigi.Task):
 
 
 if __name__ == '__main__':
-    luigi.run()
+    luigi.run(main_task_cls=TextminingWorkflow)
