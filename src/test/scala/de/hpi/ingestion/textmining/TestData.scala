@@ -1,11 +1,14 @@
 package de.hpi.ingestion.textmining
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.net.URI
+
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -28,6 +31,35 @@ object TestData {
 			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"))
 	}
 
+	def filteredTokenizedSentences(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence"),
+			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "Hessen"),
+			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"))
+	}
+
+	def stemmedTokenizedSentences(): List[List[String]] = {
+		List(
+			List("thi", "is", "a", "test", "sentenc"),
+			List("streitberg", "ist", "ein", "von", "sech", "ortsteil", "der", "gemei", "brachttal", "main-kinzig-kreis", "in", "hess"),
+			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"))
+	}
+
+	def stemmedAndFilteredSentences(): List[List[String]] = {
+		List(
+			List("thi", "is", "a", "test", "sentenc"),
+			List("streitberg", "ortsteil", "gemei", "brachttal", "main-kinzig-kreis", "hess"),
+			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"))
+	}
+
+	def reversedSentences(): List[String] = {
+		List(
+			"This is a test sentence",
+			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen")
+	}
+
+
 	def allAliasesTestRDD(sc: SparkContext): RDD[String] = {
 		sc.parallelize(List(
 			"Audi",
@@ -46,7 +78,7 @@ object TestData {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
-					Link("Audi", "Audi", 9)
+					Link("Audi", "Audi", Option(9))
 				),
 				List(),
 				List("Audi")),
@@ -56,19 +88,19 @@ object TestData {
 				List("Audi")),
 			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
-					Link("Brachttal", "Brachttal", 55),
-					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
-					Link("Hessen", "Hessen", 87),
-					Link("1377", "1377", 225),
-					Link("Büdinger Wald", "Büdinger Wald", 546)
+					Link("Brachttal", "Brachttal", Option(55)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
+					Link("Hessen", "Hessen", Option(87)),
+					Link("1377", "1377", Option(225)),
+					Link("Büdinger Wald", "Büdinger Wald", Option(546))
 				),
 				List(),
 				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald")),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
-					Link("Audi", "Audi", 7),
-					Link("Brachttal", "Brachttal", 13),
-					Link("historisches Jahr", "1377", 24)
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24))
 				),
 				List(),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
@@ -78,51 +110,51 @@ object TestData {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
-					Link("Audi", "Audi", 9)
+					Link("Audi", "Audi", Option(9))
 				),
 				List(),
 				List("Audi"),
-				context = Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)
+				context = Map("audi" -> 1, "verlink" -> 1)
 			),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
 				List(),
 				List("Audi"),
-				context = Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)
+				context = Map("audi" -> 1, "verlink" -> 1)
 			),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
-					Link("Audi", "Audi", 7),
-					Link("Brachttal", "Brachttal", 13),
-					Link("historisches Jahr", "1377", 24)
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24))
 				),
 				List(),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
-				context = Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
 	def linksWithContextsTestSet(): Set[Link] = {
 		Set(
-			Link("Audi", "Audi", 9, Map("hier" -> 1, "ist" -> 1, "verlink" -> 1)),
-			Link("Brachttal", "Brachttal", 55, Map("einwohnerzahl" -> 1, "in" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-			Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-			Link("Hessen", "Hessen", 87, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "dem" -> 1, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-			Link("1377", "1377", 225, Map("einwohnerzahl" -> 1, "und" -> 1, "streidtburgk" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "dem" -> 1, "bezeichnung" -> 1, "ein" -> 2, "jahr" -> 3, "von" -> 2, "im" -> 1, "270" -> 1, "erst" -> 1, "stridberg" -> 1, "kleinst" -> 1, "die" -> 3, "stamm" -> 1, "auf" -> 1, "weit" -> 1, "tauch" -> 1, "1500" -> 1, "es" -> 1, "mit" -> 1, "spa" -> 1, "namensvaria" -> 1, "ca." -> 1, "red" -> 1, "zugleich" -> 1)),
-			Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "und" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "der" -> 1, "im" -> 1, "-" -> 1, "ins" -> 1, "-rrb-" -> 1, "hatt" -> 1, "holx" -> 1, "ortsnam" -> 1, "vom" -> 1, "streitberg" -> 1, "mittelal" -> 1, "bis" -> 1)),
-			Link("Audi", "Audi", 7, Map("link" -> 2, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-			Link("Brachttal", "Brachttal", 13, Map("link" -> 2, "audi" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-			Link("historisches Jahr", "1377", 24, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+			Link("Audi", "Audi", Option(9), Map("verlink" -> 1)),
+			Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+			Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
+			Link("Hessen", "Hessen", Option(87), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+			Link("1377", "1377", Option(225), Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
+			Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)),
+			Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
 	def articlesWithLinkContextsTestSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
-					Link("Audi", "Audi", 9)
+					Link("Audi", "Audi", Option(9))
 				),
 				List(),
 				List("Audi"),
-				linkswithcontext = List(Link("Audi", "Audi", 9, Map("hier" -> 1, "ist" -> 1, "verlink" -> 1)))
+				linkswithcontext = List(Link("Audi", "Audi", Option(9), Map("verlink" -> 1)))
 			),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
@@ -132,34 +164,33 @@ object TestData {
 			),
 			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
-					Link("Brachttal", "Brachttal", 55),
-					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
-					Link("Hessen", "Hessen", 87),
-					Link("1377", "1377", 225),
-					Link("Büdinger Wald", "Büdinger Wald", 546)
+					Link("Brachttal", "Brachttal", Option(55)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
+					Link("Hessen", "Hessen", Option(87)),
+					Link("1377", "1377", Option(225)),
+					Link("Büdinger Wald", "Büdinger Wald", Option(546))
 				),
 				List(),
 				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"),
 				linkswithcontext = List(
-					Link("Brachttal", "Brachttal", 55, Map("einwohnerzahl" -> 1, "in" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("Hessen", "Hessen", 87, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "dem" -> 1, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("1377", "1377", 225, Map("einwohnerzahl" -> 1, "und" -> 1, "streidtburgk" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "dem" -> 1, "bezeichnung" -> 1, "ein" -> 2, "jahr" -> 3, "von" -> 2, "im" -> 1, "270" -> 1, "erst" -> 1, "stridberg" -> 1, "kleinst" -> 1, "die" -> 3, "stamm" -> 1, "auf" -> 1, "weit" -> 1, "tauch" -> 1, "1500" -> 1, "es" -> 1, "mit" -> 1, "spa" -> 1, "namensvaria" -> 1, "ca." -> 1, "red" -> 1, "zugleich" -> 1)),
-					Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "und" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "der" -> 1, "im" -> 1, "-" -> 1, "ins" -> 1, "-rrb-" -> 1, "hatt" -> 1, "holx" -> 1, "ortsnam" -> 1, "vom" -> 1, "streitberg" -> 1, "mittelal" -> 1, "bis" -> 1))
-				)
+					Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
+					Link("Hessen", "Hessen", Option(87), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+					Link("1377", "1377", Option(225), Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
+					Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)))
 			),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
-					Link("Audi", "Audi", 7),
-					Link("Brachttal", "Brachttal", 13),
-					Link("historisches Jahr", "1377", 24)
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24))
 				),
 				List(),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
 				linkswithcontext = List(
-					Link("Audi", "Audi", 7, Map("link" -> 2, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-					Link("Brachttal", "Brachttal", 13, Map("link" -> 2, "audi" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-					Link("historisches Jahr", "1377", 24, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+					Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 			))
 	}
 
@@ -167,54 +198,53 @@ object TestData {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
-					Link("Audi", "Audi", 9)
+					Link("Audi", "Audi", Option(9))
 				),
 				List(),
 				List("Audi"),
-				linkswithcontext = List(Link("Audi", "Audi", 9, Map("hier" -> 1, "ist" -> 1, "verlink" -> 1))),
-				context = Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)
+				linkswithcontext = List(Link("Audi", "Audi", Option(9), Map("verlink" -> 1))),
+				context = Map("audi" -> 1, "verlink" -> 1)
 			),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
 				List(),
 				List("Audi"),
 				linkswithcontext = List(),
-				context = Map("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)
+				context = Map("audi" -> 1, "verlink" -> 1)
 			),
 			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
-					Link("Brachttal", "Brachttal", 55),
-					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66),
-					Link("Hessen", "Hessen", 87),
-					Link("1377", "1377", 225),
-					Link("Büdinger Wald", "Büdinger Wald", 546)
+					Link("Brachttal", "Brachttal", Option(55)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
+					Link("Hessen", "Hessen", Option(87)),
+					Link("1377", "1377", Option(225)),
+					Link("Büdinger Wald", "Büdinger Wald", Option(546))
 				),
 				List(),
 				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"),
 				linkswithcontext = List(
-					Link("Brachttal", "Brachttal", 55, Map("einwohnerzahl" -> 1, "in" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "hess" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("Hessen", "Hessen", 87, Map("einwohnerzahl" -> 1, "in" -> 1, "brachttal" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 2, "erwahnung" -> 1, "ortsteil" -> 2, "dem" -> 1, "ein" -> 2, "von" -> 2, "270" -> 1, "erst" -> 1, "kleinst" -> 1, "die" -> 1, "stamm" -> 1, "sech" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "ca." -> 1, "zugleich" -> 1)),
-					Link("1377", "1377", 225, Map("einwohnerzahl" -> 1, "und" -> 1, "streidtburgk" -> 1, "aus" -> 1, "ist" -> 2, "nachweislich" -> 1, "der" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "dem" -> 1, "bezeichnung" -> 1, "ein" -> 2, "jahr" -> 3, "von" -> 2, "im" -> 1, "270" -> 1, "erst" -> 1, "stridberg" -> 1, "kleinst" -> 1, "die" -> 3, "stamm" -> 1, "auf" -> 1, "weit" -> 1, "tauch" -> 1, "1500" -> 1, "es" -> 1, "mit" -> 1, "spa" -> 1, "namensvaria" -> 1, "ca." -> 1, "red" -> 1, "zugleich" -> 1)),
-					Link("Büdinger Wald", "Büdinger Wald", 546, Map("waldrech" -> 1, "und" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "der" -> 1, "im" -> 1, "-" -> 1, "ins" -> 1, "-rrb-" -> 1, "hatt" -> 1, "holx" -> 1, "ortsnam" -> 1, "vom" -> 1, "streitberg" -> 1, "mittelal" -> 1, "bis" -> 1))),
-				context = Map("1554" -> 1, "waldrech" -> 1, "einwohnerzahl" -> 1, "und" -> 3, "streidtburgk" -> 1, "in" -> 1, "19" -> 1, "brachttal" -> 1, "aus" -> 1, "ist" -> 3, "ort" -> 1, "jahrhu" -> 1, "nachweislich" -> 1, "-lrb-" -> 3, "huterech" -> 1, "eingeburg" -> 1, "der" -> 4, "steytberg" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "dem" -> 1, "bezeichnung" -> 1, "ein" -> 3, "sind" -> 1, "jahr" -> 3, "von" -> 3, "im" -> 2, "270" -> 1, "sich" -> 1, "-" -> 1, "ins" -> 1, "erst" -> 1, "hat" -> 1, "stridberg" -> 1, "kleinst" -> 1, "die" -> 3, "-rrb-" -> 3, "stamm" -> 1, "hess" -> 1, "hatt" -> 1, "holx" -> 1, "auf" -> 1, "buding" -> 1, "weit" -> 1, "tauch" -> 1, "sech" -> 1, "stripurgk" -> 1, "1500" -> 1, "gemei" -> 1, "es" -> 1, "mit" -> 1, "danach" -> 1, "1377" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "1528" -> 1, "spa" -> 1, "namensvaria" -> 1, "ortsnam" -> 1, "vom" -> 1, "streitberg" -> 2, "mittelal" -> 1, "ca." -> 1, "bis" -> 1, "red" -> 1, "zugleich" -> 1)
+					Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
+					Link("Hessen", "Hessen", Option(87), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+					Link("1377", "1377", Option(225), Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
+					Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1))),
+				context = Map("1554" -> 1, "waldrech" -> 1, "einwohnerzahl" -> 1, "streidtburgk" -> 1, "19" -> 1, "brachttal" -> 1, "ort" -> 1, "jahrhu" -> 1, "nachweislich" -> 1, "-lrb-" -> 3, "huterech" -> 1, "eingeburg" -> 1, "steytberg" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "-" -> 1, "stridberg" -> 1, "kleinst" -> 1, "-rrb-" -> 3, "stamm" -> 1, "hess" -> 1, "holx" -> 1, "buding" -> 1, "tauch" -> 1, "stripurgk" -> 1, "1500" -> 1, "gemei" -> 1, "1377" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "1528" -> 1, "namensvaria" -> 1, "ortsnam" -> 1, "streitberg" -> 2, "mittelal" -> 1, "red" -> 1)
 			),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
-					Link("Audi", "Audi", 7),
-					Link("Brachttal", "Brachttal", 13),
-					Link("historisches Jahr", "1377", 24)
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24))
 				),
 				List(),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
 				linkswithcontext = List(
-					Link("Audi", "Audi", 7, Map("link" -> 2, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-					Link("Brachttal", "Brachttal", 13, Map("link" -> 2, "audi" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)),
-					Link("historisches Jahr", "1377", 24, Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1))),
-				context = Map("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)
+					Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1))),
+				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)
 			))
 	}
-
 
 
 	def linkContextsTfidf(): Set[(Link, Map[String, Double])] = {
@@ -224,26 +254,24 @@ object TestData {
 		val tf1df3 = 0.12493873660829993
 		val tf2df1 = 1.2041199826559248
 		val tf2df2 = 0.6020599913279624
-		val tf2df3 = 0.24987747321659987
-		val tf3df1 = 1.806179973983887
 		val tf3df2 = 0.9030899869919435
 		Set(
-			(Link("Audi", "Audi", 9), Map("hier" -> tf1df2, "ist" -> tf1df3, "verlink" -> tf1df2)),
-			(Link("Brachttal", "Brachttal", 55), Map("einwohnerzahl" -> tf1df1, "in" -> tf1df1, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf2df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "ein" -> tf2df1, "von" -> tf2df1, "270" -> tf1df1, "erst" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf1df1, "hess" -> tf1df2, "sech" -> tf1df1, "gemei" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1, "ca." -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 66), Map("einwohnerzahl" -> tf1df1, "in" -> tf1df1, "brachttal" -> tf1df2, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf2df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "ein" -> tf2df1, "von" -> tf2df1, "270" -> tf1df1, "erst" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf1df1, "stamm" -> tf1df1, "hess" -> tf1df2, "sech" -> tf1df1, "gemei" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "streitberg" -> tf1df1, "ca." -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("Hessen", "Hessen", 87), Map("einwohnerzahl" -> tf1df1, "in" -> tf1df1, "brachttal" -> tf1df2, "aus" -> tf1df1, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf2df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "dem" -> tf1df1, "ein" -> tf2df1, "von" -> tf2df1, "270" -> tf1df1, "erst" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf1df1, "stamm" -> tf1df1, "sech" -> tf1df1, "gemei" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1, "ca." -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("1377", "1377", 225), Map("einwohnerzahl" -> tf1df1, "und" -> tf1df2, "streidtburgk" -> tf1df1, "aus" -> tf1df1, "ist" -> tf2df3, "nachweislich" -> tf1df1, "der" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf1df1, "dem" -> tf1df1, "bezeichnung" -> tf1df1, "ein" -> tf2df1, "jahr" -> tf3df2, "von" -> tf2df1, "im" -> tf1df1, "270" -> tf1df1, "erst" -> tf1df1, "stridberg" -> tf1df1, "kleinst" -> tf1df1, "die" -> tf3df1, "stamm" -> tf1df1, "auf" -> tf1df1, "weit" -> tf1df1, "tauch" -> tf1df1, "1500" -> tf1df1, "es" -> tf1df1, "mit" -> tf1df1, "spa" -> tf1df1, "namensvaria" -> tf1df1, "ca." -> tf1df1, "red" -> tf1df1, "zugleich" -> tf1df1)),
-			(Link("Büdinger Wald", "Büdinger Wald", 546), Map("waldrech" -> tf1df1, "und" -> tf1df2, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "der" -> tf1df1, "im" -> tf1df1, "-" -> tf1df1, "ins" -> tf1df1, "-rrb-" -> tf1df1, "hatt" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "vom" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1, "bis" -> tf1df1)),
-			(Link("Audi", "Audi", 7), Map("link" -> tf2df1, "brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)),
-			(Link("Brachttal", "Brachttal", 13), Map("link" -> tf2df1, "audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)),
-			(Link("historisches Jahr", "1377", 24), Map("link" -> tf2df1, "audi" -> tf1df3, "brachttal" -> tf1df2, "kein" -> tf1df1, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "und" -> tf1df2, "nochmal" -> tf1df1)))
+			(Link("Audi", "Audi", Option(9)), Map("verlink" -> tf1df2)),
+			(Link("Brachttal", "Brachttal", Option(55)), Map("einwohnerzahl" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "streitberg" -> tf1df1)),
+			(Link("Hessen", "Hessen", Option(87)), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
+			(Link("1377", "1377", Option(225)), Map("einwohnerzahl" -> tf1df1, "streidtburgk" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf1df1, "bezeichnung" -> tf1df1, "jahr" -> tf3df2, "270" -> tf1df1, "stridberg" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "tauch" -> tf1df1, "1500" -> tf1df1, "namensvaria" -> tf1df1, "red" -> tf1df1)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546)), Map("waldrech" -> tf1df1, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "-" -> tf1df1, "-rrb-" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1)),
+			(Link("Audi", "Audi", Option(7)), Map("brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
+			(Link("Brachttal", "Brachttal", Option(13)), Map("audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
+			(Link("historisches Jahr", "1377", Option(24)), Map("audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
 	def termFrequenciesTestSet(): Set[(String, Bag[String, Int])] = {
 		Set(
-			("Audi Test mit Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "verlink" -> 1)),
-			("Audi Test ohne Link", Bag("hier" -> 1, "ist" -> 1, "audi" -> 1, "nich" -> 1, "verlink" -> 1)),
-			("Testartikel", Bag("link" -> 2, "audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "kein" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "und" -> 1, "nochmal" -> 1)))
+			("Audi Test mit Link", Bag("audi" -> 1, "verlink" -> 1)),
+			("Audi Test ohne Link", Bag("audi" -> 1, "verlink" -> 1)),
+			("Testartikel", Bag("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
 	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
@@ -327,12 +355,6 @@ object TestData {
 			.sortBy(_._1)
 	}
 
-	def getArticle(title: String): ParsedWikipediaEntry = {
-		parsedWikipediaTestSet()
-			.filter(_.title == title)
-			.head
-	}
-
 	def allPageNamesTestRDD(sc: SparkContext): RDD[String] = {
 		sc.parallelize(List(
 			"Brachttal",
@@ -363,17 +385,22 @@ object TestData {
 
 	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
-			DocumentFrequency("Audi", 3),
-			DocumentFrequency("Backfisch", 1),
-			DocumentFrequency("ist", 3),
-			DocumentFrequency("und", 2),
-			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("einer", 1))
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("backfisch", 1)
+		)
 	}
 
 	def filteredDocumentFrequenciesTestList(): List[DocumentFrequency] = {
 		List(
-			DocumentFrequency("Audi", 3))
+			DocumentFrequency("audi", 3)
+		)
+	}
+
+	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("audi", 3),
+			DocumentFrequency("backfisch", 2)
+		)
 	}
 
 	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
@@ -397,7 +424,7 @@ object TestData {
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 2),
 			DocumentFrequency("zugleich", 1),
-			DocumentFrequency("ein", 6)
+			DocumentFrequency("ein", 3)
 		)
 	}
 
@@ -448,15 +475,10 @@ object TestData {
 
 	def inverseDocumentFrequenciesTestSet(): Set[(String, Double)] = {
 		val oneOccurrence = 0.6020599913279624
-		val twoOccurrences = 0.3010299956639812
 		val threeOccurrences = 0.12493873660829993
 		Set(
-			("Audi", threeOccurrences),
-			("Backfisch", oneOccurrence),
-			("ist", threeOccurrences),
-			("und", twoOccurrences),
-			("zugleich", oneOccurrence),
-			("einer", oneOccurrence))
+			("audi", threeOccurrences),
+			("backfisch", oneOccurrence))
 	}
 
 	def tfidfContextsTestSet(): Set[(String, Map[String, Double])] = {
@@ -465,9 +487,9 @@ object TestData {
 		val tf2df1 = 0.9542425094393249
 		val df3 = 0.0
 		Set(
-			("Audi Test mit Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "verlink" -> tf1df2)),
-			("Audi Test ohne Link", Map("hier" -> tf1df2, "ist" -> tf1df2, "audi" -> df3, "nich" -> tf1df1, "verlink" -> tf1df2)),
-			("Testartikel", Map("link" -> tf2df1, "audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "kein" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "und" -> tf1df1, "nochmal" -> tf1df1)))
+			("Audi Test mit Link", Map("audi" -> df3, "verlink" -> tf1df2)),
+			("Audi Test ohne Link", Map("audi" -> df3, "verlink" -> tf1df2)),
+			("Testartikel", Map("audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
 	def unstemmedGermanWordsTestSet(): Set[String] = {
@@ -475,47 +497,47 @@ object TestData {
 	}
 
 	def wikipediaTestTextLinks(): Map[String, List[Link]] = {
-		// extracted text links from Article abstracts
+		// extracted text links from article abstracts
 		Map(
 			"Audi" -> List(
-				Link("Ingolstadt", "Ingolstadt", 55),
-				Link("Bayern", "Bayern", 69),
-				Link("Automobilhersteller", "Automobilhersteller", 94),
-				Link("Volkswagen", "Volkswagen AG", 123),
-				Link("Wortspiel", "Wortspiel", 175),
-				Link("Namensrechte", "Marke (Recht)", 202),
-				Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", 255),
-				Link("August Horch", "August Horch", 316),
-				Link("Lateinische", "Latein", 599),
-				Link("Imperativ", "Imperativ (Modus)", 636),
-				Link("Zwickau", "Zwickau", 829),
-				Link("Zschopauer", "Zschopau", 868),
-				Link("DKW", "DKW", 937),
-				Link("Wanderer", "Wanderer (Unternehmen)", 1071),
-				Link("Auto Union AG", "Auto Union", 1105),
-				Link("Chemnitz", "Chemnitz", 1131),
-				Link("Zweiten Weltkrieg", "Zweiter Weltkrieg", 1358),
-				Link("Ingolstadt", "Ingolstadt", 1423),
-				Link("NSU Motorenwerke AG", "NSU Motorenwerke", 1599),
-				Link("Neckarsulm", "Neckarsulm", 1830)),
+				Link("Ingolstadt", "Ingolstadt", Option(55)),
+				Link("Bayern", "Bayern", Option(69)),
+				Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+				Link("Volkswagen", "Volkswagen AG", Option(123)),
+				Link("Wortspiel", "Wortspiel", Option(175)),
+				Link("Namensrechte", "Marke (Recht)", Option(202)),
+				Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", Option(255)),
+				Link("August Horch", "August Horch", Option(316)),
+				Link("Lateinische", "Latein", Option(599)),
+				Link("Imperativ", "Imperativ (Modus)", Option(636)),
+				Link("Zwickau", "Zwickau", Option(829)),
+				Link("Zschopauer", "Zschopau", Option(868)),
+				Link("DKW", "DKW", Option(937)),
+				Link("Wanderer", "Wanderer (Unternehmen)", Option(1071)),
+				Link("Auto Union AG", "Auto Union", Option(1105)),
+				Link("Chemnitz", "Chemnitz", Option(1131)),
+				Link("Zweiten Weltkrieg", "Zweiter Weltkrieg", Option(1358)),
+				Link("Ingolstadt", "Ingolstadt", Option(1423)),
+				Link("NSU Motorenwerke AG", "NSU Motorenwerke", Option(1599)),
+				Link("Neckarsulm", "Neckarsulm", Option(1830))),
 
 			"Electronic Arts" -> List(
-				Link("Publisher", "Publisher", 83),
-				Link("Computer- und Videospielen", "Computerspiel", 97),
-				Link("Madden NFL", "Madden NFL", 180),
-				Link("FIFA", "FIFA (Spieleserie)", 192),
-				Link("Vivendi Games", "Vivendi Games", 346),
-				Link("Activision", "Activision", 364),
-				Link("Activision Blizzard", "Activision Blizzard", 378),
-				Link("Nasdaq Composite", "Nasdaq Composite", 675),
-				Link("S&P 500", "S&P 500", 699)),
+				Link("Publisher", "Publisher", Option(83)),
+				Link("Computer- und Videospielen", "Computerspiel", Option(97)),
+				Link("Madden NFL", "Madden NFL", Option(180)),
+				Link("FIFA", "FIFA (Spieleserie)", Option(192)),
+				Link("Vivendi Games", "Vivendi Games", Option(346)),
+				Link("Activision", "Activision", Option(364)),
+				Link("Activision Blizzard", "Activision Blizzard", Option(378)),
+				Link("Nasdaq Composite", "Nasdaq Composite", Option(675)),
+				Link("S&P 500", "S&P 500", Option(699))),
 
 			"Abraham Lincoln" -> List(
-				Link("President of the United States", "President of the United States", 29)),
+				Link("President of the United States", "President of the United States", Option(29))),
 
 			"Leadinstrument" -> List(
-				// Redirect links
-				Link("Leadinstrument", "Lead (Musik)")))
+				Link("Leadinstrument", "Lead (Musik)")) // Redirect link
+		)
 	}
 
 	def wikipediaTestTemplateLinks(): Map[String, List[Link]] = {
@@ -557,7 +579,7 @@ object TestData {
 		Set("Audi", "Electronic Arts", "Postbank-Hochhaus (Berlin)", "Abraham Lincoln")
 	}
 
-	def wikipediaEntriesTestList(): List[WikipediaEntry] = {
+	def wikipediaEntries(): List[WikipediaEntry] = {
 		// extracted from Wikipedia
 		List(
 			WikipediaEntry("Audi", Option("""{{Begriffsklärungshinweis}}\n{{Coordinate |NS=48/46/59.9808/N |EW=11/25/4.926/E |type=landmark |region=DE-BY }}\n{{Infobox Unternehmen\n| Name   = Audi AG\n| Logo   = Audi-Logo 2016.svg\n| Unternehmensform = [[Aktiengesellschaft]]\n| Gründungsdatum = 16. Juli 1909 in [[Zwickau]] (Audi)<br /><!--\n-->29. Juni 1932 in [[Chemnitz]] (Auto Union)<br /><!--\n-->3.&nbsp;September&nbsp;1949&nbsp;in&nbsp;[[Ingolstadt]]&nbsp;(Neugründung)<br /><!--\n-->10. März 1969 in [[Neckarsulm]] (Fusion)\n| ISIN   = DE0006757008\n| Sitz   = [[Ingolstadt]], [[Deutschland]]\n| Leitung  =\n* [[Rupert Stadler]],<br />[[Vorstand]]svorsitzender\n* [[Matthias Müller (Manager)|Matthias Müller]],<br />[[Aufsichtsrat]]svorsitzender\n| Mitarbeiterzahl = 82.838 <small>(31. Dez. 2015)</small><ref name="kennzahlen" />\n| Umsatz  = 58,42 [[Milliarde|Mrd.]] [[Euro|EUR]] <small>(2015)</small><ref name="kennzahlen" />\n| Branche  = [[Automobilhersteller]]\n| Homepage  = www.audi.de\n}}\n\n[[Datei:Audi Ingolstadt.jpg|mini|Hauptsitz in Ingolstadt]]\n[[Datei:Neckarsulm 20070725.jpg|mini|Audi-Werk in Neckarsulm (Bildmitte)]]\n[[Datei:Michèle Mouton, Audi Quattro A1 - 1983 (11).jpg|mini|Kühlergrill mit Audi-Emblem <small>[[Audi quattro]] (Rallye-Ausführung, Baujahr 1983)</small>]]\n[[Datei:Audi 2009 logo.svg|mini|Logo bis April 2016]]\n\nDie '''Audi AG''' ({{Audio|Audi AG.ogg|Aussprache}}, Eigenschreibweise: ''AUDI AG'') mit Sitz in [[Ingolstadt]] in [[Bayern]] ist ein deutscher [[Automobilhersteller]], der dem [[Volkswagen AG|Volkswagen]]-Konzern angehört.\n\nDer Markenname ist ein [[Wortspiel]] zur Umgehung der [[Marke (Recht)|Namensrechte]] des ehemaligen Kraftfahrzeugherstellers ''[[Horch|A. Horch & Cie. Motorwagenwerke Zwickau]]''. Unternehmensgründer [[August Horch]], der „seine“ Firma nach Zerwürfnissen mit dem Finanzvorstand verlassen hatte, suchte einen Namen für sein neues Unternehmen und fand ihn im Vorschlag des Zwickauer Gymnasiasten Heinrich Finkentscher (Sohn des mit A. Horch befreundeten Franz Finkentscher), der ''Horch'' ins [[Latein]]ische übersetzte.<ref>Film der Audi AG: ''Die Silberpfeile aus Zwickau.'' Interview mit August Horch, Video 1992.</ref> ''Audi'' ist der [[Imperativ (Modus)|Imperativ]] Singular von ''audire'' (zu Deutsch ''hören'', ''zuhören'') und bedeutet „Höre!“ oder eben „Horch!“. Am 25. April 1910 wurde die ''Audi Automobilwerke GmbH Zwickau'' in das Handelsregister der Stadt [[Zwickau]] eingetragen.\n\n1928 übernahm die [[Zschopau]]er ''Motorenwerke J. S. Rasmussen AG'', bekannt durch ihre Marke ''[[DKW]]'', die Audi GmbH. Audi wurde zur Tochtergesellschaft und 1932 mit der Übernahme der Horchwerke AG sowie einem Werk des Unternehmens ''[[Wanderer (Unternehmen)|Wanderer]]'' Teil der neu gegründeten ''[[Auto Union|Auto Union AG]]'' mit Sitz in [[Chemnitz]], die folglich die vier verschiedenen Marken unter einem Dach anboten. Daraus entstand auch das heutige aus vier Ringen bestehende Logo von Audi, das darin ursprünglich nur für einen der Ringe gestanden hatte.\n\nNach dem [[Zweiter Weltkrieg|Zweiten Weltkrieg]] wurde 1949 die ''Auto Union GmbH'' nun mit Sitz in [[Ingolstadt]] neugegründet. Nachdem diese sich zunächst auf die Marke ''DKW'' konzentriert hatte, wurde 1965 erstmals wieder die Marke ''Audi'' verwendet. Im Zuge der Fusion 1969 mit der ''[[NSU Motorenwerke|NSU Motorenwerke AG]]'' zur ''Audi NSU Auto Union AG'' wurde die Marke ''Audi'' zum ersten Mal nach 37 Jahren als prägender Bestandteil in den Firmennamen der Auto Union aufgenommen. Hauptsitz war, dem Fusionspartner entsprechend, bis 1985 in [[Neckarsulm]], bevor der Unternehmensname der ehemaligen Auto Union infolge des Auslaufens der Marke NSU auf ''Audi AG'' verkürzt wurde und der Sitz wieder zurück nach Ingolstadt wechselte.""")),
@@ -568,7 +590,23 @@ object TestData {
 			WikipediaEntry("Zerfall", Option("""'''Zerfall''' steht für:\n* Radioaktiver Zerfall, siehe [[Radioaktivität]]\n* das [[Zerfallsgesetz]] einer radioaktiven Substanz\n* Exponentieller Zerfall, siehe [[Exponentielles Wachstum]]\n* den [[Zerfall (Soziologie)|Zerfall]] gesellschaftlicher Strukturen \n* ein Album der Band Eisregen, siehe [[Zerfall (Album)]]\n* den Film [[Raspad – Der Zerfall]]\n\n'''Siehe auch:'''\n{{Wiktionary}}\n\n{{Begriffsklärung}}""")),
 			WikipediaEntry("Fisch", Option("""'''Fisch''' steht für:\n\n* [[Fische]], im Wasser lebende Wirbeltiere \n* [[Speisefisch]], eine Lebensmittelkategorie\n* [[Fische (Sternbild)]]\n* [[Fische (Tierkreiszeichen)]]\n* [[Fisch (Christentum)]], religiöses Symbol\n* [[Fisch (Wappentier)]], gemeine Figur in der Heraldik\n\n'''Fisch''' ist der Name folgender Orte:\n\n* [[Fisch (Saargau)]], Ortsgemeinde in Rheinland-Pfalz\n\n{{Begriffsklärung}}""")),
 			WikipediaEntry("Zwilling (Begriffsklärung)", Option("""'''Zwilling''' bezeichnet:\n\n* den biologischen Zwilling, siehe [[Zwillinge]]\n* einen Begriff aus der Kristallkunde, siehe [[Kristallzwilling]]\n* [[Zwilling J. A. Henckels]], einen Hersteller von Haushaltswaren mit Sitz in Solingen\n\nin der Astronomie und Astrologie:\n\n* ein Sternbild, siehe [[Zwillinge (Sternbild)]]\n* eines der Tierkreiszeichen, siehe [[Zwillinge (Tierkreiszeichen)]]\n\n{{Begriffsklärung}}""")),
-			WikipediaEntry("Leadinstrument", Option("""#REDIRECT [[Lead (Musik)]]\n[[Kategorie:Musikinstrument nach Funktion]]""")))
+			WikipediaEntry("Leadinstrument", Option("""#REDIRECT [[Lead (Musik)]]\n[[Kategorie:Musikinstrument nach Funktion]]""")),
+			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
+	}
+
+	def wikipediaEntriesForParsing(): List[WikipediaEntry] = {
+		List(
+			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
+	}
+
+	def parsedWikipediaEntries(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Salzachtal",
+				Option("""REDIRECT Salzach#Salzachtal Kategorie:Tal im Land Salzburg Kategorie:Tal in Oberösterreich Kategorie:Tal in Bayern !"""),
+				textlinks = List(Link("Salzachtal", "Salzach#Salzachtal")),
+				categorylinks = List(Link("Tal im Land Salzburg", "Tal im Land Salzburg"), Link("Tal in Oberösterreich", "Tal in Oberösterreich"), Link("Tal in Bayern", "Tal in Bayern"), Link("!", "Salzach")))
+		)
 	}
 
 	def wikipediaDisambiguationPagesTestSet(): Set[String] = {
@@ -614,6 +652,12 @@ object TestData {
 			Page("Zerfall (Album)", Map("Zerfall" -> 1)))
 	}
 
+	def groupedValidPagesSet(): Set[(String, Set[String])] = {
+		Set(
+			("Audi", Set("Ingolstadt", "Bayern", "Automobilhersteller", "Zerfall (Album)"))
+		)
+	}
+
 	def probabilityReferences(): Map[String, Double] = {
 		Map(
 			"Ingolstadt" -> 0.0,
@@ -630,21 +674,147 @@ object TestData {
 			"Zerfall (Album)")
 	}
 
-	def smallerParsedWikipediaTestList(): List[ParsedWikipediaEntry] = {
+	def smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
 		List(
-			ParsedWikipediaEntry("Audi", Option("dummy text"), List(
-				Link("Ingolstadt", "Ingolstadt", 55),
-				Link("Bayern", "Bayern", 69),
-				Link("Automobilhersteller", "Automobilhersteller", 94),
-				Link("Zerfall", "Zerfall (Album)", 4711),
-				Link("Zerfall", "Zerfall (Soziologie)", 4711), // dead link
-				Link("", "page name with empty alias", 4711),
-				Link("alias with empty page name", "", 4711)),
-				List()))
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Ingolstadt", "Ingolstadt", Option(55)),
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Zerfall (Soziologie)", Option(4711)), // dead link
+					Link("", "page name with empty alias", Option(4711)),
+					Link("alias with empty page name", "", Option(4711))
+					)))
+	}
+
+	def parsedArticlesWithoutLinksSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
+	def parsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Ingolstadt", "Ingolstadt", Option(55)),
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Zerfall (Soziologie)", Option(4711)), // dead link
+					Link("", "page name with empty alias", Option(4711)),
+					Link("alias with empty page name", "", Option(4711))
+				)),
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
+	def closedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Ingolstadt", "Ingolstadt", Option(55)),
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Zerfall (Soziologie)", Option(4711)), // dead link
+					Link("", "page name with empty alias", Option(4711)),
+					Link("alias with empty page name", "", Option(4711)),
+					Link("Konkurrent", "Volvo", Option(4711)),
+					Link("Opel", "Opel", Option(4711)),
+					Link("DB", "Deutsche Bahn", Option(4711))
+				)),
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
+	def cleanedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Ingolstadt", "Ingolstadt", Option(55)),
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711))
+				)))
+	}
+
+	def cleanedClosedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				List(
+					Link("Konkurrent", "Volvo", Option(4711)),
+					Link("Opel", "Opel", Option(4711)),
+					Link("DB", "Deutsche Bahn", Option(4711))
+				)))
 	}
 
 	def germanStopwordsTestSet(): Set[String] = {
 		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
+	}
+
+	def unstemmedDFTestSet(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich einer ein Link."),
+				List(
+					Link("Audi", "Audi", Option(9))
+				),
+				List(),
+				List("Audi")
+			),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich einer Einer Link"),
+				List(
+					Link("Audi", "Audi", Option(9))
+				),
+				List(),
+				List("Audi")
+			),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich Ein Link."),
+				List(
+					Link("Audi", "Audi", Option(9))
+				),
+				List(),
+				List("Audi")
+			),
+			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi audi aUdi auDi."),
+				List(
+					Link("Audi", "Audi", Option(9))
+				),
+				List(),
+				List("Audi")
+			)
+		)
+	}
+
+	def stemmedDFTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("audi", 4),
+			DocumentFrequency("backfisch", 3)
+		)
+	}
+
+	def germanDFStopwordsTestSet(): Set[DocumentFrequency] = {
+		Set(
+			DocumentFrequency("ist", 3),
+			DocumentFrequency("und", 3)
+		)
 	}
 
 	def unstemmedGermanWordsTestList(): List[String] = {
@@ -658,12 +828,106 @@ object TestData {
 			"deutschla", "baum", "brauch", "such", "konn")
 	}
 
-	def parsedTestEntry(): ParsedWikipediaEntry = {
+	def parsedEntry(): ParsedWikipediaEntry = {
 		ParsedWikipediaEntry(
 			"Schwarzer Humor",
 			Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod. Hier hat sich jemand einen makabren Scherz erlaubt. Als schwarzer Humor wird Humor bezeichnet, der Verbrechen, Krankheit, Tod und ähnliche Themen, für die gewöhnlich eine Abhandlung in ernster Form erwartet wird, in satirischer oder bewusst verharmlosender Weise verwendet. Oft bezieht er sich auf Zeitthemen. Schwarzer Humor bedient sich häufig paradoxer Stilfiguren. Nicht selten löst er Kontroversen aus darüber, ob man sich über die genannten Dinge lustig machen dürfe und wo die Grenzen des guten Geschmacks lägen; besonders ist dies der Fall, wenn religiöse und sexuelle Themen und tragische Ereignisse zum Gegenstand genommen werden. In der darstellenden Kunst nennt man auf schwarzen Humor setzende Werke schwarze Komödien. Der Begriff wurde durch den Surrealisten André Breton erstmals 1940 in seiner Schrift Anthologie de l’humour noir näher umrissen, wird jedoch seit den 1960er Jahren zum Teil deutlich anders verstanden, indem Kennzeichen der Desillusion und des Nihilismus hinzutraten. In dem Vorwort seines Werkes nennt Breton unter anderem Quellen von Freud und Hegel, die seiner Meinung nach in die Begriffsentwicklung eingeflossen sind. Ursprünge des ‚schwarzen Humors‘ sah Breton in seiner Anthologie bei einigen Werken des irischen Satirikers Jonathan Swift wie Directions to Servants, A Modest Proposal, A Meditation on a Broom-Stick und einige seiner Aphorismen. In den öffentlichen Gebrauch kam der Begriff erst in den 1960er Jahren insbesondere im angloamerikanischen Raum (‚black humour‘) durch die Rezeption von Schriftstellern wie Nathanael West, Vladimir Nabokov und Joseph Heller. So gilt Catch-22 (1961) als ein bekanntes Beispiel dieser Stilart, in dem die Absurdität des Militarismus im Zweiten Weltkrieg satirisch überspitzt wurde. Weitere Beispiele sind Kurt Vonnegut, Slaughterhouse Five (1969), Thomas Pynchon, V. (1963) und Gravity’s Rainbow (1973), sowie im Film Stanley Kubrick’s Dr. Strangelove (1964) und im Absurden Theater insbesondere bei Eugène Ionesco zu finden. Der Begriff black comedy (dtsch. „schwarze Komödie“), der in der englischen Sprache schon für einige Stücke Shakespeares angewandt wurde, weist nach dem Lexikon der Filmbegriffe der Christian-Albrechts-Universität zu Kiel als Komödientyp durch „manchmal sarkastischen, absurden und morbiden ‚schwarzen‘ Humor“ aus, der sich sowohl auf „ernste oder tabuisierte Themen wie Krankheit, Behinderung, Tod, Krieg, Verbrechen“ wie auch auf „für sakrosankt gehaltene Dinge“ richten kann und dabei „auch vor politischen Unkorrektheiten, derben Späßen, sexuellen und skatologischen Anzüglichkeiten nicht zurückschreckt.“ Dabei stehe „hinter der Fassade zynischer Grenzüberschreitungen“ häufig ein „aufrichtiges Anliegen, falsche Hierarchien, Konventionen und Verlogenheiten innerhalb einer Gesellschaft mit den Mitteln filmischer Satire zu entlarven.“ Als filmische Beispiele werden angeführt: Robert Altmans M*A*S*H (USA 1970), Mike Nichols’ Catch-22 (USA 1970), nach Joseph Heller) sowie in der Postmoderne Quentin Tarantinos Pulp Fiction (USA 1994) und Lars von Triers Idioterne (Dänemark 1998). Der Essayist François Bondy schrieb 1971 in Die Zeit: „Der schwarze Humor ist nicht zu verwechseln mit dem ‚kranken Humor‘, der aus den Staaten kam, mit seinen ‚sick jokes‘“ und nannte als Beispiel den Witz: „Mama, ich mag meinen kleinen Bruder nicht. – Schweig, iß, was man dir vorsetzt“. Witz und Humor seien jedoch nicht dasselbe und letzteres „eine originale Geschichte in einer besonderen Tonart“. Humor im Sinne von einer – wie der Duden definiert – „vorgetäuschten Heiterkeit mit der jemand einer unangenehmen oder verzweifelten Lage, in der er sich befindet, zu begegnen“ versucht, nennt man auch Galgenhumor."""),
-			List[Link](Link("Hickelkasten", "Hickelkasten", 0), Link("Humor", "Humor", 182), Link("satirischer", "Satire", 321), Link("paradoxer", "Paradoxon", 451), Link("Stilfiguren", "Rhetorische Figur", 461), Link("Kontroversen", "Kontroverse", 495), Link("guten Geschmacks", "Geschmack (Kultur)", 601), Link("Surrealisten", "Surrealismus", 865), Link("André Breton", "André Breton", 878), Link("Desillusion", "Desillusion", 1061), Link("Nihilismus", "Nihilismus", 1081), Link("Freud", "Sigmund Freud", 1173), Link("Hegel", "Georg Wilhelm Friedrich Hegel", 1183), Link("Anthologie", "Anthologie", 1314), Link("Jonathan Swift", "Jonathan Swift", 1368), Link("Directions to Servants", "Directions to Servants", 1387), Link("A Modest Proposal", "A Modest Proposal", 1411), Link("A Meditation on a Broom-Stick", "A Meditation on a Broom-Stick", 1430), Link("Aphorismen", "Aphorismus", 1478), Link("Nathanael West", "Nathanael West", 1663), Link("Vladimir Nabokov", "Vladimir Nabokov", 1679), Link("Joseph Heller", "Joseph Heller", 1700), Link("Catch-22", "Catch-22", 1723), Link("Kurt Vonnegut", "Kurt Vonnegut", 1893), Link("Slaughterhouse Five", "Schlachthof 5 oder Der Kinderkreuzzug", 1908), Link("Thomas Pynchon", "Thomas Pynchon", 1936), Link("V.", "V.", 1952), Link("Gravity’s Rainbow", "Die Enden der Parabel", 1966), Link("Stanley Kubrick", "Stanley Kubrick", 2006), Link("Dr. Strangelove", "Dr. Seltsam oder: Wie ich lernte, die Bombe zu lieben", 2024), Link("Absurden Theater", "Absurdes Theater", 2054), Link("Eugène Ionesco", "Eugène Ionesco", 2088), Link("Shakespeares", "Shakespeare", 2222), Link("Christian-Albrechts-Universität zu Kiel", "Christian-Albrechts-Universität zu Kiel", 2296), Link("Komödientyp", "Komödie", 2340), Link("sarkastischen", "Sarkasmus", 2368), Link("absurden", "Absurdität", 2383), Link("morbiden", "Morbidität", 2396), Link("tabuisierte", "Tabuisierung", 2462), Link("sakrosankt", "Sakrosankt", 2551), Link("politischen Unkorrektheiten", "Politische Korrektheit", 2612), Link("sexuellen und skatologischen", "Vulgärsprache", 2656), Link("zynischer", "Zynismus", 2756), Link("Satire", "Satire", 2933), Link("Robert Altmans", "Robert Altman", 2997), Link("M*A*S*H", "MASH (Film)", 3012), Link("Mike Nichols", "Mike Nichols", 3032), Link("Catch-22", "Catch-22 – Der böse Trick", 3046), Link("Joseph Heller", "Joseph Heller", 3071), Link("Postmoderne", "Postmoderne", 3099), Link("Quentin Tarantinos", "Quentin Tarantino", 3111), Link("Pulp Fiction", "Pulp Fiction", 3130), Link("Lars von Triers", "Lars von Trier", 3158), Link("Idioterne", "Idioten", 3174), Link("François Bondy", "François Bondy", 3214), Link("Die Zeit", "Die Zeit", 3245), Link("Witz", "Witz", 3491), Link("Duden", "Duden", 3639), Link("Galgenhumor", "Galgenhumor", 3806)),
-			List())
+			List(
+				Link("Hickelkasten", "Hickelkasten", Option(0)),
+				Link("Humor", "Humor", Option(182)),
+				Link("satirischer", "Satire", Option(321)),
+				Link("paradoxer", "Paradoxon", Option(451)),
+				Link("Stilfiguren", "Rhetorische Figur", Option(461)),
+				Link("Kontroversen", "Kontroverse", Option(495)),
+				Link("guten Geschmacks", "Geschmack (Kultur)", Option(601)),
+				Link("Surrealisten", "Surrealismus", Option(865)),
+				Link("André Breton", "André Breton", Option(878)),
+				Link("Desillusion", "Desillusion", Option(1061)),
+				Link("Nihilismus", "Nihilismus", Option(1081)),
+				Link("Freud", "Sigmund Freud", Option(1173)),
+				Link("Hegel", "Georg Wilhelm Friedrich Hegel", Option(1183)),
+				Link("Anthologie", "Anthologie", Option(1314)),
+				Link("Jonathan Swift", "Jonathan Swift", Option(1368)),
+				Link("Directions to Servants", "Directions to Servants", Option(1387)),
+				Link("A Modest Proposal", "A Modest Proposal", Option(1411)),
+				Link("A Meditation on a Broom-Stick", "A Meditation on a Broom-Stick", Option(1430)),
+				Link("Aphorismen", "Aphorismus", Option(1478)),
+				Link("Nathanael West", "Nathanael West", Option(1663)),
+				Link("Vladimir Nabokov", "Vladimir Nabokov", Option(1679)),
+				Link("Joseph Heller", "Joseph Heller", Option(1700)),
+				Link("Catch-22", "Catch-22", Option(1723)),
+				Link("Kurt Vonnegut", "Kurt Vonnegut", Option(1893)),
+				Link("Slaughterhouse Five", "Schlachthof 5 oder Der Kinderkreuzzug", Option(1908)),
+				Link("Thomas Pynchon", "Thomas Pynchon", Option(1936)),
+				Link("V.", "V.", Option(1952)),
+				Link("Gravity’s Rainbow", "Die Enden der Parabel", Option(1966)),
+				Link("Stanley Kubrick", "Stanley Kubrick", Option(2006)),
+				Link("Dr. Strangelove", "Dr. Seltsam oder: Wie ich lernte, die Bombe zu lieben", Option(2024)),
+				Link("Absurden Theater", "Absurdes Theater", Option(2054)),
+				Link("Eugène Ionesco", "Eugène Ionesco", Option(2088)),
+				Link("Shakespeares", "Shakespeare", Option(2222)),
+				Link("Christian-Albrechts-Universität zu Kiel", "Christian-Albrechts-Universität zu Kiel", Option(2296)),
+				Link("Komödientyp", "Komödie", Option(2340)),
+				Link("sarkastischen", "Sarkasmus", Option(2368)),
+				Link("absurden", "Absurdität", Option(2383)),
+				Link("morbiden", "Morbidität", Option(2396)),
+				Link("tabuisierte", "Tabuisierung", Option(2462)),
+				Link("sakrosankt", "Sakrosankt", Option(2551)),
+				Link("politischen Unkorrektheiten", "Politische Korrektheit", Option(2612)),
+				Link("sexuellen und skatologischen", "Vulgärsprache", Option(2656)),
+				Link("zynischer", "Zynismus", Option(2756)),
+				Link("Satire", "Satire", Option(2933)),
+				Link("Robert Altmans", "Robert Altman", Option(2997)),
+				Link("M*A*S*H", "MASH (Film)", Option(3012)),
+				Link("Mike Nichols", "Mike Nichols", Option(3032)),
+				Link("Catch-22", "Catch-22 – Der böse Trick", Option(3046)),
+				Link("Joseph Heller", "Joseph Heller", Option(3071)),
+				Link("Postmoderne", "Postmoderne", Option(3099)),
+				Link("Quentin Tarantinos", "Quentin Tarantino", Option(3111)),
+				Link("Pulp Fiction", "Pulp Fiction", Option(3130)),
+				Link("Lars von Triers", "Lars von Trier", Option(3158)),
+				Link("Idioterne", "Idioten", Option(3174)),
+				Link("François Bondy", "François Bondy", Option(3214)),
+				Link("Die Zeit", "Die Zeit", Option(3245)),
+				Link("Witz", "Witz", Option(3491)),
+				Link("Duden", "Duden", Option(3639)),
+				Link("Galgenhumor", "Galgenhumor", Option(3806))
+			))
+	}
+
+	def parsedEntryWithDifferentLinkTypes(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Origineller Titel",
+			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
+			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
+			templatelinks = List(Link("Charlie", "Charlie C.")),
+			categorylinks = List(Link("Dora", "Dora")),
+			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
+			disambiguationlinks = List(Link("Esel", "Esel"))
+		)
+	}
+
+	def allLinksListFromEntryList(): List[Link] = {
+		List(
+			Link("Apfel", "Apfel", Option(0)),
+			Link("Baum", "Baum", Option(4)),
+			Link("Charlie", "Charlie C."),
+			Link("Dora", "Dora"),
+			Link("Fund", "Fund"),
+			Link("Grieß", "Brei"),
+			Link("Esel", "Esel")
+		)
+	}
+
+	def parsedEntryWithFilteredLinks(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Origineller Titel",
+			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
+			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
+			categorylinks = List(Link("Dora", "Dora")),
+			listlinks = List(Link("Fund", "Fund")),
+			disambiguationlinks = List(Link("Esel", "Esel"))
+		)
 	}
 
 	def testNamespacePages(): List[WikipediaEntry] = {
@@ -724,15 +988,15 @@ object TestData {
 
 	def testNamespaceLinks(): List[Link] = {
 		List(
-			Link("August Horch", "August Horch", 0),
-			Link("August Horch", "Benutzer:August Horch", 0),
-			Link("August Horch", "Thema:August Horch", 0),
-			Link("August Horch", "HD:August Horch", 0),
-			Link("August Horch", "Kategorie:August Horch", 0))
+			Link("August Horch", "August Horch", Option(0)),
+			Link("August Horch", "Benutzer:August Horch", Option(0)),
+			Link("August Horch", "Thema:August Horch", Option(0)),
+			Link("August Horch", "HD:August Horch", Option(0)),
+			Link("August Horch", "Kategorie:August Horch", Option(0)))
 	}
 
 	def testListLinkPage(): String = {
-		Source.fromURL(getClass.getResource("/test_data.html")).getLines().mkString("\n")
+		Source.fromURL(getClass.getResource("/textmining/test_data.html")).getLines().mkString("\n")
 	}
 
 	def testExtractedListLinks(): List[Link] = {
@@ -762,48 +1026,44 @@ object TestData {
 
 	def testCleanedNamespaceLinks(): List[Link] = {
 		List(
-			Link("August Horch", "August Horch", 0),
-			Link("August Horch", "Kategorie:August Horch", 0))
+			Link("August Horch", "August Horch", Option(0)),
+			Link("August Horch", "Kategorie:August Horch", Option(0)))
 	}
 
 	def testCategoryLinks(): List[Link] = {
 		List(
-			Link("Ingolstadt", "Ingolstadt", 55),
-			Link("Bayern", "Bayern", 69),
-			Link("Automobilhersteller", "Kategorie:Automobilhersteller", 94),
-			Link("Volkswagen", "Volkswagen AG", 123),
-			Link("Wortspiel", "Kategorie:Wortspiel", 175),
-			Link("Kategorie:Namensrechte", "Marke (Recht)", 202),
-			Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", 255),
-			Link("August Horch", "August Horch", 316),
-			Link("Lateinische", "Latein", 599),
-			Link("Imperativ", "Imperativ (Modus)", 636),
-			Link("Kategorie:Zwickau", "Zwickau", 829),
-			Link("Zschopauer", "Zschopau", 868))
+			Link("Ingolstadt", "Ingolstadt", Option(55)),
+			Link("Bayern", "Bayern", Option(69)),
+			Link("Automobilhersteller", "Kategorie:Automobilhersteller", Option(94)),
+			Link("Volkswagen", "Volkswagen AG", Option(123)),
+			Link("Wortspiel", "Kategorie:Wortspiel", Option(175)),
+			Link("Kategorie:Namensrechte", "Marke (Recht)", Option(202)),
+			Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", Option(255)),
+			Link("August Horch", "August Horch", Option(316)),
+			Link("Lateinische", "Latein", Option(599)),
+			Link("Imperativ", "Imperativ (Modus)", Option(636)),
+			Link("Kategorie:Zwickau", "Zwickau", Option(829)),
+			Link("Zschopauer", "Zschopau", Option(868)))
 	}
 
 	def testCleanedCategoryLinks(): List[Link] = {
 		List(
-			Link("Ingolstadt", "Ingolstadt", 55),
-			Link("Bayern", "Bayern", 69),
-			Link("Volkswagen", "Volkswagen AG", 123),
-			Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", 255),
-			Link("August Horch", "August Horch", 316),
-			Link("Lateinische", "Latein", 599),
-			Link("Imperativ", "Imperativ (Modus)", 636),
-			Link("Zschopauer", "Zschopau", 868))
+			Link("Ingolstadt", "Ingolstadt", Option(55)),
+			Link("Bayern", "Bayern", Option(69)),
+			Link("Volkswagen", "Volkswagen AG", Option(123)),
+			Link("A. Horch & Cie. Motorwagenwerke Zwickau", "Horch", Option(255)),
+			Link("August Horch", "August Horch", Option(316)),
+			Link("Lateinische", "Latein", Option(599)),
+			Link("Imperativ", "Imperativ (Modus)", Option(636)),
+			Link("Zschopauer", "Zschopau", Option(868)))
 	}
 
 	def testExtractedCategoryLinks(): List[Link] = {
 		List(
-			Link("Automobilhersteller", "Automobilhersteller", 0),
-			Link("Wortspiel", "Wortspiel", 0),
-			Link("Namensrechte", "Marke (Recht)", 0),
-			Link("Zwickau", "Zwickau", 0))
-	}
-
-	def testRedirectCornerCaseEntries(): Set[ParsedWikipediaEntry] = {
-		Set(ParsedWikipediaEntry("?", Option("#WEITERLEITUNG [[?]]"), List[Link](Link("?", "?", 0))))
+			Link("Automobilhersteller", "Automobilhersteller"),
+			Link("Wortspiel", "Wortspiel"),
+			Link("Namensrechte", "Marke (Recht)"),
+			Link("Zwickau", "Zwickau"))
 	}
 
 	def testRedirectDict(): Map[String, String] = {
@@ -811,11 +1071,11 @@ object TestData {
 	}
 
 	def testLinksWithRedirects(): Set[Link] = {
-		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus Berlin", 10))
+		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus Berlin", Option(10)))
 	}
 
 	def testLinksWithResolvedRedirects(): Set[Link] = {
-		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus (Berlin)", 10))
+		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus (Berlin)", Option(10)))
 	}
 
 	def testEntriesWithBadRedirects(): List[WikipediaEntry] = {
@@ -831,6 +1091,121 @@ object TestData {
 			  |<abbr title="Naturgesetze für Information">NGI</abbr>
 			  |</p></body>""".stripMargin
 		)
+	}
+
+	def parsedEntriesWithRedirects(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "Test Redirect Entry 1"))),
+			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "Test Redirect Entry 2"), Link("alias 3", "EU"))),
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
+			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
+	}
+
+	def parsedEntriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "test page"))),
+			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "test page 2"), Link("alias 3", "Europäische Union"))),
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
+			ParsedWikipediaEntry("Test Wrong Redirect Entry 1", Option("WEITERLEITUNG test page")),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
+	}
+
+	def parsedRedirectEntries(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
+			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT")))
+	}
+
+	def redirectDict(): Map[String, String] = {
+		Map(
+			"Test Redirect Entry 1" -> "test page",
+			"Test Redirect Entry 2" -> "test page 2",
+			"EU" -> "Europäische Union")
+	}
+
+	def redirectMap(): Map[String, String] = {
+		Map(
+			"Site 1" -> "Site 3",
+			"Site 3" -> "Site 6",
+			"Site 4" -> "Site 5",
+			"Site 5" -> "Site 4",
+			"Site 7" -> "Site 7",
+			"EU" -> "Europäische Union")
+	}
+
+	def cleanedRedirectMap(): Map[String, String] = {
+		Map(
+			"Site 1" -> "Site 6",
+			"Site 3" -> "Site 6",
+			"EU" -> "Europäische Union")
+	}
+
+	def entriesWithRedirects(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1",
+				textlinks = List(Link("Alias 1", "Site 1")),
+				disambiguationlinks = List(Link("Alias 2", "Site 2")),
+				listlinks = List(Link("Alias 3", "Site 3")),
+				categorylinks = List(Link("Alias 4", "Site 4")),
+				templatelinks = List(Link("Alias 5", "Site 5"))),
+			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "EU"))))
+	}
+
+	def entriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Test Entry 1",
+				textlinks = List(Link("Alias 1", "Site 6")),
+				disambiguationlinks = List(Link("Alias 2", "Site 2")),
+				listlinks = List(Link("Alias 3", "Site 6")),
+				categorylinks = List(Link("Alias 4", "Site 4")),
+				templatelinks = List(Link("Alias 5", "Site 5"))),
+			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union"))))
+	}
+
+	def aliasFileStream(): BufferedSource = {
+		Source.fromURL(getClass.getResource("/textmining/aliasfile"))
+	}
+
+	def deserializedTrie(): TrieNode = {
+		val trie = new TrieNode()
+		val tokenizer = IngestionTokenizer(false, false)
+		val aliasList = List("test alias abc", "this is a second alias", "a third alias", "test alias bcs", "this is a different sentence")
+		for(alias <- aliasList) {
+			trie.append(tokenizer.process(alias))
+		}
+		trie
+	}
+
+	def testDataTrie(tokenizer: IngestionTokenizer): TrieNode = {
+		val trie = new TrieNode()
+		val aliasList = Source.fromURL(getClass.getResource("/textmining/triealiases")).getLines()
+		for(alias <- aliasList) {
+			trie.append(tokenizer.process(alias))
+		}
+		trie
+	}
+
+	def uncleanedFoundAliaes(): List[String] = {
+		List("Alias 1", "", "Alias 2", "Alias 1", "Alias 3")
+	}
+
+	def cleanedFoundAliaes(): List[String] = {
+		List("Alias 1", "Alias 2", "Alias 3")
+	}
+
+	def binaryTrieStream(): ByteArrayInputStream = {
+		val aliasStream = TestData.aliasFileStream()
+		val trieStream = new ByteArrayOutputStream(1024)
+		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
+		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 }
 

@@ -1,12 +1,11 @@
 package de.hpi.ingestion.deduplication.similarity
 
-import java.lang.Math._
-
+import java.lang.Math.{min, max}
 
 /**
-  * A hybrid similarity measure comparing strings corresponding to the jaccard algorithm
+  * A similarity measure that computes how close two given numbers are to each other in terms of percentage.
   */
-object DeviantNumbers  extends SimilarityMeasure[String] {
+object RoughlyEqualNumbers extends SimilarityMeasure[String] {
 
 	/**
 	  * Calculates how close are two given numbers to each other in terms of percentage
@@ -19,5 +18,5 @@ object DeviantNumbers  extends SimilarityMeasure[String] {
 		val max = Math.max(s.toDouble, t.toDouble)
 		val min = Math.min(s.toDouble, t.toDouble)
 		min / max
-	 }
+	}
 }
