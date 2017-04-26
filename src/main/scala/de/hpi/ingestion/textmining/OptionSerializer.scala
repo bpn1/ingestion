@@ -59,10 +59,7 @@ class OptionSerializer() extends Serializer[Option[_]] {
 						kryo.writeClassAndObject(output, t)
 					}
 				}
-			case None =>
-				output.writeInt(3, true)
-			case _ =>
-				Console.err.println(s"This serializer can't serialize objects of $value")
+			case None | _ => output.writeInt(3, true)
 		}
 	}
 }

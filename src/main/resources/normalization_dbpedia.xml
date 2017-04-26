@@ -3,7 +3,7 @@
     <attributeMapping>
         <attribute>
             <key>id_wikidata</key>
-            <mapping>wikidata_id</mapping>
+            <mapping>wikidataid</mapping>
         </attribute>
         <attribute>
             <key>id_dbpedia</key>

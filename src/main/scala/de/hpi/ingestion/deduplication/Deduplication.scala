@@ -70,17 +70,14 @@ class Deduplication(
 			.mkString("\n"))
 
 		val configSettings = xml \\ "config" \ "sourceSettings"
-		settings("keyspace") = (configSettings \ "keyspace").text
-		settings("stagingTable") = (configSettings \ "stagingTable").text
-		settings("subjectTable") = (configSettings \ "subjectTable").text
-		settings("duplicatesTable") = (configSettings \ "duplicatesTable").text
-		settings("versionTable") = (configSettings \ "versionTable").text
+		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
+			settings(node.label) = node.text
 
 		config = (xml \\ "config" \ "simMeasurements" \ "feature")
 			.toList
 			.map { feature =>
 				val attribute = (feature \ "attribute").text
-				val simMeasure = (feature \ "similartyMeasure").text
+				val simMeasure = (feature \ "similarityMeasure").text
 				val weight = (feature \ "weight").text
 				val scale = (feature \ "scale").text
 
@@ -135,11 +132,25 @@ class Deduplication(
 	}
 
 	/**
+	  * Creates candidates for the Deduplication for each element from the output of findDuplicates
+	  * @param subjectPairs Pairs of subjects for all possible duplicates
+	  * @return all actual candidates to save to the cassandra
+	  */
+	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
+		subjectPairs
+			.map { case (subject1, subject2, score) =>
+				subject1.id -> List((subject2, settings("stagingTable"), score))
+			}
+			.reduceByKey { case (accumulator, candidate) => candidate ::: accumulator}
+			.map(DuplicateCandidates.tupled)
+	}
+
+	/**
 	  * Finds the duplicates of each block
 	  * @param block List of Subjects where the duplicates are searched in
-	  * @return tuple of Subjects whose score is greater or equal a given threshold this.confidence
+	  * @return tuple of Subjects with it's score, which is greater or equal a given threshold this.confidence
 	  */
-	def findDuplicates(block: List[Subject]): List[(Subject, Subject)] = {
+	def findDuplicates(block: List[Subject]): List[(Subject, Subject, Double)] = {
 		block
 			.cross(block)
 			.filter(tuple => tuple._1 != tuple._2)
@@ -147,7 +158,8 @@ class Deduplication(
 			.toList
 			.distinct
 			.map(_.head)
-			.filter(tuple => compare(tuple._1, tuple._2) >= this.confidence)
+			.map(tuple => (tuple._1, tuple._2, compare(tuple._1, tuple._2)))
+			.filter(tuple => tuple._3 >= this.confidence)
 	}
 
 	/**
@@ -221,9 +233,9 @@ class Deduplication(
 			.setAppName(this.appName)
 		val sc = new SparkContext(conf)
 		parseConfig()
-		val subjects = sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable"))
+		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
 		val blocks = if(merge) {
-			val staging = sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable"))
+			val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
 			blocking(subjects, staging, blockingSchemes)
 		} else {
 			blocking(subjects, blockingSchemes)
@@ -232,19 +244,11 @@ class Deduplication(
 		val blockEvaluation = evaluateBlocks(blocks, this.appName)
 		sc
 			.parallelize(Seq(blockEvaluation))
-			.saveToCassandra(settings("keyspace"), settings("statsTable"))
+			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 
-		blocks
-			.flatMap(block => findDuplicates(block._2))
-		    .map { case (subject1, subject2) =>
-				DuplicateCandidate(
-					UUIDs.random(),
-					subject1.id,
-					subject1.name,
-					subject2.id,
-					subject2.name,
-					settings("stagingTable"))
-			}.saveToCassandra(settings("keyspace"), settings("duplicatesTable"))
+		val subjectPairs = blocks.flatMap(block => findDuplicates(block._2))
+		createDuplicateCandidates(subjectPairs)
+			.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 }
 
@@ -258,6 +262,7 @@ object Deduplication {
 		"JaroWinkler" -> JaroWinkler,
 		"N-Gram" -> NGram,
 		"Overlap" -> Overlap,
-		"DeviantNumbers" -> DeviantNumbers
+		"EuclidianDistance" -> EuclidianDistance,
+		"RoughlyEqualNumbers" -> RoughlyEqualNumbers
 	)
 }

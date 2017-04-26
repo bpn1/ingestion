@@ -1,195 +1,108 @@
 package de.hpi.ingestion.deduplication
 
-import java.util.UUID
-
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.deduplication.models._
-import org.apache.spark.{SparkConf, SparkContext}
-import de.hpi.ingestion.datalake.models.{Subject, Version}
+import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 import de.hpi.ingestion.deduplication.similarity._
 import org.scalatest.{FlatSpec, Matchers}
 
-class DeduplicationUnitTest
-	extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
-
+class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 	"compare" should "calculate a score regarding the configuration" in {
-		val testSubjects = getSampleSubjects()
+		val deduplication = TestData.defaultDeduplication
+		deduplication.config = TestData.testConfig
+		val subjects = TestData.testSubjects
+		val score = deduplication.compare(subjects.head, subjects(1))
+		val expected = TestData.testSubjectScore(subjects.head, subjects(1))
 
-		val deduplication = defaultDeduplication
-		deduplication.parseConfig()
-		val score = deduplication.compare(testSubjects(0), testSubjects(1))
-		val simScores = List (
-			MongeElkan.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.8,
-			JaroWinkler.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.7,
-			ExactMatchString.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.2
-		)
-
-		val expectedScore = simScores.sum / 3
-		score shouldEqual expectedScore
-	}
-
-	"DeviantNumbers" should "calculate the similiarity of two numbers, but not as strings" in {
-			val testSubjects = getSampleSubjects()
-			val expectedScore1 = 0.98
-			val expectedScore2 = 0.02
-
-			val computedScore1 = DeviantNumbers.compare(
-				testSubjects(0).properties("grossIncome").head,
-				testSubjects(1).properties("grossIncome").head
-			)
-
-			val computedScore2 = DeviantNumbers.compare(
-				testSubjects(2).properties("grossIncome").head,
-				testSubjects(3).properties("grossIncome").head
-			)
-
-			computedScore1 shouldEqual expectedScore1
-			computedScore2 shouldEqual computedScore2
+		score shouldEqual expected
 	}
 
 	it should "just return the weighted score if the configuration contains only one element" in {
-		val testSubjects = getSampleSubjects()
+		val deduplication = TestData.defaultDeduplication
+		deduplication.config = TestData.testConfig.take(1)
+		val subjects = TestData.testSubjects
+		val score = deduplication.compare(subjects.head, subjects(1))
+		val expected = MongeElkan.compare(subjects.head.name.get, subjects(1).name.get) * 0.8
 
-		val deduplication = defaultDeduplication
-		deduplication.parseConfig()
-		val score = deduplication.compare(testSubjects(0), testSubjects(1))
-		val expectedScore = MongeElkan.compare(testSubjects(0).name.get, testSubjects(1).name.get) * 0.8
-		score shouldEqual expectedScore
+		score shouldEqual expected
 	}
 
 	"parseConfig" should "generate a configuration from a given path" in {
-		val deduplication = defaultDeduplication
+		val deduplication = TestData.defaultDeduplication
 		deduplication.parseConfig()
-		val expected = List(
-			ScoreConfig[String, SimilarityMeasure[String]]("name", MongeElkan, 0.8),
-			ScoreConfig[String, SimilarityMeasure[String]]("name", JaroWinkler, 0.7),
-			ScoreConfig[String, SimilarityMeasure[String]]("name", ExactMatchString, 0.2)
-		)
+		val expected = TestData.testConfig
+
 		deduplication.config shouldEqual expected
 	}
 
 	"blocking" should "partition subjects regarding the value of the given key" in {
-		val testSubjects = getSampleSubjects()
-		val deduplication = defaultDeduplication
-		val subjects = sc.parallelize(testSubjects)
-		val blockingSchemes = List(new ListBlockingScheme())
-		blockingSchemes.foreach(_.setAttributes("city"))
-		val blocks = deduplication.blocking(subjects, blockingSchemes)
-		val expected = sc.parallelize(testBlocks(testSubjects))
+		val deduplication = TestData.defaultDeduplication
+		val subjects = TestData.testSubjects
+		val subjectsRDD = sc.parallelize(subjects)
+		val blockingSchemes = List(TestData.cityBlockingScheme)
+		val blocks = deduplication.blocking(subjectsRDD, blockingSchemes)
+		val expected = sc.parallelize(TestData.cityBlock(subjects))
+
 		assertRDDEquals(expected, blocks)
 	}
 
-	"findDuplicates" should "return a list of tuple of duplicates" in {
-		val testSubjects = getSampleSubjects()
+	"createDuplicateCandidates" should "build an RDD containing all candidates for deduplication for each subject" in {
+		val testSubjects = TestData.testSubjects
+		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
+		deduplication.settings("stagingTable")= "subject_wikidata"
+		val testSubject1 = testSubjects(0)
+		val testSubject2 = testSubjects(3)
+		val testSubjectPair = List((testSubject1, testSubject2, 0.5))
+		val testDuplicateCandidates = deduplication.createDuplicateCandidates(sc.parallelize(testSubjectPair))
+		val expectedCandidate = DuplicateCandidates(testSubject1.id, List((testSubject2, "subject_wikidata", 0.5)))
+		val expected = sc.parallelize(List(expectedCandidate))
+		assertRDDEquals(testDuplicateCandidates, expected)
+	}
 
+	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
 		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
 		deduplication.parseConfig()
-		val duplicates = testBlocks(testSubjects)
-			.map(_._2)
-			.flatMap(deduplication.findDuplicates)
-		val expected = List((testSubjects(0), testSubjects(3)))
+		val subjects = TestData.testSubjects
+		val duplicates = TestData.cityBlock(subjects).map(_._2).flatMap(deduplication.findDuplicates)
+		val expected = List((subjects.head, subjects(1), 0.3558974358974359))
 		duplicates shouldEqual expected
 	}
 
 	"buildDuplicatesClique" should "should add isDuplicate relation with a confidence for a list of tuples" in {
-		val testSubjects = getSampleSubjects()
-
-		val deduplication = defaultDeduplication
-		val duplicates = List(
-			(testSubjects(0), testSubjects(2), 0.8),
-			(testSubjects(1), testSubjects(3), 0.8))
+		val deduplication = TestData.defaultDeduplication
+		val subjects = TestData.testSubjects
+		val duplicates = List((subjects.head, subjects(2), 0.8), (subjects(1), subjects(3), 0.8))
 		val expectedRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
-		val expectedRelationNode1 = Map(testSubjects(2).id -> expectedRelation)
-		val expectedRelationNode2 = Map(testSubjects(3).id -> expectedRelation)
-		val version = getSampleVersion
+		val expectedRelationNode1 = Map(subjects(2).id -> expectedRelation)
+		val expectedRelationNode2 = Map(subjects(3).id -> expectedRelation)
+		val version = TestData.testVersion(sc)
 		deduplication.buildDuplicatesSCC(duplicates, version)
 
-		testSubjects(0).relations shouldEqual expectedRelationNode1
-		testSubjects(1).relations shouldEqual expectedRelationNode2
+		subjects.head.relations shouldEqual expectedRelationNode1
+		subjects(1).relations shouldEqual expectedRelationNode2
 
 	}
 
 	"evaluateBlocks" should "evaluate each block sorted by its size" in {
-		val testSubjects = getSampleSubjects()
-		val deduplication = defaultDeduplication
-		val blocks = sc.parallelize(testBlocks(testSubjects))
+		val deduplication = TestData.defaultDeduplication
+		val subjects = TestData.testSubjects
+		val blocks = sc.parallelize(TestData.cityBlock(subjects))
 		val evaluation = deduplication.evaluateBlocks(blocks, "Test comment")
-		val expected = evaluationTestData
-		expected.data shouldEqual evaluation.data
-		expected.comment shouldEqual evaluation.comment
+		val expected = TestData.evaluationTestData
+
+		evaluation.data shouldEqual expected.data
+		evaluation.comment shouldEqual expected.comment
 	}
 
 	"addSymRelation" should "add a symmetric relation between two given nodes" in {
-		val testSubjects = getSampleSubjects()
+		val deduplication = TestData.defaultDeduplication
+		val subjects = TestData.testSubjects
+		val relation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
+		val version = TestData.testVersion(sc)
+		val expectedRelationNode1 = Map(subjects(1).id -> relation)
+		val expectedRelationNode2 = Map(subjects.head.id -> relation)
+		deduplication.addSymRelation(subjects.head, subjects(1), relation, version)
 
-		val deduplication = defaultDeduplication()
-		val sampleRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
-		val sampleVersion = Version("DeduplicationUnitTest", List[String](), sc)
-
-		val expectedRelationNode1 = Map(testSubjects(1).id -> sampleRelation)
-		val expectedRelationNode2 = Map(testSubjects(0).id -> sampleRelation)
-
-		deduplication.addSymRelation(testSubjects(0), testSubjects(1), sampleRelation, sampleVersion)
-
-		 testSubjects(0).relations shouldEqual expectedRelationNode1
-		 testSubjects(1).relations shouldEqual expectedRelationNode2
-	}
-
-	def getSampleSubjects() : List[Subject] = {
-
-		List(
-			Subject(
-				name = Some("Volkswagen"),
-				properties = Map(
-					"city" -> List("Berlin"),
-					"grossIncome" -> List("1000000")
-				)
-			),
-			Subject(
-				name = Some("Audi GmbH"),
-				properties = Map(
-					"city" -> List("Berlin"),
-					"grossIncome" -> List("980000")
-				)
-			),
-			Subject(
-				name = Some("Audy GmbH"),
-				properties = Map(
-					"city" -> List("New York"),
-					"grossIncome" -> List("600")
-					)
-				),
-			Subject(
-				name = Some("Volkswagen AG"),
-				properties = Map(
-					"city" -> List("Berlin"),
-					"grossIncome" -> List("12")
-					)
-				),
-			Subject(
-				name = Some("Porsche")),
-			Subject(
-				name = Some("Ferrari"))
-		)
-	}
-
-	def getSampleVersion : Version = {
-		Version("SomeTestApp", Nil, sc)
-	}
-
-	def testBlocks(testSubjects: List[Subject]): List[(List[List[String]], List[Subject])] = {
-		List((List(List("Berlin")),  List(testSubjects(0), testSubjects(1), testSubjects(3))),
-			(List(List("New York")), List(testSubjects(2))),
-			(List(List("undefined")), List(testSubjects(4), testSubjects(5))))
-	}
-
-	def defaultDeduplication(): Deduplication = {
-		new Deduplication(0.5, "TestDeduplication", List("testSource"))
-	}
-
-	def evaluationTestData(): BlockEvaluation = {
-		BlockEvaluation(
-			data = Map(List("Berlin") -> 3, List("undefined") -> 2, List("New York") -> 1),
-			comment = Option("Test comment"))
+		subjects.head.relations shouldEqual expectedRelationNode1
+		subjects(1).relations shouldEqual expectedRelationNode2
 	}
 }

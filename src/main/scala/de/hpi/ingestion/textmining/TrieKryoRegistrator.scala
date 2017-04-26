@@ -17,6 +17,20 @@ class TrieKryoRegistrator extends KryoRegistrator {
 	  * @param kryo current Kryo instance
 	  */
 	override def registerClasses(kryo: Kryo): Unit = {
+		TrieKryoRegistrator.register(kryo)
+	}
+}
+
+/**
+  * Companion object for the TrieKryoRegister used to register the Trie for non Spark Kryo instances.
+  */
+object TrieKryoRegistrator {
+
+	/**
+	  * Registers the Trie serializer for the given Kryo instance.
+	  * @param kryo kryo instance used to register the Trie
+	  */
+	def register(kryo: Kryo): Unit = {
 		kryo.register(classOf[mutable.Map[_, _]], new MutableMapSerializer())
 		kryo.register(classOf[Option[_]], new OptionSerializer())
 

@@ -221,7 +221,7 @@ object TextParser {
 				case t: Element =>
 					val target = parseUrl(t.attr("href"))
 					val source = if(t.text == "") target else t.text
-					val link = Link(source, target, offset)
+					val link = Link(source, target, Option(offset))
 					linksList += link
 					offset += t.text.length
 				case t: TextNode =>

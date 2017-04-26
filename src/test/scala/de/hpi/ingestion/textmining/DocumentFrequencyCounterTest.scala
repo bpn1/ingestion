@@ -1,10 +1,9 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.textmining.models.DocumentFrequency
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
-class DocumentFrequencyCounterTest extends FlatSpec with PrettyTester with SharedSparkContext with Matchers {
+class DocumentFrequencyCounterTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Document frequencies" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val documentFrequencies = DocumentFrequencyCounter
@@ -28,31 +27,19 @@ class DocumentFrequencyCounterTest extends FlatSpec with PrettyTester with Share
 		documentFrequencies should contain allElementsOf TestData.documentFrequenciesTestSet()
 	}
 
-	"Stemmed document frequencies" should "not contain unstemmed German words" in {
-		val documentFrequencies = sc.parallelize(TestData.unstemmedDocumentFrequenciesTestSet().toList)
-		val stemmedDF = DocumentFrequencyCounter
-			.stemDocumentFrequencies(documentFrequencies)
-			.map(_.word)
+	they should "count stemmed words only once" in {
+		val articles = sc.parallelize(TestData.unstemmedDFTestSet().toList)
+		val documentFrequencies = DocumentFrequencyCounter
+			.countDocumentFrequencies(articles)
 			.collect
 			.toSet
-		stemmedDF should contain noElementsOf TestData.unstemmedGermanWordsTestList()
-	}
-
-	they should "contain these document frequencies" in {
-		val documentFrequencies = sc.parallelize(TestData.unstemmedDocumentFrequenciesTestSet().toList)
-		val stemmedDF = DocumentFrequencyCounter
-			.stemDocumentFrequencies(documentFrequencies)
-			.collect
-			.toSet
-		stemmedDF should contain allElementsOf TestData.incorrectStemmedDocumentFrequenciesTestSet()
+		documentFrequencies should contain allElementsOf TestData.stemmedDFTestSet()
 	}
 
 	"Filtered document frequencies" should "not contain German stopwords" in {
 		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
 		val filteredWords = DocumentFrequencyCounter
-			.filterDocumentFrequencies(documentFrequencies,
-				1,
-				TestData.germanStopwordsTestSet())
+			.filterDocumentFrequencies(documentFrequencies, 1)
 			.map(_.word)
 			.collect
 			.toSet
@@ -63,9 +50,7 @@ class DocumentFrequencyCounterTest extends FlatSpec with PrettyTester with Share
 		val threshold = DocumentFrequencyCounter.leastSignificantDocumentFrequency
 		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
 		val infrequentWords = DocumentFrequencyCounter
-			.filterDocumentFrequencies(documentFrequencies,
-				threshold,
-				Set[String]())
+			.filterDocumentFrequencies(documentFrequencies, threshold)
 			.filter(_.count < threshold)
 			.collect
 			.toSet
@@ -78,9 +63,7 @@ class DocumentFrequencyCounterTest extends FlatSpec with PrettyTester with Share
 		val documentFrequencies = DocumentFrequencyCounter
 			.countDocumentFrequencies(articles)
 		val filteredDocumentFrequencies = DocumentFrequencyCounter
-			.filterDocumentFrequencies(documentFrequencies,
-				threshold,
-				TestData.germanStopwordsTestSet())
+			.filterDocumentFrequencies(documentFrequencies, threshold)
 			.collect
 			.toSet
 		val testFilteredDocumentFrequencies = TestData.filteredDocumentFrequenciesTestList()
