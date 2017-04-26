@@ -102,7 +102,9 @@ class Deduplication(
 		blockingSchemes: List[BlockingScheme]
 	): RDD[(List[List[String]], List[Subject])] = {
 		subjects
-			.map(subject => (blockingSchemes.map(_.generateKey(subject)), List(subject)))
+			.map { subject =>
+				(blockingSchemes.map(_.generateKey(subject)), List(subject))
+			}
 			.reduceByKey(_ ++ _)	// ToDo: #182, better reduce function
 	}
 

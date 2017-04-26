@@ -14,7 +14,7 @@ trait BlockingScheme extends Serializable {
 	  * if required for the blocking scheme.
 	  * @param attrList Sequence of attributes to use.
 	  */
-	def setAttributes(attrList: String*): Unit = inputAttributes = attrList.toList
+	protected def setAttributes(attrList: String*): Unit = inputAttributes = attrList.toList
 
 	/**
 	  * Generates key from the subject's properties.
@@ -29,12 +29,9 @@ trait BlockingScheme extends Serializable {
   */
 class SimpleBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject): List[String] = {
-		if(subject.name.isDefined) {
-			val name = subject.name.get
+		subject.name.map { name =>
 			List(name.substring(0, Math.min(3, name.length)))
-		} else {
-			undefinedValue
-		}
+		}.getOrElse(undefinedValue)
 	}
 }
 
@@ -44,10 +41,6 @@ class SimpleBlockingScheme extends BlockingScheme {
 class ListBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject): List[String] = {
 		val key = inputAttributes.flatMap(subject.get)
-		if (key.isEmpty) {
-			undefinedValue
-		} else {
-			key
-		}
+		if (key.nonEmpty) key else undefinedValue
 	}
 }
