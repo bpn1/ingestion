@@ -89,4 +89,8 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 		sentences shouldEqual expectedSentences
 		sentences2 shouldEqual expectedSentences
 	}
+
+	"String arguments" should "be parsed to create a tokenizer" in {
+		assert(false)
+	}
 }

@@ -3,9 +3,12 @@ package de.hpi.ingestion.textmining
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
-object TermFrequencyCounter {
+object TermFrequencyCounter extends SparkJob {
+	appName = "Term Frequency Counter"
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputArticlesTablename = "parsedwikipedia"
@@ -67,30 +70,43 @@ object TermFrequencyCounter {
 	}
 
 	/**
-	  * Enriches articles with the term frequencies of the whole article (called context) and the term frequencies
-	  * for all link contexts (called link contexts).
-	  * @param articles RDD of Parsed Wikipedia Entries
-	  * @return RDD of articles with their contexts and the link contexts
+	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
 	  */
-	def run(
-		articles: RDD[ParsedWikipediaEntry],
-		tokenizer: IngestionTokenizer = IngestionTokenizer()
-	): RDD[ParsedWikipediaEntry] = {
-		articles
-			.map(extractArticleContext(_, tokenizer))
-			.map(extractLinkContexts(_, tokenizer))
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		List(articles).toAnyRDD()
 	}
 
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Term Frequency Counter")
+	/**
+	  * Enriches articles with the term frequencies of the whole article (called context) and the term frequencies
+	  * for all link contexts (called link contexts).
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
+		val tokenizer = IngestionTokenizer(args)
+		val enrichedArticles = articles
+			.map(extractArticleContext(_, tokenizer))
+			.map(extractLinkContexts(_, tokenizer))
+		List(enrichedArticles).toAnyRDD()
+	}
 
-		val sc = new SparkContext(conf)
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-
-		run(articles)
+	/**
+	  * Saves enriched Parsed Wikipedia entries to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
 			.saveToCassandra(keyspace, outputArticlesTablename)
-
-		sc.stop()
 	}
 }

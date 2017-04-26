@@ -27,7 +27,7 @@ class MockSparkJob extends FlatSpec with SparkJob with SharedSparkContext {
 		Nil
 	}
 
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		methodCalls += "run"
 		Nil
 	}

@@ -213,9 +213,9 @@ class Deduplication(
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = List[RDD[Subject]](sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable")))
+		val subjects = List(sc.cassandraTable[Subject](settings("keyspace"), settings("subjectTable")))
 		val staging = if(merge) {
-			List[RDD[Subject]](sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable")))
+			List(sc.cassandraTable[Subject](settings("keyspace"), settings("stagingTable")))
 		} else {
 			Nil
 		}
@@ -229,7 +229,7 @@ class Deduplication(
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		parseConfig()
 		val inputData = input.fromAnyRDD[Subject]()
 		val subjects = inputData.head

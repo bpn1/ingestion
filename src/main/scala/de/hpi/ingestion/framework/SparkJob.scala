@@ -27,7 +27,7 @@ trait SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]]
+	def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]]
 
 	/**
 	  * Saves the output data to e.g. the Cassandra or the HDFS.

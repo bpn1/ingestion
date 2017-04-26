@@ -2,7 +2,7 @@ package de.hpi.ingestion.deduplication
 
 import java.util.UUID
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -51,7 +51,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val training = sc.cassandraTable[DuplicateCandidates](this.keyspace, this.inputTraining)
 		val test = sc.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
-		List[RDD[DuplicateCandidates]](training).toAnyRDD() ++ List[RDD[(UUID, UUID)]](test).toAnyRDD()
+		List(training).toAnyRDD() ++ List(test).toAnyRDD()
 	}
 
 	/**
@@ -61,7 +61,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val training = input.head.asInstanceOf[RDD[DuplicateCandidates]]
 			.flatMap { case DuplicateCandidates(subject_id, candidates) =>
 				candidates.map(candidate => ((subject_id, candidate._1.id), candidate._3))

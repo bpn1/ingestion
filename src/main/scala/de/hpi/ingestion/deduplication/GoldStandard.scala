@@ -71,7 +71,7 @@ object GoldStandard extends SparkJob {
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val dbpedia = sc.cassandraTable[Subject](this.keyspace, this.inputDBPedia)
 		val wikidata = sc.cassandraTable[Subject](this.keyspace, this.inputWikiData)
-		List[RDD[Subject]](dbpedia, wikidata).toAnyRDD()
+		List(dbpedia, wikidata).toAnyRDD()
 	}
 
 	/**
@@ -81,7 +81,7 @@ object GoldStandard extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val data = input.fromAnyRDD[Subject]()
 		val results = join(data.head, data(1))
 		List(results).toAnyRDD()

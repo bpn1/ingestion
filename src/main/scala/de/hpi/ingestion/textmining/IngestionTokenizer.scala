@@ -1,6 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import scala.io.Source
+import scala.util.Try
 
 /**
   * An advanced tokenizer that uses a given tokenizer, removes stop words if flag is set and stems the tokens
@@ -92,5 +93,27 @@ object IngestionTokenizer {
 	  */
 	def apply(tokenizer: Tokenizer, stopWords: Boolean = false, stem: Boolean = false): IngestionTokenizer = {
 		new IngestionTokenizer(tokenizer, stopWords, stem)
+	}
+
+	/**
+	  * Parses an Array of String arguments to create a Tokenizer. If the arguments are not well-formed the default
+	  * values of the default Tokenizer will be used.
+	  * @param args Array of arguments
+	  * @return Tokenizer corresponding to the arguments if they are well-formed
+	  */
+	def apply(args: Array[String]) = {
+		val tokenizer = if(args.length < 1) {
+			new CoreNLPTokenizer
+		} else {
+			args.head match {
+				case "WhiteSpaceTokenizer" => new WhitespaceTokenizer
+				case "CleanWhiteSpaceTokenizer" => new CleanWhitespaceTokenizer
+				case "CleanCoreNLPTokenizer" => new CleanCoreNLPTokenizer
+				case "CoreNLPTokenizer" | _ => new CoreNLPTokenizer
+			}
+		}
+		val filter = args.length < 2 || Try(args(1).toBoolean).getOrElse(false)
+		val stem = args.length < 3 || Try(args(2).toBoolean).getOrElse(false)
+		new IngestionTokenizer(tokenizer, filter, stem)
 	}
 }
