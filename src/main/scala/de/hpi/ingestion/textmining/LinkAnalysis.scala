@@ -21,7 +21,8 @@ object LinkAnalysis extends SparkJob {
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
@@ -32,9 +33,10 @@ object LinkAnalysis extends SparkJob {
 
 	/**
 	  * Saves the grouped aliases and links to the Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val aliases = output.head.asInstanceOf[RDD[Alias]]
@@ -42,6 +44,7 @@ object LinkAnalysis extends SparkJob {
 		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))
 		pages.saveToCassandra(keyspace, outputPageToAliasesTablename)
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -103,30 +106,18 @@ object LinkAnalysis extends SparkJob {
 	}
 
 	/**
-	  * Groups link Aliases by page names and vice versa. Also removes dead links (no corresponding page).
+	  * Groups the links once on the aliases and once on the pages. Also removes dead links (no corresponding page).
 	  *
-	  * @param articles all Wikipedia articles
-	  * @return grouped Aliases and page names
-	  */
-	def run(articles: RDD[ParsedWikipediaEntry]): (RDD[Alias], RDD[Page]) = {
-		val validLinks = extractValidLinks(articles)
-		val aliases = groupByAliases(validLinks)
-		val pages = groupByPageNames(validLinks)
-		(aliases, pages)
-	}
-
-	/**
-	  * Groups the links once on the aliases and once on the pages.
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val allPages = articles.map(_.title)
-		val aliases = removeDeadLinks(groupByAliases(articles), allPages)
-		val pages = removeDeadPages(groupByPageNames(articles), allPages)
+		val validLinks = extractValidLinks(articles)
+		val aliases = groupByAliases(validLinks)
+		val pages = groupByPageNames(validLinks)
 		List(aliases).toAnyRDD() ++ List(pages).toAnyRDD()
 	}
 }
