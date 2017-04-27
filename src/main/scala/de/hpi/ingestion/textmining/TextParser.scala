@@ -2,6 +2,7 @@ package de.hpi.ingestion.textmining
 
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
@@ -13,14 +14,16 @@ import java.net.URLDecoder
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 
 import scala.io.Source
 
 /**
-  * Parses all Wikipedia articles from Wikitext to raw text and extracts its links.
+  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links.
   */
-object TextParser {
+object TextParser extends SparkJob {
+	appName = "Text Parser"
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
@@ -30,20 +33,72 @@ object TextParser {
 	val redirectText = "REDIRECT"
 	val disambiguationTitleSuffix = " (Begriffsklärung)"
 
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
+		List(wikipedia).toAnyRDD()
+	}
+
+	/**
+	  * Saves Parsed Wikipedia entries to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.saveToCassandra(keyspace, outputTablename)
+	}
+	// $COVERAGE-ON$
+
+	/**
+	  * Cleans Wikimarkup and converts it to html.
+	  *
+	  * @param wikiMarkup Wikimarkup to clean and convert
+	  * @return cleaned html
+	  */
 	def wikipediaToHtml(wikiMarkup: String): String = {
 		val html = wikiMarkup.replaceAll("\\\\n", "\n")
 		WikiModel.toHtml(removeWikiMarkup(html))
 	}
 
+	/**
+	  * Checks if article is redirect page.
+	  *
+	  * @param html html of article to be checked
+	  * @return true if article is redirect page
+	  */
 	def isRedirectPage(html: String): Boolean = {
 		val searchText = Jsoup.parse(html).body.text
 		searchText.startsWith(parsableRedirect)
 	}
 
+	/**
+	  * Checks if article is redirect page.
+	  *
+	  * @param entry Wikipedia entry to be checked
+	  * @return true if article is redirect page
+	  */
 	def isRedirectPage(entry: ParsedWikipediaEntry): Boolean = {
 		entry.getText().startsWith(redirectText)
 	}
 
+	/**
+	  * Extracts all links from a redirect page including redirect link.
+	  *
+	  * @param title title of Wikipedia article
+	  * @param html  html of Wikipedia article
+	  * @param text  text of Wikipedia article
+	  * @return list of all links in the redirect page
+	  */
 	def extractRedirect(title: String, html: String, text: String): List[Link] = {
 		val anchorList = Jsoup.parse(html).select("a")
 		val linksList = anchorList
@@ -58,10 +113,17 @@ object TextParser {
 		cleanMetapageLinks(linksList)
 	}
 
+	/**
+	  * Parse Wikipedia article, clean it of Wikimarkup, extract text and all links.
+	  *
+	  * @param title title of Wikipedia article
+	  * @param html  html of Wikipedia article
+	  * @return parsed Wikipedia entry
+	  */
 	def parseHtml(title: String, html: String): ParsedWikipediaEntry = {
 		val parsedEntry = ParsedWikipediaEntry(title)
 		val document = Jsoup.parse(html)
-		if (isRedirectPage(html)) {
+		if(isRedirectPage(html)) {
 			val text = document.body.text.replaceAll("(?i)(\\A(WEITERLEITUNG|REDIRECT))", redirectText)
 			parsedEntry.setText(text)
 			parsedEntry.textlinks = extractRedirect(title, html, text)
@@ -81,6 +143,7 @@ object TextParser {
 
 	/**
 	  * Removes any unwanted HTML tags and inline Wikimarkup tags.
+	  *
 	  * @param document Jsoup Document to clean
 	  * @return cleaned Document containing only text and anchor tags
 	  */
@@ -103,6 +166,12 @@ object TextParser {
 		Jsoup.parse(traverser.getCleanedDocument())
 	}
 
+	/**
+	  * Parse url to match Wikipedia titles.
+	  *
+	  * @param url url found in anchor tags
+	  * @return title of linked Wikipedia page
+	  */
 	def parseUrl(url: String): String = {
 		var cleanedUrl = url
 			.replaceAll("%(?![0-9a-fA-F]{2})", "%25")
@@ -118,11 +187,24 @@ object TextParser {
 		cleanedUrl.replaceAll("\\A/", "")
 	}
 
+	/**
+	  * Checks if article is disambiguation page.
+	  *
+	  * @param entry Wikipedia entry to be checked
+	  * @return true if article is disambiguation page
+	  */
 	def isDisambiguationPage(entry: WikipediaEntry): Boolean = {
 		val disambiguationWikiMarkupSuffix = "{{Begriffsklärung}}"
 		entry.getText().endsWith(disambiguationWikiMarkupSuffix)
 	}
 
+	/**
+	  * Extracts all links from a disambiguation page.
+	  *
+	  * @param title title of Wikipedia article
+	  * @param body  html body of Wikipedia article
+	  * @return tuple of html text and list of all links
+	  */
 	def extractDisambiguationLinks(title: String, body: Element): (String, List[Link]) = {
 		val linksList = ListBuffer[Link]()
 		val cleanTitle = title.stripSuffix(disambiguationTitleSuffix)
@@ -135,6 +217,12 @@ object TextParser {
 		(body.text, linksList.toList)
 	}
 
+	/**
+	  * Extract all links with offset from text.
+	  *
+	  * @param body html body of Wikipedia article
+	  * @return tuple of html text and list of all text links
+	  */
 	def extractTextLinks(body: Element): (String, List[Link]) = {
 		val linksList = ListBuffer[Link]()
 		var offset = 0
@@ -174,6 +262,12 @@ object TextParser {
 		(body.text, cleanedLinks)
 	}
 
+	/**
+	  * Clean text of Wikimarkup.
+	  *
+	  * @param wikitext Wikimarkup text to be cleaned
+	  * @return cleaned text
+	  */
 	def removeWikiMarkup(wikitext: String): String = {
 		var cleanText = ""
 		var depth = 0
@@ -191,6 +285,13 @@ object TextParser {
 		cleanText
 	}
 
+	/**
+	  * Extracts and checks if Wikipedia template is correct.
+	  *
+	  * @param wikitext   Wikimarkup text to be extracted from
+	  * @param startIndex startIndex of template
+	  * @return full template text
+	  */
 	def extractTemplate(wikitext: String, startIndex: Int): String = {
 		var templateText = ""
 		var depth = 0
@@ -213,6 +314,12 @@ object TextParser {
 		templateText
 	}
 
+	/**
+	  * Extract all templates in Wikipedia article.
+	  *
+	  * @param wikitext Wikimarkup text to be extracted from
+	  * @return template text containing all the templates concatenated
+	  */
 	def extractAllTemplates(wikitext: String): String = {
 		var templateText = ""
 		val templateRegex = new Regex("\\{\\{")
@@ -233,7 +340,13 @@ object TextParser {
 		templateText
 	}
 
-	def linkMatchToLink(linkMatch: scala.util.matching.Regex.Match): Link = {
+	/**
+	  * Constructs a link from regex match.
+	  *
+	  * @param linkMatch regex match containing link
+	  * @return link constructed from regex
+	  */
+	def constructLinkFromRegexMatch(linkMatch: Regex.Match): Link = {
 		val page = linkMatch.group(1)
 		if(page.startsWith("Datei:")) {
 			return null
@@ -251,6 +364,12 @@ object TextParser {
 		Link(alias, page)
 	}
 
+	/**
+	  * Extract all links from Wikipedia template.
+	  *
+	  * @param wikitext Wikimarkup text to be extracted from
+	  * @return list of all links in the template
+	  */
 	def extractTemplateLinks(wikitext: String): List[Link] = {
 		val linkList = ListBuffer[Link]()
 		val templateText = extractAllTemplates(wikitext)
@@ -259,7 +378,7 @@ object TextParser {
 			.findAllIn(templateText)
 			.matchData
 			.foreach { linkMatch =>
-				val link = linkMatchToLink(linkMatch)
+				val link = constructLinkFromRegexMatch(linkMatch)
 				if(link != null) {
 					linkList += link
 				}
@@ -267,6 +386,12 @@ object TextParser {
 		linkList.toList
 	}
 
+	/**
+	  * Parses a Wikipedia entry meanwhile removing Wikimarkup and extracting all links.
+	  *
+	  * @param entry raw Wikipedia entry
+	  * @return parsed Wikipedia entry thats been processed
+	  */
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
 		val cleanedEntry = cleanRedirects(entry)
 		var title = cleanedEntry.title
@@ -279,6 +404,12 @@ object TextParser {
 		parsedEntry
 	}
 
+	/**
+	  * Cleaning all kinds of redirects so they will get parsed by the Wikiparser.
+	  *
+	  * @param entry raw Wikipedia entry
+	  * @return raw Wikipedia entry with cleaned redirect keywords
+	  */
 	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
 		val redirectRegex = "(?i)(weiterleitung|redirect)\\s?:?\\s?"
 		val replaceString = parsableRedirect + " "
@@ -321,10 +452,22 @@ object TextParser {
 		linkList.filterNot(link => badNamespaces().exists(link.page.startsWith))
 	}
 
+	/**
+	  * Checks if a link is a category link.
+	  *
+	  * @param link link to be checked
+	  * @return true if the link is a category link
+	  */
 	def isCategoryLink(link: Link): Boolean = {
 		link.alias.startsWith(categoryNamespace) || link.page.startsWith(categoryNamespace)
 	}
 
+	/**
+	  * Extracts all category links from the textlinks column.
+	  *
+	  * @param entry without category links
+	  * @return entry with category links
+	  */
 	def extractCategoryLinks(entry: ParsedWikipediaEntry): ParsedWikipediaEntry = {
 		val categoryLinks = entry.textlinks.filter(isCategoryLink)
 		entry.textlinks = entry.textlinks.filterNot(categoryLinks.toSet)
@@ -336,6 +479,12 @@ object TextParser {
 		entry
 	}
 
+	/**
+	  * Extracts all links in list items from html.
+	  *
+	  * @param html html text to be extracted from
+	  * @return list of all links extracted from list items
+	  */
 	def extractListLinks(html: String): List[Link] = {
 		val document = Jsoup.parse(html)
 		val htmlLists = document.select("ul").toList ++ document.select("ol").toList
@@ -348,24 +497,16 @@ object TextParser {
 	/**
 	  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links. Also removes all metapages
 	  * except {@categoryNamespace} pages.
-	  *
-	  * @param rawArticles all Wikipedia articles as Wikitext
-	  * @return Wikipedia articles with extracted links
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
 	  */
-	def run(rawArticles: RDD[WikipediaEntry]): RDD[ParsedWikipediaEntry] = {
-		rawArticles
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val rawArticles = input.fromAnyRDD[WikipediaEntry]().head
+		val parsedArticles = rawArticles
 			.filter(!isMetaPage(_))
 			.map(parseWikipediaEntry)
-	}
-
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Text Parser")
-		val sc = new SparkContext(conf)
-
-		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
-		run(wikipedia).saveToCassandra(keyspace, outputTablename)
-
-		sc.stop
+		List(parsedArticles).toAnyRDD()
 	}
 }
