@@ -7,9 +7,16 @@ import scala.language.implicitConversions
 import scala.reflect.{ClassTag, classTag}
 
 
+/**
+  * Also known as muliset. It may contain elements multiple times.
+  *
+  * @param counts a map that stores the elements and their respective frequencies
+  * @tparam A element type
+  * @tparam B frequency type (e.g., Int or Double)
+  */
 class Bag[A, B <% BagCounter[B] : ClassTag](
 
-private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] with Set[A] with Serializable {
+	private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] with Set[A] with Serializable {
 
 	def getCounts(): Map[A, B] = counts
 
@@ -22,7 +29,7 @@ private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] w
 				}
 			}
 			case None => {
-				if (classTag[B] == classTag[Int] || classTag[B] == classTag[Integer]) {
+				if(classTag[B] == classTag[Int] || classTag[B] == classTag[Integer]) {
 					1.asInstanceOf[B]
 				} else {
 					1.0.asInstanceOf[B]
@@ -33,10 +40,10 @@ private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] w
 	}
 
 	def +(elem: A, times: B): Bag[A, B] = {
-		if (times.lessThanZero()) {
+		if(times.lessThanZero()) {
 			return this - (elem, times.invert())
 		}
-		if (times.equalsZero()) {
+		if(times.equalsZero()) {
 			return this
 		}
 		val count = this.counts.get(elem) match {
@@ -48,7 +55,7 @@ private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] w
 
 	def ++(that: Bag[A, B]): Bag[A, B] = {
 		var result = this
-		for ((elem: A@unchecked, count: B) <- that.getCounts()) {
+		for((elem: A@unchecked, count: B) <- that.getCounts()) {
 			result = result + (elem, count)
 		}
 		result
@@ -59,7 +66,7 @@ private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] w
 		case Some(x) => {
 			x match {
 				case t: Int => {
-					if (t == 1) {
+					if(t == 1) {
 						new Bag(this.counts - elem)
 					} else {
 						new Bag(this.counts + (elem -> (t - 1).asInstanceOf[B]))
@@ -67,7 +74,7 @@ private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] w
 				}
 				case t: Double => {
 					val newCount = t - 1.0
-					if (newCount <= 0.0) {
+					if(newCount <= 0.0) {
 						new Bag(this.counts - elem)
 					} else {
 						new Bag(this.counts + (elem -> (t - 1.0).asInstanceOf[B]))
@@ -78,17 +85,17 @@ private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] w
 	}
 
 	def -(elem: A, times: B): Bag[A, B] = {
-		if (times.lessThanZero()) {
+		if(times.lessThanZero()) {
 			return this + (elem, times.invert())
 		}
-		if (times.equalsZero()) {
+		if(times.equalsZero()) {
 			return this
 		}
 		this.counts.get(elem) match {
 			case None => this
 			case Some(x) =>
 				val newCount = (x - times).round()
-				if (newCount.lessThanZero()) {
+				if(newCount.lessThanZero()) {
 					new Bag(this.counts - elem)
 				} else {
 					new Bag(this.counts + (elem -> newCount))
@@ -98,7 +105,7 @@ private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] w
 
 	def --(that: Bag[A, B]): Bag[A, B] = {
 		var result = this
-		for ((elem: A@unchecked, count: B) <- that.getCounts()) {
+		for((elem: A@unchecked, count: B) <- that.getCounts()) {
 			result = result - (elem, count)
 		}
 		result
@@ -109,7 +116,7 @@ private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] w
 	override def empty: Bag[A, B] = new Bag[A, B]
 
 	def elementSize(count: B): Int = {
-		if (classTag[B] == classTag[Double]) {
+		if(classTag[B] == classTag[Double]) {
 			count.asInstanceOf[Double].intValue()
 		} else {
 			count.asInstanceOf[Int]
@@ -117,7 +124,7 @@ private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] w
 	}
 
 	override def iterator: Iterator[A] = {
-		for ((elem, count) <- this.counts.iterator; _ <- 1 to elementSize(count)) yield elem
+		for((elem, count) <- this.counts.iterator; _ <- 1 to elementSize(count)) yield elem
 	}
 
 	override def newBuilder: Builder[A, Bag[A, B]] = new Builder[A, Bag[A, B]] {
@@ -149,7 +156,7 @@ private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] w
 			case x: Int => x.doubleValue()
 			case x: Double => x
 		}
-		for ((elem, count) <- this.counts) {
+		for((elem, count) <- this.counts) {
 			val newValue = (count match {
 				case x: Int => x.doubleValue()
 				case x: Double => x
