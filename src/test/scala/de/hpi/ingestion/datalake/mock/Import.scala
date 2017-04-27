@@ -1,21 +1,24 @@
 package de.hpi.ingestion.datalake.mock
 
-import java.net.URL
-
 import de.hpi.ingestion.datalake.DataLakeImport
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 object Import extends DataLakeImport[Entity](
-	"TestImport",
 	List("TestSource"),
 	Option("datalakeimport.xml"),
 	"normalization.xml",
 	"inputKeySpace",
 	"inputTable"
 ){
-	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = sc.parallelize(Seq(Subject()))
+	appName = "TestImport"
+
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		List(sc.parallelize(Seq(Subject()))).toAnyRDD()
+	}
+
 	override def filterEntities(entity: Entity): Boolean = true
 	override def translateToSubject(
 		entity: Entity,

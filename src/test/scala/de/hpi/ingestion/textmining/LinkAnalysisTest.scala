@@ -2,6 +2,9 @@ package de.hpi.ingestion.textmining
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.models.{Alias, Page}
+import org.apache.spark.rdd.RDD
 
 class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Page names grouped by aliases" should "not be empty" in {
@@ -113,10 +116,10 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	"Grouped aliases and page names from incomplete article set" should "be empty" in {
 		val articles = sc.parallelize(TestData.smallerParsedWikipediaList())
-		val (groupedAliases, groupedPages) = LinkAnalysis.run(articles)
-		val groupedAliasesSet = groupedAliases
+		val List(groupedAliases, groupedPages) = LinkAnalysis.run(List(articles).toAnyRDD(), sc)
+		val groupedAliasesSet = groupedAliases.asInstanceOf[RDD[Alias]]
 			.collect
-		val groupedPagesSet = groupedPages
+		val groupedPagesSet = groupedPages.asInstanceOf[RDD[Page]]
 			.collect
 		groupedAliasesSet shouldBe empty
 		groupedPagesSet shouldBe empty

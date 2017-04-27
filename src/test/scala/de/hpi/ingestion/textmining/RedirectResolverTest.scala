@@ -3,7 +3,7 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import org.scalatest.{FlatSpec, Matchers}
-
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"All redirects in an entry" should "be resolved" in {
@@ -39,7 +39,9 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 
 	"Redirect resolver" should "resolve all redirects" in {
 		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
-		val resolvedEntries = RedirectResolver.run(unresolvedEntries, sc)
+		val resolvedEntries = RedirectResolver.run(List(unresolvedEntries).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
 		val expectedEntries = sc.parallelize(TestData.parsedEntriesWithResolvedRedirects().toList)
 		assertRDDEquals(resolvedEntries, expectedEntries)
 	}

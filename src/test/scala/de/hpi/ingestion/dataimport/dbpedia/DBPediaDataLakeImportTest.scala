@@ -3,12 +3,12 @@ package de.hpi.ingestion.dataimport.dbpedia
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
 
-class DBPediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkContext {
+class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkContext {
 	"translateToSubject" should "map the entity label on subject name" in {
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = DBPediaDataLakeImport.translateToSubject(entity, version, mapping)
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping)
 		subject.name shouldEqual entity.label
 	}
 
@@ -16,7 +16,7 @@ class DBPediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = DBPediaDataLakeImport.translateToSubject(entity, version, mapping)
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping)
 		subject.properties("id_wikidata") shouldEqual List("Q123")
 		subject.properties("id_wikipedia") shouldEqual List("dbpedia-de:List_von_Autoren")
 		subject.properties("id_dbpedia") shouldEqual List("dbpedia-de:List_von_Autoren")
@@ -28,7 +28,7 @@ class DBPediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = DBPediaDataLakeImport.translateToSubject(entity, version, mapping)
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping)
 		subject.properties("testProperty") shouldEqual List("test")
 	}
 
@@ -36,7 +36,7 @@ class DBPediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = DBPediaDataLakeImport.translateToSubject(entity, version, mapping)
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping)
 		subject.properties("geo_coords") shouldEqual List("52", "100")
 	}
 }

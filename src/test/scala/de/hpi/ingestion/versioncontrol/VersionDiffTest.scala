@@ -4,6 +4,9 @@ import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import java.util.UUID
 
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import play.api.libs.json.JsValue
+
 class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 
     val oldVersion = UUID.fromString("fc2c5a40-c566-11e6-aee2-5f2c06e3b302")
@@ -13,7 +16,8 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 		val subjects = sc.parallelize(TestData.diffSubjects())
 		val (oldV, newV) = TestData.versionsToCompare()
 		val versions = Array(oldV.toString, newV.toString)
-		val versionDiff = VersionDiff.run(subjects, versions)
+		val rddList = List(subjects).toAnyRDD()
+		val versionDiff = VersionDiff.run(rddList, sc, versions).fromAnyRDD[JsValue]().head
 		val expectedDiff = sc.parallelize(TestData.jsonDiff())
 		assertRDDEquals(versionDiff, expectedDiff)
 	}
@@ -68,5 +72,12 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 			.map(VersionDiff.timeFromUUID)
 		val expectedTimes = TestData.timeOfTimeUUIDs()
 		uuidTimes shouldEqual expectedTimes
+	}
+
+	"Version Diff assertion" should "return false if there are not two versions provided" in {
+		val successArgs = Array("v1", "v2")
+		val failArgs = Array("v1")
+		VersionDiff.assertConditions(successArgs) shouldBe true
+		VersionDiff.assertConditions(failArgs) shouldBe false
 	}
 }

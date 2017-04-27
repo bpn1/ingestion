@@ -1,25 +1,54 @@
 package de.hpi.ingestion.versioncontrol
 
 import de.hpi.ingestion.datalake.models._
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import java.util.UUID
 
+import de.hpi.ingestion.framework.SparkJob
 import play.api.libs.json._
 
 import scala.collection.mutable
 import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.versioncontrol.models.HistoryEntry
 import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Compares two versions of the Subject table given their TimeUUIDs as command line arguments and writes the
   * differences of each Subject as JSON file to the HDFS.
   */
-object VersionDiff {
+object VersionDiff extends SparkJob {
+	appName = "VersionDiff"
 	val keyspace = "datalake"
 	val tablename = "subject"
 	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
+
+	// $COVERAGE-OFF$
+	/**
+	  * Loads subjects from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
+		List(subjects.asInstanceOf[RDD[Any]])
+	}
+
+	/**
+	  * Writes the JSON diff to the HDFS.
+	  * @param output first element is the RDD of JSON diffs
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[JsValue]()
+			.head
+			.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
+	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Extracts the time component of a TimeUUID.
@@ -143,27 +172,27 @@ object VersionDiff {
 
 	/**
 	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
-	  * @param subjects RDD of Subjects
-	  * @param args command line arguments of the program containing the TimeUUIDs of the two versions to compare
-	  * @return RDD of JSON objects containing the diff for each subject
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
 	  */
-	def run(subjects: RDD[Subject], args: Array[String]): RDD[JsValue] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val (oldVersion, newVersion) = versionOrder(UUID.fromString(args(0)), UUID.fromString(args(1)))
-		subjects
-			.map(retrieveVersions(_, oldVersion, newVersion))
-			.map(diffToJson)
+		input.fromAnyRDD[Subject]()
+			.map(rdd =>
+				rdd
+					.map(retrieveVersions(_, oldVersion, newVersion))
+					.map(diffToJson))
+			.toAnyRDD()
 	}
 
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("VersionDiff")
-		val sc = new SparkContext(conf)
-
-		if(args.length < 2) {
-			System.exit(1)
-		}
-    	val subjects = sc.cassandraTable[Subject](keyspace, tablename)
-		run(subjects, args).saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
-		sc.stop
-    }
+	/**
+	  * Asserts that two versions are given as program arguments.
+	  * @param args arguments of the program
+	  * @return true if there are at least two arguments provided
+	  */
+	override def assertConditions(args: Array[String]): Boolean = {
+		args.length >= 2
+	}
 }
