@@ -7,7 +7,7 @@ object DeduplicationJob {
 		geoCountryBlockingScheme.setAttributes("geo_city")
 		val generalSectoryBlockingScheme = new ListBlockingScheme
 		generalSectoryBlockingScheme.setAttributes("gen_sectors")
-		val simpleBlockingScheme = new SimpleBlockingScheme
+		val simpleBlockingScheme = new DefaultBlockingScheme
 		val blockingSchemes = List(
 			geoCountryBlockingScheme,
 			generalSectoryBlockingScheme,

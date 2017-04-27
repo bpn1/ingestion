@@ -1,6 +1,10 @@
 package de.hpi.ingestion.deduplication
 
+import de.hpi.companies.algo.classifier.AClassifier
+import de.hpi.companies.algo.Tag
+import com.github.powerlibraries.io.In
 import de.hpi.ingestion.datalake.models.Subject
+import scala.collection.JavaConversions._
 
 /**
   * This trait is the template for our blocking schemes.
@@ -25,16 +29,25 @@ trait BlockingScheme extends Serializable {
 }
 
 /**
-  * This class uses the first three characters of the name property as key.
+  * This class uses the name property as key. For every word in the name, it creates a pair of the
+  * word and a fitting tag and filters these after the tags to check.
   */
-class SimpleBlockingScheme extends BlockingScheme {
+class DefaultBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject): List[String] = {
-		if(subject.name.isDefined) {
-			val name = subject.name.get
-			List(name.substring(0, Math.min(3, name.length)))
-		} else {
-			undefinedValue
-		}
+		subject.name.map { name =>
+			val fileStream = getClass.getResource("/bin/StanfordCRFClassifier-Tag.bin").openStream()
+			val classifier = In.stream(fileStream).readObject[AClassifier[Tag]]()
+			val taggedName = classifier.getTags(name)
+			val tagsToCheck = List(Tag.LEGAL_FORM, Tag.PERSON_LAST_NAME, Tag.SECTOR)
+
+			taggedName
+				.filter(tuple => tagsToCheck.contains(tuple.getRight))
+				.sortBy(_.getRight)
+				.map(_.toString)
+				.toList
+
+			}.filter(_.nonEmpty)
+		.getOrElse(undefinedValue)
 	}
 }
 

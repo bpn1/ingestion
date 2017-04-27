@@ -226,7 +226,7 @@ class Deduplication(
 	  * @param merge boolean indicating whether or not the duplicates should be merged
 	  */
 	def run(
-		blockingSchemes:  List[BlockingScheme] = List(new SimpleBlockingScheme),
+		blockingSchemes:  List[BlockingScheme] = List(new DefaultBlockingScheme),
 		merge: Boolean = false
 	): Unit = {
 		val conf = new SparkConf()
