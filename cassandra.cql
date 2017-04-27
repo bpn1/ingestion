@@ -146,6 +146,12 @@ CREATE TABLE datalake.duplicatecandidates (
     candidates list<frozen<tuple<subject, text, double>>>
 );
 
+CREATE TABLE datalake.sim_measure_stats (
+    id uuid PRIMARY KEY,
+    comment text,
+    data list<frozen<tuple<double, double, double, double>>>
+);
+
 -- Evaluation
 CREATE KEYSPACE evaluation WITH REPLICATION = {
     'class' : 'SimpleStrategy',
