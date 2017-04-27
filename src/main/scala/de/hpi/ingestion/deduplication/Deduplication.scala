@@ -239,10 +239,11 @@ class Deduplication(
 		val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
 		val blocks = blocking(subjects, staging, blockingSchemes)
 
-		val blockEvaluation = evaluateBlocks(blocks, s"${this.appName}_${System.currentTimeMillis()}", blockingSchemes)
+		/*val blockEvaluation =
+		evaluateBlocks(blocks, s"${this.appName}_${System.currentTimeMillis()}", blockingSchemes)
 		sc
 			.parallelize(blockEvaluation)
-			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
+			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))*/
 
 		val subjectPairs = blocks.map { blocking =>
 			blocking.flatMap(block => findDuplicates(block._2))
