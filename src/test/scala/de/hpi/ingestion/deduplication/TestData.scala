@@ -8,6 +8,8 @@ import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler,
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import scala.collection.mutable
+
 object TestData {
 	// scalastyle:off line.size.limit
 	val idList = List.fill(8)(UUID.randomUUID())
@@ -106,17 +108,17 @@ object TestData {
 
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
 
-	def testConfig: List[ScoreConfig[String, SimilarityMeasure[String]]] = List(
+	def testConfig: mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = mutable.Map("name" -> List(
 		ScoreConfig(key = "name", similarityMeasure = MongeElkan, weight= 0.8),
 		ScoreConfig(key = "name", similarityMeasure = JaroWinkler, weight= 0.7),
 		ScoreConfig(key = "name", similarityMeasure = ExactMatchString, weight= 0.2)
-	)
+	))
 
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
 			MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
 			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7,
 			ExactMatchString.compare(subject1.name.get, subject2.name.get) * 0.2
-	).sum / 3
+	).sum / (0.8 + 0.7 + 0.2)
 
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()

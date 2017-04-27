@@ -29,7 +29,7 @@ class Deduplication(
 	val configFile: Option[String] = None,
 	val merge: Boolean = false
 ) extends Serializable with SparkJob {
-	var config = List[ScoreConfig[String, SimilarityMeasure[String]]]()
+	var config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
 	val settings = mutable.Map[String, String]()
 	var blockingSchemes = List[BlockingScheme](new SimpleBlockingScheme)
 	appName = importName
@@ -76,20 +76,33 @@ class Deduplication(
 		subject2: Subject,
 		scale: Int = 1
 	): Double = {
-		val scoreList = this.config
-			.map { feature =>
-				val valueSub1 = subject1.get(feature.key).headOption
-				val valueSub2 = subject2.get(feature.key).headOption
-				if(valueSub1.isDefined && valueSub2.isDefined) {
-					val score = feature
-						.similarityMeasure
-						.compare(valueSub1.get, valueSub2.get, scale)
-					score * feature.weight
-				} else {
-					-1.0
-				}
-			}.filter(_ != -1.0)
-		scoreList.sum / Math.max(1, scoreList.length)
+		val weights = for {
+			scoreConfigs <- this.config.values.toList
+			scoreConfig <- scoreConfigs
+			weight = scoreConfig.weight
+		} yield weight
+
+		val scores = for {
+			(attribute, simMeasures) <- this.config
+			values1 = subject1.get(attribute)
+			values2 = subject2.get(attribute)
+			if values1.nonEmpty && values2.nonEmpty
+			simMeasure <- simMeasures
+		} yield {
+			val score = simMeasure.similarityMeasure.compare(values1.head, values2.head, simMeasure.scale)
+			score * simMeasure.weight * simMeasure.scale
+		}
+		scores.sum / weights.sum
+	}
+
+	/**
+	  * Get similarity Measure by its name.
+	  * @param similarityMeasure Name of the similiarity Measure
+	  * @tparam T type of the similarity Measure
+	  * @return Similarity Measure
+	  */
+	def getSimilarityMeasure[T](similarityMeasure: String): SimilarityMeasure[T] = {
+		Deduplication.dataTypes.getOrElse(similarityMeasure, ExactMatchString).asInstanceOf[SimilarityMeasure[T]]
 	}
 
 	/**
@@ -107,22 +120,23 @@ class Deduplication(
 		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
 			settings(node.label) = node.text
 
-		config = (xml \\ "config" \ "simMeasurements" \ "feature")
-			.toList
-			.map { feature =>
-				val attribute = (feature \ "attribute").text
-				val simMeasure = (feature \ "similarityMeasure").text
-				val weight = (feature \ "weight").text
-				val scale = (feature \ "scale").text
-
-				ScoreConfig[String, SimilarityMeasure[String]](
-					attribute,
-					Deduplication.dataTypes
-						.getOrElse(simMeasure, ExactMatchString)
-						.asInstanceOf[SimilarityMeasure[String]],
-					weight.toDouble,
-					scale.toInt)
-			}
+		val attributes = (xml \\ "config" \ "simMeasurements" \ "attribute").toList
+		val similarityMeasure = for {
+			node <- attributes
+			key = (node \ "key").text
+			feature <- (node \ "feature").toList
+			similarityMeasure = (feature \ "similarityMeasure").text
+			weight = (feature \ "weight").text.toDouble
+			scale = (feature \ "scale").text.toInt
+		}{
+			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
+				key,
+				getSimilarityMeasure[String](similarityMeasure),
+				weight,
+				scale
+			)
+			this.config(key) = config.getOrElse(key, Nil):::List(scoreConfig)
+		}
 	}
 
 	/**
