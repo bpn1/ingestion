@@ -11,7 +11,7 @@ import org.apache.spark.rdd.RDD
 object TestData {
 	// scalastyle:off line.size.limit
 	val idList = List.fill(8)(UUID.randomUUID())
-	def testData(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
+	def testDataSmall(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
 		sc.parallelize(Seq(
 			((idList.head, idList(1)), 1.0),
 			((idList(2), idList(3)), 1.0),
@@ -20,7 +20,7 @@ object TestData {
 		))
 	}
 
-	def trainigsData(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
+	def trainingDataSmall(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
 		sc.parallelize(Seq(
 			((idList.head, idList(1)), 0.7),
 			((idList(2), idList(3)), 0.8),

@@ -1,10 +1,13 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
+
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import scala.collection.mutable.ListMap
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, SimilarityMeasureStats}
 
 object SimilarityMeasureEvaluation {
@@ -18,8 +21,8 @@ object SimilarityMeasureEvaluation {
 	/**
 	  * Generate (prediction, label) tuples for evaluation
 	  * @param training Precictions from the training data
-	  * @param test		Labels from the testdata
-	  * @return			RDD containing (prediction, label) tuples
+	  * @param test Labels from the testdata
+	  * @return RDD containing (prediction, label) tuples
 	  */
 	def generatePredictionAndLabels(
 		training: RDD[((UUID, UUID), Double)],
@@ -39,6 +42,33 @@ object SimilarityMeasureEvaluation {
 			.values
 	}
 
+	def generateStats(
+		test: RDD[((UUID, UUID), Double)],
+		training: RDD[((UUID,UUID),Double)],
+		sc: SparkContext
+	) : SimilarityMeasureStats = {
+		val predictionAndLabels = generatePredictionAndLabels(training, test)
+		val metrics = new BinaryClassificationMetrics(predictionAndLabels, 10)
+
+		val precision = metrics.precisionByThreshold
+		val recall = metrics.recallByThreshold
+		val f1Score = metrics.fMeasureByThreshold
+
+		val data = precision
+		.join(recall)
+		.join(f1Score)
+		.map { case (threshold, ((precision, recall), f1Score)) =>
+			(threshold, precision, recall, f1Score)
+		}
+		.sortBy(_._1)
+		.collect
+		.toList
+
+		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
+		println(stats)
+		stats
+	}
+
 	def main(args: Array[String]): Unit = {
 		val conf = new SparkConf()
 			.setAppName(this.appName)
@@ -53,22 +83,7 @@ object SimilarityMeasureEvaluation {
 			.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
 			.map(pair => (pair, 1.0))
 
-		val predictionAndLabels = generatePredictionAndLabels(training, test)
-		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
-
-		val precision = metrics.precisionByThreshold
-		val recall = metrics.recallByThreshold
-		val f1Score = metrics.fMeasureByThreshold
-
-		val data = precision
-			.join(recall)
-			.join(f1Score)
-			.map { case (threshold, ((precision, recall), f1Score)) =>
-				(threshold, precision, recall, f1Score)
-			}
-			.collect
-		    .toList
-		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
+		val stats = generateStats(test, training, sc)
 
 		sc
 			.parallelize(Seq(stats))
