@@ -621,7 +621,7 @@ object TestData {
 		)
 	}
 
-	def groupedAliasesTestSet(): Set[Alias] = {
+	def groupedAliasesSet(): Set[Alias] = {
 		Set(
 			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Alias("Bayern", Map("Bayern" -> 1)),
@@ -631,7 +631,7 @@ object TestData {
 		)
 	}
 
-	def groupedPagesTestSet(): Set[Page] = {
+	def groupedPagesSet(): Set[Page] = {
 		Set(
 			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
@@ -641,16 +641,7 @@ object TestData {
 		)
 	}
 
-	def cleanedGroupedAliasesTestSet(): Set[Alias] = {
-		Set(
-			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
-			Alias("Bayern", Map("Bayern" -> 1)),
-			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1))
-		)
-	}
-
-	def cleanedGroupedPagesTestSet(): Set[Page] = {
+	def cleanedGroupedPagesSet(): Set[Page] = {
 		Set(
 			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
@@ -681,7 +672,7 @@ object TestData {
 			"Zerfall (Album)")
 	}
 
-	def smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
+	def  	smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
 		List(
 			ParsedWikipediaEntry(
 				"Audi",
@@ -748,13 +739,17 @@ object TestData {
 					Link("Bayern", "Bayern", Option(69)),
 					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
 					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)),
 					Link("Zerfall", "Zerfall (Soziologie)", Option(4711)), // dead link
 					Link("", "page name with empty alias", Option(4711)),
-					Link("alias with empty page name", "", Option(4711)),
-					Link("Konkurrent", "Volvo", Option(4711)),
-					Link("Opel", "Opel", Option(4711)),
-					Link("DB", "Deutsche Bahn", Option(4711))
+					Link("alias with empty page name", "", Option(4711))
 				)),
+			ParsedWikipediaEntry("Ingolstadt", Option("lorem")),
+			ParsedWikipediaEntry("Bayern", Option("lorem")),
+			ParsedWikipediaEntry("Automobilhersteller", Option("lorem")),
+			ParsedWikipediaEntry("Zerfall (Album)", Option("lorem")),
+			ParsedWikipediaEntry("Radioaktivität", Option("lorem")),
 			ParsedWikipediaEntry("Volvo", Option("lorem")),
 			ParsedWikipediaEntry("Opel", Option("ipsum")),
 			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
@@ -780,9 +775,12 @@ object TestData {
 				"Audi",
 				Option("dummy text"),
 				List(
-					Link("Konkurrent", "Volvo", Option(4711)),
-					Link("Opel", "Opel", Option(4711)),
-					Link("DB", "Deutsche Bahn", Option(4711))
+					Link("Ingolstadt", "Ingolstadt", Option(55)),
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711))
 				)))
 	}
 

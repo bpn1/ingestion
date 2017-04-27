@@ -6,7 +6,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 class LinkCleanerTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Grouped valid pages with known existing pages" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
-		val pages = sc.parallelize(TestData.cleanedGroupedPagesTestSet().toList)
+		val pages = sc.parallelize(TestData.cleanedGroupedPagesSet().toList)
 			.map(_.page)
 		val validPages = LinkCleaner.groupValidPages(articles, pages)
 		validPages should not be empty
@@ -14,7 +14,7 @@ class LinkCleanerTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	they should "be exactly these pages" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
-		val pages = sc.parallelize(TestData.cleanedGroupedPagesTestSet().toList)
+		val pages = sc.parallelize(TestData.cleanedGroupedPagesSet().toList)
 			.map(_.page)
 		val validPages = LinkCleaner.groupValidPages(articles, pages)
 			.collect

@@ -16,41 +16,6 @@ object LinkAnalysis {
 	val outputPageToAliasesTablename = "wikipediapages"
 
 	/**
-	  * Removes links that do not point to an existing page.
-	  *
-	  * @param links    links to be filtered
-	  * @param allPages every page in Wikipedia
-	  * @return filtered RDD of links
-	  */
-	def removeDeadLinks(links: RDD[Alias], allPages: RDD[String]): RDD[Alias] = {
-		links
-			.flatMap { link =>
-				link.pages
-					.map(page => (link.alias, page._1, page._2))
-			}
-			.keyBy { case (alias, pageName, count) => pageName }
-			.join(allPages.map(entry => Tuple2(entry, entry)))
-			.map { case (pageName, (link, doublePageName)) => link }
-			.map { case (alias, pageName, count) => (alias, Map((pageName, count))) }
-			.reduceByKey(_ ++ _)
-			.map { case (alias, links) => Alias(alias, links) }
-	}
-
-	/**
-	  * Removes non existing pages.
-	  *
-	  * @param pages    pages to be filtered
-	  * @param allPages all existing pages
-	  * @return filtered RDD of pages
-	  */
-	def removeDeadPages(pages: RDD[Page], allPages: RDD[String]): RDD[Page] = {
-		pages
-			.keyBy(_.page)
-			.join(allPages.map(entry => Tuple2(entry, entry)))
-			.map { case (pageName, (page, doublePageName)) => page }
-	}
-
-	/**
 	  * Extracts links from Wikipedia articles that point to an existing page.
 	  *
 	  * @param articles all Wikipedia articles
@@ -90,12 +55,11 @@ object LinkAnalysis {
 	/**
 	  * Creates RDD of pages with corresponding Aliases.
 	  *
-	  * @param parsedWikipedia RDD of parsed Wikipedia entries to be processed
+	  * @param links links of Wikipedia articles
 	  * @return RDD of pages
 	  */
-	def groupByPageNames(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Page] = {
-		parsedWikipedia
-			.flatMap(_.allLinks())
+	def groupByPageNames(links: RDD[Link]): RDD[Page] = {
+		links
 			.map(link => (link.page, link.alias))
 			.groupByKey
 			.map { case (page, aliasList) =>
@@ -116,8 +80,9 @@ object LinkAnalysis {
 	  * @return grouped Aliases and page names
 	  */
 	def run(articles: RDD[ParsedWikipediaEntry]): (RDD[Alias], RDD[Page]) = {
-		val aliases = groupByAliases(extractValidLinks(articles))
-		val pages = groupByPageNames(articles)
+		val validLinks = extractValidLinks(articles)
+		val aliases = groupByAliases(validLinks)
+		val pages = groupByPageNames(validLinks)
 		(aliases, pages)
 	}
 
