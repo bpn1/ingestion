@@ -2,6 +2,8 @@ package de.hpi.ingestion.textmining
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.models.FeatureEntry
 
 class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Inverse document frequencies" should "contain as many tokens as document frequencies" in {
@@ -139,8 +141,11 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
+		val input = List(articles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
 		val featureEntries = CosineContextComparator
-			.run(articles, documentFrequencies, aliases)
+			.run(input, sc)
+			.fromAnyRDD[FeatureEntry]()
+			.head
 			.collect
 		featureEntries shouldBe empty
 	}
@@ -149,8 +154,11 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
+		val input = List(articles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
 		val featureEntries = CosineContextComparator
-			.run(articles, documentFrequencies, aliases)
+			.run(input, sc)
+			.fromAnyRDD[FeatureEntry]()
+			.head
 			.collect
 		featureEntries should not be empty
 	}
@@ -159,8 +167,11 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
+		val input = List(articles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
 		val featureEntries = CosineContextComparator
-			.run(articles, documentFrequencies, aliases)
+			.run(input, sc)
+			.fromAnyRDD[FeatureEntry]()
+			.head
 			.collect
 		val linkCount = articles.flatMap(_.allLinks()).count
 		featureEntries.length shouldBe linkCount

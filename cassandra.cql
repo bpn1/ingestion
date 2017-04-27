@@ -81,7 +81,8 @@ CREATE TABLE wikidumps.dbpedia (
     description text,
     instancetype text,
     label text,
-    wikipageid text
+    wikipageid text,
+    wikidataid text
 );
 
 -- Datalake
@@ -154,7 +155,43 @@ CREATE TABLE datalake.duplicatecandidates (
     candidates list<frozen<tuple<subject, text, double>>>
 );
 
-CREATE TABLE datalake.goldstandard (
+-- Evaluation
+CREATE KEYSPACE evaluation WITH REPLICATION = {
+    'class' : 'SimpleStrategy',
+    'replication_factor' : 3
+};
+
+-- Types
+CREATE TYPE evaluation.version (
+    version timeuuid,
+    value frozen<list<text>>,
+    validity frozen<map<text, text>>,
+    datasources frozen<list<text>>,
+    timestamp timestamp,
+    program text
+);
+
+CREATE TYPE evaluation.subject (
+    id uuid,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+-- Tables
+CREATE TABLE evaluation.goldstandard (
+    id1 uuid PRIMARY KEY,
+    id2 uuid
+);
+
+CREATE TABLE evaluation.subject_dbpedia (
     id uuid PRIMARY KEY,
     aliases list<text>,
     aliases_history list<frozen<version>>,
@@ -168,7 +205,7 @@ CREATE TABLE datalake.goldstandard (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
-CREATE TABLE datalake.subject_merged (
+CREATE TABLE evaluation.subject_wikidata (
     id uuid PRIMARY KEY,
     aliases list<text>,
     aliases_history list<frozen<version>>,
@@ -180,4 +217,22 @@ CREATE TABLE datalake.subject_merged (
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+CREATE TABLE evaluation.sim_measure_stats (
+    id uuid PRIMARY KEY,
+    data list<frozen<tuple<double, double, double, double>>>,
+    comment text
+);
+
+CREATE TABLE evaluation.version (
+    version timeuuid PRIMARY KEY,
+    datasources list<text>,
+    program text,
+    timestamp timestamp
+);
+
+CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
+    subject_id uuid PRIMARY KEY,
+    candidates list<frozen<tuple<subject, text, double>>>
 );

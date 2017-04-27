@@ -1,19 +1,50 @@
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models._
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
   */
-object CosineContextComparator {
+object CosineContextComparator extends SparkJob {
+	appName = "Cosine Context Comparator"
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
 	val linksTable = "wikipedialinks"
 	val featureEntryTable = "featureentries"
+
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries with their term frequencies and loads the document frequencies from the
+	  * Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
+		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
+		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
+	}
+	/**
+	  * Saves the Feature Entries to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[FeatureEntry]()
+			.head
+			.saveToCassandra(keyspace, featureEntryTable)
+	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Transforms the term frequencies in a bag and an identifier for the term frequencies in a joinable format
@@ -218,20 +249,17 @@ object CosineContextComparator {
 	}
 
 	/**
-	  * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
-	  *
-	  * @param articlesWithTermFrequencies Wikipedia articles with their bags of words
-	  * @param documentFrequencies         Document frequencies of known tokens, used for tf-idf computation
-	  * @param aliases                     known aliases and pages they may refer to
-	  * @return Feature entries. They contain the probability that the alias is a link, that it refers to the respective
-	  *         page and the cosine similarity between the link context and the page words. A feature entry may also be
-	  *         denoted as false, which means that the actual link did not point to that page.
+	  * Calculates the Cosine Similarities for every alias and creates feature entries containing the other two
+	  * features as well.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
 	  */
-	def run(
-		articlesWithTermFrequencies: RDD[ParsedWikipediaEntry],
-		documentFrequencies: RDD[DocumentFrequency],
-		aliases: RDD[Alias]
-	): RDD[FeatureEntry] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
+		val documentFrequencies = input(1).asInstanceOf[RDD[DocumentFrequency]]
+		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val numDocuments = articlesWithTermFrequencies.count()
 
 		val articleTfidf = calculateArticleTfidf(
@@ -247,27 +275,7 @@ object CosineContextComparator {
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
-		compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
-	}
-
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Cosine Context Comparator")
-			.set("spark.shuffle.blockTransferService", "nio")
-			.set("spark.network.timeout", "600s")
-			.set("spark.driver.maxResultSize", "8g")
-		// http://stackoverflow.com/questions/29781489/apache-spark-network-errors-between-executors
-		// http://stackoverflow.com/questions/40740750/timeout-exception-in-apache-spark-during-program-execution
-		// https://qubole.zendesk.com/hc/en-us/articles/215181846-How-To-Increase-spark-driver-maxResultSize-value
-
-		val sc = new SparkContext(conf)
-
-		val articlesWithTermFrequencies = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
-		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
-
-		run(articlesWithTermFrequencies, documentFrequencies, aliases).saveToCassandra(keyspace, featureEntryTable)
-
-		sc.stop()
+		val featureEntries = compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+		List(featureEntries).toAnyRDD()
 	}
 }

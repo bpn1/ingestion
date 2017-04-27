@@ -6,21 +6,30 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
 import scala.annotation.tailrec
 
+/**
+  * Trait used for textmining tokenizers. Declares methods to tokenize a text and create a text from a list of tokens.
+  */
 trait Tokenizer extends Serializable {
 	def tokenize(x: String): List[String]
 
 	def reverse(x: List[String]): String
 }
 
+/**
+  * Tokenizes the given text on spaces.
+  */
 class WhitespaceTokenizer() extends Tokenizer {
 	def tokenize(txt: String) = txt.split(" ").toList
 
 	def reverse(tokens: List[String]) = tokens.mkString(" ")
 }
 
+/**
+  * Uses the WhitespaceTokenizer but removes control characters and removes whitespace.
+  */
 class CleanWhitespaceTokenizer() extends Tokenizer {
 	def stripAll(s: String, bad: String): String = {
-		// http://stackoverflow.com/questions/17995260/trimming-strings-in-scala
+		// Source: http://stackoverflow.com/a/17995434
 		@tailrec def start(n: Int): String = {
 			if (n == s.length) {
 				""
@@ -64,6 +73,9 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 	def reverse(tokens: List[String]) = tokens.mkString(" ")
 }
 
+/**
+  * Uses the CoreNLPTokenizer but removes control characters from the resulting tokens.
+  */
 class CleanCoreNLPTokenizer() extends CoreNLPTokenizer {
 	override def tokenize(txt: String) = {
 		val tokens = super.tokenize(txt)
@@ -72,6 +84,9 @@ class CleanCoreNLPTokenizer() extends CoreNLPTokenizer {
 	}
 }
 
+/**
+  * Uses the CoreNLP Simple German API to tokenize the given text.
+  */
 class CoreNLPTokenizer() extends Tokenizer {
 	def tokenize(txt: String) = {
 		new GermanDocument(txt)
@@ -82,9 +97,4 @@ class CoreNLPTokenizer() extends Tokenizer {
 	}
 
 	def reverse(tokens: List[String]) = tokens.mkString(" ")
-}
-
-class SentenceTokenizer() extends Tokenizer {
-	def tokenize(txt: String) = txt.split("\\.").toList.map(_.trim)
-	def reverse(tokens: List[String]) = tokens.mkString(". ").trim
 }
