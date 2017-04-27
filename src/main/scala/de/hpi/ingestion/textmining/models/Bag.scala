@@ -8,7 +8,7 @@ import scala.reflect.{ClassTag, classTag}
 
 
 /**
-  * Also known as muliset. It may contain elements multiple times.
+  * Also known as multiset. It may contain elements multiple times.
   *
   * @param counts a map that stores the elements and their respective frequencies
   * @tparam A element type
