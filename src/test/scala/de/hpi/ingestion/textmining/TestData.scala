@@ -279,7 +279,8 @@ object TestData {
 			AliasOccurrencesInArticle(Set("Audi"), Set()),
 			AliasOccurrencesInArticle(Set(), Set("Audi")),
 			AliasOccurrencesInArticle(Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), Set("Streitberg")),
-			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))))
+			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
+		))
 	}
 
 	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {

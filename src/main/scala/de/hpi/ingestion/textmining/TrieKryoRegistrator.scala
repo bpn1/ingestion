@@ -13,6 +13,7 @@ import scala.collection.mutable
 class TrieKryoRegistrator extends KryoRegistrator {
 	/**
 	  * Registers the class TrieNode with the correct Serializers for each field.
+	  *
 	  * @param kryo current Kryo instance
 	  */
 	override def registerClasses(kryo: Kryo): Unit = {

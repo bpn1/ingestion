@@ -12,9 +12,10 @@ class OptionSerializer() extends Serializer[Option[_]] {
 
 	/**
 	  * Deserializes an Object given an input buffer to read from.
-	  * @param kryo current Kryo instance
+	  *
+	  * @param kryo  current Kryo instance
 	  * @param input input input buffer to read from
-	  * @param typ class of the object we read
+	  * @param typ   class of the object we read
 	  * @return the deserialized object
 	  */
 	override def read(kryo: Kryo, input: Input, typ: Class[Option[_]]): Option[_] = {
@@ -29,7 +30,7 @@ class OptionSerializer() extends Serializer[Option[_]] {
 				for(i <- 0 until len) {
 					in += kryo.readClassAndObject(input)
 				}
-			Option(in.toList)
+				Option(in.toList)
 			case 3 | _ => None
 		}
 	}
@@ -37,9 +38,10 @@ class OptionSerializer() extends Serializer[Option[_]] {
 	/**
 	  * Serializes a mutable Map to a given output buffer.
 	  * Only Options of Strings and Lists can be serialized.
-	  * @param kryo current Kryo instance
+	  *
+	  * @param kryo   current Kryo instance
 	  * @param output output buffer to write to
-	  * @param value Option to serialize
+	  * @param value  Option to serialize
 	  */
 	override def write(kryo: Kryo, output: Output, value: Option[_]) = {
 		value match {
