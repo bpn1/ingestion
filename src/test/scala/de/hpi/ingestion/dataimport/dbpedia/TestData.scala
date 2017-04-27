@@ -1,6 +1,6 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
-import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
+import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import de.hpi.ingestion.datalake.models.Version
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -49,6 +49,8 @@ object TestData {
 
 	def properties: List[(String, String)] = List(
 		("dbo:wikiPageID", "1"),
+		("owl:sameAs", "wikidata:Q1"),
+		("owl:sameAs", "yago:X"),
 		("rdfs:label", "Anschluss"),
 		("dbo:abstract", "Lorem Ipsum"),
 		("rdf:type", "dbo:Organisation"),
@@ -59,16 +61,18 @@ object TestData {
 		("dbp:headquarters", "CentrePort, Fort Worth, Texas, United States")
 	)
 
-	def parsedEntity(name: String) = DBPediaEntity(
+	def parsedEntity(name: String) = DBpediaEntity(
 		name,
 		Option("1"),
+		Option("Q1"),
 		Option("Anschluss"),
 		Option("Lorem Ipsum"),
 		Option("Company"),
 		Map(
 			"rdf:type" -> List("dbo:Organisation", "dbo:Company", "dbo:Airline"),
 			"dbp:founded" -> List("1926-04-15", "Chicago, Illinois"),
-			"dbp:headquarters" -> List("CentrePort, Fort Worth, Texas, United States")
+			"dbp:headquarters" -> List("CentrePort, Fort Worth, Texas, United States"),
+			"owl:sameAs" -> List("wikidata:Q1", "yago:X")
 		)
 	)
 
@@ -92,17 +96,17 @@ object TestData {
 		))
 	}
 
-	def entityRDD(sc: SparkContext): RDD[DBPediaEntity] = {
+	def entityRDD(sc: SparkContext): RDD[DBpediaEntity] = {
 		sc.parallelize(List(
-			DBPediaEntity(dbpedianame="dbpedia-de:Liste_von_Autoren/V", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste"))),
-			DBPediaEntity(dbpedianame="dbpedia-de:Anschluss_(Soziologie)", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Soziologische_Systemtheorie"))),
-			DBPediaEntity(dbpedianame="dbpedia-de:Liste_von_Autoren/T", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste")))
+			DBpediaEntity(dbpedianame="Liste_von_Autoren/V", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste"))),
+			DBpediaEntity(dbpedianame="Anschluss_(Soziologie)", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Soziologische_Systemtheorie"))),
+			DBpediaEntity(dbpedianame="Liste_von_Autoren/T", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste")))
 		))
 	}
 
-	def version(sc: SparkContext): Version = Version("DBPediaDataLakeImport", datasources = List("dataSources"), sc)
+	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", datasources = List("dataSources"), sc)
 
-	def testEntity: DBPediaEntity = DBPediaEntity(
+	def testEntity: DBpediaEntity = DBpediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
 		label = Option("Liste von Autoren"),
 		data = Map(
@@ -114,6 +118,15 @@ object TestData {
 			"geo:long" -> List("100"),
 			"testProperty" -> List("test")
 		)
+	)
+
+	def mapping: Map[String, List[String]] = Map(
+		"id_wikidata" -> List("wikidata_id"),
+		"id_dbpedia" -> List("dbpedianame"),
+		"id_wikipedia" -> List("dbpedianame"),
+		"id_viaf" -> List("dbo:viafId", "property-de:viaf"),
+		"geo_coords_lat" -> List("geo:lat", "property-de:latitude", "property-de:breitengrad"),
+		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad")
 	)
 	// scalastyle:on line.size.limit
 }

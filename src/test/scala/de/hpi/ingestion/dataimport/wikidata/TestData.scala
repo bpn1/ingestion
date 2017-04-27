@@ -267,7 +267,7 @@ object TestData {
 			List())
 	}
 
-	def version(sc: SparkContext): Version = Version("DBPediaDataLakeImport", datasources = List("dataSources"), sc)
+	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", datasources = List("dataSources"), sc)
 
 	def testEntity(): WikiDataEntity = WikiDataEntity(
 		"Q21110253",
@@ -286,6 +286,12 @@ object TestData {
 		)
 	)
 
+	def mapping: Map[String, List[String]] = Map(
+		"id_wikidata" -> List("id"),
+		"id_dbpedia" -> List("wikiname"),
+		"id_wikipedia" -> List("wikiname"),
+		"id_viaf" -> List("VIAF ID")
+	)
 	// scalastyle:on line.size.limit
 }
 // scalastyle:on number.of.methods

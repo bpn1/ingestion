@@ -1,6 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import scala.io.Source
+import scala.util.Try
 
 /**
   * An advanced tokenizer that uses a given tokenizer, removes stop words if flag is set and stems the tokens
@@ -8,7 +9,7 @@ import scala.io.Source
   * @param removeStopwords flag for removing stop words
   * @param stem flag for stemming
   */
-class IngestionTokenizer(
+case class IngestionTokenizer(
 	tokenizer: Tokenizer,
 	removeStopwords: Boolean = false,
 	stem: Boolean = false
@@ -83,14 +84,24 @@ object IngestionTokenizer {
 	}
 
 	/**
-	  * Uses default constructor to create a tokenizer with the given tokenizer which removes stopwords and stems
-	  * according to the flags.
-	  * @param tokenizer tokenizer to use
-	  * @param stopWords flag for removing stopwords
-	  * @param stem flag for stemming
-	  * @return returns tokenizer which uses the CoreNLPTokenizer and removes stopwords and stems according to the flags
+	  * Parses an Array of String arguments to create a Tokenizer. If the arguments are not well-formed the default
+	  * values of the default Tokenizer will be used.
+	  * @param args Array of arguments
+	  * @return Tokenizer corresponding to the arguments if they are well-formed
 	  */
-	def apply(tokenizer: Tokenizer, stopWords: Boolean = false, stem: Boolean = false): IngestionTokenizer = {
-		new IngestionTokenizer(tokenizer, stopWords, stem)
+	def apply(args: Array[String]) = {
+		val tokenizer = if(args.length < 1) {
+			new CoreNLPTokenizer
+		} else {
+			args.head match {
+				case "WhitespaceTokenizer" => new WhitespaceTokenizer
+				case "CleanWhitespaceTokenizer" => new CleanWhitespaceTokenizer
+				case "CleanCoreNLPTokenizer" => new CleanCoreNLPTokenizer
+				case "CoreNLPTokenizer" | _ => new CoreNLPTokenizer
+			}
+		}
+		val filter = args.length < 2 || Try(args(1).toBoolean).getOrElse(false)
+		val stem = args.length < 3 || Try(args(2).toBoolean).getOrElse(false)
+		new IngestionTokenizer(tokenizer, filter, stem)
 	}
 }

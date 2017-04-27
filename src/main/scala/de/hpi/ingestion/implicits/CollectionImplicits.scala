@@ -1,7 +1,9 @@
 package de.hpi.ingestion.implicits
 
+import org.apache.spark.rdd.RDD
+
 /**
-  * Contains the implicit classes for collection type methods.
+  * Contains implicit classes extending Scala collections.
   */
 object CollectionImplicits {
 
@@ -13,7 +15,7 @@ object CollectionImplicits {
 	implicit class Crossable[X](xs: Traversable[X]) {
 		/**
 		  * Returns the cross product of both collections: xs X ys.
-		  * Source: http://stackoverflow.com/questions/14740199/cross-product-in-scala
+		  * Source: http://stackoverflow.com/a/14740340
 		  * @param ys the collection to create the cross product with
 		  * @tparam Y the type of the objects contained in the collection
 		  * @return the cross product of xs and ys
@@ -38,4 +40,32 @@ object CollectionImplicits {
 			println(s"y - x:\n\t${ys.toSet.filterNot(xs.toSet).mkString("\n\t")}")
 		}
 	}
+
+	/**
+	  * Implicit class which adds the casting of a collection of RDDs of a single type to a collection of RDDs of Any.
+	  * @param xs Collection containing the RDDs
+	  * @tparam X type of the RDDs
+	  */
+	implicit class ToAnyRDD[X](xs: List[RDD[X]]) {
+		/**
+		  * Casts the RDDs to RDDs of type Any.
+		  * @return Collection of RDDs of type Any
+		  */
+		def toAnyRDD(): List[RDD[Any]] = xs.map(_.asInstanceOf[RDD[Any]])
+	}
+
+	/**
+	  * Implicit class which adds the casting of a collection of RDDs of Any to a collection of RDDs of a single type .
+	  * @param xs Collection containing the RDDs of type Any
+	  */
+	implicit class FromAnyRDD(xs: List[RDD[Any]]) {
+		/**
+		  * Casts the RDDs of type Any to the given type.
+		  * @tparam X type of the RDDs they will be cast to
+		  * @return Collection of RDDs of the given type
+		  */
+		def fromAnyRDD[X](): List[RDD[X]] = xs.map(_.asInstanceOf[RDD[X]])
+	}
+
+
 }
