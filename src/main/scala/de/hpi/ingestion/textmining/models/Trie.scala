@@ -1,7 +1,5 @@
 package de.hpi.ingestion.textmining.models
 
-// from https://github.com/mauricio/scala-sandbox/blob/master/src/main/scala/trie/Trie.scala
-
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -9,11 +7,15 @@ import scala.collection.mutable.ListBuffer
 
 /**
   * Represents a Trie made up of TrieNodes.
+  * Source: https://git.io/v9sVB
   */
 object Trie {
 	def apply(): Trie = new TrieNode()
 }
 
+/**
+  * Trait declaring the methods needed for using the Trie.
+  */
 sealed trait Trie extends Traversable[List[String]] with Serializable {
 	/**
 	  * Appends a list of tokens to the trie.
