@@ -7,7 +7,6 @@ import de.hpi.ingestion.deduplication.models._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import com.datastax.driver.core.utils.UUIDs
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
