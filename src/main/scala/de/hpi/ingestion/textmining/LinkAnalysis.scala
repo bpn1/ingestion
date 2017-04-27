@@ -60,8 +60,8 @@ object LinkAnalysis {
 	  */
 	def groupByPageNames(links: RDD[Link]): RDD[Page] = {
 		links
-			.map(link => (link.page, link.alias))
-			.groupByKey
+			.map(link => (link.page, List(link.alias)))
+			.reduceByKey(_ ++ _)
 			.map { case (page, aliasList) =>
 				val aliases = aliasList
 					.filter(_.nonEmpty)
