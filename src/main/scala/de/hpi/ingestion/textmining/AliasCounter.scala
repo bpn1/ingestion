@@ -8,7 +8,7 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
-  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages.
+  * Counts Alias occurrences and merges them into previously extracted Aliases with their corresponding pages.
   */
 object AliasCounter extends SparkJob {
 	appName = "Alias Counter"
@@ -44,20 +44,20 @@ object AliasCounter extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Calculates the probability that an alias is a link.
+	  * Calculates the probability that an Alias is a link.
 	  *
-	  * @param aliasCounts Alias of a given alias
-	  * @return percentage of the occurrences as link.
+	  * @param aliasCounts Alias of a given Alias
+	  * @return percentage of the occurrences as link
 	  */
 	def probabilityIsLink(aliasCounts: Alias): Double = {
 		aliasCounts.linkoccurrences.toDouble / aliasCounts.totaloccurrences
 	}
 
 	/**
-	  * Extracts list of link and general alias occurrences for an article
+	  * Extracts list of link and general Alias occurrences for an article.
 	  *
-	  * @param entry article from which the aliases will be extracted
-	  * @return list of aliases each with an occurrence set to 1
+	  * @param entry article from which the Aliases will be extracted
+	  * @return list of Aliases each with an occurrence set to 1
 	  */
 	def extractAliasList(entry: ParsedWikipediaEntry): List[Alias] = {
 		val linkSet = entry.allLinks()

@@ -8,7 +8,7 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
-  * Groups link aliases by page names and vice versa. Also removes dead links (no corresponding page).
+  * Groups link Aliases by page names and vice versa without counting dead links.
   */
 object LinkAnalysis extends SparkJob {
 	appName = "Link Analysis"
@@ -44,6 +44,13 @@ object LinkAnalysis extends SparkJob {
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Removes links that do not point to an existing page.
+	  *
+	  * @param links    links to be filtered
+	  * @param allPages every page in Wikipedia
+	  * @return filtered RDD of links
+	  */
 	def removeDeadLinks(links: RDD[Alias], allPages: RDD[String]): RDD[Alias] = {
 		links
 			.flatMap { link =>
@@ -58,6 +65,13 @@ object LinkAnalysis extends SparkJob {
 			.map { case (alias, links) => Alias(alias, links) }
 	}
 
+	/**
+	  * Removes non existing pages.
+	  *
+	  * @param pages    pages to be filtered
+	  * @param allPages all existing pages
+	  * @return filtered RDD of pages
+	  */
 	def removeDeadPages(pages: RDD[Page], allPages: RDD[String]): RDD[Page] = {
 		pages
 			.keyBy(_.page)
@@ -65,6 +79,12 @@ object LinkAnalysis extends SparkJob {
 			.map { case (pageName, (page, doublePageName)) => page }
 	}
 
+	/**
+	  * Creates RDD of Aliases with corresponding pages.
+	  *
+	  * @param parsedWikipedia RDD of parsed Wikipedia entries to be processed
+	  * @return RDD of Aliases
+	  */
 	def groupByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Alias] = {
 		parsedWikipedia
 			.flatMap(_.allLinks())
@@ -81,6 +101,12 @@ object LinkAnalysis extends SparkJob {
 			.filter(alias => alias.alias.nonEmpty && alias.pages.nonEmpty)
 	}
 
+	/**
+	  * Creates RDD of pages with corresponding Aliases.
+	  *
+	  * @param parsedWikipedia RDD of parsed Wikipedia entries to be processed
+	  * @return RDD of pages
+	  */
 	def groupByPageNames(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Page] = {
 		parsedWikipedia
 			.flatMap(_.allLinks())
@@ -97,6 +123,13 @@ object LinkAnalysis extends SparkJob {
 			.filter(page => page.page.nonEmpty && page.aliases.nonEmpty)
 	}
 
+	/**
+	  * Calculates probability for Alias pointing to page.
+	  *
+	  * @param alias    Alias to be processed
+	  * @param pageName pagename that is being pointed to
+	  * @return probability for Alias pointing to page
+	  */
 	def probabilityLinkDirectsToPage(alias: Alias, pageName: String): Double = {
 		val totalReferences = alias
 			.pages
@@ -106,10 +139,10 @@ object LinkAnalysis extends SparkJob {
 	}
 
 	/**
-	  * Groups link aliases by page names and vice versa. Also removes dead links (no corresponding page).
+	  * Groups link Aliases by page names and vice versa. Also removes dead links (no corresponding page).
 	  *
 	  * @param articles all Wikipedia articles
-	  * @return Grouped aliases and page names
+	  * @return grouped Aliases and page names
 	  */
 	def run(articles: RDD[ParsedWikipediaEntry]): (RDD[Alias], RDD[Page]) = {
 		val allPages = articles.map(_.title)

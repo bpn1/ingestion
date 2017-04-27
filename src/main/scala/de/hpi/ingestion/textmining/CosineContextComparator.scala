@@ -6,7 +6,10 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
-
+/**
+  * Calculate cosine similarity for contexts of every term and link and
+  * writes it with the other features as Feature Entries to the Cassandra.
+  */
 object CosineContextComparator extends SparkJob {
 	appName = "Cosine Context Comparator"
 	val keyspace = "wikidumps"
@@ -137,10 +140,11 @@ object CosineContextComparator extends SparkJob {
 
 	/**
 	  * Calculates the tfIdf for every term.
-	  * @param termFrequencies RDD of terms with their identifier and raw term frequency in the form
-	  *                        (term, (identifier, raw term frequency))
-	  * @param documentFrequencies RDD of Document Frequencies
-	  * @param numDocuments number of documents used to determine the Document Frequencies
+	  *
+	  * @param termFrequencies            RDD of terms with their identifier and raw term frequency in the form
+	  *                                   (term, (identifier, raw term frequency))
+	  * @param documentFrequencies        RDD of Document Frequencies
+	  * @param numDocuments               number of documents used to determine the Document Frequencies
 	  * @param documentFrequencyThreshold lower threshold used for Document Frequencies of terms without a
 	  *                                   precalculated one.
 	  * @tparam T type of the identifier for each term

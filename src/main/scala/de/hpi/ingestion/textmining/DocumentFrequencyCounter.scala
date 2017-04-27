@@ -1,12 +1,15 @@
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models.{DocumentFrequency, ParsedWikipediaEntry}
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
+/**
+  * Counts document frequencies over all articles.
+  */
 object DocumentFrequencyCounter extends SparkJob {
 	appName = "Document Frequency Counter"
 	val keyspace = "wikidumps"
@@ -42,6 +45,12 @@ object DocumentFrequencyCounter extends SparkJob {
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Counts document frequencies while stemming and removing stopwords.
+	  *
+	  * @param articles all parsed Wikipedia entries
+	  * @return RDD of document frequencies
+	  */
 	def countDocumentFrequencies(
 		articles: RDD[ParsedWikipediaEntry]
 	): RDD[DocumentFrequency] = {
@@ -53,6 +62,13 @@ object DocumentFrequencyCounter extends SparkJob {
 			.map(DocumentFrequency.tupled)
 	}
 
+	/**
+	  * Filters all document frequencies that do not meet the threshold.
+	  *
+	  * @param documentFrequencies document frequencies to be filtered
+	  * @param threshold           minimum amount of occurrences in documents
+	  * @return filtered document frequencies
+	  */
 	def filterDocumentFrequencies(
 		documentFrequencies: RDD[DocumentFrequency],
 		threshold: Int

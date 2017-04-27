@@ -7,6 +7,9 @@ import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
+/**
+  * Calculates term frequency per article and link.
+  */
 object TermFrequencyCounter extends SparkJob {
 	appName = "Term Frequency Counter"
 	val keyspace = "wikidumps"
@@ -62,7 +65,7 @@ object TermFrequencyCounter extends SparkJob {
 	}
 
 	/**
-	  * Enriches a Wikipedia article with its bag of words (implemented as Map)
+	  * Enriches a Wikipedia article with its bag of words (implemented as Map).
 	  *
 	  * @param entry parsed Wikipedia entry which terms will be extracted
 	  * @return parsed Wikipedia entry with additional context information
@@ -73,7 +76,7 @@ object TermFrequencyCounter extends SparkJob {
 	}
 
 	/**
-	  * Extracts context of the links of a given Wikipedia entry. The context are {@contextSize} tokens in front of
+	  * Extracts context of the links of a given Wikipedia entry. The contexts are {@contextSize } tokens in front of
 	  * and behind the location of the links alias in the tokenized text.
 	  *
 	  * @param entry Wikipedia entry containing the used links

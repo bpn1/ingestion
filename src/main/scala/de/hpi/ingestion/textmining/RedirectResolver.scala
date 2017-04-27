@@ -8,6 +8,9 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.TupleImplicits._
 
+/**
+  * Resolves all redirects in Parsed Wikipedia entries by replacing them with the pages they point to.
+  */
 object RedirectResolver extends SparkJob {
 	appName = "Redirect Resolver"
 	val tablename = "parsedwikipedia"
@@ -42,8 +45,9 @@ object RedirectResolver extends SparkJob {
 	/**
 	  * Resolves all redirects in the links of an articles. It does so by replacing the target page with the page the
 	  * redirect points to.
+	  *
 	  * @param entry Parsed Wikipedia Entry containing the links that will be cleaned
-	  * @param dict Map containing all redirects
+	  * @param dict  Map containing all redirects
 	  * @return Parsed Wikipedia Entry with no redirect pages as target of a link
 	  */
 	def resolveRedirects(entry: ParsedWikipediaEntry, dict: Map[String, String]): ParsedWikipediaEntry = {
@@ -53,6 +57,7 @@ object RedirectResolver extends SparkJob {
 
 	/**
 	  * Builds Map of redirects from redirect articles.
+	  *
 	  * @param articles RDD of Parsed Wikipedia Articles
 	  * @return Map containing the redirects in the form redirect page -> target page
 	  */
@@ -69,6 +74,7 @@ object RedirectResolver extends SparkJob {
 	/**
 	  * Resolves transitive redirects by replacing the target page with the transitive target page. Also removes
 	  * all reflexive entries.
+	  *
 	  * @param redirectMap Map containing the redirects that will be cleaned
 	  * @return Map containing the cleaned redirects
 	  */
