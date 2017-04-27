@@ -4,11 +4,12 @@ import java.util.UUID
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
-import scala.collection.mutable.ListMap
+
 import org.apache.spark.rdd.RDD
+import play.api.libs.json._
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, SimilarityMeasureStats}
+import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, SimilarityMeasureStats, PrecisionRecallDataTuple}
 
 object SimilarityMeasureEvaluation {
 	val appName = "SimilarityMeasureEvaluation"
@@ -48,7 +49,7 @@ object SimilarityMeasureEvaluation {
 		sc: SparkContext
 	) : SimilarityMeasureStats = {
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
-		val metrics = new BinaryClassificationMetrics(predictionAndLabels, 10)
+		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
 
 		val precision = metrics.precisionByThreshold
 		val recall = metrics.recallByThreshold
@@ -58,15 +59,24 @@ object SimilarityMeasureEvaluation {
 		.join(recall)
 		.join(f1Score)
 		.map { case (threshold, ((precision, recall), f1Score)) =>
-			(threshold, precision, recall, f1Score)
+			PrecisionRecallDataTuple(
+				argument = threshold,
+				precision = precision,
+				recall = recall,
+				fscore = f1Score
+			)
 		}
-		.sortBy(_._1)
+		.sortBy(_.argument)
 		.collect
 		.toList
 
-		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
-		println(stats)
-		stats
+		implicit val statsFormat = Json.format[PrecisionRecallDataTuple]
+
+		val stats = Json.obj("stats" -> data)
+
+		val record = SimilarityMeasureStats(data = stats, comment = Option("Naive Deduplication"))
+		println(record)
+		record
 	}
 
 	def main(args: Array[String]): Unit = {
