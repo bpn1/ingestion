@@ -4,8 +4,6 @@ import de.hpi.ingestion.datalake.models.Subject
 import org.scalatest.{FlatSpec, Matchers}
 
 class BlockingSchemeUnitTest extends FlatSpec with Matchers {
-	val deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
-
 	"SimpleBlockingScheme" should "generate proper keys" in {
 		val blockingScheme = new SimpleBlockingScheme()
 		val keys = testSubjects.map(blockingScheme.generateKey)
@@ -32,13 +30,35 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		keys.toSet shouldEqual listUndefinedTestKeys
 	}
 
-	"GeoBlockingScheme" should "calculate a range for coordinates" in {
-		val blockingScheme = new GeoBlockingScheme
-		val keys = TestData.testSubjects.map(blockingScheme.generateKey)
-		val expected = TestData.geoBlockKeys
-		keys.toSet shouldEqual expected.toSet
+	"MappedListBlockingScheme" should "generate proper keys" in {
+		val subjects = TestData.testSubjects
+		val blockingScheme = new MappedListBlockingScheme(
+			attribute => attribute.substring(0, Math.min(3, attribute.length))
+		)
+		blockingScheme.setAttributes("name")
+		val simpleBlockingScheme = new SimpleBlockingScheme
+
+		subjects
+			.map(subject => (blockingScheme.generateKey(subject), simpleBlockingScheme.generateKey(subject)))
+			.foreach { case (keys, expected) =>
+				keys shouldEqual expected
+			}
 	}
 
+	it should "behave like ListBlockingScheme if no function is given" in {
+		val subjects = TestData.testSubjects
+		val attribute = "geo_city"
+		val blockingScheme = new MappedListBlockingScheme
+		blockingScheme.setAttributes(attribute)
+		val listBlockingScheme = new ListBlockingScheme
+		listBlockingScheme.setAttributes(attribute)
+
+		subjects
+			.map(subject => (blockingScheme.generateKey(subject), listBlockingScheme.generateKey(subject)))
+			.foreach { case (keys, expected) =>
+				keys shouldEqual expected
+			}
+	}
 
 	def testSubjects(): List[Subject] = {
 		List(Subject(

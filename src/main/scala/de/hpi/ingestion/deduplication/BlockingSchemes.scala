@@ -49,21 +49,13 @@ class ListBlockingScheme extends BlockingScheme {
 }
 
 /**
-  * This class uses geo coordinates as a key
+  * This class uses a list of attributes as key.
+  * @param f Function to create customized output values
   */
-class GeoBlockingScheme extends BlockingScheme {
-	this.setAttributes("geo_coords")
-	def calculateRange(lat: Double, long: Double, scale: Double = 1.0): List[Int] = {
-		List((lat / scale).toInt, (long / scale).toInt)
-	}
-
+class MappedListBlockingScheme(f: String => String = identity) extends BlockingScheme {
+	tag = "ListBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
-		val key = inputAttributes.flatMap { attribute =>
-			subject.get(attribute).sliding(2,2).toList.map {
-				case lat::long::Nil => calculateRange(lat.toDouble, long.toDouble).map(_.toString).mkString(",")
-				case _ => undefinedValue.head
-			}.distinct
-		}
+		val key = inputAttributes.flatMap(subject.get(_).map(f))
 		if (key.nonEmpty) key else undefinedValue
 	}
 }
