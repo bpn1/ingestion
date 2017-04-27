@@ -1,6 +1,7 @@
 package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
+import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 import de.hpi.ingestion.deduplication.similarity._
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -44,13 +45,25 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		assertRDDEquals(expected, blocks)
 	}
 
-	"findDuplicates" should "return a list of tuple of duplicates" in {
+	"createDuplicateCandidates" should "build an RDD containing all candidates for deduplication for each subject" in {
+		val testSubjects = TestData.testSubjects
+		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
+		deduplication.settings("stagingTable")= "subject_wikidata"
+		val testSubject1 = testSubjects(0)
+		val testSubject2 = testSubjects(3)
+		val testSubjectPair = List((testSubject1, testSubject2, 0.5))
+		val testDuplicateCandidates = deduplication.createDuplicateCandidates(sc.parallelize(testSubjectPair))
+		val expectedCandidate = DuplicateCandidates(testSubject1.id, List((testSubject2, "subject_wikidata", 0.5)))
+		val expected = sc.parallelize(List(expectedCandidate))
+		assertRDDEquals(testDuplicateCandidates, expected)
+	}
+
+	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
 		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
 		deduplication.parseConfig()
 		val subjects = TestData.testSubjects
 		val duplicates = TestData.cityBlock(subjects).map(_._2).flatMap(deduplication.findDuplicates)
-		val expected = List((subjects.head, subjects(1)))
-
+		val expected = List((subjects.head, subjects(1), 0.3558974358974359))
 		duplicates shouldEqual expected
 	}
 
