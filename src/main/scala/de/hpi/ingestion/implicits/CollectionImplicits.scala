@@ -35,9 +35,10 @@ object CollectionImplicits {
 		  * @param ys the collection used to create the difference
 		  * @tparam Y the type of the objects contained in the collection
 		  */
-		def printDifference[Y](ys: Traversable[Y]): Unit = {
-			println(s"x - y:\n\t${xs.toSet.filterNot(ys.toSet).mkString("\n\t")}")
-			println(s"y - x:\n\t${ys.toSet.filterNot(xs.toSet).mkString("\n\t")}")
+		def printableDifference[Y](ys: Traversable[Y]): String = {
+			val diff1 = s"x - y:\n\t${xs.toSet.filterNot(ys.toSet).mkString("\n\t")}"
+			val diff2 = s"y - x:\n\t${ys.toSet.filterNot(xs.toSet).mkString("\n\t")}"
+			s"Difference:\n$diff1\n$diff2"
 		}
 	}
 
