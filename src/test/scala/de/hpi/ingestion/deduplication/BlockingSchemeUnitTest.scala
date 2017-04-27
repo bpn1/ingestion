@@ -32,6 +32,13 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		keys.toSet shouldEqual listUndefinedTestKeys
 	}
 
+	"GeoBlockingScheme" should "calculate a range for coordinates" in {
+		val blockingScheme = new GeoBlockingScheme
+		val keys = TestData.testSubjects.map(blockingScheme.generateKey)
+		val expected = TestData.geoBlockKeys
+		keys.toSet shouldEqual expected.toSet
+	}
+
 
 	def testSubjects(): List[Subject] = {
 		List(Subject(
