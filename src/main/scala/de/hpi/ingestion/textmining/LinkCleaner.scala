@@ -1,16 +1,45 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.textmining.models.{Page, ParsedWikipediaEntry}
-import org.apache.spark.{SparkConf, SparkContext}
+import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Removes dead links that do not point to an existing page.
   */
-object LinkCleaner {
+object LinkCleaner extends SparkJob {
+	appName = "Link Cleaner"
 	val keyspace = "wikidumps"
-	val operatingTable = "parsedwikipedia"
+	val tablename = "parsedwikipedia"
+
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
+		List(articles).toAnyRDD()
+	}
+
+	/**
+	  * Saves cleaned Parsed Wikipedia entries to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.saveToCassandra(keyspace, tablename)
+	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Groups existing page names by the article names in which their links occur.
@@ -53,24 +82,16 @@ object LinkCleaner {
 	}
 
 	/**
-	  * Removes dead links that do not point to an existing page.
-	  *
-	  * @param articles all Wikipedia articles
-	  * @return Wikipedia articles without links to non-existing pages
+	  * Removes dead links that do not point to an existing page from the Parsed Wikipedia entries.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
 	  */
-	def run(articles: RDD[ParsedWikipediaEntry]): RDD[ParsedWikipediaEntry] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
 		val existingPages = articles.map(_.title)
 		val validPages = groupValidPages(articles, existingPages)
-		filterArticleLinks(articles, validPages)
-	}
-
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf().setAppName("Link Cleaner")
-		val sc = new SparkContext(conf)
-
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, operatingTable)
-		run(articles).saveToCassandra(keyspace, operatingTable)
-
-		sc.stop
+		List(filterArticleLinks(articles, validPages)).toAnyRDD()
 	}
 }
