@@ -1,5 +1,7 @@
 package de.hpi.ingestion.implicits
 
+import org.apache.spark.rdd.RDD
+
 /**
   * Contains implicit classes extending Scala collections.
   */
@@ -38,4 +40,32 @@ object CollectionImplicits {
 			println(s"y - x:\n\t${ys.toSet.filterNot(xs.toSet).mkString("\n\t")}")
 		}
 	}
+
+	/**
+	  * Implicit class which adds the casting of a collection of RDDs of a single type to a collection of RDDs of Any.
+	  * @param xs Collection containing the RDDs
+	  * @tparam X type of the RDDs
+	  */
+	implicit class ToAnyRDD[X](xs: List[RDD[X]]) {
+		/**
+		  * Casts the RDDs to RDDs of type Any.
+		  * @return Collection of RDDs of type Any
+		  */
+		def toAnyRDD(): List[RDD[Any]] = xs.map(_.asInstanceOf[RDD[Any]])
+	}
+
+	/**
+	  * Implicit class which adds the casting of a collection of RDDs of Any to a collection of RDDs of a single type .
+	  * @param xs Collection containing the RDDs of type Any
+	  */
+	implicit class FromAnyRDD(xs: List[RDD[Any]]) {
+		/**
+		  * Casts the RDDs of type Any to the given type.
+		  * @tparam X type of the RDDs they will be cast to
+		  * @return Collection of RDDs of the given type
+		  */
+		def fromAnyRDD[X](): List[RDD[X]] = xs.map(_.asInstanceOf[RDD[X]])
+	}
+
+
 }

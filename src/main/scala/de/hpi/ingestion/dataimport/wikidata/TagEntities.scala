@@ -1,19 +1,20 @@
 package de.hpi.ingestion.dataimport.wikidata
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
-
-import scala.collection.mutable
+import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd._
 
 import scala.language.postfixOps
 import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikiDataEntity}
+import de.hpi.ingestion.framework.SparkJob
 
 /**
   * This job builds the subclass hierarchy of selected Wikidata classes and tags every Wikidata entity, that is an
   * instance of one of the subclasses, with the top level class.
   */
-object TagEntities {
+object TagEntities extends SparkJob {
+	appName = "TagEntities"
 	val keyspace = "wikidumps"
 	val tablename = "wikidata"
 	val tagClasses = Map(
@@ -23,6 +24,32 @@ object TagEntities {
 	val instanceProperty = "instance of"
 	val subclassProperty = "subclass of"
 	val wikidataPathProperty = "wikidata_path"
+
+	// $COVERAGE-OFF$
+	/**
+	  * Reads the Wikidata entities from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val wikidata = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
+		List(wikidata).toAnyRDD()
+	}
+
+	/**
+	  * Saves the tagged Wikidata entities to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[(String, String, Map[String, List[String]])]()
+			.head
+			.saveToCassandra(keyspace, tablename, SomeColumns("id", "instancetype", "data" append))
+	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Adds entries of new class path map to the old map if they are new or shorter than the
@@ -123,14 +150,16 @@ object TagEntities {
 		(entry.id, path.head, Map(wikidataPathProperty -> path))
 	}
 
-	def main(args : Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("TagEntities")
-
-		val sc = new SparkContext(conf)
-		val classData = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
-			.map(translateToSubclassEntry)
-
+	/**
+	  * Tags the Wikidata entities with their superclass.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val wikiData = input.fromAnyRDD[WikiDataEntity]().head
+		val classData = wikiData.map(translateToSubclassEntry)
 		val subclassData = classData
 			.filter(_.data.contains(subclassProperty))
 			.cache
@@ -138,10 +167,6 @@ object TagEntities {
 		val updatedEntities = classData
 			.filter(isInstanceOf(_, subclasses))
 			.map(updateInstanceOfProperty(_, subclasses))
-
-		updatedEntities.saveToCassandra(
-			keyspace,
-			tablename,
-			SomeColumns("id", "instancetype", "data" append))
+		List(updatedEntities).toAnyRDD()
 	}
 }
