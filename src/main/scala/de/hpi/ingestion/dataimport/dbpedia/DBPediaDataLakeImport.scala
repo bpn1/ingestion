@@ -2,37 +2,45 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.{DataLakeImport, SubjectManager}
-import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
+import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.ingestion.implicits.CollectionImplicits._
+
 import scala.collection.mutable
 
 /**
-  * Import-Job to import DBPedia Subjects into the staging table of our datalake.
+  * Import-Job to import DBpedia Subjects into the staging table of our datalake.
   */
-object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
-	"DataLakeImportDBpedia_v1.0",
+object DBpediaDataLakeImport extends DataLakeImport[DBpediaEntity](
 	List("dbpedia"),
 	Option("datalakeimport_config.xml"),
 	"normalization_dbpedia.xml",
 	"wikidumps",
 	"dbpedia"
 ){
-	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = {
-		val mapping = parseNormalizationConfig(this.normalizationFile)
-		sc
-			.cassandraTable[DBPediaEntity](inputKeyspace, inputTable)
-			.filter(filterEntities)
-			.map(translateToSubject(_, version, mapping))
-	}
+	appName = s"DataLakeImportDBpedia_v1.0_${System.currentTimeMillis()}"
 
-	override def filterEntities(entity: DBPediaEntity): Boolean = {
+	// $COVERAGE-OFF$
+	/**
+	  * Loads the DBpedia entities from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val wikidata = sc.cassandraTable[DBpediaEntity](inputKeyspace, inputTable)
+		List(wikidata).toAnyRDD()
+	}
+	// $COVERAGE-ON$
+
+	override def filterEntities(entity: DBpediaEntity): Boolean = {
 		entity.instancetype.isDefined
 	}
 
 	override def translateToSubject(
-		entity: DBPediaEntity,
+		entity: DBpediaEntity,
 		version: Version,
 		mapping: Map[String, List[String]]
 	): Subject = {
@@ -54,9 +62,5 @@ object DBPediaDataLakeImport extends DataLakeImport[DBPediaEntity](
 
 		sm.addProperties(properties.toMap)
 		subject
-	}
-
-	def main(args: Array[String]) {
-		importToCassandra(args.headOption)
 	}
 }
