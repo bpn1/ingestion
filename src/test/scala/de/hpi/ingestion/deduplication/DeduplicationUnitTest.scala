@@ -62,15 +62,11 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
-		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
-		deduplication.parseConfig()
+		val deduplication = TestData.defaultDeduplication
+		deduplication.config = TestData.testConfig
 		val subjects = TestData.testSubjects
-		val duplicates = TestData.blocks(sc, subjects)
-			.map(_.map(_._2).flatMap(deduplication.findDuplicates))
-			.reduce(_.union(_))
-			.collect
-			.toList
-		val expected = List((subjects.head, subjects(1), 0.3558974358974359))
+		val duplicates = deduplication.findDuplicates(subjects)
+		val expected = TestData.testDuplicates(subjects)
 		duplicates shouldEqual expected
 	}
 

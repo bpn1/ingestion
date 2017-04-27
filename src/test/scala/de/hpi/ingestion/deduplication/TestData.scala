@@ -104,19 +104,22 @@ object TestData {
 		Subject(name = Some("Ferrari"), properties = Map("geo_coords" -> List("53","14")))
 	)
 
+	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = List(
+		(testSubjects.head, testSubjects(1), 0.5338461538461539),
+		(testSubjects(2), testSubjects(3), 0.7085185185185185)
+	)
+
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
 
 	def testConfig: List[ScoreConfig[String, SimilarityMeasure[String]]] = List(
 		ScoreConfig(key = "name", similarityMeasure = MongeElkan, weight= 0.8),
-		ScoreConfig(key = "name", similarityMeasure = JaroWinkler, weight= 0.7),
-		ScoreConfig(key = "name", similarityMeasure = ExactMatchString, weight= 0.2)
+		ScoreConfig(key = "name", similarityMeasure = JaroWinkler, weight= 0.7)
 	)
 
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
 			MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
-			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7,
-			ExactMatchString.compare(subject1.name.get, subject2.name.get) * 0.2
-	).sum / 3
+			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7
+	).sum / 2
 
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()
@@ -154,5 +157,15 @@ object TestData {
 				comment = Option("Test comment_SimpleBlockingScheme")))
 
 	}
+
+	def simpleBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
+	def listblockingScheme: List[List[String]] = List(
+		List("Berlin", "Hamburg", "1234"),
+		List("Berlin", "New York", "12"),
+		List("Berlin", "33"),
+		List("New York", "Hamburg", "600"),
+		List("undefined"),
+		List("undefined")
+	)
 	// scalastyle:on line.size.limit
 }

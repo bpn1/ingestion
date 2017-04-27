@@ -25,12 +25,6 @@
             <weight>0.7</weight>
             <scale>1</scale>
         </feature>
-        <feature>
-            <attribute>name</attribute>
-            <similarityMeasure>ExactMatchString</similarityMeasure>
-            <weight>0.2</weight>
-            <scale>1</scale>
-        </feature>
     </simMeasurements>
 </config>
 
