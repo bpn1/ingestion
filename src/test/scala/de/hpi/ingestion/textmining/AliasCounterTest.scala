@@ -2,6 +2,7 @@ package de.hpi.ingestion.textmining
 
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{SharedSparkContext, RDDComparisons}
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkContext with Matchers {
 	"Counted aliases" should "have the same size as all links" in {
@@ -93,8 +94,9 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 
 	"Alias counts" should "be exactly these tuples" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val links = sc.parallelize(TestData.linksSet().toList)
-		val mergedLinks = AliasCounter.run(articles, links)
+		val mergedLinks = AliasCounter.run(List(articles).toAnyRDD(), sc)
+			.fromAnyRDD[(String, Int, Int)]()
+			.head
 			.collect
 			.toSet
 		mergedLinks shouldEqual TestData.aliasCountsSet()
@@ -102,11 +104,12 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 
 	"Counted number of link occurrences" should "equal number of page references" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val links = sc.parallelize(TestData.linksSet().toList)
 		val expectedOccurences = TestData.linksSet()
 			.map(link => (link.alias, link.pages.foldLeft(0)(_ + _._2)))
 			.toMap
-		AliasCounter.run(articles, links)
+		AliasCounter.run(List(articles).toAnyRDD(), sc)
+			.fromAnyRDD[(String, Int, Int)]()
+			.head
 			.collect
 			.foreach(link => link._2 should be <= expectedOccurences.getOrElse(link._1, 0))
 	}

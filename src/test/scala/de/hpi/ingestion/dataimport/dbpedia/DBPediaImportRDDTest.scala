@@ -2,13 +2,13 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
+import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 
-class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
+class DBpediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 
 	"Triples" should "be tokenized into three elements" in {
 		TestData.turtleRDD(sc)
-			.map(DBPediaImport.tokenize)
+			.map(DBpediaImport.tokenize)
 			.collect
 			.foreach { tripleList =>
 				tripleList should have length 3
@@ -18,9 +18,9 @@ class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 	they should "have namespace prefixes after cleaning" in {
 		val prefixesList = TestData.prefixesList
 		val parsed = TestData.turtleRDD(sc)
-			.map(DBPediaImport.tokenize)
+			.map(DBpediaImport.tokenize)
 			.map { tripleList =>
-				tripleList.map(DBPediaImport.cleanURL(_, prefixesList))
+				tripleList.map(DBpediaImport.cleanURL(_, prefixesList))
 			}
 			.map { case List(a, b, c) => (a, b, c) }
 
@@ -32,7 +32,7 @@ class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 		val organisations = TestData.organisations
 		val entities = TestData.tripleRDD(sc)
 			.groupByKey
-			.map(tuple => DBPediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
+			.map(tuple => DBpediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
 			.map(identity)
 		entities should not be empty
 	}
@@ -41,7 +41,7 @@ class DBPediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 		val organisations = TestData.organisations
 		val entities = TestData.tripleRDD(sc)
 			.groupByKey
-			.map(tuple => DBPediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
+			.map(tuple => DBpediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
 			.map(identity)
 		val expected = TestData.entityRDD(sc)
 		assertRDDEquals(expected, entities)

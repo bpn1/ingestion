@@ -1,6 +1,6 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
-import de.hpi.ingestion.dataimport.dbpedia.models.DBPediaEntity
+import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import de.hpi.ingestion.datalake.models.Version
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -61,7 +61,7 @@ object TestData {
 		("dbp:headquarters", "CentrePort, Fort Worth, Texas, United States")
 	)
 
-	def parsedEntity(name: String) = DBPediaEntity(
+	def parsedEntity(name: String) = DBpediaEntity(
 		name,
 		Option("1"),
 		Option("Q1"),
@@ -96,17 +96,17 @@ object TestData {
 		))
 	}
 
-	def entityRDD(sc: SparkContext): RDD[DBPediaEntity] = {
+	def entityRDD(sc: SparkContext): RDD[DBpediaEntity] = {
 		sc.parallelize(List(
-			DBPediaEntity(dbpedianame="Liste_von_Autoren/V", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste"))),
-			DBPediaEntity(dbpedianame="Anschluss_(Soziologie)", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Soziologische_Systemtheorie"))),
-			DBPediaEntity(dbpedianame="Liste_von_Autoren/T", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste")))
+			DBpediaEntity(dbpedianame="Liste_von_Autoren/V", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste"))),
+			DBpediaEntity(dbpedianame="Anschluss_(Soziologie)", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Soziologische_Systemtheorie"))),
+			DBpediaEntity(dbpedianame="Liste_von_Autoren/T", data=Map("dct:subject" -> List("dbpedia-de:Kategorie:Autor", "dbpedia-de:Kategorie:Wikipedia:Liste")))
 		))
 	}
 
-	def version(sc: SparkContext): Version = Version("DBPediaDataLakeImport", datasources = List("dataSources"), sc)
+	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", datasources = List("dataSources"), sc)
 
-	def testEntity: DBPediaEntity = DBPediaEntity(
+	def testEntity: DBpediaEntity = DBpediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
 		label = Option("Liste von Autoren"),
 		data = Map(

@@ -1,18 +1,44 @@
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models._
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
-
+import de.hpi.ingestion.implicits.CollectionImplicits._
 /**
   * Calculate cosine similarity for contexts of every term and link and
   * writes it with the other features as Feature Entries to the Cassandra.
   */
-object CosineContextComparator {
+object CosineContextComparator extends SparkJob {
+	appName = "Cosine Context Comparator"
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
+
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries with their term frequencies and loads the document frequencies from the
+	  * Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
+		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD()
+	}
+	/**
+	  * Saves the Feature Entries to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+
+	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Transforms the term frequencies in a bag and an identifier for the term frequencies in a joinable format
@@ -139,14 +165,17 @@ object CosineContextComparator {
 			}
 	}
 
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Cosine Context Comparator")
-
-		val sc = new SparkContext(conf)
-		val articlesWithTermFrequencies = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
-
+	/**
+	  * Calculates the Cosine Similarities for every alias and creates feature entries containing the other two
+	  * features as well.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
+		val documentFrequencies = input(1).asInstanceOf[RDD[DocumentFrequency]]
 		val numDocuments = articlesWithTermFrequencies.count()
 
 		val articleTfidf = calculateArticleTfidf(
@@ -163,6 +192,6 @@ object CosineContextComparator {
 
 		// TODO: join RDDs and calculate cosine similarity (issue #34)
 
-		sc.stop()
+		Nil
 	}
 }

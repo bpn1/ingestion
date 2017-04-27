@@ -73,7 +73,7 @@ object TestData {
 			Subject(name = Option("wikidata_4"))
 	)
 
-	def propertyKeyDBPedia(sc: SparkContext): RDD[(String, Subject)] = {
+	def propertyKeyDBpedia(sc: SparkContext): RDD[(String, Subject)] = {
 		sc.parallelize(Seq(
 			("dbpedia_1", dbpediaList.head),
 			("dbpedia_2", dbpediaList(1))
@@ -87,7 +87,7 @@ object TestData {
 		))
 	}
 
-	def joinedDBPediaWikiData(sc: SparkContext): RDD[(UUID, UUID)] = {
+	def joinedDBpediaWikiData(sc: SparkContext): RDD[(UUID, UUID)] = {
 		sc.parallelize(Seq(
 			(dbpediaList.head.id, wikidataList.head.id),
 			(dbpediaList(1).id, wikidataList(1).id),
