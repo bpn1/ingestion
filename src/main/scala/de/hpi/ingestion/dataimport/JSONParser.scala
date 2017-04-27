@@ -67,6 +67,7 @@ abstract class JSONParser[T] {
 		v match {
 			case t: JsObject => t.as[Map[String, String]]
 				.map { case (a, b) => (k + "." + a, b) }.toList
+			// TODO: JsArray parsing - when cast to a map only of the tuples in the list will remain
 			case t: JsArray => t.as[List[String]].map(el => (k, el))
 			case t: JsString => List((k, t.as[String]))
 			case _ =>
@@ -93,6 +94,5 @@ abstract class JSONParser[T] {
 		} else {
 			None
 		}
-
 	}
 }
