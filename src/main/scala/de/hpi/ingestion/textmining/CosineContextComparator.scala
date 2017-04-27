@@ -167,24 +167,28 @@ object CosineContextComparator {
 	def compareLinksWithArticles(
 		linkContexts: RDD[(Link, Map[String, Double])],
 		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
-		articleContexts: Map[String, Map[String, Double]],
-		sc: SparkContext
+		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
-		val articleContextsBroadcast = sc.broadcast(articleContexts)
 		linkContexts
 			.map(t => (t._1.alias, t))
 			.join(aliasPageProbabilities, 128)
-			.map { case (alias, ((link, context), (page, totalProb, pageProb))) =>
-				(page, (alias, link, context, totalProb, pageProb))
-			}.mapPartitions({ partition =>
-				val localArticles = articleContextsBroadcast.value
-				partition.map { case (page, (alias, link, linkContext, totalProb, pageProb)) =>
-					localArticles.get(page).map{ pageContext =>
-						val cosineSim = calculateCosineSimilarity(linkContext, pageContext)
-						FeatureEntry(alias, page, totalProb, pageProb, cosineSim, link.page == page)
-					}}}, true)
-			.filter (_.isDefined)
-			.map(_.get)
+			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
+				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, pageProb)))
+			}.reduceByKey(_ ++ _)
+			.join(articleContexts)
+			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
+				protoFeatureEntries.map {protoFeatureEntry =>
+					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
+					FeatureEntry(
+						protoFeatureEntry.alias,
+						page,
+						protoFeatureEntry.totalProbability,
+						protoFeatureEntry.pageProbability,
+						cosineSim,
+						protoFeatureEntry.link.page == page
+					)
+				}
+			}
 	}
 
 	/**
@@ -226,8 +230,7 @@ object CosineContextComparator {
 	def run(
 		articlesWithTermFrequencies: RDD[ParsedWikipediaEntry],
 		documentFrequencies: RDD[DocumentFrequency],
-		aliases: RDD[Alias],
-		sc: SparkContext
+		aliases: RDD[Alias]
 	): RDD[FeatureEntry] = {
 		val numDocuments = articlesWithTermFrequencies.count()
 
@@ -244,8 +247,7 @@ object CosineContextComparator {
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
-		val articleTfidfMap = articleTfidf.collect.toMap
-		compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidfMap, sc)
+		compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -264,7 +266,7 @@ object CosineContextComparator {
 		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
 		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
 
-		run(articlesWithTermFrequencies, documentFrequencies, aliases, sc).saveToCassandra(keyspace, featureEntryTable)
+		run(articlesWithTermFrequencies, documentFrequencies, aliases).saveToCassandra(keyspace, featureEntryTable)
 
 		sc.stop()
 	}
