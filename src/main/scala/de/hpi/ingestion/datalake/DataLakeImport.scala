@@ -13,15 +13,15 @@ import scala.io.Source
 import scala.xml.XML
 
 /**
-  * An abstract DataLakeImport to import new sources to the staging table
+  * An abstract DataLakeImport to import new sources to the staging table.
   *
-  * @constructor create a new DataLakeImport with an appName, dataSources, an inputKeyspace
-  *              and an inputTable
-  * @param dataSources   		list of the sources where the new data is fetched from
-  * @param configFile 			name of config file in resource folder
-  * @param normalizationFile 	name of normalization file in resource folder
-  * @param inputKeyspace 		the name of the keyspace where the new data is saved in the database
-  * @param inputTable    		the name of the table where the new data is saved in the database
+  * @constructor Create a new DataLakeImport with an appName, dataSources, an inputKeyspace
+  *              and an inputTable.
+  * @param dataSources       list of the sources where the new data is fetched from
+  * @param configFile        name of config file in resource folder
+  * @param normalizationFile name of normalization file in resource folder
+  * @param inputKeyspace     the name of the keyspace where the new data is saved in the database
+  * @param inputTable        the name of the table where the new data is saved in the database
   * @tparam T the type of Objects of the new data
   */
 abstract case class DataLakeImport[T <: DLImportEntity](
@@ -75,15 +75,16 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 		mapping: Map[String, List[String]]
 	): Map[String, List[String]] = {
 		mapping
-		    .mapValues(_.map(value => entity.get(value)).reduce(_ ::: _).distinct)
+			.mapValues(_.map(value => entity.get(value)).reduce(_ ::: _).distinct)
 			.filter { case (key, values) => values.nonEmpty }
 	}
 
 	/**
 	  * Filters the input entities and then transforms them to Subjects.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
@@ -103,10 +104,11 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 
 	// $COVERAGE-OFF$
 	/**
-	  * Writes the Subjects to the {@outputTable} table in keyspace {@outputKeyspace}.
+	  * Writes the Subjects to the {@outputTable } table in keyspace {@outputKeyspace }.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
@@ -114,5 +116,6 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 			.head
 			.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
 	}
+
 	// $COVERAGE-ON$
 }

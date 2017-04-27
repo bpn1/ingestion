@@ -11,27 +11,27 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 
 object GoldStandard extends SparkJob {
 	appName = "GoldStandard_v1.0"
-	val dataSource = List("DBPedia", "Wikidata")
+	val dataSource = List("DBpedia", "Wikidata")
 	val keyspace = "evaluation"
-	val inputDBPedia = "subject_dbpedia"
+	val inputDBpedia = "subject_dbpedia"
 	val inputWikiData = "subject_wikidata"
 	val output = "goldstandard"
 
 	// $COVERAGE-OFF$
 	/**
-	  * Loads DBPedia and Wikidata from the Cassandra.
+	  * Loads DBpedia and Wikidata from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.cassandraTable[Subject](this.keyspace, this.inputDBPedia)
+		val dbpedia = sc.cassandraTable[Subject](this.keyspace, this.inputDBpedia)
 		val wikidata = sc.cassandraTable[Subject](this.keyspace, this.inputWikiData)
 		List(dbpedia, wikidata).toAnyRDD()
 	}
 
 	/**
-	  * Saves joined DBPedia and Wikidata to {@output} table in keyspace {@keyspace}.
+	  * Saves joined DBpedia and Wikidata to {@output} table in keyspace {@keyspace}.
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  * @param args arguments of the program
@@ -60,16 +60,16 @@ object GoldStandard extends SparkJob {
 	}
 
 	/**
-	  * Join DBPedia and WikiData together on a property.
+	  * Join DBpedia and WikiData together on a property.
 	  * @param property The property to be joined on.
-	  * @param dbpedia Subjects from DBPedia
+	  * @param dbpedia Subjects from DBpedia
 	  * @param wikidata Subjects from WikiData
 	  * @return RDD containing pairs of UUIDs
 	  */
 	def joinBySingleProperty(property: String, dbpedia: RDD[Subject], wikidata: RDD[Subject]): RDD[(UUID, UUID)] = {
-		val propertyKeyDBPedia = keyBySingleProperty(dbpedia, property)
+		val propertyKeyDBpedia = keyBySingleProperty(dbpedia, property)
 		val propertyKeyWikiData = keyBySingleProperty(wikidata, property)
-		propertyKeyDBPedia
+		propertyKeyDBpedia
 			.join(propertyKeyWikiData)
 			.values
 			.map { case (dbpediaSubject, wikidataSubject) =>
@@ -78,8 +78,8 @@ object GoldStandard extends SparkJob {
 	}
 
 	/**
-	  * Join DBPedia and WikiData together based on ids
-	  * @param dbpedia Subjects from DBPedia
+	  * Join DBpedia and WikiData together based on ids
+	  * @param dbpedia Subjects from DBpedia
 	  * @param wikidata Subjects from WikiData
 	  * @return RDD containing pairs of UUIDs
 	  */
@@ -90,7 +90,7 @@ object GoldStandard extends SparkJob {
 	}
 
 	/**
-	  * Joins DBPedia and Wikidata.
+	  * Joins DBpedia and Wikidata.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program
