@@ -72,7 +72,8 @@ CREATE TABLE wikidumps.dbpedia (
     description text,
     instancetype text,
     label text,
-    wikipageid text
+    wikipageid text,
+    wikidataid text
 );
 
 -- Datalake
@@ -161,9 +162,24 @@ CREATE TYPE evaluation.version (
     program text
 );
 
+CREATE TYPE evaluation.subject (
+    id uuid,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
 -- Tables
 CREATE TABLE evaluation.goldstandard (
-    id frozen<tuple <uuid, uuid>> PRIMARY KEY
+    id1 uuid PRIMARY KEY,
+    id2 uuid
 );
 
 CREATE TABLE evaluation.subject_dbpedia (
@@ -194,9 +210,20 @@ CREATE TABLE evaluation.subject_wikidata (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
+CREATE TABLE evaluation.sim_measure_stats (
+    id uuid PRIMARY KEY,
+    data list<frozen<tuple<double, double, double, double>>>,
+    comment text
+);
+
 CREATE TABLE evaluation.version (
     version timeuuid PRIMARY KEY,
     datasources list<text>,
     program text,
     timestamp timestamp
+);
+
+CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
+    subject_id uuid PRIMARY KEY,
+    candidates list<frozen<tuple<subject, text, double>>>
 );
