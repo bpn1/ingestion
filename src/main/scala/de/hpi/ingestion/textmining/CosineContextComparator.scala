@@ -5,6 +5,10 @@ import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
+/**
+  * Calculate cosine similarity for contexts of every term and link and
+  * writes it with the other features as Feature Entries to the Cassandra.
+  */
 object CosineContextComparator {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
@@ -110,10 +114,11 @@ object CosineContextComparator {
 
 	/**
 	  * Calculates the tfIdf for every term.
-	  * @param termFrequencies RDD of terms with their identifier and raw term frequency in the form
-	  *                        (term, (identifier, raw term frequency))
-	  * @param documentFrequencies RDD of Document Frequencies
-	  * @param numDocuments number of documents used to determine the Document Frequencies
+	  *
+	  * @param termFrequencies            RDD of terms with their identifier and raw term frequency in the form
+	  *                                   (term, (identifier, raw term frequency))
+	  * @param documentFrequencies        RDD of Document Frequencies
+	  * @param numDocuments               number of documents used to determine the Document Frequencies
 	  * @param documentFrequencyThreshold lower threshold used for Document Frequencies of terms without a
 	  *                                   precalculated one.
 	  * @tparam T type of the identifier for each term

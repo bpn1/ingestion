@@ -5,6 +5,9 @@ import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
 
+/**
+  * Counts document frequencies over all articles.
+  */
 object DocumentFrequencyCounter {
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
@@ -13,6 +16,12 @@ object DocumentFrequencyCounter {
 	val stem = true
 	val leastSignificantDocumentFrequency = 5
 
+	/**
+	  * Counts document frequencies while stemming and removing stopwords.
+	  *
+	  * @param articles all parsed Wikipedia entries
+	  * @return RDD of document frequencies
+	  */
 	def countDocumentFrequencies(
 		articles: RDD[ParsedWikipediaEntry]
 	): RDD[DocumentFrequency] = {
@@ -24,6 +33,13 @@ object DocumentFrequencyCounter {
 			.map(DocumentFrequency.tupled)
 	}
 
+	/**
+	  * Filters all document frequencies that do not meet the threshold.
+	  *
+	  * @param documentFrequencies document frequencies to be filtered
+	  * @param threshold           minimum amount of occurrences in documents
+	  * @return filtered document frequencies
+	  */
 	def filterDocumentFrequencies(
 		documentFrequencies: RDD[DocumentFrequency],
 		threshold: Int
@@ -33,10 +49,9 @@ object DocumentFrequencyCounter {
 	}
 
 	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Document Frequency Counter")
-
+		val conf = new SparkConf().setAppName("Document Frequency Counter")
 		val sc = new SparkContext(conf)
+
 		val allArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val documentFrequencies = countDocumentFrequencies(allArticles)
 		filterDocumentFrequencies(documentFrequencies, leastSignificantDocumentFrequency)

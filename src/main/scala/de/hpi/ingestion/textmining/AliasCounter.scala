@@ -6,7 +6,7 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 
 /**
-  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages.
+  * Counts Alias occurrences and merges them into previously extracted Aliases with their corresponding pages.
   */
 object AliasCounter {
 	val keyspace = "wikidumps"
@@ -15,20 +15,20 @@ object AliasCounter {
 	val maximumAliasLength = 1000
 
 	/**
-	  * Calculates the probability that an alias is a link.
+	  * Calculates the probability that an Alias is a link.
 	  *
-	  * @param aliasCounts Alias of a given alias
-	  * @return percentage of the occurrences as link.
+	  * @param aliasCounts Alias of a given Alias
+	  * @return percentage of the occurrences as link
 	  */
 	def probabilityIsLink(aliasCounts: Alias): Double = {
 		aliasCounts.linkoccurrences.toDouble / aliasCounts.totaloccurrences
 	}
 
 	/**
-	  * Extracts list of link and general alias occurrences for an article
+	  * Extracts list of link and general Alias occurrences for an article.
 	  *
-	  * @param entry article from which the aliases will be extracted
-	  * @return list of aliases each with an occurrence set to 1
+	  * @param entry article from which the Aliases will be extracted
+	  * @return list of Aliases each with an occurrence set to 1
 	  */
 	def extractAliasList(entry: ParsedWikipediaEntry): List[Alias] = {
 		val linkSet = entry.allLinks()
@@ -79,11 +79,11 @@ object AliasCounter {
 	}
 
 	/**
-	  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages.
+	  * Counts Alias occurrences and merges them into previously extracted Aliases with their corresponding pages.
 	  *
 	  * @param articles parsed Wikipedia articles
 	  * @param links    articles with their corresponding pages
-	  * @return merged links and alias counts
+	  * @return merged links and Alias counts
 	  */
 	def run(articles: RDD[ParsedWikipediaEntry], links: RDD[Alias]): RDD[(String, Int, Int)] = {
 		countAliases(articles)
