@@ -15,7 +15,10 @@ class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkCon
 	}
 
 	"Printable difference" should "return a diff string" in {
-
+		val (list1, list2) = TestData.diffLists
+		val diff = list1.printableDifference(list2)
+		val expectedDiff = TestData.diffString
+		diff shouldEqual expectedDiff
 	}
 
 	"Any RDD conversions" should "convert the types" in {
@@ -27,6 +30,5 @@ class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkCon
 		anyList.head.isInstanceOf[RDD[Any]] shouldBe true
 		resultRDD.isInstanceOf[RDD[String]] shouldBe true
 		startValue shouldBe resultValue
-
 	}
 }

@@ -16,4 +16,12 @@ object TestData {
 			("a2", "b3")
 		)
 	}
+
+	def diffLists: (List[Int], List[Int]) = {
+		(List(1, 2, 3, 4), List(3, 4, 5, 6))
+	}
+
+	def diffString: String = {
+		"Difference:\nx - y:\n\t1\n\t2\ny - x:\n\t5\n\t6"
+	}
 }
