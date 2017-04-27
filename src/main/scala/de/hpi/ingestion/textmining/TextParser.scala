@@ -2,6 +2,7 @@ package de.hpi.ingestion.textmining
 
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
@@ -13,6 +14,7 @@ import java.net.URLDecoder
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 
 import scala.io.Source
@@ -20,7 +22,8 @@ import scala.io.Source
 /**
   * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links.
   */
-object TextParser {
+object TextParser extends SparkJob {
+	appName = "Text Parser"
 	val keyspace = "wikidumps"
 	val tablename = "wikipedia"
 	val outputTablename = "parsedwikipedia"
@@ -29,6 +32,32 @@ object TextParser {
 	val parsableRedirect = "WEITERLEITUNG"
 	val redirectText = "REDIRECT"
 	val disambiguationTitleSuffix = " (Begriffsklärung)"
+
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
+		List(wikipedia).toAnyRDD()
+	}
+
+	/**
+	  * Saves Parsed Wikipedia entries to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.saveToCassandra(keyspace, outputTablename)
+	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Cleans Wikimarkup and converts it to html.
@@ -467,25 +496,17 @@ object TextParser {
 
 	/**
 	  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links. Also removes all metapages
-	  * except {@categoryNamespace } pages.
-	  *
-	  * @param rawArticles all Wikipedia articles as Wikitext
-	  * @return Wikipedia articles with extracted links
+	  * except {@categoryNamespace} pages.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
 	  */
-	def run(rawArticles: RDD[WikipediaEntry]): RDD[ParsedWikipediaEntry] = {
-		rawArticles
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val rawArticles = input.fromAnyRDD[WikipediaEntry]().head
+		val parsedArticles = rawArticles
 			.filter(!isMetaPage(_))
 			.map(parseWikipediaEntry)
-	}
-
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Text Parser")
-		val sc = new SparkContext(conf)
-
-		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
-		run(wikipedia).saveToCassandra(keyspace, outputTablename)
-
-		sc.stop
+		List(parsedArticles).toAnyRDD()
 	}
 }

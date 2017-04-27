@@ -2,6 +2,8 @@ package de.hpi.ingestion.textmining
 
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 
 class LinkCleanerTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Grouped valid pages with known existing pages" should "not be empty" in {
@@ -50,26 +52,30 @@ class LinkCleanerTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	"Wikipedia articles without links" should "be removed" in {
 		val articles = sc.parallelize(TestData.parsedArticlesWithoutLinksSet().toList)
-		val cleanedArticles = LinkCleaner.run(articles)
+		val cleanedArticles = LinkCleaner.run(List(articles).toAnyRDD(), sc).fromAnyRDD[ParsedWikipediaEntry]().head
 		cleanedArticles shouldBe empty
 	}
 
 	"Cleaned Wikipedia articles from incomplete article set" should "be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
-		val cleanedArticles = LinkCleaner.run(articles)
+		val cleanedArticles = LinkCleaner.run(List(articles).toAnyRDD(), sc).fromAnyRDD[ParsedWikipediaEntry]().head
 		cleanedArticles shouldBe empty
 	}
 
 	they should "not contain links" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
-		LinkCleaner.run(articles)
+		LinkCleaner.run(List(articles).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
 			.collect
 			.foreach(_.allLinks() shouldBe empty)
 	}
 
 	"Cleaned Wikipedia articles" should "be exactly these articles" in {
 		val articles = sc.parallelize(TestData.closedParsedWikipediaSet().toList)
-		val cleanedArticles = LinkCleaner.run(articles)
+		val cleanedArticles = LinkCleaner.run(List(articles).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
 			.collect
 			.toSet
 		cleanedArticles shouldEqual TestData.cleanedClosedParsedWikipediaSet()
