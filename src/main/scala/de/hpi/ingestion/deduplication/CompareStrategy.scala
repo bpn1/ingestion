@@ -95,7 +95,7 @@ object CompareStrategy extends Serializable {
 	): Double = {
 		val scoreSum = leftValues.map(
 			leftValue => rightValues.map(rightValue => compare(leftValue, rightValue, simMeasure, weight, scale))
-				.reduce(math.max)).sum
+				.reduceLeft(math.max)).sum
 		scoreSum / leftValues.size
 	}
 
@@ -114,6 +114,5 @@ object CompareStrategy extends Serializable {
 			case "geo_coords" => coordinatesCompare
 			case _ => defaultCompare
 		}
-
 	}
 }
