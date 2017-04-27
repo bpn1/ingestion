@@ -149,7 +149,7 @@ CREATE TABLE datalake.duplicatecandidates (
 CREATE TABLE datalake.sim_measure_stats (
     id uuid PRIMARY KEY,
     comment text,
-    data list<frozen<tuple<double, double, double, double>>>
+    data text
 );
 
 -- Evaluation
@@ -218,7 +218,7 @@ CREATE TABLE evaluation.subject_wikidata (
 
 CREATE TABLE evaluation.sim_measure_stats (
     id uuid PRIMARY KEY,
-    data list<frozen<tuple<double, double, double, double>>>,
+    data text,
     comment text
 );
 
