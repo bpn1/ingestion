@@ -9,6 +9,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import com.datastax.driver.core.utils.UUIDs
+import play.api.mvc.Action
 
 import scala.xml.XML
 import scala.collection.mutable
@@ -20,7 +21,11 @@ import scala.util.parsing.json.JSONObject
 import com.ning.http.client.AsyncHttpClientConfig
 import play.api.libs.ws.ning.NingWSClient
 import scala.concurrent.ExecutionContext.Implicits.global
+import pla.api.libs
 import scala.concurrent.Future
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.duration._
+import play.api.libs.concurrent.Timeout
 
 
 class MapboxDataEnrichment() extends Serializable {
@@ -39,8 +44,22 @@ class MapboxDataEnrichment() extends Serializable {
 				client.close()
 				println(res.getStatusCode)
 				res.json
-			}*/
+			}
+			def wb = Action.async{ request =>
+    val aas = WS.url("http://localhost/").withRequestTimeout(1000).get
+
+    aas.map(response =>{
+         Ok("responded")
+    })
+}
+
+			*/
 		val url = "https://api.mapbox.com/geocoding/v5/mapbox.places/strasse+5+9+13125+Berlin.json?access_token=pk.eyJ1IjoicmFkc2NoZWl0IiwiYSI6ImNqMXRoMnZ2aDAwMW0zM3FyMm9oMzJ0MTEifQ.xdZLGZA5FNwi97t2UC4ogw"
+
+		def wb = Action.async{ request =>
+			val a = client.url(url).withRequestTimeout(1000).get
+		}
+
 		val futureResult: Future[play.api.libs.json.JsValue] = client.url(url).get().map {
 		 response => (response.json)
 	 	}

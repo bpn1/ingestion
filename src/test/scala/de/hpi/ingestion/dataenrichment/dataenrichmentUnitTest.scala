@@ -8,7 +8,7 @@ class DataEnrichmentUnitTest extends FlatSpec with SharedSparkContext with RDDCo
 	"getGeoCode" should "resolve a given postal address string into a geocode" in {
 
 		val dataenrichment = new MapboxDataEnrichment
-		val testAddress = "Straße 5 9, 13125 Berlin".toString
+		val testAddress = "Straße 5 9, 13125 Berlin"
 
 		val computedValue = dataenrichment.getGeoCode(testAddress)
 
