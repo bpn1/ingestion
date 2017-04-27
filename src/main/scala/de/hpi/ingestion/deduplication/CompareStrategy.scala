@@ -15,7 +15,7 @@ object CompareStrategy extends Serializable {
 	  * @param scale Scale of the feature to be used; as specified when CompareStrategy.apply is called.
 	  * @return The similarity score of the two input strings.
 	  */
-	private def compare(
+	def compare(
 		leftValue: String,
 		rightValue: String,
 		simMeasure: SimilarityMeasure[String],
@@ -35,7 +35,7 @@ object CompareStrategy extends Serializable {
 	  * @param scale Scale of the feature to be used; as specified when CompareStrategy.apply is called.
 	  * @return The similarity score of the two input strings.
 	  */
-	private def singleStringCompare(
+	def singleStringCompare(
 		leftValue: List[String],
 		rightValue: List[String],
 		simMeasure: SimilarityMeasure[String],
@@ -54,7 +54,7 @@ object CompareStrategy extends Serializable {
 	  * @param scale Scale of the feature to be used; as specified when CompareStrategy.apply is called.
 	  * @return The similarity score of the two input coordinates.
 	  */
-	private def coordinatesCompare(
+	def coordinatesCompare(
 		leftValues: List[String],
 		rightValues: List[String],
 		simMeasure: SimilarityMeasure[String],
@@ -71,12 +71,6 @@ object CompareStrategy extends Serializable {
 		(firstScore + secondScore) / 2
 	}
 
-	def maximum(values: List[Double]): Double = {
-		var temp = 0.0
-		values.foreach(value => temp = math.max(temp, value))
-		temp
-	}
-
 	/**
 	  * This method compares two string-lists by default.
 	  * @param leftValues List of strings to be compared with rightValues.
@@ -86,7 +80,7 @@ object CompareStrategy extends Serializable {
 	  * @param scale Scale of the feature to be used; as specified when CompareStrategy.apply is called.
 	  * @return The similarity score of the two input lists of strings.
 	  */
-	private def defaultCompare(
+	def defaultCompare(
 		leftValues: List[String],
 		rightValues: List[String],
 		simMeasure: SimilarityMeasure[String],
@@ -110,7 +104,8 @@ object CompareStrategy extends Serializable {
 				 | "category"
 				 | "geo_city"
 				 | "geo_postal"
-				 | "geo_country" => singleStringCompare
+				 | "geo_country"
+				 | "gen_employees" => singleStringCompare
 			case "geo_coords" => coordinatesCompare
 			case _ => defaultCompare
 		}

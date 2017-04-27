@@ -100,23 +100,44 @@ object TestData {
 		Subject(name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin"), "gen_income" -> List("12"))),
 		Subject(name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52","13"), "gen_income" -> List("33"))),
 		Subject(name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York"), "geo_coords" -> List("53","14"), "gen_income" -> List("600"))),
-		Subject(name = Some("Porsche"), properties = Map("geo_coords" -> List("52","13"))),
-		Subject(name = Some("Ferrari"), properties = Map("geo_coords" -> List("53","14")))
+		Subject(name = Some("Porsche"), properties = Map("geo_coords" -> List("52","13"), "gen_sectors" -> List("cars", "music", "games"))),
+		Subject(name = Some("Ferrari"), properties = Map("geo_coords" -> List("53","14"), "gen_sectors" -> List("games", "cars", "music")))
 	)
+
+	def emptySubject: Subject = Subject()
 
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
 
-	def testConfig: List[ScoreConfig[String, SimilarityMeasure[String]]] = List(
-		ScoreConfig(key = "name", similarityMeasure = MongeElkan, weight= 0.8),
-		ScoreConfig(key = "name", similarityMeasure = JaroWinkler, weight= 0.7),
-		ScoreConfig(key = "name", similarityMeasure = ExactMatchString, weight= 0.2)
+	def testConfig(key: String = "name"): List[ScoreConfig[String, SimilarityMeasure[String]]] = List(
+		ScoreConfig(key, similarityMeasure = MongeElkan, weight= 0.8),
+		ScoreConfig(key, similarityMeasure = JaroWinkler, weight= 0.7),
+		ScoreConfig(key, similarityMeasure = ExactMatchString, weight= 0.2)
 	)
 
+	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String]): Double = {
+		val weight = {
+			simMeasure match {
+				case MongeElkan => 0.8
+				case JaroWinkler => 0.7
+				case ExactMatchString => 0.2
+			}
+		}
+		simMeasure.compare(subject1.name.get, subject2.name.get, 1) * weight
+	}
+
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
-			MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
-			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7,
-			ExactMatchString.compare(subject1.name.get, subject2.name.get) * 0.2
+		testCompareScore(subject1, subject2, MongeElkan),
+		testCompareScore(subject1, subject2, JaroWinkler),
+		testCompareScore(subject1, subject2, ExactMatchString)
 	).sum / 3
+
+	def expectedCompareStrategies: List[(List[String], List[String], SimilarityMeasure[String], Double, Int) => Double] = List(
+		CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
+	)
+
+	def testCompareInput: (List[String], List[String], SimilarityMeasure[String], Double, Int) = (List(
+		"very", "generic", "values"), List("even", "more", "values"), MongeElkan, 0.5, 1
+	)
 
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()
