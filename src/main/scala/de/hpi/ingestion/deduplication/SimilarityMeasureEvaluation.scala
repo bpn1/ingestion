@@ -14,9 +14,10 @@ import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, SimilarityMea
 object SimilarityMeasureEvaluation {
 	val appName = "SimilarityMeasureEvaluation"
 	val numberOfBuckets = 10
-	val keyspace = "evaluation"
+	val inputKeyspace = "evaluation"
 	val inputTest = "goldstandard"
 	val inputTraining = "dbpedia_wikidata_deduplication"
+	val statsKeyspace = "datalake"
 	val output = "sim_measure_stats"
 
 	/**
@@ -85,18 +86,18 @@ object SimilarityMeasureEvaluation {
 		val sc = new SparkContext(conf)
 
 		val training = sc
-			.cassandraTable[DuplicateCandidates](this.keyspace, this.inputTraining)
+			.cassandraTable[DuplicateCandidates](this.inputKeyspace, this.inputTraining)
 			.flatMap { case DuplicateCandidates(subject_id, candidates) =>
 				candidates.map(candidate => ((subject_id, candidate._1.id), candidate._3))
 			}.distinct
 		val test = sc
-			.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
+			.cassandraTable[(UUID, UUID)](this.inputKeyspace, this.inputTest)
 			.map(pair => (pair, 1.0))
 
 		val stats = generateStats(test, training, sc)
 
 		sc
 			.parallelize(Seq(stats))
-			.saveToCassandra(this.keyspace, this.output)
+			.saveToCassandra(this.statsKeyspace, this.output)
 	}
 }
