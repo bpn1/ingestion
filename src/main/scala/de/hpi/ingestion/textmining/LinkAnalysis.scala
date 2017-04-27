@@ -51,14 +51,29 @@ object LinkAnalysis {
 	}
 
 	/**
+	  * Extracts links from Wikipedia articles that point to an existing page.
+	  *
+	  * @param articles all Wikipedia articles
+	  * @return valid links
+	  */
+	def extractValidLinks(articles: RDD[ParsedWikipediaEntry]): RDD[Link] = {
+		val joinableExistingPages = articles.map(article => (article.title, article.title))
+		articles
+			.flatMap(_.allLinks())
+			.keyBy(_.page)
+			.join(joinableExistingPages)
+			.values
+			.map { case (link, page) => link }
+	}
+
+	/**
 	  * Creates RDD of Aliases with corresponding pages.
 	  *
-	  * @param parsedWikipedia RDD of parsed Wikipedia entries to be processed
+	  * @param links links of Wikipedia articles
 	  * @return RDD of Aliases
 	  */
-	def groupByAliases(parsedWikipedia: RDD[ParsedWikipediaEntry]): RDD[Alias] = {
-		parsedWikipedia
-			.flatMap(_.allLinks())
+	def groupByAliases(links: RDD[Link]): RDD[Alias] = {
+		links
 			.map(link => (link.alias, List(link.page)))
 			.reduceByKey(_ ++ _)
 			.map { case (alias, pageList) =>
@@ -95,30 +110,14 @@ object LinkAnalysis {
 	}
 
 	/**
-	  * Calculates probability for Alias pointing to page.
-	  *
-	  * @param alias    Alias to be processed
-	  * @param pageName pagename that is being pointed to
-	  * @return probability for Alias pointing to page
-	  */
-	def probabilityLinkDirectsToPage(alias: Alias, pageName: String): Double = {
-		val totalReferences = alias
-			.pages
-			.foldLeft(0)(_ + _._2)
-		val references = alias.pages.getOrElse(pageName, 0)
-		references / totalReferences
-	}
-
-	/**
 	  * Groups link Aliases by page names and vice versa. Also removes dead links (no corresponding page).
 	  *
 	  * @param articles all Wikipedia articles
 	  * @return grouped Aliases and page names
 	  */
 	def run(articles: RDD[ParsedWikipediaEntry]): (RDD[Alias], RDD[Page]) = {
-		val allPages = articles.map(_.title)
-		val aliases = removeDeadLinks(groupByAliases(articles), allPages)
-		val pages = removeDeadPages(groupByPageNames(articles), allPages)
+		val aliases = groupByAliases(extractValidLinks(articles))
+		val pages = groupByPageNames(articles)
 		(aliases, pages)
 	}
 

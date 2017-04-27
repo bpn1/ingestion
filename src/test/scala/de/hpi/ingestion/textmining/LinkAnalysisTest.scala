@@ -4,31 +4,43 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
 class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
+	"Valid links" should "be extracted" in {
+		val articles = sc.parallelize(TestData.closedParsedWikipediaSet().toList)
+		val validLinks = LinkAnalysis
+			.extractValidLinks(articles)
+			.collect
+		validLinks should not be empty
+	}
+
 	"Page names grouped by aliases" should "not be empty" in {
+		val links = sc.parallelize(TestData.validLinkSet().toList)
 		val groupedAliases = LinkAnalysis
-			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaList()))
+			.groupByAliases(links)
 			.collect
 			.toSet
 		groupedAliases should not be empty
 	}
 
 	they should "not have empty aliases" in {
+		val links = sc.parallelize(TestData.validLinkSet().toList)
 		LinkAnalysis
-			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaList()))
+			.groupByAliases(links)
 			.collect
 			.foreach(alias => alias.alias should not be empty)
 	}
 
 	they should "contain at least one page name per alias" in {
+		val links = sc.parallelize(TestData.validLinkSet().toList)
 		LinkAnalysis
-			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaList()))
+			.groupByAliases(links)
 			.collect
 			.foreach(alias => alias.pages should not be empty)
 	}
 
 	they should "not contain empty page names" in {
+		val links = sc.parallelize(TestData.validLinkSet().toList)
 		LinkAnalysis
-			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaList()))
+			.groupByAliases(links)
 			.flatMap(_.pages)
 			.map(_._1)
 			.collect
@@ -36,8 +48,9 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	they should "be exactly these aliases" in {
+		val links = sc.parallelize(TestData.validLinkSet().toList)
 		val groupedAliases = LinkAnalysis
-			.groupByAliases(sc.parallelize(TestData.smallerParsedWikipediaList()))
+			.groupByAliases(links)
 			.map(alias => (alias.alias, alias.pages))
 			.collect
 			.toSet
@@ -83,14 +96,6 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 			.collect
 			.toSet
 		groupedPages shouldEqual TestData.groupedPagesTestSet()
-	}
-
-	"Probability that link directs to page" should "be computed correctly" in {
-		val references = TestData.probabilityReferences()
-		TestData.cleanedGroupedAliasesTestSet()
-			.map(link =>
-				(link.alias, LinkAnalysis.probabilityLinkDirectsToPage(link, "Bayern")))
-			.foreach { case (alias, probability) => probability shouldEqual references(alias) }
 	}
 
 	"Dead links and only dead links" should "be removed" in {

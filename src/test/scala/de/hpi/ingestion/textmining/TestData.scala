@@ -617,7 +617,8 @@ object TestData {
 	def wikipediaTestAbstracts(): Map[String, String] = {
 		Map(
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
-			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
+			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet."""
+		)
 	}
 
 	def groupedAliasesTestSet(): Set[Alias] = {
@@ -625,7 +626,9 @@ object TestData {
 			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Alias("Bayern", Map("Bayern" -> 1)),
 			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Zerfall (Soziologie)" -> 1)))
+			Alias("Radioaktiver Zerfall", Map("Radioaktivität" -> 1)),
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Radioaktivität" -> 1))
+		)
 	}
 
 	def groupedPagesTestSet(): Set[Page] = {
@@ -634,7 +637,8 @@ object TestData {
 			Page("Bayern", Map("Bayern" -> 1)),
 			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
 			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
-			Page("Zerfall (Soziologie)", Map("Zerfall" -> 1)))
+			Page("Radioaktivität", Map("Zerfall" -> 1, "Radioaktiver Zerfall" -> 1))
+		)
 	}
 
 	def cleanedGroupedAliasesTestSet(): Set[Alias] = {
@@ -642,7 +646,8 @@ object TestData {
 			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Alias("Bayern", Map("Bayern" -> 1)),
 			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1)))
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1))
+		)
 	}
 
 	def cleanedGroupedPagesTestSet(): Set[Page] = {
@@ -650,7 +655,8 @@ object TestData {
 			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
 			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1)))
+			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+		)
 	}
 
 	def groupedValidPagesSet(): Set[(String, Set[String])] = {
@@ -685,10 +691,23 @@ object TestData {
 					Link("Bayern", "Bayern", Option(69)),
 					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
 					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)),
 					Link("Zerfall", "Zerfall (Soziologie)", Option(4711)), // dead link
 					Link("", "page name with empty alias", Option(4711)),
 					Link("alias with empty page name", "", Option(4711))
-					)))
+				)))
+	}
+
+	def validLinkSet(): Set[Link] = {
+		Set(
+			Link("Ingolstadt", "Ingolstadt", Option(55)),
+			Link("Bayern", "Bayern", Option(69)),
+			Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+			Link("Zerfall", "Zerfall (Album)", Option(4711)),
+			Link("Zerfall", "Radioaktivität", Option(4711)),
+			Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711))
+		)
 	}
 
 	def parsedArticlesWithoutLinksSet(): Set[ParsedWikipediaEntry] = {
