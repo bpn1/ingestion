@@ -3,13 +3,45 @@ package de.hpi.ingestion.textmining
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.{SparkConf, SparkContext}
 import com.datastax.spark.connector._
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
-object TermFrequencyCounter {
+/**
+  * Calculates term frequency per article and link.
+  */
+object TermFrequencyCounter extends SparkJob {
+	appName = "Term Frequency Counter"
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val outputArticlesTablename = "parsedwikipedia"
 	val contextSize = 20
+
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		List(articles).toAnyRDD()
+	}
+
+	/**
+	  * Saves enriched Parsed Wikipedia entries to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.saveToCassandra(keyspace, outputArticlesTablename)
+	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Extracts the stemmed terms of a Wikipedia article and their relative frequency (between 0.0 and 1.0).
@@ -33,7 +65,7 @@ object TermFrequencyCounter {
 	}
 
 	/**
-	  * Enriches a Wikipedia article with its bag of words (implemented as Map)
+	  * Enriches a Wikipedia article with its bag of words (implemented as Map).
 	  *
 	  * @param entry parsed Wikipedia entry which terms will be extracted
 	  * @return parsed Wikipedia entry with additional context information
@@ -44,7 +76,7 @@ object TermFrequencyCounter {
 	}
 
 	/**
-	  * Extracts context of the links of a given Wikipedia entry. The context are {@contextSize} tokens in front of
+	  * Extracts context of the links of a given Wikipedia entry. The contexts are {@contextSize } tokens in front of
 	  * and behind the location of the links alias in the tokenized text.
 	  *
 	  * @param entry Wikipedia entry containing the used links
@@ -69,28 +101,17 @@ object TermFrequencyCounter {
 	/**
 	  * Enriches articles with the term frequencies of the whole article (called context) and the term frequencies
 	  * for all link contexts (called link contexts).
-	  * @param articles RDD of Parsed Wikipedia Entries
-	  * @return RDD of articles with their contexts and the link contexts
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
 	  */
-	def run(
-		articles: RDD[ParsedWikipediaEntry],
-		tokenizer: IngestionTokenizer = IngestionTokenizer()
-	): RDD[ParsedWikipediaEntry] = {
-		articles
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
+		val tokenizer = IngestionTokenizer(args)
+		val enrichedArticles = articles
 			.map(extractArticleContext(_, tokenizer))
 			.map(extractLinkContexts(_, tokenizer))
-	}
-
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("Term Frequency Counter")
-
-		val sc = new SparkContext(conf)
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-
-		run(articles)
-			.saveToCassandra(keyspace, outputArticlesTablename)
-
-		sc.stop()
+		List(enrichedArticles).toAnyRDD()
 	}
 }

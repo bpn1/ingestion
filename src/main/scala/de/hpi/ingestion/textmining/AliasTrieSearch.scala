@@ -2,25 +2,69 @@ package de.hpi.ingestion.textmining
 
 import java.io.InputStream
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import com.esotericsoftware.kryo.io.Input
 import com.twitter.chill.Kryo
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FileSystem, Path}
 import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 import scala.collection.mutable
 
 /**
   * Finds all occurrences of the aliases in the given trie in all Wikipedia articles and writes them to the
   * foundaliases column.
+  * recommended spark-submit flags
+  * --driver-memory 16G				<< needed for building the Trie
+  * --driver-java-options -Xss1g	<< needed for serialization of Trie
+  * --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000" << needed for deserialization of Trie
   */
-object AliasTrieSearch {
+object AliasTrieSearch extends SparkJob {
+	appName = "TrieBuilder"
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
 	val trieName = "trie_full.bin"
+	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.TrieKryoRegistrator"
+
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
+		List(parsedWikipedia).toAnyRDD()
+	}
+
+	/**
+	  * Saves Parsed Wikipedia entries with the found aliases to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.saveToCassandra(keyspace, tablename)
+	}
+
+	/**
+	  * Opens a HDFS file stream pointing to the trie binary.
+	  * @return Input Stream pointing to the file in the HDFS
+	  */
+	def hdfsFileStream(): FSDataInputStream = {
+		val hadoopConf = new Configuration()
+		val fs = FileSystem.get(hadoopConf)
+		fs.open(new Path(trieName))
+	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Finds all occurrences of aliases in the text of a Wikipedia entry.
@@ -71,44 +115,22 @@ object AliasTrieSearch {
 	}
 
 	/**
-	  * Opens a HDFS file stream pointing to the trie binary.
-	  * @return Input Stream pointing to the file in the HDFS
-	  */
-	def hdfsFileStream(): FSDataInputStream = {
-		val hadoopConf = new Configuration()
-		val fs = FileSystem.get(hadoopConf)
-		fs.open(new Path(trieName))
-	}
-
-	/**
 	  * Uses a pre-built Trie to find aliases in the text of articles and writes them into the foundaliases field.
-	  * @param articles RDD of Parsed Wikipedia Articles
-	  * @return RDD of Parsed Wikipedia Articles containing the aliases found in their text
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
 	  */
-	def run(articles: RDD[ParsedWikipediaEntry]): RDD[ParsedWikipediaEntry] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val tokenizer = IngestionTokenizer(false, false)
-		articles
-			.mapPartitions({ partition =>
-				val trie = deserializeTrie(hdfsFileStream())
-				partition.map(matchEntry(_, trie, tokenizer))
-			}, true)
-	}
-
-	// recommended spark-submit flags
-	// --driver-memory 16G				<< needed for building the Trie
-	// --driver-java-options -Xss1g		<< needed for serialization of Trie
-	// --conf spark.executor.extrajavaoptions="-Xss8g"	<< not sure if needed
-	// --conf spark.yarn.am.extraJavaOptions="-Xss8g"	<< not sure if needed
-	// --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
-	// ThreadStackSize is needed for deserialization of Trie
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName("TrieBuilder")
-		 	.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-			.set("spark.kryo.registrator", "de.hpi.ingestion.textmining.TrieKryoRegistrator")
-		val sc = new SparkContext(conf)
-		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
-		run(parsedWikipedia).saveToCassandra(keyspace, tablename)
-		sc.stop
+		input
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.map(articles =>
+				articles
+					.mapPartitions({ partition =>
+						val trie = deserializeTrie(hdfsFileStream())
+						partition.map(matchEntry(_, trie, tokenizer))
+					}, true))
+			.toAnyRDD()
 	}
 }

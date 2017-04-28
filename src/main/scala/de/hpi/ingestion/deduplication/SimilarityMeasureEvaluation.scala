@@ -2,23 +2,51 @@ package de.hpi.ingestion.deduplication
 
 import java.util.UUID
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 
 import org.apache.spark.rdd.RDD
 import play.api.libs.json._
 import com.datastax.spark.connector._
-import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, SimilarityMeasureStats, PrecisionRecallDataTuple}
+import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, SimilarityMeasureStats}
+import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
-object SimilarityMeasureEvaluation {
-	val appName = "SimilarityMeasureEvaluation"
+object SimilarityMeasureEvaluation extends SparkJob {
+	appName = "SimilarityMeasureEvaluation"
 	val numberOfBuckets = 10
 	val inputKeyspace = "evaluation"
 	val inputTest = "goldstandard"
 	val inputTraining = "dbpedia_wikidata_deduplication"
 	val statsKeyspace = "datalake"
 	val output = "sim_measure_stats"
+
+	// $COVERAGE-OFF$
+	/**
+	  * Loads training and test data from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val training = sc.cassandraTable[DuplicateCandidates](this.keyspace, this.inputTraining)
+		val test = sc.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
+		List(training).toAnyRDD() ++ List(test).toAnyRDD()
+	}
+
+	/**
+	  * Saves the Similarity Measure Stats to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[SimilarityMeasureStats]()
+			.head
+			.saveToCassandra(this.keyspace, this.output)
+	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Generate (prediction, label) tuples for evaluation
