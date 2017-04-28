@@ -55,7 +55,7 @@ class Deduplication(
 	  * @param args arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val duplicates = output.head.asInstanceOf[RDD[Subject]]
+		val duplicates = output.head.asInstanceOf[RDD[DuplicateCandidates]]
 		val evaluation = output(1).asInstanceOf[RDD[(UUID, Option[String], Map[String, Int])]]
 		duplicates.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 		evaluation
@@ -65,6 +65,16 @@ class Deduplication(
 				SomeColumns("id", "comment", "data" append))
 	}
 	// $COVERAGE-ON$
+
+	/**
+	  * Parses config before calling the implemented method in the SparkJob trait.
+	  * @param args arguments of the program
+	  * @return true if the program can continue, false if it should be terminated
+	  */
+	override def assertConditions(args: Array[String]): Boolean = {
+		parseConfig()
+		super.assertConditions(args)
+	}
 
 	/**
 	  * Compares to subjects regarding the configuration
@@ -268,7 +278,6 @@ class Deduplication(
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		parseConfig()
 		val inputData = input.fromAnyRDD[Subject]()
 		val subjects = inputData.head
 		val staging = inputData(1)
