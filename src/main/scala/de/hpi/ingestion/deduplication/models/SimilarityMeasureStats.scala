@@ -2,7 +2,6 @@ package de.hpi.ingestion.deduplication.models
 
 import java.util.UUID
 import com.datastax.driver.core.utils.UUIDs
-import play.api.libs.json._
 import org.apache.spark.rdd.RDD
 
 /**
