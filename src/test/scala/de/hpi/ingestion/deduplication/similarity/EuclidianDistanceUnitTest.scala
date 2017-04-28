@@ -4,7 +4,7 @@ import de.hpi.ingestion.deduplication.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
-	"computedDistance" should "compute the distnace between two points in terms of kilometers" in {
+	"computeDistance" should "compute the distnace between two points in terms of kilometers" in {
 		val subjects = TestData.testSubjects
 		val distance = EuclidianDistance.computeDistance(
 			subjects(4).properties("geo_coords").head.toDouble,

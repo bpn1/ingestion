@@ -46,7 +46,7 @@ object CompareStrategy extends Serializable {
 	}
 
 	/**
-	  * This method naively compares two coordinate-pairs.
+	  * This method naively compares two coordinate-strings.
 	  * @param leftValues Coordinates to be compared with rightValue.
 	  * @param rightValues Coordinates to be compared with leftValue.
 	  * @param simMeasure Similarity measure to be used; as specified when CompareStrategy.apply is called.
@@ -61,14 +61,7 @@ object CompareStrategy extends Serializable {
 		weight: Double,
 		scale: Int = 1
 	): Double = {
-		val leftX = leftValues.head
-		val rightX = rightValues.head
-		val leftY = leftValues.last
-		val rightY = rightValues.last
-
-		val firstScore = compare(leftX, rightX, simMeasure, weight, scale)
-		val secondScore = compare(leftY, rightY, simMeasure, weight, scale)
-		(firstScore + secondScore) / 2
+		compare(leftValues.mkString(","), rightValues.mkString(","), simMeasure, weight, scale)
 	}
 
 	/**

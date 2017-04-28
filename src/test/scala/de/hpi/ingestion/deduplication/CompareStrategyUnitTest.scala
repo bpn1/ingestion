@@ -1,5 +1,7 @@
 package de.hpi.ingestion.deduplication
 
+import de.hpi.ingestion.deduplication.models.ScoreConfig
+import de.hpi.ingestion.deduplication.similarity.{EuclidianDistance, SimilarityMeasure}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.math.BigDecimal
@@ -41,23 +43,20 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 		}
 	}
 
-	/*"coordinatesCompare" should "compare the input lists as coordinate values" in {
-		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig("geo_coords")
-		val subjects = TestData.testSubjects
-		val subject1 = subjects(2)
-		val subject2 = subjects(3)
-		deduplication.config.foreach { feature =>
-			val score = CompareStrategy.coordinatesCompare(
-				subject1.get(feature.key),
-				subject2.get(feature.key),
-				feature.similarityMeasure,
-				feature.weight
-			)
-			val expected = TestData.testCompareScore(subject1, subject2, feature.similarityMeasure)
-			score shouldEqual expected
-		}
-	}*/
+	"coordinatesCompare" should "compare the input lists as coordinate values" in {
+		val coordinates = List(List("1.1", "1"), List("1", "1"))
+		val attribute = "geo_coords"
+		val feature = ScoreConfig[String, SimilarityMeasure[String]](attribute, EuclidianDistance, 1)
+		val score = CompareStrategy.coordinatesCompare(
+			coordinates.head,
+			coordinates.last,
+			feature.similarityMeasure,
+			feature.weight
+		)
+
+		val expected = feature.similarityMeasure.compare("1.1,1", "1,1", 1) * feature.weight
+		score shouldEqual expected
+	}
 
 	"defaultCompare" should "compare each element from a list with each element from another" in {
 		val deduplication = TestData.defaultDeduplication
@@ -71,7 +70,7 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 				subject2.get(feature.key),
 				feature.similarityMeasure,
 				feature.weight
-			)).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble	// rounds the value
+			)).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble	// rounds the value
 
 			val expected = 1.0 * feature.weight
 			score shouldEqual expected
