@@ -112,6 +112,14 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		groupedPages shouldEqual TestData.groupedPagesSet()
 	}
 
+	"Link data" should "be grouped and counted" in {
+		val linkData = TestData.validLinkSet()
+			.map(link => (link.alias, List(link.page)))
+		val groupedData = LinkAnalysis.groupLinks(sc.parallelize(linkData.toList)).collect.toSet
+		val expectedData = TestData.groupedAliasesSet().map(alias => (alias.alias, alias.pages))
+		groupedData shouldEqual expectedData
+	}
+
 	"Grouped aliases and page names from incomplete article set" should "be empty" in {
 		val articles = sc.parallelize(TestData.smallerParsedWikipediaList())
 		val List(groupedAliases, groupedPages) = LinkAnalysis.run(List(articles).toAnyRDD(), sc)

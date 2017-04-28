@@ -44,7 +44,6 @@ object LinkAnalysis extends SparkJob {
 		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))
 		pages.saveToCassandra(keyspace, outputPageToAliasesTablename)
 	}
-
 	// $COVERAGE-ON$
 
 	/**
@@ -56,8 +55,7 @@ object LinkAnalysis extends SparkJob {
 	def extractValidLinks(articles: RDD[ParsedWikipediaEntry]): RDD[Link] = {
 		val joinableExistingPages = articles.map(article => (article.title, article.title))
 		articles
-			.flatMap(_.allLinks())
-			.keyBy(_.page)
+			.flatMap(_.allLinks().map(l => (l.page, l)))
 			.join(joinableExistingPages)
 			.values
 			.map { case (link, page) => link }
@@ -70,18 +68,8 @@ object LinkAnalysis extends SparkJob {
 	  * @return RDD of Aliases
 	  */
 	def groupByAliases(links: RDD[Link]): RDD[Alias] = {
-		links
-			.map(link => (link.alias, List(link.page)))
-			.reduceByKey(_ ++ _)
-			.map { case (alias, pageList) =>
-				val pages = pageList
-					.filter(_.nonEmpty)
-					.groupBy(identity)
-					.mapValues(_.size)
-					.map(identity)
-				Alias(alias, pages)
-			}
-			.filter(alias => alias.alias.nonEmpty && alias.pages.nonEmpty)
+		val aliasData = links.map(link => (link.alias, List(link.page)))
+		groupLinks(aliasData).map(t => Alias(t._1, t._2))
 	}
 
 	/**
@@ -91,18 +79,24 @@ object LinkAnalysis extends SparkJob {
 	  * @return RDD of pages
 	  */
 	def groupByPageNames(links: RDD[Link]): RDD[Page] = {
+		val pageData = links.map(link => (link.page, List(link.alias)))
+		groupLinks(pageData).map(Page.tupled)
+	}
+
+	/**
+	  * Groups link data on the key, counts the number of elements per key and filters entries with an empty field.
+	  * @param links RDD containing the link data in a predefined format
+	  * @return RDD containing the counted and filtered link data
+	  */
+	def groupLinks(links: RDD[(String, List[String])]): RDD[(String, Map[String, Int])] = {
 		links
-			.map(link => (link.page, List(link.alias)))
 			.reduceByKey(_ ++ _)
-			.map { case (page, aliasList) =>
-				val aliases = aliasList
+			.map { case (key, valueList) =>
+				val countedValues = valueList
 					.filter(_.nonEmpty)
-					.groupBy(identity)
-					.mapValues(_.size)
-					.map(identity)
-				Page(page, aliases)
-			}
-			.filter(page => page.page.nonEmpty && page.aliases.nonEmpty)
+					.countElements()
+				(key, countedValues)
+			}.filter(t => t._1.nonEmpty && t._2.nonEmpty)
 	}
 
 	/**
