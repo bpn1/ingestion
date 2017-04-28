@@ -35,37 +35,6 @@ class Deduplication(
 	var blockingSchemes = List[BlockingScheme](new SimpleBlockingScheme)
 	appName = importName
 
-	// $COVERAGE-OFF$
-	/**
-	  * Loads the Subjects and if needed the staged Subjects from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
-		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
-		(subjects ++ staging).toAnyRDD()
-	}
-
-	/**
-	  * Saves the duplicates and block evaluation to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val duplicates = output.head.asInstanceOf[RDD[DuplicateCandidates]]
-		val evaluation = output(1).asInstanceOf[RDD[(UUID, Option[String], Map[String, Int])]]
-		duplicates.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
-		evaluation
-			.saveToCassandra(
-				settings("keyspaceStatsTable"),
-				settings("statsTable"),
-				SomeColumns("id", "comment", "data" append))
-	}
-	// $COVERAGE-ON$
-
 	/**
 	  * Parses config before calling the implemented method in the SparkJob trait.
 	  * @param args arguments of the program
@@ -292,19 +261,4 @@ class Deduplication(
 		val duplicates = createDuplicateCandidates(subjectPairs)
 		List(duplicates).toAnyRDD() ++ evaluationOutput
 	}
-}
-
-object Deduplication {
-	val dataTypes: Map[String, SimilarityMeasure[_]] = Map(
-		"ExactMatchString" -> ExactMatchString,
-		"MongeElkan" -> MongeElkan,
-		"Jaccard" -> Jaccard,
-		"DiceSorensen" -> DiceSorensen,
-		"Jaro" -> Jaro,
-		"JaroWinkler" -> JaroWinkler,
-		"N-Gram" -> NGram,
-		"Overlap" -> Overlap,
-		"EuclidianDistance" -> EuclidianDistance,
-		"RoughlyEqualNumbers" -> RoughlyEqualNumbers
-	)
 }
