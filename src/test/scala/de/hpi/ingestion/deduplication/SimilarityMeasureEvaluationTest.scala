@@ -50,17 +50,11 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 		val testData = TestData.testDataSmall(sc)
 		val trainingData = TestData.trainingDataSmall(sc)
 
-		val computed = SimilarityMeasureEvaluation.generateStats(testData, trainingData, sc).toString
-		println(computed)
-		implicit val statsFormat = Json.format[PrecisionRecallDataTuple]
-		val expected1 = TestData.precisionRecallResults(sc).head.toString
-		println(expected1)
+		val predictionAndLabels = SimilarityMeasureEvaluation.generatePredictionAndLabels(trainingData, testData)
+		val computed = SimilarityMeasureEvaluation.generateStats(predictionAndLabels).toString
+		val expected = TestData.precisionRecallResults(sc)
 
-		//val expected1 = Json.obj("record" -> expected(1)) \ ("record").toString
-		println(expected1)
-		assert(computed contains expected1)
-
-
+		computed equals expected
 
 	}
 }

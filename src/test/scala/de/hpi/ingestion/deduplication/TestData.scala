@@ -29,11 +29,14 @@ object TestData {
 		))
 	}
 
-	def precisionRecallResults(sc: SparkContext) : Seq[JsValue] = {
-		Seq(
-			Json.obj("argument" -> 0.5, "precision" -> 0.5, "recall" -> 0.5, "fscore" -> 0.5),
-			Json.obj("argument" -> 0.6, "precision" -> 0.6666666666666666, "recall" -> 0.5, "fscore" -> 0.5714285714285715),
-			Json.obj("argument" -> 0.7, "precision" -> 1, "recall" -> 0.5, "fscore" -> 0.6666666666666666)
+	def precisionRecallResults(sc: SparkContext) : RDD[PrecisionRecallDataTuple] = {
+		sc.parallelize(List(
+			PrecisionRecallDataTuple(0.0, 0.6666666666666666, 1, 0.8),
+			PrecisionRecallDataTuple(0.5, 0.5, 0.5, 0.5),
+			PrecisionRecallDataTuple(0.6, 0.6666666666666666, 0.5, 0.5714285714285715),
+			PrecisionRecallDataTuple(0.7, 1, 0.5, 0.6666666666666666),
+			PrecisionRecallDataTuple(0.8, 1, 0.25, 0.4)
+			)
 		)
 	}
 
