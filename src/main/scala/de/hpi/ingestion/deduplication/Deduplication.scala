@@ -90,8 +90,7 @@ class Deduplication(
 		val weights = for {
 			scoreConfigs <- this.config.values.toList
 			scoreConfig <- scoreConfigs
-			weight = scoreConfig.weight
-		} yield weight
+		} yield scoreConfig.weight
 
 		val scores = for {
 			(attribute, simMeasures) <- this.config
@@ -99,10 +98,8 @@ class Deduplication(
 			values2 = subject2.get(attribute)
 			if values1.nonEmpty && values2.nonEmpty
 			simMeasure <- simMeasures
-		} yield {
-			val score = simMeasure.similarityMeasure.compare(values1.head, values2.head, simMeasure.scale)
-			score * simMeasure.weight * simMeasure.scale
-		}
+			score = simMeasure.similarityMeasure.compare(values1.head, values2.head, simMeasure.scale)
+		} yield score * simMeasure.weight * simMeasure.scale
 		scores.sum / weights.sum
 	}
 
