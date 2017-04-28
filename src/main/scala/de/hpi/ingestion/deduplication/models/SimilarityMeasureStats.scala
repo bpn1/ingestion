@@ -12,7 +12,7 @@ import play.api.libs.json._
   */
 case class SimilarityMeasureStats(
 	id: UUID = UUIDs.timeBased(),
-	data: play.api.libs.json.JsObject,
+	data: String,
 	comment: Option[String]
 )
 

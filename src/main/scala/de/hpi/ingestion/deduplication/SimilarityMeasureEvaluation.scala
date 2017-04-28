@@ -48,7 +48,7 @@ object SimilarityMeasureEvaluation {
 		test: RDD[((UUID, UUID), Double)],
 		training: RDD[((UUID,UUID),Double)],
 		sc: SparkContext
-	) : SimilarityMeasureStats = {
+	) : JsObject = {
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
 
@@ -72,12 +72,7 @@ object SimilarityMeasureEvaluation {
 		.toList
 
 		implicit val statsFormat = Json.format[PrecisionRecallDataTuple]
-
-		val stats = Json.obj("stats" -> data)
-
-		val record = SimilarityMeasureStats(data = stats, comment = Option("Naive Deduplication"))
-		println(record)
-		record
+		Json.obj("stats" -> data)
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -94,10 +89,12 @@ object SimilarityMeasureEvaluation {
 			.cassandraTable[(UUID, UUID)](this.inputKeyspace, this.inputTest)
 			.map(pair => (pair, 1.0))
 
-		val stats = generateStats(test, training, sc)
+		val stats = generateStats(test, training, sc).toString
+
+		val record = SimilarityMeasureStats(data = stats, comment = Option("Naive Deduplication"))
 
 		sc
-			.parallelize(Seq(stats))
+			.parallelize(Seq(record))
 			.saveToCassandra(this.statsKeyspace, this.output)
 	}
 }
