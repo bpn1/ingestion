@@ -82,7 +82,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 			.join(f1Score)
 			.map { case (threshold, ((precision, recall), f1Score)) =>
 				PrecisionRecallDataTuple(threshold, precision, recall, f1Score)
-			}.sortBy(_.argument)
+			}.sortBy(_.threshold)
 	}
 
 	/**
