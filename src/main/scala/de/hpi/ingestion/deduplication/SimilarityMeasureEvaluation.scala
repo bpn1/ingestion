@@ -4,21 +4,18 @@ import java.util.UUID
 
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
-
 import org.apache.spark.rdd.RDD
-import play.api.libs.json._
 import com.datastax.spark.connector._
-import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, SimilarityMeasureStats}
+import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, PrecisionRecallDataTuple, SimilarityMeasureStats}
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 object SimilarityMeasureEvaluation extends SparkJob {
 	appName = "SimilarityMeasureEvaluation"
 	val numberOfBuckets = 10
-	val inputKeyspace = "evaluation"
+	val keyspace = "evaluation"
 	val inputTest = "goldstandard"
 	val inputTraining = "dbpedia_wikidata_deduplication"
-	val statsKeyspace = "datalake"
 	val output = "sim_measure_stats"
 
 	// $COVERAGE-OFF$
@@ -51,8 +48,8 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	/**
 	  * Generate (prediction, label) tuples for evaluation
 	  * @param training Precictions from the training data
-	  * @param test Labels from the testdata
-	  * @return RDD containing (prediction, label) tuples
+	  * @param test		Labels from the testdata
+	  * @return			RDD containing (prediction, label) tuples
 	  */
 	def generatePredictionAndLabels(
 		training: RDD[((UUID, UUID), Double)],
@@ -69,15 +66,10 @@ object SimilarityMeasureEvaluation extends SparkJob {
 				case (None, Some(label)) => (0.0, label)
 				case _ => (-1.0, -1.0)
 			}
-			.values
+		.values
 	}
 
-	def generateStats(
-		test: RDD[((UUID, UUID), Double)],
-		training: RDD[((UUID,UUID),Double)],
-		sc: SparkContext
-	) : JsObject = {
-		val predictionAndLabels = generatePredictionAndLabels(training, test)
+	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : RDD[PrecisionRecallDataTuple] = {
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
 
 		val precision = metrics.precisionByThreshold
@@ -85,44 +77,36 @@ object SimilarityMeasureEvaluation extends SparkJob {
 		val f1Score = metrics.fMeasureByThreshold
 
 		val data = precision
-		.join(recall)
-		.join(f1Score)
-		.map { case (threshold, ((precision, recall), f1Score)) =>
-			PrecisionRecallDataTuple(
-				argument = threshold,
-				precision = precision,
-				recall = recall,
-				fscore = f1Score
-			)
-		}
-		.sortBy(_.argument)
-		.collect
-		.toList
+			.join(recall)
+			.join(f1Score)
+			.map { case (threshold, ((precision, recall), f1Score)) =>
+				PrecisionRecallDataTuple(threshold, precision, recall, f1Score)
+			}.sortBy(_.argument)
 
-		implicit val statsFormat = Json.format[PrecisionRecallDataTuple]
-		Json.obj("stats" -> data)
+		data
 	}
 
-	def main(args: Array[String]): Unit = {
-		val conf = new SparkConf()
-			.setAppName(this.appName)
-		val sc = new SparkContext(conf)
-
-		val training = sc
-			.cassandraTable[DuplicateCandidates](this.inputKeyspace, this.inputTraining)
+	/**
+	  * Calculates precision, recall and f1 score using the training and test data.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val training = input.head.asInstanceOf[RDD[DuplicateCandidates]]
 			.flatMap { case DuplicateCandidates(subject_id, candidates) =>
 				candidates.map(candidate => ((subject_id, candidate._1.id), candidate._3))
 			}.distinct
-		val test = sc
-			.cassandraTable[(UUID, UUID)](this.inputKeyspace, this.inputTest)
-			.map(pair => (pair, 1.0))
 
-		val stats = generateStats(test, training, sc).toString
+		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]].map(pair => (pair, 1.0))
 
-		val record = SimilarityMeasureStats(data = stats, comment = Option("Naive Deduplication"))
+		val predictionAndLabels = generatePredictionAndLabels(training, test)
 
-		sc
-			.parallelize(Seq(record))
-			.saveToCassandra(this.statsKeyspace, this.output)
+		val data = generateStats(predictionAndLabels)
+
+		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
+
+		List(sc.parallelize(Seq(stats))).toAnyRDD()
 	}
 }
