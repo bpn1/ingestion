@@ -1,13 +1,15 @@
 package de.hpi.ingestion.deduplication
 
-import de.hpi.ingestion.datalake.models._
+import java.util.UUID
 
+import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.models._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import scala.language.postfixOps
 
 import scala.xml.XML
 import scala.collection.mutable
@@ -19,6 +21,7 @@ object BlockingJob extends SparkJob {
 	val settings = mutable.Map[String, String]()
 	var blockingSchemes = List[BlockingScheme](new SimpleBlockingScheme)
 
+	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
 		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
@@ -26,11 +29,17 @@ object BlockingJob extends SparkJob {
 	}
 
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Blocking]()
-			.head
-			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
+		val blocks = output.head.asInstanceOf[RDD[Blocking]]
+		val blockEvaluation = output(1).asInstanceOf[RDD[(UUID, Option[String], Map[String, Int])]]
+		blocks.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
+		blockEvaluation
+			.saveToCassandra(
+				settings("keyspaceStatsTable"),
+				settings("statsTable"),
+				SomeColumns("id", "comment", "data" append)
+			)
 	}
+	// $COVERAGE-ON$
 
 	override def assertConditions(args: Array[String]): Boolean = {
 		parseConfig()
@@ -43,7 +52,8 @@ object BlockingJob extends SparkJob {
 		val staging = inputSubjects(1)
 		val blockingSchemes = List(new SimpleBlockingScheme)
 		val blocks = blocking(subjects, staging, blockingSchemes)
-		val blockEvaluation = evaluateBlocks(blocks, blockingSchemes)
+		val blockEvaluation = evaluateBlocks(blocks)
+		List(blocks).toAnyRDD() ++ List(blockEvaluation).toAnyRDD()
 	}
 
 	/**
@@ -105,5 +115,19 @@ object BlockingJob extends SparkJob {
 				Blocking(key = Option(key), subjects = subjectList, staging = stagingList, comment = Option(comment))
 			}
 		}.reduce(_.union(_))
+	}
+
+	/**
+	  * Executes methods on the blocked data to gain information.
+	  * @param blocking Input data, partitioned in blocks.
+	  * @return Blocks with size-value and comment.
+	  */
+	def evaluateBlocks(
+		blocking: RDD[Blocking]
+	): RDD[(UUID, Option[String], Map[String, Int])] = {
+		val id = UUID.randomUUID()
+		blocking.map(
+			block => (id, block.comment, Map(block.key.get -> (block.subjects.length + block.staging.length)))
+		)
 	}
 }
