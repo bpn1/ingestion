@@ -29,7 +29,7 @@ object AliasTrieSearch extends SparkJob {
 	val tablename = "parsedwikipedia"
 	val trieName = "trie_full.bin"
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.TrieKryoRegistrator"
-
+	var trieStreamFunction = hdfsFileStream _
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
@@ -59,7 +59,7 @@ object AliasTrieSearch extends SparkJob {
 	  * Opens a HDFS file stream pointing to the trie binary.
 	  * @return Input Stream pointing to the file in the HDFS
 	  */
-	def hdfsFileStream(): FSDataInputStream = {
+	def hdfsFileStream(): InputStream = {
 		val hadoopConf = new Configuration()
 		val fs = FileSystem.get(hadoopConf)
 		fs.open(new Path(trieName))
@@ -128,7 +128,7 @@ object AliasTrieSearch extends SparkJob {
 			.map(articles =>
 				articles
 					.mapPartitions({ partition =>
-						val trie = deserializeTrie(hdfsFileStream())
+						val trie = deserializeTrie(trieStreamFunction())
 						partition.map(matchEntry(_, trie, tokenizer))
 					}, true))
 			.toAnyRDD()

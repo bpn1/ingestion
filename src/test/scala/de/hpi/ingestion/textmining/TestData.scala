@@ -1000,6 +1000,69 @@ object TestData {
 			))
 	}
 
+	def parsedEntryFoundAliases(): Set[String] = {
+		Set(
+			"Hickelkasten",
+			"Humor",
+			"satirischer",
+			"paradoxer",
+			"Stilfiguren",
+			"Kontroversen",
+			"guten Geschmacks",
+			"Surrealisten",
+			"André Breton",
+			"Desillusion",
+			"Nihilismus",
+			"Freud",
+			"Hegel",
+			"Anthologie",
+			"Jonathan Swift",
+			"Directions to Servants",
+			"A Modest Proposal",
+			"A Meditation on a Broom-Stick",
+			"Aphorismen",
+			"Nathanael West",
+			"Vladimir Nabokov",
+			"Joseph Heller",
+			"Catch-22",
+			"Kurt Vonnegut",
+			"Slaughterhouse Five",
+			"Thomas Pynchon",
+			"V.",
+			"Gravity 's Rainbow",
+			"Stanley Kubrick",
+			"Dr. Strangelove",
+			"Absurden Theater",
+			"Eugène Ionesco",
+			"Shakespeares",
+			"Christian-Albrechts-Universität zu Kiel",
+			"Komödientyp",
+			"sarkastischen",
+			"absurden",
+			"morbiden",
+			"tabuisierte",
+			"sakrosankt",
+			"politischen Unkorrektheiten",
+			"sexuellen und skatologischen",
+			"zynischer",
+			"Satire",
+			"Robert Altmans",
+			"M * A * S * H",
+			"Mike Nichols",
+			"Catch-22",
+			"Joseph Heller",
+			"Postmoderne",
+			"Quentin Tarantinos",
+			"Pulp Fiction",
+			"Lars von Triers",
+			"Idioterne",
+			"François Bondy",
+			"Die Zeit",
+			"Witz",
+			"Duden",
+			"Galgenhumor")
+	}
+
 	def parsedEntryWithDifferentLinkTypes(): ParsedWikipediaEntry = {
 		ParsedWikipediaEntry(
 			"Origineller Titel",
@@ -1298,11 +1361,18 @@ object TestData {
 		trie
 	}
 
-	def uncleanedFoundAliaes(): List[String] = {
+	def fullTrieStream(): ByteArrayInputStream = {
+		val aliasStream = Source.fromURL(getClass.getResource("/textmining/triealiases"))
+		val trieStream = new ByteArrayOutputStream(1024 * 10)
+		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
+		new ByteArrayInputStream(trieStream.toByteArray)
+	}
+
+	def uncleanedFoundAliases(): List[String] = {
 		List("Alias 1", "", "Alias 2", "Alias 1", "Alias 3")
 	}
 
-	def cleanedFoundAliaes(): List[String] = {
+	def cleanedFoundAliases(): List[String] = {
 		List("Alias 1", "Alias 2", "Alias 3")
 	}
 
