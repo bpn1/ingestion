@@ -7,6 +7,8 @@ import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
+import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.mllib.regression.LabeledPoint
 
 import scala.io.{BufferedSource, Source}
 
@@ -1309,6 +1311,24 @@ object TestData {
 		val trieStream = new ByteArrayOutputStream(1024)
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
+	}
+
+	def featureEntries(): List[FeatureEntry] = {
+		List(
+			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
+			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
+			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true),
+			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false),
+			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false))
+	}
+
+	def labeledPoints(): List[LabeledPoint] = {
+		List(
+			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
+			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
+			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
+			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
+			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
 	}
 }
 

@@ -95,10 +95,10 @@ class Bag[A, B <% BagCounter[B] : ClassTag](
 			case None => this
 			case Some(x) =>
 				val newCount = (x - times).round()
-				if(newCount.lessThanZero()) {
-					new Bag(this.counts - elem)
-				} else {
+				if(newCount.greaterThanZero()) {
 					new Bag(this.counts + (elem -> newCount))
+				} else {
+					new Bag(this.counts - elem)
 				}
 		}
 	}
