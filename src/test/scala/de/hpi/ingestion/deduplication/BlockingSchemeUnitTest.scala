@@ -16,23 +16,18 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		val blockingScheme = new ListBlockingScheme
 		blockingScheme.setAttributes("geo_city", "gen_income")
 		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.listblockingScheme
+		val expected = TestData.listBlockingScheme
 		keys.toSet shouldEqual expected.toSet
 	}
 
 	"MappedListBlockingScheme" should "generate proper keys" in {
 		val subjects = TestData.testSubjects
-		val blockingScheme = new MappedListBlockingScheme(
-			attribute => attribute.substring(0, Math.min(3, attribute.length))
-		)
+		val function: String => String = attribute => attribute.substring(0, Math.min(3, attribute.length))
+		val blockingScheme = new MappedListBlockingScheme(function)
 		blockingScheme.setAttributes("name")
-		val simpleBlockingScheme = new SimpleBlockingScheme
-
-		subjects
-			.map(subject => (blockingScheme.generateKey(subject), simpleBlockingScheme.generateKey(subject)))
-			.foreach { case (keys, expected) =>
-				keys shouldEqual expected
-			}
+		val keys = subjects.map(blockingScheme.generateKey)
+		val expected = TestData.mapBlockingScheme
+		keys.toSet shouldEqual expected.toSet
 	}
 
 	it should "behave like ListBlockingScheme if no function is given" in {

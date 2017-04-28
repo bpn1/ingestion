@@ -160,7 +160,7 @@ object TestData {
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
-	def listblockingScheme: List[List[String]] = List(
+	def listBlockingScheme: List[List[String]] = List(
 		List("Berlin", "Hamburg", "1234"),
 		List("Berlin", "New York", "12"),
 		List("Berlin", "33"),
@@ -168,5 +168,6 @@ object TestData {
 		List("undefined"),
 		List("undefined")
 	)
+	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
 	// scalastyle:on line.size.limit
 }
