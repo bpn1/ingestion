@@ -233,24 +233,7 @@ class Deduplication(
 		}
 	}
 
-	/**
-	  * Executes methods on the blocked data to gain information.
-	  *
-	  * @param blocks  Input data, partitioned in blocks.
-	  * @param comment Note to add to the evaluated data.
-	  * @return Blocks with size-value and comment.
-	  */
-	def evaluateBlocks(
-		blocks: RDD[(List[List[String]], List[Subject])],
-		comment: String
-	): BlockEvaluation = {
-		val dataMap = blocks
-			.map(block => (block._1.map(_.mkString(" ")), block._2.size))
-			.sortBy(_._2, false)
-			.collect()
-			.toMap
-		BlockEvaluation(data = dataMap, comment = Option(comment))
-	}
+
 
 	/**
 	  * Blocks the Subjects and finds duplicates between them between the Subjects and staged Subjects.
