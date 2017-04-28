@@ -168,37 +168,23 @@ class Bag[A, B <% BagCounter[B] : ClassTag](
 }
 
 object Bag {
-	def empty[A, B: ClassTag]
-	(implicit bToBagCounter: B => BagCounter[B])
-	: Bag[A, B] = {
+	def empty[A, B: ClassTag](implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag[A, B]
 	}
 
-	def apply[A, B: ClassTag]
-	(elem: A, elems: A*)
-		(implicit bToBagCounter: B => BagCounter[B])
-	: Bag[A, B] = {
+	def apply[A, B: ClassTag](elem: A, elems: A*)(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag[A, B] + elem ++ elems
 	}
 
-	def apply[A, B: ClassTag]
-	(elems: Seq[A])
-		(implicit bToBagCounter: B => BagCounter[B])
-	: Bag[A, B] = {
+	def apply[A, B: ClassTag](elems: Seq[A])(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag[A, B] ++ elems
 	}
 
-	def apply[A, B: ClassTag]
-	(elem: (A, B), elems: (A, B)*)
-		(implicit bToBagCounter: B => BagCounter[B])
-	: Bag[A, B] = {
+	def apply[A, B: ClassTag](elem: (A, B), elems: (A, B)*)(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag((elem +: elems).toMap)
 	}
 
-	def apply[A, B: ClassTag]
-	(elems: Map[A, B])
-		(implicit bToBagCounter: B => BagCounter[B])
-	: Bag[A, B] = {
+	def apply[A, B: ClassTag](elems: Map[A, B])(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag(elems)
 	}
 }
