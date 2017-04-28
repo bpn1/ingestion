@@ -1,6 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -180,9 +180,7 @@ object TextParser extends SparkJob {
 			cleanedUrl = URLDecoder.decode(cleanedUrl, "UTF-8")
 				.replaceAll("_", " ")
 		} catch {
-			case e: java.lang.IllegalArgumentException =>
-				println(s"IllegalArgumentException for: $cleanedUrl")
-				cleanedUrl = url
+			case e: java.lang.IllegalArgumentException => cleanedUrl = url
 		}
 		cleanedUrl.replaceAll("\\A/", "")
 	}
@@ -236,7 +234,7 @@ object TextParser extends SparkJob {
 		if(children.head.isInstanceOf[TextNode]) {
 			startIndex = 1
 			var firstChildText = children(0).asInstanceOf[TextNode].text
-			while(firstChildText.charAt(0) != body.text.charAt(0)) {
+			while(firstChildText.charAt(0) != body.text.headOption.getOrElse("")) {
 				firstChildText = firstChildText.substring(1)
 				if(firstChildText.length == 0) {
 					return ("", linksList.toList)
@@ -255,7 +253,6 @@ object TextParser extends SparkJob {
 					offset += t.text.length
 				case t: TextNode =>
 					offset += t.text.length
-				case _ =>
 			}
 		}
 		val cleanedLinks = cleanMetapageLinks(linksList.toList)
@@ -309,8 +306,6 @@ object TextParser extends SparkJob {
 			}
 			escaped = character == '\\'
 		}
-
-		println("[Textparser WARN]	Template has no end!")
 		templateText
 	}
 

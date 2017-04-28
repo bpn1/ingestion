@@ -29,8 +29,9 @@ object AliasTrieSearch extends SparkJob {
 	val tablename = "parsedwikipedia"
 	val trieName = "trie_full.bin"
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.TrieKryoRegistrator"
-	var trieStreamFunction = hdfsFileStream _
+
 	// $COVERAGE-OFF$
+	var trieStreamFunction = hdfsFileStream _
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs

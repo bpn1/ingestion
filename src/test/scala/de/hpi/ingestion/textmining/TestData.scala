@@ -2,13 +2,15 @@ package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
-
+import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.jsoup.Jsoup
+import org.jsoup.nodes.{Element, TextNode}
 
 import scala.io.{BufferedSource, Source}
 
@@ -1399,6 +1401,41 @@ object TestData {
 			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
 			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
 			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
+	}
+
+	def textLinkHtml(): List[Element] = {
+		val elements = Source.fromURL(getClass.getResource("/textmining/textlinks.html"))
+			.getLines()
+			.toList
+			.map(_.replaceAll("\\\\n", "\n"))
+			.map(Jsoup.parse)
+			.map(_.body)
+		elements(3).childNodes.head.asInstanceOf[TextNode].text("\n")
+		elements
+	}
+
+	def redirectHTML(): List[(String, String, String)] = {
+		Source.fromURL(getClass.getResource("/textmining/textlinks.html"))
+			.getLines()
+			.toList
+			.map(_.replaceAll("\\\\n", "\n"))
+			.map(("title", _, ""))
+	}
+
+	def extractedRedirects(): List[List[Link]] = {
+		List(
+			List(Link("title", "Zwillinge")),
+			List(Link("title", "Zwillinge")),
+			Nil,
+			Nil)
+	}
+
+	def textLinkTuples(): List[(String, List[Link])] = {
+		List(
+			("Wort Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(5)))),
+			("Wort 2", List(Link("Zwillinge", "Zwillinge", Option(7)))),
+			("Wort 3", Nil),
+			("", Nil))
 	}
 }
 
