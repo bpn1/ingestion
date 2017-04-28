@@ -1,5 +1,7 @@
 package de.hpi.ingestion.deduplication
 
+import java.util.UUID
+
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.deduplication.similarity._
@@ -10,7 +12,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
-
+import scala.language.postfixOps
 import scala.xml.XML
 import scala.collection.mutable
 import scala.io.Source
@@ -54,9 +56,13 @@ class Deduplication(
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val duplicates = output.head.asInstanceOf[RDD[Subject]]
-		val evaluation = output(1).asInstanceOf[RDD[BlockEvaluation]]
+		val evaluation = output(1).asInstanceOf[RDD[(UUID, Option[String], Map[String, Int])]]
 		duplicates.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
-		evaluation.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
+		evaluation
+			.saveToCassandra(
+				settings("keyspaceStatsTable"),
+				settings("statsTable"),
+				SomeColumns("id", "comment", "data" append))
 	}
 	// $COVERAGE-ON$
 
@@ -134,7 +140,7 @@ class Deduplication(
 			subjects.flatMap { subject =>
 				val blockingKeys = scheme.generateKey(subject).distinct
 				blockingKeys.map((_, List(subject)))
-			}.reduceByKey(_ ++ _)
+			}.reduceByKey(_ ::: _)
 		}
 	}
 
@@ -236,23 +242,22 @@ class Deduplication(
 	/**
 	  * Executes methods on the blocked data to gain information.
 	  *
-	  * @param blocks  Input data, partitioned in blocks.
+	  * @param blockingList Input data, partitioned in blocks.
 	  * @param comment Note to add to the evaluated data.
 	  * @return Blocks with size-value and comment.
 	  */
 	def evaluateBlocks(
-		blocks: List[RDD[(String, List[Subject])]],
+		blockingList: List[RDD[(String, List[Subject])]],
 		comment: String,
 		blockingSchemes: List[BlockingScheme]
-	): List[BlockEvaluation] = {
-		(blocks, blockingSchemes).zipped.map { case (block, blockingScheme) =>
-			val blockStats = block
-				.map(_.map(identity, _.length))
-				.collect
-				.sortBy(_._2)(Ordering[Int].reverse)
-				.toMap
-			BlockEvaluation(data = blockStats, comment = Option(s"${comment}_${blockingScheme.tag}"))
-		}
+	): RDD[(UUID, Option[String], Map[String, Int])] = {
+		(blockingList, blockingSchemes).zipped.map { case (blocks, blockingScheme) =>
+			val id = UUID.randomUUID()
+			val blockComment = Option(s"${comment}_${blockingScheme.tag}")
+			blocks
+				.map(block => List(block.map(identity, _.length)))
+				.map(data => (id, blockComment, data.toMap))
+		}.reduce(_.union(_))
 	}
 
 	/**
@@ -269,7 +274,7 @@ class Deduplication(
 		val staging = inputData(1)
 		val blocks = blocking(subjects, staging, blockingSchemes)
 		val blockEvaluation = evaluateBlocks(blocks, s"${this.appName}_${System.currentTimeMillis()}", blockingSchemes)
-		val evaluationOutput = List(sc.parallelize(blockEvaluation)).toAnyRDD()
+		val evaluationOutput = List(blockEvaluation).toAnyRDD()
 
 		val subjectPairs = blocks.map { blocking =>
 			blocking.flatMap(block => findDuplicates(block._2))

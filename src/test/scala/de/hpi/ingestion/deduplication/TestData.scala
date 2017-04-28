@@ -147,15 +147,16 @@ object TestData {
 
 	def defaultDeduplication: Deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
 
-	def evaluationTestData: List[BlockEvaluation] = {
+	def evaluationTestData: List[(Option[String], Map[String, Int])] = {
 		List(
-			BlockEvaluation(
-				data = Map("Berlin" -> 3,  "New York" -> 2, "undefined" -> 2, "Hamburg" -> 2),
-				comment = Option("Test comment_test city blocking scheme")),
-			BlockEvaluation(
-				data = Map("Vol" -> 2,  "Aud" -> 2, "Por" -> 1, "Fer" -> 1),
-				comment = Option("Test comment_SimpleBlockingScheme")))
-
+			(Option("Test comment_test city blocking scheme"), Map("Berlin" -> 3)),
+			(Option("Test comment_test city blocking scheme"), Map("New York" -> 2)),
+			(Option("Test comment_test city blocking scheme"), Map("undefined" -> 2)),
+			(Option("Test comment_test city blocking scheme"), Map("Hamburg" -> 2)),
+			(Option("Test comment_SimpleBlockingScheme"), Map("Vol" -> 2)),
+			(Option("Test comment_SimpleBlockingScheme"), Map("Aud" -> 2)),
+			(Option("Test comment_SimpleBlockingScheme"), Map("Por" -> 1)),
+			(Option("Test comment_SimpleBlockingScheme"), Map("Fer" -> 1)))
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))

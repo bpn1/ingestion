@@ -4,7 +4,6 @@ import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 import de.hpi.ingestion.deduplication.similarity._
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.TupleImplicits._
 
 class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 	"compare" should "calculate a score regarding the configuration" in {
@@ -85,14 +84,17 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 	}
 
-	"evaluateBlocks" should "evaluate each block sorted by its size" in {
+	"evaluateBlocks" should "evaluate each block" in {
 		val deduplication = TestData.defaultDeduplication
 		val subjects = TestData.testSubjects
 		val blocks = TestData.blocks(sc, subjects)
 		val blockingSchemes = List(TestData.cityBlockingScheme, new SimpleBlockingScheme)
 		val evaluationList = deduplication.evaluateBlocks(blocks, "Test comment", blockingSchemes)
-		val evaluationData = evaluationList.map(blockingData => (blockingData.data, blockingData.comment))
-		val expected = TestData.evaluationTestData.map(blockingData => (blockingData.data, blockingData.comment))
+		val evaluationData = evaluationList
+			.map(blockingData => (blockingData._2, blockingData._3))
+			.collect
+			.toSet
+		val expected = TestData.evaluationTestData.toSet
 		evaluationData shouldEqual expected
 	}
 
