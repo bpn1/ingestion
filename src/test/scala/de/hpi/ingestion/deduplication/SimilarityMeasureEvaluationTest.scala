@@ -2,8 +2,7 @@ package de.hpi.ingestion.deduplication
 
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.deduplication.models.PrecisionRecallDataTuple
-import play.api.libs.json._
+
 
 class SimilarityMeasureEvaluationTest extends FlatSpec
 	with Matchers
@@ -11,8 +10,8 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 	with RDDComparisons
 {
 	"generatePredictionAndLabels" should "find all TRUE POSITIVES" in {
-		val test = TestData.testDataSmall(sc)
-		val training = TestData.trainingDataSmall(sc)
+		val test = TestData.testData(sc)
+		val training = TestData.trainingData(sc)
 		val truePositives = SimilarityMeasureEvaluation
 			.generatePredictionAndLabels(training, test)
 			.filter { case (prediction, label) =>
@@ -23,8 +22,8 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 	}
 
 	it should "find all FALSE POSITIVES" in {
-		val test = TestData.testDataSmall(sc)
-		val training = TestData.trainingDataSmall(sc)
+		val test = TestData.testData(sc)
+		val training = TestData.trainingData(sc)
 		val falsePositives = SimilarityMeasureEvaluation
 			.generatePredictionAndLabels(training, test)
 			.filter { case (prediction, label) =>
@@ -35,8 +34,8 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 	}
 
 	it should "find all FALSE NEGATIVES" in {
-		val test = TestData.testDataSmall(sc)
-		val training = TestData.trainingDataSmall(sc)
+		val test = TestData.testData(sc)
+		val training = TestData.trainingData(sc)
 		val falseNegatives = SimilarityMeasureEvaluation
 			.generatePredictionAndLabels(training, test)
 			.filter { case (prediction, label) =>
@@ -47,14 +46,13 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 	}
 
 	"generateStats" should "create a correct computation of precision + recall" in {
-		val testData = TestData.testDataSmall(sc)
-		val trainingData = TestData.trainingDataSmall(sc)
+		val testData = TestData.testData(sc)
+		val trainingData = TestData.trainingData(sc)
 
 		val predictionAndLabels = SimilarityMeasureEvaluation.generatePredictionAndLabels(trainingData, testData)
-		val computed = SimilarityMeasureEvaluation.generateStats(predictionAndLabels).toString
+		val computed = SimilarityMeasureEvaluation.generateStats(predictionAndLabels)
 		val expected = TestData.precisionRecallResults(sc)
 
-		computed equals expected
-
+		assertRDDEquals(computed, expected)
 	}
 }

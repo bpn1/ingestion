@@ -66,26 +66,23 @@ object SimilarityMeasureEvaluation extends SparkJob {
 				case (None, Some(label)) => (0.0, label)
 				case _ => (-1.0, -1.0)
 			}
-		.values
+			.values
 	}
 
 
 	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : RDD[PrecisionRecallDataTuple] = {
-
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
 
 		val precision = metrics.precisionByThreshold
 		val recall = metrics.recallByThreshold
 		val f1Score = metrics.fMeasureByThreshold
 
-		val data = precision
+		precision
 			.join(recall)
 			.join(f1Score)
 			.map { case (threshold, ((precision, recall), f1Score)) =>
 				PrecisionRecallDataTuple(threshold, precision, recall, f1Score)
 			}.sortBy(_.argument)
-
-		data
 	}
 
 	/**
@@ -102,12 +99,8 @@ object SimilarityMeasureEvaluation extends SparkJob {
 			}.distinct
 
 		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]].map(pair => (pair, 1.0))
-
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
-
 		val data = generateStats(predictionAndLabels)
-
-
 		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
 
 		List(sc.parallelize(Seq(stats))).toAnyRDD()

@@ -168,6 +168,13 @@ CREATE TYPE evaluation.version (
     program text
 );
 
+CREATE TYPE evaluation.precisionrecalldatatuple (
+    threshold double,
+    precision double,
+    recall double,
+    fscore double
+);
+
 CREATE TYPE evaluation.subject (
     id uuid,
     aliases list<text>,
@@ -218,7 +225,7 @@ CREATE TABLE evaluation.subject_wikidata (
 
 CREATE TABLE evaluation.sim_measure_stats (
     id uuid PRIMARY KEY,
-    data text,
+    data list<frozen<precisionrecalldatatuple>>,
     comment text
 );
 
