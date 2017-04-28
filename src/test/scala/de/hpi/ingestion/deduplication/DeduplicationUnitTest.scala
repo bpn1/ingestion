@@ -70,6 +70,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val subjects = TestData.testSubjects
 		val duplicates = deduplication.findDuplicates(subjects)
 		val expected = TestData.testDuplicates(subjects)
+
 		duplicates shouldEqual expected
 	}
 

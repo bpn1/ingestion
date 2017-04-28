@@ -107,23 +107,23 @@ object TestData {
 	)
 
 	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = List(
-		(testSubjects.head, testSubjects(1), 0.5338461538461539),
-		(testSubjects(2), testSubjects(3), 0.7085185185185185)
+		(testSubjects.head, testSubjects(1), 0.7117948717948718),
+		(testSubjects.head, testSubjects(4), 0.5761904761904763),
+		(testSubjects(1), testSubjects(4), 0.5654212454212454),
+		(testSubjects(2), testSubjects(3), 0.9446913580246914)
 	)
 
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
 
 	def testConfig: mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = mutable.Map("name" -> List(
 		ScoreConfig(key = "name", similarityMeasure = MongeElkan, weight= 0.8),
-		ScoreConfig(key = "name", similarityMeasure = JaroWinkler, weight= 0.7),
-		ScoreConfig(key = "name", similarityMeasure = ExactMatchString, weight= 0.2)
+		ScoreConfig(key = "name", similarityMeasure = JaroWinkler, weight= 0.7)
 	))
 
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
 			MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
-			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7,
-			ExactMatchString.compare(subject1.name.get, subject2.name.get) * 0.2
-	).sum / (0.8 + 0.7 + 0.2)
+			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7
+	).sum / (0.8 + 0.7)
 
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()
