@@ -138,7 +138,7 @@ CREATE TABLE datalake.object (
 CREATE TABLE datalake.deduplicationstats (
     id uuid PRIMARY KEY,
     comment text,
-    data map<frozen<list<text>>, int>
+    data map<text, int>
 );
 
 CREATE TABLE datalake.duplicatecandidates (

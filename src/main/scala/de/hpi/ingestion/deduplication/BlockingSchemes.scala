@@ -7,6 +7,7 @@ import de.hpi.ingestion.datalake.models.Subject
   */
 trait BlockingScheme extends Serializable {
 	val undefinedValue = List("undefined")
+	var tag = "BlockingScheme"
 	protected var inputAttributes: List[String] = List[String]()
 
 	/**
@@ -28,13 +29,11 @@ trait BlockingScheme extends Serializable {
   * This class uses the first three characters of the name property as key.
   */
 class SimpleBlockingScheme extends BlockingScheme {
+	tag = "SimpleBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
-		if(subject.name.isDefined) {
-			val name = subject.name.get
+		subject.name.map { name =>
 			List(name.substring(0, Math.min(3, name.length)))
-		} else {
-			undefinedValue
-		}
+		}.getOrElse(undefinedValue)
 	}
 }
 
@@ -42,12 +41,21 @@ class SimpleBlockingScheme extends BlockingScheme {
   * This class uses a list of input attributes as key.
   */
 class ListBlockingScheme extends BlockingScheme {
+	tag = "ListBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
 		val key = inputAttributes.flatMap(subject.get)
-		if (key.isEmpty) {
-			undefinedValue
-		} else {
-			key
-		}
+		if (key.nonEmpty) key else undefinedValue
+	}
+}
+
+/**
+  * This class uses a list of attributes as key.
+  * @param f Function to create customized output values
+  */
+class MappedListBlockingScheme(f: String => String = identity) extends BlockingScheme {
+	tag = "ListBlockingScheme"
+	override def generateKey(subject: Subject): List[String] = {
+		val key = inputAttributes.flatMap(subject.get(_).map(f))
+		if (key.nonEmpty) key else undefinedValue
 	}
 }
