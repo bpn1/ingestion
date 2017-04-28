@@ -14,10 +14,17 @@ class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkCon
 		crossProduct shouldEqual expected
 	}
 
-	"Printable difference" should "return a diff string" in {
+	"Printable set difference" should "return a diff string" in {
 		val (list1, list2) = TestData.diffLists
-		val diff = list1.printableDifference(list2)
+		val diff = list1.printableSetDifference(list2)
 		val expectedDiff = TestData.diffString
+		diff shouldEqual expectedDiff
+	}
+
+	it should "calculate the set difference" in {
+		val (list1, list2) = TestData.equalDiffLists
+		val diff = list1.printableSetDifference(list2)
+		val expectedDiff = TestData.equalDiffString
 		diff shouldEqual expectedDiff
 	}
 

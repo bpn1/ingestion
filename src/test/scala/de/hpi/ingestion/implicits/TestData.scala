@@ -21,7 +21,15 @@ object TestData {
 		(List(1, 2, 3, 4), List(3, 4, 5, 6))
 	}
 
+	def equalDiffLists: (List[Int], List[Int]) = {
+		(List(1, 2, 3, 4), List(1, 4, 3, 2))
+	}
+
 	def diffString: String = {
 		"Difference:\nx - y:\n\t1\n\t2\ny - x:\n\t5\n\t6"
+	}
+
+	def equalDiffString: String = {
+		"Difference:\nx - y:\n\t\ny - x:\n\t"
 	}
 }
