@@ -69,7 +69,9 @@ object SimilarityMeasureEvaluation extends SparkJob {
 		.values
 	}
 
+
 	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : RDD[PrecisionRecallDataTuple] = {
+
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
 
 		val precision = metrics.precisionByThreshold
@@ -104,6 +106,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
 
 		val data = generateStats(predictionAndLabels)
+
 
 		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
 
