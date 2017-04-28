@@ -3,7 +3,7 @@ package de.hpi.ingestion.deduplication
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
 
 /**
-  * This class is a factory for compare methods for the different Values.
+  * This class is a factory of comparing methods for different kinds of values.
   */
 object CompareStrategy extends Serializable {
 	/**
@@ -42,7 +42,7 @@ object CompareStrategy extends Serializable {
 		weight: Double,
 		scale: Int = 1
 	): Double = {
-		compare(leftValue.head, rightValue.head, simMeasure, weight, scale)
+		this.compare(leftValue.head, rightValue.head, simMeasure, weight, scale)
 	}
 
 	/**

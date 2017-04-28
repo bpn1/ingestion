@@ -13,16 +13,14 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 		val subjects = TestData.testSubjects
 		val subject1 = subjects(0)
 		val subject2 = subjects(1)
-		deduplication.config.foreach{feature =>
-			val score = CompareStrategy.compare(
+		deduplication.config.map { feature =>
+			(CompareStrategy.compare(
 				subject1.get(feature.key).head,
 				subject2.get(feature.key).head,
 				feature.similarityMeasure,
 				feature.weight
-			)
-			val expected = TestData.testCompareScore(subject1, subject2, feature.similarityMeasure)
-			score shouldEqual expected
-		}
+			), TestData.testCompareScore(subject1, subject2, feature.similarityMeasure, feature))
+		}.foreach { case (score, expected) => score shouldEqual expected }
 	}
 
 	"simpleStringCompare" should "only compare the first element in a list" in {
@@ -31,16 +29,14 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 		val subjects = TestData.testSubjects
 		val subject1 = subjects(0)
 		val subject2 = subjects(1)
-		deduplication.config.foreach{feature =>
-			val score = CompareStrategy.singleStringCompare(
+		deduplication.config.map { feature =>
+			(CompareStrategy.singleStringCompare(
 				subject1.get(feature.key),
 				subject2.get(feature.key),
 				feature.similarityMeasure,
 				feature.weight
-			)
-			val expected = TestData.testCompareScore(subject1, subject2, feature.similarityMeasure)
-			score shouldEqual expected
-		}
+			), TestData.testCompareScore(subject1, subject2, feature.similarityMeasure, feature))
+		}.foreach {case (score, expected) => score shouldEqual expected}
 	}
 
 	"coordinatesCompare" should "compare the input lists as coordinate values" in {
@@ -53,7 +49,6 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 			feature.similarityMeasure,
 			feature.weight
 		)
-
 		val expected = feature.similarityMeasure.compare("1.1,1", "1,1", 1) * feature.weight
 		score shouldEqual expected
 	}

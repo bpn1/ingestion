@@ -114,21 +114,14 @@ object TestData {
 		ScoreConfig(key, similarityMeasure = ExactMatchString, weight= 0.2)
 	)
 
-	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String]): Double = {
-		val weight = {
-			simMeasure match {
-				case MongeElkan => 0.8
-				case JaroWinkler => 0.7
-				case ExactMatchString => 0.2
-			}
-		}
-		simMeasure.compare(subject1.name.get, subject2.name.get, 1) * weight
+	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String], scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]): Double = {
+		simMeasure.compare(subject1.name.get, subject2.name.get, scoreConfig.scale) * scoreConfig.weight
 	}
 
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
-		testCompareScore(subject1, subject2, MongeElkan),
-		testCompareScore(subject1, subject2, JaroWinkler),
-		testCompareScore(subject1, subject2, ExactMatchString)
+		testCompareScore(subject1, subject2, MongeElkan, testConfig()(0)),
+		testCompareScore(subject1, subject2, JaroWinkler, testConfig()(1)),
+		testCompareScore(subject1, subject2, ExactMatchString, testConfig()(2))
 	).sum / 3
 
 	def expectedCompareStrategies: List[(List[String], List[String], SimilarityMeasure[String], Double, Int) => Double] = List(
