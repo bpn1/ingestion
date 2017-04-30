@@ -84,9 +84,7 @@ class Deduplication(
 					CompareStrategy(attribute)(
 						valueSubject1,
 						valueSubject2,
-						feature.similarityMeasure,
-						feature.weight,
-						scale
+						feature
 					)
 				} else {
 					-1.0

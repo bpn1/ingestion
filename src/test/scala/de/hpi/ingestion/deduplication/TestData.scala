@@ -124,12 +124,12 @@ object TestData {
 		testCompareScore(subject1, subject2, ExactMatchString, testConfig()(2))
 	).sum / 3
 
-	def expectedCompareStrategies: List[(List[String], List[String], SimilarityMeasure[String], Double, Int) => Double] = List(
-		CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
-	)
+	def expectedCompareStrategies: List[(List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) => Double] = List(
+			CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
+		)
 
-	def testCompareInput: (List[String], List[String], SimilarityMeasure[String], Double, Int) = (List(
-		"very", "generic", "values"), List("even", "more", "values"), MongeElkan, 0.5, 1
+	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (List(
+		"very", "generic", "values"), List("even", "more", "values"), testConfig()(1)
 	)
 
 	def cityBlockingScheme: ListBlockingScheme = {

@@ -14,11 +14,9 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 		val subject1 = subjects(0)
 		val subject2 = subjects(1)
 		deduplication.config.map { feature =>
-			(CompareStrategy.compare(
+			(feature.compare(
 				subject1.get(feature.key).head,
-				subject2.get(feature.key).head,
-				feature.similarityMeasure,
-				feature.weight
+				subject2.get(feature.key).head
 			), TestData.testCompareScore(subject1, subject2, feature.similarityMeasure, feature))
 		}.foreach { case (score, expected) => score shouldEqual expected }
 	}
@@ -33,23 +31,21 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 			(CompareStrategy.singleStringCompare(
 				subject1.get(feature.key),
 				subject2.get(feature.key),
-				feature.similarityMeasure,
-				feature.weight
+				feature
 			), TestData.testCompareScore(subject1, subject2, feature.similarityMeasure, feature))
 		}.foreach {case (score, expected) => score shouldEqual expected}
 	}
 
 	"coordinatesCompare" should "compare the input lists as coordinate values" in {
-		val coordinates = List(List("1.1", "1"), List("1", "1"))
+		val coordinates = List(List("1.5", "1", "10", "10"), List("1.1", "1", "10", "10"))
 		val attribute = "geo_coords"
 		val feature = ScoreConfig[String, SimilarityMeasure[String]](attribute, EuclidianDistance, 1)
 		val score = CompareStrategy.coordinatesCompare(
 			coordinates.head,
 			coordinates.last,
-			feature.similarityMeasure,
-			feature.weight
+			feature
 		)
-		val expected = feature.similarityMeasure.compare("1.1,1", "1,1", 1) * feature.weight
+		val expected = 0.75
 		score shouldEqual expected
 	}
 
@@ -63,8 +59,7 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 			val score = BigDecimal(CompareStrategy.defaultCompare(
 				subject1.get(feature.key),
 				subject2.get(feature.key),
-				feature.similarityMeasure,
-				feature.weight
+				feature
 			)).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble	// rounds the value
 
 			val expected = 1.0 * feature.weight
