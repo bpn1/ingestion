@@ -3,6 +3,8 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 
 class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Matchers {
 
@@ -65,7 +67,9 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	"Articles without any context" should "be fully enriched with article and link contexts" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val enrichedArticles = TermFrequencyCounter
-			.run(articles, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true))
+			.run(List(articles).toAnyRDD(), sc, Array("CleanCoreNLPTokenizer", "true", "true"))
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
 			.collect
 			.toSet
 		val expectedArticles = TestData.articlesWithCompleteContexts()

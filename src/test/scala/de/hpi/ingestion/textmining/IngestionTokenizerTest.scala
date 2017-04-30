@@ -89,4 +89,47 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 		sentences shouldEqual expectedSentences
 		sentences2 shouldEqual expectedSentences
 	}
+
+	"String arguments apply" should "parse tokenizer option" in {
+		var tokenizer = IngestionTokenizer(Array("WhitespaceTokenizer"))
+		tokenizer.tokenizer.getClass shouldEqual classOf[WhitespaceTokenizer]
+		tokenizer = IngestionTokenizer(Array("CleanWhitespaceTokenizer"))
+		tokenizer.tokenizer.getClass shouldEqual classOf[CleanWhitespaceTokenizer]
+		tokenizer = IngestionTokenizer(Array("CleanCoreNLPTokenizer"))
+		tokenizer.tokenizer.getClass shouldEqual classOf[CleanCoreNLPTokenizer]
+		tokenizer = IngestionTokenizer(Array("CoreNLPTokenizer"))
+		tokenizer.tokenizer.getClass shouldEqual classOf[CoreNLPTokenizer]
+		tokenizer = IngestionTokenizer(Array("Broken"))
+		tokenizer.tokenizer.getClass shouldEqual classOf[CoreNLPTokenizer]
+		tokenizer = IngestionTokenizer(Array[String]())
+		tokenizer.tokenizer.getClass shouldEqual classOf[CoreNLPTokenizer]
+	}
+
+	it should "parse stopword filtering option" in {
+		val tokenizerName = "WhitespaceTokenizer"
+		var tokenizer = IngestionTokenizer(Array[String]())
+		tokenizer.removeStopwords shouldBe true
+		tokenizer = IngestionTokenizer(Array(tokenizerName))
+		tokenizer.removeStopwords shouldBe true
+		tokenizer = IngestionTokenizer(Array(tokenizerName, "true"))
+		tokenizer.removeStopwords shouldBe true
+		tokenizer = IngestionTokenizer(Array(tokenizerName, "false"))
+		tokenizer.removeStopwords shouldBe false
+		tokenizer = IngestionTokenizer(Array(tokenizerName, "broken"))
+		tokenizer.removeStopwords shouldBe false
+	}
+
+	it should "parse stemming option" in {
+		val tokenizerName = "WhitespaceTokenizer"
+		var tokenizer = IngestionTokenizer(Array[String]())
+		tokenizer.stem shouldBe true
+		tokenizer = IngestionTokenizer(Array(tokenizerName))
+		tokenizer.stem shouldBe true
+		tokenizer = IngestionTokenizer(Array(tokenizerName, "true", "true"))
+		tokenizer.stem shouldBe true
+		tokenizer = IngestionTokenizer(Array(tokenizerName, "true", "false"))
+		tokenizer.stem shouldBe false
+		tokenizer = IngestionTokenizer(Array(tokenizerName, "true", "broken"))
+		tokenizer.stem shouldBe false
+	}
 }
