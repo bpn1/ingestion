@@ -5,7 +5,7 @@ import java.util.Date
 
 import play.api.libs.json._
 
-abstract class JSONParser[T] {
+trait JSONParser[T] {
 	def parseJSON(line: String): T = {
 		val json = Json.parse(line)
 		val entity = fillEntityValues(json)
@@ -20,46 +20,39 @@ abstract class JSONParser[T] {
 	}
 
 	def getValue(json: JsValue, path: List[String]): Option[JsValue] = {
-		var element = Option(json)
-		try {
-			for (pathSegment <- path) {
-				element = Option((element.get \ pathSegment).as[JsValue])
+		var element = json
+		for(pathSegment <- path) {
+			if(element.as[JsObject].value.contains(pathSegment)) {
+				element = (element \ pathSegment).as[JsValue]
+			} else {
+				return None
 			}
-		} catch {
-			case jre: JsResultException =>
-				element = None
-			case ex: NoSuchElementException =>
-				element = None
 		}
-
-		if (element.isDefined && element.get.getClass == classOf[JsUndefined]) {
-			element = None
+		if(element.getClass == classOf[JsUndefined]) {
+			None
+		} else {
+			Option(element)
 		}
-
-		element
 	}
 
 	def extractString(json: JsValue, path: List[String]): Option[String] = {
 		val value = getValue(json, path)
-		if (value.isEmpty) {
-			return None
-		}
-		value.orNull.asOpt[String]
+		value.map(_.as[String])
 	}
 
 	def extractList(json: JsValue, path: List[String]): List[JsValue] = {
-		val value = getValue(json, path).getOrElse(JsArray())
-		value.as[List[JsValue]]
+		val value = getValue(json, path).map(_.as[List[JsValue]])
+		value.getOrElse(Nil)
 	}
 
 	def extractStringList(json: JsValue, path: List[String]): List[String] = {
-		val value = getValue(json, path).getOrElse(JsArray())
-		value.as[List[String]]
+		val value = getValue(json, path).map(_.as[List[String]])
+		value.getOrElse(Nil)
 	}
 
 	def extractMap(json: JsValue, path: List[String]): Map[String, JsValue] = {
-		val value = getValue(json, path).getOrElse(JsObject(Seq[(String, JsValue)]()))
-		value.as[Map[String, JsValue]]
+		val value = getValue(json, path).map(_.as[Map[String, JsValue]])
+		value.getOrElse(Map[String, JsValue]())
 	}
 
 	def flattenNestedMap(nestedTuple: (String, JsValue)): List[(String, String)] = {
@@ -77,22 +70,19 @@ abstract class JSONParser[T] {
 
 	def extractDouble(json: JsValue, path: List[String]): Option[String] = {
 		val value = getValue(json, path)
-		value.orNull.asOpt[Double].map(_.toString)
+		value.map(_.as[Double].toString)
 	}
 
 	def extractBoolean(json: JsValue, path: List[String]): Option[Boolean] = {
 		val value = getValue(json, path)
-		value.orNull.asOpt[Boolean]
+		value.map(_.as[Boolean])
 	}
 
 	def extractDate(json: JsValue, path: List[String], datePattern: String): Option[Date] = {
 		val value = getValue(json, path)
-		if (value.isDefined) {
+		value.map { dateString =>
 			val dateFormat = new SimpleDateFormat(datePattern)
-			val date = dateFormat.parse(value.get.as[String])
-			Option(date)
-		} else {
-			None
+			dateFormat.parse(dateString.as[String])
 		}
 	}
 }
