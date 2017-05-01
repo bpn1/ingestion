@@ -75,3 +75,6 @@ scalacOptions in (Compile, doc) ++= Seq("-doc-source-url", "https://github.com/b
 unmanagedSourceDirectories in Compile += baseDirectory.value / "implisense_files" / "src"
 unmanagedResourceDirectories in Compile += baseDirectory.value / "implisense_files" / "src" / "main" / "resources"
 unmanagedSourceDirectories in Test += baseDirectory.value / "implisense_files" / "src"
+
+// scoverage settings
+coverageExcludedPackages := "de.hpi.ingestion.dataimport.implisense.*"
