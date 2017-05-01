@@ -29,7 +29,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	"parseConfig" should "generate a configuration from a given path" in {
 		val deduplication = TestData.defaultDeduplication
 		deduplication.parseConfig()
-		val expected = TestData.testConfig()
+		val expected = TestData.parsedConfig()
 
 		deduplication.config shouldEqual expected
 	}
@@ -62,7 +62,6 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
 		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig
 		val subjects = TestData.testSubjects
 		val duplicates = deduplication.findDuplicates(subjects)
 		val expected = TestData.testDuplicates(subjects)
