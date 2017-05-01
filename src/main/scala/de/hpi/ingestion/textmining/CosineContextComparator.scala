@@ -208,7 +208,7 @@ object CosineContextComparator extends SparkJob {
 	): RDD[FeatureEntry] = {
 		linkContexts
 			.map(t => (t._1.alias, t))
-			.join(aliasPageProbabilities, 128)
+			.join(aliasPageProbabilities)
 			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
 				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, pageProb)))
 			}.reduceByKey(_ ++ _)
