@@ -32,4 +32,22 @@ object TestData {
 	def equalDiffString: String = {
 		"Difference:\nx - y:\n\t\ny - x:\n\t"
 	}
+
+	def countableData: List[Int] = {
+		List(1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 1, 2, 6, 7, 0)
+	}
+
+	def countedData: Map[Int, Int] = {
+		Map(
+			0 -> 1,
+			1 -> 3,
+			2 -> 3,
+			3 -> 2,
+			4 -> 2,
+			5 -> 1,
+			6 -> 2,
+			7 -> 2,
+			8 -> 1,
+			9 -> 1)
+	}
 }
