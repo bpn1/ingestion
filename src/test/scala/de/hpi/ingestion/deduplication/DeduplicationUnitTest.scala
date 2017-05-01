@@ -38,18 +38,20 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val deduplication = TestData.defaultDeduplication
 		val subjects = TestData.testSubjects
 		val subjectsRDD = sc.parallelize(subjects)
-		val blockingSchemes = List(TestData.cityBlockingScheme)
+		val blockingSchemes = List(TestData.cityBlockingScheme, new SimpleBlockingScheme)
 		val blocks = deduplication.blocking(subjectsRDD, blockingSchemes)
-		val expected = sc.parallelize(TestData.cityBlock(subjects))
+		val expectedBlocks = TestData.blocks(sc, subjects)
 
-		assertRDDEquals(expected, blocks)
+		(blocks, expectedBlocks).zipped.foreach { case (block, expectedBlock) =>
+			assertRDDEquals(expectedBlock, block)
+		}
 	}
 
 	"createDuplicateCandidates" should "build an RDD containing all candidates for deduplication for each subject" in {
 		val testSubjects = TestData.testSubjects
 		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
 		deduplication.settings("stagingTable")= "subject_wikidata"
-		val testSubject1 = testSubjects(0)
+		val testSubject1 = testSubjects.head
 		val testSubject2 = testSubjects(3)
 		val testSubjectPair = List((testSubject1, testSubject2, 0.5))
 		val testDuplicateCandidates = deduplication.createDuplicateCandidates(sc.parallelize(testSubjectPair))
@@ -59,11 +61,11 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
-		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
-		deduplication.parseConfig()
+		val deduplication = TestData.defaultDeduplication
+		deduplication.config = TestData.testConfig
 		val subjects = TestData.testSubjects
-		val duplicates = TestData.cityBlock(subjects).map(_._2).flatMap(deduplication.findDuplicates)
-		val expected = List((subjects.head, subjects(1), 0.3558974358974359))
+		val duplicates = deduplication.findDuplicates(subjects)
+		val expected = TestData.testDuplicates(subjects)
 		duplicates shouldEqual expected
 	}
 
@@ -82,15 +84,18 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 	}
 
-	"evaluateBlocks" should "evaluate each block sorted by its size" in {
+	"evaluateBlocks" should "evaluate each block" in {
 		val deduplication = TestData.defaultDeduplication
 		val subjects = TestData.testSubjects
-		val blocks = sc.parallelize(TestData.cityBlock(subjects))
-		val evaluation = deduplication.evaluateBlocks(blocks, "Test comment")
-		val expected = TestData.evaluationTestData
-
-		evaluation.data shouldEqual expected.data
-		evaluation.comment shouldEqual expected.comment
+		val blocks = TestData.blocks(sc, subjects)
+		val blockingSchemes = List(TestData.cityBlockingScheme, new SimpleBlockingScheme)
+		val evaluationList = deduplication.evaluateBlocks(blocks, "Test comment", blockingSchemes)
+		val evaluationData = evaluationList
+			.map(blockingData => (blockingData._2, blockingData._3))
+			.collect
+			.toSet
+		val expected = TestData.evaluationTestData.toSet
+		evaluationData shouldEqual expected
 	}
 
 	"addSymRelation" should "add a symmetric relation between two given nodes" in {
