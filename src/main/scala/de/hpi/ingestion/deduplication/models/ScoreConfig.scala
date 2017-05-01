@@ -24,10 +24,7 @@ case class ScoreConfig[A, B <: SimilarityMeasure[A]](
 	  * @param rightValue String to be compared with leftValue.
 	  * @return The similarity score of the two input strings.
 	  */
-	def compare(
-		leftValue: A,
-		rightValue: A
-	): Double = {
+	def compare(leftValue: A, rightValue: A): Double = {
 		val score = similarityMeasure.compare(leftValue, rightValue, scale)
 		score * weight
 	}

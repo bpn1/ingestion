@@ -80,16 +80,11 @@ class Deduplication(
 				val attribute = feature.key
 				val valueSubject1 = subject1.get(attribute)
 				val valueSubject2 = subject2.get(attribute)
-				if (valueSubject1.nonEmpty && valueSubject2.nonEmpty) {
-					CompareStrategy(attribute)(
-						valueSubject1,
-						valueSubject2,
-						feature
-					)
-				} else {
-					-1.0
-				}
-			}.filter(_ != -1.0)
+				(feature, valueSubject1, valueSubject2)
+			}.collect {
+				case (feature, values1, values2) if values1.nonEmpty && values2.nonEmpty =>
+					CompareStrategy(feature.key)(values1, values2, feature)
+			}
 		scoreList.sum / Math.max(1, scoreList.length)
 	}
 

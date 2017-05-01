@@ -3,13 +3,10 @@ package de.hpi.ingestion.deduplication
 import de.hpi.ingestion.deduplication.models.ScoreConfig
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
 
-import scala.collection.mutable.ListBuffer
-
 /**
   * This class is a factory of comparing methods for different kinds of values.
   */
 object CompareStrategy extends Serializable {
-
 
 	/**
 	  * This method compares two string-lists with one element each.
@@ -39,11 +36,12 @@ object CompareStrategy extends Serializable {
 	): Double = {
 		val left = leftValues.grouped(2).toList.map(_.mkString(","))
 		val right = rightValues.grouped(2).toList.map(_.mkString(","))
-		val scoreSum = left.map(
-			leftValue => right.map(
-				rightValue => scoreConfig.compare(leftValue, rightValue)
-			)
-				.max).sum
+		val scoreSum = left
+			.map { leftValue =>
+				right
+					.map(rightValue => scoreConfig.compare(leftValue, rightValue))
+					.max
+			}.sum
 		scoreSum / left.size
 	}
 
@@ -58,9 +56,12 @@ object CompareStrategy extends Serializable {
 		rightValues: List[String],
 		scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]
 	): Double = {
-		val scoreSum = leftValues.map(
-			leftValue => rightValues.map(rightValue => scoreConfig.compare(leftValue, rightValue))
-				.max).sum
+		val scoreSum = leftValues
+			.map { leftValue =>
+				rightValues
+					.map(rightValue => scoreConfig.compare(leftValue, rightValue))
+					.max
+			}.sum
 		scoreSum / leftValues.size
 	}
 
