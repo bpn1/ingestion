@@ -6,6 +6,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits.TupleImplicits._
 
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
@@ -163,11 +164,16 @@ object CosineContextComparator extends SparkJob {
 		documentFrequencyThreshold: Int
 	): RDD[(T, Map[String, Double])] = {
 		val inverseDocumentFrequencies = documentFrequencies.map(calculateIdf(_, numDocuments))
-		termFrequencies.leftOuterJoin(inverseDocumentFrequencies)
-			.map { case (token, ((identifier, tf), idfOption)) =>
+		termFrequencies
+			.map(_.map(identity, List(_)))
+			.reduceByKey(_ ++ _)
+			.leftOuterJoin(inverseDocumentFrequencies)
+			.flatMap { case (token, (tfList, idfOption)) =>
 				val idf = idfOption.getOrElse(calculateIdf(documentFrequencyThreshold - 1, numDocuments))
-				val tfidf = tf * idf
-				(identifier, Map(token -> tfidf))
+				tfList.map { case (identifier, tf) =>
+					val tfidf = tf * idf
+					(identifier, Map(token -> tfidf))
+				}
 			}
 	}
 
