@@ -42,7 +42,7 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 		)
 
 		val configSettings = xml \\ "config" \ "sourceSettings"
-		for (node <- configSettings.head.child if node.text.trim.nonEmpty)
+		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
 			settings(node.label) = node.text
 	}
 
@@ -70,7 +70,6 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 
 	protected def parseNormalizationConfig(path: String): Map[String, List[String]] = {
 		val url = getClass.getResource(s"/$path")
-		println(url.getFile)
 		this.parseNormalizationConfig(url)
 	}
 
