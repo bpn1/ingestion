@@ -114,9 +114,9 @@ object TestData {
 		ScoreConfig(key, similarityMeasure = ExactMatchString, weight= 0.2)
 	)
 
-	def parsedConfig(key: String = "name"): List[ScoreConfig[String, SimilarityMeasure[String]]] = List(
-		ScoreConfig(key, similarityMeasure = MongeElkan, weight= 0.8),
-		ScoreConfig(key, similarityMeasure = JaroWinkler, weight= 0.7)
+	def parsedConfig: List[ScoreConfig[String, SimilarityMeasure[String]]] = List(
+		ScoreConfig("name", similarityMeasure = MongeElkan, weight= 0.8),
+		ScoreConfig("name", similarityMeasure = JaroWinkler, weight= 0.7)
 	)
 
 	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = List(
