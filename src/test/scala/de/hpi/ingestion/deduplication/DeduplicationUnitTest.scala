@@ -74,21 +74,6 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		duplicates shouldEqual expected
 	}
 
-	"buildDuplicatesClique" should "should add isDuplicate relation with a confidence for a list of tuples" in {
-		val deduplication = TestData.defaultDeduplication
-		val subjects = TestData.testSubjects
-		val duplicates = List((subjects.head, subjects(2), 0.8), (subjects(1), subjects(3), 0.8))
-		val expectedRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
-		val expectedRelationNode1 = Map(subjects(2).id -> expectedRelation)
-		val expectedRelationNode2 = Map(subjects(3).id -> expectedRelation)
-		val version = TestData.testVersion(sc)
-		deduplication.buildDuplicatesSCC(duplicates, version)
-
-		subjects.head.relations shouldEqual expectedRelationNode1
-		subjects(1).relations shouldEqual expectedRelationNode2
-
-	}
-
 	"evaluateBlocks" should "evaluate each block" in {
 		val deduplication = TestData.defaultDeduplication
 		val subjects = TestData.testSubjects
@@ -101,18 +86,5 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 			.toSet
 		val expected = TestData.evaluationTestData.toSet
 		evaluationData shouldEqual expected
-	}
-
-	"addSymRelation" should "add a symmetric relation between two given nodes" in {
-		val deduplication = TestData.defaultDeduplication
-		val subjects = TestData.testSubjects
-		val relation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
-		val version = TestData.testVersion(sc)
-		val expectedRelationNode1 = Map(subjects(1).id -> relation)
-		val expectedRelationNode2 = Map(subjects.head.id -> relation)
-		deduplication.addSymRelation(subjects.head, subjects(1), relation, version)
-
-		subjects.head.relations shouldEqual expectedRelationNode1
-		subjects(1).relations shouldEqual expectedRelationNode2
 	}
 }
