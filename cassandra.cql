@@ -146,6 +146,12 @@ CREATE TABLE datalake.duplicatecandidates (
     candidates list<frozen<tuple<subject, text, double>>>
 );
 
+CREATE TABLE datalake.sim_measure_stats (
+    id uuid PRIMARY KEY,
+    comment text,
+    data text
+);
+
 -- Evaluation
 CREATE KEYSPACE evaluation WITH REPLICATION = {
     'class' : 'SimpleStrategy',
@@ -160,6 +166,13 @@ CREATE TYPE evaluation.version (
     datasources frozen<list<text>>,
     timestamp timestamp,
     program text
+);
+
+CREATE TYPE evaluation.precisionrecalldatatuple (
+    threshold double,
+    precision double,
+    recall double,
+    fscore double
 );
 
 CREATE TYPE evaluation.subject (
@@ -212,7 +225,7 @@ CREATE TABLE evaluation.subject_wikidata (
 
 CREATE TABLE evaluation.sim_measure_stats (
     id uuid PRIMARY KEY,
-    data list<frozen<tuple<double, double, double, double>>>,
+    data list<frozen<precisionrecalldatatuple>>,
     comment text
 );
 

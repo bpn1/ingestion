@@ -3,7 +3,7 @@ package de.hpi.ingestion.deduplication
 import java.util.UUID
 
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.deduplication.models.{BlockEvaluation, ScoreConfig}
+import de.hpi.ingestion.deduplication.models.{BlockEvaluation, PrecisionRecallDataTuple, ScoreConfig}
 import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler, MongeElkan, SimilarityMeasure}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -20,13 +20,25 @@ object TestData {
 		))
 	}
 
-	def trainigsData(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
+	def trainingData(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
 		sc.parallelize(Seq(
 			((idList.head, idList(1)), 0.7),
 			((idList(2), idList(3)), 0.8),
 			((idList(4), idList(7)), 0.5),
 			((idList(6), idList(5)), 0.6)
 		))
+	}
+
+	def precisionRecallResults(sc: SparkContext) : RDD[PrecisionRecallDataTuple] = {
+		sc.parallelize(
+			List(
+				PrecisionRecallDataTuple(0.0, 0.6666666666666666, 1, 0.8),
+				PrecisionRecallDataTuple(0.5, 0.5, 0.5, 0.5),
+				PrecisionRecallDataTuple(0.6, 0.6666666666666666, 0.5, 0.5714285714285715),
+				PrecisionRecallDataTuple(0.7, 1, 0.5, 0.6666666666666666),
+				PrecisionRecallDataTuple(0.8, 1, 0.25, 0.4)
+			)
+		)
 	}
 
 	def truePositives(sc: SparkContext): RDD[(Double, Double)] = {
