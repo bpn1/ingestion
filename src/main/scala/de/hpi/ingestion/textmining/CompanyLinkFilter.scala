@@ -56,7 +56,7 @@ object CompanyLinkFilter extends SparkJob {
 		val joinableComps = companyPages.map(t => Tuple2(t, t))
 		pages
 			.map(page => (page.page, page.aliases.keySet))
-			.join(sc.broadcast(joinableComps).value)
+			.join(joinableComps)
 			.flatMap { case (page, (aliases, page2)) => aliases }
 			.distinct
 	}
