@@ -8,7 +8,7 @@ import org.scalatest.{FlatSpec, Matchers}
 class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 	"compare" should "calculate a score regarding the configuration" in {
 		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig
+		deduplication.config = TestData.testConfig()
 		val subjects = TestData.testSubjects
 		val score = deduplication.compare(subjects.head, subjects(1))
 		val expected = TestData.testSubjectScore(subjects.head, subjects(1))
@@ -18,7 +18,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 	it should "just return the weighted score if the configuration contains only one element" in {
 		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig.take(1)
+		deduplication.config = TestData.testConfig().take(1)
 		val subjects = TestData.testSubjects
 		val score = deduplication.compare(subjects.head, subjects(1))
 		val expected = MongeElkan.compare(subjects.head.name.get, subjects(1).name.get) * 0.8
@@ -29,7 +29,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	"parseConfig" should "generate a configuration from a given path" in {
 		val deduplication = TestData.defaultDeduplication
 		deduplication.parseConfig()
-		val expected = TestData.testConfig
+		val expected = TestData.parsedConfig
 
 		deduplication.config shouldEqual expected
 	}
@@ -62,7 +62,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
 		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig
+		deduplication.config = TestData.parsedConfig
 		val subjects = TestData.testSubjects
 		val duplicates = deduplication.findDuplicates(subjects)
 		val expected = TestData.testDuplicates(subjects)
