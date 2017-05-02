@@ -110,9 +110,11 @@ object TestData {
 
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
 
-	def parsedConfig: List[ScoreConfig[String, SimilarityMeasure[String]]] = List(
-		ScoreConfig("name", similarityMeasure = MongeElkan, weight= 0.8),
-		ScoreConfig("name", similarityMeasure = JaroWinkler, weight= 0.7)
+	def parsedConfig: mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = mutable.Map(
+		"name" -> List(
+			ScoreConfig("name", similarityMeasure = MongeElkan, weight= 0.8),
+			ScoreConfig("name", similarityMeasure = JaroWinkler, weight= 0.7)
+		)
 	)
 
 	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = List(
@@ -142,8 +144,10 @@ object TestData {
 			CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
 		)
 
-	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (List(
-		"very", "generic", "values"), List("even", "more", "values"), testConfig()(1)
+	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (
+		List("very", "generic", "values"),
+		List("even", "more", "values"),
+		testConfig().head._2.head
 	)
 
 	def cityBlockingScheme: ListBlockingScheme = {
