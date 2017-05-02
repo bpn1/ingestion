@@ -46,13 +46,24 @@ object CompanyLinkFilter extends SparkJob {
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Extracts Wikipedia page names of every tagged Wikidata entity.
+	  * @param wikidata RDD of Wikidata entities
+	  * @return RDD of Wikipedia article names
+	  */
 	def extractCompanyPages(wikidata: RDD[WikiDataEntity]): RDD[String] = {
 		wikidata
 			.filter(entry => entry.instancetype.isDefined && entry.wikiname.isDefined)
 			.map(_.wikiname.get)
 	}
 
-	def extractCompanyAliases(sc: SparkContext, pages: RDD[Page], companyPages: RDD[String]): RDD[String] = {
+	/**
+	  * Extracts all aliases companies have.
+	  * @param pages RDD of Wikipedia Pages containing all aliases of every page
+	  * @param companyPages RDD containing the names of all company articles
+	  * @return RDD containing all aliases companies have
+	  */
+	def extractCompanyAliases(pages: RDD[Page], companyPages: RDD[String]): RDD[String] = {
 		val joinableComps = companyPages.map(t => Tuple2(t, t))
 		pages
 			.map(page => (page.page, page.aliases.keySet))
@@ -61,6 +72,12 @@ object CompanyLinkFilter extends SparkJob {
 			.distinct
 	}
 
+	/**
+	  * Removes all Links of a Parsed Wikipedia entry whose alias is not in the List of company aliases.
+	  * @param article Parsed Wikipedia entry to be cleaned
+	  * @param companyAliases List of all aliases companies have
+	  * @return Parsed Wikipedia entry with cleaned links
+	  */
 	def filterCompanyLinks(article: ParsedWikipediaEntry, companyAliases: List[String]): ParsedWikipediaEntry = {
 		article.filterLinks(link => companyAliases.contains(link.alias))
 		article
@@ -78,24 +95,14 @@ object CompanyLinkFilter extends SparkJob {
 		val pages = input(1).asInstanceOf[RDD[Page]]
 		val articles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
 
-		val unfilteredLinks = articles
-			.map(_.allLinks().length)
-			.reduce(_ + _)
-
 		val companyPages = extractCompanyPages(wikidata)
-		val companyAliases = extractCompanyAliases(sc, pages, companyPages)
+		val companyAliases = extractCompanyAliases(pages, companyPages)
 		val aliasBroadcast = sc.broadcast(companyAliases.collect.toList)
 
 		val filteredArticles = articles.mapPartitions({ rdd =>
 			val localCompAliases = aliasBroadcast.value
 			rdd.map(filterCompanyLinks(_, localCompAliases))
 		}, true)
-
-		val filteredLinks = filteredArticles
-			.map(_.allLinks().length)
-			.reduce(_ + _)
-		println(s"COMP LINK FILTER: unfiltered links: $unfilteredLinks")
-		println(s"COMP LINK FILTER: filtered links: $filteredLinks")
 		List(filteredArticles).toAnyRDD()
 	}
 }
