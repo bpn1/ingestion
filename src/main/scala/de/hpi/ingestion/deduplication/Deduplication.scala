@@ -150,7 +150,8 @@ class Deduplication(
 			subjects.flatMap { subject =>
 				val blockingKeys = scheme.generateKey(subject).distinct
 				blockingKeys.map((_, List(subject)))
-			}.reduceByKey(_ ::: _)
+			}.filter(_._1 != scheme.undefinedValue)
+			.reduceByKey(_ ::: _)
 		}
 	}
 
