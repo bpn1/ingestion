@@ -1251,8 +1251,8 @@ object TestData {
 			Page("Page 6", Map("P6Alias1" -> 1)))
 	}
 
-	def companyAliases(): List[String] = {
-		List("P1Alias1", "P1Alias2", "P2Alias1", "P2Alias2", "P3Alias1")
+	def companyAliases(): Set[String] = {
+		Set("P1Alias1", "P1Alias2", "P2Alias1", "P2Alias2", "P3Alias1")
 	}
 
 	def unfilteredCompanyLinksEntries(): List[ParsedWikipediaEntry] = {

@@ -9,18 +9,16 @@ class CompanyLinkFilterTest extends FlatSpec with Matchers with SharedSparkConte
 
 	"Company pages" should "be extracted" in {
 		val wikidataEntities = sc.parallelize(TestData.wikidataEntities())
-		val companyPages = CompanyLinkFilter.extractCompanyPages(wikidataEntities).collect.toList.toSet
-//		val expectedPages = sc.parallelize(TestData.wikidataCompanyPages())
-		val expectedPages = TestData.wikidataCompanyPages().toSet
-		companyPages shouldEqual expectedPages
-//		assertRDDEquals(companyPages, expectedPages)
+		val companyPages = CompanyLinkFilter.extractCompanyPages(wikidataEntities)
+		val expectedPages = sc.parallelize(TestData.wikidataCompanyPages())
+		assertRDDEquals(companyPages, expectedPages)
 	}
 
 	"Company aliases" should "be extracted" in {
 		val pages = sc.parallelize(TestData.companyPages())
 		val companyPages = sc.parallelize(TestData.wikidataCompanyPages())
 		val companyAliases = CompanyLinkFilter.extractCompanyAliases(pages, companyPages)
-		val expectedAliases = sc.parallelize(TestData.companyAliases())
+		val expectedAliases = sc.parallelize(TestData.companyAliases().toList)
 		assertRDDEquals(companyAliases, expectedAliases)
 	}
 

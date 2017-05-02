@@ -78,7 +78,7 @@ object CompanyLinkFilter extends SparkJob {
 	  * @param companyAliases List of all aliases companies have
 	  * @return Parsed Wikipedia entry with cleaned links
 	  */
-	def filterCompanyLinks(article: ParsedWikipediaEntry, companyAliases: List[String]): ParsedWikipediaEntry = {
+	def filterCompanyLinks(article: ParsedWikipediaEntry, companyAliases: Set[String]): ParsedWikipediaEntry = {
 		article.filterLinks(link => companyAliases.contains(link.alias))
 		article
 	}
@@ -97,7 +97,7 @@ object CompanyLinkFilter extends SparkJob {
 
 		val companyPages = extractCompanyPages(wikidata)
 		val companyAliases = extractCompanyAliases(pages, companyPages)
-		val aliasBroadcast = sc.broadcast(companyAliases.collect.toList)
+		val aliasBroadcast = sc.broadcast(companyAliases.collect.toSet)
 
 		val filteredArticles = articles.mapPartitions({ rdd =>
 			val localCompAliases = aliasBroadcast.value
