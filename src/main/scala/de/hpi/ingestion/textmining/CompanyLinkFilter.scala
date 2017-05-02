@@ -78,6 +78,10 @@ object CompanyLinkFilter extends SparkJob {
 		val pages = input(1).asInstanceOf[RDD[Page]]
 		val articles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
 
+		val unfilteredLinks = articles
+			.map(_.allLinks().length)
+			.reduce(_ + _)
+
 		val companyPages = extractCompanyPages(wikidata)
 		val companyAliases = extractCompanyAliases(sc, pages, companyPages)
 		val aliasBroadcast = sc.broadcast(companyAliases.collect.toList)
@@ -86,6 +90,12 @@ object CompanyLinkFilter extends SparkJob {
 			val localCompAliases = aliasBroadcast.value
 			rdd.map(filterCompanyLinks(_, localCompAliases))
 		}, true)
+
+		val filteredLinks = filteredArticles
+			.map(_.allLinks().length)
+			.reduce(_ + _)
+		println(s"COMP LINK FILTER: unfiltered links: $unfilteredLinks")
+		println(s"COMP LINK FILTER: filtered links: $filteredLinks")
 		List(filteredArticles).toAnyRDD()
 	}
 }
