@@ -24,7 +24,7 @@ import scala.collection.mutable
   * --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000" << needed for deserialization of Trie
   */
 object AliasTrieSearch extends SparkJob {
-	appName = "TrieBuilder"
+	appName = "Alias Trie Search"
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
 	val trieName = "trie_full.bin"
@@ -33,7 +33,8 @@ object AliasTrieSearch extends SparkJob {
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
@@ -44,9 +45,10 @@ object AliasTrieSearch extends SparkJob {
 
 	/**
 	  * Saves Parsed Wikipedia entries with the found aliases to the Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
@@ -57,6 +59,7 @@ object AliasTrieSearch extends SparkJob {
 
 	/**
 	  * Opens a HDFS file stream pointing to the trie binary.
+	  *
 	  * @return Input Stream pointing to the file in the HDFS
 	  */
 	def hdfsFileStream(): FSDataInputStream = {
@@ -64,12 +67,14 @@ object AliasTrieSearch extends SparkJob {
 		val fs = FileSystem.get(hadoopConf)
 		fs.open(new Path(trieName))
 	}
+
 	// $COVERAGE-ON$
 
 	/**
 	  * Finds all occurrences of aliases in the text of a Wikipedia entry.
-	  * @param entry parsed Wikipedia entry to use
-	  * @param trie Trie containing the aliases we look for
+	  *
+	  * @param entry     parsed Wikipedia entry to use
+	  * @param trie      Trie containing the aliases we look for
 	  * @param tokenizer Tokenizer used to tokenize the text of the entry
 	  * @return entry containing list of found aliases
 	  */
@@ -91,6 +96,7 @@ object AliasTrieSearch extends SparkJob {
 
 	/**
 	  * Removes empty and duplicate aliases from the given list of aliases.
+	  *
 	  * @param aliases List of aliases found in an article
 	  * @return cleaned List of aliases
 	  */
@@ -102,6 +108,7 @@ object AliasTrieSearch extends SparkJob {
 
 	/**
 	  * Deserializes Trie binary into a TrieNode.
+	  *
 	  * @param trieStream Input Stream pointing to the Trie binary data
 	  * @return deserialized Trie
 	  */
@@ -116,9 +123,10 @@ object AliasTrieSearch extends SparkJob {
 
 	/**
 	  * Uses a pre-built Trie to find aliases in the text of articles and writes them into the foundaliases field.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {

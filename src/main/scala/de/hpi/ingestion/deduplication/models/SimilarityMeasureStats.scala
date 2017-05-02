@@ -2,6 +2,7 @@ package de.hpi.ingestion.deduplication.models
 
 import java.util.UUID
 import com.datastax.driver.core.utils.UUIDs
+import org.apache.spark.rdd.RDD
 
 /**
   * Case class for corresponding sim_measure_stats cassandra table
@@ -11,6 +12,7 @@ import com.datastax.driver.core.utils.UUIDs
   */
 case class SimilarityMeasureStats(
 	id: UUID = UUIDs.timeBased(),
-	data: List[(Double, Double, Double, Double)],
+	data: RDD[PrecisionRecallDataTuple],
 	comment: Option[String]
 )
+

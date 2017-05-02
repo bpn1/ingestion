@@ -4,7 +4,7 @@ import de.hpi.ingestion.deduplication.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
-	"computedDistance" should "compute the distnace between two points in terms of kilometers" in {
+	"computeDistance" should "compute the distnace between two points in terms of kilometers" in {
 		val subjects = TestData.testSubjects
 		val distance = EuclidianDistance.computeDistance(
 			subjects(4).properties("geo_coords").head.toDouble,
@@ -43,9 +43,9 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 	"compare" should "compute correct score for two given points" in {
 		val subjects = TestData.testSubjects
 		val geoPoints = List(
-			subjects.head.properties("geo_coords").mkString(","),
-			subjects(2).properties("geo_coords").mkString(","),
-			subjects(3).properties("geo_coords").mkString(",")
+			subjects.head.properties("geo_coords").take(2).mkString(","),
+			subjects(2).properties("geo_coords").take(2).mkString(","),
+			subjects(3).properties("geo_coords").take(2).mkString(",")
 		)
 		val scores = List(
 			EuclidianDistance.compare(geoPoints.head, geoPoints.head),
