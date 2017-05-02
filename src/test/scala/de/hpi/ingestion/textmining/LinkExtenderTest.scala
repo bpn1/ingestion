@@ -5,23 +5,32 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 
-	"aliases" should "be empty" in {
-		val aliases = TestData.linkExtenderPagesTestSet()
+	"pages" should "be empty" in {
+		val pages = TestData.linkExtenderPagesTestMap()
 		val entry = TestData.parsedEntry()
-		val allAliases = LinkExtender.findAllAliases(entry, sc.parallelize(aliases.toList))
-		allAliases shouldBe empty
+		val allPages = LinkExtender.findAllAliases(entry, pages)
+		allPages shouldBe empty
 	}
 
-	"aliases" should "not be empty" in {
-		val aliases = TestData.linkExtenderPagesTestSet()
+	"pages" should "not be empty" in {
+		val pages = TestData.linkExtenderPagesTestMap()
 		val entry = TestData.linkExtenderParsedEntry()
-		val allAliases = LinkExtender.findAllAliases(entry, sc.parallelize(aliases.toList))
-		allAliases shouldBe TestData.linkExtenderFoundPages()
+		val allPages = LinkExtender.findAllAliases(entry, pages)
+		allPages shouldBe TestData.linkExtenderFoundPages()
+	}
+
+
+	"aliases" should "be reverted from pages" in {
+		val pages = TestData.linkExtenderFoundPages()
+		val aliases = LinkExtender.reversePages(pages)
+
+		aliases shouldBe TestData.linkExtenderFoundAliases()
 	}
 
 	"trie" should "include string" in {
-		val aliases = TestData.linkExtenderFoundPages()
-		val trie = LinkExtender.buildTrieFromAliases(aliases)
+		val tokenizer = IngestionTokenizer(false, false)
+		val aliases = TestData.linkExtenderFoundAliases()
+		val trie = LinkExtender.buildTrieFromAliases(aliases, tokenizer)
 
 		val result = trie.findByPrefix(List[String]("Audi"))
 
@@ -42,13 +51,13 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"entry" should "have extended Links" in {
 		val entry = TestData.linkExtenderParsedEntry()
-		val pages = TestData.linkExtenderFoundPages()
-		val trie = LinkExtender.buildTrieFromAliases(pages)
+		val aliases = TestData.linkExtenderFoundAliases()
 		val tokenizer = IngestionTokenizer(false, false)
+		val trie = LinkExtender.buildTrieFromAliases(aliases, tokenizer)
 
 		val parsedEntry = LinkExtender.findAliasOccurences(
 			entry,
-			pages,
+			aliases,
 			trie,
 			tokenizer
 		)

@@ -1209,26 +1209,36 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
-	def linkExtenderPagesTestSet(): Set[Page] = {
-		Set(
-			Page("Audi", Map("Audi AG" -> 1, "Audi" -> 1)),
-			Page("Bayern", Map("Bayern" -> 1)),
-			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1)))
+	def linkExtenderPagesTestMap(): Map[String, Map[String, Int]] = {
+		Map(
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
+			"Bayern" -> Map("Bayern" -> 1),
+			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1),
+			"Zerfall (Album)" -> Map("Zerfall" -> 1)
+		)
 	}
 
 	def linkExtenderParsedEntry(): ParsedWikipediaEntry = {
 		ParsedWikipediaEntry("Audi", Option("Audi ist Audi AG. VW ist Volkswagen AG"),
 			List(
-				Link("VW", "VW", Option(9))
+				Link("VW", "VW", Option(18))
 			)
 		)
 	}
 
-	def linkExtenderFoundPages(): Set[Page] = {
-		Set(
-			Page("Audi", Map("Audi AG" -> 1, "Audi" -> 1)),
-			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1))
+	def linkExtenderFoundPages(): Map[String, Map[String, Int]] = {
+		Map(
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
+			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1)
+		)
+	}
+
+	def linkExtenderFoundAliases(): Map[String, String] = {
+		Map(
+			"Audi" -> "Audi",
+			"Audi AG" -> "Audi",
+			"VW" -> "VW",
+			"Volkswagen AG" -> "VW"
 		)
 	}
 }
