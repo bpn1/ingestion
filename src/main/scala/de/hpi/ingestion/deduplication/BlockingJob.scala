@@ -88,7 +88,7 @@ object BlockingJob extends SparkJob {
 			settings(node.label) = node.text
 	}
 
-	/**
+/*	/**
 	  * Uses input blocking scheme to generate blocks of subjects.
 	  * @param subjects RDD to perform the blocking on.
 	  * @param blockingSchemes blocking schemes to use to generate keys.
@@ -129,6 +129,44 @@ object BlockingJob extends SparkJob {
 				Blocking(key = Option(key), subjects = subjectList, staging = stagingList, comment = Option(comment))
 			}
 		}.reduce(_.union(_))
+	}*/
+
+	/**
+	  * Uses input blocking scheme to generate blocks of subjects.
+	  * @param subjects RDD to perform the blocking on.
+	  * @param blockingSchemes blocking schemes to use to generate keys.
+	  * @return subjects grouped by blocking keys
+	  */
+	def blocking(
+		subjects: RDD[Subject],
+		blockingSchemes: List[BlockingScheme]
+	): RDD[(List[List[String]], List[Subject])] = {
+		subjects
+		.map(subject => (blockingSchemes.map(_.generateKey(subject)), List(subject)))
+		.reduceByKey(_ ++ _)	// ToDo: #182, better reduce function
+	}
+
+	/**
+	  * Creates blocks based on the input blocking scheme
+	  * @param subjects RDD to perform the blocking on
+	  * @param stagingSubjects RDD to perform the blocking on
+	  * @param blockingSchemes blocking schemes to use to generate keys.
+	  * @return RDD of blocks.
+	  */
+	def blocking(
+		subjects: RDD[Subject],
+		stagingSubjects: RDD[Subject],
+		blockingSchemes: List[BlockingScheme]
+	): RDD[(List[List[String]], List[Subject])] = {
+		val subjectBlocks = blocking(subjects, blockingSchemes)
+		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
+		subjectBlocks
+		.fullOuterJoin(stagingBlocks)
+		.map {
+			case (key, (Some(x), None)) => (key, x)
+			case (key, (None, Some(x))) => (key, x)
+			case (key, (Some(x), Some(y))) => (key, (x ++ y).distinct)
+		}
 	}
 
 	/**
