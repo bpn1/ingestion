@@ -1,7 +1,5 @@
 package de.hpi.ingestion.deduplication.similarity
 
-import java.lang.Math.{min, max}
-
 /**
   * A similarity measure that computes how close two given numbers are to each other in terms of percentage.
   */

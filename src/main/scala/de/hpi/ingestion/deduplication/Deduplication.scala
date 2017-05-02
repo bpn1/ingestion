@@ -79,7 +79,7 @@ class Deduplication(
 	/**
 	  * Compares to subjects regarding the configuration
 	  * @param subject1 subjects to be compared to subject2
-	  * @param subject2 subjects to be compared to subject2
+	  * @param subject2 subjects to be compared to subject1
 	  * @return the similarity score of the subjects
 	  */
 	def compare(
@@ -89,17 +89,14 @@ class Deduplication(
 	): Double = {
 		val scoreList = this.config
 			.map { feature =>
-				val valueSub1 = subject1.get(feature.key).headOption
-				val valueSub2 = subject2.get(feature.key).headOption
-				if(valueSub1.isDefined && valueSub2.isDefined) {
-					val score = feature
-						.similarityMeasure
-						.compare(valueSub1.get, valueSub2.get, scale)
-					score * feature.weight
-				} else {
-					-1.0
-				}
-			}.filter(_ != -1.0)
+				val attribute = feature.key
+				val valueSubject1 = subject1.get(attribute)
+				val valueSubject2 = subject2.get(attribute)
+				(feature, valueSubject1, valueSubject2)
+			}.collect {
+				case (feature, values1, values2) if values1.nonEmpty && values2.nonEmpty =>
+					CompareStrategy(feature.key)(values1, values2, feature)
+			}
 		scoreList.sum / Math.max(1, scoreList.length)
 	}
 
