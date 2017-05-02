@@ -53,7 +53,8 @@ CREATE TABLE wikidumps.wikipediatfidf (
 );
 
 CREATE TABLE wikidumps.featureentries (
-	alias text PRIMARY KEY,
+	id uuid PRIMARY KEY,
+	alias text,
 	entity text,
 	prob_link double,
 	prob_entity double,
