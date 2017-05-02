@@ -79,7 +79,7 @@ class Deduplication(
 	/**
 	  * Compares to subjects regarding the configuration
 	  * @param subject1 subjects to be compared to subject2
-	  * @param subject2 subjects to be compared to subject2
+	  * @param subject2 subjects to be compared to subject1
 	  * @return the similarity score of the subjects
 	  */
 	def compare(
@@ -87,20 +87,20 @@ class Deduplication(
 		subject2: Subject,
 		scale: Int = 1
 	): Double = {
-		val weights = for {
-			scoreConfigs <- this.config.values.toList
-			scoreConfig <- scoreConfigs
-		} yield scoreConfig.weight
+		val weights = config
+			.values
+			.flatMap(_.map(_.weight))
+			.sum
 
 		val scores = for {
-			(attribute, simMeasures) <- this.config
-			values1 = subject1.get(attribute)
-			values2 = subject2.get(attribute)
-			if values1.nonEmpty && values2.nonEmpty
-			simMeasure <- simMeasures
-			score = simMeasure.similarityMeasure.compare(values1.head, values2.head, simMeasure.scale)
-		} yield score * simMeasure.weight * simMeasure.scale
-		scores.sum / weights.sum
+			(attribute, scoreConfigs) <- this.config
+			valueSubject1 = subject1.get(attribute)
+			valueSubject2 = subject2.get(attribute)
+			if valueSubject1.nonEmpty && valueSubject2.nonEmpty
+			scoreConfig <- scoreConfigs
+		} yield CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
+
+		scores.sum / weights
 	}
 
 	/**
@@ -129,7 +129,7 @@ class Deduplication(
 			settings(node.label) = node.text
 
 		val attributes = (xml \\ "config" \ "simMeasurements" \ "attribute").toList
-		val similarityMeasure = for {
+		for {
 			node <- attributes
 			key = (node \ "key").text
 			feature <- (node \ "feature").toList
@@ -161,7 +161,8 @@ class Deduplication(
 			subjects.flatMap { subject =>
 				val blockingKeys = scheme.generateKey(subject).distinct
 				blockingKeys.map((_, List(subject)))
-			}.reduceByKey(_ ::: _)
+			}.filter(_._1 != scheme.undefinedValue)
+			.reduceByKey(_ ::: _)
 		}
 	}
 

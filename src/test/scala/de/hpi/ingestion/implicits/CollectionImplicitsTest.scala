@@ -38,4 +38,10 @@ class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkCon
 		resultRDD.isInstanceOf[RDD[String]] shouldBe true
 		startValue shouldBe resultValue
 	}
+
+	"Count elements" should "count the elements" in {
+		val countedData = TestData.countableData.countElements()
+		val expectedCounts = TestData.countedData
+		countedData shouldEqual expectedCounts
+	}
 }
