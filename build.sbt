@@ -76,5 +76,5 @@ unmanagedSourceDirectories in Compile += baseDirectory.value / "implisense_files
 unmanagedResourceDirectories in Compile += baseDirectory.value / "implisense_files" / "src" / "main" / "resources"
 unmanagedSourceDirectories in Test += baseDirectory.value / "implisense_files" / "src"
 
-// scoverage settings
+// scoverage settings, since scoverage cannot handle unmanagedSources
 coverageExcludedPackages := "de.hpi.ingestion.dataimport.implisense.*"
