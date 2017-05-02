@@ -30,7 +30,7 @@ class Deduplication(
 	val dataSources: List[String],
 	val configFile: Option[String] = None
 ) extends Serializable with SparkJob {
-	var config = List[ScoreConfig[String, SimilarityMeasure[String]]]()
+	var config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
 	val settings = mutable.Map[String, String]()
 	var blockingSchemes = List[BlockingScheme](new SimpleBlockingScheme)
 	appName = importName
@@ -87,17 +87,30 @@ class Deduplication(
 		subject2: Subject,
 		scale: Int = 1
 	): Double = {
-		val scoreList = this.config
-			.map { feature =>
-				val attribute = feature.key
-				val valueSubject1 = subject1.get(attribute)
-				val valueSubject2 = subject2.get(attribute)
-				(feature, valueSubject1, valueSubject2)
-			}.collect {
-				case (feature, values1, values2) if values1.nonEmpty && values2.nonEmpty =>
-					CompareStrategy(feature.key)(values1, values2, feature)
-			}
-		scoreList.sum / Math.max(1, scoreList.length)
+		val weights = config
+			.values
+			.flatMap(_.map(_.weight))
+			.sum
+
+		val scores = for {
+			(attribute, scoreConfigs) <- this.config
+			valueSubject1 = subject1.get(attribute)
+			valueSubject2 = subject2.get(attribute)
+			if valueSubject1.nonEmpty && valueSubject2.nonEmpty
+			scoreConfig <- scoreConfigs
+		} yield CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
+
+		scores.sum / weights
+	}
+
+	/**
+	  * Get similarity Measure by its name.
+	  * @param similarityMeasure Name of the similarity Measure
+	  * @tparam T type of the similarity Measure
+	  * @return Similarity Measure
+	  */
+	def getSimilarityMeasure[T](similarityMeasure: String): SimilarityMeasure[T] = {
+		Deduplication.dataTypes.getOrElse(similarityMeasure, ExactMatchString).asInstanceOf[SimilarityMeasure[T]]
 	}
 
 	/**
@@ -115,22 +128,22 @@ class Deduplication(
 		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
 			settings(node.label) = node.text
 
-		config = (xml \\ "config" \ "simMeasurements" \ "feature")
-			.toList
-			.map { feature =>
-				val attribute = (feature \ "attribute").text
-				val simMeasure = (feature \ "similarityMeasure").text
-				val weight = (feature \ "weight").text
-				val scale = (feature \ "scale").text
-
-				ScoreConfig[String, SimilarityMeasure[String]](
-					attribute,
-					Deduplication.dataTypes
-						.getOrElse(simMeasure, ExactMatchString)
-						.asInstanceOf[SimilarityMeasure[String]],
-					weight.toDouble,
-					scale.toInt)
-			}
+		val attributes = (xml \\ "config" \ "simMeasurements" \ "attribute").toList
+		for {
+			node <- attributes
+			key = (node \ "key").text
+			feature <- (node \ "feature").toList
+			similarityMeasure = (feature \ "similarityMeasure").text
+			weight = (feature \ "weight").text.toDouble
+			scale = (feature \ "scale").text.toInt
+		}{
+			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
+				getSimilarityMeasure[String](similarityMeasure),
+				weight,
+				scale
+			)
+			this.config(key) = config.getOrElse(key, Nil):::List(scoreConfig)
+		}
 	}
 
 	/**

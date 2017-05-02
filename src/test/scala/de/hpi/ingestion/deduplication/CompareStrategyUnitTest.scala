@@ -11,35 +11,52 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 		val deduplication = TestData.defaultDeduplication
 		deduplication.config = TestData.testConfig()
 		val subjects = TestData.testSubjects
-		val subject1 = subjects(0)
+		val subject1 = subjects.head
 		val subject2 = subjects(1)
-		deduplication.config.map { feature =>
-			(feature.compare(
-				subject1.get(feature.key).head,
-				subject2.get(feature.key).head
-			), TestData.testCompareScore(subject1, subject2, feature.similarityMeasure, feature))
-		}.foreach { case (score, expected) => score shouldEqual expected }
+		for {
+			(attribute, scoreConfigs) <- deduplication.config
+			scoreConfig <- scoreConfigs
+		}{
+			val score = scoreConfig.compare(subject1.get(attribute).head, subject2.get(attribute).head)
+			val expected = TestData.testCompareScore(
+				subject1,
+				subject2,
+				scoreConfig.similarityMeasure,
+				scoreConfig
+			)
+			score shouldEqual expected
+		}
 	}
 
 	"simpleStringCompare" should "only compare the first element in a list" in {
 		val deduplication = TestData.defaultDeduplication
 		deduplication.config = TestData.testConfig()
 		val subjects = TestData.testSubjects
-		val subject1 = subjects(0)
+		val subject1 = subjects.head
 		val subject2 = subjects(1)
-		deduplication.config.map { feature =>
-			(CompareStrategy.singleStringCompare(
-				subject1.get(feature.key),
-				subject2.get(feature.key),
-				feature
-			), TestData.testCompareScore(subject1, subject2, feature.similarityMeasure, feature))
-		}.foreach {case (score, expected) => score shouldEqual expected}
+		for {
+			(attribute, scoreConfigs) <- deduplication.config
+			scoreConfig <- scoreConfigs
+		}{
+			val score = CompareStrategy.singleStringCompare(
+				subject1.get(attribute),
+				subject2.get(attribute),
+				scoreConfig
+			)
+			val expected = TestData.testCompareScore(
+				subject1,
+				subject2,
+				scoreConfig.similarityMeasure,
+				scoreConfig
+			)
+			score shouldEqual expected
+		}
 	}
 
 	"coordinatesCompare" should "compare the input lists as coordinate values" in {
 		val coordinates = List(List("1.5", "1", "10", "10"), List("1.1", "1", "10", "10"))
 		val attribute = "geo_coords"
-		val feature = ScoreConfig[String, SimilarityMeasure[String]](attribute, EuclidianDistance, 1)
+		val feature = ScoreConfig[String, SimilarityMeasure[String]](EuclidianDistance, 1)
 		val score = CompareStrategy.coordinatesCompare(
 			coordinates.head,
 			coordinates.last,
@@ -55,14 +72,16 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 		val subjects = TestData.testSubjects
 		val subject1 = subjects(4)
 		val subject2 = subjects(5)
-		deduplication.config.foreach { feature =>
+		for {
+			(attribute, scoreConfigs) <- deduplication.config
+			scoreConfig <- scoreConfigs
+		}{
 			val score = BigDecimal(CompareStrategy.defaultCompare(
-				subject1.get(feature.key),
-				subject2.get(feature.key),
-				feature
-			)).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble	// rounds the value
-
-			val expected = 1.0 * feature.weight
+				subject1.get(attribute),
+				subject2.get(attribute),
+				scoreConfig
+			)).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble
+			val expected = 1.0 * scoreConfig.weight
 			score shouldEqual expected
 		}
 	}
