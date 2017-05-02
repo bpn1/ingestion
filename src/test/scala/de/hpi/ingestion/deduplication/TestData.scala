@@ -133,8 +133,7 @@ object TestData {
 			sc.parallelize(Seq(
 				("Berlin", List(testSubjects.head, testSubjects(1), testSubjects(2))),
 				("Hamburg", List(testSubjects.head, testSubjects(3))),
-				("New York", List(testSubjects(1), testSubjects(3))),
-				("undefined", List(testSubjects(4), testSubjects(5)))
+				("New York", List(testSubjects(1), testSubjects(3)))
 			)),
 			sc.parallelize(Seq(
 				("Vol", List(testSubjects.head, testSubjects(1))),
@@ -151,7 +150,6 @@ object TestData {
 		List(
 			(Option("Test comment_test city blocking scheme"), Map("Berlin" -> 3)),
 			(Option("Test comment_test city blocking scheme"), Map("New York" -> 2)),
-			(Option("Test comment_test city blocking scheme"), Map("undefined" -> 2)),
 			(Option("Test comment_test city blocking scheme"), Map("Hamburg" -> 2)),
 			(Option("Test comment_SimpleBlockingScheme"), Map("Vol" -> 2)),
 			(Option("Test comment_SimpleBlockingScheme"), Map("Aud" -> 2)),

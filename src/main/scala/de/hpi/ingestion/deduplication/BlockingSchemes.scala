@@ -6,7 +6,7 @@ import de.hpi.ingestion.datalake.models.Subject
   * This trait is the template for our blocking schemes.
   */
 trait BlockingScheme extends Serializable {
-	val undefinedValue = List("undefined")
+	val undefinedValue = "undefined"
 	var tag = "BlockingScheme"
 	protected var inputAttributes: List[String] = List[String]()
 
@@ -33,7 +33,7 @@ class SimpleBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject): List[String] = {
 		subject.name.map { name =>
 			List(name.substring(0, Math.min(3, name.length)))
-		}.getOrElse(undefinedValue)
+		}.getOrElse(List(undefinedValue))
 	}
 }
 
@@ -44,7 +44,7 @@ class ListBlockingScheme extends BlockingScheme {
 	tag = "ListBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
 		val key = inputAttributes.flatMap(subject.get)
-		if (key.nonEmpty) key else undefinedValue
+		if (key.nonEmpty) key else List(undefinedValue)
 	}
 }
 
@@ -56,6 +56,6 @@ class MappedListBlockingScheme(f: String => String = identity) extends BlockingS
 	tag = "ListBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
 		val key = inputAttributes.flatMap(subject.get(_).map(f))
-		if (key.nonEmpty) key else undefinedValue
+		if (key.nonEmpty) key else List(undefinedValue)
 	}
 }
