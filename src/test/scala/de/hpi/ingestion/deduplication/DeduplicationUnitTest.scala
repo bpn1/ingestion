@@ -21,7 +21,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	it should "just return the weighted score if the configuration contains only one element" in {
 		val deduplication = TestData.defaultDeduplication
 		val config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
-		config("name") = List(ScoreConfig("name", MongeElkan, 0.5))
+		config("name") = List(ScoreConfig(MongeElkan, 0.5))
 		deduplication.config = config
 		val subjects = TestData.testSubjects
 		val score = deduplication.compare(subjects.head, subjects(1))

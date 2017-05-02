@@ -105,7 +105,7 @@ class Deduplication(
 
 	/**
 	  * Get similarity Measure by its name.
-	  * @param similarityMeasure Name of the similiarity Measure
+	  * @param similarityMeasure Name of the similarity Measure
 	  * @tparam T type of the similarity Measure
 	  * @return Similarity Measure
 	  */
@@ -138,7 +138,6 @@ class Deduplication(
 			scale = (feature \ "scale").text.toInt
 		}{
 			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
-				key,
 				getSimilarityMeasure[String](similarityMeasure),
 				weight,
 				scale

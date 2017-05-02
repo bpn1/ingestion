@@ -124,8 +124,8 @@ object TestData {
 
 	def parsedConfig: mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = mutable.Map(
 		"name" -> List(
-			ScoreConfig("name", similarityMeasure = MongeElkan, weight= 0.8),
-			ScoreConfig("name", similarityMeasure = JaroWinkler, weight= 0.7)
+			ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
+			ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)
 		)
 	)
 
@@ -138,8 +138,8 @@ object TestData {
 
 	def testConfig(key: String = "name"): mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = mutable.Map(
 		key -> List(
-			ScoreConfig(key = key, similarityMeasure = MongeElkan, weight= 0.8),
-			ScoreConfig(key = key, similarityMeasure = JaroWinkler, weight= 0.7)
+			ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
+			ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)
 		)
 	)
 

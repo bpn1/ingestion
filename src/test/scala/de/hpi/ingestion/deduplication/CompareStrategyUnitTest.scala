@@ -56,7 +56,7 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 	"coordinatesCompare" should "compare the input lists as coordinate values" in {
 		val coordinates = List(List("1.5", "1", "10", "10"), List("1.1", "1", "10", "10"))
 		val attribute = "geo_coords"
-		val feature = ScoreConfig[String, SimilarityMeasure[String]](attribute, EuclidianDistance, 1)
+		val feature = ScoreConfig[String, SimilarityMeasure[String]](EuclidianDistance, 1)
 		val score = CompareStrategy.coordinatesCompare(
 			coordinates.head,
 			coordinates.last,
