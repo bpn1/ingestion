@@ -23,7 +23,8 @@ object CosineContextComparator extends SparkJob {
 	/**
 	  * Loads Parsed Wikipedia entries with their term frequencies and loads the document frequencies from the
 	  * Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
@@ -33,11 +34,13 @@ object CosineContextComparator extends SparkJob {
 		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
 		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
+
 	/**
 	  * Saves the Feature Entries to the Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
@@ -45,6 +48,7 @@ object CosineContextComparator extends SparkJob {
 			.head
 			.saveToCassandra(keyspace, featureEntryTable)
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -133,6 +137,7 @@ object CosineContextComparator extends SparkJob {
 		documentFrequencyThreshold: Int
 	): RDD[(Link, Map[String, Double])] = {
 		val contextTermFrequencies = articles
+			.sample(false, 0.01)
 			.flatMap(_.linkswithcontext)
 			.map(link => (link, Bag(link.context)))
 			.flatMap(t => joinableTermFrequencies(t._1, t._2))
@@ -208,13 +213,13 @@ object CosineContextComparator extends SparkJob {
 	): RDD[FeatureEntry] = {
 		linkContexts
 			.map(t => (t._1.alias, t))
-			.join(aliasPageProbabilities, 128)
+			.join(aliasPageProbabilities)
 			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
 				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, pageProb)))
 			}.reduceByKey(_ ++ _)
 			.join(articleContexts)
 			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
-				protoFeatureEntries.map {protoFeatureEntry =>
+				protoFeatureEntries.map { protoFeatureEntry =>
 					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
 					FeatureEntry(
 						protoFeatureEntry.alias,
@@ -257,9 +262,10 @@ object CosineContextComparator extends SparkJob {
 	/**
 	  * Calculates the Cosine Similarities for every alias and creates feature entries containing the other two
 	  * features as well.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
