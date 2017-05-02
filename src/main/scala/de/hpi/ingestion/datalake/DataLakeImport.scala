@@ -31,6 +31,9 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 	inputKeyspace: String,
 	inputTable: String
 ) extends DLImport[T] with SparkJob {
+
+	override protected def filterEntities(entity: T): Boolean = true
+
 	protected def parseConfig(url: URL): Unit = {
 		val xml = XML.loadString(Source
 			.fromURL(url)
