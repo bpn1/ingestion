@@ -1,6 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -117,7 +117,7 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Parse Wikipedia article, clean it of Wikimarkup, extract text and all links.
+	  * Parse Wikipedia article, clean it off Wikimarkup, extract text and all links.
 	  *
 	  * @param title title of Wikipedia article
 	  * @param html  html of Wikipedia article
@@ -136,7 +136,7 @@ object TextParser extends SparkJob {
 			parsedEntry.disambiguationlinks = outputTuple._2
 		} else {
 			val cleanedDocument = removeTags(document)
-			val outputTuple = extractTextLinks(cleanedDocument.body)
+			val outputTuple = extractTextAndTextLinks(cleanedDocument.body)
 			parsedEntry.setText(outputTuple._1)
 			parsedEntry.textlinks = outputTuple._2
 			parsedEntry.listlinks = extractListLinks(html)
@@ -221,12 +221,12 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Extract all links with offset from text.
+	  * Extract text and all links with offset from html.
 	  *
 	  * @param body html body of Wikipedia article
 	  * @return tuple of html text and list of all text links
 	  */
-	def extractTextLinks(body: Element): (String, List[Link]) = {
+	def extractTextAndTextLinks(body: Element): (String, List[Link]) = {
 		val linksList = ListBuffer[Link]()
 		var offset = 0
 		var startIndex = 0
@@ -262,11 +262,20 @@ object TextParser extends SparkJob {
 			}
 		}
 		val cleanedLinks = cleanMetapageLinks(linksList.toList)
-		(body.text, cleanedLinks)
+		(extractTextWithHeadlines(body), cleanedLinks)
 	}
 
 	/**
-	  * Clean text of Wikimarkup.
+	  *
+	  * @param body
+	  * @return
+	  */
+	def extractTextWithHeadlines(body: Element): String = {
+		body.text
+	}
+
+	/**
+	  * Cleans text of Wikimarkup.
 	  *
 	  * @param wikitext Wikimarkup text to be cleaned
 	  * @return cleaned text

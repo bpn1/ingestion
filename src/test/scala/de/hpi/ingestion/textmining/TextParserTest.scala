@@ -107,9 +107,9 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"All redirects" should "contain #WEITERLEITUNG link" in {
- 		val entries = TestData.testEntriesWithBadRedirects()
+		val entries = TestData.testEntriesWithBadRedirects()
 		entries.map(entry => TextParser.cleanRedirects(entry))
-		    .map(entry => entry.getText should startWith (s"#${TextParser.parsableRedirect}"))
+			.map(entry => entry.getText should startWith(s"#${TextParser.parsableRedirect}"))
 	}
 
 	"Wikipedia disambiguation pages" should "be recognized as such" in {
@@ -233,12 +233,20 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Cleaned Wikipedia document" should "not contain other tags than anchors" in {
-		TestData.documentTestList()
+		List(TestData.document())
 			.map(Jsoup.parse)
 			.map(TextParser.removeTags)
 			.map(_.toString)
 			.foreach(document => document should (not include "</span>"
 				and not include "</p>" and not include "</abbr>"))
+	}
+
+	they should "contain headlines" in {
+		List(TestData.documentWithHeadlines())
+			.map(Jsoup.parse)
+			.map(TextParser.removeTags)
+			.map(_.toString)
+			.foreach(document => document should (include("<h2>") and include("</h2>")))
 	}
 
 	"Redirect page entries" should "be identified as such" in {
@@ -269,8 +277,17 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.collect
 			.head
 			.getText()
-		parsedArticleText should contain allElementsOf TestData.wikipediaEntryHeadlines()
+
+		TestData.wikipediaEntryHeadlines()
+			.foreach(headline => assert(parsedArticleText.contains(headline)))
 	}
+
+	//	"Text extracted from HTML" should "contain headlines" in {
+	//		val document = TestData.documentElementWithHeadlines()
+	//		val text = TextParser.extractTextWithHeadlines(document)
+	//		TestData.wikipediaEntryHeadlines()
+	//			.foreach(headline => assert(text.contains(headline)))
+	//	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
 		val substring = text.substring(link.offset.get, link.offset.get + link.alias.length)
