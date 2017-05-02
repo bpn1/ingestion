@@ -260,6 +260,18 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		parsedArticles shouldEqual expectedArticles
 	}
 
+	"Wikipedia headlines" should "be parsed" in {
+		val article = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
+		val parsedArticleText = TextParser
+			.run(List(article).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.collect
+			.head
+			.getText()
+		parsedArticleText should contain allElementsOf TestData.wikipediaEntryHeadlines()
+	}
+
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
 		val substring = text.substring(link.offset.get, link.offset.get + link.alias.length)
 		substring == link.alias

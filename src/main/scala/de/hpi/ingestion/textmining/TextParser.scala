@@ -36,7 +36,8 @@ object TextParser extends SparkJob {
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
@@ -47,9 +48,10 @@ object TextParser extends SparkJob {
 
 	/**
 	  * Saves Parsed Wikipedia entries to the Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
@@ -57,6 +59,7 @@ object TextParser extends SparkJob {
 			.head
 			.saveToCassandra(keyspace, outputTablename)
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -496,10 +499,11 @@ object TextParser extends SparkJob {
 
 	/**
 	  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links. Also removes all metapages
-	  * except {@categoryNamespace} pages.
+	  * except {@categoryNamespace } pages.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
