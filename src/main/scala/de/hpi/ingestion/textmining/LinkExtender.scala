@@ -110,7 +110,7 @@ object LinkExtender extends SparkJob {
 				offset = text.indexOf(longestMatch.head, offset)
 				resultList += Link(found, page, Option(offset))
 				offset += longestMatch.map(_.length).sum
-				i += aliasMatches.maxBy(_.length).length
+				i += longestMatch.length
 			}
 			else {
 				offset += tokens(i).length
