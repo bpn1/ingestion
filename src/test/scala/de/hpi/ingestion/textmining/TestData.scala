@@ -1274,7 +1274,7 @@ object TestData {
 				"Audi",
 				Some("Audi ist Audi AG. VW ist Volkswagen AG"),
 				List(Link("VW","VW",Some(18),Map())),
-            	extendedLinks = List(
+            	extendedlinks = List(
 					Link("Audi","Audi",Some(0)),
 					Link("Audi AG","Audi",Some(9)),
 					Link("VW","VW",Some(18)),

@@ -65,7 +65,7 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 			tokenizer
 		)
 
-		parsedEntry.extendedLinks shouldEqual TestData.linkExtenderExtendedParsedEntry().head.extendedLinks
+		parsedEntry.extendedlinks shouldEqual TestData.linkExtenderExtendedParsedEntry().head.extendedlinks
 	}
 
 	"Entry with extended Links" should "be exactly this entry" in {
