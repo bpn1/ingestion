@@ -106,7 +106,7 @@ object LinkExtender extends SparkJob {
 		var offset = 0
 		while(i < tokens.length) {
 			val testTokens = tokens.slice(i, tokens.length)
-			val aliasMatches = trie.matchTokens(testTokens)
+			val aliasMatches = trie.matchTokens(testTokens).filter(_.nonEmpty).distinct
 			if(aliasMatches.nonEmpty) {
 				val longestMatch = aliasMatches.maxBy(_.length)
 				val found = tokenizer.reverse(longestMatch)
