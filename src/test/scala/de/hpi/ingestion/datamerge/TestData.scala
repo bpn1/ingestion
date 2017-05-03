@@ -51,35 +51,55 @@ object TestData {
 		subjectIds.last -> Map("type" -> "isDuplicate", "confidence" -> "0.6")
 	)
 
-	def subjects(sc: SparkContext): RDD[Subject] = sc.parallelize(List(
-		Subject(id = subjectIds.head),
-		Subject(id = subjectIds(1)),
-		Subject(id = subjectIds(2))
+	def subjects: List[Subject] = List(
+		Subject(id = subjectIds.head, name = Some("Audi"), properties = Map("geo_city" -> List("München"))),
+		Subject(id = subjectIds(1), name = Some("Mercedes"), properties = Map("geo_postal" -> List("10666"))),
+		Subject(id = subjectIds(2), name = Some("BMW")),
+		Subject(id = subjectIds(3), name = Some("Audi"), properties = Map("geo_city" -> List("Berlin"), "type" -> List("Auto"))),
+		Subject(id = subjectIds(4), name = Some("Audi AG"), properties = Map("geo_postal" -> List("10888"))),
+		Subject(id = subjectIds(5), name = Some("Mercedes Benz"), properties = Map("geo_coords" -> List("1", "1"))),
+		Subject(id = subjectIds(6), name = Some("Mercedes B."), properties = Map("geo_coords" -> List("1", "2", "3", "4"))),
+		Subject(id = subjectIds(7), name = Some("Volkswagen"))
+	)
+	def subjectRDD(sc: SparkContext): RDD[Subject] = sc.parallelize(List(
+		subjects.head, subjects(1), subjects(2)
 	))
-	def staging(sc: SparkContext): RDD[Subject] = sc.parallelize(List(
+	def stagingRDD(sc: SparkContext): RDD[Subject] = sc.parallelize(List(
+		subjects(3), subjects(4), subjects(5), subjects(6), subjects(7)
+	))
+	def duplicateCandidatesRDD(sc: SparkContext): RDD[DuplicateCandidates] = sc.parallelize(List(
+		DuplicateCandidates(
+			subjects.head.id,
+			List(
+				(subjects(3), "source", 0.6),
+				(subjects(4), "source", 0.6)
+			)
+		),
+		DuplicateCandidates(
+			subjects(1).id,
+			List(
+				(subjects(5), "source", 0.6),
+				(subjects(6), "source", 0.6)
+			)
+		)
+	))
+	def inputRDD(sc: SparkContext): List[RDD[Any]] = List(
+		subjectRDD(sc),
+		stagingRDD(sc),
+		duplicateCandidatesRDD(sc)
+	).toAnyRDD()
+	def outputRDD(sc: SparkContext): List[RDD[Any]] = List(sc.parallelize(List(
+		Subject(id = subjectIds.head, name = Some("Audi"), properties = Map(
+			"geo_city" -> List("München", "Berlin"), "geo_postal" -> List("10888")
+		), relations = Map(
+			subjectIds(3) -> Map("type" -> "Duplicate", "confidence" -> "0.5")
+		)),
+		Subject(id = subjectIds(1)),
 		Subject(id = subjectIds(3)),
 		Subject(id = subjectIds(4)),
 		Subject(id = subjectIds(5)),
 		Subject(id = subjectIds(6)),
-		Subject(id = subjectIds(7))
-	))
-	def duplicateCandidates(sc: SparkContext): RDD[DuplicateCandidates] = sc.parallelize(List(
-		DuplicateCandidates(
-			subjectIds.head,
-			List(
-				(Subject(id = subjectIds(3)), "source", 0.6),
-				(Subject(id = subjectIds(4)), "source", 0.6)
-			)
-		),
-		DuplicateCandidates(
-			subjectIds(1),
-			List(
-				(Subject(id = subjectIds(5)), "source", 0.6),
-				(Subject(id = subjectIds(6)), "source", 0.6)
-			)
-		)
-	))
-	def inputRDD(sc: SparkContext): List[RDD[Any]] = List(subjects(sc), staging(sc), duplicateCandidates(sc)).toAnyRDD()
-	//def outputRDD(sc: SparkContext): List[RDD[Any]] =
+		subjects.last
+	))).toAnyRDD()
 	// scalastyle:on line.size.limit
 }
