@@ -152,7 +152,7 @@ object TextParser extends SparkJob {
 	  */
 	def removeTags(document: Document): Document = {
 		val documentContent = document
-			.select("p")
+			.select("p,h2")
 			.map { element =>
 				element.getElementsByClass("reference").remove
 				element.select("small").remove
@@ -262,16 +262,7 @@ object TextParser extends SparkJob {
 			}
 		}
 		val cleanedLinks = cleanMetapageLinks(linksList.toList)
-		(extractTextWithHeadlines(body), cleanedLinks)
-	}
-
-	/**
-	  *
-	  * @param body
-	  * @return
-	  */
-	def extractTextWithHeadlines(body: Element): String = {
-		body.text
+		(body.text, cleanedLinks)
 	}
 
 	/**

@@ -245,8 +245,11 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		List(TestData.documentWithHeadlines())
 			.map(Jsoup.parse)
 			.map(TextParser.removeTags)
-			.map(_.toString)
-			.foreach(document => document should (include("<h2>") and include("</h2>")))
+			.map(_.body.text)
+			.foreach { text =>
+				TestData.wikipediaEntryHeadlines()
+					.foreach(headline => assert(text.contains(headline)))
+			}
 	}
 
 	"Redirect page entries" should "be identified as such" in {
