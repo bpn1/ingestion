@@ -83,10 +83,12 @@ object LinkExtender extends SparkJob {
 			val testTokens = tokens.slice(i, tokens.length)
 			val aliasMatches = trie.matchTokens(testTokens)
 			if(aliasMatches.nonEmpty) {
-				val found = tokenizer.reverse(aliasMatches.maxBy(_.length))
+				val longestMatch = aliasMatches.maxBy(_.length)
+				val found = tokenizer.reverse(longestMatch)
 				val page = aliases(found)
-				offset = text.indexOf(found, offset)
+				offset = text.indexOf(longestMatch.head, offset)
 				resultList += Link(found, page, Option(offset))
+				offset += longestMatch.map(_.length).sum
 				i += aliasMatches.maxBy(_.length).length
 			}
 			else {
@@ -100,20 +102,17 @@ object LinkExtender extends SparkJob {
 
 	def reversePages(pages: Map[String, Map[String, Int]]): Map[String, String] = {
 		pages.toList
-			.flatMap(t => t._2.map((_, t._1)))
-			.groupBy(_._1._1)
-			.map { alias =>
-					val page = alias._2.reduce { (currentMax, currentAlias) =>
-						val aliasCount = pages(currentAlias._2).values.sum
-						val maxCount = pages(currentMax._2).values.sum
-						if((currentAlias._1._2.toFloat / aliasCount) > (currentMax._1._2.toFloat / maxCount)) {
-							currentAlias
-						}
-						else {
-							currentMax
-						}
-					}._2
-				(alias._1, page)
+			.flatMap(t => t._2.map(kv => (kv._1, kv._2, t._1)))
+			.groupBy(_._1)
+			.map { case (alias, pageList) =>
+				val page = pageList.reduce { (currentMax, currentAlias) =>
+					val aliasCount = pages(currentAlias._3).values.sum
+					val maxCount = pages(currentMax._3).values.sum
+					val normalizedAliasCount = currentAlias._2.toFloat / aliasCount
+					val normalizedMaxCount = currentMax._2.toFloat / maxCount
+					if(normalizedAliasCount > normalizedMaxCount) currentAlias else currentMax
+				}._3
+				(alias, page)
 			}
 	}
 

@@ -1209,6 +1209,15 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
+	def linkExtenderPagesTestSet(): Set[Page] = {
+		Set(
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
+			Page("Bayern", Map("Bayern" -> 1)),
+			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+		)
+	}
+
 	def linkExtenderPagesTestMap(): Map[String, Map[String, Int]] = {
 		Map(
 			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),

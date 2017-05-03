@@ -1,7 +1,8 @@
 package de.hpi.ingestion.textmining
 
-import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
+import com.holdenkarau.spark.testing.{SharedSparkContext, RDDComparisons}
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 
@@ -63,5 +64,13 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 		)
 
 		parsedEntry.extendedLinks should not be empty
+	}
+
+	"enrty with extended Links" should "be exactly this entry" in {
+		val entry = sc.parallelize(List(TestData.linkExtenderParsedEntry()))
+		val pages = sc.parallelize(TestData.linkExtenderPagesTestSet().toList)
+		val input = List(entry).toAnyRDD() ++ List(pages).toAnyRDD()
+		val extendedEntries = LinkExtender.run(input, sc)
+		extendedEntries shouldBe empty
 	}
 }
