@@ -117,7 +117,7 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Parse Wikipedia article, clean it off Wikimarkup, extract text and all links.
+	  * Parse Wikipedia article, remove the Wikimarkup, extract text and all links.
 	  *
 	  * @param title title of Wikipedia article
 	  * @param html  html of Wikipedia article
@@ -271,7 +271,7 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Cleans text of Wikimarkup.
+	  * Removes text of Wikimarkup.
 	  *
 	  * @param wikitext Wikimarkup text to be cleaned
 	  * @return cleaned text
