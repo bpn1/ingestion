@@ -156,14 +156,15 @@ object TextParser extends SparkJob {
 			tableOfContents.remove()
 		}
 
+		// https://www.w3schools.com/html/html_headings.asp
 		val documentContent = document
-			.select("p,h1,h2,h3,h4,h5,h6") // https://www.w3schools.com/html/html_headings.asp
+			.select("p,h1,h2,h3,h4,h5,h6")
 			.map { element =>
-			element.getElementsByClass("reference").remove
-			element.select("small").remove
-			element.getElementsByAttributeValueStarting("title", "Datei:").remove
-			element
-		}
+				element.getElementsByClass("reference").remove
+				element.select("small").remove
+				element.getElementsByAttributeValueStarting("title", "Datei:").remove
+				element
+			}
 		val htmltext = documentContent
 			.map(_.toString)
 			.mkString("\n")
