@@ -31,7 +31,7 @@ object LinkExtender extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
-		val pages = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputPageToAliasesTablename)
+		val pages = sc.cassandraTable[Page](keyspace, inputPageToAliasesTablename)
 		List(parsedWikipedia).toAnyRDD() ++ List(pages).toAnyRDD()
 	}
 
