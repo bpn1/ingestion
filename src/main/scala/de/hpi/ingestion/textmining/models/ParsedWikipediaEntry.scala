@@ -24,8 +24,8 @@ case class ParsedWikipediaEntry(
 	var listlinks: List[Link] = List[Link](),
 	var disambiguationlinks: List[Link] = List[Link](),
 	var linkswithcontext: List[Link] = List[Link](),
-	var extendedlinks: List[Link] = List[Link](),
-	var context: Map[String, Int] = Map[String, Int]()
+	var context: Map[String, Int] = Map[String, Int](),
+	var extendedlinks: List[Link] = List[Link]()
 ) {
 	def setText(t: String): Unit = text = Option(t)
 
