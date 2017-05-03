@@ -88,7 +88,7 @@ object BlockingJob extends SparkJob {
 			settings(node.label) = node.text
 	}
 
-/*	/**
+	/**
 	  * Uses input blocking scheme to generate blocks of subjects.
 	  * @param subjects RDD to perform the blocking on.
 	  * @param blockingSchemes blocking schemes to use to generate keys.
@@ -102,7 +102,8 @@ object BlockingJob extends SparkJob {
 			subjects.flatMap { subject =>
 				val blockingKeys = scheme.generateKey(subject).distinct
 				blockingKeys.map((_, List(subject)))
-			}.reduceByKey(_ ::: _)
+			}.filter(_._1 != scheme.undefinedValue)
+			.reduceByKey(_ ::: _)
 		}
 	}
 
@@ -117,69 +118,39 @@ object BlockingJob extends SparkJob {
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
 		blockingSchemes: List[BlockingScheme]
-	): RDD[Blocking] = {
+	): List[RDD[(String, List[Subject])]] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes)
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
 
-		(subjectBlocks, stagingBlocks, blockingSchemes).zipped.map { case (subjectBlock, stagingBlock, block) =>
+		(subjectBlocks, stagingBlocks).zipped.map { case (subjectBlock, stagingBlock) =>
 			subjectBlock
-			.join(stagingBlock)
-			.map { case (key, (subjectList, stagingList)) =>
-				val comment = s"${appName}_${block.tag}_${System.currentTimeMillis()}"
-				Blocking(key = Option(key), subjects = subjectList, staging = stagingList, comment = Option(comment))
+			.fullOuterJoin(stagingBlock)
+			.mapValues { case (subjectList, stagingList) =>
+				val subjects = subjectList.getOrElse(Nil)
+				val stagedSubjects = stagingList.getOrElse(Nil)
+				subjects.union(stagedSubjects).distinct
 			}
-		}.reduce(_.union(_))
-	}*/
-
-	/**
-	  * Uses input blocking scheme to generate blocks of subjects.
-	  * @param subjects RDD to perform the blocking on.
-	  * @param blockingSchemes blocking schemes to use to generate keys.
-	  * @return subjects grouped by blocking keys
-	  */
-	def blocking(
-		subjects: RDD[Subject],
-		blockingSchemes: List[BlockingScheme]
-	): RDD[(List[List[String]], List[Subject])] = {
-		subjects
-		.map(subject => (blockingSchemes.map(_.generateKey(subject)), List(subject)))
-		.reduceByKey(_ ++ _)	// ToDo: #182, better reduce function
-	}
-
-	/**
-	  * Creates blocks based on the input blocking scheme
-	  * @param subjects RDD to perform the blocking on
-	  * @param stagingSubjects RDD to perform the blocking on
-	  * @param blockingSchemes blocking schemes to use to generate keys.
-	  * @return RDD of blocks.
-	  */
-	def blocking(
-		subjects: RDD[Subject],
-		stagingSubjects: RDD[Subject],
-		blockingSchemes: List[BlockingScheme]
-	): RDD[(List[List[String]], List[Subject])] = {
-		val subjectBlocks = blocking(subjects, blockingSchemes)
-		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
-		subjectBlocks
-		.fullOuterJoin(stagingBlocks)
-		.map {
-			case (key, (Some(x), None)) => (key, x)
-			case (key, (None, Some(x))) => (key, x)
-			case (key, (Some(x), Some(y))) => (key, (x ++ y).distinct)
 		}
 	}
 
 	/**
 	  * Executes methods on the blocked data to gain information.
-	  * @param blocking Input data, partitioned in blocks.
+	  *
+	  * @param blockingList Input data, partitioned in blocks.
+	  * @param comment Note to add to the evaluated data.
 	  * @return Blocks with size-value and comment.
 	  */
 	def evaluateBlocks(
-		blocking: RDD[Blocking]
+		blockingList: List[RDD[(String, List[Subject])]],
+		comment: String,
+		blockingSchemes: List[BlockingScheme]
 	): RDD[(UUID, Option[String], Map[String, Int])] = {
-		val id = UUID.randomUUID()
-		blocking.map(
-			block => (id, block.comment, Map(block.key.get -> (block.subjects.length + block.staging.length)))
-		)
+		(blockingList, blockingSchemes).zipped.map { case (blocks, blockingScheme) =>
+			val id = UUID.randomUUID()
+			val blockComment = Option(s"${comment}_${blockingScheme.tag}")
+			blocks
+			.map(block => List(block.map(identity, _.length)))
+			.map(data => (id, blockComment, data.toMap))
+		}.reduce(_.union(_))
 	}
 }

@@ -72,6 +72,16 @@ object DeduplicationJob extends SparkJob {
 	}
 
 	/**
+	  * Get similarity Measure by its name.
+	  * @param similarityMeasure Name of the similarity Measure
+	  * @tparam T type of the similarity Measure
+	  * @return Similarity Measure
+	  */
+	def getSimilarityMeasure[T](similarityMeasure: String): SimilarityMeasure[T] = {
+		this.dataTypes.getOrElse(similarityMeasure, ExactMatchString).asInstanceOf[SimilarityMeasure[T]]
+	}
+
+	/**
 	  * Reads the configuration from a xml file
 	  * @return a list containing scoreConfig entities parsed from the xml file
 	  */
@@ -86,28 +96,28 @@ object DeduplicationJob extends SparkJob {
 		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
 			settings(node.label) = node.text
 
-		config = (xml \\ "config" \ "simMeasurements" \ "feature")
-		.toList
-		.map { feature =>
-			val attribute = (feature \ "attribute").text
-			val simMeasure = (feature \ "similarityMeasure").text
-			val weight = (feature \ "weight").text
-			val scale = (feature \ "scale").text
-
-			ScoreConfig[String, SimilarityMeasure[String]](
-				attribute,
-				this.dataTypes
-				.getOrElse(simMeasure, ExactMatchString)
-				.asInstanceOf[SimilarityMeasure[String]],
-				weight.toDouble,
-				scale.toInt)
+		val attributes = (xml \\ "config" \ "simMeasurements" \ "attribute").toList
+		for {
+			node <- attributes
+			key = (node \ "key").text
+			feature <- (node \ "feature").toList
+			similarityMeasure = (feature \ "similarityMeasure").text
+			weight = (feature \ "weight").text.toDouble
+			scale = (feature \ "scale").text.toInt
+		}{
+			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
+				getSimilarityMeasure[String](similarityMeasure),
+				weight,
+				scale
+			)
+			this.config(key) = config.getOrElse(key, Nil):::List(scoreConfig)
 		}
 	}
 
 	/**
 	  * Compares to subjects regarding the configuration
 	  * @param subject1 subjects to be compared to subject2
-	  * @param subject2 subjects to be compared to subject2
+	  * @param subject2 subjects to be compared to subject1
 	  * @return the similarity score of the subjects
 	  */
 	def compare(
@@ -115,20 +125,20 @@ object DeduplicationJob extends SparkJob {
 		subject2: Subject,
 		scale: Int = 1
 	): Double = {
-		val scoreList = this.config
-		.map { feature =>
-			val valueSub1 = subject1.get(feature.key).headOption
-			val valueSub2 = subject2.get(feature.key).headOption
-			if(valueSub1.isDefined && valueSub2.isDefined) {
-				val score = feature
-				.similarityMeasure
-				.compare(valueSub1.get, valueSub2.get, scale)
-				score * feature.weight
-			} else {
-				-1.0
-			}
-		}.filter(_ != -1.0)
-		scoreList.sum / Math.max(1, scoreList.length)
+		val weights = config
+			.values
+			.flatMap(_.map(_.weight))
+			.sum
+
+		val scores = for {
+			(attribute, scoreConfigs) <- this.config
+			valueSubject1 = subject1.get(attribute)
+			valueSubject2 = subject2.get(attribute)
+			if valueSubject1.nonEmpty && valueSubject2.nonEmpty
+			scoreConfig <- scoreConfigs
+		} yield CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
+
+		scores.sum / weights
 	}
 
 	/**
@@ -159,7 +169,7 @@ object DeduplicationJob extends SparkJob {
 		.distinct
 		.map(_.head)
 		.map(tuple => (tuple._1, tuple._2, compare(tuple._1, tuple._2)))
-		.filter(tuple => tuple._3 >= settings("confidence"))
+		.filter(tuple => tuple._3 >= settings("confidence").toDouble)
 	}
 
 	/**
