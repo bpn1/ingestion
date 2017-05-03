@@ -65,13 +65,7 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 			.groupByAliases(links)
 			.collect
 			.toSet
-<<<<<<< HEAD
-		val groupedAliasesTest = TestData.groupedAliasesSet()
-			.map(alias => (alias.alias, alias.pages))
-		groupedAliases shouldEqual groupedAliasesTest
-=======
 		groupedAliases shouldEqual TestData.groupedAliasesSet()
->>>>>>> master
 	}
 
 	"Aliases grouped by page names" should "not be empty" in {
