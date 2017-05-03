@@ -118,7 +118,7 @@ object LinkExtender extends SparkJob {
 					i += longestMatch.get.length
 				}
 				else {
-					println(aliasMatches)
+					println("LinkExtenderError: " + aliasMatches)
 					offset += tokens(i).length
 					i += 1
 				}
