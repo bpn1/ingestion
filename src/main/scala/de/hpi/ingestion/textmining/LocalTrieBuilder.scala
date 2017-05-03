@@ -17,8 +17,9 @@ object LocalTrieBuilder {
 
 	/**
 	  * Creates Trie of the aliases in the given file and serializes it to a binary of the given name.
+	  *
 	  * @param aliasStream stream of the file containing the aliases with one alias per line
-	  * @param trieStream output stream of the binary file of the trie
+	  * @param trieStream  output stream of the binary file of the trie
 	  */
 	def serializeTrie(aliasStream: BufferedSource, trieStream: OutputStream): Unit = {
 		val kryo = new Kryo()

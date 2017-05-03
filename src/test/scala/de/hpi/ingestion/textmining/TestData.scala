@@ -726,7 +726,9 @@ object TestData {
 			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Alias("Bayern", Map("Bayern" -> 1)),
 			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Zerfall (Soziologie)" -> 1)))
+			Alias("Radioaktiver Zerfall", Map("Radioaktivität" -> 1)),
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Radioaktivität" -> 1))
+		)
 	}
 
 	def groupedPagesSet(): Set[Page] = {
@@ -735,16 +737,7 @@ object TestData {
 			Page("Bayern", Map("Bayern" -> 1)),
 			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
 			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
-			Page("Zerfall (Soziologie)", Map("Zerfall" -> 1))
-		)
-	}
-
-	def cleanedGroupedAliasesSet(): Set[Alias] = {
-		Set(
-			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
-			Alias("Bayern", Map("Bayern" -> 1)),
-			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1))
+			Page("Radioaktivität", Map("Zerfall" -> 1, "Radioaktiver Zerfall" -> 1))
 		)
 	}
 
@@ -781,7 +774,7 @@ object TestData {
 		)
 	}
 
-	def smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
+	def  	smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
 		List(
 			ParsedWikipediaEntry(
 				"Audi",
@@ -791,10 +784,23 @@ object TestData {
 					Link("Bayern", "Bayern", Option(69)),
 					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
 					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)),
 					Link("Zerfall", "Zerfall (Soziologie)", Option(4711)), // dead link
 					Link("", "page name with empty alias", Option(4711)),
 					Link("alias with empty page name", "", Option(4711))
-					)))
+				)))
+	}
+
+	def validLinkSet(): Set[Link] = {
+		Set(
+			Link("Ingolstadt", "Ingolstadt", Option(55)),
+			Link("Bayern", "Bayern", Option(69)),
+			Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+			Link("Zerfall", "Zerfall (Album)", Option(4711)),
+			Link("Zerfall", "Radioaktivität", Option(4711)),
+			Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711))
+		)
 	}
 
 	def parsedArticlesWithoutLinksSet(): Set[ParsedWikipediaEntry] = {
@@ -835,13 +841,17 @@ object TestData {
 					Link("Bayern", "Bayern", Option(69)),
 					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
 					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)),
 					Link("Zerfall", "Zerfall (Soziologie)", Option(4711)), // dead link
 					Link("", "page name with empty alias", Option(4711)),
-					Link("alias with empty page name", "", Option(4711)),
-					Link("Konkurrent", "Volvo", Option(4711)),
-					Link("Opel", "Opel", Option(4711)),
-					Link("DB", "Deutsche Bahn", Option(4711))
+					Link("alias with empty page name", "", Option(4711))
 				)),
+			ParsedWikipediaEntry("Ingolstadt", Option("lorem")),
+			ParsedWikipediaEntry("Bayern", Option("lorem")),
+			ParsedWikipediaEntry("Automobilhersteller", Option("lorem")),
+			ParsedWikipediaEntry("Zerfall (Album)", Option("lorem")),
+			ParsedWikipediaEntry("Radioaktivität", Option("lorem")),
 			ParsedWikipediaEntry("Volvo", Option("lorem")),
 			ParsedWikipediaEntry("Opel", Option("ipsum")),
 			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
@@ -867,9 +877,12 @@ object TestData {
 				"Audi",
 				Option("dummy text"),
 				List(
-					Link("Konkurrent", "Volvo", Option(4711)),
-					Link("Opel", "Opel", Option(4711)),
-					Link("DB", "Deutsche Bahn", Option(4711))
+					Link("Ingolstadt", "Ingolstadt", Option(55)),
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711))
 				)))
 	}
 
