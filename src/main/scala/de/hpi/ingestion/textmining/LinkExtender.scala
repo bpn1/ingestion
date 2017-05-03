@@ -119,6 +119,8 @@ object LinkExtender extends SparkJob {
 				}
 				else {
 					println(aliasMatches)
+					offset += tokens(i).length
+					i += 1
 				}
 			}
 			else {
