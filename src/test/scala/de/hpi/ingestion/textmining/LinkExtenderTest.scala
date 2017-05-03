@@ -1,34 +1,36 @@
 package de.hpi.ingestion.textmining
 
 import org.scalatest.{FlatSpec, Matchers}
-import com.holdenkarau.spark.testing.{SharedSparkContext, RDDComparisons}
+import com.holdenkarau.spark.testing.{SharedSparkContext}
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
+
 
 class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 
-	"pages" should "be empty" in {
-		val pages = TestData.linkExtenderPagesTestMap()
+	"Pages" should "be empty" in {
+		val pages = TestData.linkExtenderPagesMap()
 		val entry = TestData.parsedEntry()
-		val allPages = LinkExtender.findAllAliases(entry, pages)
+		val allPages = LinkExtender.findAllPages(entry, pages)
 		allPages shouldBe empty
 	}
 
-	"pages" should "not be empty" in {
-		val pages = TestData.linkExtenderPagesTestMap()
+	"Pages" should "exactly be these pages" in {
+		val pages = TestData.linkExtenderPagesMap()
 		val entry = TestData.linkExtenderParsedEntry()
-		val allPages = LinkExtender.findAllAliases(entry, pages)
+		val allPages = LinkExtender.findAllPages(entry, pages)
 		allPages shouldBe TestData.linkExtenderFoundPages()
 	}
 
 
-	"aliases" should "be reverted from pages" in {
+	"Aliases" should "be reverted from pages" in {
 		val pages = TestData.linkExtenderFoundPages()
 		val aliases = LinkExtender.reversePages(pages)
 
 		aliases shouldBe TestData.linkExtenderFoundAliases()
 	}
 
-	"trie" should "include string" in {
+	"Trie" should "include exactly these" in {
 		val tokenizer = IngestionTokenizer(false, false)
 		val aliases = TestData.linkExtenderFoundAliases()
 		val trie = LinkExtender.buildTrieFromAliases(aliases, tokenizer)
@@ -50,27 +52,31 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 		result3 should contain (List[String]("Volkswagen", "AG"))
 	}
 
-	"entry" should "have extended Links" in {
+	"Entry" should "have exactly these extended links" in {
 		val entry = TestData.linkExtenderParsedEntry()
 		val aliases = TestData.linkExtenderFoundAliases()
 		val tokenizer = IngestionTokenizer(false, false)
-		val trie = LinkExtender.buildTrieFromAliases(aliases, tokenizer)
+		val trie = TestData.linkExtenderTrie(tokenizer)
 
-		val parsedEntry = LinkExtender.findAliasOccurences(
+		val parsedEntry = LinkExtender.findAliasOccurrences(
 			entry,
 			aliases,
 			trie,
 			tokenizer
 		)
 
-		parsedEntry.extendedLinks should not be empty
+		parsedEntry.extendedLinks shouldEqual TestData.linkExtenderExtendedParsedEntry().head.extendedLinks
 	}
 
-	"enrty with extended Links" should "be exactly this entry" in {
+	"Entry with extended Links" should "be exactly this entry" in {
 		val entry = sc.parallelize(List(TestData.linkExtenderParsedEntry()))
-		val pages = sc.parallelize(TestData.linkExtenderPagesTestSet().toList)
+		val pages = sc.parallelize(TestData.linkExtenderPagesSet().toList)
 		val input = List(entry).toAnyRDD() ++ List(pages).toAnyRDD()
 		val extendedEntries = LinkExtender.run(input, sc)
-		extendedEntries shouldBe empty
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.collect
+			.toSet
+		extendedEntries shouldEqual TestData.linkExtenderExtendedParsedEntry()
 	}
 }

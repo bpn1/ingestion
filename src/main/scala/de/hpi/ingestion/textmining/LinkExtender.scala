@@ -12,7 +12,8 @@ import de.hpi.ingestion.framework.SparkJob
 
 
 /**
-  * Extends Wikipedia articles with links that were only tagged once
+  * Extends Wikipedia articles with links of occurrences of aliases that were previously
+  * linked in the same article.
   */
 object LinkExtender extends SparkJob {
 	val keyspace = "wikidumps"
@@ -50,7 +51,13 @@ object LinkExtender extends SparkJob {
 
 	// $COVERAGE-ON$
 
-	def findAllAliases(article: ParsedWikipediaEntry,
+	/**
+	  * Filters all Pages for the Links and title of an Wikipedia article.
+	  * @param article Wikipedia article to be used
+	  * @param pages raw Pages map
+	  * @return filtered Pages map
+	  */
+	def findAllPages(article: ParsedWikipediaEntry,
 		pages: Map[String, Map[String, Int]]
 	): Map[String, Map[String, Int]] = {
 		val links = article.allLinks()
@@ -59,16 +66,30 @@ object LinkExtender extends SparkJob {
 		pageAliases ++ linkAliases
 	}
 
+	/**
+	  * Builds trie from given Aliases.
+	  * @param aliases Aliases to be used
+	  * @param tokenizer tokenizer to be uses to process Aliases
+	  * @return built trie
+	  */
 	def buildTrieFromAliases(aliases: Map[String, String], tokenizer: IngestionTokenizer): TrieNode = {
 		val trie = new TrieNode()
 		aliases.keys.foreach { key =>
-			val tokens = tokenizer.process(key)
-			trie.append(tokens)
+			trie.append(tokenizer.process(key))
 		}
 		trie
 	}
 
-	def findAliasOccurences(
+	/**
+	  * Finds all Aliases in a given text of already linked entities and adds new Links
+	  * for all occurrences.
+ 	  * @param entry Wikipedia entry to be extended
+	  * @param aliases map of Alias to Page
+	  * @param trie prebuilt trie from Aliases
+	  * @param tokenizer tokenizer to be used to process text
+	  * @return Wikipedia entry with extended Links
+	  */
+	def findAliasOccurrences(
 		entry: ParsedWikipediaEntry,
 		aliases: Map[String, String],
 		trie: TrieNode,
@@ -100,6 +121,11 @@ object LinkExtender extends SparkJob {
 		entry
 	}
 
+	/**
+	  * Reverts map of Page to Aliases to a map of Alias to Page.
+	  * @param pages Map of Page to Aliases
+	  * @return Map of Alias to Page
+	  */
 	def reversePages(pages: Map[String, Map[String, Int]]): Map[String, String] = {
 		pages.toList
 			.flatMap(t => t._2.map(kv => (kv._1, kv._2, t._1)))
@@ -117,7 +143,8 @@ object LinkExtender extends SparkJob {
 	}
 
 	/**
-	  *
+	  * Extends links of parsed Wikipedia entries by looking at existing Links and
+	  * adding additional not yet linked occurrences.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program
@@ -134,10 +161,10 @@ object LinkExtender extends SparkJob {
 		val parsedArticlesWithExtendedLinks = parsedArticles.mapPartitions({ entryPartition =>
 			val localPages = pagesBroadcast.value
 			entryPartition.map { entry =>
-				val tempPages = findAllAliases(entry, localPages)
+				val tempPages = findAllPages(entry, localPages)
 				val aliases = reversePages(tempPages)
 				val trie = buildTrieFromAliases(aliases, tokenizer)
-				findAliasOccurences(entry, aliases, trie, tokenizer)
+				findAliasOccurrences(entry, aliases, trie, tokenizer)
 			}
 		}, true)
 

@@ -1226,7 +1226,7 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
-	def linkExtenderPagesTestSet(): Set[Page] = {
+	def linkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
@@ -1235,7 +1235,7 @@ object TestData {
 		)
 	}
 
-	def linkExtenderPagesTestMap(): Map[String, Map[String, Int]] = {
+	def linkExtenderPagesMap(): Map[String, Map[String, Int]] = {
 		Map(
 			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
 			"Bayern" -> Map("Bayern" -> 1),
@@ -1267,6 +1267,31 @@ object TestData {
 			"Volkswagen AG" -> "VW"
 		)
 	}
+
+	def linkExtenderExtendedParsedEntry(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Some("Audi ist Audi AG. VW ist Volkswagen AG"),
+				List(Link("VW","VW",Some(18),Map())),
+            	extendedLinks = List(
+					Link("Audi","Audi",Some(0)),
+					Link("Audi AG","Audi",Some(9)),
+					Link("VW","VW",Some(18)),
+					Link("Volkswagen AG","VW",Some(25))
+				)
+			)
+		)
+	}
+	def linkExtenderTrie(tokenizer: IngestionTokenizer): TrieNode = {
+		val trie = new TrieNode()
+		val aliasList = List("Audi", "Audi AG", "VW", "Volkswagen AG")
+		for(alias <- aliasList) {
+			trie.append(tokenizer.process(alias))
+		}
+		trie
+	}
+
 }
 
 // scalastyle:on method.length
