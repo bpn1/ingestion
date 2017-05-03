@@ -24,8 +24,9 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 
 
 	"Aliases" should "be reverted from pages" in {
+		val tokenizer = IngestionTokenizer(false, false)
 		val pages = TestData.linkExtenderFoundPages()
-		val aliases = LinkExtender.reversePages(pages)
+		val aliases = LinkExtender.reversePages(pages, tokenizer)
 
 		aliases shouldBe TestData.linkExtenderFoundAliases()
 	}

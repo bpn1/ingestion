@@ -75,10 +75,10 @@ object LinkExtender extends SparkJob {
 	  * @param tokenizer tokenizer to be uses to process Aliases
 	  * @return built trie
 	  */
-	def buildTrieFromAliases(aliases: Map[String, String], tokenizer: IngestionTokenizer): TrieNode = {
+	def buildTrieFromAliases(aliases: Map[String, (String, String)], tokenizer: IngestionTokenizer): TrieNode = {
 		val trie = new TrieNode()
-		aliases.keys.foreach { key =>
-			trie.append(tokenizer.process(key))
+		aliases.values.foreach { case (alias, page) =>
+			trie.append(tokenizer.process(alias))
 		}
 		trie
 	}
@@ -95,7 +95,7 @@ object LinkExtender extends SparkJob {
 	  */
 	def findAliasOccurrences(
 		entry: ParsedWikipediaEntry,
-		aliases: Map[String, String],
+		aliases: Map[String, (String, String)],
 		trie: TrieNode,
 		tokenizer: IngestionTokenizer
 	): ParsedWikipediaEntry = {
@@ -112,7 +112,7 @@ object LinkExtender extends SparkJob {
 				val found = tokenizer.reverse(longestMatch)
 				val page = aliases(found)
 				offset = text.indexOf(longestMatch.head, offset)
-				resultList += Link(found, page, Option(offset))
+				resultList += Link(page._1, page._2, Option(offset))
 				offset += longestMatch.map(_.length).sum
 				i += longestMatch.length
 			}
@@ -131,7 +131,10 @@ object LinkExtender extends SparkJob {
 	  * @param pages Map of Page to Aliases
 	  * @return Map of Alias to Page
 	  */
-	def reversePages(pages: Map[String, Map[String, Int]]): Map[String, String] = {
+	def reversePages(
+		pages: Map[String, Map[String, Int]],
+		tokenizer: IngestionTokenizer
+	): Map[String, (String, String)] = {
 		pages.toList
 			.flatMap(t => t._2.map(kv => (kv._1, kv._2, t._1)))
 			.groupBy(_._1)
@@ -143,7 +146,7 @@ object LinkExtender extends SparkJob {
 					val normalizedMaxCount = currentMax._2.toFloat / maxCount
 					if(normalizedAliasCount > normalizedMaxCount) currentAlias else currentMax
 				}._3
-				(alias, page)
+				(tokenizer.reverse(tokenizer.process(alias)), (alias, page))
 			}
 	}
 
@@ -168,7 +171,7 @@ object LinkExtender extends SparkJob {
 			val localPages = pagesBroadcast.value
 			entryPartition.map { entry =>
 				val tempPages = findAllPages(entry, localPages)
-				val aliases = reversePages(tempPages)
+				val aliases = reversePages(tempPages, tokenizer)
 				val trie = buildTrieFromAliases(aliases, tokenizer)
 				findAliasOccurrences(entry, aliases, trie, tokenizer)
 			}
