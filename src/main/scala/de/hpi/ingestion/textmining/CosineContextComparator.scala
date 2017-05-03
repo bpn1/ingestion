@@ -137,7 +137,6 @@ object CosineContextComparator extends SparkJob {
 		documentFrequencyThreshold: Int
 	): RDD[(Link, Map[String, Double])] = {
 		val contextTermFrequencies = articles
-			.sample(false, 0.01)
 			.flatMap(_.linkswithcontext)
 			.map(link => (link, Bag(link.context)))
 			.flatMap(t => joinableTermFrequencies(t._1, t._2))
