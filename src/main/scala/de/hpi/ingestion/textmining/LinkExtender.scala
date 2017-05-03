@@ -16,6 +16,7 @@ import de.hpi.ingestion.framework.SparkJob
   * linked in the same article.
   */
 object LinkExtender extends SparkJob {
+	appName = "LinkExtender"
 	val keyspace = "wikidumps"
 	val inputParsedTablename = "parsedwikipedia"
 	val outputParsedTablename = "parsedwikipedia"
