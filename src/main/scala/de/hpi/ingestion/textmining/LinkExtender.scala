@@ -168,4 +168,5 @@ object LinkExtender extends SparkJob {
 			}
 		}, true)
 
-		List(parsedArticlesWithExtendedLinks).toAny
+		List(parsedArticlesWithExtendedLinks).toAnyRDD()
+	}
