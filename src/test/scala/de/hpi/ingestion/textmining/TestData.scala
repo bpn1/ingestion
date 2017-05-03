@@ -580,16 +580,16 @@ object TestData {
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, true),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, true),
-			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true),
-			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, true),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true),
-			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false)
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, true, null),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, true, null),
+			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
+			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
+			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
 		)
 	}
 
