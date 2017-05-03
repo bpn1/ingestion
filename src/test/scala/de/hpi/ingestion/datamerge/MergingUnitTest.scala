@@ -5,14 +5,38 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext {
 	"addSymmetricRelation" should "add a symmetric relation between two given nodes" in {
-		val subjects = TestData.testSubjects
-		val relation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
+		val subjects = TestData.testSubjects.take(2)
+		val relation = Map("type" -> "isDuplicate", "confidence" -> "0.6")
 		val version = TestData.testVersion(sc)
-		val expectedRelationNode1 = Map(subjects(1).id -> relation)
-		val expectedRelationNode2 = Map(subjects.head.id -> relation)
-		Merging.addSymmetricRelation(subjects.head, subjects(1), relation, version)
+		Merging.addSymmetricRelation(subjects.head, subjects.last, relation, version)
 
-		subjects.head.relations shouldEqual expectedRelationNode1
-		subjects(1).relations shouldEqual expectedRelationNode2
+		subjects.head.relations(subjects.last.id) shouldEqual relation
+		subjects.last.relations(subjects.head.id) shouldEqual relation
+	}
+
+	"mergeInformation" should "merge slaves information into master node" in {
+		val master = TestData.masterNode
+		val duplicates = TestData.duplicates
+		val version = TestData.testVersion(sc)
+		Merging.mergeInformation(master, duplicates, version)
+		val expected = TestData.expectedProperties
+
+		master.properties shouldEqual expected
+	}
+
+	"appendDuplicates" should "append the new slaves to the master node" in {
+		val master = TestData.masterNode
+		val duplicates = TestData.duplicates
+		val relation = Map("type" -> "isDuplicate", "confidence" -> "0.6")
+		val version = TestData.testVersion(sc)
+		Merging.appendDuplicates(master, duplicates, version)
+		val expectedProperties = TestData.expectedProperties
+		val expectedRelations = TestData.expectedRelations
+
+		master.properties shouldEqual expectedProperties
+		master.relations shouldEqual expectedRelations
+		duplicates.candidates.foreach { case (duplicate, source, score) =>
+			duplicate.relations(master.id) shouldEqual relation
+		}
 	}
 }

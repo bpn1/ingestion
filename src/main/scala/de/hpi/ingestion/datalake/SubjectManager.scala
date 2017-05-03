@@ -5,28 +5,28 @@ import java.util.UUID
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 
 class SubjectManager(subject: Subject, templateVersion: Version) {
-	def makeVersion(value: List[String], validity: Map[String, String] = null): Version = {
+	def makeVersion(value: List[String], validity: Map[String, String] = Map()): Version = {
 		templateVersion.copy(value = value, validity = validity)
 	}
 
-	def setName(value: String, validity: Map[String, String] = null) {
+	def setName(value: String, validity: Map[String, String] = Map()) {
 		subject.name = Option(value)
 		subject.name_history = List(makeVersion(List(value), validity))
 	}
 
-	def addAliases(value: List[String], validity: Map[String, String] = null) {
+	def addAliases(value: List[String], validity: Map[String, String] = Map()) {
 		subject.aliases = value ++ subject.aliases
 		subject.aliases_history = List(makeVersion(subject.aliases, validity))
 	}
 
-	def setCategory(value: String, validity: Map[String, String] = null) {
+	def setCategory(value: String, validity: Map[String, String] = Map()) {
 		subject.category = Option(value)
 		subject.category_history = List(makeVersion(List(value), validity))
 	}
 
 	def addProperties(
 		value: Map[String, List[String]],
-		validityMap: Map[String, Map[String, String]] = null
+		validityMap: Map[String, Map[String, String]] = Map()
 	) {
 		val buffer = mutable.Map[String, List[String]]()
 		buffer ++= subject.properties
@@ -34,19 +34,16 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		historyBuffer ++= subject.properties_history
 
 		// add a history entry and do deduplication for every field
-		for((key, list) <- value) {
-			val oldList = buffer.getOrElseUpdate(key, List[String]())
-			// check if the lists contain the same elements
-			if(oldList.toSet != list.toSet) {
-				buffer(key) = (oldList ++ list).distinct
-				val oldHistory = historyBuffer.getOrElseUpdate(key, List[Version]())
-
-				var validity: Map[String, String] = null
-				if(validityMap != null) {
-					validity = validityMap.getOrElse(key, null)
-				}
-				historyBuffer(key) = oldHistory ++ List(makeVersion(buffer(key), validity))
-			}
+		for {
+			(key, list) <- value
+			oldList = buffer.getOrElseUpdate(key, Nil)
+			oldHistory = historyBuffer.getOrElseUpdate(key, Nil)
+			if oldList.toSet != list.toSet
+			newList = oldList ::: list
+		}{
+			val validity = if(validityMap.nonEmpty) validityMap.getOrElse(key, Map()) else Map[String, String]()
+			buffer(key) = if(key == "geo_coords") newList else newList.distinct
+			historyBuffer(key) = oldHistory ::: List(makeVersion(buffer(key), validity))
 		}
 		subject.properties = buffer.toMap
 		subject.properties_history = historyBuffer.toMap
@@ -67,11 +64,10 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 
 	def addRelations(
 		relations: Map[UUID, Map[String, String]],
-		validityMap: Map[UUID, Map[String, Map[String, String]]] = null
+		validityMap: Map[UUID, Map[String, Map[String, String]]] = Map()
 	): Unit = {
 		val buffer = mutable.Map[UUID, Map[String, String]]()
 		buffer ++= subject.relations
-
 		val historyBuffer = mutable.Map[UUID, Map[String, List[Version]]]()
 		historyBuffer ++= subject.relations_history
 

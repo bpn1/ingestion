@@ -56,18 +56,37 @@ object Merging extends SparkJob {
 		subject_manager2.addRelations(Map(subject1.id -> relations))
 	}
 
-	def mergeInformation(master: Subject, duplicates: DuplicateCandidates, version: Version): Subject = {
+	/**
+	  * Merges information of duplicates into master properties
+	  * @param master master node
+	  * @param duplicates duplicate candidates
+	  * @param version version
+	  */
+	def mergeInformation(master: Subject, duplicates: DuplicateCandidates, version: Version): Unit = {
 		val master_manager = new SubjectManager(master, version)
 		val mergedProperties = duplicates.candidates.map { case (duplicate, source, score) =>
-			duplicate.toProperties(source)
+			duplicate.normalizedProperties
 		}.reduceLeft((properties, duplicateProperties) => {
 			// Merging two property maps together
-			(properties.toSeq ++ duplicateProperties.toSeq)
+			(properties.toList ::: duplicateProperties.toList)
 				.groupBy(_._1)
-				.mapValues(_.reduce(_._2 ::: _._2))
+				.mapValues(_.flatMap(_._2))
 		})
 		master_manager.addProperties(mergedProperties)
-		master
+	}
+
+	/**
+	  * Appends new duplicates to existing master node
+	  * @param master master node
+	  * @param duplicates duplicate candidates
+	  * @param version version
+	  */
+	def appendDuplicates(master: Subject, duplicates: DuplicateCandidates, version: Version): Unit = {
+		duplicates.candidates.foreach { case (candidate, source, score) =>
+			val relation = Map("type" -> "isDuplicate", "confidence" -> score.toString)
+			addSymmetricRelation(master, candidate, relation, version)
+		}
+		mergeInformation(master, duplicates, version)
 	}
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
@@ -79,19 +98,14 @@ object Merging extends SparkJob {
 
 		val version = Version(program = "Merging")
 
-		val joined = subject
+		val updatedDuplicates = subject
 			.keyBy(_.id)
 			.join(duplicates.keyBy(_.subject_id))
 			.values
-
-		val mergedDuplicates = joined.flatMap { case (master, candidates) =>
-			val duplicates = candidates.candidates.map { case (duplicate, source, score) =>
-				val relation = Map("type" -> "isDuplicate", "confidence" -> score.toString)
-				addSymmetricRelation(master, duplicate, relation, version)
-				duplicate
+			.flatMap { case (master, candidates) =>
+				appendDuplicates(master, candidates, version)
+				master :: candidates.candidates.map(_._1)
 			}
-			mergeInformation(master, candidates, version) :: duplicates
-		}.distinct
 
 		val nonDuplicates = stagings
 			.keyBy(_.id)
@@ -100,6 +114,6 @@ object Merging extends SparkJob {
 			}.keyBy(_.id))
 			.values
 
-		List(mergedDuplicates.union(nonDuplicates)).toAnyRDD()
+		List(updatedDuplicates.union(nonDuplicates)).toAnyRDD()
 	}
 }

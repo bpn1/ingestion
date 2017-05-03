@@ -2,6 +2,7 @@ package de.hpi.ingestion.datalake.models
 
 import java.util.UUID
 import scala.collection.mutable
+import scala.io.Source
 
 case class Subject(
 	var id: UUID = UUID.randomUUID(),
@@ -68,4 +69,19 @@ case class Subject(
 		mappedProperties ++= prefixedProperties
 		mappedProperties.toMap
 	}
+
+	def normalizedProperties: Map[String, List[String]] = {
+		(for {
+			key <- Subject.normalizedPropertyKeys
+			value = this.properties.getOrElse(key, Nil)
+			if value.nonEmpty
+		} yield key -> value).toMap
+	}
+}
+
+object Subject {
+	val normalizedPropertyKeys = Source
+		.fromURL(this.getClass.getResource("/normalized_properties.txt"))
+		.getLines
+		.toList
 }
