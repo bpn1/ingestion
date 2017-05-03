@@ -70,3 +70,11 @@ scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value
 // scaladoc settings
 scalacOptions in (Compile, doc) ++= Seq("-doc-footer", "Impressum: https://hpi.de/naumann/sites/ingestion/impressum/")
 scalacOptions in (Compile, doc) ++= Seq("-doc-source-url", "https://github.com/bpn1/ingestion/tree/master€{FILE_PATH}.scala")
+
+// include implisense files as unmanaged source directories
+unmanagedSourceDirectories in Compile += baseDirectory.value / "implisense_files" / "src"
+unmanagedResourceDirectories in Compile += baseDirectory.value / "implisense_files" / "src" / "main" / "resources"
+unmanagedSourceDirectories in Test += baseDirectory.value / "implisense_files" / "src"
+
+// scoverage settings, since scoverage cannot handle unmanagedSources
+coverageExcludedPackages := "de.hpi.ingestion.dataimport.implisense.*"

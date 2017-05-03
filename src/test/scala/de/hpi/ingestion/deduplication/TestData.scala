@@ -8,6 +8,8 @@ import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler,
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import scala.collection.mutable
+
 object TestData {
 	// scalastyle:off line.size.limit
 	val idList = List.fill(8)(UUID.randomUUID())
@@ -120,38 +122,44 @@ object TestData {
 
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
 
-	def testConfig(key: String = "name"): List[ScoreConfig[String, SimilarityMeasure[String]]] = List(
-		ScoreConfig(key, similarityMeasure = MongeElkan, weight= 0.8),
-		ScoreConfig(key, similarityMeasure = JaroWinkler, weight= 0.7),
-		ScoreConfig(key, similarityMeasure = ExactMatchString, weight= 0.2)
-	)
-
-	def parsedConfig: List[ScoreConfig[String, SimilarityMeasure[String]]] = List(
-		ScoreConfig("name", similarityMeasure = MongeElkan, weight= 0.8),
-		ScoreConfig("name", similarityMeasure = JaroWinkler, weight= 0.7)
+	def parsedConfig: mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = mutable.Map(
+		"name" -> List(
+			ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
+			ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)
+		)
 	)
 
 	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = List(
-		(testSubjects.head, testSubjects(1), 0.5338461538461539),
-		(testSubjects(2), testSubjects(3), 0.7085185185185185)
+		(testSubjects.head, testSubjects(1), 0.7117948717948718),
+		(testSubjects.head, testSubjects(4), 0.5761904761904763),
+		(testSubjects(1), testSubjects(4), 0.5654212454212454),
+		(testSubjects(2), testSubjects(3), 0.9446913580246914)
 	)
+
+	def testConfig(key: String = "name"): mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = mutable.Map(
+		key -> List(
+			ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
+			ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)
+		)
+	)
+
+	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
+			MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
+			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7
+	).sum / (0.8 + 0.7)
 
 	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String], scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]): Double = {
 		simMeasure.compare(subject1.name.get, subject2.name.get, scoreConfig.scale) * scoreConfig.weight
 	}
 
-	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
-		testCompareScore(subject1, subject2, MongeElkan, testConfig()(0)),
-		testCompareScore(subject1, subject2, JaroWinkler, testConfig()(1)),
-		testCompareScore(subject1, subject2, ExactMatchString, testConfig()(2))
-	).sum / 3
-
 	def expectedCompareStrategies: List[(List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) => Double] = List(
 			CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
 		)
 
-	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (List(
-		"very", "generic", "values"), List("even", "more", "values"), testConfig()(1)
+	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (
+		List("very", "generic", "values"),
+		List("even", "more", "values"),
+		testConfig().head._2.head
 	)
 
 	def cityBlockingScheme: ListBlockingScheme = {
