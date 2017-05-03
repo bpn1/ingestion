@@ -106,15 +106,20 @@ object LinkExtender extends SparkJob {
 		var offset = 0
 		while(i < tokens.length) {
 			val testTokens = tokens.slice(i, tokens.length)
-			val aliasMatches = trie.matchTokens(testTokens).filter(_.nonEmpty).distinct
+			val aliasMatches = trie.matchTokens(testTokens).filter(_.nonEmpty)
 			if(aliasMatches.nonEmpty) {
-				val longestMatch = aliasMatches.maxBy(_.length)
-				val found = tokenizer.reverse(longestMatch)
-				val page = aliases(found)
-				offset = text.indexOf(longestMatch.head, offset)
-				resultList += Link(page._1, page._2, Option(offset))
-				offset += longestMatch.map(_.length).sum
-				i += longestMatch.length
+				val longestMatch = Option(aliasMatches.maxBy(_.length))
+				if(longestMatch.isDefined) {
+					val found = tokenizer.reverse(longestMatch.get)
+					val page = aliases(found)
+					offset = text.indexOf(longestMatch.head, offset)
+					resultList += Link(page._1, page._2, Option(offset))
+					offset += longestMatch.map(_.length).sum
+					i += longestMatch.get.length
+				}
+				else {
+					println(aliasMatches)
+				}
 			}
 			else {
 				offset += tokens(i).length
