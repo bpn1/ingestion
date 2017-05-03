@@ -1,9 +1,7 @@
 package de.hpi.ingestion.deduplication
 
-import java.util.UUID
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
-import de.hpi.ingestion.deduplication.BlockingJob.{getClass, settings}
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.similarity._
 import de.hpi.ingestion.framework.SparkJob
@@ -37,9 +35,18 @@ object DeduplicationJob extends SparkJob {
 	)
 
 	// $COVERAGE-OFF$
+	/**
+	  * Loads the Subjects and the staged Subjects from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		Nil
+	}
 
 	/**
-	  * Loads the Subjects and if needed the staged Subjects from the Cassandra.
+	  * Saves the duplicates in the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
@@ -63,12 +70,13 @@ object DeduplicationJob extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		parseConfig()
-		val blocks = input.fromAnyRDD[Subject]()
-		val subjectPairs = blocks.flatMap(block => findDuplicates(block._2))
-		val duplicates = createDuplicateCandidates(subjectPairs)
-
-		List(duplicates).toAnyRDD()
+//		parseConfig()
+//		val blocks = input.fromAnyRDD[Subject]()
+//		val subjectPairs = blocks.flatMap(block => findDuplicates(block._2))
+//		val duplicates = createDuplicateCandidates(subjectPairs)
+//
+//		List(duplicates).toAnyRDD()
+		input
 	}
 
 	/**
@@ -86,32 +94,32 @@ object DeduplicationJob extends SparkJob {
 	  * @return a list containing scoreConfig entities parsed from the xml file
 	  */
 	def parseConfig(): Unit = {
-		val path = this.configFile.getOrElse("config.xml")
-		val xml = XML.loadString(Source
-		.fromURL(getClass.getResource(s"/$path"))
-		.getLines()
-		.mkString("\n"))
-
-		val configSettings = xml \\ "config" \ "sourceSettings"
-		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
-			settings(node.label) = node.text
-
-		val attributes = (xml \\ "config" \ "simMeasurements" \ "attribute").toList
-		for {
-			node <- attributes
-			key = (node \ "key").text
-			feature <- (node \ "feature").toList
-			similarityMeasure = (feature \ "similarityMeasure").text
-			weight = (feature \ "weight").text.toDouble
-			scale = (feature \ "scale").text.toInt
-		}{
-			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
-				getSimilarityMeasure[String](similarityMeasure),
-				weight,
-				scale
-			)
-			this.config(key) = config.getOrElse(key, Nil):::List(scoreConfig)
-		}
+//		val path = this.configFile.getOrElse("config.xml")
+//		val xml = XML.loadString(Source
+//		.fromURL(getClass.getResource(s"/$path"))
+//		.getLines()
+//		.mkString("\n"))
+//
+//		val configSettings = xml \\ "config" \ "sourceSettings"
+//		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
+//			settings(node.label) = node.text
+//
+//		val attributes = (xml \\ "config" \ "simMeasurements" \ "attribute").toList
+//		for {
+//			node <- attributes
+//			key = (node \ "key").text
+//			feature <- (node \ "feature").toList
+//			similarityMeasure = (feature \ "similarityMeasure").text
+//			weight = (feature \ "weight").text.toDouble
+//			scale = (feature \ "scale").text.toInt
+//		}{
+//			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
+//				getSimilarityMeasure[String](similarityMeasure),
+//				weight,
+//				scale
+//			)
+//			this.config(key) = config.getOrElse(key, Nil):::List(scoreConfig)
+//		}
 	}
 
 	/**
@@ -125,20 +133,21 @@ object DeduplicationJob extends SparkJob {
 		subject2: Subject,
 		scale: Int = 1
 	): Double = {
-		val weights = config
-			.values
-			.flatMap(_.map(_.weight))
-			.sum
-
-		val scores = for {
-			(attribute, scoreConfigs) <- this.config
-			valueSubject1 = subject1.get(attribute)
-			valueSubject2 = subject2.get(attribute)
-			if valueSubject1.nonEmpty && valueSubject2.nonEmpty
-			scoreConfig <- scoreConfigs
-		} yield CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
-
-		scores.sum / weights
+//		val weights = config
+//			.values
+//			.flatMap(_.map(_.weight))
+//			.sum
+//
+//		val scores = for {
+//			(attribute, scoreConfigs) <- this.config
+//			valueSubject1 = subject1.get(attribute)
+//			valueSubject2 = subject2.get(attribute)
+//			if valueSubject1.nonEmpty && valueSubject2.nonEmpty
+//			scoreConfig <- scoreConfigs
+//		} yield CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
+//
+//		scores.sum / weights
+		0.0
 	}
 
 	/**
@@ -200,7 +209,6 @@ object DeduplicationJob extends SparkJob {
 	  * @return subjects containing the merged information of both duplicates
 	  */
 	def buildDuplicatesSCC(duplicates: List[(Subject, Subject, Double)], version: Version): Unit = {
-
 		duplicates.foreach { scoredDuplicatePair =>
 			addSymRelation(
 				scoredDuplicatePair._1,

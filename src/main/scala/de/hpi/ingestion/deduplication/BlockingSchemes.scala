@@ -8,7 +8,7 @@ import de.hpi.ingestion.datalake.models.Subject
 trait BlockingScheme extends Serializable {
 	val undefinedValue = "undefined"
 	var tag = "BlockingScheme"
-	protected var inputAttributes: List[String] = List[String]()
+	var inputAttributes: List[String] = List[String]()
 
 	/**
 	  * Gets the attributes to generate the key with as input and converts them to a list
@@ -37,6 +37,14 @@ class SimpleBlockingScheme extends BlockingScheme {
 	}
 }
 
+object SimpleBlockingScheme {
+	def apply(tag: String): SimpleBlockingScheme = {
+		val scheme = new SimpleBlockingScheme
+		scheme.tag = tag
+		scheme
+	}
+}
+
 /**
   * This class uses a list of input attributes as key.
   */
@@ -45,6 +53,15 @@ class ListBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject): List[String] = {
 		val key = inputAttributes.flatMap(subject.get)
 		if (key.nonEmpty) key else List(undefinedValue)
+	}
+}
+
+object ListBlockingScheme {
+	def apply(tag: String, attrList: String*): ListBlockingScheme = {
+		val scheme = new ListBlockingScheme
+		scheme.tag = tag
+		scheme.inputAttributes = attrList.toList
+		scheme
 	}
 }
 
@@ -57,5 +74,14 @@ class MappedListBlockingScheme(f: String => String = identity) extends BlockingS
 	override def generateKey(subject: Subject): List[String] = {
 		val key = inputAttributes.flatMap(subject.get(_).map(f))
 		if (key.nonEmpty) key else List(undefinedValue)
+	}
+}
+
+object MappedListBlockingScheme {
+	def apply(tag: String, attrList: String*): MappedListBlockingScheme = {
+		val scheme = new MappedListBlockingScheme
+		scheme.tag = tag
+		scheme.inputAttributes = attrList.toList
+		scheme
 	}
 }

@@ -29,15 +29,10 @@ object BlockingJob extends SparkJob {
 	}
 
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val blocks = output.head.asInstanceOf[RDD[Blocking]]
-		val blockEvaluation = output(1).asInstanceOf[RDD[(UUID, Option[String], Map[String, Int])]]
-		blocks.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
-		blockEvaluation
-			.saveToCassandra(
-				settings("keyspaceStatsTable"),
-				settings("statsTable"),
-				SomeColumns("id", "comment", "data" append)
-			)
+		output
+			.fromAnyRDD[BlockEvaluation]()
+			.head
+			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -46,28 +41,17 @@ object BlockingJob extends SparkJob {
 		super.assertConditions(args)
 	}
 
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val inputSubjects = input.fromAnyRDD[Subject]()
 		val subjects = inputSubjects.head
 		val staging = inputSubjects(1)
-		val geoCountryBlockingScheme = new ListBlockingScheme
-		geoCountryBlockingScheme.setAttributes("geo_city")
-		geoCountryBlockingScheme.tag = "geo Country BlockingScheme"
-
-		val generalSectorBlockingScheme = new ListBlockingScheme
-		generalSectorBlockingScheme.setAttributes("gen_sectors")
-		generalSectorBlockingScheme.tag = "general Sector BlockingScheme"
-
-		val simpleBlockingScheme = new SimpleBlockingScheme
-
-		val blockingSchemes = List(
-			geoCountryBlockingScheme,
-			generalSectorBlockingScheme,
-			simpleBlockingScheme
-		)
-		val blocks = blocking(subjects, staging, blockingSchemes)
-		val blockEvaluation = evaluateBlocks(blocks)
-		List(blocks).toAnyRDD() ++ List(blockEvaluation).toAnyRDD()
+		val geoCountryBlockingScheme = ListBlockingScheme("geo_city", "geo_country_scheme")
+		val generalSectorBlockingScheme = ListBlockingScheme("gen_sectors", "gen_sectors_scheme")
+		val simpleBlockingScheme = SimpleBlockingScheme("simple_scheme")
+		val blockingSchemes = List(geoCountryBlockingScheme, generalSectorBlockingScheme, simpleBlockingScheme)
+		val blocks = blocking(subjects, staging, blockingSchemes, false)
+		val blockEvaluation = evaluateBlocks(blocks, s"BlockingJob_${System.currentTimeMillis()}")
+		List(blockEvaluation).toAnyRDD()
 	}
 
 	/**
@@ -91,20 +75,20 @@ object BlockingJob extends SparkJob {
 	/**
 	  * Uses input blocking scheme to generate blocks of subjects.
 	  * @param subjects RDD to perform the blocking on.
-	  * @param blockingSchemes blocking schemes to use to generate keys.
+	  * @param scheme blocking scheme to use to generate keys.
 	  * @return subjects grouped by blocking keys
 	  */
 	def blocking(
 		subjects: RDD[Subject],
-		blockingSchemes: List[BlockingScheme]
-	): List[RDD[(String, List[Subject])]] = {
-		blockingSchemes.map { scheme =>
-			subjects.flatMap { subject =>
+		scheme: BlockingScheme,
+		filterUndefined: Boolean
+	): RDD[(String, List[Subject])] = {
+		subjects
+			.flatMap { subject =>
 				val blockingKeys = scheme.generateKey(subject).distinct
 				blockingKeys.map((_, List(subject)))
-			}.filter(_._1 != scheme.undefinedValue)
+			}.filter(_._1 != scheme.undefinedValue || !filterUndefined)
 			.reduceByKey(_ ::: _)
-		}
 	}
 
 	/**
@@ -117,40 +101,49 @@ object BlockingJob extends SparkJob {
 	def blocking(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
-		blockingSchemes: List[BlockingScheme]
-	): List[RDD[(String, List[Subject])]] = {
-		val subjectBlocks = blocking(subjects, blockingSchemes)
-		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
+		blockingSchemes: List[BlockingScheme],
+		filterUndefined: Boolean = true
+	): RDD[(String, Block)] = {
+		blockingSchemes.map { scheme =>
+			val subjectBlocks = blocking(subjects, scheme, filterUndefined)
+			val stagingBlocks = blocking(stagingSubjects, scheme, filterUndefined)
+			subjectBlocks
+				.join(stagingBlocks)
+				.map { case (key, (subjectBlock, stagingBlock)) =>
+					val block = Block(
+						key = key,
+						subjects = subjectBlock,
+						staging = stagingBlock)
+					(scheme.tag, block)
+				}
+		}.reduce(_.union(_))
+	}
 
-		(subjectBlocks, stagingBlocks).zipped.map { case (subjectBlock, stagingBlock) =>
-			subjectBlock
-			.fullOuterJoin(stagingBlock)
-			.mapValues { case (subjectList, stagingList) =>
-				val subjects = subjectList.getOrElse(Nil)
-				val stagedSubjects = stagingList.getOrElse(Nil)
-				subjects.union(stagedSubjects).distinct
-			}
-		}
+	def mergeEvaluation(eval1: BlockEvaluation, eval2: BlockEvaluation): BlockEvaluation = {
+		val blockingData = (eval1.data.toList ++ eval2.data.toList)
+			.groupBy(_._1)
+			.mapValues(_.flatMap(_._2))
+		BlockEvaluation(eval1.id, blockingData, eval1.comment)
 	}
 
 	/**
 	  * Executes methods on the blocked data to gain information.
 	  *
-	  * @param blockingList Input data, partitioned in blocks.
+	  * @param blocks Input data, partitioned in blocks.
 	  * @param comment Note to add to the evaluated data.
 	  * @return Blocks with size-value and comment.
 	  */
 	def evaluateBlocks(
-		blockingList: List[RDD[(String, List[Subject])]],
-		comment: String,
-		blockingSchemes: List[BlockingScheme]
-	): RDD[(UUID, Option[String], Map[String, Int])] = {
-		(blockingList, blockingSchemes).zipped.map { case (blocks, blockingScheme) =>
-			val id = UUID.randomUUID()
-			val blockComment = Option(s"${comment}_${blockingScheme.tag}")
-			blocks
-			.map(block => List(block.map(identity, _.length)))
-			.map(data => (id, blockComment, data.toMap))
-		}.reduce(_.union(_))
+		blocks: RDD[(String, Block)],
+		comment: String
+	): RDD[BlockEvaluation] = {
+		val defaultKey = "key"
+		val id = UUID.randomUUID()
+		blocks.map { case (tag, block) =>
+			val evalMap = Map(tag -> List(block.evaluate()))
+			val evaluation = BlockEvaluation(id, evalMap, Option(comment))
+			(defaultKey, evaluation)
+		}.reduceByKey(mergeEvaluation)
+		.values
 	}
 }
