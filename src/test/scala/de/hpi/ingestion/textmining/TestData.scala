@@ -605,28 +605,6 @@ object TestData {
 		  | <head></head>
 		  | <body>
 		  |  <p>Das heutige <b>Postbank-Hochhaus</b> (früher: <b>Postscheckamt Berlin West</b> (Bln W), seit 1985: <b>Postgiroamt Berlin</b>) ist ein <a href="/Hochhaus" title="Hochhaus">Hochhaus</a> der <a href="/Postbank" title="Postbank">Postbank</a>.</p>
-		  |  <table id="toc" class="toc" summary="Contents">
-		  |   <tbody>
-		  |    <tr>
-		  |     <td>
-		  |      <div id="toctitle">
-		  |       <h2>Contents</h2>
-		  |      </div>
-		  |      <ul>
-		  |       <ul>
-		  |        <li class="toclevel-1"><a href="#Geschichte_und_Entstehung">Geschichte und Entstehung</a> </li>
-		  |        <li class="toclevel-1"><a href="#Architektur">Architektur</a> </li>
-		  |        <li class="toclevel-1"><a href="#UKW-Sender">UKW-Sender</a> </li>
-		  |        <li class="toclevel-1"><a href="#Siehe_auch">Siehe auch</a> </li>
-		  |        <li class="toclevel-1"><a href="#Literatur">Literatur</a> </li>
-		  |        <li class="toclevel-1"><a href="#Weblinks">Weblinks</a> </li>
-		  |        <li class="toclevel-1"><a href="#Einzelnachweise">Einzelnachweise</a> </li>
-		  |       </ul>
-		  |      </ul></td>
-		  |    </tr>
-		  |   </tbody>
-		  |  </table>
-		  |  <hr>
 		  |  <h2><span class="mw-headline" id="Geschichte_und_Entstehung">Geschichte und Entstehung</span></h2>
 		  |  <p>Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der <a href="/Dorotheenstra%C3%9Fe_(Berlin)" title="Dorotheenstraße (Berlin)">Dorotheenstraße</a> 29 (heute: 84).</p>
 		  |  <h2><span class="mw-headline" id="Architektur">Architektur</span></h2>
@@ -645,9 +623,9 @@ object TestData {
 		Set("Geschichte und Entstehung", "Architektur", "UKW-Sender", "Siehe auch", "Literatur", "Weblinks", "Einzelnachweise")
 	}
 
-	//	def documentElementWithHeadlines(): Element = {
-	//		Element()
-	//	}
+	def parsedArticleTextWithHeadlines(): String = {
+		"Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank. Geschichte und Entstehung Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84). Architektur Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. UKW-Sender Im Postbank-Hochhaus befinden sich mehrere UKW-Sender. Siehe auch Literatur Weblinks Einzelnachweise"
+	}
 
 	def wikipediaEntriesForParsing(): List[WikipediaEntry] = {
 		List(

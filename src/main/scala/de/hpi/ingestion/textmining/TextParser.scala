@@ -151,14 +151,19 @@ object TextParser extends SparkJob {
 	  * @return cleaned Document containing only text and anchor tags
 	  */
 	def removeTags(document: Document): Document = {
+		val tableOfContents = document.getElementById("toc")
+		if(tableOfContents != null) {
+			tableOfContents.remove()
+		}
+
 		val documentContent = document
-			.select("p,h2")
+			.select("p,h1,h2,h3,h4,h5,h6") // https://www.w3schools.com/html/html_headings.asp
 			.map { element =>
-				element.getElementsByClass("reference").remove
-				element.select("small").remove
-				element.getElementsByAttributeValueStarting("title", "Datei:").remove
-				element
-			}
+			element.getElementsByClass("reference").remove
+			element.select("small").remove
+			element.getElementsByAttributeValueStarting("title", "Datei:").remove
+			element
+		}
 		val htmltext = documentContent
 			.map(_.toString)
 			.mkString("\n")

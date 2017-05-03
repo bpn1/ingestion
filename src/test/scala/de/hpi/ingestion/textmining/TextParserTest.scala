@@ -252,6 +252,14 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			}
 	}
 
+	it should "have exactly this text" in {
+		List(TestData.documentWithHeadlines())
+			.map(Jsoup.parse)
+			.map(TextParser.removeTags)
+			.map(_.body.text)
+			.foreach(_ shouldEqual TestData.parsedArticleTextWithHeadlines())
+	}
+
 	"Redirect page entries" should "be identified as such" in {
 		val entries = TestData.parsedEntriesWithRedirects()
 			.filter(TextParser.isRedirectPage)
@@ -271,7 +279,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		parsedArticles shouldEqual expectedArticles
 	}
 
-	"Wikipedia headlines" should "be parsed" in {
+	"Parsed Wikipedia article" should "contain headlines" in {
 		val article = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
 		val parsedArticleText = TextParser
 			.run(List(article).toAnyRDD(), sc)
@@ -285,12 +293,17 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.foreach(headline => assert(parsedArticleText.contains(headline)))
 	}
 
-	//	"Text extracted from HTML" should "contain headlines" in {
-	//		val document = TestData.documentElementWithHeadlines()
-	//		val text = TextParser.extractTextWithHeadlines(document)
-	//		TestData.wikipediaEntryHeadlines()
-	//			.foreach(headline => assert(text.contains(headline)))
-	//	}
+	it should "have exactly this text" in {
+		val article = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
+		val parsedArticleText = TextParser
+			.run(List(article).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.collect
+			.head
+			.getText()
+		parsedArticleText shouldEqual TestData.parsedArticleTextWithHeadlines()
+	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
 		val substring = text.substring(link.offset.get, link.offset.get + link.alias.length)
