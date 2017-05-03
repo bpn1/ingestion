@@ -23,7 +23,7 @@ object LinkExtender extends SparkJob {
 
 	// $COVERAGE-OFF$
 	/**
-	  * Loads Wikipedia entries from the Cassandra.
+	  * Loads parsed Wikipedia entries from the Cassandra.
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
@@ -36,7 +36,7 @@ object LinkExtender extends SparkJob {
 	}
 
 	/**
-	  * Saves Parsed Wikipedia entries to the Cassandra.
+	  * Saves parsed Wikipedia entries with extended links to the Cassandra.
 	  *
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
