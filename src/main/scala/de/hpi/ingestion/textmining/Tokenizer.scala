@@ -98,3 +98,16 @@ class CoreNLPTokenizer() extends Tokenizer {
 
 	def reverse(tokens: List[String]) = tokens.mkString(" ")
 }
+
+/**
+  * Uses the CoreNLP Simple German API to tokenize the given text into sentences.
+  */
+class CoreNLPSentenceTokenizer() extends CoreNLPTokenizer {
+	override def tokenize(txt: String) = {
+		new GermanDocument(txt)
+			.sentences
+			.asScala
+			.toList
+			.map(_.text())
+	}
+}
