@@ -6,15 +6,20 @@ import os
 ingestion_jar = '/home/bp2016n1/jars/ingestion-assembly-1.0.jar'
 package_prefix = 'de.hpi.ingestion.textmining.'
 
+#https://docs.google.com/presentation/d/1KhNmbFrYCKe223mJjRMIJJ_CJPJX4Gk8sWdWcUwPlT4/edit?usp=sharing
 programs = ['TextParser',
             'LinkCleaner',
             'RedirectResolver'
             'LinkAnalysis',
+            'CompanyLinkFilter',
+            'LinkAnalysis',
+            'LocalTrieBuilder',
             'AliasTrieSearch',
             'AliasCounter',
             'DocumentFrequencyCounter',
             'TermFrequencyCounter',
-            'CosineContextExtractor']
+            'CosineContextExtractor',
+            'Classifier']
 
 
 def create_command(program):
