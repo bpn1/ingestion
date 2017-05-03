@@ -53,8 +53,9 @@ object LinkExtender extends SparkJob {
 
 	/**
 	  * Filters all Pages for the Links and title of an Wikipedia article.
+	  *
 	  * @param article Wikipedia article to be used
-	  * @param pages raw Pages map
+	  * @param pages   raw Pages map
 	  * @return filtered Pages map
 	  */
 	def findAllPages(article: ParsedWikipediaEntry,
@@ -68,7 +69,8 @@ object LinkExtender extends SparkJob {
 
 	/**
 	  * Builds trie from given Aliases.
-	  * @param aliases Aliases to be used
+	  *
+	  * @param aliases   Aliases to be used
 	  * @param tokenizer tokenizer to be uses to process Aliases
 	  * @return built trie
 	  */
@@ -83,9 +85,10 @@ object LinkExtender extends SparkJob {
 	/**
 	  * Finds all Aliases in a given text of already linked entities and adds new Links
 	  * for all occurrences.
- 	  * @param entry Wikipedia entry to be extended
-	  * @param aliases map of Alias to Page
-	  * @param trie prebuilt trie from Aliases
+	  *
+	  * @param entry     Wikipedia entry to be extended
+	  * @param aliases   map of Alias to Page
+	  * @param trie      prebuilt trie from Aliases
 	  * @param tokenizer tokenizer to be used to process text
 	  * @return Wikipedia entry with extended Links
 	  */
@@ -123,6 +126,7 @@ object LinkExtender extends SparkJob {
 
 	/**
 	  * Reverts map of Page to Aliases to a map of Alias to Page.
+	  *
 	  * @param pages Map of Page to Aliases
 	  * @return Map of Alias to Page
 	  */
@@ -145,9 +149,10 @@ object LinkExtender extends SparkJob {
 	/**
 	  * Extends links of parsed Wikipedia entries by looking at existing Links and
 	  * adding additional not yet linked occurrences.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
@@ -170,3 +175,4 @@ object LinkExtender extends SparkJob {
 
 		List(parsedArticlesWithExtendedLinks).toAnyRDD()
 	}
+}
