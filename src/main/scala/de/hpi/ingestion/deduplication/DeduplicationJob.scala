@@ -17,7 +17,7 @@ import scala.xml.XML
 
 object DeduplicationJob extends SparkJob {
 	appName = "Deduplication"
-	var config = List[ScoreConfig[String, SimilarityMeasure[String]]]()
+	var config = List[(String, ScoreConfig[String, SimilarityMeasure[String]])]()
 	val settings = mutable.Map[String, String]()
 	val configFile: Option[String] = None
 
@@ -42,7 +42,9 @@ object DeduplicationJob extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		Nil
+		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
+		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
+		(subjects ++ staging).toAnyRDD()
 	}
 
 	/**
@@ -51,9 +53,9 @@ object DeduplicationJob extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
-
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-
+		val duplicates = output.head.asInstanceOf[RDD[DuplicateCandidates]]
+		duplicates.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -94,33 +96,65 @@ object DeduplicationJob extends SparkJob {
 	  * @return a list containing scoreConfig entities parsed from the xml file
 	  */
 	def parseConfig(): Unit = {
-//		val path = this.configFile.getOrElse("config.xml")
-//		val xml = XML.loadString(Source
-//		.fromURL(getClass.getResource(s"/$path"))
-//		.getLines()
-//		.mkString("\n"))
-//
-//		val configSettings = xml \\ "config" \ "sourceSettings"
-//		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
-//			settings(node.label) = node.text
-//
-//		val attributes = (xml \\ "config" \ "simMeasurements" \ "attribute").toList
-//		for {
-//			node <- attributes
-//			key = (node \ "key").text
-//			feature <- (node \ "feature").toList
-//			similarityMeasure = (feature \ "similarityMeasure").text
-//			weight = (feature \ "weight").text.toDouble
-//			scale = (feature \ "scale").text.toInt
-//		}{
-//			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
-//				getSimilarityMeasure[String](similarityMeasure),
-//				weight,
-//				scale
-//			)
-//			this.config(key) = config.getOrElse(key, Nil):::List(scoreConfig)
-//		}
+		val path = this.configFile.getOrElse("config.xml")
+		val xml = XML.loadString(Source
+			.fromURL(getClass.getResource(s"/$path"))
+			.getLines()
+			.mkString("\n"))
+
+		val configSettings = xml \\ "config" \ "sourceSettings"
+		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
+			settings(node.label) = node.text
+
+		config = (xml \\ "config" \ "simMeasurements" \ "feature")
+			.toList
+			.map { feature =>
+				val attribute = (feature \ "attribute").text
+				val simMeasure = (feature \ "similarityMeasure").text
+				val weight = (feature \ "weight").text
+				val scale = (feature \ "scale").text
+
+				(attribute, ScoreConfig[String, SimilarityMeasure[String]](
+					this.dataTypes
+						.getOrElse(simMeasure, ExactMatchString)
+						.asInstanceOf[SimilarityMeasure[String]],
+					weight.toDouble,
+					scale.toInt))
+			}
 	}
+
+	/*/**
+	  * Reads the configuration from a xml file
+	  * @return a list containing scoreConfig entities parsed from the xml file
+	  */
+	def parseConfig(): Unit = {
+		val path = this.configFile.getOrElse("config.xml")
+		val xml = XML.loadString(Source
+			.fromURL(getClass.getResource(s"/$path"))
+			.getLines()
+			.mkString("\n"))
+
+		val configSettings = xml \\ "config" \ "sourceSettings"
+		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
+			settings(node.label) = node.text
+
+		val attributes = (xml \\ "config" \ "simMeasurements" \ "attribute").toList
+		for {
+			node <- attributes
+			key = (node \ "key").text
+			feature <- (node \ "feature").toList
+			similarityMeasure = (feature \ "similarityMeasure").text
+			weight = (feature \ "weight").text.toDouble
+			scale = (feature \ "scale").text.toInt
+		}{
+			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
+				getSimilarityMeasure[String](similarityMeasure),
+				weight,
+				scale
+			)
+			this.config = config.getOrElse(key, Nil):::List(scoreConfig)
+		}
+	}*/
 
 	/**
 	  * Compares to subjects regarding the configuration
@@ -133,21 +167,17 @@ object DeduplicationJob extends SparkJob {
 		subject2: Subject,
 		scale: Int = 1
 	): Double = {
-//		val weights = config
-//			.values
-//			.flatMap(_.map(_.weight))
-//			.sum
-//
-//		val scores = for {
-//			(attribute, scoreConfigs) <- this.config
-//			valueSubject1 = subject1.get(attribute)
-//			valueSubject2 = subject2.get(attribute)
-//			if valueSubject1.nonEmpty && valueSubject2.nonEmpty
-//			scoreConfig <- scoreConfigs
-//		} yield CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
-//
-//		scores.sum / weights
-		0.0
+		val weights = config.map(_._2.weight).sum
+
+		val scores = for {
+			(attribute, scoreConfigs) <- this.config
+			valueSubject1 = subject1.get(attribute)
+			valueSubject2 = subject2.get(attribute)
+			if valueSubject1.nonEmpty && valueSubject2.nonEmpty
+				scoreConfig <- scoreConfigs
+		} yield CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
+		// Nothing is returned here? Why?
+		scores.sum / weights
 	}
 
 	/**
@@ -157,11 +187,11 @@ object DeduplicationJob extends SparkJob {
 	  */
 	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
 		subjectPairs
-		.map { case (subject1, subject2, score) =>
+			.map { case (subject1, subject2, score) =>
 			subject1.id -> List((subject2, settings("stagingTable"), score))
-		}
-		.reduceByKey { case (accumulator, candidate) => candidate ::: accumulator}
-		.map(DuplicateCandidates.tupled)
+			}
+			.reduceByKey { case (accumulator, candidate) => candidate ::: accumulator}
+			.map(DuplicateCandidates.tupled)
 	}
 
 	/**
@@ -171,14 +201,14 @@ object DeduplicationJob extends SparkJob {
 	  */
 	def findDuplicates(block: List[Subject]): List[(Subject, Subject, Double)] = {
 		block
-		.cross(block)
-		.filter(tuple => tuple._1 != tuple._2)
-		.map(tuple => Set(tuple, tuple.swap))
-		.toList
-		.distinct
-		.map(_.head)
-		.map(tuple => (tuple._1, tuple._2, compare(tuple._1, tuple._2)))
-		.filter(tuple => tuple._3 >= settings("confidence").toDouble)
+			.cross(block)
+			.filter(tuple => tuple._1 != tuple._2)
+			.map(tuple => Set(tuple, tuple.swap))
+			.toList
+			.distinct
+			.map(_.head)
+			.map(tuple => (tuple._1, tuple._2, compare(tuple._1, tuple._2)))
+			.filter(tuple => tuple._3 >= settings("confidence").toDouble)
 	}
 
 	/**
