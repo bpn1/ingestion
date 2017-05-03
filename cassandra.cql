@@ -135,6 +135,18 @@ CREATE TABLE datalake.object (
     properties_history map<text, frozen<list<frozen<version>>>>
 );
 
+CREATE TYPE datalake.blockstats (
+    key text,
+    subjects int,
+    staging int
+);
+
+CREATE TABLE datalake.deduplicationstats (
+    id uuid PRIMARY KEY,
+    comment text,
+    data map<text, frozen<list<blockstats>>>
+);
+
 CREATE TABLE datalake.deduplicationstats (
     id uuid PRIMARY KEY,
     comment text,
