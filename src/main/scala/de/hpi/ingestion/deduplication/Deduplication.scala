@@ -1,16 +1,18 @@
 package de.hpi.ingestion.deduplication
 
+import java.util.UUID
+
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.deduplication.similarity._
 import de.hpi.ingestion.deduplication.models._
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits.TupleImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import com.datastax.driver.core.utils.UUIDs
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
-
+import scala.language.postfixOps
 import scala.xml.XML
 import scala.collection.mutable
 import scala.io.Source
@@ -26,10 +28,9 @@ class Deduplication(
 	val confidence: Double,
 	val importName: String,
 	val dataSources: List[String],
-	val configFile: Option[String] = None,
-	val merge: Boolean = false
+	val configFile: Option[String] = None
 ) extends Serializable with SparkJob {
-	var config = List[ScoreConfig[String, SimilarityMeasure[String]]]()
+	var config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
 	val settings = mutable.Map[String, String]()
 	var blockingSchemes = List[BlockingScheme](new SimpleBlockingScheme)
 	appName = importName
@@ -43,11 +44,7 @@ class Deduplication(
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
-		val staging = if(merge) {
-			List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
-		} else {
-			Nil
-		}
+		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
 		(subjects ++ staging).toAnyRDD()
 	}
 
@@ -58,17 +55,31 @@ class Deduplication(
 	  * @param args arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val duplicates = output.head.asInstanceOf[RDD[Subject]]
-		val evaluation = output(1).asInstanceOf[RDD[BlockEvaluation]]
+		val duplicates = output.head.asInstanceOf[RDD[DuplicateCandidates]]
+		val evaluation = output(1).asInstanceOf[RDD[(UUID, Option[String], Map[String, Int])]]
 		duplicates.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
-		evaluation.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
+		evaluation
+			.saveToCassandra(
+				settings("keyspaceStatsTable"),
+				settings("statsTable"),
+				SomeColumns("id", "comment", "data" append))
 	}
 	// $COVERAGE-ON$
 
 	/**
+	  * Parses config before calling the implemented method in the SparkJob trait.
+	  * @param args arguments of the program
+	  * @return true if the program can continue, false if it should be terminated
+	  */
+	override def assertConditions(args: Array[String]): Boolean = {
+		parseConfig()
+		super.assertConditions(args)
+	}
+
+	/**
 	  * Compares to subjects regarding the configuration
 	  * @param subject1 subjects to be compared to subject2
-	  * @param subject2 subjects to be compared to subject2
+	  * @param subject2 subjects to be compared to subject1
 	  * @return the similarity score of the subjects
 	  */
 	def compare(
@@ -76,20 +87,30 @@ class Deduplication(
 		subject2: Subject,
 		scale: Int = 1
 	): Double = {
-		val scoreList = this.config
-			.map { feature =>
-				val valueSub1 = subject1.get(feature.key).headOption
-				val valueSub2 = subject2.get(feature.key).headOption
-				if(valueSub1.isDefined && valueSub2.isDefined) {
-					val score = feature
-						.similarityMeasure
-						.compare(valueSub1.get, valueSub2.get, scale)
-					score * feature.weight
-				} else {
-					-1.0
-				}
-			}.filter(_ != -1.0)
-		scoreList.sum / Math.max(1, scoreList.length)
+		val weights = config
+			.values
+			.flatMap(_.map(_.weight))
+			.sum
+
+		val scores = for {
+			(attribute, scoreConfigs) <- this.config
+			valueSubject1 = subject1.get(attribute)
+			valueSubject2 = subject2.get(attribute)
+			if valueSubject1.nonEmpty && valueSubject2.nonEmpty
+			scoreConfig <- scoreConfigs
+		} yield CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
+
+		scores.sum / weights
+	}
+
+	/**
+	  * Get similarity Measure by its name.
+	  * @param similarityMeasure Name of the similarity Measure
+	  * @tparam T type of the similarity Measure
+	  * @return Similarity Measure
+	  */
+	def getSimilarityMeasure[T](similarityMeasure: String): SimilarityMeasure[T] = {
+		Deduplication.dataTypes.getOrElse(similarityMeasure, ExactMatchString).asInstanceOf[SimilarityMeasure[T]]
 	}
 
 	/**
@@ -107,22 +128,22 @@ class Deduplication(
 		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
 			settings(node.label) = node.text
 
-		config = (xml \\ "config" \ "simMeasurements" \ "feature")
-			.toList
-			.map { feature =>
-				val attribute = (feature \ "attribute").text
-				val simMeasure = (feature \ "similarityMeasure").text
-				val weight = (feature \ "weight").text
-				val scale = (feature \ "scale").text
-
-				ScoreConfig[String, SimilarityMeasure[String]](
-					attribute,
-					Deduplication.dataTypes
-						.getOrElse(simMeasure, ExactMatchString)
-						.asInstanceOf[SimilarityMeasure[String]],
-					weight.toDouble,
-					scale.toInt)
-			}
+		val attributes = (xml \\ "config" \ "simMeasurements" \ "attribute").toList
+		for {
+			node <- attributes
+			key = (node \ "key").text
+			feature <- (node \ "feature").toList
+			similarityMeasure = (feature \ "similarityMeasure").text
+			weight = (feature \ "weight").text.toDouble
+			scale = (feature \ "scale").text.toInt
+		}{
+			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
+				getSimilarityMeasure[String](similarityMeasure),
+				weight,
+				scale
+			)
+			this.config(key) = config.getOrElse(key, Nil):::List(scoreConfig)
+		}
 	}
 
 	/**
@@ -134,10 +155,14 @@ class Deduplication(
 	def blocking(
 		subjects: RDD[Subject],
 		blockingSchemes: List[BlockingScheme]
-	): RDD[(List[List[String]], List[Subject])] = {
-		subjects
-			.map(subject => (blockingSchemes.map(_.generateKey(subject)), List(subject)))
-			.reduceByKey(_ ++ _)	// ToDo: #182, better reduce function
+	): List[RDD[(String, List[Subject])]] = {
+		blockingSchemes.map { scheme =>
+			subjects.flatMap { subject =>
+				val blockingKeys = scheme.generateKey(subject).distinct
+				blockingKeys.map((_, List(subject)))
+			}.filter(_._1 != scheme.undefinedValue)
+			.reduceByKey(_ ::: _)
+		}
 	}
 
 	/**
@@ -151,16 +176,19 @@ class Deduplication(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
 		blockingSchemes: List[BlockingScheme]
-	): RDD[(List[List[String]], List[Subject])] = {
+	): List[RDD[(String, List[Subject])]] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes)
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
-		subjectBlocks
-			.fullOuterJoin(stagingBlocks)
-			.map {
-				case (key, (Some(x), None)) => (key, x)
-				case (key, (None, Some(x))) => (key, x)
-				case (key, (Some(x), Some(y))) => (key, (x ++ y).distinct)
-			}
+
+		(subjectBlocks, stagingBlocks).zipped.map { case (subjectBlock, stagingBlock) =>
+			subjectBlock
+				.fullOuterJoin(stagingBlock)
+				.mapValues { case (subjectList, stagingList) =>
+					val subjects = subjectList.getOrElse(Nil)
+					val stagedSubjects = stagingList.getOrElse(Nil)
+					subjects.union(stagedSubjects).distinct
+				}
+		}
 	}
 
 	/**
@@ -171,9 +199,8 @@ class Deduplication(
 	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
 		subjectPairs
 			.map { case (subject1, subject2, score) =>
-				subject1.id -> List((subject2, settings("stagingTable"), score))
-			}
-			.reduceByKey { case (accumulator, candidate) => candidate ::: accumulator}
+				(subject1.id, List((subject2, settings("stagingTable"), score)))
+			}.reduceByKey(_ ::: _)
 			.map(DuplicateCandidates.tupled)
 	}
 
@@ -227,7 +254,7 @@ class Deduplication(
 			addSymRelation(
 				scoredDuplicatePair._1,
 				scoredDuplicatePair._2,
-				Map("type" -> "isDuplicate", "confidence" -> (scoredDuplicatePair._3).toString),
+				Map("type" -> "isDuplicate", "confidence" -> scoredDuplicatePair._3.toString),
 				version
 			)
 		}
@@ -236,20 +263,22 @@ class Deduplication(
 	/**
 	  * Executes methods on the blocked data to gain information.
 	  *
-	  * @param blocks  Input data, partitioned in blocks.
+	  * @param blockingList Input data, partitioned in blocks.
 	  * @param comment Note to add to the evaluated data.
 	  * @return Blocks with size-value and comment.
 	  */
 	def evaluateBlocks(
-		blocks: RDD[(List[List[String]], List[Subject])],
-		comment: String
-	): BlockEvaluation = {
-		val dataMap = blocks
-			.map(block => (block._1.map(_.mkString(" ")), block._2.size))
-			.sortBy(_._2, false)
-			.collect()
-			.toMap
-		BlockEvaluation(data = dataMap, comment = Option(comment))
+		blockingList: List[RDD[(String, List[Subject])]],
+		comment: String,
+		blockingSchemes: List[BlockingScheme]
+	): RDD[(UUID, Option[String], Map[String, Int])] = {
+		(blockingList, blockingSchemes).zipped.map { case (blocks, blockingScheme) =>
+			val id = UUID.randomUUID()
+			val blockComment = Option(s"${comment}_${blockingScheme.tag}")
+			blocks
+				.map(block => List(block.map(identity, _.length)))
+				.map(data => (id, blockComment, data.toMap))
+		}.reduce(_.union(_))
 	}
 
 	/**
@@ -260,21 +289,18 @@ class Deduplication(
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		parseConfig()
 		val inputData = input.fromAnyRDD[Subject]()
 		val subjects = inputData.head
-		val blocks = if(merge) {
-			val staging = inputData(1)
-			blocking(subjects, staging, blockingSchemes)
-		} else {
-			blocking(subjects, blockingSchemes)
-		}
-		val blockEvaluation = sc.parallelize(Seq(evaluateBlocks(blocks, appName)))
+		val staging = inputData(1)
+		val blocks = blocking(subjects, staging, blockingSchemes)
+		val blockEvaluation = evaluateBlocks(blocks, s"${this.appName}_${System.currentTimeMillis()}", blockingSchemes)
+		val evaluationOutput = List(blockEvaluation).toAnyRDD()
 
-		val subjectPairs = blocks.flatMap(block => findDuplicates(block._2))
+		val subjectPairs = blocks.map { blocking =>
+			blocking.flatMap(block => findDuplicates(block._2))
+		}.reduce(_.union(_))
 		val duplicates = createDuplicateCandidates(subjectPairs)
-
-		List(duplicates).toAnyRDD() ++ List(blockEvaluation).toAnyRDD()
+		List(duplicates).toAnyRDD() ++ evaluationOutput
 	}
 }
 

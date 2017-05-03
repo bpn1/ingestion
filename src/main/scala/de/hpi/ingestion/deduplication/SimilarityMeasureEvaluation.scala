@@ -6,7 +6,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, SimilarityMeasureStats}
+import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, PrecisionRecallDataTuple, SimilarityMeasureStats}
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -69,6 +69,22 @@ object SimilarityMeasureEvaluation extends SparkJob {
 			.values
 	}
 
+
+	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : RDD[PrecisionRecallDataTuple] = {
+		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
+
+		val precision = metrics.precisionByThreshold
+		val recall = metrics.recallByThreshold
+		val f1Score = metrics.fMeasureByThreshold
+
+		precision
+			.join(recall)
+			.join(f1Score)
+			.map { case (threshold, ((precision, recall), f1Score)) =>
+				PrecisionRecallDataTuple(threshold, precision, recall, f1Score)
+			}.sortBy(_.threshold)
+	}
+
 	/**
 	  * Calculates precision, recall and f1 score using the training and test data.
 	  * @param input List of RDDs containing the input data
@@ -82,24 +98,9 @@ object SimilarityMeasureEvaluation extends SparkJob {
 				candidates.map(candidate => ((subject_id, candidate._1.id), candidate._3))
 			}.distinct
 
-		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]]
-			.map(pair => (pair, 1.0))
-
+		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]].map(pair => (pair, 1.0))
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
-		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
-
-		val precision = metrics.precisionByThreshold
-		val recall = metrics.recallByThreshold
-		val f1Score = metrics.fMeasureByThreshold
-
-		val data = precision
-			.join(recall)
-			.join(f1Score)
-			.map { case (threshold, ((precision, recall), f1Score)) =>
-				(threshold, precision, recall, f1Score)
-			}
-			.collect
-			.toList
+		val data = generateStats(predictionAndLabels)
 		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
 
 		List(sc.parallelize(Seq(stats))).toAnyRDD()
