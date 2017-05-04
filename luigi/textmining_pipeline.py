@@ -3,10 +3,11 @@ import luigi
 import subprocess
 import os
 
-ingestion_jar = '/home/bp2016n1/jars/ingestion-assembly-1.0.jar'
+# ingestion_jar = '/home/bp2016n1/jars/ingestion-assembly-1.0.jar'
+ingestion_jar = '/home/bp2016n1/jars/jenkins/ingestion_feature_textmining_34.jar'
 package_prefix = 'de.hpi.ingestion.textmining.'
 
-#https://docs.google.com/presentation/d/1KhNmbFrYCKe223mJjRMIJJ_CJPJX4Gk8sWdWcUwPlT4/edit?usp=sharing
+# https://docs.google.com/presentation/d/1KhNmbFrYCKe223mJjRMIJJ_CJPJX4Gk8sWdWcUwPlT4/edit?usp=sharing
 programs = ['TextParser',
             'LinkCleaner',
             'RedirectResolver'
@@ -28,10 +29,10 @@ def create_command(program):
 
 
 def make_operator_chain(programs, force_execution):
-    last_task = ''
+    last_task = None
     for program in programs:
-        last_task = TextminingTask(name=program, command=create_command(program), upstream_task=last_task,
-                                   force=force_execution)
+        command = create_command(program)
+        last_task = TextminingTask(name=program, command=command, upstream_task=last_task, force=force_execution)
     return last_task
 
 
@@ -52,7 +53,7 @@ class ForceableTask(luigi.Task):
 class TextminingTask(ForceableTask):
     name = luigi.Parameter()
     command = luigi.Parameter()
-    upstream_task = luigi.Parameter(default='')
+    upstream_task = luigi.Parameter(default=None)
 
     def requires(self):
         if self.upstream_task is '':
@@ -64,7 +65,7 @@ class TextminingTask(ForceableTask):
 
     def output_path(self):
         if self.requires() is not None:
-            prefix = self.input() + '.'
+            prefix = self.input().path + '.'
         else:
             prefix = '/home/luigi/pipeline/logs/'
         return prefix + self.name + '.log'
