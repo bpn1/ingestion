@@ -8,7 +8,7 @@ import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
-import org.jsoup.nodes.{Document, Element, TextNode}
+import org.jsoup.nodes.{Document, Element, TextNode, Comment}
 import java.net.URLDecoder
 
 import scala.collection.mutable.ListBuffer
@@ -263,6 +263,8 @@ object TextParser extends SparkJob {
 					offset += t.text.length
 				case t: TextNode =>
 					offset += t.text.length
+				case t: Comment =>
+					println(body)
 			}
 		}
 		val cleanedLinks = cleanMetapageLinks(linksList.toList)
