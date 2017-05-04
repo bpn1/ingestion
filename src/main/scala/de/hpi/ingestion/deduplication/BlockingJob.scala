@@ -75,20 +75,20 @@ object BlockingJob extends SparkJob {
 	/**
 	  * Uses input blocking scheme to generate blocks of subjects.
 	  * @param subjects RDD to perform the blocking on.
-	  * @param scheme blocking scheme to use to generate keys.
-	  * @return subjects grouped by blocking keys
+	  * @param blockingSchemes blocking scheme to use to generate keys.
+	  * @return subjects keyed by blocking keys and the blocking schemes tag
 	  */
 	def blocking(
 		subjects: RDD[Subject],
-		scheme: BlockingScheme,
-		filterUndefined: Boolean
-	): RDD[(String, List[Subject])] = {
+		blockingSchemes: List[BlockingScheme]
+	): RDD[((String, String), Subject)] = {
 		subjects
 			.flatMap { subject =>
-				val blockingKeys = scheme.generateKey(subject).distinct
-				blockingKeys.map((_, List(subject)))
-			}.filter(_._1 != scheme.undefinedValue || !filterUndefined)
-			.reduceByKey(_ ::: _)
+				blockingSchemes.flatMap { scheme =>
+					val blockingKeys = scheme.generateKey(subject).distinct
+					blockingKeys.map(key => ((key, scheme.tag), subject))
+				}
+			}
 	}
 
 	/**
@@ -104,19 +104,13 @@ object BlockingJob extends SparkJob {
 		blockingSchemes: List[BlockingScheme],
 		filterUndefined: Boolean = true
 	): RDD[(String, Block)] = {
-		blockingSchemes.map { scheme =>
-			val subjectBlocks = blocking(subjects, scheme, filterUndefined)
-			val stagingBlocks = blocking(stagingSubjects, scheme, filterUndefined)
-			subjectBlocks
-				.join(stagingBlocks)
-				.map { case (key, (subjectBlock, stagingBlock)) =>
-					val block = Block(
-						key = key,
-						subjects = subjectBlock,
-						staging = stagingBlock)
-					(scheme.tag, block)
-				}
-		}.reduce(_.union(_))
+		val subjectBlocks = blocking(subjects, blockingSchemes)
+		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
+		subjectBlocks
+			.cogroup(stagingBlocks)
+			.map { case ((key, tag), (subjectList, stagingList)) =>
+				(tag, Block(key = key, subjects = subjectList.toList, staging = stagingList.toList))
+			}
 	}
 
 	def mergeEvaluation(eval1: BlockEvaluation, eval2: BlockEvaluation): BlockEvaluation = {
