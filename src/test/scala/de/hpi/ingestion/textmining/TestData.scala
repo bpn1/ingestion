@@ -2,6 +2,7 @@ package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
+import org.jsoup.nodes.Element
 
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
@@ -595,9 +596,41 @@ object TestData {
 			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
 	}
 
+	def wikipediaEntryWithHeadlines(): WikipediaEntry = {
+		WikipediaEntry("Postbank-Hochhaus (Berlin) Kurz", Option("""Das heutige '''Postbank-Hochhaus''' (früher: '''Postscheckamt Berlin West''' (Bln W), seit 1985: '''Postgiroamt Berlin''') ist ein [[Hochhaus]] der [[Postbank]].\n\n== Geschichte und Entstehung ==\nDas Postscheckamt von Berlin war ab 1909 in einem Neubau in der [[Dorotheenstraße (Berlin)|Dorotheenstraße]] 29 (heute: 84).\n\n== Architektur ==\nDie Gestaltung des Gebäudes orientiert sich an [[Mies van der Rohe]]s [[Seagram Building]] in [[New York City|New York]].\n\n== UKW-Sender ==\nIm Postbank-Hochhaus befinden sich mehrere [[Ultrakurzwellensender|UKW-Sender]].\n\n== Siehe auch ==\n\n== Literatur ==\n\n== Weblinks ==\n\n== Einzelnachweise =="""))
+	}
+
+	def documentWithHeadlines(): String = {
+		"""<html>
+		  | <head></head>
+		  | <body>
+		  |  <p>Das heutige <b>Postbank-Hochhaus</b> (früher: <b>Postscheckamt Berlin West</b> (Bln W), seit 1985: <b>Postgiroamt Berlin</b>) ist ein <a href="/Hochhaus" title="Hochhaus">Hochhaus</a> der <a href="/Postbank" title="Postbank">Postbank</a>.</p>
+		  |  <h2><span class="mw-headline" id="Geschichte_und_Entstehung">Geschichte und Entstehung</span></h2>
+		  |  <p>Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der <a href="/Dorotheenstra%C3%9Fe_(Berlin)" title="Dorotheenstraße (Berlin)">Dorotheenstraße</a> 29 (heute: 84).</p>
+		  |  <h2><span class="mw-headline" id="Architektur">Architektur</span></h2>
+		  |  <p>Die Gestaltung des Gebäudes orientiert sich an <a href="/Mies_van_der_Rohe" title="Mies van der Rohe">Mies van der Rohes</a> <a href="/Seagram_Building" title="Seagram Building">Seagram Building</a> in <a href="/New_York_City" title="New York City">New York</a>.</p>
+		  |  <h2><span class="mw-headline" id="UKW-Sender">UKW-Sender</span></h2>
+		  |  <p>Im Postbank-Hochhaus befinden sich mehrere <a href="/Ultrakurzwellensender" title="Ultrakurzwellensender">UKW-Sender</a>.</p>
+		  |  <h2><span class="mw-headline" id="Siehe_auch">Siehe auch</span></h2>
+		  |  <h2><span class="mw-headline" id="Literatur">Literatur</span></h2>
+		  |  <h2><span class="mw-headline" id="Weblinks">Weblinks</span></h2>
+		  |  <h2><span class="mw-headline" id="Einzelnachweise">Einzelnachweise</span></h2>
+		  | </body>
+		  |</html>""".stripMargin
+	}
+
+	def wikipediaEntryHeadlines(): Set[String] = {
+		Set("Geschichte und Entstehung", "Architektur", "UKW-Sender", "Siehe auch", "Literatur", "Weblinks", "Einzelnachweise")
+	}
+
+	def parsedArticleTextWithHeadlines(): String = {
+		"Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank. Geschichte und Entstehung Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84). Architektur Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. UKW-Sender Im Postbank-Hochhaus befinden sich mehrere UKW-Sender. Siehe auch Literatur Weblinks Einzelnachweise"
+	}
+
 	def wikipediaEntriesForParsing(): List[WikipediaEntry] = {
 		List(
-			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
+			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]"""))
+		)
 	}
 
 	def parsedWikipediaEntries(): List[ParsedWikipediaEntry] = {
@@ -672,7 +705,7 @@ object TestData {
 			"Zerfall (Album)")
 	}
 
-	def  	smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
+	def smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
 		List(
 			ParsedWikipediaEntry(
 				"Audi",
@@ -1100,15 +1133,13 @@ object TestData {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
 
-	def documentTestList(): List[String] = {
-		List(
-			"""<body><p><a href="/2._Juli" title="2. Juli">2. Juli</a>
-			  |<a href="/1852" title="1852">1852</a> im Stadtteil
-			  |<span class="math">bli</span> bla
-			  |<span class="math">blub</span>
-			  |<abbr title="Naturgesetze für Information">NGI</abbr>
-			  |</p></body>""".stripMargin
-		)
+	def document(): String = {
+		"""<body><p><a href="/2._Juli" title="2. Juli">2. Juli</a>
+		  |<a href="/1852" title="1852">1852</a> im Stadtteil
+		  |<span class="math">bli</span> bla
+		  |<span class="math">blub</span>
+		  |<abbr title="Naturgesetze für Information">NGI</abbr>
+		  |</p></body>""".stripMargin
 	}
 
 	def parsedEntriesWithRedirects(): Set[ParsedWikipediaEntry] = {
