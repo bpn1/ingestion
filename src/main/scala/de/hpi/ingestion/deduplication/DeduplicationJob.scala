@@ -17,7 +17,7 @@ import scala.xml.XML
 
 object DeduplicationJob extends SparkJob {
 	appName = "Deduplication"
-	var config = List[(String, ScoreConfig[String, SimilarityMeasure[String]])]()
+	var config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
 	val settings = mutable.Map[String, String]()
 	val configFile: Option[String] = None
 
@@ -98,41 +98,9 @@ object DeduplicationJob extends SparkJob {
 	def parseConfig(): Unit = {
 		val path = this.configFile.getOrElse("config.xml")
 		val xml = XML.loadString(Source
-			.fromURL(getClass.getResource(s"/$path"))
-			.getLines()
-			.mkString("\n"))
-
-		val configSettings = xml \\ "config" \ "sourceSettings"
-		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
-			settings(node.label) = node.text
-
-		config = (xml \\ "config" \ "simMeasurements" \ "feature")
-			.toList
-			.map { feature =>
-				val attribute = (feature \ "attribute").text
-				val simMeasure = (feature \ "similarityMeasure").text
-				val weight = (feature \ "weight").text
-				val scale = (feature \ "scale").text
-
-				(attribute, ScoreConfig[String, SimilarityMeasure[String]](
-					this.dataTypes
-						.getOrElse(simMeasure, ExactMatchString)
-						.asInstanceOf[SimilarityMeasure[String]],
-					weight.toDouble,
-					scale.toInt))
-			}
-	}
-
-	/*/**
-	  * Reads the configuration from a xml file
-	  * @return a list containing scoreConfig entities parsed from the xml file
-	  */
-	def parseConfig(): Unit = {
-		val path = this.configFile.getOrElse("config.xml")
-		val xml = XML.loadString(Source
-			.fromURL(getClass.getResource(s"/$path"))
-			.getLines()
-			.mkString("\n"))
+		.fromURL(getClass.getResource(s"/$path"))
+		.getLines()
+		.mkString("\n"))
 
 		val configSettings = xml \\ "config" \ "sourceSettings"
 		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
@@ -152,9 +120,9 @@ object DeduplicationJob extends SparkJob {
 				weight,
 				scale
 			)
-			this.config = config.getOrElse(key, Nil):::List(scoreConfig)
+			this.config(key) = config.getOrElse(key, Nil):::List(scoreConfig)
 		}
-	}*/
+	}
 
 	/**
 	  * Compares to subjects regarding the configuration
@@ -167,16 +135,19 @@ object DeduplicationJob extends SparkJob {
 		subject2: Subject,
 		scale: Int = 1
 	): Double = {
-		val weights = config.map(_._2.weight).sum
+		val weights = config
+		.values
+		.flatMap(_.map(_.weight))
+		.sum
 
 		val scores = for {
 			(attribute, scoreConfigs) <- this.config
 			valueSubject1 = subject1.get(attribute)
 			valueSubject2 = subject2.get(attribute)
 			if valueSubject1.nonEmpty && valueSubject2.nonEmpty
-				scoreConfig <- scoreConfigs
+			scoreConfig <- scoreConfigs
 		} yield CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
-		// Nothing is returned here? Why?
+
 		scores.sum / weights
 	}
 
