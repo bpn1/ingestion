@@ -3,7 +3,7 @@ package de.hpi.ingestion.deduplication
 import java.util.UUID
 
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.deduplication.models.{BlockEvaluation, PrecisionRecallDataTuple, ScoreConfig}
+import de.hpi.ingestion.deduplication.models.{BlockEvaluation, PrecisionRecallDataTuple, ScoreConfig, Block}
 import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler, MongeElkan, SimilarityMeasure}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -72,19 +72,19 @@ object TestData {
 	)
 
 	val wikidataList = List(
-			Subject(
-				name = Option("wikidata_1"),
-				properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List(""))
-			),
-			Subject(
-				name = Option("wikidata_2"),
-				properties = Map("id_dbpedia" -> List("dbpedia_2"), "id_wikidata" -> List("Q2"))
-			),
-			Subject(
-				name = Option("wikidata_3"),
-				properties = Map("id_dbpedia" -> List("dbpedia_3"), "id_wikidata" -> List("Q3"))
-			),
-			Subject(name = Option("wikidata_4"))
+		Subject(
+			name = Option("wikidata_1"),
+			properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List(""))
+		),
+		Subject(
+			name = Option("wikidata_2"),
+			properties = Map("id_dbpedia" -> List("dbpedia_2"), "id_wikidata" -> List("Q2"))
+		),
+		Subject(
+			name = Option("wikidata_3"),
+			properties = Map("id_dbpedia" -> List("dbpedia_3"), "id_wikidata" -> List("Q3"))
+		),
+		Subject(name = Option("wikidata_4"))
 	)
 
 	def propertyKeyDBpedia(sc: SparkContext): RDD[(String, Subject)] = {
@@ -144,8 +144,8 @@ object TestData {
 	)
 
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
-			MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
-			JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7
+		MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
+		JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7
 	).sum / (0.8 + 0.7)
 
 	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String], scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]): Double = {
@@ -153,13 +153,13 @@ object TestData {
 	}
 
 	def expectedCompareStrategies: List[(List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) => Double] = List(
-			CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
-		)
+		CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
+	)
 
 	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (
-		List("very", "generic", "values"),
-		List("even", "more", "values"),
-		testConfig().head._2.head
+	List("very", "generic", "values"),
+	List("even", "more", "values"),
+	testConfig().head._2.head
 	)
 
 	def cityBlockingScheme: ListBlockingScheme = {
@@ -169,23 +169,29 @@ object TestData {
 		scheme
 	}
 
-	def blocks(sc: SparkContext, testSubjects: List[Subject]): List[RDD[(String, List[Subject])]] = {
-		List(
-			sc.parallelize(Seq(
-				("Berlin", List(testSubjects.head, testSubjects(1), testSubjects(2))),
-				("Hamburg", List(testSubjects.head, testSubjects(3))),
-				("New York", List(testSubjects(1), testSubjects(3)))
-			)),
-			sc.parallelize(Seq(
-				("Vol", List(testSubjects.head, testSubjects(1))),
-				("Aud", List(testSubjects(2), testSubjects(3))),
-				("Por", List(testSubjects(4))),
-				("Fer", List(testSubjects(5)))
-			))
-		)
-	}
+	def subjects: List[Subject] = List(
+		Subject(name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52","11"), "gen_income" -> List("1234"))),
+		Subject(name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52","13"), "gen_income" -> List("33"))),
+		Subject(name = Some("Porsche"), properties = Map("geo_coords" -> List("52","13"), "gen_sectors" -> List("cars", "music", "games"))),
+		Subject(name = Some("Ferrari"), properties = Map("geo_coords" -> List("53","14"), "gen_sectors" -> List("games", "cars", "music")))
+	)
 
-	def defaultDeduplication: Deduplication = new Deduplication(0.5, "TestDeduplication", List("testSource"))
+	def stagings: List[Subject] = List(
+		Subject(name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "gen_income" -> List("12"))),
+		Subject(name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53","14"), "gen_income" -> List("600")))
+	)
+
+	def blocks(sc: SparkContext, testSubjects: List[Subject]): RDD[(String, Block)] = {
+		sc.parallelize(List(
+			("GeoBlocking", Block(key = "Berlin", subjects = subjects.take(2), staging = stagings.take(1))),
+			("GeoBlocking", Block(key = "Hamburg", subjects = subjects.take(1), staging = List(stagings.last))),
+			("GeoBlocking", Block(key = "New York", staging = stagings)),
+			("SimpleBlocking", Block(key = "Vol", subjects = subjects.take(1), staging = stagings.take(1))),
+			("SimpleBlocking", Block(key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last))),
+			("SimpleBlocking", Block(key = "Por", subjects = List(subjects(3)))),
+			("SimpleBlocking", Block(key = "Fer", subjects = List(subjects(4))))
+		))
+	}
 
 	def evaluationTestData: List[(Option[String], Map[String, Int])] = {
 		List(

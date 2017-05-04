@@ -9,7 +9,7 @@ import scala.collection.mutable
 
 class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 	"compare" should "calculate a score regarding the configuration" in {
-		val deduplication = TestData.defaultDeduplication
+		val deduplication = DeduplicationJob
 		deduplication.config = TestData.testConfig()
 		val subjects = TestData.testSubjects
 		val score = deduplication.compare(subjects.head, subjects(1))
@@ -19,7 +19,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	it should "just return the weighted score if the configuration contains only one element" in {
-		val deduplication = TestData.defaultDeduplication
+		val deduplication = DeduplicationJob
 		val config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
 		config("name") = List(ScoreConfig(MongeElkan, 0.5))
 		deduplication.config = config
@@ -31,29 +31,16 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	"parseConfig" should "generate a configuration from a given path" in {
-		val deduplication = TestData.defaultDeduplication
+		val deduplication = DeduplicationJob
 		deduplication.parseConfig()
 		val expected = TestData.parsedConfig
 
 		deduplication.config shouldEqual expected
 	}
 
-	"blocking" should "partition subjects regarding the value of the given key" in {
-		val deduplication = TestData.defaultDeduplication
-		val subjects = TestData.testSubjects
-		val subjectsRDD = sc.parallelize(subjects)
-		val blockingSchemes = List(TestData.cityBlockingScheme, new SimpleBlockingScheme)
-		val blocks = deduplication.blocking(subjectsRDD, blockingSchemes)
-		val expectedBlocks = TestData.blocks(sc, subjects)
-
-		(blocks, expectedBlocks).zipped.foreach { case (block, expectedBlock) =>
-			assertRDDEquals(expectedBlock, block)
-		}
-	}
-
 	"createDuplicateCandidates" should "build an RDD containing all candidates for deduplication for each subject" in {
 		val testSubjects = TestData.testSubjects
-		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
+		val deduplication = DeduplicationJob
 		deduplication.settings("stagingTable")= "subject_wikidata"
 		val testSubject1 = testSubjects.head
 		val testSubject2 = testSubjects(3)
@@ -65,7 +52,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
-		val deduplication = TestData.defaultDeduplication
+		val deduplication = DeduplicationJob
 		deduplication.config = TestData.parsedConfig
 		val subjects = TestData.testSubjects
 		val duplicates = deduplication.findDuplicates(subjects)
@@ -74,8 +61,8 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		duplicates shouldEqual expected
 	}
 
-	"buildDuplicatesClique" should "should add isDuplicate relation with a confidence for a list of tuples" in {
-		val deduplication = TestData.defaultDeduplication
+	"buildDuplicatesSCC" should "should add isDuplicate relation with a confidence for a list of tuples" in {
+		val deduplication = DeduplicationJob
 		val subjects = TestData.testSubjects
 		val duplicates = List((subjects.head, subjects(2), 0.8), (subjects(1), subjects(3), 0.8))
 		val expectedRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
@@ -89,22 +76,10 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 	}
 
-	"evaluateBlocks" should "evaluate each block" in {
-		val deduplication = TestData.defaultDeduplication
-		val subjects = TestData.testSubjects
-		val blocks = TestData.blocks(sc, subjects)
-		val blockingSchemes = List(TestData.cityBlockingScheme, new SimpleBlockingScheme)
-		val evaluationList = deduplication.evaluateBlocks(blocks, "Test comment", blockingSchemes)
-		val evaluationData = evaluationList
-			.map(blockingData => (blockingData._2, blockingData._3))
-			.collect
-			.toSet
-		val expected = TestData.evaluationTestData.toSet
-		evaluationData shouldEqual expected
-	}
+
 
 	"addSymRelation" should "add a symmetric relation between two given nodes" in {
-		val deduplication = TestData.defaultDeduplication
+		val deduplication = DeduplicationJob
 		val subjects = TestData.testSubjects
 		val relation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
 		val version = TestData.testVersion(sc)
