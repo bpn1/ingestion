@@ -12,45 +12,6 @@ object TestData {
 	// scalastyle:off line.size.limit
 	val subjectIds = List.fill(10)(UUID.randomUUID())
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
-	def testSubjects: List[Subject] = List(
-		Subject(
-			id = subjectIds.head,
-			name = Some("Volkswagen"),
-			properties = Map(
-				"geo_city" -> List("Berlin", "Hamburg"),
-				"geo_coords" -> List("52","11"),
-				"gen_employees" -> List("1234")
-			)
-		),
-		Subject(
-			id = subjectIds(1),
-			name = Some("Volkswagen AG"),
-			properties = Map(
-				"geo_city" -> List("Berlin", "New York"),
-				"gen_employees" -> List("12")
-			)
-		),
-		Subject(
-			id = subjectIds(2),
-			name = Some("Volkswagen KG"),
-			properties = Map("geo_coords" -> List("52", "12"))
-		)
-	)
-	def masterNode: Subject = testSubjects.head
-	def duplicates: DuplicateCandidates = DuplicateCandidates(
-		testSubjects.head.id,
-		candidates = testSubjects.tail.map((_, "source", 0.6))
-	)
-	def expectedProperties: Map[String, List[String]] = Map(
-		"geo_city" -> List("Berlin", "Hamburg", "New York"),
-		"geo_coords" -> List("52", "11", "52", "12"),
-		"gen_employees" -> List("1234", "12")
-	)
-	def expectedRelations: Map[UUID, Map[String, String]] = Map(
-		subjectIds(1) -> Map("type" -> "isDuplicate", "confidence" -> "0.6"),
-		subjectIds.last -> Map("type" -> "isDuplicate", "confidence" -> "0.6")
-	)
-
 	def subjects: List[Subject] = List(
 		Subject(id = subjectIds.head, name = Some("Audi"), properties = Map("geo_city" -> List("München"))),
 		Subject(id = subjectIds(1), name = Some("Mercedes"), properties = Map("geo_postal" -> List("10666"))),
@@ -60,6 +21,19 @@ object TestData {
 		Subject(id = subjectIds(5), name = Some("Mercedes Benz"), properties = Map("geo_coords" -> List("1", "1"))),
 		Subject(id = subjectIds(6), name = Some("Mercedes B."), properties = Map("geo_coords" -> List("1", "2", "3", "4"))),
 		Subject(id = subjectIds(7), name = Some("Volkswagen"))
+	)
+	def masterNode: Subject = subjects.head
+	def duplicates: DuplicateCandidates = DuplicateCandidates(
+		subjects.head.id,
+		candidates = List(subjects(3), subjects(4)).map((_, "source", 0.6))
+	)
+	def expectedProperties: Map[String, List[String]] = Map(
+		"geo_city" -> List("München", "Berlin"),
+		"geo_postal" -> List("10888")
+	)
+	def expectedRelations: Map[UUID, Map[String, String]] = Map(
+		subjectIds(3) -> Map("type" -> "isDuplicate", "confidence" -> "0.6"),
+		subjectIds(4) -> Map("type" -> "isDuplicate", "confidence" -> "0.6")
 	)
 	def subjectRDD(sc: SparkContext): RDD[Subject] = sc.parallelize(List(
 		subjects.head, subjects(1), subjects(2)
@@ -83,23 +57,50 @@ object TestData {
 			)
 		)
 	))
-	def inputRDD(sc: SparkContext): List[RDD[Any]] = List(
-		subjectRDD(sc),
-		stagingRDD(sc),
-		duplicateCandidatesRDD(sc)
-	).toAnyRDD()
-	def outputRDD(sc: SparkContext): List[RDD[Any]] = List(sc.parallelize(List(
-		Subject(id = subjectIds.head, name = Some("Audi"), properties = Map(
-			"geo_city" -> List("München", "Berlin"), "geo_postal" -> List("10888")
-		), relations = Map(
-			subjectIds(3) -> Map("type" -> "Duplicate", "confidence" -> "0.5")
-		)),
-		Subject(id = subjectIds(1)),
-		Subject(id = subjectIds(3)),
-		Subject(id = subjectIds(4)),
-		Subject(id = subjectIds(5)),
-		Subject(id = subjectIds(6)),
-		subjects.last
-	))).toAnyRDD()
+	def inputRDD(sc: SparkContext): List[RDD[Any]] = {
+		List(subjectRDD(sc), stagingRDD(sc)).toAnyRDD() ::: List(duplicateCandidatesRDD(sc)).toAnyRDD()
+	}
+	def outputRDD(sc: SparkContext): List[RDD[Any]] = {
+		val relation = Map("type" -> "Duplicate", "confidence" -> "0.5")
+		List(sc.parallelize(List(
+			Subject(
+				id = subjectIds.head,
+				name = Some("Audi"),
+				properties = Map("geo_city" -> List("München", "Berlin"), "geo_postal" -> List("10888")),
+				relations = Map(subjectIds(3) -> relation, subjectIds(4) -> relation)
+			),
+			Subject(
+				id = subjectIds(1),
+				name = Some("Mercedes"),
+				properties = Map("geo_postal" -> List("10666"), "geo_coords" -> List("1", "1", "1", "2", "3", "4")),
+				relations = Map(subjectIds(5) -> relation, subjectIds(6) -> relation)
+			),
+			Subject(
+				id = subjectIds(3),
+				name = Some("Audi"),
+				properties = Map("geo_city" -> List("Berlin"), "type" -> List("Auto")),
+				relations = Map(subjectIds.head -> relation)
+			),
+			Subject(
+				id = subjectIds(4),
+				name = Some("Audi AG"),
+				properties = Map("geo_postal" -> List("10888")),
+				relations = Map(subjectIds.head -> relation)
+			),
+			Subject(
+				id = subjectIds(5),
+				name = Some("Mercedes Benz"),
+				properties = Map("geo_coords" -> List("1", "1")),
+				relations = Map(subjectIds(1) -> relation)
+			),
+			Subject(
+				id = subjectIds(6),
+				name = Some("Mercedes B."),
+				properties = Map("geo_coords" -> List("1", "2", "3", "4")),
+				relations = Map(subjectIds(1) -> relation)
+			),
+			subjects.last
+		))).toAnyRDD()
+	}
 	// scalastyle:on line.size.limit
 }

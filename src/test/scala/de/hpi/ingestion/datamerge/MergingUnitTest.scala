@@ -5,7 +5,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext {
 	"addSymmetricRelation" should "add a symmetric relation between two given nodes" in {
-		val subjects = TestData.testSubjects.take(2)
+		val subjects = TestData.subjects.take(2)
 		val relation = Map("type" -> "isDuplicate", "confidence" -> "0.6")
 		val version = TestData.testVersion(sc)
 		Merging.addSymmetricRelation(subjects.head, subjects.last, relation, version)
