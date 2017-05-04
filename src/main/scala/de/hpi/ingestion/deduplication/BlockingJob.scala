@@ -1,7 +1,5 @@
 package de.hpi.ingestion.deduplication
 
-import java.util.UUID
-
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.models._
 import org.apache.spark.SparkContext
@@ -9,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits.TupleImplicits._
 import scala.language.postfixOps
 
 import scala.xml.XML
@@ -50,8 +49,8 @@ object BlockingJob extends SparkJob {
 		val simpleBlockingScheme = SimpleBlockingScheme("simple_scheme")
 		val blockingSchemes = List(geoCountryBlockingScheme, generalSectorBlockingScheme, simpleBlockingScheme)
 		val blocks = blocking(subjects, staging, blockingSchemes, false)
-		val blockEvaluation = evaluateBlocks(blocks, s"BlockingJob_${System.currentTimeMillis()}")
-		List(blockEvaluation).toAnyRDD()
+		val blockEvaluation = List(evaluateBlocks(blocks, s"BlockingJob_${System.currentTimeMillis()}"))
+		blockEvaluation.toAnyRDD()
 	}
 
 	/**
@@ -73,10 +72,11 @@ object BlockingJob extends SparkJob {
 	}
 
 	/**
-	  * Uses input blocking scheme to generate blocks of subjects.
-	  * @param subjects RDD to perform the blocking on.
-	  * @param blockingSchemes blocking scheme to use to generate keys.
-	  * @return subjects keyed by blocking keys and the blocking schemes tag
+	  * Uses input blocking schemes to generate blocks of subjects. Every subject generates an entry for every key
+	  * element for every blocking scheme.
+	  * @param subjects RDD to perform the blocking on
+	  * @param blockingSchemes List of blocking schemes used to generate keys
+	  * @return subjects keyed by a blocking key and the blocking schemes tag
 	  */
 	def blocking(
 		subjects: RDD[Subject],
@@ -92,11 +92,11 @@ object BlockingJob extends SparkJob {
 	}
 
 	/**
-	  * Creates blocks based on the input blocking scheme
+	  * Blocks the input Subjects using the provided blocking schemes.
 	  * @param subjects RDD to perform the blocking on
 	  * @param stagingSubjects RDD to perform the blocking on
-	  * @param blockingSchemes blocking schemes to use to generate keys.
-	  * @return RDD of blocks.
+	  * @param blockingSchemes blocking schemes used to generate keys
+	  * @return RDD of blocks keyed by the tag of the blocking scheme used to genrate the blocking
 	  */
 	def blocking(
 		subjects: RDD[Subject],
@@ -113,31 +113,21 @@ object BlockingJob extends SparkJob {
 			}
 	}
 
-	def mergeEvaluation(eval1: BlockEvaluation, eval2: BlockEvaluation): BlockEvaluation = {
-		val blockingData = (eval1.data.toList ++ eval2.data.toList)
-			.groupBy(_._1)
-			.mapValues(_.flatMap(_._2))
-		BlockEvaluation(eval1.id, blockingData, eval1.comment)
-	}
-
 	/**
-	  * Executes methods on the blocked data to gain information.
-	  *
-	  * @param blocks Input data, partitioned in blocks.
-	  * @param comment Note to add to the evaluated data.
-	  * @return Blocks with size-value and comment.
+	  * Counts the number of subjects per block and writes the statistical data to a Block Evaluation object.
+	  * @param blocks blocked subjects
+	  * @param comment note to add to the evaluated data
+	  * @return Block Evaluation containing the block sizes per blocking scheme
 	  */
 	def evaluateBlocks(
 		blocks: RDD[(String, Block)],
 		comment: String
 	): RDD[BlockEvaluation] = {
-		val defaultKey = "key"
-		val id = UUID.randomUUID()
-		blocks.map { case (tag, block) =>
-			val evalMap = Map(tag -> List(block.evaluate()))
-			val evaluation = BlockEvaluation(id, evalMap, Option(comment))
-			(defaultKey, evaluation)
-		}.reduceByKey(mergeEvaluation)
-		.values
+		blocks
+			.map(_.map(identity, block => List(block.evaluate())))
+			.reduceByKey(_ ++ _)
+			.map { case (tag, blockList) =>
+				BlockEvaluation(data = blockList, comment = Option(s"${tag}_$comment"))
+			}
 	}
 }

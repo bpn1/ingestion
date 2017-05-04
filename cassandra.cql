@@ -144,7 +144,7 @@ CREATE TYPE datalake.blockstats (
 CREATE TABLE datalake.deduplicationstats (
     id uuid PRIMARY KEY,
     comment text,
-    data map<text, frozen<list<blockstats>>>
+    data list<frozen<blockstats>>
 );
 
 CREATE TABLE datalake.deduplicationstats (
