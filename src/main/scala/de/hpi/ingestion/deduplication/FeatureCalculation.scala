@@ -1,12 +1,14 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
+
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.deduplication.models.FeatureEntry
+import de.hpi.ingestion.deduplication.models.{FeatureEntry, ScoreConfig}
+import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
@@ -32,6 +34,33 @@ object FeatureCalculation extends SparkJob {
 			.fromAnyRDD[FeatureEntry]()
 			.head
 			.saveToCassandra(keyspace, features)
+	}
+
+	def isDuplicate(subject: Subject, staging: Subject, goldStandard: RDD[(UUID, UUID)]): Boolean = false // TODO: nyi
+
+	def compare(subject: Subject, staging: Subject): Double = 0.0 // TODO: nyi
+
+	def createFeature(
+		subject: Subject,
+		staging: Subject,
+		goldStandard: RDD[(UUID, UUID)],
+		config: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]
+	): FeatureEntry = {
+		val scores = config.map { case (attribute, scoreConfigs) =>
+			val subjectValues = subject.get(attribute)
+			val stagingValues = staging.get(attribute)
+			val scores = scoreConfigs.map { scoreConfig =>
+				if(subjectValues.isEmpty || stagingValues.isEmpty){
+					0.0
+				}
+				else {
+					CompareStrategy(attribute)(subjectValues, stagingValues, scoreConfig)
+				}
+			}
+			(attribute, scores)
+		}
+		val correct = isDuplicate(subject, staging, goldStandard)
+		FeatureEntry(subject, staging, scores, correct)
 	}
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
