@@ -244,6 +244,7 @@ object TextParser extends SparkJob {
 			startIndex = 1
 			var firstChildText = children(0).asInstanceOf[TextNode].text
 			while(firstChildText.charAt(0) != body.text.headOption.getOrElse("")) {
+				println(body)
 				firstChildText = firstChildText.substring(1)
 				if(firstChildText.length == 0) {
 					return ("", linksList.toList)
