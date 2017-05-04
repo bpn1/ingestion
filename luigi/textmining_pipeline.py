@@ -113,4 +113,8 @@ class TextminingWorkflow(luigi.Task):
 
 
 if __name__ == '__main__':
-    luigi.run(main_task_cls=TextminingWorkflow)
+    try:
+        luigi.run(main_task_cls=TextminingWorkflow)
+    except KeyboardInterrupt:
+        print("Pipeline interrupted")
+        # todo: send ctrl+c via ssh
