@@ -45,8 +45,8 @@ object BlockingJob extends SparkJob {
 		val inputSubjects = input.fromAnyRDD[Subject]()
 		val subjects = inputSubjects.head
 		val staging = inputSubjects(1)
-		val geoCountryBlockingScheme = ListBlockingScheme("geo_city", "geo_country_scheme")
-		val generalSectorBlockingScheme = ListBlockingScheme("gen_sectors", "gen_sectors_scheme")
+		val geoCountryBlockingScheme = ListBlockingScheme("geo_country", "geo_country_scheme")
+		val generalSectorBlockingScheme = ListBlockingScheme("geo_coords", "geo_coords_scheme")
 		val simpleBlockingScheme = SimpleBlockingScheme("simple_scheme")
 		val blockingSchemes = List(geoCountryBlockingScheme, generalSectorBlockingScheme, simpleBlockingScheme)
 		val blocks = blocking(subjects, staging, blockingSchemes, false)
