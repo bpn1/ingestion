@@ -1,12 +1,14 @@
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models._
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import org.apache.spark.mllib.regression.LabeledPoint
 
 object ClassifierTraining extends SparkJob {
 	appName = "Classifier Training"
@@ -53,7 +55,31 @@ object ClassifierTraining extends SparkJob {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
 		val data = entries.map(_.labeledPoint())
 		val Array(training, test) = data.randomSplit(Array(0.6, 0.4))
+		training.cache
 		val model = NaiveBayes.train(training, 1.0)
+		val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
+			val prediction = model.predict(features)
+			(prediction, label)
+		}
+		val metrics = new BinaryClassificationMetrics(predictionAndLabels)
+
+		val precision = metrics.precisionByThreshold()
+		precision.foreach { case (t, p) =>
+			println(s"Threshhold: $t, Precision $p")
+		}
+
+		val recall = metrics.recallByThreshold()
+		recall.foreach { case (t, r) =>
+			println(s"Threshhold: $t, Recall $r")
+		}
+
+//		val prc = metrics.pr()
+
+		val f1score = metrics.fMeasureByThreshold(0.5)
+		f1score.foreach { case (t, f) =>
+			println(s"Threshhold: $t, F-Score $f, Beta = 0.5")
+		}
+
 		val numCorrect = test
 			.map(p => (model.predict(p.features), p.label))
 			.filter(x => x._1 == x._2)
