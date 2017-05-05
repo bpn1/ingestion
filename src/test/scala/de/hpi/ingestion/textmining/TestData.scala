@@ -1256,6 +1256,17 @@ object TestData {
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
+
+	def classifierFeatureEntries(): List[FeatureEntry] = {
+		List(
+			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
+			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, true),
+			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3, false),
+			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2, false),
+			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
+			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
+			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
+	}
 }
 
 // scalastyle:on method.length
