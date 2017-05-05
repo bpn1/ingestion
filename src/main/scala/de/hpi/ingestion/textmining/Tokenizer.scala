@@ -1,7 +1,10 @@
 package de.hpi.ingestion.textmining
 
 import java.util.StringTokenizer
+
+import de.hpi.ingestion.textmining.models.OffsetToken
 import edu.stanford.nlp.simple.GermanDocument
+
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
 import scala.annotation.tailrec
@@ -12,6 +15,8 @@ import scala.annotation.tailrec
 trait Tokenizer extends Serializable {
 	def tokenize(x: String): List[String]
 
+	def tokenizeWithOffsets(x: String): List[OffsetToken]
+
 	def reverse(x: List[String]): String
 }
 
@@ -20,6 +25,8 @@ trait Tokenizer extends Serializable {
   */
 class WhitespaceTokenizer() extends Tokenizer {
 	def tokenize(txt: String) = txt.split(" ").toList
+
+	def tokenizeWithOffsets(x: String) = List()
 
 	def reverse(tokens: List[String]) = tokens.mkString(" ")
 }
@@ -70,6 +77,8 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 			.toList
 	}
 
+	def tokenizeWithOffsets(x: String) = List()
+
 	def reverse(tokens: List[String]) = tokens.mkString(" ")
 }
 
@@ -82,6 +91,8 @@ class CleanCoreNLPTokenizer() extends CoreNLPTokenizer {
 		val badTokens = Set[String](".", "!", "?", ",", ";", ":")
 		tokens.filter(token => !badTokens.contains(token))
 	}
+
+	override def tokenizeWithOffsets(x: String) = List()
 }
 
 /**
@@ -95,6 +106,8 @@ class CoreNLPTokenizer() extends Tokenizer {
 			.toList
 			.flatMap(_.words.asScala.toList)
 	}
+
+	def tokenizeWithOffsets(x: String) = List()
 
 	def reverse(tokens: List[String]) = tokens.mkString(" ")
 }

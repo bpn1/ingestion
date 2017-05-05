@@ -132,4 +132,15 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 		tokenizer = IngestionTokenizer(Array(tokenizerName, "true", "broken"))
 		tokenizer.stem shouldBe false
 	}
+
+	"Tokens with offset" should "not be empty" in {
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, false, false)
+		TestData.testSentences()
+			.map(tokenizer.processWithOffsets)
+			.foreach(_ should not be empty)
+	}
+
+	they should "have valid offsets" in {
+
+	}
 }
