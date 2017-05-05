@@ -9,8 +9,9 @@ package_prefix = "de.hpi.ingestion.textmining."
 
 
 class TaskDefinition(object):
-    def __init__(self, task_name, upstream_tasks=None, scala_class=None):
-        self.task_name = task_name
+    def __init__(self, name, upstream_tasks=None, scala_class=None):
+        self.name = name
+        self.luigi_task = None
 
         if upstream_tasks is None:
             self.upstream_tasks = []
@@ -18,7 +19,7 @@ class TaskDefinition(object):
             self.upstream_tasks = upstream_tasks
 
         if scala_class is None:
-            self.scala_class = task_name
+            self.scala_class = name
         else:
             self.scala_class = scala_class
 
@@ -45,7 +46,7 @@ def define_task_dictionary(tasks):
     # task names must be unique!
     task_dict = {}
     for task in tasks:
-        task_dict[task.task_name] = task
+        task_dict[task.name] = task
     return task_dict
 
 
@@ -54,13 +55,25 @@ def create_command(program):
            + ingestion_jar + "\""
 
 
-def make_operator_dag(tasks, force_execution):
+def construct_task_dag(tasks, force_execution):
     last_task = None
-    for task in tasks.values():
-        command = create_command(task.scala_class)
-        upstream_tasks = [tasks[upstream_task] for upstream_task in task.upstream_tasks]
-        last_task = TextminingTask(name=task.task_name, command=command, upstream_tasks=upstream_tasks,
-                                   force=force_execution)
+    completed_tasks = set()
+    while len(completed_tasks) < len(tasks):
+        for task in tasks.values():
+            if task.name in completed_tasks:
+                continue
+            upstream_task_missing = False
+            command = create_command(task.scala_class)
+            upstream_tasks = [tasks[upstream_task].luigi_task for upstream_task in task.upstream_tasks]
+            for upstream_task in upstream_tasks:
+                if upstream_task is None:
+                    upstream_task_missing = True
+                    break
+            if not upstream_task_missing:
+                last_task = TextminingTask(name=task.name, command=command, upstream_tasks=upstream_tasks,
+                                           force=force_execution)
+                task.luigi_task = last_task
+                completed_tasks.add(task.name)
     return last_task
 
 
@@ -94,9 +107,9 @@ class TextminingTask(ForceableTask):
         return prefix + self.name + ".log"
 
     def inputs(self):
-        [upstream_task.output() for upstream_task in self.requires()]
+        return [upstream_task.output() for upstream_task in self.requires()]
 
-    def have_upstream_tasks_completed(self):
+    def has_upstream_completed(self):
         completed = True
         for input in self.inputs():
             with input.open("r") as fin:
@@ -107,7 +120,7 @@ class TextminingTask(ForceableTask):
     def execute_command(self):
         with self.output().open("w") as outfile:
             status, output = subprocess.call(self.command, shell=True)
-            outfile.write(str(status))
+            outfile.write(str(status))cri
             outfile.write("\n")
             outfile.write(output)
             print("status: \t" + str(status))
@@ -131,7 +144,7 @@ class TextminingWorkflow(luigi.Task):
     name = "TextminingWorkflow"
     force_execution = luigi.BoolParameter(default=False)
     tasks_dict = define_task_dictionary(tasks_definitions)
-    upstream_task = make_operator_dag(tasks_dict, force_execution)
+    upstream_task = construct_task_dag(tasks_dict, force_execution)
 
     def requires(self):
         return self.upstream_task
