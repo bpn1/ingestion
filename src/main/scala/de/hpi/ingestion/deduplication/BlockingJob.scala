@@ -5,11 +5,12 @@ import de.hpi.ingestion.deduplication.models._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
-import scala.language.postfixOps
 
+import scala.language.postfixOps
 import scala.xml.XML
 import scala.collection.mutable
 import scala.io.Source

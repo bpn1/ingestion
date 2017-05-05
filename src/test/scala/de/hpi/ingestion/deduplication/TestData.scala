@@ -3,8 +3,9 @@ package de.hpi.ingestion.deduplication
 import java.util.UUID
 
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.deduplication.models.{BlockEvaluation, PrecisionRecallDataTuple, ScoreConfig, Block}
-import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler, MongeElkan, SimilarityMeasure}
+import de.hpi.ingestion.deduplication.blockingschemes.ListBlockingScheme
+import de.hpi.ingestion.deduplication.models.{Block, BlockStats, PrecisionRecallDataTuple, ScoreConfig}
+import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan, SimilarityMeasure}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -118,6 +119,18 @@ object TestData {
 		Subject(name = Some("Ferrari"), properties = Map("geo_coords" -> List("53","14"), "gen_sectors" -> List("games", "cars", "music")))
 	)
 
+	def subjectBlocks(testSubjects: List[Subject]): List[Block] = {
+		List(
+			Block(key = "Aud", subjects = List(testSubjects(2)), staging = List(testSubjects(3))),
+			Block(key = "Vol", subjects = testSubjects.take(1), staging = List(testSubjects(1))),
+			Block(key = "undefined", subjects = testSubjects.take(2), staging = List(testSubjects(4)))
+//			Block(key = "Vol", subjects = subjects.take(1), staging = stagings.take(1)),
+//			Block(key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last)),
+//			Block(key = "Por", subjects = List(subjects(3))),
+//			Block(key = "Fer", subjects = List(subjects(4)))
+		)
+	}
+
 	def emptySubject: Subject = Subject()
 
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
@@ -165,7 +178,7 @@ object TestData {
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()
 		scheme.setAttributes("geo_city")
-		scheme.tag = "test city blocking scheme"
+		scheme.tag = "GeoBlocking"
 		scheme
 	}
 
@@ -181,27 +194,42 @@ object TestData {
 		Subject(name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53","14"), "gen_income" -> List("600")))
 	)
 
-	def blocks(sc: SparkContext, testSubjects: List[Subject]): RDD[(String, Block)] = {
+	def flatBlocks(sc: SparkContext, subjects: List[Subject], staging: List[Subject]): RDD[((String, String), Subject)] = {
 		sc.parallelize(List(
-			("GeoBlocking", Block(key = "Berlin", subjects = subjects.take(2), staging = stagings.take(1))),
-			("GeoBlocking", Block(key = "Hamburg", subjects = subjects.take(1), staging = List(stagings.last))),
-			("GeoBlocking", Block(key = "New York", staging = stagings)),
-			("SimpleBlocking", Block(key = "Vol", subjects = subjects.take(1), staging = stagings.take(1))),
-			("SimpleBlocking", Block(key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last))),
-			("SimpleBlocking", Block(key = "Por", subjects = List(subjects(3)))),
-			("SimpleBlocking", Block(key = "Fer", subjects = List(subjects(4))))
+			(("Berlin", "GeoBlocking"), staging.head),
+			(("Berlin", "GeoBlocking"), subjects.head),
+			(("Berlin", "GeoBlocking"), subjects(1)),
+			(("Hamburg", "GeoBlocking"), subjects.head),
+			(("Hamburg", "GeoBlocking"), staging.last),
+			(("New York", "GeoBlocking"), staging.head),
+			(("New York", "GeoBlocking"), staging.last),
+			(("undefined", "GeoBlocking"), subjects(2)),
+			(("undefined", "GeoBlocking"), subjects(3)),
+			(("Vol", "SimpleBlocking"), subjects.head),
+			(("Vol", "SimpleBlocking"), staging.head),
+			(("Aud", "SimpleBlocking"), subjects(1)),
+			(("Aud", "SimpleBlocking"), staging.last),
+			(("Por", "SimpleBlocking"), subjects(2)),
+			(("Fer", "SimpleBlocking"), subjects(3))
 		))
 	}
 
-	def evaluationTestData: List[(Option[String], Map[String, Int])] = {
+	def blocks(sc: SparkContext): RDD[(String, Block)] = {
+		sc.parallelize(List(
+			("GeoBlocking", Block(key = "Berlin", subjects = testSubjects.take(2), staging = stagings.take(1))),
+			("GeoBlocking", Block(key = "Hamburg", subjects = testSubjects.take(1), staging = List(stagings.last))),
+			("GeoBlocking", Block(key = "New York", staging = stagings)),
+			("SimpleBlocking", Block(key = "Vol", subjects = testSubjects.take(1), staging = stagings.take(1))),
+			("SimpleBlocking", Block(key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last))),
+			("SimpleBlocking", Block(key = "Por", subjects = List(testSubjects(3)))),
+			("SimpleBlocking", Block(key = "Fer", subjects = List(testSubjects(4))))
+		))
+	}
+
+	def evaluationTestData: List[(Option[String], List[BlockStats])] = {
 		List(
-			(Option("Test comment_test city blocking scheme"), Map("Berlin" -> 3)),
-			(Option("Test comment_test city blocking scheme"), Map("New York" -> 2)),
-			(Option("Test comment_test city blocking scheme"), Map("Hamburg" -> 2)),
-			(Option("Test comment_SimpleBlockingScheme"), Map("Vol" -> 2)),
-			(Option("Test comment_SimpleBlockingScheme"), Map("Aud" -> 2)),
-			(Option("Test comment_SimpleBlockingScheme"), Map("Por" -> 1)),
-			(Option("Test comment_SimpleBlockingScheme"), Map("Fer" -> 1)))
+			(Option("GeoBlocking_Test comment"), List(BlockStats("Berlin", 2, 1), BlockStats("Hamburg", 1, 1), BlockStats("New York", 0, 2))),
+			(Option("SimpleBlocking_Test comment"), List(BlockStats("Vol", 1, 1), BlockStats("Aud", 1, 1), BlockStats("Por", 1), BlockStats("Fer", 1))))
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))

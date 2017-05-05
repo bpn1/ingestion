@@ -1,14 +1,15 @@
 package de.hpi.ingestion.deduplication
 
-import de.hpi.ingestion.datalake.models._
+import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.SubjectManager
+import de.hpi.ingestion.datalake.models._
+import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.similarity._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import com.datastax.spark.connector._
 
 import scala.collection.mutable
 import scala.io.Source
@@ -54,8 +55,10 @@ object DeduplicationJob extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val duplicates = output.head.asInstanceOf[RDD[DuplicateCandidates]]
-		duplicates.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
+		output
+			.fromAnyRDD[DuplicateCandidates]()
+			.head
+			.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -72,13 +75,16 @@ object DeduplicationJob extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-//		parseConfig()
-//		val blocks = input.fromAnyRDD[Subject]()
-//		val subjectPairs = blocks.flatMap(block => findDuplicates(block._2))
-//		val duplicates = createDuplicateCandidates(subjectPairs)
-//
-//		List(duplicates).toAnyRDD()
-		input
+		val inputRDDs = input.fromAnyRDD[Subject]()
+		val subjects = inputRDDs.head
+		val staging = inputRDDs(1)
+		val blockingSchemes = List(SimpleBlockingScheme("simple_scheme"))
+		val blocks = BlockingJob.blocking(subjects, staging, blockingSchemes)
+		val subjectPairs = blocks
+			.values
+			.flatMap(findDuplicates)
+		val duplicates = createDuplicateCandidates(subjectPairs)
+		List(duplicates).toAnyRDD()
 	}
 
 	/**
@@ -92,10 +98,11 @@ object DeduplicationJob extends SparkJob {
 	}
 
 	/**
-	  * Reads the configuration from a xml file
+	  * Reads the configuration from an xml file.
 	  * @return a list containing scoreConfig entities parsed from the xml file
 	  */
 	def parseConfig(): Unit = {
+		config.clear()
 		val path = this.configFile.getOrElse("config.xml")
 		val xml = XML.loadString(Source
 		.fromURL(getClass.getResource(s"/$path"))
@@ -118,9 +125,8 @@ object DeduplicationJob extends SparkJob {
 			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
 				getSimilarityMeasure[String](similarityMeasure),
 				weight,
-				scale
-			)
-			this.config(key) = config.getOrElse(key, Nil):::List(scoreConfig)
+				scale)
+			this.config(key) = config.getOrElse(key, Nil) :+ scoreConfig
 		}
 	}
 
@@ -136,9 +142,9 @@ object DeduplicationJob extends SparkJob {
 		scale: Int = 1
 	): Double = {
 		val weights = config
-		.values
-		.flatMap(_.map(_.weight))
-		.sum
+			.values
+			.flatMap(_.map(_.weight))
+			.sum
 
 		val scores = for {
 			(attribute, scoreConfigs) <- this.config
@@ -152,34 +158,28 @@ object DeduplicationJob extends SparkJob {
 	}
 
 	/**
-	  * Creates candidates for the Deduplication for each element from the output of findDuplicates
+	  * Creates candidates for the Deduplication for each element of the output of findDuplicates.
 	  * @param subjectPairs Pairs of subjects for all possible duplicates
 	  * @return all actual candidates to save to the cassandra
 	  */
 	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
 		subjectPairs
 			.map { case (subject1, subject2, score) =>
-			subject1.id -> List((subject2, settings("stagingTable"), score))
-			}
-			.reduceByKey { case (accumulator, candidate) => candidate ::: accumulator}
+				(subject1.id, List((subject2, settings("stagingTable"), score)))
+			}.reduceByKey(_ ::: _)
 			.map(DuplicateCandidates.tupled)
 	}
 
 	/**
-	  * Finds the duplicates of each block
+	  * Finds the duplicates of each block.
 	  * @param block List of Subjects where the duplicates are searched in
 	  * @return tuple of Subjects with it's score, which is greater or equal a given threshold this.confidence
 	  */
-	def findDuplicates(block: List[Subject]): List[(Subject, Subject, Double)] = {
+	def findDuplicates(block: Block): List[(Subject, Subject, Double)] = {
 		block
-			.cross(block)
-			.filter(tuple => tuple._1 != tuple._2)
-			.map(tuple => Set(tuple, tuple.swap))
-			.toList
-			.distinct
-			.map(_.head)
-			.map(tuple => (tuple._1, tuple._2, compare(tuple._1, tuple._2)))
-			.filter(tuple => tuple._3 >= settings("confidence").toDouble)
+			.crossProduct()
+			.map(subjects => (subjects._1, subjects._2, compare(subjects._1, subjects._2)))
+			.filter(_._3 >= settings("confidence").toDouble)
 	}
 
 	/**
@@ -214,9 +214,8 @@ object DeduplicationJob extends SparkJob {
 			addSymRelation(
 				scoredDuplicatePair._1,
 				scoredDuplicatePair._2,
-				Map("type" -> "isDuplicate", "confidence" -> (scoredDuplicatePair._3).toString),
-				version
-			)
+				Map("type" -> "isDuplicate", "confidence" -> scoredDuplicatePair._3.toString),
+				version)
 		}
 	}
 }

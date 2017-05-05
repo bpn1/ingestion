@@ -31,11 +31,9 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	"parseConfig" should "generate a configuration from a given path" in {
-		val deduplication = DeduplicationJob
-		deduplication.parseConfig()
+		DeduplicationJob.parseConfig()
 		val expected = TestData.parsedConfig
-
-		deduplication.config shouldEqual expected
+		DeduplicationJob.config shouldEqual expected
 	}
 
 	"createDuplicateCandidates" should "build an RDD containing all candidates for deduplication for each subject" in {
@@ -52,12 +50,13 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
-		val deduplication = DeduplicationJob
-		deduplication.config = TestData.parsedConfig
+		DeduplicationJob.config = TestData.parsedConfig
+		DeduplicationJob.settings("confidence") = "0.35"
 		val subjects = TestData.testSubjects
-		val duplicates = deduplication.findDuplicates(subjects)
-		val expected = TestData.testDuplicates(subjects)
-
+		val duplicates = TestData.subjectBlocks(subjects)
+			.flatMap(DeduplicationJob.findDuplicates)
+			.toSet
+		val expected = TestData.testDuplicates(subjects).toSet
 		duplicates shouldEqual expected
 	}
 
@@ -73,10 +72,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 		subjects.head.relations shouldEqual expectedRelationNode1
 		subjects(1).relations shouldEqual expectedRelationNode2
-
 	}
-
-
 
 	"addSymRelation" should "add a symmetric relation between two given nodes" in {
 		val deduplication = DeduplicationJob
