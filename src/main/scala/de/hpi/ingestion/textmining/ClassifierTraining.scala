@@ -39,9 +39,44 @@ object ClassifierTraining extends SparkJob {
 			.head
 			.collect
 			.head
-			.save(sc, s"wikipedia_naivebayes_model_${System.currentTimeMillis()}")
+			.save(sc, s"wikipedia_randomforest_model_${System.currentTimeMillis()}")
 	}
 	// $COVERAGE-ON$
+
+	/**
+	  * Calculates Precision, Recall and F1-Score of the given prediction results.
+	  * @param predictionAndLabels RDD containing Tuples of the prediction and the given label in the format
+	  *                            (prediction, label)
+	  * @return List of statistic data as three-tuples in the format (statistic, threshold, value)
+	  */
+	def calculateStatistics(
+		predictionAndLabels: RDD[(Double, Double)],
+		beta: Double
+	): List[(String, Double, Double)] = {
+		val metrics = new BinaryClassificationMetrics(predictionAndLabels)
+		val precision = metrics.precisionByThreshold()
+		val recall = metrics.recallByThreshold()
+		val f1score = metrics.fMeasureByThreshold(beta)
+		val precisionOutput = precision.map { case (t, p) => ("precision", t, p) }
+		val recallOutput = recall.map { case (t, r) => ("recall", t, r) }
+		val fscoreOutput = f1score.map { case (t, f) => (s"fscore with beta $beta", t, f) }
+		precisionOutput
+			.union(recallOutput)
+			.union(fscoreOutput)
+			.collect
+			.toList
+	}
+
+	/**
+	  * Formats List of statistic three-tuples into a printable String.
+	  * @param stats List of statistic three-tuples in the format (statistic, threshold, value)
+	  * @return formatted String of the statistics
+	  */
+	def formatStatistics(stats: List[(String, Double, Double)]): String = {
+		stats
+			.map(t => s"${t._1}\t${t._2}\t${t._3}")
+			.mkString("\n")
+	}
 
 	/**
 	  * Uses 60% of the entries to train a Naive Bayes model and tests the model with the other 40% of the data.
@@ -55,37 +90,14 @@ object ClassifierTraining extends SparkJob {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
 		val data = entries.map(_.labeledPoint())
 		val Array(training, test) = data.randomSplit(Array(0.6, 0.4))
-		training.cache
+
 		val model = NaiveBayes.train(training, 1.0)
 		val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
 			val prediction = model.predict(features)
 			(prediction, label)
 		}
-		val metrics = new BinaryClassificationMetrics(predictionAndLabels)
+		val statistics = calculateStatistics(predictionAndLabels, 0.5)
 
-		val precision = metrics.precisionByThreshold()
-		precision.foreach { case (t, p) =>
-			println(s"Threshhold: $t, Precision $p")
-		}
-
-		val recall = metrics.recallByThreshold()
-		recall.foreach { case (t, r) =>
-			println(s"Threshhold: $t, Recall $r")
-		}
-
-//		val prc = metrics.pr()
-
-		val f1score = metrics.fMeasureByThreshold(0.5)
-		f1score.foreach { case (t, f) =>
-			println(s"Threshhold: $t, F-Score $f, Beta = 0.5")
-		}
-
-		val numCorrect = test
-			.map(p => (model.predict(p.features), p.label))
-			.filter(x => x._1 == x._2)
-			.count
-		val accuracy = 1.0 * numCorrect / test.count()
-		println(s"accuracy of the model: $accuracy")
 		List(sc.parallelize(Seq(model))).toAnyRDD()
 	}
 }
