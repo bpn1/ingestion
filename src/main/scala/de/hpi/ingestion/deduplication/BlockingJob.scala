@@ -20,6 +20,7 @@ object BlockingJob extends SparkJob {
 	val configFile: Option[String] = None
 	val settings = mutable.Map[String, String]()
 	var blockingSchemes = List[BlockingScheme](new SimpleBlockingScheme)
+	sparkOptions("spark.network.timeout") = "600s"
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
