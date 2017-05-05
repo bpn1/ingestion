@@ -268,11 +268,7 @@ object TextParser extends SparkJob {
 				case t: TextNode =>
 					offset += t.text.length
 				case t: Comment =>
-					println("BBB Error:")
-					println(t)
-					println("---------")
-					println(body)
-					println("=========")
+					// ignore HTML comments
 			}
 		}
 		val cleanedLinks = cleanMetapageLinks(linksList.toList)
@@ -519,7 +515,7 @@ object TextParser extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val rawArticles = input.fromAnyRDD[WikipediaEntry]().head
+		val rawArticles = input.fromAnyRDD[WikipediaEntry]().head.sample(false, 0.1)
 		val parsedArticles = rawArticles
 			.filter(!isMetaPage(_))
 			.map(parseWikipediaEntry)
