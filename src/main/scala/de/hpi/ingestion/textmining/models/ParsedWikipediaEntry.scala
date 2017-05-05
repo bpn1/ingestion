@@ -13,7 +13,7 @@ package de.hpi.ingestion.textmining.models
   * @param disambiguationlinks all links on this page if this page is a disambiguation page
   * @param linkswithcontext    all textlinks containing the term frequencies of their context
   * @param context             term frequencies of this articles plain text
-  * @param extendedlinks       all occurences of aliases of other links in this article
+  * @param extendedlinks       all occurrences of aliases of other links in this article
   */
 case class ParsedWikipediaEntry(
 	title: String,
