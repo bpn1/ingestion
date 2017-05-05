@@ -80,4 +80,16 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 			.toSet
 		extendedEntries shouldEqual TestData.linkExtenderExtendedParsedEntry()
 	}
+	"Big Entry with extended Links" should "be exactly this big entry" in {
+		val entry = sc.parallelize(List(TestData.bigLinkExtenderParsedEntry()))
+		val pages = sc.parallelize(TestData.bigLinkExtenderPagesSet().toList)
+		val input = List(entry).toAnyRDD() ++ List(pages).toAnyRDD()
+		val extendedEntry = LinkExtender.run(input, sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.collect
+			.toSet
+			.head
+		extendedEntry.extendedlinks shouldEqual TestData.bigLinkExtenderExtendedParsedEntry().head.extendedlinks
+	}
 }

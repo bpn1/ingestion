@@ -2,13 +2,15 @@ package de.hpi.ingestion.textmining
 
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
-
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, hdfsFileStream}
+
+import scala.collection.mutable
 
 
 /**
@@ -59,13 +61,20 @@ object LinkExtender extends SparkJob {
 	  * @param pages   raw Pages map
 	  * @return filtered Pages map
 	  */
-	def findAllPages(article: ParsedWikipediaEntry,
+	def findAllPages(
+		article: ParsedWikipediaEntry,
 		pages: Map[String, Map[String, Int]]
 	): Map[String, Map[String, Int]] = {
-		val links = article.allLinks()
-		val pageAliases = pages.filterKeys(_ == article.title)
-		val linkAliases = links.flatMap(link => pages.filterKeys(_ == link.page))
-		pageAliases ++ linkAliases
+		val links = article.textlinks
+		val filteredPages = mutable.Map[String, Map[String, Int]]()
+		pages.get(article.title).foreach { aliases =>
+			filteredPages(article.title) = aliases
+		}
+		links.foreach(link =>
+			pages.get(link.page).foreach { aliases =>
+				filteredPages(link.page) = aliases
+		})
+		filteredPages.toMap
 	}
 
 	/**
@@ -108,20 +117,13 @@ object LinkExtender extends SparkJob {
 			val testTokens = tokens.slice(i, tokens.length)
 			val aliasMatches = trie.matchTokens(testTokens).filter(_.nonEmpty)
 			if(aliasMatches.nonEmpty) {
-				val longestMatch = Option(aliasMatches.maxBy(_.length))
-				if(longestMatch.isDefined) {
-					val found = tokenizer.reverse(longestMatch.get)
-					val page = aliases(found)
-					offset = text.indexOf(longestMatch.head, offset)
-					resultList += Link(page._1, page._2, Option(offset))
-					offset += longestMatch.map(_.length).sum
-					i += longestMatch.get.length
-				}
-				else {
-					println("LinkExtenderError: " + aliasMatches)
-					offset += tokens(i).length
-					i += 1
-				}
+				val longestMatch = aliasMatches.maxBy(_.length)
+				val found = tokenizer.reverse(longestMatch)
+				val page = aliases(found)
+				offset = text.indexOf(longestMatch.head, offset-(longestMatch.head.length-1))
+				resultList += Link(page._1, page._2, Option(offset))
+				offset += longestMatch.map(_.length).sum
+				i += longestMatch.length
 			}
 			else {
 				offset += tokens(i).length
@@ -144,14 +146,18 @@ object LinkExtender extends SparkJob {
 	): Map[String, (String, String)] = {
 		pages.toList
 			.flatMap(t => t._2.map(kv => (kv._1, kv._2, t._1)))
+			.filter{ case (alias, count, page) =>
+				alias.length != 1 && (alias.charAt(0).isLetter || alias.charAt(0).isDigit)
+			}
 			.groupBy(_._1)
 			.map { case (alias, pageList) =>
-				val page = pageList.reduce { (currentMax, currentAlias) =>
-					val aliasCount = pages(currentAlias._3).values.sum
-					val maxCount = pages(currentMax._3).values.sum
-					val normalizedAliasCount = currentAlias._2.toFloat / aliasCount
-					val normalizedMaxCount = currentMax._2.toFloat / maxCount
-					if(normalizedAliasCount > normalizedMaxCount) currentAlias else currentMax
+				val page = pageList
+					.reduce { (currentMax, currentAlias) =>
+						val aliasCount = pages(currentAlias._3).values.sum
+						val maxCount = pages(currentMax._3).values.sum
+						val normalizedAliasCount = currentAlias._2.toFloat / aliasCount
+						val normalizedMaxCount = currentMax._2.toFloat / maxCount
+						if(normalizedAliasCount > normalizedMaxCount) currentAlias else currentMax
 				}._3
 				(tokenizer.reverse(tokenizer.process(alias)), (alias, page))
 			}
