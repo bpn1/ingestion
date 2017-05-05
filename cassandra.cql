@@ -135,7 +135,7 @@ CREATE TABLE datalake.object (
     properties_history map<text, frozen<list<frozen<version>>>>
 );
 
-CREATE TABLE datalake.deduplicationstats (
+CREATE TABLE datalake.blockingstats (
     id uuid PRIMARY KEY,
     comment text,
     data map<text, int>

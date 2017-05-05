@@ -2,7 +2,9 @@ package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
+import org.jsoup.nodes.Element
 
+import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -595,9 +597,41 @@ object TestData {
 			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
 	}
 
+	def wikipediaEntryWithHeadlines(): WikipediaEntry = {
+		WikipediaEntry("Postbank-Hochhaus (Berlin) Kurz", Option("""Das heutige '''Postbank-Hochhaus''' (früher: '''Postscheckamt Berlin West''' (Bln W), seit 1985: '''Postgiroamt Berlin''') ist ein [[Hochhaus]] der [[Postbank]].\n\n== Geschichte und Entstehung ==\nDas Postscheckamt von Berlin war ab 1909 in einem Neubau in der [[Dorotheenstraße (Berlin)|Dorotheenstraße]] 29 (heute: 84).\n\n== Architektur ==\nDie Gestaltung des Gebäudes orientiert sich an [[Mies van der Rohe]]s [[Seagram Building]] in [[New York City|New York]].\n\n== UKW-Sender ==\nIm Postbank-Hochhaus befinden sich mehrere [[Ultrakurzwellensender|UKW-Sender]].\n\n== Siehe auch ==\n\n== Literatur ==\n\n== Weblinks ==\n\n== Einzelnachweise =="""))
+	}
+
+	def documentWithHeadlines(): String = {
+		"""<html>
+		  | <head></head>
+		  | <body>
+		  |  <p>Das heutige <b>Postbank-Hochhaus</b> (früher: <b>Postscheckamt Berlin West</b> (Bln W), seit 1985: <b>Postgiroamt Berlin</b>) ist ein <a href="/Hochhaus" title="Hochhaus">Hochhaus</a> der <a href="/Postbank" title="Postbank">Postbank</a>.</p>
+		  |  <h2><span class="mw-headline" id="Geschichte_und_Entstehung">Geschichte und Entstehung</span></h2>
+		  |  <p>Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der <a href="/Dorotheenstra%C3%9Fe_(Berlin)" title="Dorotheenstraße (Berlin)">Dorotheenstraße</a> 29 (heute: 84).</p>
+		  |  <h2><span class="mw-headline" id="Architektur">Architektur</span></h2>
+		  |  <p>Die Gestaltung des Gebäudes orientiert sich an <a href="/Mies_van_der_Rohe" title="Mies van der Rohe">Mies van der Rohes</a> <a href="/Seagram_Building" title="Seagram Building">Seagram Building</a> in <a href="/New_York_City" title="New York City">New York</a>.</p>
+		  |  <h2><span class="mw-headline" id="UKW-Sender">UKW-Sender</span></h2>
+		  |  <p>Im Postbank-Hochhaus befinden sich mehrere <a href="/Ultrakurzwellensender" title="Ultrakurzwellensender">UKW-Sender</a>.</p>
+		  |  <h2><span class="mw-headline" id="Siehe_auch">Siehe auch</span></h2>
+		  |  <h2><span class="mw-headline" id="Literatur">Literatur</span></h2>
+		  |  <h2><span class="mw-headline" id="Weblinks">Weblinks</span></h2>
+		  |  <h2><span class="mw-headline" id="Einzelnachweise">Einzelnachweise</span></h2>
+		  | </body>
+		  |</html>""".stripMargin
+	}
+
+	def wikipediaEntryHeadlines(): Set[String] = {
+		Set("Geschichte und Entstehung", "Architektur", "UKW-Sender", "Siehe auch", "Literatur", "Weblinks", "Einzelnachweise")
+	}
+
+	def parsedArticleTextWithHeadlines(): String = {
+		"Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank. Geschichte und Entstehung Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84). Architektur Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. UKW-Sender Im Postbank-Hochhaus befinden sich mehrere UKW-Sender. Siehe auch Literatur Weblinks Einzelnachweise"
+	}
+
 	def wikipediaEntriesForParsing(): List[WikipediaEntry] = {
 		List(
-			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
+			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]"""))
+		)
 	}
 
 	def parsedWikipediaEntries(): List[ParsedWikipediaEntry] = {
@@ -672,7 +706,7 @@ object TestData {
 			"Zerfall (Album)")
 	}
 
-	def  	smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
+	def smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
 		List(
 			ParsedWikipediaEntry(
 				"Audi",
@@ -1100,15 +1134,13 @@ object TestData {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
 
-	def documentTestList(): List[String] = {
-		List(
-			"""<body><p><a href="/2._Juli" title="2. Juli">2. Juli</a>
-			  |<a href="/1852" title="1852">1852</a> im Stadtteil
-			  |<span class="math">bli</span> bla
-			  |<span class="math">blub</span>
-			  |<abbr title="Naturgesetze für Information">NGI</abbr>
-			  |</p></body>""".stripMargin
-		)
+	def document(): String = {
+		"""<body><p><a href="/2._Juli" title="2. Juli">2. Juli</a>
+		  |<a href="/1852" title="1852">1852</a> im Stadtteil
+		  |<span class="math">bli</span> bla
+		  |<span class="math">blub</span>
+		  |<abbr title="Naturgesetze für Information">NGI</abbr>
+		  |</p></body>""".stripMargin
 	}
 
 	def parsedEntriesWithRedirects(): Set[ParsedWikipediaEntry] = {
@@ -1224,6 +1256,79 @@ object TestData {
 		val trieStream = new ByteArrayOutputStream(1024)
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
+	}
+
+	def wikidataEntities(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Page 1")),
+			WikiDataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Page 2")),
+			WikiDataEntity("Q3", instancetype = Option("comp"), wikiname = Option("Page 3")),
+			WikiDataEntity("Q4", instancetype = Option("comp")),
+			WikiDataEntity("Q5", wikiname = Option("Page 5")),
+			WikiDataEntity("Q6"))
+	}
+
+	def wikidataCompanyPages(): List[String] = {
+		List("Page 1", "Page 2", "Page 3")
+	}
+
+	def companyPages(): List[Page] = {
+		List(
+			Page("Page 1", Map("P1Alias1" -> 1, "P1Alias2" -> 1)),
+			Page("Page 2", Map("P2Alias1" -> 1, "P2Alias2" -> 1)),
+			Page("Page 3", Map("P3Alias1" -> 1, "P1Alias1" -> 1)),
+			Page("Page 4", Map("P4Alias1" -> 1, "P4Alias3" -> 1)),
+			Page("Page 5", Map("P5Alias1" -> 1)),
+			Page("Page 6", Map("P6Alias1" -> 1)))
+	}
+
+	def companyAliases(): Set[String] = {
+		Set("P1Alias1", "P1Alias2", "P2Alias1", "P2Alias2", "P3Alias1")
+	}
+
+	def unfilteredCompanyLinksEntries(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Title 1",
+				textlinks = List(Link("P1Alias1", "Page 1"), Link("P4Alias3", "Page 4")),
+				templatelinks = List(Link("P2Alias1", "Page 2")),
+				categorylinks = List(Link("P3Alias1", "Page 3")),
+				listlinks = List(Link("P4Alias1", "Page 4"))),
+			ParsedWikipediaEntry(
+				"Title 2",
+				textlinks = List(Link("P5Alias1", "Page 5")),
+				categorylinks = List(Link("P6Alias1", "Page 6"))),
+			ParsedWikipediaEntry(
+				"Title 3",
+				listlinks = List(Link("P1Alias2", "Page 1")),
+				disambiguationlinks = List(Link("P2Alias2", "Page 2")))
+		)
+	}
+
+	def filteredCompanyLinksEntries(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Title 1",
+				textlinks = List(Link("P1Alias1", "Page 1")),
+				templatelinks = List(Link("P2Alias1", "Page 2")),
+				categorylinks = List(Link("P3Alias1", "Page 3"))),
+			ParsedWikipediaEntry("Title 2"),
+			ParsedWikipediaEntry(
+				"Title 3",
+				listlinks = List(Link("P1Alias2", "Page 1")),
+				disambiguationlinks = List(Link("P2Alias2", "Page 2")))
+		)
+	}
+
+	def classifierFeatureEntries(): List[FeatureEntry] = {
+		List(
+			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
+			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, true),
+			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3, false),
+			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2, false),
+			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
+			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
+			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
 	}
 }
 
