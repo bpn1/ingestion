@@ -2,6 +2,7 @@ package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
+import org.jsoup.nodes.Element
 
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
@@ -595,9 +596,41 @@ object TestData {
 			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
 	}
 
+	def wikipediaEntryWithHeadlines(): WikipediaEntry = {
+		WikipediaEntry("Postbank-Hochhaus (Berlin) Kurz", Option("""Das heutige '''Postbank-Hochhaus''' (früher: '''Postscheckamt Berlin West''' (Bln W), seit 1985: '''Postgiroamt Berlin''') ist ein [[Hochhaus]] der [[Postbank]].\n\n== Geschichte und Entstehung ==\nDas Postscheckamt von Berlin war ab 1909 in einem Neubau in der [[Dorotheenstraße (Berlin)|Dorotheenstraße]] 29 (heute: 84).\n\n== Architektur ==\nDie Gestaltung des Gebäudes orientiert sich an [[Mies van der Rohe]]s [[Seagram Building]] in [[New York City|New York]].\n\n== UKW-Sender ==\nIm Postbank-Hochhaus befinden sich mehrere [[Ultrakurzwellensender|UKW-Sender]].\n\n== Siehe auch ==\n\n== Literatur ==\n\n== Weblinks ==\n\n== Einzelnachweise =="""))
+	}
+
+	def documentWithHeadlines(): String = {
+		"""<html>
+		  | <head></head>
+		  | <body>
+		  |  <p>Das heutige <b>Postbank-Hochhaus</b> (früher: <b>Postscheckamt Berlin West</b> (Bln W), seit 1985: <b>Postgiroamt Berlin</b>) ist ein <a href="/Hochhaus" title="Hochhaus">Hochhaus</a> der <a href="/Postbank" title="Postbank">Postbank</a>.</p>
+		  |  <h2><span class="mw-headline" id="Geschichte_und_Entstehung">Geschichte und Entstehung</span></h2>
+		  |  <p>Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der <a href="/Dorotheenstra%C3%9Fe_(Berlin)" title="Dorotheenstraße (Berlin)">Dorotheenstraße</a> 29 (heute: 84).</p>
+		  |  <h2><span class="mw-headline" id="Architektur">Architektur</span></h2>
+		  |  <p>Die Gestaltung des Gebäudes orientiert sich an <a href="/Mies_van_der_Rohe" title="Mies van der Rohe">Mies van der Rohes</a> <a href="/Seagram_Building" title="Seagram Building">Seagram Building</a> in <a href="/New_York_City" title="New York City">New York</a>.</p>
+		  |  <h2><span class="mw-headline" id="UKW-Sender">UKW-Sender</span></h2>
+		  |  <p>Im Postbank-Hochhaus befinden sich mehrere <a href="/Ultrakurzwellensender" title="Ultrakurzwellensender">UKW-Sender</a>.</p>
+		  |  <h2><span class="mw-headline" id="Siehe_auch">Siehe auch</span></h2>
+		  |  <h2><span class="mw-headline" id="Literatur">Literatur</span></h2>
+		  |  <h2><span class="mw-headline" id="Weblinks">Weblinks</span></h2>
+		  |  <h2><span class="mw-headline" id="Einzelnachweise">Einzelnachweise</span></h2>
+		  | </body>
+		  |</html>""".stripMargin
+	}
+
+	def wikipediaEntryHeadlines(): Set[String] = {
+		Set("Geschichte und Entstehung", "Architektur", "UKW-Sender", "Siehe auch", "Literatur", "Weblinks", "Einzelnachweise")
+	}
+
+	def parsedArticleTextWithHeadlines(): String = {
+		"Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank. Geschichte und Entstehung Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84). Architektur Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. UKW-Sender Im Postbank-Hochhaus befinden sich mehrere UKW-Sender. Siehe auch Literatur Weblinks Einzelnachweise"
+	}
+
 	def wikipediaEntriesForParsing(): List[WikipediaEntry] = {
 		List(
-			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
+			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]"""))
+		)
 	}
 
 	def parsedWikipediaEntries(): List[ParsedWikipediaEntry] = {
@@ -617,40 +650,37 @@ object TestData {
 	def wikipediaTestAbstracts(): Map[String, String] = {
 		Map(
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
-			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet.""")
+			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet."""
+		)
 	}
 
-	def groupedAliasesTestSet(): Set[Alias] = {
+	def groupedAliasesSet(): Set[Alias] = {
 		Set(
 			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Alias("Bayern", Map("Bayern" -> 1)),
 			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Zerfall (Soziologie)" -> 1)))
+			Alias("Radioaktiver Zerfall", Map("Radioaktivität" -> 1)),
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Radioaktivität" -> 1))
+		)
 	}
 
-	def groupedPagesTestSet(): Set[Page] = {
+	def groupedPagesSet(): Set[Page] = {
 		Set(
 			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
 			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
 			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
-			Page("Zerfall (Soziologie)", Map("Zerfall" -> 1)))
+			Page("Radioaktivität", Map("Zerfall" -> 1, "Radioaktiver Zerfall" -> 1))
+		)
 	}
 
-	def cleanedGroupedAliasesTestSet(): Set[Alias] = {
-		Set(
-			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
-			Alias("Bayern", Map("Bayern" -> 1)),
-			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1)))
-	}
-
-	def cleanedGroupedPagesTestSet(): Set[Page] = {
+	def cleanedGroupedPagesSet(): Set[Page] = {
 		Set(
 			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
 			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1)))
+			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+		)
 	}
 
 	def groupedValidPagesSet(): Set[(String, Set[String])] = {
@@ -685,10 +715,23 @@ object TestData {
 					Link("Bayern", "Bayern", Option(69)),
 					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
 					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)),
 					Link("Zerfall", "Zerfall (Soziologie)", Option(4711)), // dead link
 					Link("", "page name with empty alias", Option(4711)),
 					Link("alias with empty page name", "", Option(4711))
-					)))
+				)))
+	}
+
+	def validLinkSet(): Set[Link] = {
+		Set(
+			Link("Ingolstadt", "Ingolstadt", Option(55)),
+			Link("Bayern", "Bayern", Option(69)),
+			Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+			Link("Zerfall", "Zerfall (Album)", Option(4711)),
+			Link("Zerfall", "Radioaktivität", Option(4711)),
+			Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711))
+		)
 	}
 
 	def parsedArticlesWithoutLinksSet(): Set[ParsedWikipediaEntry] = {
@@ -729,13 +772,17 @@ object TestData {
 					Link("Bayern", "Bayern", Option(69)),
 					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
 					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)),
 					Link("Zerfall", "Zerfall (Soziologie)", Option(4711)), // dead link
 					Link("", "page name with empty alias", Option(4711)),
-					Link("alias with empty page name", "", Option(4711)),
-					Link("Konkurrent", "Volvo", Option(4711)),
-					Link("Opel", "Opel", Option(4711)),
-					Link("DB", "Deutsche Bahn", Option(4711))
+					Link("alias with empty page name", "", Option(4711))
 				)),
+			ParsedWikipediaEntry("Ingolstadt", Option("lorem")),
+			ParsedWikipediaEntry("Bayern", Option("lorem")),
+			ParsedWikipediaEntry("Automobilhersteller", Option("lorem")),
+			ParsedWikipediaEntry("Zerfall (Album)", Option("lorem")),
+			ParsedWikipediaEntry("Radioaktivität", Option("lorem")),
 			ParsedWikipediaEntry("Volvo", Option("lorem")),
 			ParsedWikipediaEntry("Opel", Option("ipsum")),
 			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
@@ -761,9 +808,12 @@ object TestData {
 				"Audi",
 				Option("dummy text"),
 				List(
-					Link("Konkurrent", "Volvo", Option(4711)),
-					Link("Opel", "Opel", Option(4711)),
-					Link("DB", "Deutsche Bahn", Option(4711))
+					Link("Ingolstadt", "Ingolstadt", Option(55)),
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711))
 				)))
 	}
 
@@ -1083,15 +1133,13 @@ object TestData {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
 
-	def documentTestList(): List[String] = {
-		List(
-			"""<body><p><a href="/2._Juli" title="2. Juli">2. Juli</a>
-			  |<a href="/1852" title="1852">1852</a> im Stadtteil
-			  |<span class="math">bli</span> bla
-			  |<span class="math">blub</span>
-			  |<abbr title="Naturgesetze für Information">NGI</abbr>
-			  |</p></body>""".stripMargin
-		)
+	def document(): String = {
+		"""<body><p><a href="/2._Juli" title="2. Juli">2. Juli</a>
+		  |<a href="/1852" title="1852">1852</a> im Stadtteil
+		  |<span class="math">bli</span> bla
+		  |<span class="math">blub</span>
+		  |<abbr title="Naturgesetze für Information">NGI</abbr>
+		  |</p></body>""".stripMargin
 	}
 
 	def parsedEntriesWithRedirects(): Set[ParsedWikipediaEntry] = {
@@ -1207,6 +1255,17 @@ object TestData {
 		val trieStream = new ByteArrayOutputStream(1024)
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
+	}
+
+	def classifierFeatureEntries(): List[FeatureEntry] = {
+		List(
+			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
+			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, true),
+			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3, false),
+			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2, false),
+			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
+			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
+			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
 	}
 }
 

@@ -107,9 +107,9 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"All redirects" should "contain #WEITERLEITUNG link" in {
- 		val entries = TestData.testEntriesWithBadRedirects()
+		val entries = TestData.testEntriesWithBadRedirects()
 		entries.map(entry => TextParser.cleanRedirects(entry))
-		    .map(entry => entry.getText should startWith (s"#${TextParser.parsableRedirect}"))
+			.map(entry => entry.getText should startWith(s"#${TextParser.parsableRedirect}"))
 	}
 
 	"Wikipedia disambiguation pages" should "be recognized as such" in {
@@ -233,12 +233,31 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Cleaned Wikipedia document" should "not contain other tags than anchors" in {
-		TestData.documentTestList()
+		List(TestData.document())
 			.map(Jsoup.parse)
 			.map(TextParser.removeTags)
 			.map(_.toString)
 			.foreach(document => document should (not include "</span>"
 				and not include "</p>" and not include "</abbr>"))
+	}
+
+	they should "contain headlines" in {
+		List(TestData.documentWithHeadlines())
+			.map(Jsoup.parse)
+			.map(TextParser.removeTags)
+			.map(_.body.text)
+			.foreach { text =>
+				TestData.wikipediaEntryHeadlines()
+					.foreach(headline => assert(text.contains(headline)))
+			}
+	}
+
+	it should "have exactly this text" in {
+		List(TestData.documentWithHeadlines())
+			.map(Jsoup.parse)
+			.map(TextParser.removeTags)
+			.map(_.body.text)
+			.foreach(_ shouldEqual TestData.parsedArticleTextWithHeadlines())
 	}
 
 	"Redirect page entries" should "be identified as such" in {
@@ -258,6 +277,32 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.toList
 		val expectedArticles = TestData.parsedWikipediaEntries()
 		parsedArticles shouldEqual expectedArticles
+	}
+
+	"Parsed Wikipedia article" should "contain headlines" in {
+		val article = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
+		val parsedArticleText = TextParser
+			.run(List(article).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.collect
+			.head
+			.getText()
+
+		TestData.wikipediaEntryHeadlines()
+			.foreach(headline => assert(parsedArticleText.contains(headline)))
+	}
+
+	it should "have exactly this text" in {
+		val article = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
+		val parsedArticleText = TextParser
+			.run(List(article).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.collect
+			.head
+			.getText()
+		parsedArticleText shouldEqual TestData.parsedArticleTextWithHeadlines()
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {

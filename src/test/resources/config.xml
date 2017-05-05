@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
     <sourceSettings>
-        <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
-        <subjectTable>testsubject</subjectTable>
-        <keyspaceStagingTable>datalake</keyspaceStagingTable>
-        <stagingTable>subject_temp</stagingTable>
-        <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
-        <duplicatesTable>duplicatecandidates</duplicatesTable>
-        <keyspaceVersionTable>datalake</keyspaceVersionTable>
+        <keyspaceSubjectTable>evaluation</keyspaceSubjectTable>
+        <subjectTable>subject_dbpedia</subjectTable>
+        <keyspaceStagingTable>evaluation</keyspaceStagingTable>
+        <stagingTable>subject_wikidata</stagingTable>
+        <keyspaceDuplicatesTable>evaluation</keyspaceDuplicatesTable>
+        <duplicatesTable>dbpedia_wikidata_deduplication</duplicatesTable>
+        <keyspaceVersionTable>evaluation</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
         <statsTable>deduplicationstats</statsTable>
     </sourceSettings>
     <simMeasurements>
-        <feature>
-            <attribute>name</attribute>
-            <similarityMeasure>MongeElkan</similarityMeasure>
-            <weight>0.8</weight>
-            <scale>1</scale>
-        </feature>
-        <feature>
-            <attribute>name</attribute>
-            <similarityMeasure>JaroWinkler</similarityMeasure>
-            <weight>0.7</weight>
-            <scale>1</scale>
-        </feature>
+        <attribute>
+            <key>name</key>
+            <feature>
+                <similarityMeasure>MongeElkan</similarityMeasure>
+                <weight>0.8</weight>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>JaroWinkler</similarityMeasure>
+                <weight>0.7</weight>
+                <scale>1</scale>
+            </feature>
+        </attribute>
     </simMeasurements>
 </config>
-

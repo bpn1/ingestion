@@ -68,5 +68,21 @@ object CollectionImplicits {
 		def fromAnyRDD[X](): List[RDD[X]] = xs.map(_.asInstanceOf[RDD[X]])
 	}
 
-
+	/**
+	  * Implicit class which adds the counting of a collections elements.
+	  * @param xs Collection containing the elements to count
+	  * @tparam X type of the Collection
+	  */
+	implicit class CountElements[X](xs: Traversable[X]) {
+		/**
+		  * Counts the elements of the Collection calling this method.
+		  * @return Map containing the counts for each element of this collection
+		  */
+		def countElements(): Map[X, Int] = {
+			xs
+				.groupBy(identity)
+				.mapValues(_.size)
+				.map(identity)
+		}
+	}
 }
