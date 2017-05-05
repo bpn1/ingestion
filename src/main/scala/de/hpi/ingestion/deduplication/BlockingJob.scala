@@ -1,19 +1,19 @@
 package de.hpi.ingestion.deduplication
 
-import de.hpi.ingestion.datalake.models._
-import de.hpi.ingestion.deduplication.models._
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
+import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 
-import scala.language.postfixOps
-import scala.xml.XML
 import scala.collection.mutable
 import scala.io.Source
+import scala.language.postfixOps
+import scala.xml.XML
 
 object BlockingJob extends SparkJob {
 	appName = "Blocking"
@@ -21,6 +21,7 @@ object BlockingJob extends SparkJob {
 	val settings = mutable.Map[String, String]()
 	var blockingSchemes = List[BlockingScheme](new SimpleBlockingScheme)
 	sparkOptions("spark.network.timeout") = "600s"
+	sparkOptions("spark.yarn.executor.memoryOverhead") = "2048"
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {

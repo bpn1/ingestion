@@ -10,7 +10,7 @@
         <keyspaceVersionTable>evaluation</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
-        <statsTable>deduplicationstats</statsTable>
+        <statsTable>blockingstats</statsTable>
         <confidence>0.2</confidence>
     </sourceSettings>
     <simMeasurements>
