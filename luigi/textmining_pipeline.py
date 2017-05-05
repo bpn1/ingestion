@@ -157,5 +157,5 @@ if __name__ == "__main__":
     try:
         luigi.run(main_task_cls=TextminingWorkflow)
     except KeyboardInterrupt:
-        print("Pipeline interrupted")
+        print("Pipeline interrupted: You have to stop the spark job manually!")
         # todo: send ctrl+c via ssh
