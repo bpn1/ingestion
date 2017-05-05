@@ -15,7 +15,7 @@ import scala.annotation.tailrec
 trait Tokenizer extends Serializable {
 	def tokenize(x: String): List[String]
 
-	def tokenizeWithOffsets(x: String): List[OffsetToken]
+	def tokenizeWithOffsets(x: String): List[OffsetToken] = List()
 
 	def reverse(x: List[String]): String
 }
@@ -24,11 +24,9 @@ trait Tokenizer extends Serializable {
   * Tokenizes the given text on spaces.
   */
 class WhitespaceTokenizer() extends Tokenizer {
-	def tokenize(txt: String) = txt.split(" ").toList
+	def tokenize(txt: String): List[String] = txt.split(" ").toList
 
-	def tokenizeWithOffsets(x: String) = List()
-
-	def reverse(tokens: List[String]) = tokens.mkString(" ")
+	def reverse(tokens: List[String]): String = tokens.mkString(" ")
 }
 
 /**
@@ -62,7 +60,7 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 		start(0)
 	}
 
-	def tokenize(txt: String) = {
+	def tokenize(txt: String): List[String] = {
 		val delimiters = " \n"
 		val badCharacters = "().!?,;:'`\"„“"
 		val stringTokenizer = new StringTokenizer(txt, delimiters)
@@ -77,29 +75,25 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 			.toList
 	}
 
-	def tokenizeWithOffsets(x: String) = List()
-
-	def reverse(tokens: List[String]) = tokens.mkString(" ")
+	def reverse(tokens: List[String]): String = tokens.mkString(" ")
 }
 
 /**
   * Uses the CoreNLPTokenizer but removes control characters from the resulting tokens.
   */
 class CleanCoreNLPTokenizer() extends CoreNLPTokenizer {
-	override def tokenize(txt: String) = {
+	override def tokenize(txt: String): List[String] = {
 		val tokens = super.tokenize(txt)
 		val badTokens = Set[String](".", "!", "?", ",", ";", ":")
 		tokens.filter(token => !badTokens.contains(token))
 	}
-
-	override def tokenizeWithOffsets(x: String) = List()
 }
 
 /**
   * Uses the CoreNLP Simple German API to tokenize the given text.
   */
 class CoreNLPTokenizer() extends Tokenizer {
-	def tokenize(txt: String) = {
+	def tokenize(txt: String): List[String] = {
 		new GermanDocument(txt)
 			.sentences
 			.asScala
@@ -107,7 +101,14 @@ class CoreNLPTokenizer() extends Tokenizer {
 			.flatMap(_.words.asScala.toList)
 	}
 
-	def tokenizeWithOffsets(x: String) = List()
+	override def tokenizeWithOffsets(txt: String): List[OffsetToken] = {
+		new GermanDocument(txt)
+			.sentences
+			.asScala
+			.toList
+			.flatMap(_.words.asScala.toList)
+			.map(token => OffsetToken(token, 0))
+	}
 
-	def reverse(tokens: List[String]) = tokens.mkString(" ")
+	def reverse(tokens: List[String]): String = tokens.mkString(" ")
 }
