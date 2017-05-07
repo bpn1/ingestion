@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining
 
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class IngestionTokenizerTest extends FlatSpec with Matchers {
 

@@ -4,7 +4,6 @@ import java.util.StringTokenizer
 
 import de.hpi.ingestion.textmining.models.OffsetToken
 import edu.stanford.nlp.ling.CoreAnnotations
-import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation
 import edu.stanford.nlp.pipeline.TokenizerAnnotator
 import edu.stanford.nlp.simple.GermanDocument
 import edu.stanford.nlp.pipeline.Annotation
@@ -17,18 +16,36 @@ import scala.annotation.tailrec
   * Trait used for textmining tokenizers. Declares methods to tokenize a text and create a text from a list of tokens.
   */
 trait Tokenizer extends Serializable {
-	def tokenize(x: String): List[String]
+	/**
+	  * Tokenizes a text into a list of tokens that represent a word or a punctuation character.
+	  *
+	  * @param text untokenized text
+	  * @return tokens
+	  */
+	def tokenize(text: String): List[String]
 
-	def tokenizeWithOffsets(x: String): List[OffsetToken] = List()
+	/**
+	  * Tokenizes a text into a list of tokens with their begin character offset.
+	  *
+	  * @param text untokenized text
+	  * @return tokens with offsets
+	  */
+	def tokenizeWithOffsets(text: String): List[OffsetToken] = List()
 
-	def reverse(x: List[String]): String
+	/**
+	  * Retrieves the original text from a list of tokens.
+	  *
+	  * @param tokens tokens
+	  * @return original text
+	  */
+	def reverse(tokens: List[String]): String
 }
 
 /**
   * Tokenizes the given text on spaces.
   */
 class WhitespaceTokenizer() extends Tokenizer {
-	def tokenize(txt: String): List[String] = txt.split(" ").toList
+	def tokenize(text: String): List[String] = text.split(" ").toList
 
 	def reverse(tokens: List[String]): String = tokens.mkString(" ")
 }
@@ -64,10 +81,10 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 		start(0)
 	}
 
-	def tokenize(txt: String): List[String] = {
+	def tokenize(text: String): List[String] = {
 		val delimiters = " \n"
 		val badCharacters = "().!?,;:'`\"„“"
-		val stringTokenizer = new StringTokenizer(txt, delimiters)
+		val stringTokenizer = new StringTokenizer(text, delimiters)
 		val tokens = new ListBuffer[String]()
 
 		while(stringTokenizer.hasMoreTokens) {
@@ -86,8 +103,8 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
   * Uses the CoreNLPTokenizer but removes control characters from the resulting tokens.
   */
 class CleanCoreNLPTokenizer() extends CoreNLPTokenizer {
-	override def tokenize(txt: String): List[String] = {
-		val tokens = super.tokenize(txt)
+	override def tokenize(text: String): List[String] = {
+		val tokens = super.tokenize(text)
 		val badTokens = Set[String](".", "!", "?", ",", ";", ":")
 		tokens.filter(token => !badTokens.contains(token))
 	}
@@ -97,16 +114,16 @@ class CleanCoreNLPTokenizer() extends CoreNLPTokenizer {
   * Uses the CoreNLP Simple German API to tokenize the given text.
   */
 class CoreNLPTokenizer() extends Tokenizer {
-	def tokenize(txt: String): List[String] = {
-		new GermanDocument(txt)
+	def tokenize(text: String): List[String] = {
+		new GermanDocument(text)
 			.sentences
 			.asScala
 			.toList
 			.flatMap(_.words.asScala.toList)
 	}
 
-	override def tokenizeWithOffsets(txt: String): List[OffsetToken] = {
-		val annotation = new Annotation(txt)
+	override def tokenizeWithOffsets(text: String): List[OffsetToken] = {
+		val annotation = new Annotation(text)
 		val tokens = new TokenizerAnnotator(true, "German")
 			.annotate(annotation)
 		annotation
