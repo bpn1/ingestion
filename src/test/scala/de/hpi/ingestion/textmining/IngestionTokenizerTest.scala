@@ -140,7 +140,17 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 			.foreach(_ should not be empty)
 	}
 
-	they should "have consistent offsets" in {
-
+	they should "have offsets that are consistent with the text" in {
+		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, false, false)
+		TestData.testSentences()
+			.map(sentence => (sentence, tokenizer.processWithOffsets(sentence)))
+			.foreach { case (sentence, tokensWithOffset) =>
+				tokensWithOffset.foreach { tokenWithOffset =>
+					val start = tokenWithOffset.offset
+					val end = tokenWithOffset.offset + tokenWithOffset.token.length
+					val substring = sentence.substring(start, end)
+					substring shouldEqual tokenWithOffset.token
+				}
+			}
 	}
 }
