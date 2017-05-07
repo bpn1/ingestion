@@ -3,7 +3,11 @@ package de.hpi.ingestion.textmining
 import java.util.StringTokenizer
 
 import de.hpi.ingestion.textmining.models.OffsetToken
+import edu.stanford.nlp.ling.CoreAnnotations
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation
+import edu.stanford.nlp.pipeline.TokenizerAnnotator
 import edu.stanford.nlp.simple.GermanDocument
+import edu.stanford.nlp.pipeline.Annotation
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
@@ -36,9 +40,9 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 	def stripAll(s: String, bad: String): String = {
 		// Source: http://stackoverflow.com/a/17995434
 		@tailrec def start(n: Int): String = {
-			if (n == s.length) {
+			if(n == s.length) {
 				""
-			} else if (bad.indexOf(s.charAt(n)) < 0) {
+			} else if(bad.indexOf(s.charAt(n)) < 0) {
 				end(n, s.length)
 			} else {
 				start(1 + n)
@@ -46,10 +50,10 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 		}
 
 		@tailrec def end(a: Int, n: Int): String = {
-			if (n <= a) {
+			if(n <= a) {
 				s.substring(a, n)
 			}
-			else if (bad.indexOf(s.charAt(n - 1)) < 0) {
+			else if(bad.indexOf(s.charAt(n - 1)) < 0) {
 				s.substring(a, n)
 			}
 			else {
@@ -66,7 +70,7 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 		val stringTokenizer = new StringTokenizer(txt, delimiters)
 		val tokens = new ListBuffer[String]()
 
-		while (stringTokenizer.hasMoreTokens) {
+		while(stringTokenizer.hasMoreTokens) {
 			tokens += stringTokenizer.nextToken()
 		}
 
@@ -102,12 +106,18 @@ class CoreNLPTokenizer() extends Tokenizer {
 	}
 
 	override def tokenizeWithOffsets(txt: String): List[OffsetToken] = {
-		new GermanDocument(txt)
-			.sentences
+		val annotation = new Annotation(txt)
+		val tokens = new TokenizerAnnotator(true, "German")
+			.annotate(annotation)
+		annotation
+			.get(classOf[CoreAnnotations.TokensAnnotation])
 			.asScala
 			.toList
-			.flatMap(_.words.asScala.toList)
-			.map(token => OffsetToken(token, 0))
+			.map { annotatedToken =>
+				val token = annotatedToken.get(classOf[CoreAnnotations.ValueAnnotation])
+				val offset = annotatedToken.get(classOf[CoreAnnotations.CharacterOffsetBeginAnnotation])
+				OffsetToken(token, offset)
+			}
 	}
 
 	def reverse(tokens: List[String]): String = tokens.mkString(" ")
