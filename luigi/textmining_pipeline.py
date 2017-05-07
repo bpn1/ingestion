@@ -119,10 +119,8 @@ class TextminingTask(ForceableTask):
 
     def execute_command(self):
         with self.output().open("w") as outfile:
-            status, output = subprocess.call(self.command, shell=True)
-            outfile.write(str(status))cri
-            outfile.write("\n")
-            outfile.write(output)
+            status = subprocess.call(self.command, shell=True)
+            outfile.write(str(status))
             print("status: \t" + str(status))
 
     def run(self):
