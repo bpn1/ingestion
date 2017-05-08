@@ -10,6 +10,9 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.regression.LabeledPoint
 
+/**
+  * Trains a Naive Bayes model with Feature Entries and evaluates it using precision, recall and f-score.
+  */
 object ClassifierTraining extends SparkJob {
 	appName = "Classifier Training"
 	val keyspace = "wikidumps"
@@ -39,11 +42,9 @@ object ClassifierTraining extends SparkJob {
 		output
 			.fromAnyRDD[NaiveBayesModel]()
 			.head
-			.collect
-			.head
-			.save(sc, s"wikipedia_randomforest_model_${System.currentTimeMillis()}")
+			.first
+			.save(sc, s"wikipedia_naivebayes_model_${System.currentTimeMillis()}")
 	}
-
 	// $COVERAGE-ON$
 
 	/**
