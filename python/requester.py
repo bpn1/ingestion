@@ -48,7 +48,7 @@ def generate_request(
 
 def fire_single_request_to_obtain_coordinates(request_string):
     if is_not_blank(request_string):
-        # urllib.urlencode(request_string)
+        urllib.quote(request_string.encode('utf-8'))
         response = geocoder.forward(
             request_string,
             limit = 1,
