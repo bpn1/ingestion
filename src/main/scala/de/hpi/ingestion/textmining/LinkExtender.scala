@@ -18,7 +18,7 @@ import scala.collection.mutable
   * linked in the same article.
   */
 object LinkExtender extends SparkJob {
-	appName = "LinkExtender"
+	appName = "Link Extender"
 	val keyspace = "wikidumps"
 	val inputParsedTablename = "parsedwikipedia"
 	val outputParsedTablename = "parsedwikipedia"

@@ -1349,7 +1349,7 @@ object TestData {
 	def bigLinkExtenderParsedEntry(): ParsedWikipediaEntry = {
 		ParsedWikipediaEntry(
 			"Postbank-Hochhaus (Berlin)",
-			Option("Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg. Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig. Aufgrund der Deutschen Teilung wurde das Postscheckamt in der Dorotheenstraße nur noch von der Deutschen Post der DDR genutzt. Für den Westteil von Berlin gab es damit zunächst kein eigenes Postscheckamt und daher wurde dort 1948 das Postscheckamt West eröffnet. 2014 kaufte die CG-Gruppe das Gebäude von der Postbank, die das Gebäude als Mieter bis Mitte 2016 weiternutzen will. Nach dem Auszug der Postbank soll das Hochhaus saniert und zu einem Wohn-und Hotelkomplex umgebaut werden. Gottfried Gruner Nach den Plänen des Oberpostdirektors Prosper Lemoine wurde das Gebäude des damaligen Postscheckamtes Berlin West von 1965 bis 1971 errichtet. Es hat 23 Geschosse und gehört mit einer Höhe von 89 Metern bis heute zu den höchsten Gebäuden in Berlin. Das Hochhaus besitzt eine Aluminium-Glas-Fassade und wurde im sogenannten „Internationalen Stil“ errichtet. Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. Zu dem Gebäude gehören zwei Anbauten. In dem zweigeschossigen Flachbau waren ein Rechenzentrum und die Schalterhalle untergebracht. In dem sechsgeschossiges Gebäude waren ein Heizwerk und eine Werkstatt untergebracht. Vor dem Hochhaus befindet sich der Große Brunnen von Gottfried Gruner. Er besteht aus 18 Säulen aus Bronze und wurde 1972 in Betrieb genommen. Im Postbank-Hochhaus befinden sich mehrere UKW-Sender, die von Media Broadcast betrieben werden. Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit. Über die Antennenträger auf dem Dach werden u. a. folgende Hörfunkprogramme auf Ultrakurzwelle ausgestrahlt:"),
+			Option("Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg. Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig. Aufgrund der Deutschen Teilung wurde das Postscheckamt in der Dorotheenstraße nur noch von der Deutschen Post der DDR genutzt. Für den Westteil von Berlin gab es damit zunächst kein eigenes Postscheckamt und daher wurde dort 1948 das Postscheckamt West eröffnet. 2014 kaufte die CG-Gruppe das Gebäude von der Postbank, die das Gebäude als Mieter bis Mitte 2016 weiternutzen will. Nach dem Auszug der Postbank soll das Hochhaus saniert und zu einem Wohn-und Hotelkomplex umgebaut werden. Gottfried Gruner Nach den Plänen des Oberpostdirektors Prosper Lemoine wurde das Gebäude des damaligen Postscheckamtes Berlin West von 1965 bis 1971 errichtet. Es hat 23 Geschosse und gehört mit einer Höhe von 89 Metern bis heute zu den höchsten Gebäuden in Berlin. Das Hochhaus besitzt eine Aluminium-Glas-Fassade und wurde im sogenannten „Internationalen Stil“ errichtet. Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. Zu dem Gebäude gehören zwei Anbauten. In dem zweigeschossigen Flachbau waren ein Rechenzentrum und die Schalterhalle untergebracht. In dem sechsgeschossiges Gebäude waren ein Heizwerk und eine Werkstatt untergebracht. Vor dem Hochhaus befindet sich der Große Brunnen von Gottfried Gruner. Er besteht aus 18 Säulen aus Bronze und wurde 1972 in Betrieb genommen. Im Postbank-Hochhaus befinden sich mehrere UKW-Sender, die von Media Broadcast betrieben werden. Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit. Über die Antennenträger auf dem Dach werden u. a. folgende Hörfunkprogramme auf Ultrakurzwelle ausgestrahlt: Was ist das für eins Masashi \"Jumbo\" Ozaki?"),
 			List(
 				Link("Hochhaus", "Hochhaus", Option(113)),
 				Link("Postbank", "Postbank", Option(126)),
@@ -1360,11 +1360,12 @@ object TestData {
 				Link("Magdeburg", "Magdeburg", Option(492)),
 				Link("Stettin", "Stettin", Option(506)),
 				Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
-				Link("New York", "New York City", Option(1472)),
+				Link("New York.", "New York City", Option(1472)),
 				Link("Bronze", "Bronze", Option(1800)),
 				Link("Media Broadcast", "Media Broadcast", Option(1906)),
 				Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
-				Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999))
+				Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
+				Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2008))
 			)
 		)
 	}
@@ -1382,11 +1383,12 @@ object TestData {
 			Page("Magdeburg", Map("Magdeburg" -> 2)),
 			Page("Stettin", Map("Stettin" -> 2)),
 			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 2)),
-			Page("New York City", Map("New York" -> 2)),
+			Page("New York City", Map("New York." -> 2)),
 			Page("Bronze", Map("Bronze" -> 2)),
 			Page("Media Broadcast", Map("Media Broadcast" -> 2)),
 			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 2, "DFMG" -> 11)),
-			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 2))
+			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 2)),
+			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 2))
 		)
 	}
 
@@ -1405,11 +1407,12 @@ object TestData {
 					Link("Magdeburg", "Magdeburg", Option(492)),
 					Link("Stettin", "Stettin", Option(506)),
 					Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
-					Link("New York", "New York City", Option(1472)),
+					Link("New York.", "New York City", Option(1472)),
 					Link("Bronze", "Bronze", Option(1800)),
 					Link("Media Broadcast", "Media Broadcast", Option(1906)),
 					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
-					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999))
+					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
+					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
 				),
 				extendedlinks = List(
 					Link("Berlin", "Berlin", Option(53)),
@@ -1435,7 +1438,7 @@ object TestData {
 					Link("Berlin", "Berlin", Option(1131)),
 					Link("Berlin", "Berlin", Option(1270)),
 					Link("Hochhaus", "Hochhaus", Option(1282)),
-					Link("New York", "New York City", Option(1472)),
+					Link("New York.", "New York City", Option(1472)),
 					Link("Gebäude", "Hochhaus", Option(1489)),
 					Link("Gebäude", "Hochhaus", Option(1639)),
 					Link("Hochhaus", "Hochhaus", Option(1708)),
@@ -1444,7 +1447,9 @@ object TestData {
 					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
 					Link("DFMG", "Deutsche Funkturm", Option(1963)),
 					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
-					Link("Berliner", "Berlin", Option(2052))
+					Link("Berliner", "Berlin", Option(2052)),
+					Link("Masashi \"Jumbo\" Ozaki", "" +
+						" \"Jumbo\" Ozaki", Option(2217))
 				)
 			)
 		)
