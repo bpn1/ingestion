@@ -1312,12 +1312,12 @@ object TestData {
 		)
 	}
 
-	def linkExtenderFoundAliases(): Map[String, (String, String)] = {
+	def linkExtenderFoundAliases(): Map[String, String] = {
 		Map(
-			"Audi" -> ("Audi", "Audi"),
-			"Audi AG" -> ("Audi AG", "Audi"),
-			"VW" -> ("VW", "VW"),
-			"Volkswagen AG" -> ("Volkswagen AG", "VW")
+			"Audi" -> "Audi",
+			"Audi AG" -> "Audi",
+			"VW" -> "VW",
+			"Volkswagen AG" -> "VW"
 		)
 	}
 
