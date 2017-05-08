@@ -493,7 +493,7 @@ object TextParser extends SparkJob {
 	  */
 	def extractListLinks(html: String): List[Link] = {
 		val document = Jsoup.parse(html)
-		val htmlLists = document.select("ul").toList ++ document.select("ol").toListre
+		val htmlLists = document.select("ul").toList ++ document.select("ol").toList
 		htmlLists
 			.map(element => Jsoup.parse(element.html()))
 			.flatMap(_.select("a"))
