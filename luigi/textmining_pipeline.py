@@ -3,14 +3,16 @@ import luigi
 import subprocess
 import os
 
-# ingestion_jar = "/home/bp2016n1/jars/ingestion-assembly-1.0.jar"
-ingestion_jar = "/home/bp2016n1/jars/jenkins/ingestion_feature_textmining_34.jar"
+ingestion_jar = "/home/bp2016n1/jars/jenkins/ingestion_master.jar"
+cosine_jar = "/home/bp2016n1/jars/jenkins/ingestion_feature_textmining_34.jar"
+extended_links_jar = "/home/bp2016n1/jars/jenkins/ingestion_feature_textmining_197.jar"
 package_prefix = "de.hpi.ingestion.textmining."
 
 
 class TaskDefinition(object):
-    def __init__(self, name, upstream_tasks=None, scala_class=None):
+    def __init__(self, name, upstream_tasks=None, scala_class=None, jar=ingestion_jar):
         self.name = name
+        self.jar = jar
         self.luigi_task = None
 
         if upstream_tasks is None:
@@ -25,20 +27,20 @@ class TaskDefinition(object):
 
 
 # https://docs.google.com/presentation/d/1KhNmbFrYCKe223mJjRMIJJ_CJPJX4Gk8sWdWcUwPlT4/edit?usp=sharing
-tasks_definitions = [TaskDefinition("TextParser"),
-                     TaskDefinition("LinkCleaner", ["TextParser"]),
-                     TaskDefinition("RedirectResolver", ["LinkCleaner"]),
-                     TaskDefinition("LinkAnalysis1", ["RedirectResolver"], "LinkAnalysis"),
-                     TaskDefinition("CompanyLinkFilter", ["LinkAnalysis1"]),
-                     TaskDefinition("LinkAnalysis2", ["CompanyLinkFilter"], "LinkAnalysis"),
+tasks_definitions = [TaskDefinition("TextParser", jar=extended_links_jar),
+                     TaskDefinition("LinkCleaner", ["TextParser"], jar=extended_links_jar),
+                     TaskDefinition("RedirectResolver", ["LinkCleaner"], jar=extended_links_jar),
+                     TaskDefinition("LinkAnalysis1", ["RedirectResolver"], "LinkAnalysis", jar=extended_links_jar),
+                     TaskDefinition("CompanyLinkFilter", ["LinkAnalysis1"], jar=extended_links_jar),
+                     TaskDefinition("LinkAnalysis2", ["CompanyLinkFilter"], "LinkAnalysis", jar=extended_links_jar),
                      TaskDefinition("LocalTrieBuilder", ["CompanyLinkFilter"]),
-                     TaskDefinition("AliasTrieSearch", ["LocalTrieBuilder"]),
-                     TaskDefinition("AliasCounter", ["AliasTrieSearch"]),
-                     TaskDefinition("DocumentFrequencyCounter", ["TextParser"]),
-                     TaskDefinition("TermFrequencyCounter", ["CompanyLinkFilter"]),
+                     TaskDefinition("AliasTrieSearch", ["LocalTrieBuilder"], jar=extended_links_jar),
+                     TaskDefinition("AliasCounter", ["AliasTrieSearch"], jar=extended_links_jar),
+                     TaskDefinition("DocumentFrequencyCounter", ["TextParser"], jar=extended_links_jar),
+                     TaskDefinition("TermFrequencyCounter", ["CompanyLinkFilter"], jar=extended_links_jar),
                      TaskDefinition("CosineContextExtractor",
                                     ["DocumentFrequencyCounter", "AliasCounter", "TermFrequencyCounter",
-                                     "LinkAnalysis2"]),
+                                     "LinkAnalysis2"], jar=cosine_jar),
                      TaskDefinition("Classifier", ["CosineContextExtractor"])]
 
 
@@ -50,9 +52,9 @@ def define_task_dictionary(tasks):
     return task_dict
 
 
-def create_command(program):
+def create_command(program, jar):
     return "ssh bp2016n1@sopedu \"/home/bp2016n1/scripts/spark.sh yarn " + package_prefix + program + " 8 " \
-           + ingestion_jar + "\""
+           + jar + "\""
 
 
 def construct_task_dag(tasks, force_execution):
@@ -63,7 +65,7 @@ def construct_task_dag(tasks, force_execution):
             if task.name in completed_tasks:
                 continue
             upstream_task_missing = False
-            command = create_command(task.scala_class)
+            command = create_command(task.scala_class, task.jar)
             upstream_tasks = [tasks[upstream_task].luigi_task for upstream_task in task.upstream_tasks]
             for upstream_task in upstream_tasks:
                 if upstream_task is None:
@@ -71,7 +73,7 @@ def construct_task_dag(tasks, force_execution):
                     break
             if not upstream_task_missing:
                 last_task = TextminingTask(name=task.name, command=command, upstream_tasks=upstream_tasks,
-                                           force=force_execution)
+                                           force=False)  # force=force_execution
                 task.luigi_task = last_task
                 completed_tasks.add(task.name)
     return last_task
@@ -95,6 +97,9 @@ class TextminingTask(ForceableTask):
     name = luigi.Parameter()
     command = luigi.Parameter()
     upstream_tasks = luigi.Parameter(default=None)
+
+    def __init__(self, *args, **kwargs):
+        super(TextminingTask, self).__init__(*args, **kwargs)
 
     def requires(self):
         return self.upstream_tasks
@@ -124,17 +129,19 @@ class TextminingTask(ForceableTask):
             print("status: \t" + str(status))
 
     def run(self):
+        upstream_task_names = [task.name for task in self.upstream_tasks]
+        upstream_task_names = "[" + ", ".join(upstream_task_names) + "]"
         print("-----  Task started  -----")
         print("name:            " + self.name)
         print("force-execution: " + str(self.force))
-        print("requires:        " + str(self.upstream_tasks))
+        print("requires:        " + upstream_task_names)
         print("output:          " + self.output_path())
         print("command:         " + self.command)
         if self.has_upstream_completed():
             self.execute_command()
             print("----- Task completed -----")
         else:
-            print("Error: upstream tasks " + str(self.upstream_tasks) + " have not completed!")
+            print("Error: upstream tasks " + upstream_task_names + " have not all completed!")
             print("-----  Task aborted  -----")
 
 
