@@ -1,17 +1,27 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
-import de.hpi.ingestion.deduplication.models.ScoreConfig
-import de.hpi.ingestion.deduplication.similarity.{EuclidianDistance, SimilarityMeasure}
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.math.BigDecimal
-
 class DBpediaNormalizeStrategyUnitTest extends FlatSpec with Matchers {
+	def expectedNormalizeStrategies: List[List[String] => List[String]] = List(
+		DBpediaNormalizeStrategy.normalizeEmployees,
+		DBpediaNormalizeStrategy.normalizeCountry,
+		DBpediaNormalizeStrategy.normalizeNothing
+	)
+
 	"apply" should "decide, which strategy should be used regarding the input attribute" in {
-		val input = List("5500^^xsd:integer", "100^^xsd:nonNegativeInteger", "über 1000@de .")
-		val strategy = DBpediaNormalizeStrategy.apply("gen_employees")
-		val output = strategy(input)
-		val expected = List("5500", "100", "1000")
+		val input = List(
+			"5500^^xsd:integer", "100^^xsd:nonNegativeInteger", "über 1000@de .",	// normalizeEmployees
+			"Deutschland@de .", "dbpedia-de:England", // normalizeCountry
+			"I don't fit anywhere :("	// normalizeNothing
+		)
+		val strategy = List(
+			DBpediaNormalizeStrategy.apply("gen_employees"),
+			DBpediaNormalizeStrategy.apply("geo_country"),
+			DBpediaNormalizeStrategy.apply("something_else")
+		)
+		val output = strategy.map(_(input))
+		val expected = expectedNormalizeStrategies.map(_(input))
 		output shouldEqual expected
 	}
 
@@ -92,18 +102,6 @@ class DBpediaNormalizeStrategyUnitTest extends FlatSpec with Matchers {
 			val expected = 1.0 * scoreConfig.weight
 			score shouldEqual expected
 		}
-	}
-
-	"apply" should "decide, which strategy should be used regarding the input attribute" in {
-		val inputValues = TestData.testCompareInput
-		val strategies = List(
-			CompareStrategy.apply("geo_city"),
-			CompareStrategy.apply("geo_coords"),
-			CompareStrategy.apply("gen_income")
-		)
-		val output = strategies.map(_.tupled(inputValues))
-		val expected = TestData.expectedCompareStrategies.map(_.tupled(inputValues))
-		output shouldEqual expected
 	}
 	*/
 }
