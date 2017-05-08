@@ -1,0 +1,55 @@
+from forceable_task import ForceableTask
+import luigi
+import subprocess
+
+
+class IngestionTask(ForceableTask):
+    name = luigi.Parameter()
+    command = luigi.Parameter()
+    upstream_tasks = luigi.Parameter(default=None)
+
+    def __init__(self, *args, **kwargs):
+        super(IngestionTask, self).__init__(*args, **kwargs)
+
+    def requires(self):
+        return self.upstream_tasks
+
+    def output(self):
+        return luigi.LocalTarget(self.output_path())
+
+    def output_path(self):
+        prefix = "/home/luigi/pipeline/logs/"
+        return prefix + self.name + ".log"
+
+    def inputs(self):
+        return [upstream_task.output() for upstream_task in self.requires()]
+
+    def has_upstream_completed(self):
+        completed = True
+        for input in self.inputs():
+            with input.open("r") as fin:
+                status = int(fin.readline())
+                completed &= status == 0
+        return completed
+
+    def execute_command(self):
+        with self.output().open("w") as outfile:
+            status = subprocess.call(self.command, shell=True)
+            outfile.write(str(status))
+            print("status: \t" + str(status))
+
+    def run(self):
+        upstream_task_names = [task.name for task in self.upstream_tasks]
+        upstream_task_names = "[" + ", ".join(upstream_task_names) + "]"
+        print("-----  Task started  -----")
+        print("name:            " + self.name)
+        print("force-execution: " + str(self.force))
+        print("requires:        " + upstream_task_names)
+        print("output:          " + self.output_path())
+        print("command:         " + self.command)
+        if self.has_upstream_completed():
+            self.execute_command()
+            print("----- Task completed -----")
+        else:
+            print("Error: upstream tasks " + upstream_task_names + " have not all completed!")
+            print("-----  Task aborted  -----")
