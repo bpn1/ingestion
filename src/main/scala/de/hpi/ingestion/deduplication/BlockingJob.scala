@@ -1,5 +1,6 @@
 package de.hpi.ingestion.deduplication
 
+import com.datastax.driver.core.utils.UUIDs
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
@@ -19,9 +20,10 @@ object BlockingJob extends SparkJob {
 	appName = "Blocking"
 	val configFile: Option[String] = None
 	val settings = mutable.Map[String, String]()
-	var blockingSchemes = List[BlockingScheme](new SimpleBlockingScheme)
-	sparkOptions("spark.network.timeout") = "600s"
-	sparkOptions("spark.yarn.executor.memoryOverhead") = "2048"
+	var blockingSchemes = List[BlockingScheme](
+		ListBlockingScheme("geo_country_scheme", "geo_country"),
+		ListBlockingScheme("geo_coords_scheme", "geo_coords"),
+		SimpleBlockingScheme("simple_scheme"))
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
@@ -47,13 +49,16 @@ object BlockingJob extends SparkJob {
 		val inputSubjects = input.fromAnyRDD[Subject]()
 		val subjects = inputSubjects.head
 		val staging = inputSubjects(1)
-		val geoCountryBlockingScheme = ListBlockingScheme("geo_country", "geo_country_scheme")
-		val generalSectorBlockingScheme = ListBlockingScheme("geo_coords", "geo_coords_scheme")
-		val simpleBlockingScheme = SimpleBlockingScheme("simple_scheme")
-		val blockingSchemes = List(geoCountryBlockingScheme, generalSectorBlockingScheme, simpleBlockingScheme)
-		val blocks = blocking(subjects, staging, blockingSchemes, false)
-		val blockEvaluation = List(evaluateBlocks(blocks, s"BlockingJob_${System.currentTimeMillis()}"))
+		val comment = args.headOption.getOrElse("BlockingJob")
+		val blockEvaluation = List(evaluationBlocking(subjects, staging, blockingSchemes, false, comment))
 		blockEvaluation.toAnyRDD()
+	}
+
+
+	def setBlockingSchemes(schemes: BlockingScheme*): Unit = setBlockingSchemes(schemes.toList)
+
+	def setBlockingSchemes(schemes: List[BlockingScheme]): Unit = {
+		blockingSchemes = if(schemes.nonEmpty) schemes else List(new SimpleBlockingScheme)
 	}
 
 	/**
@@ -113,24 +118,47 @@ object BlockingJob extends SparkJob {
 			.cogroup(stagingBlocks)
 			.map { case ((key, tag), (subjectList, stagingList)) =>
 				(tag, Block(key = key, subjects = subjectList.toList, staging = stagingList.toList))
+			}.filter { case (tag, block) =>
+				!(blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(block.key) && filterUndefined)
 			}
 	}
 
 	/**
-	  * Counts the number of subjects per block and writes the statistical data to a Block Evaluation object.
-	  * @param blocks blocked subjects
-	  * @param comment note to add to the evaluated data
-	  * @return Block Evaluation containing the block sizes per blocking scheme
+	  * Blocks the input Subjects using the provided blocking schemes and evaluates the blocks. This method reduces
+	  * the amount of data shuffled across the network for better performance.
+	  * @param subjects RDD containing the Subjects
+	  * @param stagingSubjects RDD containing the staged Subjects
+	  * @param blockingSchemes blocking schemes used to generate keys
+	  * @param filterUndefined whether or not the undefined blocks will be filtered (defaults to true)
+	  * @param comment additional comment added to the data entries
+	  * @return RDD of Block Evaluations containing the Block sizes
 	  */
-	def evaluateBlocks(
-		blocks: RDD[(String, Block)],
+	def evaluationBlocking(
+		subjects: RDD[Subject],
+		stagingSubjects: RDD[Subject],
+		blockingSchemes: List[BlockingScheme],
+		filterUndefined: Boolean = true,
 		comment: String
 	): RDD[BlockEvaluation] = {
-		blocks
-			.map(_.map(identity, block => List(block.evaluate())))
-			.reduceByKey(_ ++ _)
-			.map { case (tag, blockList) =>
-				BlockEvaluation(data = blockList, comment = Option(s"${tag}_$comment"))
+		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, s => 1))
+		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, s => 1))
+		val id = UUIDs.timeBased()
+
+		subjectBlocks.cogroup(stagingBlocks)
+			.map { case ((key, tag), (subjectList, stagingList)) =>
+				BlockEvaluation(
+					jobid = id,
+					tag = tag,
+					key = key,
+					numsubjects = subjectList.sum,
+					numstaging = stagingList.sum,
+					comment = Option(comment))
+			}.filter { blockEval =>
+				val isUndefined = blockingSchemes
+					.find(_.tag == blockEval.tag)
+					.map(_.undefinedValue)
+					.contains(blockEval.key)
+				!(isUndefined && filterUndefined)
 			}
 	}
 }

@@ -4,15 +4,16 @@ import java.util.UUID
 
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.blockingschemes.ListBlockingScheme
-import de.hpi.ingestion.deduplication.models.{Block, BlockStats, PrecisionRecallDataTuple, ScoreConfig}
+import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan, SimilarityMeasure}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
 
+// scalastyle:off line.size.limit
+// scalastyle:off number.of.methods
 object TestData {
-	// scalastyle:off line.size.limit
 	val idList = List.fill(8)(UUID.randomUUID())
 	def testData(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
 		sc.parallelize(Seq(
@@ -194,6 +195,31 @@ object TestData {
 		Subject(name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53","14"), "gen_income" -> List("600")))
 	)
 
+	def flatSubjectBlocks(sc: SparkContext, subjects: List[Subject]): RDD[((String, String), Subject)] = {
+		sc.parallelize(List(
+			(("Berlin", "GeoBlocking"), subjects.head),
+			(("Berlin", "GeoBlocking"), subjects(1)),
+			(("Hamburg", "GeoBlocking"), subjects.head),
+			(("undefined", "GeoBlocking"), subjects(2)),
+			(("undefined", "GeoBlocking"), subjects(3)),
+			(("Vol", "SimpleBlocking"), subjects.head),
+			(("Aud", "SimpleBlocking"), subjects(1)),
+			(("Por", "SimpleBlocking"), subjects(2)),
+			(("Fer", "SimpleBlocking"), subjects(3))
+		))
+	}
+
+	def flatStagingBlocks(sc: SparkContext, staging: List[Subject]): RDD[((String, String), Subject)] = {
+		sc.parallelize(List(
+			(("Berlin", "GeoBlocking"), staging.head),
+			(("Hamburg", "GeoBlocking"), staging.last),
+			(("New York", "GeoBlocking"), staging.head),
+			(("New York", "GeoBlocking"), staging.last),
+			(("Vol", "SimpleBlocking"), staging.head),
+			(("Aud", "SimpleBlocking"), staging.last)
+		))
+	}
+
 	def flatBlocks(sc: SparkContext, subjects: List[Subject], staging: List[Subject]): RDD[((String, String), Subject)] = {
 		sc.parallelize(List(
 			(("Berlin", "GeoBlocking"), staging.head),
@@ -214,22 +240,64 @@ object TestData {
 		))
 	}
 
-	def blocks(sc: SparkContext): RDD[(String, Block)] = {
+	def groupedBlocks(sc: SparkContext, subjects: List[Subject], stagings: List[Subject]): RDD[(String, Block)] = {
 		sc.parallelize(List(
-			("GeoBlocking", Block(key = "Berlin", subjects = testSubjects.take(2), staging = stagings.take(1))),
-			("GeoBlocking", Block(key = "Hamburg", subjects = testSubjects.take(1), staging = List(stagings.last))),
-			("GeoBlocking", Block(key = "New York", staging = stagings)),
-			("SimpleBlocking", Block(key = "Vol", subjects = testSubjects.take(1), staging = stagings.take(1))),
-			("SimpleBlocking", Block(key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last))),
-			("SimpleBlocking", Block(key = "Por", subjects = List(testSubjects(3)))),
-			("SimpleBlocking", Block(key = "Fer", subjects = List(testSubjects(4))))
+			("GeoBlocking", Block(id = null, key = "Berlin", subjects = subjects.take(2), staging = stagings.take(1))),
+			("GeoBlocking", Block(id = null, key = "Hamburg", subjects = subjects.take(1), staging = List(stagings.last))),
+			("GeoBlocking", Block(id = null, key = "New York", staging = stagings)),
+			("GeoBlocking", Block(id = null, key = "undefined", subjects = subjects.slice(2, 4))),
+			("SimpleBlocking", Block(id = null, key = "Vol", subjects = subjects.take(1), staging = stagings.take(1))),
+			("SimpleBlocking", Block(id = null, key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last))),
+			("SimpleBlocking", Block(id = null, key = "Por", subjects = List(subjects(2)))),
+			("SimpleBlocking", Block(id = null, key = "Fer", subjects = List(subjects(3))))
 		))
 	}
 
-	def evaluationTestData: List[(Option[String], List[BlockStats])] = {
-		List(
-			(Option("GeoBlocking_Test comment"), List(BlockStats("Berlin", 2, 1), BlockStats("Hamburg", 1, 1), BlockStats("New York", 0, 2))),
-			(Option("SimpleBlocking_Test comment"), List(BlockStats("Vol", 1, 1), BlockStats("Aud", 1, 1), BlockStats("Por", 1), BlockStats("Fer", 1))))
+	def groupedAndFilteredBlocks(sc: SparkContext, subjects: List[Subject], stagings: List[Subject]): RDD[(String, Block)] = {
+		sc.parallelize(List(
+			("GeoBlocking", Block(id = null, key = "Berlin", subjects = subjects.take(2), staging = stagings.take(1))),
+			("GeoBlocking", Block(id = null, key = "Hamburg", subjects = subjects.take(1), staging = List(stagings.last))),
+			("GeoBlocking", Block(id = null, key = "New York", staging = stagings)),
+			("SimpleBlocking", Block(id = null, key = "Vol", subjects = subjects.take(1), staging = stagings.take(1))),
+			("SimpleBlocking", Block(id = null, key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last))),
+			("SimpleBlocking", Block(id = null, key = "Por", subjects = List(subjects(2)))),
+			("SimpleBlocking", Block(id = null, key = "Fer", subjects = List(subjects(3))))
+		))
+	}
+
+	def blockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
+		sc.parallelize(List(
+			BlockEvaluation(null, null, "GeoBlocking", "Berlin", 2, 1, Option("BlockingJob")),
+			BlockEvaluation(null, null, "GeoBlocking", "Hamburg", 1, 1, Option("BlockingJob")),
+			BlockEvaluation(null, null, "GeoBlocking", "New York", 0, 2, Option("BlockingJob")),
+			BlockEvaluation(null, null, "GeoBlocking", "undefined", 2, 0, Option("BlockingJob")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Vol", 1, 1, Option("BlockingJob")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Aud", 1, 1, Option("BlockingJob")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Por", 1, 0, Option("BlockingJob")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Fer", 1, 0, Option("BlockingJob"))))
+	}
+
+	def filteredBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
+		sc.parallelize(List(
+			BlockEvaluation(null, null, "GeoBlocking", "Berlin", 2, 1, Option("Test comment")),
+			BlockEvaluation(null, null, "GeoBlocking", "Hamburg", 1, 1, Option("Test comment")),
+			BlockEvaluation(null, null, "GeoBlocking", "New York", 0, 2, Option("Test comment")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Vol", 1, 1, Option("Test comment")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Aud", 1, 1, Option("Test comment")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Por", 1, 0, Option("Test comment")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Fer", 1, 0, Option("Test comment"))))
+	}
+
+	def blockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
+		sc.parallelize(List(
+			BlockEvaluation(null, null, "GeoBlocking", "Berlin", 2, 1, Option("Test comment")),
+			BlockEvaluation(null, null, "GeoBlocking", "Hamburg", 1, 1, Option("Test comment")),
+			BlockEvaluation(null, null, "GeoBlocking", "New York", 0, 2, Option("Test comment")),
+			BlockEvaluation(null, null, "GeoBlocking", "undefined", 2, 0, Option("Test comment")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Vol", 1, 1, Option("Test comment")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Aud", 1, 1, Option("Test comment")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Por", 1, 0, Option("Test comment")),
+			BlockEvaluation(null, null, "SimpleBlocking", "Fer", 1, 0, Option("Test comment"))))
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
@@ -242,5 +310,10 @@ object TestData {
 		List("undefined")
 	)
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
-	// scalastyle:on line.size.limit
+
+	def requiredSettings: List[String] = {
+		List("keyspaceSubjectTable", "subjectTable", "keyspaceStagingTable", "stagingTable", "keyspaceStatsTable", "statsTable")
+	}
 }
+// scalastyle:on line.size.limit
+// scalastyle:on number.of.methods
