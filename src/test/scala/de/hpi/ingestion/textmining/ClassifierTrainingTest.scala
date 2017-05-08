@@ -12,4 +12,18 @@ class ClassifierTrainingTest extends FlatSpec with Matchers with SharedSparkCont
 		val modelList = ClassifierTraining.run(input, sc).fromAnyRDD[NaiveBayesModel]().head.collect.toList
 		modelList should not be empty
 	}
+
+	"Statistics" should "be calculated" in {
+		val data = sc.parallelize(TestData.labeledPredictions())
+		val statistics = ClassifierTraining.calculateStatistics(data, 0.5)
+		val expectedStats = TestData.predictionStatistics()
+		statistics shouldEqual expectedStats
+	}
+
+	they should "be formatted" in {
+		val statistics = TestData.predictionStatistics()
+		val formattedStats = ClassifierTraining.formatStatistics(statistics)
+		val expectedString = TestData.formattedPredictionStatistics()
+		formattedStats shouldEqual expectedString
+	}
 }
