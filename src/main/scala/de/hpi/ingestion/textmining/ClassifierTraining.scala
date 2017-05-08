@@ -41,11 +41,11 @@ object ClassifierTraining extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[NaiveBayesModel]()
-			.head
-			.first
-			.save(sc, s"wikipedia_naivebayes_model_${System.currentTimeMillis()}")
+//		output
+//			.fromAnyRDD[RandomForestModel]()
+//			.head
+//			.first
+//			.save(sc, s"wikipedia_randomforest_model_${System.currentTimeMillis()}")
 	}
 	// $COVERAGE-ON$
 
@@ -66,13 +66,13 @@ object ClassifierTraining extends SparkJob {
 	  * @param data RDD of labeled points
 	  * @return tuple of the trained model and test data in the format (model, testdata)
 	  */
-	def trainRandomForest(data: RDD[LabeledPoint]): (RandomForestModel, RDD[LabeledPoint]) = {
+	def trainRandomForest(data: RDD[LabeledPoint], numTrees: Int = 3): (RandomForestModel, RDD[LabeledPoint]) = {
 		val Array(training, test) = data.randomSplit(Array(0.7, 0.3))
 		val model = RandomForest.trainClassifier(
 			training,
 			numClasses = 2,
 			categoricalFeaturesInfo = Map[Int, Int](),
-			numTrees = 3,
+			numTrees = numTrees,
 			featureSubsetStrategy = "auto",
 			impurity = "gini",
 			maxDepth = 4,
@@ -129,18 +129,19 @@ object ClassifierTraining extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
-		val data = entries.map(_.labeledPoint())
+		val data = entries.map(_.labeledPoint()).cache
 
-		val Array(training, test) = data.randomSplit(Array(0.6, 0.4))
-
-		val model = NaiveBayes.train(training, 1.0)
-		val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
-			val prediction = model.predict(features)
-			(prediction, label)
-		}
-		val statistics = calculateStatistics(predictionAndLabels, 0.5)
-
-
-		List(sc.parallelize(Seq(model))).toAnyRDD()
+		val stats = (3 to 10).map { count =>
+			val (model, test) = trainRandomForest(data, count)
+			val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
+				val prediction = model.predict(features)
+				(prediction, label)
+			}
+			val statistics = calculateStatistics(predictionAndLabels, 0.5)
+			s"num trees: $count\n${formatStatistics(statistics)}"
+		}.mkString("\n")
+		println(stats)
+		Nil
+//		List(sc.parallelize(Seq(model))).toAnyRDD()
 	}
 }
