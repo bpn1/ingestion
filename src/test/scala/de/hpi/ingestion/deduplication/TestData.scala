@@ -3,7 +3,7 @@ package de.hpi.ingestion.deduplication
 import java.util.UUID
 
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.deduplication.models.{BlockEvaluation, PrecisionRecallDataTuple, ScoreConfig}
+import de.hpi.ingestion.deduplication.models.{BlockEvaluation, FeatureEntry, PrecisionRecallDataTuple, ScoreConfig}
 import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler, MongeElkan, SimilarityMeasure}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -208,5 +208,21 @@ object TestData {
 		List("undefined")
 	)
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
+
+	def features(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
+		FeatureEntry(Subject(id = idList.head), Subject(id = idList(1))),
+		FeatureEntry(Subject(id = idList(2)), Subject(id = idList(3))),
+		FeatureEntry(Subject(id = idList(4)), Subject(id = idList(5)))
+	))
+
+	def goldStandard(sc: SparkContext): RDD[(UUID, UUID)] = sc.parallelize(List(
+		(idList.head, idList(1)), (idList(2), idList(3)), (idList(5), idList(6))
+	))
+
+	def labeledFeatures(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
+		FeatureEntry(Subject(id = idList.head), Subject(id = idList(1)), correct = true),
+		FeatureEntry(Subject(id = idList(2)), Subject(id = idList(3)), correct = true),
+		FeatureEntry(Subject(id = idList(4)), Subject(id = idList(5)), correct = false)
+	))
 	// scalastyle:on line.size.limit
 }

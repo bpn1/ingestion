@@ -1,7 +1,6 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -10,6 +9,7 @@ import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.deduplication.models.{FeatureEntry, ScoreConfig}
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import scala.collection.mutable
 
 /**
   * Job for calculation of feature entries
@@ -17,15 +17,16 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 object FeatureCalculation extends SparkJob {
 	appName = "Feature calculation"
 	val keyspace = "evaluation"
-	val dbpedia = "subject_dbpedia"
-	val wikidata = "subject_wikidata"
-	val goldStandard = "goldstandard"
-	val features = "sim_measure_features"
+	val dbpediaTable = "subject_dbpedia"
+	val wikidataTable = "subject_wikidata"
+	val goldStandardTable = "goldstandard"
+	val featuresTable = "sim_measure_features"
+	var config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
 
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.cassandraTable[Subject](keyspace, dbpedia)
-		val wikidata = sc.cassandraTable[Subject](keyspace, wikidata)
-		val goldStandard = sc.cassandraTable[(UUID, UUID)](keyspace, goldStandard)
+		val dbpedia = sc.cassandraTable[Subject](keyspace, dbpediaTable)
+		val wikidata = sc.cassandraTable[Subject](keyspace, wikidataTable)
+		val goldStandard = sc.cassandraTable[(UUID, UUID)](keyspace, goldStandardTable)
 		List(dbpedia, wikidata).toAnyRDD() ::: List(goldStandard).toAnyRDD()
 	}
 
@@ -33,34 +34,43 @@ object FeatureCalculation extends SparkJob {
 		output
 			.fromAnyRDD[FeatureEntry]()
 			.head
-			.saveToCassandra(keyspace, features)
+			.saveToCassandra(keyspace, featuresTable)
 	}
 
-	def isDuplicate(subject: Subject, staging: Subject, goldStandard: RDD[(UUID, UUID)]): Boolean = false // TODO: nyi
+	def labelFeature(features: RDD[FeatureEntry], goldStandard: RDD[(UUID, UUID)]): RDD[FeatureEntry] = {
+		val keyedFeatures = features.keyBy(feature => (feature.subject.id, feature.staging.id))
+		val keyedGoldStandard = goldStandard.map((_, true))
 
-	def compare(subject: Subject, staging: Subject): Double = 0.0 // TODO: nyi
+		keyedFeatures
+			.leftOuterJoin(keyedGoldStandard)
+			.values
+			.map { case (feature, correct) =>
+				feature.copy(correct = correct.getOrElse(false))
+			}
+	}
+
+	def compare(
+		attribute: String,
+		subjectValues: List[String],
+		stagingValues: List[String],
+		scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]
+	): Double = (subjectValues, stagingValues) match {
+		case (xs, ys) if xs.nonEmpty && ys.nonEmpty =>
+			CompareStrategy(attribute)(subjectValues, stagingValues, scoreConfig)
+		case _ => 0.0
+	}
 
 	def createFeature(
 		subject: Subject,
-		staging: Subject,
-		goldStandard: RDD[(UUID, UUID)],
-		config: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]
+		staging: Subject
 	): FeatureEntry = {
-		val scores = config.map { case (attribute, scoreConfigs) =>
+		val scores = this.config.map { case (attribute, scoreConfigs) =>
 			val subjectValues = subject.get(attribute)
 			val stagingValues = staging.get(attribute)
-			val scores = scoreConfigs.map { scoreConfig =>
-				if(subjectValues.isEmpty || stagingValues.isEmpty){
-					0.0
-				}
-				else {
-					CompareStrategy(attribute)(subjectValues, stagingValues, scoreConfig)
-				}
-			}
+			val scores = scoreConfigs.map(compare(attribute, subjectValues, stagingValues, _))
 			(attribute, scores)
-		}
-		val correct = isDuplicate(subject, staging, goldStandard)
-		FeatureEntry(subject, staging, scores, correct)
+		}.toMap
+		FeatureEntry(subject, staging, scores)
 	}
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
@@ -69,6 +79,10 @@ object FeatureCalculation extends SparkJob {
 		val wikidata = inputSubjects(1)
 		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().head
 
+		//val blocks = Blocking.blocking()
+		// blocks.foreach(block => createFeature)
+		// val labeledPoints = labelFeature(blocks, goldStandard)
+		// List(labeledPoints).toAnyRDD()
 		Nil
 	}
 }
