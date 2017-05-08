@@ -4,6 +4,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
 import org.jsoup.nodes.Element
 
+import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -1428,6 +1429,78 @@ object TestData {
 		)
 	}
 
+	def wikidataEntities(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Page 1")),
+			WikiDataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Page 2")),
+			WikiDataEntity("Q3", instancetype = Option("comp"), wikiname = Option("Page 3")),
+			WikiDataEntity("Q4", instancetype = Option("comp")),
+			WikiDataEntity("Q5", wikiname = Option("Page 5")),
+			WikiDataEntity("Q6"))
+	}
+
+	def wikidataCompanyPages(): List[String] = {
+		List("Page 1", "Page 2", "Page 3")
+	}
+
+	def companyPages(): List[Page] = {
+		List(
+			Page("Page 1", Map("P1Alias1" -> 1, "P1Alias2" -> 1)),
+			Page("Page 2", Map("P2Alias1" -> 1, "P2Alias2" -> 1)),
+			Page("Page 3", Map("P3Alias1" -> 1, "P1Alias1" -> 1)),
+			Page("Page 4", Map("P4Alias1" -> 1, "P4Alias3" -> 1)),
+			Page("Page 5", Map("P5Alias1" -> 1)),
+			Page("Page 6", Map("P6Alias1" -> 1)))
+	}
+
+	def companyAliases(): Set[String] = {
+		Set("P1Alias1", "P1Alias2", "P2Alias1", "P2Alias2", "P3Alias1")
+	}
+
+	def unfilteredCompanyLinksEntries(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Title 1",
+				textlinks = List(Link("P1Alias1", "Page 1"), Link("P4Alias3", "Page 4")),
+				templatelinks = List(Link("P2Alias1", "Page 2")),
+				categorylinks = List(Link("P3Alias1", "Page 3")),
+				listlinks = List(Link("P4Alias1", "Page 4"))),
+			ParsedWikipediaEntry(
+				"Title 2",
+				textlinks = List(Link("P5Alias1", "Page 5")),
+				categorylinks = List(Link("P6Alias1", "Page 6"))),
+			ParsedWikipediaEntry(
+				"Title 3",
+				listlinks = List(Link("P1Alias2", "Page 1")),
+				disambiguationlinks = List(Link("P2Alias2", "Page 2")))
+		)
+	}
+
+	def filteredCompanyLinksEntries(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Title 1",
+				textlinks = List(Link("P1Alias1", "Page 1")),
+				templatelinks = List(Link("P2Alias1", "Page 2")),
+				categorylinks = List(Link("P3Alias1", "Page 3"))),
+			ParsedWikipediaEntry("Title 2"),
+			ParsedWikipediaEntry(
+				"Title 3",
+				listlinks = List(Link("P1Alias2", "Page 1")),
+				disambiguationlinks = List(Link("P2Alias2", "Page 2")))
+		)
+	}
+
+	def classifierFeatureEntries(): List[FeatureEntry] = {
+		List(
+			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
+			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, true),
+			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3, false),
+			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2, false),
+			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
+			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
+			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
+	}
 }
 
 // scalastyle:on method.length
