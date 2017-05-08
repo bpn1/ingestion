@@ -244,11 +244,6 @@ object TextParser extends SparkJob {
 			startIndex = 1
 			var firstChildText = children(0).asInstanceOf[TextNode].text
 			while(firstChildText.charAt(0) != body.text.headOption.getOrElse("")) {
-				if(firstChildText.length == 0) {
-					println("AAA Error:")
-					println(body)
-					println("=========")
-				}
 				firstChildText = firstChildText.substring(1)
 				if(firstChildText.length == 0) {
 					return ("", linksList.toList)
@@ -498,7 +493,7 @@ object TextParser extends SparkJob {
 	  */
 	def extractListLinks(html: String): List[Link] = {
 		val document = Jsoup.parse(html)
-		val htmlLists = document.select("ul").toList ++ document.select("ol").toList
+		val htmlLists = document.select("ul").toList ++ document.select("ol").toListre
 		htmlLists
 			.map(element => Jsoup.parse(element.html()))
 			.flatMap(_.select("a"))
@@ -515,7 +510,7 @@ object TextParser extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val rawArticles = input.fromAnyRDD[WikipediaEntry]().head.sample(false, 0.1)
+		val rawArticles = input.fromAnyRDD[WikipediaEntry]().head
 		val parsedArticles = rawArticles
 			.filter(!isMetaPage(_))
 			.map(parseWikipediaEntry)
