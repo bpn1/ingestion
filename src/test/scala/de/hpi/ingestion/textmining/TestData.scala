@@ -23,42 +23,63 @@ object TestData {
 		List(
 			"This is a test sentence.",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen.",
-			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.")
+			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.",
+			"Dieser Satz enthält Klammern (evtl. problematisch)."
+		)
 	}
 
 	def tokenizedTestSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
-			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"))
+			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
+			List("Dieser", "Satz", "enthält", "Klammern", "-LRB-", "evtl", "problematisch", "-RRB-")
+		)
+	}
+
+	def tokenizedTestSentencesWithoutSpecialCharacters(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence"),
+			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
+			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
+			List("Dieser", "Satz", "enthält", "Klammern", "evtl", "problematisch")
+		)
 	}
 
 	def filteredTokenizedSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "Hessen"),
-			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"))
+			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"),
+			List("Satz", "enthält", "Klammern", "-LRB-", "evtl", "problematisch", "-RRB-")
+		)
 	}
 
 	def stemmedTokenizedSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
 			List("streitberg", "ist", "ein", "von", "sech", "ortsteil", "der", "gemei", "brachttal", "main-kinzig-kreis", "in", "hess"),
-			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"))
+			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"),
+			List("dies", "satx", "enthal", "klamm", "-lrb-", "evtl", "problematisch", "-rrb-")
+		)
 	}
 
 	def stemmedAndFilteredSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
 			List("streitberg", "ortsteil", "gemei", "brachttal", "main-kinzig-kreis", "hess"),
-			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"))
+			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"),
+			List("satx", "enthal", "klamm", "-lrb-", "evtl", "problematisch", "-rrb-")
+		)
 	}
 
 	def reversedSentences(): List[String] = {
 		List(
 			"This is a test sentence",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
-			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen")
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
+			"Dieser Satz enthält Klammern -LRB- evtl problematisch -RRB-"
+		)
 	}
 
 
