@@ -147,10 +147,15 @@ CREATE TABLE datalake.deduplicationstats (
     data list<frozen<blockstats>>
 );
 
-CREATE TABLE datalake.deduplicationstats (
-    id uuid PRIMARY KEY,
+CREATE TABLE datalake.blockingstats (
+    id uuid,
+    jobid timeuuid,
+    tag text,
     comment text,
-    data map<text, int>
+    key text,
+    numstaging int,
+    numsubjects int,
+    PRIMARY KEY (id, jobid, tag)
 );
 
 CREATE TABLE datalake.duplicatecandidates (
