@@ -28,7 +28,7 @@ object DBpediaNormalizeStrategy extends Serializable {
 			case r"""\d+..xsd:integer""" => "filter_me"
 			case r"""(\d+\.\d+)${ord}..xsd:.+""" => ord
 			case other => other
-		}
+		}.filterNot(_ == "filter_me").grouped(2).toList.distinct.flatten
 	}
 
 	def normalizeNothing(values: List[String]): List[String] = values

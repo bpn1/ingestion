@@ -29,6 +29,18 @@ class DBpediaNormalizeStrategyUnitTest extends FlatSpec with Matchers {
 		output shouldEqual expected
 	}
 
+	//"normalizeCoords" should "normalize all possible appearances of coordinate values in dbpedia" in {}
+	"normalizeCoords" should "kick out redundant information or integers" in {
+		val input = List(
+			"48.34822^^xsd:float", "10.905282^^xsd:float",
+			"48348220^^xsd:integer", "10905282^^xsd:integer",
+			"48.34822^^xsd:double", "10.905282^^xsd:double"
+		)
+		val output = DBpediaNormalizeStrategy("geo_coords")(input)
+		val expected = List("48.34822", "10.905282")
+		output shouldEqual expected
+	}
+
 	/*"compare" should "return the score of the similarity of two strings" in {
 		val deduplication = TestData.defaultDeduplication
 		deduplication.config = TestData.testConfig()
