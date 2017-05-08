@@ -15,7 +15,10 @@ import scala.collection.mutable
 import scala.io.Source
 import scala.xml.XML
 
-
+/**
+  * Compares two groups of Subjects by first blocking with multiple Blocking Schemes, then compares all Subjects
+  * in every block and filters all pairs below a given threshold.
+  */
 object DeduplicationJob extends SparkJob {
 	appName = "Deduplication"
 	var config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
@@ -80,18 +83,16 @@ object DeduplicationJob extends SparkJob {
 		val staging = inputRDDs(1)
 		val blockingSchemes = List(SimpleBlockingScheme("simple_scheme"))
 		val blocks = BlockingJob.blocking(subjects, staging, blockingSchemes)
-		val subjectPairs = blocks
-			.values
-			.flatMap(findDuplicates)
+		val subjectPairs = findDuplicates(blocks.values)
 		val duplicates = createDuplicateCandidates(subjectPairs)
 		List(duplicates).toAnyRDD()
 	}
 
 	/**
-	  * Get similarity Measure by its name.
-	  * @param similarityMeasure Name of the similarity Measure
-	  * @tparam T type of the similarity Measure
-	  * @return Similarity Measure
+	  * Returns a Similarity Measure given its name.
+	  * @param similarityMeasure name of the Similarity Measure
+	  * @tparam T type of the Similarity Measure
+	  * @return the requested Similarity Measure if it exists or else Exact Match String as default
 	  */
 	def getSimilarityMeasure[T](similarityMeasure: String): SimilarityMeasure[T] = {
 		this.dataTypes.getOrElse(similarityMeasure, ExactMatchString).asInstanceOf[SimilarityMeasure[T]]
@@ -105,9 +106,9 @@ object DeduplicationJob extends SparkJob {
 		config.clear()
 		val path = this.configFile.getOrElse("config.xml")
 		val xml = XML.loadString(Source
-		.fromURL(getClass.getResource(s"/$path"))
-		.getLines()
-		.mkString("\n"))
+			.fromURL(getClass.getResource(s"/$path"))
+			.getLines()
+			.mkString("\n"))
 
 		val configSettings = xml \\ "config" \ "sourceSettings"
 		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
@@ -131,7 +132,7 @@ object DeduplicationJob extends SparkJob {
 	}
 
 	/**
-	  * Compares to subjects regarding the configuration
+	  * Compares to subjects regarding the configuration.
 	  * @param subject1 subjects to be compared to subject2
 	  * @param subject2 subjects to be compared to subject1
 	  * @return the similarity score of the subjects
@@ -158,64 +159,31 @@ object DeduplicationJob extends SparkJob {
 	}
 
 	/**
-	  * Creates candidates for the Deduplication for each element of the output of findDuplicates.
-	  * @param subjectPairs Pairs of subjects for all possible duplicates
-	  * @return all actual candidates to save to the cassandra
+	  * Groups all found duplicates by the Subject whose duplicate they are and creates the corresponding
+	  * DuplicateCandidates.
+	  * @param subjectPairs RDD of Subject pairs containing all found duplicates
+	  * @return RDD of grouped Duplicate Candidates
 	  */
 	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
+		val stagingTable = settings("stagingTable")
 		subjectPairs
 			.map { case (subject1, subject2, score) =>
-				(subject1.id, List((subject2, settings("stagingTable"), score)))
+				(subject1.id, List((subject2, stagingTable, score)))
 			}.reduceByKey(_ ::: _)
 			.map(DuplicateCandidates.tupled)
 	}
 
 	/**
-	  * Finds the duplicates of each block.
-	  * @param block List of Subjects where the duplicates are searched in
-	  * @return tuple of Subjects with it's score, which is greater or equal a given threshold this.confidence
+	  * Finds the duplicates of each block by comparing the Subjects and filtering all Subjects pairs below the
+	  * threshold {@confidence}.
+	  * @param blocks RDD of BLocks containing the Subjects that are compared
+	  * @return tuple of Subjects with their score, which is greater or equal the given threshold.
 	  */
-	def findDuplicates(block: Block): List[(Subject, Subject, Double)] = {
-		block
-			.crossProduct()
+	def findDuplicates(blocks: RDD[Block]): RDD[(Subject, Subject, Double)] = {
+		val threshold = settings("confidence").toDouble
+		blocks
+			.flatMap(_.crossProduct())
 			.map(subjects => (subjects._1, subjects._2, compare(subjects._1, subjects._2)))
-			.filter(_._3 >= settings("confidence").toDouble)
-	}
-
-	/**
-	  * Add symmetric relations between two subject nodes, abstraction from SubjectManagers
-	  * addRelations method
-	  * @param subject1 UUID of a given node
-	  * @param subject2 UUID of another given node
-	  * @param relations A set of attributes of keys and values describing the relation,
-	  * typically a 'type' value should be passed
-	  * @param version Current transactional id handle
-	  */
-	def addSymRelation(
-		subject1: Subject,
-		subject2: Subject,
-		relations: Map[String,String],
-		version: Version
-	): Unit = {
-		val subjectManager1 = new SubjectManager(subject1, version)
-		val subjectManager2 = new SubjectManager(subject2, version)
-
-		subjectManager1.addRelations(Map(subject2.id -> relations))
-		subjectManager2.addRelations(Map(subject1.id -> relations))
-	}
-
-	/**
-	  * Merging two duplicates in one subject
-	  * @param duplicates tuple of Subject
-	  * @return subjects containing the merged information of both duplicates
-	  */
-	def buildDuplicatesSCC(duplicates: List[(Subject, Subject, Double)], version: Version): Unit = {
-		duplicates.foreach { scoredDuplicatePair =>
-			addSymRelation(
-				scoredDuplicatePair._1,
-				scoredDuplicatePair._2,
-				Map("type" -> "isDuplicate", "confidence" -> scoredDuplicatePair._3.toString),
-				version)
-		}
+			.filter(_._3 >= threshold)
 	}
 }

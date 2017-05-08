@@ -9,22 +9,20 @@ import scala.collection.mutable
 
 class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 	"compare" should "calculate a score regarding the configuration" in {
-		val deduplication = DeduplicationJob
-		deduplication.config = TestData.testConfig()
+		DeduplicationJob.config = TestData.testConfig()
 		val subjects = TestData.testSubjects
-		val score = deduplication.compare(subjects.head, subjects(1))
+		val score = DeduplicationJob.compare(subjects.head, subjects(1))
 		val expected = TestData.testSubjectScore(subjects.head, subjects(1))
 
 		score shouldEqual expected
 	}
 
 	it should "just return the weighted score if the configuration contains only one element" in {
-		val deduplication = DeduplicationJob
 		val config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
 		config("name") = List(ScoreConfig(MongeElkan, 0.5))
-		deduplication.config = config
+		DeduplicationJob.config = config
 		val subjects = TestData.testSubjects
-		val score = deduplication.compare(subjects.head, subjects(1))
+		val score = DeduplicationJob.compare(subjects.head, subjects(1))
 		val expected = MongeElkan.compare(subjects.head.name.get, subjects(1).name.get)
 
 		score shouldEqual expected
@@ -38,12 +36,11 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 	"createDuplicateCandidates" should "build an RDD containing all candidates for deduplication for each subject" in {
 		val testSubjects = TestData.testSubjects
-		val deduplication = DeduplicationJob
-		deduplication.settings("stagingTable")= "subject_wikidata"
+		DeduplicationJob.settings("stagingTable") = "subject_wikidata"
 		val testSubject1 = testSubjects.head
 		val testSubject2 = testSubjects(3)
 		val testSubjectPair = List((testSubject1, testSubject2, 0.5))
-		val testDuplicateCandidates = deduplication.createDuplicateCandidates(sc.parallelize(testSubjectPair))
+		val testDuplicateCandidates = DeduplicationJob.createDuplicateCandidates(sc.parallelize(testSubjectPair))
 		val expectedCandidate = DuplicateCandidates(testSubject1.id, List((testSubject2, "subject_wikidata", 0.5)))
 		val expected = sc.parallelize(List(expectedCandidate))
 		assertRDDEquals(testDuplicateCandidates, expected)
@@ -53,37 +50,8 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		DeduplicationJob.config = TestData.parsedConfig
 		DeduplicationJob.settings("confidence") = "0.35"
 		val subjects = TestData.testSubjects
-		val duplicates = TestData.subjectBlocks(subjects)
-			.flatMap(DeduplicationJob.findDuplicates)
-			.toSet
+		val duplicates = DeduplicationJob.findDuplicates(TestData.subjectBlocks(subjects, sc)).collect.toSet
 		val expected = TestData.testDuplicates(subjects).toSet
 		duplicates shouldEqual expected
-	}
-
-	"buildDuplicatesSCC" should "should add isDuplicate relation with a confidence for a list of tuples" in {
-		val deduplication = DeduplicationJob
-		val subjects = TestData.testSubjects
-		val duplicates = List((subjects.head, subjects(2), 0.8), (subjects(1), subjects(3), 0.8))
-		val expectedRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
-		val expectedRelationNode1 = Map(subjects(2).id -> expectedRelation)
-		val expectedRelationNode2 = Map(subjects(3).id -> expectedRelation)
-		val version = TestData.testVersion(sc)
-		deduplication.buildDuplicatesSCC(duplicates, version)
-
-		subjects.head.relations shouldEqual expectedRelationNode1
-		subjects(1).relations shouldEqual expectedRelationNode2
-	}
-
-	"addSymRelation" should "add a symmetric relation between two given nodes" in {
-		val deduplication = DeduplicationJob
-		val subjects = TestData.testSubjects
-		val relation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
-		val version = TestData.testVersion(sc)
-		val expectedRelationNode1 = Map(subjects(1).id -> relation)
-		val expectedRelationNode2 = Map(subjects.head.id -> relation)
-		deduplication.addSymRelation(subjects.head, subjects(1), relation, version)
-
-		subjects.head.relations shouldEqual expectedRelationNode1
-		subjects(1).relations shouldEqual expectedRelationNode2
 	}
 }

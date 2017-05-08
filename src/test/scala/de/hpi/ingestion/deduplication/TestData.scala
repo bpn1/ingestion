@@ -120,8 +120,8 @@ object TestData {
 		Subject(name = Some("Ferrari"), properties = Map("geo_coords" -> List("53","14"), "gen_sectors" -> List("games", "cars", "music")))
 	)
 
-	def subjectBlocks(testSubjects: List[Subject]): List[Block] = {
-		List(
+	def subjectBlocks(testSubjects: List[Subject], sc: SparkContext): RDD[Block] = {
+		sc.parallelize(List(
 			Block(key = "Aud", subjects = List(testSubjects(2)), staging = List(testSubjects(3))),
 			Block(key = "Vol", subjects = testSubjects.take(1), staging = List(testSubjects(1))),
 			Block(key = "undefined", subjects = testSubjects.take(2), staging = List(testSubjects(4)))
@@ -129,7 +129,7 @@ object TestData {
 //			Block(key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last)),
 //			Block(key = "Por", subjects = List(subjects(3))),
 //			Block(key = "Fer", subjects = List(subjects(4)))
-		)
+		))
 	}
 
 	def emptySubject: Subject = Subject()

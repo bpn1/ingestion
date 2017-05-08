@@ -16,6 +16,10 @@ import scala.io.Source
 import scala.language.postfixOps
 import scala.xml.XML
 
+/**
+  * Blocks two groups of Subjects with multiple Blocking Schemes and evaluates the resulting blocks by counting their
+  * sizes and writing the results to the Cassandra.
+  */
 object BlockingJob extends SparkJob {
 	appName = "Blocking"
 	val configFile: Option[String] = None
@@ -26,12 +30,24 @@ object BlockingJob extends SparkJob {
 		SimpleBlockingScheme("simple_scheme"))
 
 	// $COVERAGE-OFF$
+	/**
+	  * Loads the Subjects and staged Subjects from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
 		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
 		(subjects ++ staging).toAnyRDD()
 	}
 
+	/**
+	  * Saves the Blocking Evaluation to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
 			.fromAnyRDD[BlockEvaluation]()
@@ -40,11 +56,23 @@ object BlockingJob extends SparkJob {
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Parses the config before asserting the Conditions of the super class.
+	  * @param args arguments of the program
+	  * @return true if the program can continue, false if it should be terminated
+	  */
 	override def assertConditions(args: Array[String]): Boolean = {
 		parseConfig()
 		super.assertConditions(args)
 	}
 
+	/**
+	  * Blocks the input Subjects and counts the block sizes.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val inputSubjects = input.fromAnyRDD[Subject]()
 		val subjects = inputSubjects.head
@@ -54,9 +82,16 @@ object BlockingJob extends SparkJob {
 		blockEvaluation.toAnyRDD()
 	}
 
-
+	/**
+	  * Sets the used blocking schemes.
+	  * @param schemes List of Blocking Schemes used in the blocking process
+	  */
 	def setBlockingSchemes(schemes: BlockingScheme*): Unit = setBlockingSchemes(schemes.toList)
 
+	/**
+	  * Sets the used blocking schemes.
+	  * @param schemes List of Blocking Schemes used in the blocking process
+	  */
 	def setBlockingSchemes(schemes: List[BlockingScheme]): Unit = {
 		blockingSchemes = if(schemes.nonEmpty) schemes else List(new SimpleBlockingScheme)
 	}
@@ -144,7 +179,8 @@ object BlockingJob extends SparkJob {
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, s => 1))
 		val id = UUIDs.timeBased()
 
-		subjectBlocks.cogroup(stagingBlocks)
+		subjectBlocks
+			.cogroup(stagingBlocks)
 			.map { case ((key, tag), (subjectList, stagingList)) =>
 				BlockEvaluation(
 					jobid = id,
