@@ -168,6 +168,20 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 			}
 	}
 
+	"Cleaned tokenized sentences" should "contain multiple tokens" in {
+		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, false)
+		TestData.testSentences()
+			.map(tokenizer.process)
+			.foreach(tokens => tokens.length should be > 1)
+	}
+
+	they should "be exactly these token lists" in {
+		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, false)
+		val tokenizedSentences = TestData.testSentences()
+			.map(tokenizer.process)
+		tokenizedSentences shouldEqual TestData.tokenizedTestSentencesWithoutSpecialCharacters()
+	}
+
 	def isSpecialCharacter(text: String, beginOffset: Int, endOffset: Int): Boolean = {
 		val length = endOffset - beginOffset
 		val character = text.charAt(beginOffset)
