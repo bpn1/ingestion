@@ -125,10 +125,6 @@ object TestData {
 			Block(key = "Aud", subjects = List(testSubjects(2)), staging = List(testSubjects(3))),
 			Block(key = "Vol", subjects = testSubjects.take(1), staging = List(testSubjects(1))),
 			Block(key = "undefined", subjects = testSubjects.take(2), staging = List(testSubjects(4)))
-//			Block(key = "Vol", subjects = subjects.take(1), staging = stagings.take(1)),
-//			Block(key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last)),
-//			Block(key = "Por", subjects = List(subjects(3))),
-//			Block(key = "Fer", subjects = List(subjects(4)))
 		))
 	}
 
@@ -143,12 +139,38 @@ object TestData {
 		)
 	)
 
-	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = List(
-		(testSubjects.head, testSubjects(1), 0.7117948717948718),
-		(testSubjects.head, testSubjects(4), 0.5761904761904763),
-		(testSubjects(1), testSubjects(4), 0.5654212454212454),
-		(testSubjects(2), testSubjects(3), 0.9446913580246914)
-	)
+	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = {
+		List(
+			(testSubjects.head, testSubjects(1), 0.7117948717948718),
+			(testSubjects.head, testSubjects(4), 0.5761904761904763),
+			(testSubjects(1), testSubjects(4), 0.5654212454212454),
+			(testSubjects(2), testSubjects(3), 0.9446913580246914))
+	}
+
+	def trueDuplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
+		val stagingTable = "subject_wikidata"
+		List(
+			DuplicateCandidates(
+				subjects.head.id,
+				List((subjects(1), stagingTable, 0.7117948717948718))),
+			DuplicateCandidates(
+				subjects(2).id,
+				List((subjects(3), stagingTable, 0.9446913580246914))))
+	}
+
+	def duplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
+		val stagingTable = "subject_wikidata"
+		List(
+			DuplicateCandidates(
+				subjects.head.id,
+				List((subjects(1), stagingTable, 0.7117948717948718), (subjects(4), stagingTable, 0.5761904761904763))),
+			DuplicateCandidates(
+				subjects(1).id,
+				List((subjects(4), stagingTable, 0.5654212454212454))),
+			DuplicateCandidates(
+				subjects(2).id,
+				List((subjects(3), stagingTable, 0.9446913580246914))))
+	}
 
 	def testConfig(key: String = "name"): mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = mutable.Map(
 		key -> List(

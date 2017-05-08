@@ -89,16 +89,6 @@ object DeduplicationJob extends SparkJob {
 	}
 
 	/**
-	  * Returns a Similarity Measure given its name.
-	  * @param similarityMeasure name of the Similarity Measure
-	  * @tparam T type of the Similarity Measure
-	  * @return the requested Similarity Measure if it exists or else Exact Match String as default
-	  */
-	def getSimilarityMeasure[T](similarityMeasure: String): SimilarityMeasure[T] = {
-		this.dataTypes.getOrElse(similarityMeasure, ExactMatchString).asInstanceOf[SimilarityMeasure[T]]
-	}
-
-	/**
 	  * Reads the configuration from an xml file.
 	  * @return a list containing scoreConfig entities parsed from the xml file
 	  */
@@ -124,7 +114,7 @@ object DeduplicationJob extends SparkJob {
 			scale = (feature \ "scale").text.toInt
 		}{
 			val scoreConfig = ScoreConfig[String, SimilarityMeasure[String]](
-				getSimilarityMeasure[String](similarityMeasure),
+				SimilarityMeasure.get[String](similarityMeasure),
 				weight,
 				scale)
 			this.config(key) = config.getOrElse(key, Nil) :+ scoreConfig
