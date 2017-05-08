@@ -6,22 +6,26 @@ class DBpediaNormalizeStrategyUnitTest extends FlatSpec with Matchers {
 	def expectedNormalizeStrategies: List[List[String] => List[String]] = List(
 		DBpediaNormalizeStrategy.normalizeEmployees,
 		DBpediaNormalizeStrategy.normalizeCountry,
+		DBpediaNormalizeStrategy.normalizeCoords,
 		DBpediaNormalizeStrategy.normalizeNothing
 	)
 
 	"apply" should "decide, which strategy should be used regarding the input attribute" in {
 		val input = List(
-			"5500^^xsd:integer", "100^^xsd:nonNegativeInteger", "über 1000@de .",	// normalizeEmployees
-			"Deutschland@de .", "dbpedia-de:England", // normalizeCountry
-			"I don't fit anywhere :("	// normalizeNothing
+			"5500^^xsd:integer", "100^^xsd:nonNegativeInteger", "über 1000@de .", // employees
+			"Deutschland@de .", "dbpedia-de:England", // country
+			"48.34822^^xsd:float", "10.905282^^xsd:double", "48348220^^xsd:integer", "10905282^^xsd:integer", // coords
+			"I don't fit anywhere :(" // nothing
 		)
 		val strategy = List(
 			DBpediaNormalizeStrategy.apply("gen_employees"),
 			DBpediaNormalizeStrategy.apply("geo_country"),
+			DBpediaNormalizeStrategy.apply("geo_coords"),
 			DBpediaNormalizeStrategy.apply("something_else")
 		)
 		val output = strategy.map(_(input))
 		val expected = expectedNormalizeStrategies.map(_(input))
+		//val expected = List(List("48.34822", "10.905282", "filter_me", "filter_me"))
 		output shouldEqual expected
 	}
 
