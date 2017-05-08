@@ -1,5 +1,6 @@
 from mapbox import Geocoder
 import uuid
+import urllib
 
 geocoder = Geocoder(
     access_token='pk.eyJ1IjoicmFkc2NoZWl0IiwiYSI6ImNqMXRoMnZ2aDAwMW0zM3FyMm9oMzJ0MTEifQ.xdZLGZA5FNwi97t2UC4ogw')
@@ -47,7 +48,13 @@ def generate_request(
 
 def fire_single_request_to_obtain_coordinates(request_string):
     if is_not_blank(request_string):
-        response = geocoder.forward(request_string)
+        # urllib.urlencode(request_string)
+        response = geocoder.forward(
+            request_string,
+            limit = 1,
+            types = ('place', 'locality', 'neighborhood', 'address', 'region', 'district')
+
+        )
 
         if response.status_code == 200:
             if 'center' in response.json()['features'][0]:
@@ -73,6 +80,8 @@ def fire_single_request_to_obtain_coordinates(request_string):
                 else:
                     wikidata = ""
 
+
+                # Filter for the right type, according https://www.mapbox.com/api-documentation/?language=Python#geocoding
                 if 'type' in properties:
                     kind = properties[0]['type']
                 else:
