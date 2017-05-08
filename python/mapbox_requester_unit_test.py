@@ -26,7 +26,8 @@ class MyTestCase(unittest.TestCase):
             "coordinates": [-76.981041, 38.878649],
             "name": "Pennsylvania Ave SE",
             "place_name": "1600 Pennsylvania Ave SE, Washington, District of Columbia 20003, United States",
-            "wikidata": ""
+            "wikidata": "",
+            "type": ""
         }
 
         self.assertEqual(computed_value, expected_value)
