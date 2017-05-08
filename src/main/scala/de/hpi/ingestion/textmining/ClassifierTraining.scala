@@ -18,7 +18,8 @@ object ClassifierTraining extends SparkJob {
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Feature entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
@@ -29,9 +30,10 @@ object ClassifierTraining extends SparkJob {
 
 	/**
 	  * Saves Naive Bayes Model to the HDFS.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
@@ -41,10 +43,12 @@ object ClassifierTraining extends SparkJob {
 			.head
 			.save(sc, s"wikipedia_randomforest_model_${System.currentTimeMillis()}")
 	}
+
 	// $COVERAGE-ON$
 
 	/**
 	  * Calculates Precision, Recall and F1-Score of the given prediction results.
+	  *
 	  * @param predictionAndLabels RDD containing Tuples of the prediction and the given label in the format
 	  *                            (prediction, label)
 	  * @return List of statistic data as three-tuples in the format (statistic, threshold, value)
@@ -69,6 +73,7 @@ object ClassifierTraining extends SparkJob {
 
 	/**
 	  * Formats List of statistic three-tuples into a printable String.
+	  *
 	  * @param stats List of statistic three-tuples in the format (statistic, threshold, value)
 	  * @return formatted String of the statistics
 	  */
@@ -81,9 +86,10 @@ object ClassifierTraining extends SparkJob {
 	/**
 	  * Uses 60% of the entries to train a Naive Bayes model and tests the model with the other 40% of the data.
 	  * Example code: https://spark.apache.org/docs/latest/mllib-naive-bayes.html
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
