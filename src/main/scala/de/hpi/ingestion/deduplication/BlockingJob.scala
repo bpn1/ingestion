@@ -177,24 +177,22 @@ object BlockingJob extends SparkJob {
 	): RDD[BlockEvaluation] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, s => 1))
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, s => 1))
-		val id = UUIDs.timeBased()
+		val jobid = UUIDs.timeBased()
 
 		subjectBlocks
 			.cogroup(stagingBlocks)
-			.map { case ((key, tag), (subjectList, stagingList)) =>
-				BlockEvaluation(
-					jobid = id,
-					tag = tag,
-					key = key,
-					numsubjects = subjectList.sum,
-					numstaging = stagingList.sum,
-					comment = Option(comment))
-			}.filter { blockEval =>
+			.filter { case ((key, tag), (subjectList, stagingList)) =>
 				val isUndefined = blockingSchemes
-					.find(_.tag == blockEval.tag)
+					.find(_.tag == tag)
 					.map(_.undefinedValue)
-					.contains(blockEval.key)
+					.contains(key)
 				!(isUndefined && filterUndefined)
+			}.map { case ((key, tag), (subjectList, stagingList)) =>
+				val blockData = BlockStats(key, subjectList.sum, stagingList.sum)
+				(tag, Set(blockData))
+			}.reduceByKey(_ ++ _)
+			.map { case (tag, blockStatSet) =>
+				BlockEvaluation(jobid, tag, blockStatSet, Option(comment))
 			}
 	}
 }

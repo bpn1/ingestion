@@ -1,8 +1,12 @@
 package de.hpi.ingestion.deduplication.models
 
 /**
-  * Created by janehmueller on 08.05.17.
+  * Contains the statistical data of a single block.
+  * @param key key used to generate this block
+  * @param numsubjects number of Subjects in this block
+  * @param numstaging number of staged Subjects in this block
   */
-class BlockStats {
-
-}
+case class BlockStats(
+	key: String,
+	numsubjects: Int,
+	numstaging: Int)

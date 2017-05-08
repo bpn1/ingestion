@@ -1,5 +1,6 @@
 package de.hpi.ingestion.deduplication.blockingschemes
 
+import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.deduplication.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -10,6 +11,13 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.simpleBlockingScheme
 		keys.toSet shouldEqual expected.toSet
+	}
+
+	it should "generate a default undefined key if there is no name" in {
+		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
+		val subject = Subject()
+		val key = blockingScheme.generateKey(subject)
+		key shouldEqual List(blockingScheme.undefinedValue)
 	}
 
 	"ListBlockingScheme" should "generate proper keys" in {

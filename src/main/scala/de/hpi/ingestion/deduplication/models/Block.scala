@@ -19,17 +19,6 @@ case class Block(
 	staging: List[Subject] = Nil
 ) {
 	/**
-	  * Evaluates this block and returns a Block Evaluation.
-	  * @param jobid UUID of the job which created this block
-	  * @param tag tag of the Blocking Scheme which created this block
-	  * @param comment additional information
-	  * @return BlockEvaluation containing the length of this blocks subject "columns"
-	  */
-	def evaluate(jobid: UUID, tag: String, comment: String): BlockEvaluation = {
-		BlockEvaluation(UUID.randomUUID(), jobid, tag, key, subjects.length, staging.length, Option(comment))
-	}
-
-	/**
 	  * Returns the cross product between this blocks subjects and staging subjects.
 	  * @return List of 2-Tuples of Subject containing all tuples of the cross product
 	  */

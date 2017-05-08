@@ -135,27 +135,24 @@ CREATE TABLE datalake.object (
     properties_history map<text, frozen<list<frozen<version>>>>
 );
 
-CREATE TYPE datalake.blockstats (
-    key text,
-    subjects int,
-    staging int
-);
-
 CREATE TABLE datalake.deduplicationstats (
     id uuid PRIMARY KEY,
     comment text,
-    data list<frozen<blockstats>>
+    data map<text, int>
+);
+
+CREATE TYPE datalake.blockstats (
+    key text,
+    numsubjects int,
+    numstaging int
 );
 
 CREATE TABLE datalake.blockingstats (
-    id uuid,
     jobid timeuuid,
-    tag text,
+    schemetag text,
     comment text,
-    key text,
-    numstaging int,
-    numsubjects int,
-    PRIMARY KEY (id, jobid, tag)
+    data frozen<set<frozen<blockstats>>>,
+    PRIMARY KEY (jobid, schemetag)
 );
 
 CREATE TABLE datalake.duplicatecandidates (
