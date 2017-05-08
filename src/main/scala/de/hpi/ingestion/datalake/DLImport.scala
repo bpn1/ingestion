@@ -56,4 +56,9 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 		entity: T,
 		mapping: Map[String, List[String]]
 	): Map[String, List[String]]
+/*
+	protected def normalizeValues(
+		property: (String, List[String])
+	): Subject
+	*/
 }

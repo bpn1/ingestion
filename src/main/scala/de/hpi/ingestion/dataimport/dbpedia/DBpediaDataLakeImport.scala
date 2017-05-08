@@ -9,6 +9,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 import scala.collection.mutable
+import scala.util.matching.Regex
 
 /**
   * Import-Job to import DBpedia Subjects into the staging table of our datalake.
@@ -38,7 +39,18 @@ object DBpediaDataLakeImport extends DataLakeImport[DBpediaEntity](
 	override def filterEntities(entity: DBpediaEntity): Boolean = {
 		entity.instancetype.isDefined
 	}
+/*
+	override protected def normalizeValues(property: (String, List[String])): Subject = {
+		val employeesRegex = new Regex("^Q[0-9]+$")
+		val string = property._1
+		string match {
+			case r"\d+" => true
+		}
 
+
+		new Subject
+	}
+*/
 	override def translateToSubject(
 		entity: DBpediaEntity,
 		version: Version,
@@ -59,6 +71,8 @@ object DBpediaDataLakeImport extends DataLakeImport[DBpediaEntity](
 				.zip(normalizedProperties("geo_coords_long"))
 				.flatMap(x => List(x._1, x._2))
 		}
+
+		properties.map(property => DBpediaNormalizeStrategy(property._1)(property._2))
 
 		sm.addProperties(properties.toMap)
 		subject
