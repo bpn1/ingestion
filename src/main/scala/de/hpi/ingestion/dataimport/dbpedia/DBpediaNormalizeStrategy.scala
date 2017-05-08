@@ -16,11 +16,13 @@ object DBpediaNormalizeStrategy extends Serializable {
 
 	def normalizeCountry(values: List[String]): List[String] = {
 		values.map {
-			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß-]+)${country}""" => country
+			case r"""[A-Z][A-Z].+""" => "filter_me"
+			case r"""\d+\^\^xsd:integer""" => "filter_me"	// or are these 15s and 20s important?
+			case r""".+\.svg""" => "filter_me"
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${country}""" => country
 			case r"""([A-Za-zÄäÖöÜüß-]+)${country}@de \.""" => country
 			case other => other
-		}
-		//"Deutschland@de .", "dbpedia-de:England"
+		}.filterNot(_ == "filter_me").map(_.replaceAll("_", " "))
 	}
 
 	def normalizeCoords(values: List[String]): List[String] = {
