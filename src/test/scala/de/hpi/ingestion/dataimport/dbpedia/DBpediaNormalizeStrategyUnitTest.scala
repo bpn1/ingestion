@@ -25,7 +25,6 @@ class DBpediaNormalizeStrategyUnitTest extends FlatSpec with Matchers {
 		)
 		val output = strategy.map(_(input))
 		val expected = expectedNormalizeStrategies.map(_(input))
-		//val expected = List(List("48.34822", "10.905282", "filter_me", "filter_me"))
 		output shouldEqual expected
 	}
 
@@ -41,83 +40,23 @@ class DBpediaNormalizeStrategyUnitTest extends FlatSpec with Matchers {
 		output shouldEqual expected
 	}
 
-	/*"compare" should "return the score of the similarity of two strings" in {
-		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig()
-		val subjects = TestData.testSubjects
-		val subject1 = subjects.head
-		val subject2 = subjects(1)
-		for {
-			(attribute, scoreConfigs) <- deduplication.config
-			scoreConfig <- scoreConfigs
-		}{
-			val score = scoreConfig.compare(subject1.get(attribute).head, subject2.get(attribute).head)
-			val expected = TestData.testCompareScore(
-				subject1,
-				subject2,
-				scoreConfig.similarityMeasure,
-				scoreConfig
-			)
-			score shouldEqual expected
-		}
-	}
-
-	"simpleStringCompare" should "only compare the first element in a list" in {
-		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig()
-		val subjects = TestData.testSubjects
-		val subject1 = subjects.head
-		val subject2 = subjects(1)
-		for {
-			(attribute, scoreConfigs) <- deduplication.config
-			scoreConfig <- scoreConfigs
-		}{
-			val score = CompareStrategy.singleStringCompare(
-				subject1.get(attribute),
-				subject2.get(attribute),
-				scoreConfig
-			)
-			val expected = TestData.testCompareScore(
-				subject1,
-				subject2,
-				scoreConfig.similarityMeasure,
-				scoreConfig
-			)
-			score shouldEqual expected
-		}
-	}
-
-	"coordinatesCompare" should "compare the input lists as coordinate values" in {
-		val coordinates = List(List("1.5", "1", "10", "10"), List("1.1", "1", "10", "10"))
-		val attribute = "geo_coords"
-		val feature = ScoreConfig[String, SimilarityMeasure[String]](EuclidianDistance, 1)
-		val score = CompareStrategy.coordinatesCompare(
-			coordinates.head,
-			coordinates.last,
-			feature
+	"normalizeCountry" should "normalize all possible appearances of country values in dbpedia" in {
+		val input = List(
+			"dbpedia-de:Japanisches_Kaiser-reich", "LI@de .", "Deutschland@de ."
 		)
-		val expected = 0.75
-		score shouldEqual expected
+		val output = DBpediaNormalizeStrategy("geo_country")(input)
+		val expected = List("Japanisches Kaiser-reich", "Deutschland")
+		output shouldEqual expected
 	}
 
-	"defaultCompare" should "compare each element from a list with each element from another" in {
-		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig("gen_sectors")
-		val subjects = TestData.testSubjects
-		val subject1 = subjects(4)
-		val subject2 = subjects(5)
-		for {
-			(attribute, scoreConfigs) <- deduplication.config
-			scoreConfig <- scoreConfigs
-		}{
-			val score = BigDecimal(CompareStrategy.defaultCompare(
-				subject1.get(attribute),
-				subject2.get(attribute),
-				scoreConfig
-			)).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble
-			val expected = 1.0 * scoreConfig.weight
-			score shouldEqual expected
-		}
+	it should "remove integers and .svg files" in {
+		val input = List(
+			"dbpedia-de:Frankreich",
+			"15^^xsd:integer",
+			"dbpedia-de:Datei:Flag_of_Bavaria_(striped).svg"
+		)
+		val output = DBpediaNormalizeStrategy("geo_country")(input)
+		val expected = List("Frankreich")
+		output shouldEqual expected
 	}
-	*/
 }
