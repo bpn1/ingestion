@@ -30,7 +30,7 @@ trait Tokenizer extends Serializable {
 	  * @param text untokenized text
 	  * @return tokens with offsets
 	  */
-	def tokenizeWithOffsets(text: String): List[OffsetToken] = List()
+	def tokenizeWithOffsets(text: String): List[OffsetToken] = Nil
 
 	/**
 	  * Retrieves the original text from a list of tokens.
@@ -132,8 +132,9 @@ class CoreNLPTokenizer() extends Tokenizer {
 			.toList
 			.map { annotatedToken =>
 				val token = annotatedToken.get(classOf[CoreAnnotations.ValueAnnotation])
-				val offset = annotatedToken.get(classOf[CoreAnnotations.CharacterOffsetBeginAnnotation])
-				OffsetToken(token, offset)
+				val beginOffset = annotatedToken.get(classOf[CoreAnnotations.CharacterOffsetBeginAnnotation])
+				val endOffset = annotatedToken.get(classOf[CoreAnnotations.CharacterOffsetEndAnnotation])
+				OffsetToken(token, beginOffset, endOffset)
 			}
 	}
 

@@ -46,7 +46,9 @@ case class IngestionTokenizer(
 		val stemmer = new AccessibleGermanStemmer
 		var tokens = tokenizer.tokenizeWithOffsets(text)
 		if(removeStopwords) tokens = tokens.filter(offsetToken => !stopwords.contains(offsetToken.token))
-		if(stem) tokens = tokens.map(offsetToken => OffsetToken(stemmer.stem(offsetToken.token), offsetToken.offset))
+		if(stem) tokens = tokens.map { offsetToken =>
+			OffsetToken(stemmer.stem(offsetToken.token), offsetToken.beginOffset, offsetToken.endOffset)
+		}
 		tokens
 	}
 
