@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining
 
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class IngestionTokenizerTest extends FlatSpec with Matchers {
 
@@ -131,5 +130,61 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 		tokenizer.stem shouldBe false
 		tokenizer = IngestionTokenizer(Array(tokenizerName, "true", "broken"))
 		tokenizer.stem shouldBe false
+	}
+
+	"Tokens with offset" should "not be empty" in {
+		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, false, false)
+		TestData.testSentences()
+			.map(tokenizer.processWithOffsets)
+			.foreach(_ should not be empty)
+	}
+
+	they should "have offsets that are consistent with their token" in {
+		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, false, false)
+		TestData.testSentences()
+			.map(sentence => (sentence, tokenizer.processWithOffsets(sentence)))
+			.foreach { case (sentence, tokensWithOffset) =>
+				tokensWithOffset.foreach { tokenWithOffset =>
+					if(!isSpecialCharacter(sentence, tokenWithOffset.beginOffset, tokenWithOffset.endOffset)) {
+						tokenWithOffset.token.length shouldEqual tokenWithOffset.endOffset - tokenWithOffset.beginOffset
+					}
+				}
+			}
+	}
+
+	they should "have offsets that are consistent with the text" in {
+		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, false, false)
+		TestData.testSentences()
+			.map(sentence => (sentence, tokenizer.processWithOffsets(sentence)))
+			.foreach { case (sentence, tokensWithOffset) =>
+				tokensWithOffset.foreach { tokenWithOffset =>
+					if(!isSpecialCharacter(sentence, tokenWithOffset.beginOffset, tokenWithOffset.endOffset)) {
+						val start = tokenWithOffset.beginOffset
+						val end = tokenWithOffset.beginOffset + tokenWithOffset.token.length
+						val substring = sentence.substring(start, end)
+						substring shouldEqual tokenWithOffset.token
+					}
+				}
+			}
+	}
+
+	"Cleaned tokenized sentences" should "contain multiple tokens" in {
+		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, false)
+		TestData.testSentences()
+			.map(tokenizer.process)
+			.foreach(tokens => tokens.length should be > 1)
+	}
+
+	they should "be exactly these token lists" in {
+		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, false)
+		val tokenizedSentences = TestData.testSentences()
+			.map(tokenizer.process)
+		tokenizedSentences shouldEqual TestData.tokenizedTestSentencesWithoutSpecialCharacters()
+	}
+
+	def isSpecialCharacter(text: String, beginOffset: Int, endOffset: Int): Boolean = {
+		val length = endOffset - beginOffset
+		val character = text.charAt(beginOffset)
+		length == 1 && !character.isLetter && !character.isDigit
 	}
 }
