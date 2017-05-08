@@ -6,7 +6,7 @@ class SimilarityMeasureTest extends FlatSpec with Matchers {
 
 	"Similarity Measure" should "be returned given its name" in {
 		SimilarityMeasure.get[String]("ExactMatchString") shouldEqual ExactMatchString
-		SimilarityMeasure.get[String]("ExactMatchDouble") shouldEqual ExactMatchDouble
+		SimilarityMeasure.get[Double]("ExactMatchDouble") shouldEqual ExactMatchDouble
 		SimilarityMeasure.get[String]("MongeElkan") shouldEqual MongeElkan
 		SimilarityMeasure.get[String]("Jaccard") shouldEqual Jaccard
 		SimilarityMeasure.get[String]("DiceSorensen") shouldEqual DiceSorensen
