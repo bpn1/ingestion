@@ -1,14 +1,21 @@
-from __future__ import print_function
+from abstract_pipeline import AbstractPipeline
+from task_definition import TaskDefinition
 import luigi
-import commands
-import os
 
-wiki_jar = '/home/hadoop/WikiImport/target/scala-2.10/WikiImport-assembly-1.0.jar'
-datalake_jar = '/home/hadoop/DataLakeImport/target/scala-2.10/DataLakeImport-assembly-1.0.jar'
+# https://github.com/bpn1/ingestion/wiki/WikiData-Pipeline
+task_definitions = [TaskDefinition("WikiDataImport"),
+                    TaskDefinition("TagEntities", ["WikiDataImport"]),
+                    TaskDefinition("ResolveEntities", ["TagEntities"]),
+                    TaskDefinition("WikiDataDataLakeImport", ["ResolveEntities"]),
+                    TaskDefinition("FindRelations", ["WikiDataDataLakeImport"])]
 
-programs = [
-    ('WikiDataRDD', wiki_jar),
-    ('TagEntities', wiki_jar),
-    ('ResolveEntities', wiki_jar),
-    ('DataLakeImport', datalake_jar),
-    ('FindRelations', datalake_jar)]
+
+class WikiDataPipeline(AbstractPipeline):
+    @classmethod
+    def get_pipeline(cls):
+        cls.name = "WikiData Pipeline"
+        cls.force_execution = luigi.BoolParameter(default=False)
+        cls.package = "de.hpi.ingestion.dataimport.wikidata"
+        cls.task_definitions = task_definitions
+        cls.define_upstream_task()
+        return cls

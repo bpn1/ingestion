@@ -1,14 +1,15 @@
+from pipeline_constructor import PipelineConstructor
 import luigi
 
 
 class AbstractPipeline(luigi.Task):
-    name = "Abstract Pipeline"
-    force_execution = luigi.BoolParameter(default=False)
-    tasks_dict = {}
-    upstream_task = None
-
     def requires(self):
-        return self.upstream_task
+        return type(self).upstream_task
 
     def output(self):
         return self.input()
+
+    @classmethod
+    def define_upstream_task(cls):
+        cls.upstream_task = PipelineConstructor(cls.package, cls.task_definitions).construct_task_dag(
+            cls.force_execution)

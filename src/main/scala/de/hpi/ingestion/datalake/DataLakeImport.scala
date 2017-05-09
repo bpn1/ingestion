@@ -31,6 +31,22 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 	inputKeyspace: String,
 	inputTable: String
 ) extends DLImport[T] with SparkJob {
+	// $COVERAGE-OFF$
+	/**
+	  * Writes the Subjects to the {@outputTable } table in keyspace {@outputKeyspace }.
+	  *
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[Subject]()
+			.head
+			.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
+	}
+	// $COVERAGE-ON$
+
 	protected def parseConfig(url: URL): Unit = {
 		val xml = XML.loadString(Source
 			.fromURL(url)
@@ -101,21 +117,4 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 					.map(translateToSubject(_, version, mapping)))
 			.toAnyRDD()
 	}
-
-	// $COVERAGE-OFF$
-	/**
-	  * Writes the Subjects to the {@outputTable } table in keyspace {@outputKeyspace }.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Subject]()
-			.head
-			.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
-	}
-
-	// $COVERAGE-ON$
 }
