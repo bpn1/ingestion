@@ -52,6 +52,16 @@ CREATE TABLE wikidumps.wikipediatfidf (
     tokens map<text, double>
 );
 
+CREATE TABLE wikidumps.featureentries (
+	id uuid PRIMARY KEY,
+	alias text,
+	entity text,
+	prob_link double,
+	prob_entity double,
+	cosine_sim double,
+	correct boolean
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,
