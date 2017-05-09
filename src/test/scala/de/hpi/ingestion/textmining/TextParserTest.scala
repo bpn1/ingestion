@@ -108,7 +108,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	"All redirects" should "contain #WEITERLEITUNG link" in {
 		val entries = TestData.testEntriesWithBadRedirects()
-		entries.map(entry => TextParser.cleanRedirects(entry))
+		entries.map(entry => TextParser.cleanRedirectsAndWhitespaces(entry))
 			.map(entry => entry.getText should startWith(s"#${TextParser.parsableRedirect}"))
 	}
 
@@ -303,6 +303,12 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.head
 			.getText()
 		parsedArticleText shouldEqual TestData.parsedArticleTextWithHeadlines()
+	}
+
+	"Alternative whitespace characters" should "be replaced with standard whitespaces" in {
+		val entry = TestData.entryWithAlternativeWhitespace()
+		val cleanedEntry = TextParser.cleanRedirectsAndWhitespaces(entry)
+		cleanedEntry shouldEqual TestData.entryWithStandardWhitespaces()
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
