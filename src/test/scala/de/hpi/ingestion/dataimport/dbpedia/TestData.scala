@@ -128,5 +128,10 @@ object TestData {
 		"geo_coords_lat" -> List("geo:lat", "property-de:latitude", "property-de:breitengrad"),
 		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad")
 	)
+
+	def unnormalizedCoords: List[String] = List("48.34822^^xsd:float", "10.905282^^xsd:float","48348220^^xsd:integer", "10905282^^xsd:integer", "48.34822^^xsd:double", "10.905282^^xsd:double")
+	def normalizedCoords: List[String] = List("48.34822", "10.905282")
+	def unnormalizedCountries: List[String] = List("dbpedia-de:Japanisches_Kaiser-reich", "LI@de .", "Deutschland@de .", "dbpedia-de:Datei:Flag_of_Bavaria_(striped).svg", "15^^xsd:integer")
+	def normalizedCountries: List[String] = List("Japanisches Kaiser-reich", "Deutschland")
 	// scalastyle:on line.size.limit
 }
