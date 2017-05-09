@@ -2,7 +2,7 @@ package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.framework.SparkJob
 import com.datastax.spark.connector._
-import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
+import de.hpi.ingestion.textmining.models.{Link, ParsedWikipediaEntry, Sentence}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
@@ -49,33 +49,21 @@ object RelationSentenceParser extends SparkJob {
 	def entryToSentencesWithEntitites(
 		entry: ParsedWikipediaEntry,
 		tokenizer: CoreNLPSentenceTokenizer
-	): List[String] = {
+	): List[Sentence] = {
 		tokenizer.tokenize(entry.getText())
 		val text = entry.getText()
 		val sentences = tokenizer.tokenize(entry.getText())
-		val links = entry.allLinks()
-		var i = 0
+		val links = entry.allLinks().filter(_.offset.getOrElse(-1) >= 0)
 		var offset = 0
 		sentences.map{ sentence =>
-
-		}
-		while(i < tokens.length) {
-			val testTokens = tokens.slice(i, tokens.length)
-			val aliasMatches = trie.matchTokens(testTokens)
-			if(aliasMatches.nonEmpty) {
-				val longestMatch = aliasMatches.maxBy(_.length)
-				val found = tokenizer.reverse(longestMatch)
-				val page = aliases(found)
-				offset = text.indexOf(longestMatch.head, offset)
-				resultList += Link(found, page, Option(offset))
-				offset += longestMatch.map(_.length).sum
-				i += longestMatch.length
+			offset = text.indexOf(sentence, offset)
+			val sentenceLinks = links.filter { link =>
+				link.offset.get > offset && link.offset.get < (offset + sentence.length)
 			}
-			else {
-				offset += tokens(i).length
-				i += 1
-			}
-		}
+				.map(link => link.copy(offset = link.offset.map(_ - offset)))
+			offset += sentence.length
+			Sentence(sentence, sentenceLinks)
+		}.filter(_.links.length > 1)
 	}
 
 	/**
