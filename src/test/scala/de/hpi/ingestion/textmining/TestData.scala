@@ -4,6 +4,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
 import org.jsoup.nodes.Element
 
+import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -22,42 +23,63 @@ object TestData {
 		List(
 			"This is a test sentence.",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen.",
-			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.")
+			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.",
+			"Dieser Satz enthält Klammern (evtl. problematisch)."
+		)
 	}
 
 	def tokenizedTestSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
-			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"))
+			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
+			List("Dieser", "Satz", "enthält", "Klammern", "-LRB-", "evtl", "problematisch", "-RRB-")
+		)
+	}
+
+	def tokenizedTestSentencesWithoutSpecialCharacters(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence"),
+			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
+			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
+			List("Dieser", "Satz", "enthält", "Klammern", "evtl", "problematisch")
+		)
 	}
 
 	def filteredTokenizedSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "Hessen"),
-			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"))
+			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"),
+			List("Satz", "enthält", "Klammern", "-LRB-", "evtl", "problematisch", "-RRB-")
+		)
 	}
 
 	def stemmedTokenizedSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
 			List("streitberg", "ist", "ein", "von", "sech", "ortsteil", "der", "gemei", "brachttal", "main-kinzig-kreis", "in", "hess"),
-			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"))
+			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"),
+			List("dies", "satx", "enthal", "klamm", "-lrb-", "evtl", "problematisch", "-rrb-")
+		)
 	}
 
 	def stemmedAndFilteredSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
 			List("streitberg", "ortsteil", "gemei", "brachttal", "main-kinzig-kreis", "hess"),
-			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"))
+			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"),
+			List("satx", "enthal", "klamm", "-lrb-", "evtl", "problematisch", "-rrb-")
+		)
 	}
 
 	def reversedSentences(): List[String] = {
 		List(
 			"This is a test sentence",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
-			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen")
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
+			"Dieser Satz enthält Klammern -LRB- evtl problematisch -RRB-"
+		)
 	}
 
 
@@ -652,6 +674,14 @@ object TestData {
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
 			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet."""
 		)
+	}
+
+	def entryWithAlternativeWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
+	}
+
+	def entryWithStandardWhitespaces(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
 
 	def groupedAliasesSet(): Set[Alias] = {
@@ -1257,6 +1287,68 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
+	def wikidataEntities(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Page 1")),
+			WikiDataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Page 2")),
+			WikiDataEntity("Q3", instancetype = Option("comp"), wikiname = Option("Page 3")),
+			WikiDataEntity("Q4", instancetype = Option("comp")),
+			WikiDataEntity("Q5", wikiname = Option("Page 5")),
+			WikiDataEntity("Q6"))
+	}
+
+	def wikidataCompanyPages(): List[String] = {
+		List("Page 1", "Page 2", "Page 3")
+	}
+
+	def companyPages(): List[Page] = {
+		List(
+			Page("Page 1", Map("P1Alias1" -> 1, "P1Alias2" -> 1)),
+			Page("Page 2", Map("P2Alias1" -> 1, "P2Alias2" -> 1)),
+			Page("Page 3", Map("P3Alias1" -> 1, "P1Alias1" -> 1)),
+			Page("Page 4", Map("P4Alias1" -> 1, "P4Alias3" -> 1)),
+			Page("Page 5", Map("P5Alias1" -> 1)),
+			Page("Page 6", Map("P6Alias1" -> 1)))
+	}
+
+	def companyAliases(): Set[String] = {
+		Set("P1Alias1", "P1Alias2", "P2Alias1", "P2Alias2", "P3Alias1")
+	}
+
+	def unfilteredCompanyLinksEntries(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Title 1",
+				textlinks = List(Link("P1Alias1", "Page 1"), Link("P4Alias3", "Page 4")),
+				templatelinks = List(Link("P2Alias1", "Page 2")),
+				categorylinks = List(Link("P3Alias1", "Page 3")),
+				listlinks = List(Link("P4Alias1", "Page 4"))),
+			ParsedWikipediaEntry(
+				"Title 2",
+				textlinks = List(Link("P5Alias1", "Page 5")),
+				categorylinks = List(Link("P6Alias1", "Page 6"))),
+			ParsedWikipediaEntry(
+				"Title 3",
+				listlinks = List(Link("P1Alias2", "Page 1")),
+				disambiguationlinks = List(Link("P2Alias2", "Page 2")))
+		)
+	}
+
+	def filteredCompanyLinksEntries(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Title 1",
+				textlinks = List(Link("P1Alias1", "Page 1")),
+				templatelinks = List(Link("P2Alias1", "Page 2")),
+				categorylinks = List(Link("P3Alias1", "Page 3"))),
+			ParsedWikipediaEntry("Title 2"),
+			ParsedWikipediaEntry(
+				"Title 3",
+				listlinks = List(Link("P1Alias2", "Page 1")),
+				disambiguationlinks = List(Link("P2Alias2", "Page 2")))
+		)
+	}
+
 	def classifierFeatureEntries(): List[FeatureEntry] = {
 		List(
 			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
@@ -1266,6 +1358,39 @@ object TestData {
 			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
 			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
 			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
+	}
+
+	def labeledPredictions(): List[(Double, Double)] = {
+		List(
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(0.0, 1.0),
+			(1.0, 0.0),
+			(1.0, 0.0),
+			(0.0, 0.0),
+			(0.0, 0.0))
+	}
+
+	def predictionStatistics(): List[(String, Double, Double)] = {
+		List(
+			("precision", 1.0, 5.0/7.0),
+			("precision", 0.0, 0.6),
+			("recall", 1.0, 5.0/6.0),
+			("recall", 0.0, 1.0),
+			("fscore with beta 0.5", 1.0, 25.0/34.0),
+			("fscore with beta 0.5", 0.0, 0.6521739130434783))
+	}
+
+	def formattedPredictionStatistics(): String = {
+		s"precision\t1.0\t${5.0/7.0}" + "\n" +
+			"precision\t0.0\t0.6" + "\n" +
+			s"recall\t1.0\t${5.0/6.0}" + "\n" +
+			"recall\t0.0\t1.0" + "\n" +
+			s"fscore with beta 0.5\t1.0\t${25.0/34.0}" + "\n" +
+			"fscore with beta 0.5\t0.0\t0.6521739130434783"
 	}
 }
 
