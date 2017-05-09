@@ -2,7 +2,7 @@ package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.framework.SparkJob
 import com.datastax.spark.connector._
-import de.hpi.ingestion.textmining.models.{Link, ParsedWikipediaEntry, Sentence}
+import de.hpi.ingestion.textmining.models.{Entity, Link, ParsedWikipediaEntry, Sentence}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
@@ -11,13 +11,13 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 object RelationSentenceParser extends SparkJob {
 	val keyspace = "wikidumps"
 	val inputTablename = "parsedwikipedia"
-	//TODO: Create output table
-	val outputTablename = "parsedwikipedia"
+	val outputTablename = "wikipediasentences"
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
@@ -28,25 +28,28 @@ object RelationSentenceParser extends SparkJob {
 
 	/**
 	  * Saves Parsed Wikipedia entries with resolved redirects to the Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[ParsedWikipediaEntry]()
+			.fromAnyRDD[Sentence]()
 			.head
 			.saveToCassandra(keyspace, outputTablename)
 	}
+
 	// $COVERAGE-ON$
 
 	/**
 	  * TODO
-	  * @param text
-	  * @param tokenizer
-	  * @return
+	  *
+	  * @param entry     Parsed Wikipedia Entry to be processed into sentences
+	  * @param tokenizer tokenizer to be used
+	  * @return List of Sentences with at least two entities
 	  */
-	def entryToSentencesWithEntitites(
+	def entryToSentencesWithEntities(
 		entry: ParsedWikipediaEntry,
 		tokenizer: CoreNLPSentenceTokenizer
 	): List[Sentence] = {
@@ -55,26 +58,29 @@ object RelationSentenceParser extends SparkJob {
 		val sentences = tokenizer.tokenize(entry.getText())
 		val links = entry.allLinks().filter(_.offset.getOrElse(-1) >= 0)
 		var offset = 0
-		sentences.map{ sentence =>
+		sentences.map { sentence =>
 			offset = text.indexOf(sentence, offset)
-			val sentenceLinks = links.filter { link =>
+			val sentenceEntities = links.filter { link =>
 				link.offset.get > offset && link.offset.get < (offset + sentence.length)
 			}
-				.map(link => link.copy(offset = link.offset.map(_ - offset)))
+				.map(link => Entity(link.alias, link.page, link.offset.map(_ - offset)))
 			offset += sentence.length
-			Sentence(sentence, sentenceLinks)
-		}.filter(_.links.length > 1)
+			Sentence(entry.title, offset-sentence.length, sentence, sentenceEntities)
+		}.filter(_.entities.length > 1)
 	}
 
 	/**
 	  * TODO
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		List(articles).toAnyRDD()
+		val tokenizer = new CoreNLPSentenceTokenizer()
+		val sentences = articles.flatMap(entry => entryToSentencesWithEntities(entry, tokenizer))
+		List(sentences).toAnyRDD()
 	}
 }

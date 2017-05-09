@@ -12,6 +12,12 @@ CREATE TYPE wikidumps.link (
     context map<text, int>
 );
 
+CREATE TYPE wikidumps.entity (
+    alias text,
+    page text,
+    offset int
+);
+
 CREATE TABLE wikidumps.parsedwikipedia (
     title text PRIMARY KEY,
     textlinks frozen<list<frozen<link>>>,
@@ -50,6 +56,13 @@ CREATE TABLE wikidumps.wikipediadocfreq (
 CREATE TABLE wikidumps.wikipediatfidf (
     page text PRIMARY KEY,
     tokens map<text, double>
+);
+
+CREATE TABLE wikidumps.wikipediasentences (
+    articletitle text,
+    articleoffset int,
+    text text,
+    entities frozen<list<frozen<entity>>>
 );
 
 -- Wikidumps.Wikidata

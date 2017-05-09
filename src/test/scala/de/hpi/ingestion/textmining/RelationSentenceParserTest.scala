@@ -9,7 +9,7 @@ class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with M
 	"Wikipedia text" should "be split into Sentences" in {
 		val parsedEntry = TestData.bigLinkExtenderParsedEntry()
 		val tokenizer = new CoreNLPSentenceTokenizer
-		val sentences = RelationSentenceParser.entryToSentencesWithEntitites(parsedEntry, tokenizer)
+		val sentences = RelationSentenceParser.entryToSentencesWithEntities(parsedEntry, tokenizer)
 		sentences shouldBe TestData.sentenceList()
 	}
 }

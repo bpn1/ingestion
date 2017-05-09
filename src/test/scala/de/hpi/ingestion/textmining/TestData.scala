@@ -1253,28 +1253,34 @@ object TestData {
 	def sentenceList(): List[Sentence] = {
 		List(
 			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				0,
 				"Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg.",
 				List(
-					Link("Hochhaus", "Hochhaus", Option(113), Map()),
-					Link("Postbank", "Postbank", Option(126), Map()),
-					Link("Berliner", "Berlin", Option(190), Map()),
-					Link("Kreuzberg", "Berlin-Kreuzberg", Option(208), Map())
+					Entity("Hochhaus", "Hochhaus", Option(113)),
+					Entity("Postbank", "Postbank", Option(126)),
+					Entity("Berliner", "Berlin", Option(190)),
+					Entity("Kreuzberg", "Berlin-Kreuzberg", Option(208))
 				)
 			),
 			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				219,
 				"Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig.",
 				List(
-					Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(246), Map()),
-					Link("Potsdam", "Potsdam", Option(264), Map()),
-					Link("Magdeburg", "Magdeburg", Option(273), Map()),
-					Link("Stettin", "Stettin", Option(287), Map())
+					Entity("Frankfurt (Oder)", "Frankfurt (Oder)", Option(246)),
+					Entity("Potsdam", "Potsdam", Option(264)),
+					Entity("Magdeburg", "Magdeburg", Option(273)),
+					Entity("Stettin", "Stettin", Option(287))
 				)
 			),
 			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				1940,
 				"Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit.",
 				List(
-					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(4), Map()),
-					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(59), Map())
+					Entity("Deutsche Funkturm", "Deutsche Funkturm", Option(4)),
+					Entity("Deutschen Telekom AG", "Deutsche Telekom", Option(59))
 				)
 			)
 		)
