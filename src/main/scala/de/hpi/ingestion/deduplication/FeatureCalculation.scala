@@ -21,7 +21,7 @@ object FeatureCalculation extends SparkJob {
 	val wikidataTable = "subject_wikidata"
 	val goldStandardTable = "goldstandard"
 	val featuresTable = "sim_measure_features"
-	var config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
+	var config = Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
 
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val dbpedia = sc.cassandraTable[Subject](keyspace, dbpediaTable)
@@ -69,7 +69,7 @@ object FeatureCalculation extends SparkJob {
 			val stagingValues = staging.get(attribute)
 			val scores = scoreConfigs.map(compare(attribute, subjectValues, stagingValues, _))
 			(attribute, scores)
-		}.toMap
+		}
 		FeatureEntry(subject, staging, scores)
 	}
 
@@ -79,6 +79,7 @@ object FeatureCalculation extends SparkJob {
 		val wikidata = inputSubjects(1)
 		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().head
 
+		//this.config = Deduplication.parseConfig
 		//val blocks = Blocking.blocking()
 		// blocks.foreach(block => createFeature)
 		// val labeledPoints = labelFeature(blocks, goldStandard)
