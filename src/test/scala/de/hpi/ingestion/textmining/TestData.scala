@@ -23,42 +23,63 @@ object TestData {
 		List(
 			"This is a test sentence.",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen.",
-			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.")
+			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.",
+			"Dieser Satz enthält Klammern (evtl. problematisch)."
+		)
 	}
 
 	def tokenizedTestSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
-			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"))
+			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
+			List("Dieser", "Satz", "enthält", "Klammern", "-LRB-", "evtl", "problematisch", "-RRB-")
+		)
+	}
+
+	def tokenizedTestSentencesWithoutSpecialCharacters(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence"),
+			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
+			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
+			List("Dieser", "Satz", "enthält", "Klammern", "evtl", "problematisch")
+		)
 	}
 
 	def filteredTokenizedSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "Hessen"),
-			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"))
+			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"),
+			List("Satz", "enthält", "Klammern", "-LRB-", "evtl", "problematisch", "-RRB-")
+		)
 	}
 
 	def stemmedTokenizedSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
 			List("streitberg", "ist", "ein", "von", "sech", "ortsteil", "der", "gemei", "brachttal", "main-kinzig-kreis", "in", "hess"),
-			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"))
+			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"),
+			List("dies", "satx", "enthal", "klamm", "-lrb-", "evtl", "problematisch", "-rrb-")
+		)
 	}
 
 	def stemmedAndFilteredSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
 			List("streitberg", "ortsteil", "gemei", "brachttal", "main-kinzig-kreis", "hess"),
-			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"))
+			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"),
+			List("satx", "enthal", "klamm", "-lrb-", "evtl", "problematisch", "-rrb-")
+		)
 	}
 
 	def reversedSentences(): List[String] = {
 		List(
 			"This is a test sentence",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
-			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen")
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
+			"Dieser Satz enthält Klammern -LRB- evtl problematisch -RRB-"
+		)
 	}
 
 
@@ -1329,6 +1350,39 @@ object TestData {
 			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
 			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
 			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
+	}
+
+	def labeledPredictions(): List[(Double, Double)] = {
+		List(
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(0.0, 1.0),
+			(1.0, 0.0),
+			(1.0, 0.0),
+			(0.0, 0.0),
+			(0.0, 0.0))
+	}
+
+	def predictionStatistics(): List[(String, Double, Double)] = {
+		List(
+			("precision", 1.0, 5.0/7.0),
+			("precision", 0.0, 0.6),
+			("recall", 1.0, 5.0/6.0),
+			("recall", 0.0, 1.0),
+			("fscore with beta 0.5", 1.0, 25.0/34.0),
+			("fscore with beta 0.5", 0.0, 0.6521739130434783))
+	}
+
+	def formattedPredictionStatistics(): String = {
+		s"precision\t1.0\t${5.0/7.0}" + "\n" +
+			"precision\t0.0\t0.6" + "\n" +
+			s"recall\t1.0\t${5.0/6.0}" + "\n" +
+			"recall\t0.0\t1.0" + "\n" +
+			s"fscore with beta 0.5\t1.0\t${25.0/34.0}" + "\n" +
+			"fscore with beta 0.5\t0.0\t0.6521739130434783"
 	}
 }
 
