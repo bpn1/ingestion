@@ -44,17 +44,6 @@ object AliasCounter extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Calculates the probability that an Alias is a link.
-	  *
-	  * @param aliasCounter Alias of a given Alias
-	  * @return percentage of the occurrences as link
-	  */
-	def probabilityIsLink(aliasCounter: Alias): Double = {
-		// dead method
-		aliasCounter.linkoccurrences.get.toDouble / aliasCounter.totaloccurrences.get
-	}
-
-	/**
 	  * Extracts list of link and general Alias occurrences for an article.
 	  *
 	  * @param entry article from which the Aliases will be extracted

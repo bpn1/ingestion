@@ -85,13 +85,6 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
 	}
 
-	"Probability that word is link" should "be calculated correctly" in {
-		val linkProbabilities = TestData.countedAliasesTestRDD(sc)
-			.map(countedAlias =>
-				(countedAlias.alias, AliasCounter.probabilityIsLink(countedAlias)))
-		assertRDDEquals(linkProbabilities, TestData.linkProbabilitiesRDD(sc))
-	}
-
 	"Alias counts" should "be exactly these tuples" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val mergedLinks = AliasCounter.run(List(articles).toAnyRDD(), sc)

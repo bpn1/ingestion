@@ -396,21 +396,6 @@ object TestData {
 		)
 	}
 
-	def linkProbabilitiesRDD(sc: SparkContext): RDD[(String, Double)] = {
-		sc.parallelize(List(
-			("Audi", 2.0 / 3),
-			("Brachttal", 1.0),
-			("Main-Kinzig-Kreis", 1.0 / 2),
-			("Hessen", 1.0 / 2),
-			("1377", 1.0),
-			("Büdinger Wald", 1.0 / 2),
-			("Backfisch", 0.0),
-			("Streitberg", 0.0),
-			("historisches Jahr", 1.0)
-		))
-			.sortBy(_._1)
-	}
-
 	def allPageNamesTestRDD(sc: SparkContext): RDD[String] = {
 		sc.parallelize(List(
 			"Brachttal",
