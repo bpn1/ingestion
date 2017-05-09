@@ -6,38 +6,49 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits.TupleImplicits._
+
 /**
-  * Calculate cosine similarity for contexts of every term and link and
-  * writes it with the other features as Feature Entries to the Cassandra.
+  * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
   */
 object CosineContextComparator extends SparkJob {
 	appName = "Cosine Context Comparator"
 	val keyspace = "wikidumps"
 	val inputArticlesTablename = "parsedwikipedia"
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
+	val linksTable = "wikipedialinks"
+	val featureEntryTable = "featureentries"
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries with their term frequencies and loads the document frequencies from the
 	  * Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
 		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
-		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD()
+		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
+		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
+
 	/**
 	  * Saves the Feature Entries to the Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-
+		output
+			.fromAnyRDD[FeatureEntry]()
+			.head
+			.saveToCassandra(keyspace, featureEntryTable)
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -157,25 +168,109 @@ object CosineContextComparator extends SparkJob {
 		documentFrequencyThreshold: Int
 	): RDD[(T, Map[String, Double])] = {
 		val inverseDocumentFrequencies = documentFrequencies.map(calculateIdf(_, numDocuments))
-		termFrequencies.leftOuterJoin(inverseDocumentFrequencies)
-			.map { case (token, ((identifier, tf), idfOption)) =>
+		termFrequencies
+			.map(_.map(identity, List(_)))
+			.reduceByKey(_ ++ _)
+			.leftOuterJoin(inverseDocumentFrequencies)
+			.flatMap { case (token, (tfList, idfOption)) =>
 				val idf = idfOption.getOrElse(calculateIdf(documentFrequencyThreshold - 1, numDocuments))
-				val tfidf = tf * idf
-				(identifier, Map(token -> tfidf))
+				tfList.map { case (identifier, tf) =>
+					val tfidf = tf * idf
+					(identifier, Map(token -> tfidf))
+				}
 			}
+	}
+
+	/**
+	  * Computes probability that alias is a link and that it refers to a specific page for all aliases.
+	  *
+	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
+	  * @return aliases with probability features
+	  */
+	def computeAliasProbabilities(aliases: RDD[Alias]): RDD[(String, (String, Double, Double))] = {
+		aliases
+			.filter(alias => alias.linkoccurrences.isDefined && alias.totaloccurrences.isDefined)
+			.flatMap { alias =>
+				val totalProb = alias.linkoccurrences.get.toDouble / alias.totaloccurrences.get.toDouble
+				val numPages = alias.pages.values.sum.toDouble
+				val pageProb = alias.pages.mapValues(_.toDouble / numPages)
+				alias.pages.keySet.map(page => (alias.alias, (page, totalProb, pageProb(page))))
+			}
+	}
+
+	/** Adds the cosine similarity feature value to the alias probability feature values.
+	  *
+	  * @param linkContexts           links with their contexts
+	  * @param aliasPageProbabilities both alias probabilities feature values
+	  * @param articleContexts        article names with their bags of words
+	  * @return feature entries containing alias probabilities and cosine similarity
+	  */
+	def compareLinksWithArticles(
+		linkContexts: RDD[(Link, Map[String, Double])],
+		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
+		articleContexts: RDD[(String, Map[String, Double])]
+	): RDD[FeatureEntry] = {
+		linkContexts
+			.map(t => (t._1.alias, t))
+			.join(aliasPageProbabilities)
+			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
+				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, pageProb)))
+			}.reduceByKey(_ ++ _)
+			.join(articleContexts)
+			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
+				protoFeatureEntries.map { protoFeatureEntry =>
+					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
+					FeatureEntry(
+						protoFeatureEntry.alias,
+						page,
+						protoFeatureEntry.totalProbability,
+						protoFeatureEntry.pageProbability,
+						cosineSim,
+						protoFeatureEntry.link.page == page
+					)
+				}
+			}
+	}
+
+	/**
+	  * Calculates the length of a vector.
+	  *
+	  * @param vector vector
+	  * @return length
+	  */
+	def calculateLength(vector: Iterable[Double]): Double = {
+		math.sqrt(vector.map(t => t * t).sum)
+	}
+
+	/**
+	  * Calculate the cosine similarity between two vectors with possibly different dimensions.
+	  *
+	  * @param vectorA vector with dimension keys
+	  * @param vectorB vector with dimension keys
+	  * @return cosine similarity
+	  */
+	def calculateCosineSimilarity[T](vectorA: Map[T, Double], vectorB: Map[T, Double]): Double = {
+		val lengthA = calculateLength(vectorA.values)
+		val lengthB = calculateLength(vectorB.values)
+		val dotProduct = vectorA.keySet.intersect(vectorB.keySet)
+			.map(key => vectorA(key) * vectorB(key))
+			.sum
+		dotProduct / (lengthA * lengthB)
 	}
 
 	/**
 	  * Calculates the Cosine Similarities for every alias and creates feature entries containing the other two
 	  * features as well.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val documentFrequencies = input(1).asInstanceOf[RDD[DocumentFrequency]]
+		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val numDocuments = articlesWithTermFrequencies.count()
 
 		val articleTfidf = calculateArticleTfidf(
@@ -190,8 +285,8 @@ object CosineContextComparator extends SparkJob {
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 
-		// TODO: join RDDs and calculate cosine similarity (issue #34)
-
-		Nil
+		val aliasPageProbabilities = computeAliasProbabilities(aliases)
+		val featureEntries = compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+		List(featureEntries).toAnyRDD()
 	}
 }
