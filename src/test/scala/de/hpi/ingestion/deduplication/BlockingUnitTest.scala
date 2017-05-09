@@ -64,7 +64,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val subjectRDD = sc.parallelize(subjects)
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
-		val comment = "BlockingJob"
+		val comment = "Blocking"
 		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
 		val evaluationBlocks = Blocking.evaluationBlocking(subjectRDD, stagingRDD, blockingSchemes, true, comment)
 			.map(_.copy(jobid = null))

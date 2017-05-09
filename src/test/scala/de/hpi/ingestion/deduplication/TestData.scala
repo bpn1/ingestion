@@ -295,7 +295,7 @@ object TestData {
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2),
 					BlockStats("undefined", 2, 0)),
-				Option("BlockingJob")),
+				Option("Blocking")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
@@ -304,7 +304,7 @@ object TestData {
 					BlockStats("Aud", 1, 1),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("BlockingJob"))))
+				Option("Blocking"))))
 	}
 
 	def filteredBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -316,7 +316,7 @@ object TestData {
 					BlockStats("Berlin", 2, 1),
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2)),
-				Option("BlockingJob")),
+				Option("Blocking")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
@@ -325,7 +325,7 @@ object TestData {
 					BlockStats("Aud", 1, 1),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("BlockingJob"))))
+				Option("Blocking"))))
 	}
 
 	def blockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
