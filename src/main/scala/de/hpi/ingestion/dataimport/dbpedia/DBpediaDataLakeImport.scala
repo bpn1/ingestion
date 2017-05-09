@@ -39,6 +39,10 @@ object DBpediaDataLakeImport extends DataLakeImport[DBpediaEntity](
 		entity.instancetype.isDefined
 	}
 
+	override def normalizeAttribute(attribute: String, values: List[String]): List[String] = {
+		DBpediaNormalizeStrategy(attribute)(values)
+	}
+
 	override def translateToSubject(
 		entity: DBpediaEntity,
 		version: Version,
@@ -59,8 +63,6 @@ object DBpediaDataLakeImport extends DataLakeImport[DBpediaEntity](
 				.zip(normalizedProperties("geo_coords_long"))
 				.flatMap(x => List(x._1, x._2))
 		}
-
-		properties.map(property => DBpediaNormalizeStrategy(property._1)(property._2))
 
 		sm.addProperties(properties.toMap)
 		subject

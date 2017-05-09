@@ -78,8 +78,12 @@ abstract case class DataLakeImport[T <: DLImportEntity](
 		mapping: Map[String, List[String]]
 	): Map[String, List[String]] = {
 		mapping
-			.mapValues(_.map(value => entity.get(value)).reduce(_ ::: _).distinct)
-			.filter { case (key, values) => values.nonEmpty }
+			.mapValues { values =>
+				values
+					.map(value => normalizeAttribute(value, entity.get(value)))
+					.reduce(_ ::: _)
+					.distinct
+			}.filter(_._2.nonEmpty)
 	}
 
 	/**

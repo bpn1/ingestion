@@ -56,6 +56,14 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 		entity: T,
 		mapping: Map[String, List[String]]
 	): Map[String, List[String]]
+
+	/**
+	  * Normalizes a given attribute
+	  * @param attribute attribute name
+	  * @param values attribute values
+	  * @return normalized attribute values
+	  */
+	protected def normalizeAttribute(attribute: String, values: List[String]): List[String]
 /*
 	protected def normalizeValues(
 		property: (String, List[String])
