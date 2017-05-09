@@ -1,12 +1,12 @@
 package de.hpi.ingestion.datalake.mock
 
-import de.hpi.ingestion.datalake.DataLakeImport
+import de.hpi.ingestion.datalake.DataLakeImportImplements
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-object Import extends DataLakeImport[Entity](
+object Import extends DataLakeImportImplements[Entity](
 	List("TestSource"),
 	Option("datalakeimport.xml"),
 	"normalization.xml",

@@ -1,7 +1,7 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.datalake.models._
-import de.hpi.ingestion.datalake.{DataLakeImport, SubjectManager}
+import de.hpi.ingestion.datalake.{DataLakeImportImplements, SubjectManager}
 import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -13,7 +13,7 @@ import scala.collection.mutable
 /**
   * Import-Job to import DBpedia Subjects into the staging table of our datalake.
   */
-object DBpediaDataLakeImport extends DataLakeImport[DBpediaEntity](
+object DBpediaDataLakeImport extends DataLakeImportImplements[DBpediaEntity](
 	List("dbpedia"),
 	Option("datalakeimport_config.xml"),
 	"normalization_dbpedia.xml",

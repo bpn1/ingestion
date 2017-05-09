@@ -3,7 +3,7 @@ package de.hpi.ingestion.datalake
 import de.hpi.ingestion.datalake.mock.Import
 import org.scalatest.{FlatSpec, Matchers}
 
-class DataLakeImportUnitTest extends FlatSpec with Matchers {
+class DataLakeImportImplementsUnitTest extends FlatSpec with Matchers {
 	"parseConfig" should "set the parsed configuration as settings" in {
 		val expected = TestData.configMapping
 		Import.parseConfig("datalakeimport_config.xml")
