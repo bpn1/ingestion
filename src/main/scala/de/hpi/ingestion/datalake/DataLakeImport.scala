@@ -1,11 +1,13 @@
 package de.hpi.ingestion.datalake
 
 import java.net.URL
-
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
-
 import scala.collection.mutable
 
+/**
+  * Trait for imports into the Datalake
+  * @tparam T
+  */
 trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	val settings = mutable.Map[String, String]()
 	val outputKeyspace = "datalake"
@@ -64,9 +66,4 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @return normalized attribute values
 	  */
 	protected def normalizeAttribute(attribute: String, values: List[String]): List[String]
-/*
-	protected def normalizeValues(
-		property: (String, List[String])
-	): Subject
-	*/
 }

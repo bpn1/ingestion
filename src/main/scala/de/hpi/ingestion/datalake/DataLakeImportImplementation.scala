@@ -13,9 +13,9 @@ import scala.io.Source
 import scala.xml.XML
 
 /**
-  * An abstract DataLakeImportImplements to import new sources to the staging table.
+  * An abstract DataLakeImportImplementation to import new sources to the staging table.
   *
-  * @constructor Create a new DataLakeImportImplements with an appName, dataSources, an inputKeyspace
+  * @constructor Create a new DataLakeImportImplementation with an appName, dataSources, an inputKeyspace
   *              and an inputTable.
   * @param dataSources       list of the sources where the new data is fetched from
   * @param configFile        name of config file in resource folder
@@ -24,7 +24,7 @@ import scala.xml.XML
   * @param inputTable        the name of the table where the new data is saved in the database
   * @tparam T the type of Objects of the new data
   */
-abstract case class DataLakeImportImplements[T <: DLImportEntity](
+abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	dataSources: List[String],
 	configFile: Option[String],
 	normalizationFile: String,
