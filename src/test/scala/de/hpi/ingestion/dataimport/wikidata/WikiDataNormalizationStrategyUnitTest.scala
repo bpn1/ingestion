@@ -37,6 +37,5 @@ class WikiDataNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 			.foreach { case (result, expected) =>
 				result shouldEqual expected
 			}
-
 	}
 }
