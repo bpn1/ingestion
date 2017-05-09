@@ -15,3 +15,6 @@ target/
 .DS_Store
 
 *.iml
+
+# Compiled Python
+*.pyc

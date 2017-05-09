@@ -402,7 +402,7 @@ object TextParser extends SparkJob {
 	  * @return parsed Wikipedia entry thats been processed
 	  */
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
-		val cleanedEntry = cleanRedirects(entry)
+		val cleanedEntry = cleanRedirectsAndWhitespaces(entry)
 		var title = cleanedEntry.title
 		if(isDisambiguationPage(cleanedEntry) && !title.endsWith(disambiguationTitleSuffix)) {
 			title += disambiguationTitleSuffix
@@ -414,15 +414,17 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Cleaning all kinds of redirects so they will get parsed by the Wikiparser.
+	  * Cleans all kinds of redirects so they will get parsed by the Wikiparser
+	  * and replaces alternative whitespace characters with standard whitespaces.
 	  *
 	  * @param entry raw Wikipedia entry
 	  * @return raw Wikipedia entry with cleaned redirect keywords
 	  */
-	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
+	def cleanRedirectsAndWhitespaces(entry: WikipediaEntry): WikipediaEntry = {
 		val redirectRegex = "(?i)(weiterleitung|redirect)\\s?:?\\s?"
 		val replaceString = parsableRedirect + " "
-		val cleanedText = entry.getText().replaceAll(redirectRegex, replaceString)
+		var cleanedText = entry.getText().replaceAll(redirectRegex, replaceString)
+		cleanedText = cleanedText.replace("\u00a0", " ")
 		entry.setText(cleanedText)
 		entry
 	}
