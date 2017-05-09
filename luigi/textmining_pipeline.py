@@ -19,10 +19,10 @@ task_definitions = [TaskDefinition("TextParser", jar=extended_links_jar),
                     TaskDefinition("AliasCounter", ["AliasTrieSearch"], jar=extended_links_jar),
                     TaskDefinition("DocumentFrequencyCounter", ["TextParser"], jar=extended_links_jar),
                     TaskDefinition("TermFrequencyCounter", ["CompanyLinkFilter"], jar=extended_links_jar),
-                    TaskDefinition("CosineContextExtractor",
+                    TaskDefinition("CosineContextComparator",
                                    ["DocumentFrequencyCounter", "AliasCounter", "TermFrequencyCounter",
                                     "LinkAnalysis2"], jar=cosine_jar),
-                    TaskDefinition("Classifier", ["CosineContextExtractor"])]
+                    TaskDefinition("Classifier", ["CosineContextComparator"])]
 
 
 class TextminingPipeline(AbstractPipeline):
