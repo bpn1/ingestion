@@ -20,6 +20,8 @@ object Import extends DataLakeImportImplements[Entity](
 	}
 
 	override def filterEntities(entity: Entity): Boolean = true
+
+	override def normalizeAttribute(attribute: String, values: List[String]): List[String] = values
 	override def translateToSubject(
 		entity: Entity,
 		version: Version,
