@@ -1,38 +1,56 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
+import de.hpi.ingestion.implicits.RegexImplicits._
+
+/**
+  * Strategies for the normalization of DBPedia entities
+  */
 object DBpediaNormalizeStrategy extends Serializable {
+	val xsdNumberPatter = """([-+]?[0-9]+\.?[0-9]*)\^\^xsd:.+""".r
 
-	implicit class Regex(sc: StringContext) {
-		def r = new util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
-	}	// from http://stackoverflow.com/questions/4636610/how-to-pattern-match-using-regular-expression-in-scala
-
+	/**
+	  * Normalizes Employees
+	  * @param values employees list
+	  * @return normalizes employees
+	  */
 	def normalizeEmployees(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""(\d+)${number}..xsd:.+""" => List(number)
+			case xsdNumberPatter(number) => List(number)
 			case r"""über (\d+)${number}@de \.""" => List(number)
 			case _ => None
 		}
 	}
 
+	/**
+	  * Normalizes countries
+	  * @param values country list
+	  * @return normalized countries
+	  */
 	def normalizeCountry(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""[A-Z][A-Z].+""" => None
-			case r"""\d+\^\^xsd:integer""" => None
-			case r""".+\.svg""" => None
 			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${country}""" => List(country)
 			case r"""([A-Za-zÄäÖöÜüß-]+)${country}@de \.""" => List(country)
 			case _ => None
 		}.map(_.replaceAll("_", " "))
 	}
 
+	/**
+	  * Normalizes coordinates
+	  * @param values coordinates list
+	  * @return normalized coordinates list
+	  */
 	def normalizeCoords(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""\d+..xsd:integer""" => None
-			case r"""(\d+\.\d+)${ord}..xsd:.+""" => List(ord)
+			case xsdNumberPatter(coordinate) => List(coordinate)
 			case _ => None
 		}.grouped(2).toList.distinct.flatten
 	}
 
+	/**
+	  * Chooses the right normalization method
+	  * @param attribute Attribute to be normalized
+	  * @return Normalization method
+	  */
 	def apply(attribute: String): (List[String]) => List[String] = {
 		attribute match {
 			case "gen_employees" => normalizeEmployees
@@ -41,5 +59,4 @@ object DBpediaNormalizeStrategy extends Serializable {
 			case _ => identity
 		}
 	}
-
 }
