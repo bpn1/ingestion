@@ -6,9 +6,11 @@ import de.hpi.ingestion.textmining.models.{Entity, Link, ParsedWikipediaEntry, S
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.AliasTrieSearch.appName
 
 
 object RelationSentenceParser extends SparkJob {
+	appName = "Relation Sentence Parser"
 	val keyspace = "wikidumps"
 	val inputTablename = "parsedwikipedia"
 	val outputTablename = "wikipediasentences"
