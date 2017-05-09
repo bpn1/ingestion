@@ -1,3 +1,5 @@
 #!/bin/bash
 
-nice -n 10 python3 /home/luigi/pipeline/textmining_pipeline.py --scheduler-host localhost | tee pipeline.log
+BASEDIR=$(dirname "$0")
+
+nice -n 10 python3 $BASEDIR/pipeline.py --scheduler-host localhost | tee pipeline.log

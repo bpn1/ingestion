@@ -15,7 +15,7 @@ class TaskDefinition(object):
             self.upstream_tasks = upstream_tasks
 
         if scala_class is None:
-            self.scala_class = name 
+            self.scala_class = name
         else:
             self.scala_class = scala_class
 

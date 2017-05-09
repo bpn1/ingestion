@@ -15,3 +15,9 @@ target/
 .DS_Store
 
 *.iml
+
+# Logfiles
+*.log
+
+# Compiled python
+*.pyc
