@@ -103,7 +103,11 @@ object Merging extends SparkJob {
 			.join(duplicates.keyBy(_.subject_id))
 			.values
 			.flatMap { case (master, candidates) =>
-				appendDuplicates(master, candidates, version)
+				//appendDuplicates(master, candidates, version)
+				candidates.candidates.foreach { case (candidate, source, score) =>
+					val relation = Map("type" -> "isDuplicate", "confidence" -> score.toString)
+					addSymmetricRelation(master, candidate, relation, version)
+				}
 				master :: candidates.candidates.map(_._1)
 			}
 
