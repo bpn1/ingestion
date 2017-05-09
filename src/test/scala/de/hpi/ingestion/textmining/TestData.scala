@@ -676,6 +676,14 @@ object TestData {
 		)
 	}
 
+	def entryWithAlternativeWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
+	}
+
+	def entryWithStandardWhitespaces(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
+	}
+
 	def groupedAliasesSet(): Set[Alias] = {
 		Set(
 			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
