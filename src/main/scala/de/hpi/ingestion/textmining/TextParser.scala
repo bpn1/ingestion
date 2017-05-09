@@ -8,7 +8,7 @@ import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
-import org.jsoup.nodes.{Document, Element, TextNode}
+import org.jsoup.nodes.{Document, Element, TextNode, Comment}
 import java.net.URLDecoder
 
 import scala.collection.mutable.ListBuffer
@@ -189,9 +189,7 @@ object TextParser extends SparkJob {
 			cleanedUrl = URLDecoder.decode(cleanedUrl, "UTF-8")
 				.replaceAll("_", " ")
 		} catch {
-			case e: java.lang.IllegalArgumentException =>
-				println(s"IllegalArgumentException for: $cleanedUrl")
-				cleanedUrl = url
+			case e: java.lang.IllegalArgumentException => cleanedUrl = url
 		}
 		cleanedUrl.replaceAll("\\A/", "")
 	}
@@ -245,7 +243,7 @@ object TextParser extends SparkJob {
 		if(children.head.isInstanceOf[TextNode]) {
 			startIndex = 1
 			var firstChildText = children(0).asInstanceOf[TextNode].text
-			while(firstChildText.charAt(0) != body.text.charAt(0)) {
+			while(firstChildText.charAt(0) != body.text.headOption.getOrElse("")) {
 				firstChildText = firstChildText.substring(1)
 				if(firstChildText.length == 0) {
 					return ("", linksList.toList)
@@ -264,7 +262,8 @@ object TextParser extends SparkJob {
 					offset += t.text.length
 				case t: TextNode =>
 					offset += t.text.length
-				case _ =>
+				case t: Comment =>
+					// ignore HTML comments
 			}
 		}
 		val cleanedLinks = cleanMetapageLinks(linksList.toList)
@@ -318,8 +317,6 @@ object TextParser extends SparkJob {
 			}
 			escaped = character == '\\'
 		}
-
-		println("[Textparser WARN]	Template has no end!")
 		templateText
 	}
 

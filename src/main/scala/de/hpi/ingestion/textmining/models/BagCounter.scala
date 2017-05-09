@@ -23,20 +23,6 @@ trait BagCounter[T] extends Ordered[T] {
 	def -(that: T): T
 
 	/**
-	  * Multiplies this BagCounter with another BagCounter of the same type.
-	  * @param that other BagCounter of the same type
-	  * @return product of the two BagCounters
-	  */
-	def *(that: T): T
-
-	/**
-	  * Divides this BagCounter by another BagCounter of the same type.
-	  * @param that other BagCounter of the same type
-	  * @return result of the division
-	  */
-	def /(that: T): T
-
-	/**
 	  * Returns true if this BagCounter equals 0.
 	  * @return true if this BagCounter equals 0.
 	  */
@@ -47,6 +33,12 @@ trait BagCounter[T] extends Ordered[T] {
 	  * @return true if this BagCounter is less than 0.
 	  */
 	def lessThanZero(): Boolean
+
+	/**
+	  * Returns true if this BagCounter is greater than 0.
+	  * @return true if this BagCounter is greater than 0.
+	  */
+	def greaterThanZero(): Boolean
 
 	/**
 	  * Inverts this BagCounter.
@@ -82,13 +74,11 @@ object BagCounter {
 
 		def -(y: Int): Int = x - y
 
-		def *(y: Int): Int = x * y
-
-		def /(y: Int): Int = x / y
-
 		def equalsZero(): Boolean = x == 0
 
 		def lessThanZero(): Boolean = x < 0
+
+		def greaterThanZero(): Boolean = x > 0
 
 		def invert(): Int = x * -1
 
@@ -107,13 +97,11 @@ object BagCounter {
 
 		def -(y: Double): Double = x - y
 
-		def *(y: Double): Double = x * y
-
-		def /(y: Double): Double = x / y
-
 		def equalsZero(): Boolean = x == 0.0
 
 		def lessThanZero(): Boolean = x < 0.0
+
+		def greaterThanZero(): Boolean = x > 0.0
 
 		def invert(): Double = x * -1.0
 

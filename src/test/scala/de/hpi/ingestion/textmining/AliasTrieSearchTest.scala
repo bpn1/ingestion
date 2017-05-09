@@ -1,8 +1,10 @@
 package de.hpi.ingestion.textmining
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.textmining.models.{Link, ParsedWikipediaEntry, TrieNode}
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import org.scalatest.{FlatSpec, Matchers}
+import scala.io.Source
 
 class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext {
 
@@ -15,8 +17,8 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 	}
 
 	they should "be cleaned from duplicates and empty strings" in {
-		val cleanedAliaes = AliasTrieSearch.cleanFoundAliases(TestData.uncleanedFoundAliaes())
-		val expectedAliases = TestData.cleanedFoundAliaes()
+		val cleanedAliaes = AliasTrieSearch.cleanFoundAliases(TestData.uncleanedFoundAliases())
+		val expectedAliases = TestData.cleanedFoundAliases()
 		cleanedAliaes shouldEqual expectedAliases
 	}
 
@@ -25,5 +27,17 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 		val trie = AliasTrieSearch.deserializeTrie(trieStream)
 		val expectedTrie = TestData.deserializedTrie()
 		trie shouldEqual expectedTrie
+	}
+
+	"Wikipedia entries" should "be enriched with found aliases" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val testTrieStreamFunction = TestData.fullTrieStream _
+		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
+		val inputEntry = sc.parallelize(Seq(TestData.parsedEntry()))
+		val searchResult = AliasTrieSearch.run(List(inputEntry).toAnyRDD(), sc)
+		val enrichedEntry = searchResult.fromAnyRDD[ParsedWikipediaEntry]().head.collect.head
+		val foundAliases = TestData.parsedEntryFoundAliases()
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+		enrichedEntry.foundaliases.toSet shouldEqual foundAliases
 	}
 }
