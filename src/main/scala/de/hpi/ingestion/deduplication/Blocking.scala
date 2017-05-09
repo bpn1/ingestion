@@ -11,19 +11,17 @@ import de.hpi.ingestion.implicits.TupleImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import scala.collection.mutable
 import scala.io.Source
-import scala.language.postfixOps
-import scala.xml.XML
+import scala.xml.{Node, XML}
 
 /**
   * Blocks two groups of Subjects with multiple Blocking Schemes and evaluates the resulting blocks by counting their
   * sizes and writing the results to the Cassandra.
   */
-object BlockingJob extends SparkJob {
+object Blocking extends SparkJob {
 	appName = "Blocking"
 	val configFile: Option[String] = None
-	val settings = mutable.Map[String, String]()
+	var settings = Map[String, String]()
 	var blockingSchemes = List[BlockingScheme](
 		ListBlockingScheme("geo_country_scheme", "geo_country"),
 		ListBlockingScheme("geo_coords_scheme", "geo_coords"),
@@ -74,10 +72,8 @@ object BlockingJob extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val inputSubjects = input.fromAnyRDD[Subject]()
-		val subjects = inputSubjects.head
-		val staging = inputSubjects(1)
-		val comment = args.headOption.getOrElse("BlockingJob")
+		val List(subjects, staging) = input.fromAnyRDD[Subject]()
+		val comment = args.headOption.getOrElse("Blocking")
 		val blockEvaluation = List(evaluationBlocking(subjects, staging, blockingSchemes, false, comment))
 		blockEvaluation.toAnyRDD()
 	}
@@ -97,21 +93,21 @@ object BlockingJob extends SparkJob {
 	}
 
 	/**
-	  * Reads the configuration from a xml file
+	  * Reads the configuration from an xml file.
 	  * @return a list containing scoreConfig entities parsed from the xml file
 	  */
 	def parseConfig(): Unit = {
 		val path = this.configFile.getOrElse("config.xml")
-		val xml = XML.loadString(
-			Source
-				.fromURL(getClass.getResource(s"/$path"))
-				.getLines()
-				.mkString("\n")
-		)
+		val xml = XML.loadString(Source
+			.fromURL(getClass.getResource(s"/$path"))
+			.getLines()
+			.mkString("\n"))
 
 		val configSettings = xml \\ "config" \ "sourceSettings"
-		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
-			settings(node.label) = node.text
+		settings = configSettings.head.child
+			.collect {
+				case node: Node if node.text.trim.nonEmpty => (node.label, node.text)
+			}.toMap
 	}
 
 	/**

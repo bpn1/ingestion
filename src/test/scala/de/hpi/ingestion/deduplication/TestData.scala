@@ -132,12 +132,12 @@ object TestData {
 
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
 
-	def parsedConfig: mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = mutable.Map(
-		"name" -> List(
-			ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
-			ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)
-		)
-	)
+	def parsedConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		Map(
+			"name" -> List(
+				ScoreConfig(similarityMeasure = MongeElkan, weight = 0.8),
+				ScoreConfig(similarityMeasure = JaroWinkler, weight = 0.7)))
+	}
 
 	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = {
 		List(
@@ -172,12 +172,12 @@ object TestData {
 				List((subjects(3), stagingTable, 0.9446913580246914))))
 	}
 
-	def testConfig(key: String = "name"): mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = mutable.Map(
-		key -> List(
-			ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
-			ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)
-		)
-	)
+	def testConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		Map(
+			key -> List(
+				ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
+				ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)))
+	}
 
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
 		MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,

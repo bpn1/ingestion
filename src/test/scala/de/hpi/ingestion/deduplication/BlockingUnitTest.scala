@@ -14,8 +14,8 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
 		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val subjectBlocks = BlockingJob.blocking(subjectRDD, blockingSchemes)
-		val stagingBlocks = BlockingJob.blocking(stagingRDD, blockingSchemes)
+		val subjectBlocks = Blocking.blocking(subjectRDD, blockingSchemes)
+		val stagingBlocks = Blocking.blocking(stagingRDD, blockingSchemes)
 		val expectedSubjects = TestData.flatSubjectBlocks(sc, subjects)
 		val expectedStaging = TestData.flatStagingBlocks(sc, staging)
 		assertRDDEquals(subjectBlocks, expectedSubjects)
@@ -28,7 +28,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
 		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val blocks = BlockingJob.blocking(subjectRDD, stagingRDD, blockingSchemes, false)
+		val blocks = Blocking.blocking(subjectRDD, stagingRDD, blockingSchemes, false)
 			.map { case (tag, block) => (tag, block.copy(id = null)) }
 		val expectedBlocks = TestData.groupedBlocks(sc, subjects, staging)
 		assertRDDEquals(blocks, expectedBlocks)
@@ -40,7 +40,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
 		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val blocks = BlockingJob.blocking(subjectRDD, stagingRDD, blockingSchemes, true)
+		val blocks = Blocking.blocking(subjectRDD, stagingRDD, blockingSchemes, true)
 			.map { case (tag, block) => (tag, block.copy(id = null)) }
 		val expectedBlocks = TestData.groupedAndFilteredBlocks(sc, subjects, staging)
 		assertRDDEquals(blocks, expectedBlocks)
@@ -53,7 +53,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val stagingRDD = sc.parallelize(staging)
 		val comment = "Test comment"
 		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = BlockingJob.evaluationBlocking(subjectRDD, stagingRDD, blockingSchemes, false, comment)
+		val evaluationBlocks = Blocking.evaluationBlocking(subjectRDD, stagingRDD, blockingSchemes, false, comment)
 			.map(_.copy(jobid = null))
 		val expected = TestData.blockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
@@ -66,7 +66,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val stagingRDD = sc.parallelize(staging)
 		val comment = "BlockingJob"
 		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = BlockingJob.evaluationBlocking(subjectRDD, stagingRDD, blockingSchemes, true, comment)
+		val evaluationBlocks = Blocking.evaluationBlocking(subjectRDD, stagingRDD, blockingSchemes, true, comment)
 			.map(_.copy(jobid = null))
 		val expected = TestData.filteredBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
@@ -78,8 +78,8 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
 		val input = List(subjectRDD, stagingRDD).toAnyRDD()
-		BlockingJob.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = BlockingJob.run(input, sc).fromAnyRDD[BlockEvaluation]().head
+		Blocking.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
+		val evaluationBlocks = Blocking.run(input, sc).fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))
 		val expected = TestData.blockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
@@ -91,46 +91,44 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
 		val input = List(subjectRDD, stagingRDD).toAnyRDD()
-		BlockingJob.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = BlockingJob.run(input, sc, Array("Test comment")).fromAnyRDD[BlockEvaluation]().head
+		Blocking.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
+		val evaluationBlocks = Blocking.run(input, sc, Array("Test comment")).fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))
 		val expected = TestData.blockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
 
 	it should "use the Simple Blocking Scheme if there is no other scheme defined" in {
-		val originalSchemes = BlockingJob.blockingSchemes
+		val originalSchemes = Blocking.blockingSchemes
 
-		BlockingJob.blockingSchemes should not be empty
-		BlockingJob.setBlockingSchemes(Nil)
-		BlockingJob.blockingSchemes should not be empty
-		BlockingJob.blockingSchemes should have length 1
-		BlockingJob.blockingSchemes.head.isInstanceOf[SimpleBlockingScheme] shouldBe true
+		Blocking.blockingSchemes should not be empty
+		Blocking.setBlockingSchemes(Nil)
+		Blocking.blockingSchemes should not be empty
+		Blocking.blockingSchemes should have length 1
+		Blocking.blockingSchemes.head.isInstanceOf[SimpleBlockingScheme] shouldBe true
 
-		BlockingJob.setBlockingSchemes(originalSchemes)
+		Blocking.setBlockingSchemes(originalSchemes)
 	}
 
 	"Config" should "be read" in {
-		val originalSettings = BlockingJob.settings.toMap
+		val originalSettings = Blocking.settings
 
-		BlockingJob.settings shouldBe empty
-		BlockingJob.parseConfig()
-		BlockingJob.settings should not be empty
+		Blocking.settings shouldBe empty
+		Blocking.parseConfig()
+		Blocking.settings should not be empty
 		TestData.requiredSettings.foreach { setting =>
-			BlockingJob.settings should contain key setting
+			Blocking.settings should contain key setting
 		}
-		BlockingJob.settings.clear()
-		BlockingJob.settings ++= originalSettings
+		Blocking.settings = originalSettings
 	}
 
 	it should "be read before run is executed" in {
-		val originalSettings = BlockingJob.settings.toMap
+		val originalSettings = Blocking.settings
 
-		BlockingJob.settings shouldBe empty
-		BlockingJob.assertConditions(Array[String]())
-		BlockingJob.settings should not be empty
+		Blocking.settings shouldBe empty
+		Blocking.assertConditions(Array[String]())
+		Blocking.settings should not be empty
 
-		BlockingJob.settings.clear()
-		BlockingJob.settings ++= originalSettings
+		Blocking.settings = originalSettings
 	}
 }
