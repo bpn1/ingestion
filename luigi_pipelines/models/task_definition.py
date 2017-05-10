@@ -21,8 +21,9 @@ class TaskDefinition(object):
 
     def create_command(self):
         assert self.package is not None  # package has to be set prior to command construction
-        return "ssh bp2016n1@sopedu \"/home/bp2016n1/scripts/spark.sh yarn " + self.package + "." + self.scala_class \
-               + " 8 " + self.jar + "\""
+        full_class_name = self.package + "." + self.scala_class
+        return "ssh bp2016n1@sopedu \"HADOOP_USER_NAME='bp2016n1' spark-submit --class " + full_class_name + \
+               " --master yarn --num-executors 23 --executor-cores 4 --executor-memory 10G " + self.jar + "\""
 
     @property
     def command(self):
