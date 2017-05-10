@@ -679,7 +679,6 @@ object TestData {
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
-
 	def entryWithStandardWhitespaces(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
@@ -1411,6 +1410,13 @@ object TestData {
 					Entity("Deutschen Telekom AG", "Deutsche Telekom", Option(59))
 				)
 			)
+		)
+	}
+
+	def moreSentences(): List[Sentence] = {
+		List(
+			Sentence("Audi",0,"Audi ist Audi AG.",List(Entity("Audi","Audi",Some(0)), Entity("Audi AG","Audi",Some(9)))),
+			Sentence("Audi",18,"VW ist Volkswagen AG",List(Entity("VW","VW",Some(0)), Entity("Volkswagen AG","VW",Some(7))))
 		)
 	}
 	def bigLinkExtenderPagesSet(): Set[Page] = {

@@ -8,7 +8,9 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.AliasTrieSearch.appName
 
-
+/**
+  * Parses all Sentences with entities from Wikipedia
+  */
 object RelationSentenceParser extends SparkJob {
 	appName = "Relation Sentence Parser"
 	val keyspace = "wikidumps"
@@ -29,7 +31,7 @@ object RelationSentenceParser extends SparkJob {
 	}
 
 	/**
-	  * Saves Parsed Wikipedia entries with resolved redirects to the Cassandra.
+	  * Saves Sentences with entities to the Cassandra.
 	  *
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
@@ -45,7 +47,8 @@ object RelationSentenceParser extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * TODO
+	  * Parses all Sentences from a parsed Wikipedia etry with at least 2 entities
+	  * and recalculating relative offsets of entities
 	  *
 	  * @param entry     Parsed Wikipedia Entry to be processed into sentences
 	  * @param tokenizer tokenizer to be used
@@ -58,12 +61,12 @@ object RelationSentenceParser extends SparkJob {
 		tokenizer.tokenize(entry.getText())
 		val text = entry.getText()
 		val sentences = tokenizer.tokenize(entry.getText())
-		val links = entry.allLinks().filter(_.offset.getOrElse(-1) >= 0)
+		val links = entry.allLinks().filter(_.offset.getOrElse(-1) >= 0).distinct
 		var offset = 0
 		sentences.map { sentence =>
 			offset = text.indexOf(sentence, offset)
 			val sentenceEntities = links.filter { link =>
-				link.offset.get > offset && link.offset.get < (offset + sentence.length)
+				link.offset.get >= offset && link.offset.get < (offset + sentence.length)
 			}
 				.map(link => Entity(link.alias, link.page, link.offset.map(_ - offset)))
 			offset += sentence.length
@@ -72,7 +75,7 @@ object RelationSentenceParser extends SparkJob {
 	}
 
 	/**
-	  * TODO
+	  * Parses all Sentences with at least 2 entities from every Wikipedia article and puts them into an RDD
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
