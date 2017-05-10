@@ -58,9 +58,8 @@ object RelationSentenceParser extends SparkJob {
 		entry: ParsedWikipediaEntry,
 		tokenizer: CoreNLPSentenceTokenizer
 	): List[Sentence] = {
-		tokenizer.tokenize(entry.getText())
 		val text = entry.getText()
-		val sentences = tokenizer.tokenize(entry.getText())
+		val sentences = tokenizer.tokenize(text)
 		val links = entry.allLinks().filter(_.offset.getOrElse(-1) >= 0).distinct
 		var offset = 0
 		sentences.map { sentence =>
