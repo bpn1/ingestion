@@ -2,14 +2,12 @@ package de.hpi.ingestion.textmining
 
 import java.io.{BufferedReader, InputStreamReader}
 
-import breeze.linalg.split
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.implicits.TupleImplicits._
 
 import scala.collection.mutable
 
@@ -111,11 +109,8 @@ object CosineContextComparator extends SparkJob {
 		numDocuments: Long,
 		defaultIdf: Double
 	): RDD[(String, Map[String, Double])] = {
-		val termFrequencies = articles
-			.map(entry => (entry.title, Bag(entry.context)))
-			.flatMap(t => joinableTermFrequencies(t._1, t._2))
-
-		calculateTfidf(termFrequencies, numDocuments, defaultIdf).reduceByKey(_ ++ _)
+		val termFrequencies = articles.map(entry => (entry.title, Bag(entry.context)))
+		calculateTfidf(termFrequencies, numDocuments, defaultIdf)
 	}
 
 	/**
@@ -134,9 +129,7 @@ object CosineContextComparator extends SparkJob {
 		val contextTermFrequencies = articles
 			.flatMap(_.linkswithcontext)
 			.map(link => (link, Bag(link.context)))
-			.flatMap(t => joinableTermFrequencies(t._1, t._2))
-
-		calculateTfidf(contextTermFrequencies, numDocuments, defaultIdf).reduceByKey(_ ++ _)
+		calculateTfidf(contextTermFrequencies, numDocuments, defaultIdf)
 	}
 
 	/**
@@ -149,17 +142,20 @@ object CosineContextComparator extends SparkJob {
 	  * @return RDD of tuples containing identifiers and a Map with the tfidf for each term
 	  */
 	def calculateTfidf[T](
-		termFrequencies: RDD[(String, (T, Int))],
+		termFrequencies: RDD[(T, Bag[String, Int])],
 		numDocuments: Long,
 		defaultIdf: Double
 	): RDD[(T, Map[String, Double])] = {
 		termFrequencies
 			.mapPartitions({ partition =>
 				val idfMap = inverseDocumentFrequencies(numDocuments)
-				partition.map { case (token, (identifier, tf)) =>
-					val idf = idfMap.getOrElse(token, defaultIdf)
-					val tfidf = tf * idf
-					(identifier, Map(token -> tfidf))
+				partition.map { case (identifier, bagOfWords) =>
+					val idfs = bagOfWords.getCounts().map { case (token, tf) =>
+						val idf = idfMap.getOrElse(token, defaultIdf)
+						val tfidf = tf * idf
+						(token, tfidf)
+					}
+					(identifier, idfs)
 				}
 			}, true)
 	}
@@ -241,6 +237,12 @@ object CosineContextComparator extends SparkJob {
 		dotProduct / (lengthA * lengthB)
 	}
 
+	/**
+	  * Reads the document frequencies from the hdfs, calculates the inverse document frequencies and returns them
+	  * as Map.
+	  * @param numDocs number of documents used to create the document frequency data
+	  * @return Map of every term and its inverse document frequency
+	  */
 	def inverseDocumentFrequencies(numDocs: Long): Map[String, Double] = {
 		val docfreqStream = AliasTrieSearch.trieStreamFunction(docfreqFile)
 		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
