@@ -1,9 +1,7 @@
 package de.hpi.ingestion.datalake
 
 import java.net.URL
-
-import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
-
+import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version, WZCategory}
 import scala.collection.mutable
 
 trait DLImport[T <: DLImportEntity] extends Serializable {
@@ -56,4 +54,18 @@ trait DLImport[T <: DLImportEntity] extends Serializable {
 		entity: T,
 		mapping: Map[String, List[String]]
 	): Map[String, List[String]]
+
+	/**
+	  * Parses the categorization config file into a Map.
+	  * @param url the path to the config file
+	  * @return a Map containing the categorization
+	  */
+	protected def parseCategorizationConfig(url: URL): Map[WZCategory, List[WZCategory]]
+
+	/**
+	  * Parses the categorization config file into a Map.
+	  * @param path the path to the config file
+	  * @return a Map containing the categorization
+	  */
+	protected def parseCategorizationConfig(path: String): Map[WZCategory, List[WZCategory]]
 }
