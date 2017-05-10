@@ -10,7 +10,8 @@ object RegexImplicits {
 	  */
 	implicit class Regex(sc: StringContext) {
 		/**
-		  * http://stackoverflow.com/a/16256935/6625021
+		  * This function helps using string interpolation for regexes as used in the normalize strategies.
+		  * Source: http://stackoverflow.com/a/16256935/6625021
 		  * @return matcher
 		  */
 		def r = new util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
