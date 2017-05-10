@@ -1,35 +1,13 @@
 package de.hpi.ingestion.dataimport.wikidata
 
-import java.net.URL
+import de.hpi.ingestion.dataimport.NormalizationStrategies
 import de.hpi.ingestion.implicits.RegexImplicits._
-import scala.io.Source
-import scala.xml.XML
 
 /**
   * Strategies for the normalization of WikiData entities
   */
-object WikiDataNormalizeStrategy {
-	val mapping = this.parseNormalizationConfig(this.getClass.getResource("/categorization_wikidata.xml"))
-
-	def parseNormalizationConfig(url: URL): Map[String, List[String]] = {
-		val xml = XML.loadString(Source
-			.fromURL(url)
-			.getLines()
-			.mkString("\n"))
-
-		(xml \\ "categorization" \ "category").map { attribute =>
-			val key = (attribute \ "key").text
-			val values = (attribute \ "mapping").map(_.text).toList
-			(key, values)
-		}.toMap
-	}
-
-	/**
-	  * Mapping Sector to the wz2008 companion
-	  * @param sector sector to map
-	  * @return corresponding wz2008 entries
-	  */
-	def mapSector(sector: String): List[String] = this.mapping.getOrElse(sector, List(sector))
+object WikiDataNormalizeStrategy extends NormalizationStrategies("categorization_wikidata.xml") with Serializable {
+	mapping = this.parseNormalizationConfig()
 
 	/**
 	  * Normalizes coordinates: e.g. "-1,1"
