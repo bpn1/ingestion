@@ -1,6 +1,7 @@
 package de.hpi.ingestion.textmining
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.io._
+
 import scala.collection.JavaConversions._
 import org.jsoup.nodes.Element
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
@@ -516,6 +517,22 @@ object TestData {
 			DocumentFrequency("hier", 2),
 			DocumentFrequency("verlink", 2)
 		)
+	}
+
+	def filteredStemmedIdfMap(): Map[String, Double] = {
+		val numDoc = 4.0
+		Map(
+			"ist" -> 3.0 / numDoc,
+			"audi" -> 3.0 / numDoc,
+			"hier" -> 2.0 / numDoc,
+			"verlink" -> 2.0 / numDoc,
+			"brachttal" -> 2.0 / numDoc,
+			"main-kinzig-kreis" -> 2.0 / numDoc,
+			"hess" -> 2.0 / numDoc,
+			"buding" -> 2.0 / numDoc,
+			"wald" -> 2.0 / numDoc,
+			"jahr" -> 2.0 / numDoc,
+			"und" -> 2.0 / numDoc)
 	}
 
 	def inverseDocumentFrequenciesSet(): Set[(String, Double)] = {
@@ -1421,11 +1438,15 @@ object TestData {
 		trie
 	}
 
-	def fullTrieStream(): ByteArrayInputStream = {
+	def fullTrieStream(file: String): ByteArrayInputStream = {
 		val aliasStream = Source.fromURL(getClass.getResource("/textmining/triealiases"))
 		val trieStream = new ByteArrayOutputStream(1024 * 10)
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
+	}
+
+	def docfreqStream(file: String)(file2: String): InputStream = {
+		new FileInputStream(new File(getClass.getResource(s"/textmining/$file").toURI))
 	}
 
 	def uncleanedFoundAliases(): List[String] = {
