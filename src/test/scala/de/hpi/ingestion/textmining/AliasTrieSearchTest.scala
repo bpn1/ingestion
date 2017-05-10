@@ -33,13 +33,15 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 
 	"Wikipedia entries" should "be enriched with found aliases" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+
 		val testTrieStreamFunction = TestData.fullTrieStream _
 		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
 		val inputEntry = sc.parallelize(Seq(TestData.parsedEntry()))
 		val searchResult = AliasTrieSearch.run(List(inputEntry).toAnyRDD(), sc)
 		val enrichedEntry = searchResult.fromAnyRDD[ParsedWikipediaEntry]().head.collect.head
 		val foundAliases = TestData.parsedEntryFoundAliases()
-		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 		enrichedEntry.foundaliases.toSet shouldEqual foundAliases
+
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 }

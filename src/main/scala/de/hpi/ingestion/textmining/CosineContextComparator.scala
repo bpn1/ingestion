@@ -1,5 +1,8 @@
 package de.hpi.ingestion.textmining
 
+import java.io.{BufferedReader, InputStreamReader}
+
+import breeze.linalg.split
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
@@ -7,6 +10,8 @@ import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
+
+import scala.collection.mutable
 
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
@@ -18,6 +23,7 @@ object CosineContextComparator extends SparkJob {
 	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
 	val linksTable = "wikipedialinks"
 	val featureEntryTable = "featureentries"
+	val docfreqFile = "wikipedia/wikipedia_docfreq"
 
 	// $COVERAGE-OFF$
 	/**
@@ -30,9 +36,8 @@ object CosineContextComparator extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
 		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
-		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
+		List(tfArticles).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
 
 	/**
@@ -48,7 +53,6 @@ object CosineContextComparator extends SparkJob {
 			.head
 			.saveToCassandra(keyspace, featureEntryTable)
 	}
-
 	// $COVERAGE-ON$
 
 	/**
@@ -98,87 +102,66 @@ object CosineContextComparator extends SparkJob {
 	  * Calculates the tfIdf of every term for every Wikipedia article.
 	  *
 	  * @param articles                   RDD of parsed Wikipedia articles with known term frequencies
-	  * @param documentFrequencies        RDD of document frequencies
 	  * @param numDocuments               number of documents that was used to calculate the document frequencies
-	  * @param documentFrequencyThreshold lower threshold for document frequencies
+	  * @param defaultIdf                 default idf value for terms without a document frequency above the threshold
 	  * @return RDD of tuples containing the page name and the tfIdfs of every term on that page
 	  */
 	def calculateArticleTfidf(
 		articles: RDD[ParsedWikipediaEntry],
-		documentFrequencies: RDD[DocumentFrequency],
 		numDocuments: Long,
-		documentFrequencyThreshold: Int
+		defaultIdf: Double
 	): RDD[(String, Map[String, Double])] = {
 		val termFrequencies = articles
 			.map(entry => (entry.title, Bag(entry.context)))
 			.flatMap(t => joinableTermFrequencies(t._1, t._2))
 
-		calculateTfidf(
-			termFrequencies,
-			documentFrequencies,
-			numDocuments,
-			documentFrequencyThreshold)
-			.reduceByKey(_ ++ _)
+		calculateTfidf(termFrequencies, numDocuments, defaultIdf).reduceByKey(_ ++ _)
 	}
 
 	/**
 	  * Calculates the tfIdf for the context of every link.
 	  *
 	  * @param articles                   RDD of parsed Wikipedia articles containing the links and their contexts
-	  * @param documentFrequencies        RDD of document frequencies
 	  * @param numDocuments               number of documents that was used to calculate the document frequencies
-	  * @param documentFrequencyThreshold lower threshold for document frequencies
-	  * @return RDD of tuples containing the link and the tfIdfs of ever term in its context
+	  * @param defaultIdf                 default idf value for terms without a document frequency above the threshold
+	  * @return RDD of tuples containing the link and the tfIdfs of every term in its context
 	  */
 	def calculateLinkContextsTfidf(
 		articles: RDD[ParsedWikipediaEntry],
-		documentFrequencies: RDD[DocumentFrequency],
 		numDocuments: Long,
-		documentFrequencyThreshold: Int
+		defaultIdf: Double
 	): RDD[(Link, Map[String, Double])] = {
 		val contextTermFrequencies = articles
 			.flatMap(_.linkswithcontext)
 			.map(link => (link, Bag(link.context)))
 			.flatMap(t => joinableTermFrequencies(t._1, t._2))
 
-		calculateTfidf(
-			contextTermFrequencies,
-			documentFrequencies,
-			numDocuments,
-			documentFrequencyThreshold)
-			.reduceByKey(_ ++ _)
+		calculateTfidf(contextTermFrequencies, numDocuments, defaultIdf).reduceByKey(_ ++ _)
 	}
 
 	/**
 	  * Calculates the tfIdf for every term.
-	  *
-	  * @param termFrequencies            RDD of terms with their identifier and raw term frequency in the form
-	  *                                   (term, (identifier, raw term frequency))
-	  * @param documentFrequencies        RDD of Document Frequencies
-	  * @param numDocuments               number of documents used to determine the Document Frequencies
-	  * @param documentFrequencyThreshold lower threshold used for Document Frequencies of terms without a
-	  *                                   precalculated one.
+	  * @param termFrequencies RDD of terms with their identifier and raw term frequency in the form
+	  *                        (term, (identifier, raw term frequency))
+	  * @param numDocuments number of documents used to determine the Document Frequencies
+	  * @param defaultIdf default idf value for terms without a document frequency above the threshold
 	  * @tparam T type of the identifier for each term
-	  * @return RDD of identifiers and a Map containing the tfidf for each term as tuple
+	  * @return RDD of tuples containing identifiers and a Map with the tfidf for each term
 	  */
 	def calculateTfidf[T](
 		termFrequencies: RDD[(String, (T, Int))],
-		documentFrequencies: RDD[DocumentFrequency],
 		numDocuments: Long,
-		documentFrequencyThreshold: Int
+		defaultIdf: Double
 	): RDD[(T, Map[String, Double])] = {
-		val inverseDocumentFrequencies = documentFrequencies.map(calculateIdf(_, numDocuments))
 		termFrequencies
-			.map(_.map(identity, List(_)))
-			.reduceByKey(_ ++ _)
-			.leftOuterJoin(inverseDocumentFrequencies)
-			.flatMap { case (token, (tfList, idfOption)) =>
-				val idf = idfOption.getOrElse(calculateIdf(documentFrequencyThreshold - 1, numDocuments))
-				tfList.map { case (identifier, tf) =>
+			.mapPartitions({ partition =>
+				val idfMap = inverseDocumentFrequencies(numDocuments)
+				partition.map { case (token, (identifier, tf)) =>
+					val idf = idfMap.getOrElse(token, defaultIdf)
 					val tfidf = tf * idf
 					(identifier, Map(token -> tfidf))
 				}
-			}
+			}, true)
 	}
 
 	/**
@@ -258,6 +241,19 @@ object CosineContextComparator extends SparkJob {
 		dotProduct / (lengthA * lengthB)
 	}
 
+	def inverseDocumentFrequencies(numDocs: Long): Map[String, Double] = {
+		val docfreqStream = AliasTrieSearch.trieStreamFunction(docfreqFile)
+		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
+		val idfMap = mutable.Map[String, Double]()
+		var line = reader.readLine()
+		while(line != null) {
+			val Array(count, token) = line.split("\t", 2)
+			idfMap(token) = calculateIdf(count.toInt, numDocs)
+			line = reader.readLine()
+		}
+		idfMap.toMap
+	}
+
 	/**
 	  * Calculates the Cosine Similarities for every alias and creates feature entries containing the other two
 	  * features as well.
@@ -268,22 +264,13 @@ object CosineContextComparator extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
-		val documentFrequencies = input(1).asInstanceOf[RDD[DocumentFrequency]]
-		val aliases = input(2).asInstanceOf[RDD[Alias]]
+		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].cache
+		val aliases = input(1).asInstanceOf[RDD[Alias]]
+
 		val numDocuments = articlesWithTermFrequencies.count()
-
-		val articleTfidf = calculateArticleTfidf(
-			articlesWithTermFrequencies,
-			documentFrequencies,
-			numDocuments,
-			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
-
-		val contextTfidf = calculateLinkContextsTfidf(
-			articlesWithTermFrequencies,
-			documentFrequencies,
-			numDocuments,
-			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
+		val defaultIdf = calculateIdf(DocumentFrequencyCounter.leastSignificantDocumentFrequency - 1, numDocuments)
+		val articleTfidf = calculateArticleTfidf(articlesWithTermFrequencies, numDocuments, defaultIdf)
+		val contextTfidf = calculateLinkContextsTfidf(articlesWithTermFrequencies, numDocuments, defaultIdf)
 
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
 		val featureEntries = compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
