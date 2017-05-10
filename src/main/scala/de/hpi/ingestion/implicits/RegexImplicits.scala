@@ -9,6 +9,10 @@ object RegexImplicits {
 	  * @param sc String Context
 	  */
 	implicit class Regex(sc: StringContext) {
+		/**
+		  * http://stackoverflow.com/a/16256935/6625021
+		  * @return matcher
+		  */
 		def r = new util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
-	}	// from http://stackoverflow.com/questions/4636610/how-to-pattern-match-using-regular-expression-in-scala
+	}
 }
