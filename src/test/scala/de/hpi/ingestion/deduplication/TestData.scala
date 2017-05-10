@@ -381,7 +381,7 @@ object TestData {
 		FeatureEntry(Subject(id = idList(2)), Subject(id = idList(3)), correct = true),
 		FeatureEntry(Subject(id = idList(4)), Subject(id = idList(5)), correct = false)
 	))
-	
+
 	def requiredSettings: List[String] = {
 		List("keyspaceSubjectTable", "subjectTable", "keyspaceStagingTable", "stagingTable", "keyspaceStatsTable", "statsTable")
 	}
