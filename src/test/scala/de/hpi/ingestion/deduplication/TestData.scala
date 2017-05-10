@@ -361,6 +361,7 @@ object TestData {
 		List("undefined"),
 		List("undefined")
 	)
+	def geoCoordsBlockingScheme: List[List[String]] = List(List("52,11"), List("undefined"), List("52,13"), List("53,14"))
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
 
 	def requiredSettings: List[String] = {
