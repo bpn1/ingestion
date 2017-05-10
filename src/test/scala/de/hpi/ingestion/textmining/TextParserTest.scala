@@ -85,6 +85,12 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.foreach(entry => entry.textlinks shouldEqual textLinks(entry.title))
 	}
 
+	they should "be extracted" in {
+		val linkTuples = TestData.textLinkHtml().map(TextParser.extractTextAndTextLinks)
+		val expectedTuples = TestData.textLinkTuples()
+		linkTuples shouldEqual expectedTuples
+	}
+
 	"Wikipedia text link offsets" should "be consistent with text" in {
 		TestData.wikipediaEntries()
 			.map(TextParser.parseWikipediaEntry)
@@ -277,6 +283,12 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.toList
 		val expectedArticles = TestData.parsedWikipediaEntries()
 		parsedArticles shouldEqual expectedArticles
+	}
+
+	"Redirects" should "be extracted" in {
+		val redirectLinks = TestData.redirectHTML().map((TextParser.extractRedirect _).tupled)
+		val expectedLinks = TestData.extractedRedirects()
+		redirectLinks shouldEqual expectedLinks
 	}
 
 	"Parsed Wikipedia article" should "contain headlines" in {
