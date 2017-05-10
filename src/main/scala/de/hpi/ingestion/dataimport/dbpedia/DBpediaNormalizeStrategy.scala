@@ -6,8 +6,6 @@ import de.hpi.ingestion.implicits.RegexImplicits._
   * Strategies for the normalization of DBPedia entities
   */
 object DBpediaNormalizeStrategy extends Serializable {
-	val xsdNumberPatter = """([-+]?[0-9]+\.?[0-9]*)\^\^xsd:.+""".r
-
 	/**
 	  * Normalizes Employees
 	  * @param values employees list
@@ -15,10 +13,11 @@ object DBpediaNormalizeStrategy extends Serializable {
 	  */
 	def normalizeEmployees(values: List[String]): List[String] = {
 		values.flatMap {
-			case xsdNumberPatter(number) => List(number)
+			case r"""([-+]?[0-9]+\.?[0-9]*)${number}\^\^xsd:integer""" => List(number)
+			case r"""([-+]?[0-9]+\.?[0-9]*)${number}\^\^xsd:nonNegativeInteger""" => List(number)
 			case r"""über (\d+)${number}@de \.""" => List(number)
 			case _ => None
-		}
+		}.distinct
 	}
 
 	/**
@@ -28,10 +27,10 @@ object DBpediaNormalizeStrategy extends Serializable {
 	  */
 	def normalizeCountry(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${country}""" => List(country)
-			case r"""([A-Za-zÄäÖöÜüß-]+)${country}@de \.""" => List(country)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" => List(country)
+			case r"""([A-Za-zÄäÖöÜüß-]{3,})${country}@de \.""" => List(country)
 			case _ => None
-		}.map(_.replaceAll("_", " "))
+		}.map(_.replaceAll("_", " ")).distinct
 	}
 
 	/**
@@ -41,7 +40,8 @@ object DBpediaNormalizeStrategy extends Serializable {
 	  */
 	def normalizeCoords(values: List[String]): List[String] = {
 		values.flatMap {
-			case xsdNumberPatter(coordinate) => List(coordinate)
+			case r"""([-+]?[0-9]+\.?[0-9]*)${coordinate}\^\^xsd:float""" => List(coordinate)
+			case r"""([-+]?[0-9]+\.?[0-9]*)${coordinate}\^\^xsd:double""" => List(coordinate)
 			case _ => None
 		}.grouped(2).toList.distinct.flatten
 	}

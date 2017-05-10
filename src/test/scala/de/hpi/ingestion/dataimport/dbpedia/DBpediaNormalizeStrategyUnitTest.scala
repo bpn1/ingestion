@@ -33,10 +33,17 @@ class DBpediaNormalizeStrategyUnitTest extends FlatSpec with Matchers {
 		result shouldEqual expected
 	}
 
-	"normalizeCountry" should "normalize all possible appearances of country values in dbpedia" in {
+	"normalizeCountry" should "normalize all possible appearances of country values" in {
 		val countries = TestData.unnormalizedCountries
 		val result = DBpediaNormalizeStrategy.normalizeCountry(countries)
 		val expected = TestData.normalizedCountries
+		result shouldEqual expected
+	}
+
+	"normalizeEmployees" should "normalize the employees count" in {
+		val employeesCount = TestData.unnormalizedEmployees
+		val result = DBpediaNormalizeStrategy.normalizeEmployees(employeesCount)
+		val expected = TestData.normalizedEmployees
 		result shouldEqual expected
 	}
 }
