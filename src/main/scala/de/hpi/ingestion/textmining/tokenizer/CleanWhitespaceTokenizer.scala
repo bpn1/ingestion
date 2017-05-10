@@ -9,8 +9,15 @@ import scala.collection.mutable.ListBuffer
   * Uses the WhitespaceTokenizer but removes control characters and removes whitespace.
   */
 class CleanWhitespaceTokenizer() extends Tokenizer {
+
+	/**
+	  * Removes all leading and trailing characters that are not wanted.
+	  * Source: http://stackoverflow.com/a/17995434
+	  * @param s String to clean
+	  * @param bad String of characters to filter
+	  * @return cleaned String not containg any of the bad characters as first or last characters
+	  */
 	def stripAll(s: String, bad: String): String = {
-		// Source: http://stackoverflow.com/a/17995434
 		@tailrec def start(n: Int): String = {
 			if(n == s.length) {
 				""
@@ -22,11 +29,7 @@ class CleanWhitespaceTokenizer() extends Tokenizer {
 		}
 
 		@tailrec def end(a: Int, n: Int): String = {
-			if(n <= a) {
-				println("good stuff")
-				s.substring(a, n)
-			}
-			else if(bad.indexOf(s.charAt(n - 1)) < 0) {
+			if(bad.indexOf(s.charAt(n - 1)) < 0) {
 				s.substring(a, n)
 			}
 			else {

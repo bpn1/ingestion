@@ -218,8 +218,8 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	it should "strip tokens of bad tokens" in {
 		val tokenizer = new CleanWhitespaceTokenizer
 		val badCharacters = "().!?,;:'`\"„“"
-		val tokens = List("", "a.").map(tokenizer.stripAll(_, badCharacters))
-		val expectedTokens = List("", "a")
+		val tokens = List("", "a.", ".", ".a", "a.a", "...(.a").map(tokenizer.stripAll(_, badCharacters))
+		val expectedTokens = List("", "a", "", "a", "a.a", "a")
 		tokens shouldEqual expectedTokens
 	}
 
