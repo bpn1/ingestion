@@ -12,9 +12,9 @@ CREATE TYPE wikidumps.link (
     context map<text, int>
 );
 
-CREATE TYPE wikidumps.entity (
+CREATE TYPE wikidumps.entitylink (
     alias text,
-    page text,
+    entity text,
     offset int
 );
 
@@ -63,7 +63,17 @@ CREATE TABLE wikidumps.wikipediasentences (
     articletitle text,
     articleoffset int,
     text text,
-    entities frozen<list<frozen<entity>>>
+    entities frozen<list<frozen<entitylink>>>
+);
+
+CREATE TABLE wikidumps.featureentries (
+	id uuid PRIMARY KEY,
+	alias text,
+	entity text,
+	prob_link double,
+	prob_entity double,
+	cosine_sim double,
+	correct boolean
 );
 
 -- Wikidumps.Wikidata
@@ -155,13 +165,27 @@ CREATE TABLE datalake.blockingstats (
     data map<text, int>
 );
 
+CREATE TYPE datalake.blockstats (
+    key text,
+    numsubjects int,
+    numstaging int
+);
+
+CREATE TABLE datalake.blockingstats (
+    jobid timeuuid,
+    schemetag text,
+    comment text,
+    data frozen<set<frozen<blockstats>>>,
+    PRIMARY KEY (jobid, schemetag)
+);
+
 CREATE TABLE datalake.duplicatecandidates (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<subject, text, double>>>
 );
 
 CREATE TABLE datalake.sim_measure_stats (
-    id uuid PRIMARY KEY,
+    id timeuuid PRIMARY KEY,
     comment text,
     data text
 );

@@ -13,19 +13,20 @@ package de.hpi.ingestion.textmining.models
   * @param disambiguationlinks all links on this page if this page is a disambiguation page
   * @param linkswithcontext    all textlinks containing the term frequencies of their context
   * @param context             term frequencies of this articles plain text
+  * @param extendedlinks       all occurrences of aliases of other links in this article
   */
 case class ParsedWikipediaEntry(
 	title: String,
 	var text: Option[String] = None,
-	var textlinks: List[Link] = List[Link](),
-	var templatelinks: List[Link] = List[Link](),
-	var foundaliases: List[String] = List[String](),
-	var categorylinks: List[Link] = List[Link](),
-	var listlinks: List[Link] = List[Link](),
-	var disambiguationlinks: List[Link] = List[Link](),
-	var linkswithcontext: List[Link] = List[Link](),
+	var textlinks: List[Link] = Nil,
+	var templatelinks: List[Link] = Nil,
+	var foundaliases: List[String] = Nil,
+	var categorylinks: List[Link] = Nil,
+	var listlinks: List[Link] = Nil,
+	var disambiguationlinks: List[Link] = Nil,
+	var linkswithcontext: List[Link] = Nil,
 	var context: Map[String, Int] = Map[String, Int](),
-	var extendedlinks: List[Link] = List[Link]()
+	var extendedlinks: List[Link] = Nil
 ) {
 	def setText(t: String): Unit = text = Option(t)
 
