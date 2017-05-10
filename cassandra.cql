@@ -60,10 +60,11 @@ CREATE TABLE wikidumps.wikipediatfidf (
 );
 
 CREATE TABLE wikidumps.wikipediasentences (
-    articletitle text,
-    articleoffset int,
-    text text,
-    entities frozen<list<frozen<entitylink>>>
+   articletitle text,
+   articleoffset int,
+   text text,
+   entities frozen<list<frozen<entitylink>>>,
+   PRIMARY KEY (articletitle, articleoffset)
 );
 
 CREATE TABLE wikidumps.featureentries (
