@@ -1,11 +1,35 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
+import java.net.URL
 import de.hpi.ingestion.implicits.RegexImplicits._
+import scala.io.Source
+import scala.xml.XML
 
 /**
   * Strategies for the normalization of DBPedia entities
   */
 object DBpediaNormalizeStrategy extends Serializable {
+	val mapping = this.parseNormalizationConfig(this.getClass.getResource("/categorization_dbpedia.xml"))
+
+	def parseNormalizationConfig(url: URL): Map[String, List[String]] = {
+		val xml = XML.loadString(Source
+			.fromURL(url)
+			.getLines()
+			.mkString("\n"))
+
+		(xml \\ "categorization" \ "category").map { attribute =>
+			val key = (attribute \ "key").text
+			val values = (attribute \ "mapping").map(_.text).toList
+			(key, values)
+		}.toMap
+	}
+
+	/**
+	  * Mapping Sector to the wz2008 companion
+	  * @param sector sector to map
+	  * @return corresponding wz2008 entries
+	  */
+	def mapSector(sector: String): List[String] = this.mapping.getOrElse(sector, List(sector))
 	/**
 	  * Normalizes Employees
 	  * @param values employees list
@@ -53,7 +77,7 @@ object DBpediaNormalizeStrategy extends Serializable {
 	  */
 	def normalizeSector(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${sector}""" => List(sector)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${sector}""" => this.mapSector(sector)
 			case _ => None
 		}
 	}
@@ -65,6 +89,7 @@ object DBpediaNormalizeStrategy extends Serializable {
 	  */
 	def apply(attribute: String): (List[String]) => List[String] = {
 		attribute match {
+			case "gen_sector" => this.normalizeSector
 			case "gen_employees" => normalizeEmployees
 			case "geo_country" => normalizeCountry
 			case "geo_coords" => normalizeCoords

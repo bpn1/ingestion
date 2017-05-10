@@ -46,4 +46,11 @@ class DBpediaNormalizeStrategyUnitTest extends FlatSpec with Matchers {
 		val expected = TestData.normalizedEmployees
 		result shouldEqual expected
 	}
+
+	"normalizeSector" should "normalize and map the sectors" in {
+		val employeesCount = TestData.unnormalizedEmployees
+		val result = DBpediaNormalizeStrategy.normalizeEmployees(employeesCount)
+		val expected = TestData.normalizedEmployees
+		result shouldEqual expected
+	}
 }
