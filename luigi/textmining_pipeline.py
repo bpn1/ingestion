@@ -26,11 +26,11 @@ task_definitions = [TaskDefinition("TextParser", jar=extended_links_jar),
 
 
 class TextminingPipeline(AbstractPipeline):
-    @classmethod
-    def get_pipeline(cls):
-        cls.name = "Textmining Pipeline"
-        cls.force_execution = luigi.BoolParameter(default=False)
-        cls.package = "de.hpi.ingestion.textmining"
-        cls.task_definitions = task_definitions
-        cls.define_upstream_task()
-        return cls
+    name = "Textmining Pipeline"
+    force_execution = luigi.BoolParameter(default=False)
+    package = "de.hpi.ingestion.textmining"
+    task_definitions = task_definitions
+
+    def __init__(self, *args, **kwargs):
+        super(TextminingPipeline, self).__init__(*args, **kwargs)
+        type(self).define_upstream_task()

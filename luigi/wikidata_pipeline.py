@@ -11,11 +11,11 @@ task_definitions = [TaskDefinition("WikiDataImport"),
 
 
 class WikiDataPipeline(AbstractPipeline):
-    @classmethod
-    def get_pipeline(cls):
-        cls.name = "WikiData Pipeline"
-        cls.force_execution = luigi.BoolParameter(default=False)
-        cls.package = "de.hpi.ingestion.dataimport.wikidata"
-        cls.task_definitions = task_definitions
-        cls.define_upstream_task()
-        return cls
+    name = "WikiData Pipeline"
+    force_execution = luigi.BoolParameter(default=False)
+    package = "de.hpi.ingestion.dataimport.wikidata"
+    task_definitions = task_definitions
+
+    def __init__(self, *args, **kwargs):
+        super(WikiDataPipeline, self).__init__(*args, **kwargs)
+        type(self).define_upstream_task()

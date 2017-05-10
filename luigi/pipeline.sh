@@ -2,4 +2,10 @@
 
 BASEDIR=$(dirname "$0")
 
-nice -n 10 python3 $BASEDIR/pipeline.py --scheduler-host localhost | tee pipeline.log
+usage="Usage: pipeline.sh (TextminingPipeline|WikiDataPipeline)"
+if [ "$#" -ne 1 ]; then
+        echo $usage
+    exit 1
+fi
+
+python3 $BASEDIR/pipeline.py --scheduler-host localhost $1 | tee pipeline.log

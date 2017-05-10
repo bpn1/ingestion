@@ -3,6 +3,9 @@ import luigi
 
 
 class AbstractPipeline(luigi.Task):
+    def __init__(self, *args, **kwargs):
+        super(AbstractPipeline, self).__init__(*args, **kwargs)
+
     def requires(self):
         return type(self).upstream_task
 
