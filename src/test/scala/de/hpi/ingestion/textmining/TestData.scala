@@ -1,6 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+
 import scala.collection.JavaConversions._
 import org.jsoup.nodes.Element
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
@@ -8,6 +9,7 @@ import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.jsoup.Jsoup
@@ -58,6 +60,15 @@ object TestData {
 		)
 	}
 
+	def filteredUncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence", "."),
+			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", ",", "Main-Kinzig-Kreis", "Hessen", "."),
+			List(":", "Audi", ",", "Brachttal", ",", "historisches", "Jahr", ".", ":", "Hessen", ",", "Main-Kinzig-Kreis", ",", "Büdinger", "Wald", ",", "Backfisch", "nochmal", "Hessen", "."),
+			List("Satz", "enthält", "Klammern", "-LRB-", "evtl", ".", "problematisch", "-RRB-", ".")
+		)
+	}
+
 	def stemmedTokenizedSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
@@ -76,12 +87,30 @@ object TestData {
 		)
 	}
 
+	def stemmedAndFilteredUncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("thi", "is", "a", "test", "sentenc", "."),
+			List("streitberg", "ortsteil", "gemei", "brachttal", ",", "main-kinzig-kreis", "hess", "."),
+			List(":", "audi", ",", "brachttal", ",", "historisch", "jahr", ".", ":", "hess", ",", "main-kinzig-kreis", ",", "buding", "wald", ",", "backfisch", "nochmal", "hess", "."),
+			List("satx", "enthal", "klamm", "-lrb-", "evtl", ".", "problematisch", "-rrb-", ".")
+		)
+	}
+
 	def reversedSentences(): List[String] = {
 		List(
 			"This is a test sentence",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
 			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
 			"Dieser Satz enthält Klammern -LRB- evtl problematisch -RRB-"
+		)
+	}
+
+	def cleanedReversedSentences(): List[String] = {
+		List(
+			"This is a test sentence",
+			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
+			"Dieser Satz enthält Klammern evtl problematisch"
 		)
 	}
 
@@ -758,6 +787,14 @@ object TestData {
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
 			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet."""
 		)
+	}
+
+	def rawEntryWithAlternativeWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("""Der '''Fehler 2.&nbsp;Art''', auch als '''β-Fehler''' (Beta-Fehler)"""))
+	}
+
+	def rawEntryWithStandardWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("""Der '''Fehler 2. Art''', auch als '''β-Fehler''' (Beta-Fehler)"""))
 	}
 
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {

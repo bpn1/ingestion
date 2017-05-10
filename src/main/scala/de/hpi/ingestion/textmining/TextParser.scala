@@ -461,6 +461,16 @@ object TextParser extends SparkJob {
 	}
 
 	/**
+	  * Removes non line breaking spaces from the Wikimarkup since the Wikimarkup Parser does not handle them properly.
+	  * @param entry Wikipedia Entry containing the bad spaces
+	  * @return cleaned Wikipedia Entry without non line breaking spaces
+	  */
+	def cleanNLBSpaces(entry: WikipediaEntry): WikipediaEntry = {
+		val cleanText = entry.text.map(_.replaceAll("&nbsp;", " "))
+		entry.copy(text = cleanText)
+	}
+
+	/**
 	  * Checks if a link is a category link.
 	  *
 	  * @param link link to be checked
@@ -504,7 +514,7 @@ object TextParser extends SparkJob {
 
 	/**
 	  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links. Also removes all metapages
-	  * except {@categoryNamespace } pages.
+	  * except {@categoryNamespace} pages.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
@@ -515,6 +525,7 @@ object TextParser extends SparkJob {
 		val rawArticles = input.fromAnyRDD[WikipediaEntry]().head
 		val parsedArticles = rawArticles
 			.filter(!isMetaPage(_))
+			.map(cleanNLBSpaces)
 			.map(parseWikipediaEntry)
 		List(parsedArticles).toAnyRDD()
 	}
