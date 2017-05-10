@@ -151,6 +151,20 @@ CREATE TABLE datalake.blockingstats (
     data map<text, int>
 );
 
+CREATE TYPE datalake.blockstats (
+    key text,
+    numsubjects int,
+    numstaging int
+);
+
+CREATE TABLE datalake.blockingstats (
+    jobid timeuuid,
+    schemetag text,
+    comment text,
+    data frozen<set<frozen<blockstats>>>,
+    PRIMARY KEY (jobid, schemetag)
+);
+
 CREATE TABLE datalake.duplicatecandidates (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<subject, text, double>>>
