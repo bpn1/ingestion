@@ -2,9 +2,11 @@
 
 BASEDIR=$(dirname "$0")
 
-usage="Usage: pipeline.sh (TextminingPipeline|WikiDataPipeline)"
+USAGE="Usage: pipeline.sh <pipeline name>"
+PIPELINES="Valid pipeline names are: TextminingPipeline, DBpediaPipeline, WikiDataPipeline, WikipediaPipeline"
 if [ "$#" -ne 1 ]; then
-        echo $usage
+        echo $USAGE
+        echo $PIPELINES
     exit 1
 fi
 
