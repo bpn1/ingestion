@@ -8,13 +8,12 @@ import scala.math.BigDecimal
 
 class CompareStrategyUnitTest extends FlatSpec with Matchers {
 	"compare" should "return the score of the similarity of two strings" in {
-		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig()
+		val config = TestData.testConfig()
 		val subjects = TestData.testSubjects
 		val subject1 = subjects.head
 		val subject2 = subjects(1)
 		for {
-			(attribute, scoreConfigs) <- deduplication.config
+			(attribute, scoreConfigs) <- config
 			scoreConfig <- scoreConfigs
 		}{
 			val score = scoreConfig.compare(subject1.get(attribute).head, subject2.get(attribute).head)
@@ -29,13 +28,12 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 	}
 
 	"simpleStringCompare" should "only compare the first element in a list" in {
-		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig()
+		val config = TestData.testConfig()
 		val subjects = TestData.testSubjects
 		val subject1 = subjects.head
 		val subject2 = subjects(1)
 		for {
-			(attribute, scoreConfigs) <- deduplication.config
+			(attribute, scoreConfigs) <- config
 			scoreConfig <- scoreConfigs
 		}{
 			val score = CompareStrategy.singleStringCompare(
@@ -67,13 +65,12 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 	}
 
 	"defaultCompare" should "compare each element from a list with each element from another" in {
-		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig("gen_sectors")
+		val config = TestData.testConfig("gen_sectors")
 		val subjects = TestData.testSubjects
 		val subject1 = subjects(4)
 		val subject2 = subjects(5)
 		for {
-			(attribute, scoreConfigs) <- deduplication.config
+			(attribute, scoreConfigs) <- config
 			scoreConfig <- scoreConfigs
 		}{
 			val score = BigDecimal(CompareStrategy.defaultCompare(
