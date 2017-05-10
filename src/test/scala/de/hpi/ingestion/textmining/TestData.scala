@@ -2,7 +2,9 @@ package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
+import org.jsoup.nodes.Element
 
+import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -21,42 +23,63 @@ object TestData {
 		List(
 			"This is a test sentence.",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen.",
-			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.")
+			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.",
+			"Dieser Satz enthält Klammern (evtl. problematisch)."
+		)
 	}
 
 	def tokenizedTestSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
-			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"))
+			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
+			List("Dieser", "Satz", "enthält", "Klammern", "-LRB-", "evtl", "problematisch", "-RRB-")
+		)
+	}
+
+	def tokenizedTestSentencesWithoutSpecialCharacters(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence"),
+			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
+			List("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine", "Links", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
+			List("Dieser", "Satz", "enthält", "Klammern", "evtl", "problematisch")
+		)
 	}
 
 	def filteredTokenizedSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "Hessen"),
-			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"))
+			List("Audi", "Brachttal", "historisches", "Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "nochmal", "Hessen"),
+			List("Satz", "enthält", "Klammern", "-LRB-", "evtl", "problematisch", "-RRB-")
+		)
 	}
 
 	def stemmedTokenizedSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
 			List("streitberg", "ist", "ein", "von", "sech", "ortsteil", "der", "gemei", "brachttal", "main-kinzig-kreis", "in", "hess"),
-			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"))
+			List("link", "audi", "brachttal", "historisch", "jahr", "kein", "link", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "und", "nochmal", "hess"),
+			List("dies", "satx", "enthal", "klamm", "-lrb-", "evtl", "problematisch", "-rrb-")
+		)
 	}
 
 	def stemmedAndFilteredSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
 			List("streitberg", "ortsteil", "gemei", "brachttal", "main-kinzig-kreis", "hess"),
-			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"))
+			List("audi", "brachttal", "historisch", "jahr", "hess", "main-kinzig-kreis", "buding", "wald", "backfisch", "nochmal", "hess"),
+			List("satx", "enthal", "klamm", "-lrb-", "evtl", "problematisch", "-rrb-")
+		)
 	}
 
 	def reversedSentences(): List[String] = {
 		List(
 			"This is a test sentence",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
-			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen")
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
+			"Dieser Satz enthält Klammern -LRB- evtl problematisch -RRB-"
+		)
 	}
 
 
@@ -595,9 +618,41 @@ object TestData {
 			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
 	}
 
+	def wikipediaEntryWithHeadlines(): WikipediaEntry = {
+		WikipediaEntry("Postbank-Hochhaus (Berlin) Kurz", Option("""Das heutige '''Postbank-Hochhaus''' (früher: '''Postscheckamt Berlin West''' (Bln W), seit 1985: '''Postgiroamt Berlin''') ist ein [[Hochhaus]] der [[Postbank]].\n\n== Geschichte und Entstehung ==\nDas Postscheckamt von Berlin war ab 1909 in einem Neubau in der [[Dorotheenstraße (Berlin)|Dorotheenstraße]] 29 (heute: 84).\n\n== Architektur ==\nDie Gestaltung des Gebäudes orientiert sich an [[Mies van der Rohe]]s [[Seagram Building]] in [[New York City|New York]].\n\n== UKW-Sender ==\nIm Postbank-Hochhaus befinden sich mehrere [[Ultrakurzwellensender|UKW-Sender]].\n\n== Siehe auch ==\n\n== Literatur ==\n\n== Weblinks ==\n\n== Einzelnachweise =="""))
+	}
+
+	def documentWithHeadlines(): String = {
+		"""<html>
+		  | <head></head>
+		  | <body>
+		  |  <p>Das heutige <b>Postbank-Hochhaus</b> (früher: <b>Postscheckamt Berlin West</b> (Bln W), seit 1985: <b>Postgiroamt Berlin</b>) ist ein <a href="/Hochhaus" title="Hochhaus">Hochhaus</a> der <a href="/Postbank" title="Postbank">Postbank</a>.</p>
+		  |  <h2><span class="mw-headline" id="Geschichte_und_Entstehung">Geschichte und Entstehung</span></h2>
+		  |  <p>Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der <a href="/Dorotheenstra%C3%9Fe_(Berlin)" title="Dorotheenstraße (Berlin)">Dorotheenstraße</a> 29 (heute: 84).</p>
+		  |  <h2><span class="mw-headline" id="Architektur">Architektur</span></h2>
+		  |  <p>Die Gestaltung des Gebäudes orientiert sich an <a href="/Mies_van_der_Rohe" title="Mies van der Rohe">Mies van der Rohes</a> <a href="/Seagram_Building" title="Seagram Building">Seagram Building</a> in <a href="/New_York_City" title="New York City">New York</a>.</p>
+		  |  <h2><span class="mw-headline" id="UKW-Sender">UKW-Sender</span></h2>
+		  |  <p>Im Postbank-Hochhaus befinden sich mehrere <a href="/Ultrakurzwellensender" title="Ultrakurzwellensender">UKW-Sender</a>.</p>
+		  |  <h2><span class="mw-headline" id="Siehe_auch">Siehe auch</span></h2>
+		  |  <h2><span class="mw-headline" id="Literatur">Literatur</span></h2>
+		  |  <h2><span class="mw-headline" id="Weblinks">Weblinks</span></h2>
+		  |  <h2><span class="mw-headline" id="Einzelnachweise">Einzelnachweise</span></h2>
+		  | </body>
+		  |</html>""".stripMargin
+	}
+
+	def wikipediaEntryHeadlines(): Set[String] = {
+		Set("Geschichte und Entstehung", "Architektur", "UKW-Sender", "Siehe auch", "Literatur", "Weblinks", "Einzelnachweise")
+	}
+
+	def parsedArticleTextWithHeadlines(): String = {
+		"Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank. Geschichte und Entstehung Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84). Architektur Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. UKW-Sender Im Postbank-Hochhaus befinden sich mehrere UKW-Sender. Siehe auch Literatur Weblinks Einzelnachweise"
+	}
+
 	def wikipediaEntriesForParsing(): List[WikipediaEntry] = {
 		List(
-			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]""")))
+			WikipediaEntry("Salzachtal", Option("""#WEITERLEITUNG [[Salzach#Salzachtal]]\n[[Kategorie:Tal im Land Salzburg]]\n[[Kategorie:Tal in Oberösterreich]]\n[[Kategorie:Tal in Bayern]]\n[[Kategorie:Salzach|!]]"""))
+		)
 	}
 
 	def parsedWikipediaEntries(): List[ParsedWikipediaEntry] = {
@@ -619,6 +674,14 @@ object TestData {
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
 			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet."""
 		)
+	}
+
+	def entryWithAlternativeWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
+	}
+
+	def entryWithStandardWhitespaces(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
 
 	def groupedAliasesSet(): Set[Alias] = {
@@ -1100,15 +1163,13 @@ object TestData {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
 
-	def documentTestList(): List[String] = {
-		List(
-			"""<body><p><a href="/2._Juli" title="2. Juli">2. Juli</a>
-			  |<a href="/1852" title="1852">1852</a> im Stadtteil
-			  |<span class="math">bli</span> bla
-			  |<span class="math">blub</span>
-			  |<abbr title="Naturgesetze für Information">NGI</abbr>
-			  |</p></body>""".stripMargin
-		)
+	def document(): String = {
+		"""<body><p><a href="/2._Juli" title="2. Juli">2. Juli</a>
+		  |<a href="/1852" title="1852">1852</a> im Stadtteil
+		  |<span class="math">bli</span> bla
+		  |<span class="math">blub</span>
+		  |<abbr title="Naturgesetze für Information">NGI</abbr>
+		  |</p></body>""".stripMargin
 	}
 
 	def parsedEntriesWithRedirects(): Set[ParsedWikipediaEntry] = {
@@ -1226,6 +1287,73 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
+	def linkExtenderPagesSet(): Set[Page] = {
+		Set(
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
+			Page("Bayern", Map("Bayern" -> 1)),
+			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+		)
+	}
+
+	def linkExtenderPagesMap(): Map[String, Map[String, Int]] = {
+		Map(
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
+			"Bayern" -> Map("Bayern" -> 1),
+			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1),
+			"Zerfall (Album)" -> Map("Zerfall" -> 1)
+		)
+	}
+
+	def linkExtenderParsedEntry(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry("Audi", Option("Audi ist Audi AG. VW ist Volkswagen AG"),
+			List(
+				Link("VW", "VW", Option(18))
+			)
+		)
+	}
+
+	def linkExtenderFoundPages(): Map[String, Map[String, Int]] = {
+		Map(
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
+			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1)
+		)
+	}
+
+	def linkExtenderFoundAliases(): Map[String, String] = {
+		Map(
+			"Audi" -> "Audi",
+			"Audi AG" -> "Audi",
+			"VW" -> "VW",
+			"Volkswagen AG" -> "VW"
+		)
+	}
+
+	def linkExtenderExtendedParsedEntry(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("Audi ist Audi AG. VW ist Volkswagen AG"),
+				List(Link("VW", "VW", Option(18), Map())),
+				extendedlinks = List(
+					Link("Audi", "Audi", Option(0)),
+					Link("Audi AG", "Audi", Option(9)),
+					Link("VW", "VW", Option(18)),
+					Link("Volkswagen AG", "VW", Option(25))
+				)
+			)
+		)
+	}
+
+	def linkExtenderTrie(tokenizer: IngestionTokenizer): TrieNode = {
+		val trie = new TrieNode()
+		val aliasList = List("Audi", "Audi AG", "VW", "Volkswagen AG")
+		for(alias <- aliasList) {
+			trie.append(tokenizer.process(alias))
+		}
+		trie
+	}
+
 	def bigLinkExtenderParsedEntry(): ParsedWikipediaEntry = {
 		ParsedWikipediaEntry(
 			"Postbank-Hochhaus (Berlin)",
@@ -1284,6 +1412,195 @@ object TestData {
 				)
 			)
 		)
+	}
+	def bigLinkExtenderPagesSet(): Set[Page] = {
+		Set(
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
+			Page("VW", Map("Volkswagen AG" -> 2, "VW" -> 2)),
+			Page("Hochhaus", Map("Hochhaus" -> 2, "Gebäude" -> 1)),
+			Page("Postbank", Map("Postbank" -> 2)),
+			Page("Berlin", Map("Berlin" -> 2, "(" -> 1, "Berliner" -> 2)),
+			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 2)),
+			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 2)),
+			Page("Potsdam", Map("Potsdam" -> 2)),
+			Page("Magdeburg", Map("Magdeburg" -> 2)),
+			Page("Stettin", Map("Stettin" -> 2)),
+			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 2)),
+			Page("New York City", Map("New York." -> 2)),
+			Page("Bronze", Map("Bronze" -> 2)),
+			Page("Media Broadcast", Map("Media Broadcast" -> 2)),
+			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 2, "DFMG" -> 11)),
+			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 2)),
+			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 2))
+		)
+	}
+
+	def bigLinkExtenderExtendedParsedEntry(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Postbank-Hochhaus (Berlin)",
+				Option("Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg. Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig. Aufgrund der Deutschen Teilung wurde das Postscheckamt in der Dorotheenstraße nur noch von der Deutschen Post der DDR genutzt. Für den Westteil von Berlin gab es damit zunächst kein eigenes Postscheckamt und daher wurde dort 1948 das Postscheckamt West eröffnet. 2014 kaufte die CG-Gruppe das Gebäude von der Postbank, die das Gebäude als Mieter bis Mitte 2016 weiternutzen will. Nach dem Auszug der Postbank soll das Hochhaus saniert und zu einem Wohn-und Hotelkomplex umgebaut werden. Gottfried Gruner Nach den Plänen des Oberpostdirektors Prosper Lemoine wurde das Gebäude des damaligen Postscheckamtes Berlin West von 1965 bis 1971 errichtet. Es hat 23 Geschosse und gehört mit einer Höhe von 89 Metern bis heute zu den höchsten Gebäuden in Berlin. Das Hochhaus besitzt eine Aluminium-Glas-Fassade und wurde im sogenannten „Internationalen Stil“ errichtet. Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. Zu dem Gebäude gehören zwei Anbauten. In dem zweigeschossigen Flachbau waren ein Rechenzentrum und die Schalterhalle untergebracht. In dem sechsgeschossiges Gebäude waren ein Heizwerk und eine Werkstatt untergebracht. Vor dem Hochhaus befindet sich der Große Brunnen von Gottfried Gruner. Er besteht aus 18 Säulen aus Bronze und wurde 1972 in Betrieb genommen. Im Postbank-Hochhaus befinden sich mehrere UKW-Sender, die von Media Broadcast betrieben werden. Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit. Über die Antennenträger auf dem Dach werden u. a. folgende Hörfunkprogramme auf Ultrakurzwelle ausgestrahlt:"),
+				List(
+					Link("Hochhaus", "Hochhaus", Option(113)),
+					Link("Postbank", "Postbank", Option(126)),
+					Link("Berliner", "Berlin", Option(190)),
+					Link("Kreuzberg", "Berlin-Kreuzberg", Option(208)),
+					Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(465)),
+					Link("Potsdam", "Potsdam", Option(483)),
+					Link("Magdeburg", "Magdeburg", Option(492)),
+					Link("Stettin", "Stettin", Option(506)),
+					Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
+					Link("New York.", "New York City", Option(1472)),
+					Link("Bronze", "Bronze", Option(1800)),
+					Link("Media Broadcast", "Media Broadcast", Option(1906)),
+					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
+					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
+					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
+				),
+				extendedlinks = List(
+					Link("Berlin", "Berlin", Option(53)),
+					Link("Berlin", "Berlin", Option(97)),
+					Link("Hochhaus", "Hochhaus", Option(113)),
+					Link("Postbank", "Postbank", Option(126)),
+					Link("Berliner", "Berlin", Option(190)),
+					Link("Kreuzberg", "Berlin-Kreuzberg", Option(208)),
+					Link("Berlin", "Berlin", Option(241)),
+					Link("Berlin", "Berlin", Option(457)),
+					Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(465)),
+					Link("Potsdam", "Potsdam", Option(483)),
+					Link("Magdeburg", "Magdeburg", Option(492)),
+					Link("Stettin", "Stettin", Option(506)),
+					Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
+					Link("Berlin", "Berlin", Option(673)),
+					Link("Gebäude", "Hochhaus", Option(818)),
+					Link("Postbank", "Postbank", Option(834)),
+					Link("Gebäude", "Hochhaus", Option(852)),
+					Link("Postbank", "Postbank", Option(925)),
+					Link("Hochhaus", "Hochhaus", Option(943)),
+					Link("Gebäude", "Hochhaus", Option(1093)),
+					Link("Berlin", "Berlin", Option(1131)),
+					Link("Berlin", "Berlin", Option(1270)),
+					Link("Hochhaus", "Hochhaus", Option(1282)),
+					Link("New York.", "New York City", Option(1472)),
+					Link("Gebäude", "Hochhaus", Option(1489)),
+					Link("Gebäude", "Hochhaus", Option(1639)),
+					Link("Hochhaus", "Hochhaus", Option(1708)),
+					Link("Bronze", "Bronze", Option(1800)),
+					Link("Media Broadcast", "Media Broadcast", Option(1906)),
+					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
+					Link("DFMG", "Deutsche Funkturm", Option(1963)),
+					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
+					Link("Berliner", "Berlin", Option(2052)),
+					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
+				)
+			)
+		)
+	}
+
+	def wikidataEntities(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Page 1")),
+			WikiDataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Page 2")),
+			WikiDataEntity("Q3", instancetype = Option("comp"), wikiname = Option("Page 3")),
+			WikiDataEntity("Q4", instancetype = Option("comp")),
+			WikiDataEntity("Q5", wikiname = Option("Page 5")),
+			WikiDataEntity("Q6"))
+	}
+
+	def wikidataCompanyPages(): List[String] = {
+		List("Page 1", "Page 2", "Page 3")
+	}
+
+	def companyPages(): List[Page] = {
+		List(
+			Page("Page 1", Map("P1Alias1" -> 1, "P1Alias2" -> 1)),
+			Page("Page 2", Map("P2Alias1" -> 1, "P2Alias2" -> 1)),
+			Page("Page 3", Map("P3Alias1" -> 1, "P1Alias1" -> 1)),
+			Page("Page 4", Map("P4Alias1" -> 1, "P4Alias3" -> 1)),
+			Page("Page 5", Map("P5Alias1" -> 1)),
+			Page("Page 6", Map("P6Alias1" -> 1)))
+	}
+
+	def companyAliases(): Set[String] = {
+		Set("P1Alias1", "P1Alias2", "P2Alias1", "P2Alias2", "P3Alias1")
+	}
+
+	def unfilteredCompanyLinksEntries(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Title 1",
+				textlinks = List(Link("P1Alias1", "Page 1"), Link("P4Alias3", "Page 4")),
+				templatelinks = List(Link("P2Alias1", "Page 2")),
+				categorylinks = List(Link("P3Alias1", "Page 3")),
+				listlinks = List(Link("P4Alias1", "Page 4"))),
+			ParsedWikipediaEntry(
+				"Title 2",
+				textlinks = List(Link("P5Alias1", "Page 5")),
+				categorylinks = List(Link("P6Alias1", "Page 6"))),
+			ParsedWikipediaEntry(
+				"Title 3",
+				listlinks = List(Link("P1Alias2", "Page 1")),
+				disambiguationlinks = List(Link("P2Alias2", "Page 2")))
+		)
+	}
+
+	def filteredCompanyLinksEntries(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Title 1",
+				textlinks = List(Link("P1Alias1", "Page 1")),
+				templatelinks = List(Link("P2Alias1", "Page 2")),
+				categorylinks = List(Link("P3Alias1", "Page 3"))),
+			ParsedWikipediaEntry("Title 2"),
+			ParsedWikipediaEntry(
+				"Title 3",
+				listlinks = List(Link("P1Alias2", "Page 1")),
+				disambiguationlinks = List(Link("P2Alias2", "Page 2")))
+		)
+	}
+
+	def classifierFeatureEntries(): List[FeatureEntry] = {
+		List(
+			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
+			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, true),
+			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3, false),
+			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2, false),
+			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
+			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
+			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
+	}
+
+	def labeledPredictions(): List[(Double, Double)] = {
+		List(
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(1.0, 1.0),
+			(0.0, 1.0),
+			(1.0, 0.0),
+			(1.0, 0.0),
+			(0.0, 0.0),
+			(0.0, 0.0))
+	}
+
+	def predictionStatistics(): List[(String, Double, Double)] = {
+		List(
+			("precision", 1.0, 5.0/7.0),
+			("precision", 0.0, 0.6),
+			("recall", 1.0, 5.0/6.0),
+			("recall", 0.0, 1.0),
+			("fscore with beta 0.5", 1.0, 25.0/34.0),
+			("fscore with beta 0.5", 0.0, 0.6521739130434783))
+	}
+
+	def formattedPredictionStatistics(): String = {
+		s"precision\t1.0\t${5.0/7.0}" + "\n" +
+			"precision\t0.0\t0.6" + "\n" +
+			s"recall\t1.0\t${5.0/6.0}" + "\n" +
+			"recall\t0.0\t1.0" + "\n" +
+			s"fscore with beta 0.5\t1.0\t${25.0/34.0}" + "\n" +
+			"fscore with beta 0.5\t0.0\t0.6521739130434783"
 	}
 }
 

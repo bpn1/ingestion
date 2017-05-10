@@ -1,6 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -36,7 +36,8 @@ object TextParser extends SparkJob {
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
@@ -47,9 +48,10 @@ object TextParser extends SparkJob {
 
 	/**
 	  * Saves Parsed Wikipedia entries to the Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
@@ -57,6 +59,7 @@ object TextParser extends SparkJob {
 			.head
 			.saveToCassandra(keyspace, outputTablename)
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -114,7 +117,7 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Parse Wikipedia article, clean it of Wikimarkup, extract text and all links.
+	  * Parse Wikipedia article, remove the Wikimarkup, extract text and all links.
 	  *
 	  * @param title title of Wikipedia article
 	  * @param html  html of Wikipedia article
@@ -133,7 +136,7 @@ object TextParser extends SparkJob {
 			parsedEntry.disambiguationlinks = outputTuple._2
 		} else {
 			val cleanedDocument = removeTags(document)
-			val outputTuple = extractTextLinks(cleanedDocument.body)
+			val outputTuple = extractTextAndTextLinks(cleanedDocument.body)
 			parsedEntry.setText(outputTuple._1)
 			parsedEntry.textlinks = outputTuple._2
 			parsedEntry.listlinks = extractListLinks(html)
@@ -148,8 +151,14 @@ object TextParser extends SparkJob {
 	  * @return cleaned Document containing only text and anchor tags
 	  */
 	def removeTags(document: Document): Document = {
+		val tableOfContents = document.getElementById("toc")
+		if(tableOfContents != null) {
+			tableOfContents.remove()
+		}
+
+		// https://www.w3schools.com/html/html_headings.asp
 		val documentContent = document
-			.select("p")
+			.select("p,h1,h2,h3,h4,h5,h6")
 			.map { element =>
 				element.getElementsByClass("reference").remove
 				element.select("small").remove
@@ -218,12 +227,12 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Extract all links with offset from text.
+	  * Extract text and all links with offset from html.
 	  *
 	  * @param body html body of Wikipedia article
 	  * @return tuple of html text and list of all text links
 	  */
-	def extractTextLinks(body: Element): (String, List[Link]) = {
+	def extractTextAndTextLinks(body: Element): (String, List[Link]) = {
 		val linksList = ListBuffer[Link]()
 		var offset = 0
 		var startIndex = 0
@@ -263,7 +272,7 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Clean text of Wikimarkup.
+	  * Removes text of Wikimarkup.
 	  *
 	  * @param wikitext Wikimarkup text to be cleaned
 	  * @return cleaned text
@@ -393,7 +402,7 @@ object TextParser extends SparkJob {
 	  * @return parsed Wikipedia entry thats been processed
 	  */
 	def parseWikipediaEntry(entry: WikipediaEntry): ParsedWikipediaEntry = {
-		val cleanedEntry = cleanRedirects(entry)
+		val cleanedEntry = cleanRedirectsAndWhitespaces(entry)
 		var title = cleanedEntry.title
 		if(isDisambiguationPage(cleanedEntry) && !title.endsWith(disambiguationTitleSuffix)) {
 			title += disambiguationTitleSuffix
@@ -405,15 +414,17 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Cleaning all kinds of redirects so they will get parsed by the Wikiparser.
+	  * Cleans all kinds of redirects so they will get parsed by the Wikiparser
+	  * and replaces alternative whitespace characters with standard whitespaces.
 	  *
 	  * @param entry raw Wikipedia entry
 	  * @return raw Wikipedia entry with cleaned redirect keywords
 	  */
-	def cleanRedirects(entry: WikipediaEntry): WikipediaEntry = {
+	def cleanRedirectsAndWhitespaces(entry: WikipediaEntry): WikipediaEntry = {
 		val redirectRegex = "(?i)(weiterleitung|redirect)\\s?:?\\s?"
 		val replaceString = parsableRedirect + " "
-		val cleanedText = entry.getText().replaceAll(redirectRegex, replaceString)
+		var cleanedText = entry.getText().replaceAll(redirectRegex, replaceString)
+		cleanedText = cleanedText.replace("\u00a0", " ")
 		entry.setText(cleanedText)
 		entry
 	}
@@ -496,10 +507,11 @@ object TextParser extends SparkJob {
 
 	/**
 	  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links. Also removes all metapages
-	  * except {@categoryNamespace} pages.
+	  * except {@categoryNamespace } pages.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {

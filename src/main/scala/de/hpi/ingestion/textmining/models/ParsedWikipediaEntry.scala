@@ -24,7 +24,8 @@ case class ParsedWikipediaEntry(
 	var listlinks: List[Link] = List[Link](),
 	var disambiguationlinks: List[Link] = List[Link](),
 	var linkswithcontext: List[Link] = List[Link](),
-	var context: Map[String, Int] = Map[String, Int]()
+	var context: Map[String, Int] = Map[String, Int](),
+	var extendedlinks: List[Link] = List[Link]()
 ) {
 	def setText(t: String): Unit = text = Option(t)
 
@@ -36,7 +37,7 @@ case class ParsedWikipediaEntry(
 	  * @return all links
 	  */
 	def allLinks(): List[Link] = {
-		textlinks ++ templatelinks ++ categorylinks ++ listlinks ++ disambiguationlinks
+		textlinks ++ templatelinks ++ categorylinks ++ listlinks ++ disambiguationlinks ++ extendedlinks
 	}
 
 	/**
@@ -50,5 +51,6 @@ case class ParsedWikipediaEntry(
 		categorylinks = categorylinks.filter(filterFunction)
 		disambiguationlinks = disambiguationlinks.filter(filterFunction)
 		listlinks = listlinks.filter(filterFunction)
+		extendedlinks = extendedlinks.filter(filterFunction)
 	}
 }
