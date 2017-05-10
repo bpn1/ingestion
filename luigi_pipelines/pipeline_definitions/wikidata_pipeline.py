@@ -1,5 +1,5 @@
-from abstract_pipeline import AbstractPipeline
-from task_definition import TaskDefinition
+from pipeline_definitions.abstract_pipeline import AbstractPipeline
+from models.task_definition import TaskDefinition
 import luigi
 
 # https://github.com/bpn1/ingestion/wiki/WikiData-Pipeline

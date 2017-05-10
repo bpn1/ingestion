@@ -1,9 +1,7 @@
-from abstract_pipeline import AbstractPipeline
-from task_definition import TaskDefinition
-from pipeline_constructor import PipelineConstructor
+from pipeline_definitions.abstract_pipeline import AbstractPipeline
+from models.task_definition import TaskDefinition
 import luigi
 
-cosine_jar = "/home/bp2016n1/jars/jenkins/ingestion_feature_textmining_34.jar"
 extended_links_jar = "/home/bp2016n1/jars/jenkins/ingestion_feature_textmining_197.jar"
 
 # https://docs.google.com/presentation/d/1KhNmbFrYCKe223mJjRMIJJ_CJPJX4Gk8sWdWcUwPlT4/edit?usp=sharing
@@ -21,7 +19,7 @@ task_definitions = [TaskDefinition("TextParser", jar=extended_links_jar),
                     TaskDefinition("TermFrequencyCounter", ["CompanyLinkFilter"], jar=extended_links_jar),
                     TaskDefinition("CosineContextComparator",
                                    ["DocumentFrequencyCounter", "AliasCounter", "TermFrequencyCounter",
-                                    "LinkAnalysis2"], jar=cosine_jar),
+                                    "LinkAnalysis2"]),
                     TaskDefinition("Classifier", ["CosineContextComparator"])]
 
 

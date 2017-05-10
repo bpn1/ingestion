@@ -1,4 +1,4 @@
-from forceable_task import ForceableTask
+from models.forceable_task import ForceableTask
 import luigi
 import subprocess
 

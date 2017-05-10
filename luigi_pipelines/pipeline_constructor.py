@@ -1,4 +1,4 @@
-from ingestion_task import IngestionTask
+from models.ingestion_task import IngestionTask
 
 
 class PipelineConstructor(object):

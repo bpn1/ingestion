@@ -8,4 +8,4 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-python3 $BASEDIR/pipeline.py --scheduler-host localhost $1 | tee pipeline.log
+python3 $BASEDIR/run_pipeline.py --scheduler-host localhost $1 | tee pipeline.log
