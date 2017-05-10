@@ -48,4 +48,12 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 				keys shouldEqual expected
 			}
 	}
+
+	"GeoCoordsBlockingScheme" should "generate proper keys from coordinates" in {
+		val subjects = TestData.testSubjects
+		val blockingScheme = new GeoCoordsBlockingScheme
+		val keys = subjects.map(blockingScheme.generateKey)
+		val expected = TestData.geoCoordsBlockingScheme
+		keys.toSet shouldEqual expected.toSet
+	}
 }
