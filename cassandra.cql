@@ -157,7 +157,7 @@ CREATE TABLE datalake.duplicatecandidates (
 );
 
 CREATE TABLE datalake.sim_measure_stats (
-    id uuid PRIMARY KEY,
+    id timeuuid PRIMARY KEY,
     comment text,
     data text
 );
