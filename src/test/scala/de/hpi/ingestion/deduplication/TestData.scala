@@ -189,12 +189,14 @@ object TestData {
 	}
 
 	def expectedCompareStrategies: List[(List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) => Double] = List(
-		CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
+			CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
 	)
 
-	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = {
-		(List("very", "generic", "values"), List("even", "more", "values"), testConfig().head._2.head)
-	}
+	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (
+		List("very", "generic", "values"),
+		List("even", "more", "values"),
+		testConfig().head._2.head
+	)
 
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()
@@ -359,6 +361,7 @@ object TestData {
 		List("undefined"),
 		List("undefined")
 	)
+	def geoCoordsBlockingScheme: List[List[String]] = List(List("52,11"), List("undefined"), List("52,13"), List("53,14"))
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
 
 	def requiredSettings: List[String] = {
