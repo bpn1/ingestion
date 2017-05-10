@@ -1442,7 +1442,7 @@ object TestData {
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
-  
+
   def linkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
@@ -1617,7 +1617,7 @@ object TestData {
 			)
 		)
   }
-  
+
   def featureEntries(): List[FeatureEntry] = {
 		List(
 			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
