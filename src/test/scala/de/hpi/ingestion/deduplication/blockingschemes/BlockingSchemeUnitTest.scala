@@ -1,20 +1,28 @@
-package de.hpi.ingestion.deduplication
+package de.hpi.ingestion.deduplication.blockingschemes
 
+import de.hpi.ingestion.datalake.models.Subject
+import de.hpi.ingestion.deduplication.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	"SimpleBlockingScheme" should "generate proper keys" in {
 		val subjects = TestData.testSubjects
-		val blockingScheme = new SimpleBlockingScheme
+		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.simpleBlockingScheme
 		keys.toSet shouldEqual expected.toSet
 	}
 
+	it should "generate a default undefined key if there is no name" in {
+		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
+		val subject = Subject()
+		val key = blockingScheme.generateKey(subject)
+		key shouldEqual List(blockingScheme.undefinedValue)
+	}
+
 	"ListBlockingScheme" should "generate proper keys" in {
 		val subjects = TestData.testSubjects
-		val blockingScheme = new ListBlockingScheme
-		blockingScheme.setAttributes("geo_city", "gen_income")
+		val blockingScheme = ListBlockingScheme("Test ListBS", "geo_city", "gen_income")
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.listBlockingScheme
 		keys.toSet shouldEqual expected.toSet
@@ -23,8 +31,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	"MappedListBlockingScheme" should "generate proper keys" in {
 		val subjects = TestData.testSubjects
 		val function: String => String = attribute => attribute.substring(0, Math.min(3, attribute.length))
-		val blockingScheme = new MappedListBlockingScheme(function)
-		blockingScheme.setAttributes("name")
+		val blockingScheme = MappedListBlockingScheme("Test MapBS", function, "name")
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.mapBlockingScheme
 		keys.toSet shouldEqual expected.toSet
@@ -33,11 +40,8 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	it should "behave like ListBlockingScheme if no function is given" in {
 		val subjects = TestData.testSubjects
 		val attribute = "geo_city"
-		val blockingScheme = new MappedListBlockingScheme
-		blockingScheme.setAttributes(attribute)
-		val listBlockingScheme = new ListBlockingScheme
-		listBlockingScheme.setAttributes(attribute)
-
+		val blockingScheme = MappedListBlockingScheme("Test MapBS", identity, attribute)
+		val listBlockingScheme = ListBlockingScheme("Test ListBS", attribute)
 		subjects
 			.map(subject => (blockingScheme.generateKey(subject), listBlockingScheme.generateKey(subject)))
 			.foreach { case (keys, expected) =>

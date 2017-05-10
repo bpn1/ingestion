@@ -107,3 +107,37 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		subject.relations_history = historyBuffer.toMap
 	}
 }
+
+/**
+  * Companion-object for the SubjectManager class.
+  */
+object SubjectManager {
+
+	/**
+	  * Adds symmetric relations between two subjects.
+	  * @param subject1 first subject
+	  * @param subject2 second subject
+	  * @param relations Map containing the attribute keys and values describing the relation, typically a 'type' value
+	  *                  should be passed
+	  * @param version Version of the current job used for versioning
+	  */
+	def addSymRelation(subject1: Subject, subject2: Subject, relations: Map[String,String], version: Version): Unit = {
+		val subjectManager1 = new SubjectManager(subject1, version)
+		val subjectManager2 = new SubjectManager(subject2, version)
+
+		subjectManager1.addRelations(Map(subject2.id -> relations))
+		subjectManager2.addRelations(Map(subject1.id -> relations))
+	}
+
+	/**
+	  * Creates symmetric duplicate relations between all found duplicates and thus an SCC between multiple duplicates.
+	  * @param duplicates List of duplicate three-tuples in the form (Subject1, Subject2, score)
+	  * @param version Version of the current job used for versioning
+	  */
+	def buildDuplicatesSCC(duplicates: List[(Subject, Subject, Double)], version: Version): Unit = {
+		duplicates.foreach { case (subject1, subject2, score) =>
+			val duplicateRelation = Map("type" -> "isDuplicate", "confidence" -> score.toString)
+			addSymRelation(subject1, subject2, duplicateRelation, version)
+		}
+	}
+}
