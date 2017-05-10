@@ -3,12 +3,12 @@ from pipeline_definitions.dataimport.wikidata_pipeline import WikiDataPipeline
 import luigi
 import sys
 
-# usage: [nice -n 19] python3 run_pipeline.py --scheduler-host localhost <PipelineName>
+# usage: [nice -n 19] python3 run_pipeline.py --scheduler-host localhost <PipelineName> [--force]
 if __name__ == "__main__":
     try:
         if len(sys.argv) == 1:
             print("Program called without parameters: Performing dry run")
-            luigi.run(["--local-scheduler"], main_task_cls=WikiDataPipeline)
+            luigi.run(["--local-scheduler"], main_task_cls=WikiDataPipeline(force=True))
         else:
             luigi.run()
     except KeyboardInterrupt:

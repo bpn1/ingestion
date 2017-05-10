@@ -1,18 +1,17 @@
 from pipeline_constructor import PipelineConstructor
-import luigi
+from models.forceable_task import ForceableTask
 
 
-class AbstractPipeline(luigi.Task):
+class AbstractPipeline(ForceableTask):
     def __init__(self, *args, **kwargs):
+        self.upstream_task = self._define_upstream_task()
         super(AbstractPipeline, self).__init__(*args, **kwargs)
 
     def requires(self):
-        return type(self).upstream_task
+        return self.upstream_task
 
     def output(self):
         return self.input()
 
-    @classmethod
-    def define_upstream_task(cls):
-        cls.upstream_task = PipelineConstructor(cls.package, cls.task_definitions).construct_task_dag(
-            cls.force_execution)
+    def _define_upstream_task(self):
+        return PipelineConstructor(self.package, self.task_definitions).construct_task_dag(self.force)

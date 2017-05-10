@@ -1,6 +1,5 @@
 from pipeline_definitions.abstract_pipeline import AbstractPipeline
 from models.task_definition import TaskDefinition
-import luigi
 
 hdfs_jar = "/home/bp2016n1/jars/jenkins/ingestion_323_textmining_feature.jar"
 
@@ -26,10 +25,5 @@ task_definitions = [TaskDefinition("TextParser"),
 
 class TextminingPipeline(AbstractPipeline):
     name = "Textmining Pipeline"
-    force_execution = luigi.BoolParameter(default=False)
     package = "de.hpi.ingestion.textmining"
     task_definitions = task_definitions
-
-    def __init__(self, *args, **kwargs):
-        super(TextminingPipeline, self).__init__(*args, **kwargs)
-        type(self).define_upstream_task()
