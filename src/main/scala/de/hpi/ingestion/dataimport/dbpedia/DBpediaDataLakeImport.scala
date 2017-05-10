@@ -1,7 +1,7 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.datalake.models._
-import de.hpi.ingestion.datalake.{DataLakeImport, SubjectManager}
+import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
 import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -13,7 +13,7 @@ import scala.collection.mutable
 /**
   * Import-Job to import DBpedia Subjects into the staging table of our datalake.
   */
-object DBpediaDataLakeImport extends DataLakeImport[DBpediaEntity](
+object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity](
 	List("dbpedia"),
 	Option("datalakeimport_config.xml"),
 	"normalization_dbpedia.xml",
@@ -37,6 +37,10 @@ object DBpediaDataLakeImport extends DataLakeImport[DBpediaEntity](
 
 	override def filterEntities(entity: DBpediaEntity): Boolean = {
 		entity.instancetype.isDefined
+	}
+
+	override def normalizeAttribute(attribute: String, values: List[String]): List[String] = {
+		DBpediaNormalizeStrategy(attribute)(values)
 	}
 
 	override def translateToSubject(
