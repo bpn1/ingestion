@@ -1456,8 +1456,7 @@ object TestData {
 					Link("DFMG", "Deutsche Funkturm", Option(1963)),
 					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
 					Link("Berliner", "Berlin", Option(2052)),
-					Link("Masashi \"Jumbo\" Ozaki", "" +
-						" \"Jumbo\" Ozaki", Option(2217))
+					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
 				)
 			)
 		)
