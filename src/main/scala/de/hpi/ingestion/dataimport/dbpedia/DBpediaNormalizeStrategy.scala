@@ -47,6 +47,18 @@ object DBpediaNormalizeStrategy extends Serializable {
 	}
 
 	/**
+	  * Normalizes sector
+	  * @param values sector list
+	  * @return normalized sectors
+	  */
+	def normalizeSector(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${sector}""" => List(sector)
+			case _ => None
+		}
+	}
+
+	/**
 	  * Chooses the right normalization method
 	  * @param attribute Attribute to be normalized
 	  * @return Normalization method

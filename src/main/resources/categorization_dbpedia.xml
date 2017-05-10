@@ -1,48 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <categorization>
     <category>
-        <label>Kraftfahrzeughersteller</label>
+        <key>Kraftfahrzeughersteller</key>
         <mapping>29</mapping>
         <mapping>45</mapping>
     </category>
     <category>
-        <label>Brauerei</label>
+        <key>Brauerei</key>
         <mapping>11</mapping>
     </category>
     <category>
-        <label>Verlag</label>
+        <key>Verlag</key>
         <mapping>58</mapping>
     </category>
     <category>
-        <label>Maschinenbau</label>
+        <key>Maschinenbau</key>
         <mapping>28</mapping>
     </category>
     <category>
-        <label>Softwaretechnik</label>
+        <key>Softwaretechnik</key>
         <mapping>58.2</mapping>
         <mapping>46.51</mapping>
         <mapping>47.41</mapping>
         <mapping>62.01.9</mapping>
     </category>
     <category>
-        <label>Einzelhandel</label>
+        <key>Einzelhandel</key>
         <mapping>47</mapping>
     </category>
     <category>
-        <label>Telekommunikation</label>
+        <key>Telekommunikation</key>
         <mapping>61</mapping>
     </category>
     <category>
-        <label>Energieversorgung</label>
+        <key>Energieversorgung</key>
         <mapping>D</mapping>
         <mapping>35</mapping>
     </category>
     <category>
-        <label>Buchverlag</label>
+        <key>Buchverlag</key>
         <mapping>58.11</mapping>
     </category>
     <category>
-        <label>Versicherer</label>
+        <key>Versicherer</key>
         <mapping>65.1</mapping>
         <mapping>65.2</mapping>
     </category>

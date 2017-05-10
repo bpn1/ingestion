@@ -293,6 +293,8 @@ object TestData {
 		"id_viaf" -> List("VIAF ID")
 	)
 
+	def unnormalizedSectors: List[String] = List("Automobilindustrie", "Q126793", "Einzelhandel")
+	def normalizedSectors: List[String] = List("29", "45", "47")
 	def unnormalizedCoordinates: List[String] = List("-1;1", "55;48.88", "0.133;-1", "xxx;-1.0")
 	def normalizedCoordinates: List[String] = List("-1", "1", "55", "48.88", "0.133", "-1")
 	def unnormalizedCountries: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
