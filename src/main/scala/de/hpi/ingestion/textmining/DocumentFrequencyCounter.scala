@@ -6,6 +6,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 /**
   * Counts document frequencies over all articles.

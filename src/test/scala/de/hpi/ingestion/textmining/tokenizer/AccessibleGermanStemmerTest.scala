@@ -1,5 +1,6 @@
-package de.hpi.ingestion.textmining
+package de.hpi.ingestion.textmining.tokenizer
 
+import de.hpi.ingestion.textmining.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class AccessibleGermanStemmerTest extends FlatSpec with Matchers {

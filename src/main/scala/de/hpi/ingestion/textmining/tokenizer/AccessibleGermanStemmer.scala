@@ -1,4 +1,4 @@
-package de.hpi.ingestion.textmining
+package de.hpi.ingestion.textmining.tokenizer
 
 import org.apache.lucene.analysis.de.GermanStemmer
 

@@ -4,7 +4,9 @@ import java.io.{FileOutputStream, OutputStream}
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Output
+import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
 import de.hpi.ingestion.textmining.models.TrieNode
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 import scala.io.{BufferedSource, Source}
 
@@ -37,6 +39,7 @@ object LocalTrieBuilder {
 		trieBinary.close()
 	}
 
+	// $COVERAGE-OFF$
 	// recommended scala flags
 	// -J-Xmx16g
 	// -J-Xss1g
@@ -44,4 +47,5 @@ object LocalTrieBuilder {
 	def main(args: Array[String]): Unit = {
 		serializeTrie(Source.fromFile(aliasFileName), new FileOutputStream(trieFileName))
 	}
+	// $COVERAGE-ON$
 }
