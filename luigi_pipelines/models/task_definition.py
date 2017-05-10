@@ -1,7 +1,6 @@
-ingestion_jar = "/home/bp2016n1/jars/jenkins/ingestion_master.jar"
-
-
 class TaskDefinition(object):
+    ingestion_jar = "/home/bp2016n1/jars/jenkins/ingestion_master.jar"
+
     def __init__(self, name, upstream_tasks=None, scala_class=None, jar=ingestion_jar, command=None, package=None):
         self.name = name
         self.jar = jar

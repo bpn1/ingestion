@@ -32,7 +32,7 @@ class PipelineConstructor(object):
                         break
                 if not upstream_task_missing:
                     last_task = IngestionTask(name=task.name, command=task.command, upstream_tasks=upstream_tasks,
-                                              force=False)  # force=force_execution
+                                              force=force_execution)
                     task.luigi_task = last_task
                     completed_tasks.add(task.name)
         return last_task

@@ -6,10 +6,16 @@ import subprocess
 class IngestionTask(ForceableTask):
     name = luigi.Parameter()
     command = luigi.Parameter()
-    upstream_tasks = luigi.Parameter(default=None)
+    upstream_tasks = luigi.Parameter()
 
     def __init__(self, *args, **kwargs):
         super(IngestionTask, self).__init__(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.name
 
     def requires(self):
         return self.upstream_tasks
@@ -38,18 +44,21 @@ class IngestionTask(ForceableTask):
             outfile.write(str(status))
             print("status: \t" + str(status))
 
-    def run(self):
+    def _upstream_task_names(self):
         upstream_task_names = [task.name for task in self.upstream_tasks]
         upstream_task_names = "[" + ", ".join(upstream_task_names) + "]"
-        print("-----  Task started  -----")
-        print("name:            " + self.name)
-        print("force-execution: " + str(self.force))
-        print("requires:        " + upstream_task_names)
-        print("output:          " + self.output_path())
-        print("command:         " + self.command)
+        return upstream_task_names
+
+    def run(self):
+        print("\n/----  Task started  -----")
+        print("|name:            " + self.name)
+        print("|force-execution: " + str(self.force))
+        print("|requires:        " + self._upstream_task_names())
+        print("|output:          " + self.output_path())
+        print("|command:         " + self.command)
         if self.has_upstream_completed():
             self.execute_command()
-            print("----- Task completed -----")
+            print("\---- Task completed -----")
         else:
-            print("Error: upstream tasks " + upstream_task_names + " have not all completed!")
-            print("-----  Task aborted  -----")
+            print("Error: upstream tasks " + self._upstream_task_names() + " have not all completed!")
+            print("\----  Task aborted  -----")

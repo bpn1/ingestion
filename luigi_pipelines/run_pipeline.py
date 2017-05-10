@@ -1,10 +1,16 @@
 import pipeline_definitions
+from pipeline_definitions.dataimport.wikidata_pipeline import WikiDataPipeline
 import luigi
+import sys
 
 # usage: [nice -n 19] python3 run_pipeline.py --scheduler-host localhost <PipelineName>
 if __name__ == "__main__":
     try:
-        luigi.run()
+        if len(sys.argv) == 1:
+            print("Program called without parameters: Performing dry run")
+            luigi.run(["--local-scheduler"], main_task_cls=WikiDataPipeline)
+        else:
+            luigi.run()
     except KeyboardInterrupt:
         print("Pipeline interrupted: You have to stop the spark job manually!")
         # todo: send ctrl+c via ssh

@@ -2,24 +2,25 @@ from pipeline_definitions.abstract_pipeline import AbstractPipeline
 from models.task_definition import TaskDefinition
 import luigi
 
-extended_links_jar = "/home/bp2016n1/jars/jenkins/ingestion_feature_textmining_197.jar"
+hdfs_jar = "/home/bp2016n1/jars/jenkins/ingestion_323_textmining_feature.jar"
 
 # https://docs.google.com/presentation/d/1KhNmbFrYCKe223mJjRMIJJ_CJPJX4Gk8sWdWcUwPlT4/edit?usp=sharing
-task_definitions = [TaskDefinition("TextParser", jar=extended_links_jar),
-                    TaskDefinition("LinkCleaner", ["TextParser"], jar=extended_links_jar),
-                    TaskDefinition("RedirectResolver", ["LinkCleaner"], jar=extended_links_jar),
-                    TaskDefinition("LinkAnalysis1", ["RedirectResolver"], "LinkAnalysis", jar=extended_links_jar),
-                    TaskDefinition("CompanyLinkFilter", ["LinkAnalysis1"], jar=extended_links_jar),
-                    TaskDefinition("LinkAnalysis2", ["CompanyLinkFilter"], "LinkAnalysis", jar=extended_links_jar),
-                    TaskDefinition("LocalTrieBuilder", ["CompanyLinkFilter"]),
-                    TaskDefinition("AliasTrieSearch", ["LocalTrieBuilder"], jar=extended_links_jar,
-                                   command="ssh bp2016n1@sopedu \"HADOOP_USER_NAME='bp2016n1' spark-submit --class de.hpi.ingestion.textmining.AliasTrieSearch --master yarn --num-executors 23 --executor-cores 4 --executor-memory 19G  --conf 'spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000' " + extended_links_jar + "\""),
-                    TaskDefinition("AliasCounter", ["AliasTrieSearch"], jar=extended_links_jar),
-                    TaskDefinition("DocumentFrequencyCounter", ["TextParser"], jar=extended_links_jar),
-                    TaskDefinition("TermFrequencyCounter", ["CompanyLinkFilter"], jar=extended_links_jar),
-                    TaskDefinition("CosineContextComparator",
-                                   ["DocumentFrequencyCounter", "AliasCounter", "TermFrequencyCounter",
-                                    "LinkAnalysis2"]),
+task_definitions = [TaskDefinition("TextParser"),
+                    TaskDefinition("LinkCleaner", ["TextParser"],),
+                    TaskDefinition("RedirectResolver", ["LinkCleaner"]),
+                    TaskDefinition("LinkExtender", ["RedirectResolver"],
+                                   command="\"HADOOP_USER_NAME='bp2016n1' spark-submit --class de.hpi.ingestion.textmining.LinkExtender --master yarn --driver-memory 16G --driver-java-options -Xss1g --num-executors 23 --executor-cores 4 --executor-memory 15G --conf 'spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000' " + TaskDefinition.ingestion_jar + "\""),
+                    TaskDefinition("LinkAnalysis1", ["LinkExtender"], "LinkAnalysis"),
+                    TaskDefinition("CompanyLinkFilter", ["LinkAnalysis1"]),
+                    TaskDefinition("LinkAnalysis2", ["CompanyLinkFilter"], "LinkAnalysis"),
+                    # TaskDefinition("LocalTrieBuilder", ["CompanyLinkFilter"]),
+                    TaskDefinition("AliasTrieSearch", ["CompanyLinkFilter"], jar=hdfs_jar,
+                                   command="ssh bp2016n1@sopedu \"HADOOP_USER_NAME='bp2016n1' spark-submit --class de.hpi.ingestion.textmining.AliasTrieSearch --master yarn --num-executors 23 --executor-cores 4 --executor-memory 19G  --conf 'spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000' " + TaskDefinition.ingestion_jar + "\""),
+                    TaskDefinition("AliasCounter", ["AliasTrieSearch"]),
+                    TaskDefinition("DocumentFrequencyCounter", ["TextParser"]),
+                    TaskDefinition("TermFrequencyCounter", ["CompanyLinkFilter"]),
+                    TaskDefinition("CosineContextComparator", ["DocumentFrequencyCounter", "AliasCounter",
+                                                               "TermFrequencyCounter", "LinkAnalysis2"]),
                     TaskDefinition("Classifier", ["CosineContextComparator"])]
 
 
