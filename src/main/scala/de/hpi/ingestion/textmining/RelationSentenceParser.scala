@@ -2,7 +2,7 @@ package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.framework.SparkJob
 import com.datastax.spark.connector._
-import de.hpi.ingestion.textmining.models.{Entity, Link, ParsedWikipediaEntry, Sentence}
+import de.hpi.ingestion.textmining.models.{EntityLink, Link, ParsedWikipediaEntry, Sentence}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
@@ -67,7 +67,7 @@ object RelationSentenceParser extends SparkJob {
 			val sentenceEntities = links.filter { link =>
 				link.offset.get >= offset && link.offset.get < (offset + sentence.length)
 			}
-				.map(link => Entity(link.alias, link.page, link.offset.map(_ - offset)))
+				.map(link => EntityLink(link.alias, link.page, link.offset.map(_ - offset)))
 			offset += sentence.length
 			Sentence(entry.title, offset-sentence.length, sentence, sentenceEntities)
 		}.filter(_.entities.length > 1)

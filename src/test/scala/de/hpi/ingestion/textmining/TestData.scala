@@ -1441,7 +1441,7 @@ object TestData {
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
-  
+
   def linkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
@@ -1540,10 +1540,10 @@ object TestData {
 				0,
 				"Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg.",
 				List(
-					Entity("Hochhaus", "Hochhaus", Option(113)),
-					Entity("Postbank", "Postbank", Option(126)),
-					Entity("Berliner", "Berlin", Option(190)),
-					Entity("Kreuzberg", "Berlin-Kreuzberg", Option(208))
+					EntityLink("Hochhaus", "Hochhaus", Option(113)),
+					EntityLink("Postbank", "Postbank", Option(126)),
+					EntityLink("Berliner", "Berlin", Option(190)),
+					EntityLink("Kreuzberg", "Berlin-Kreuzberg", Option(208))
 				)
 			),
 			Sentence(
@@ -1551,10 +1551,10 @@ object TestData {
 				219,
 				"Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig.",
 				List(
-					Entity("Frankfurt (Oder)", "Frankfurt (Oder)", Option(246)),
-					Entity("Potsdam", "Potsdam", Option(264)),
-					Entity("Magdeburg", "Magdeburg", Option(273)),
-					Entity("Stettin", "Stettin", Option(287))
+					EntityLink("Frankfurt (Oder)", "Frankfurt (Oder)", Option(246)),
+					EntityLink("Potsdam", "Potsdam", Option(264)),
+					EntityLink("Magdeburg", "Magdeburg", Option(273)),
+					EntityLink("Stettin", "Stettin", Option(287))
 				)
 			),
 			Sentence(
@@ -1562,8 +1562,8 @@ object TestData {
 				1940,
 				"Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit.",
 				List(
-					Entity("Deutsche Funkturm", "Deutsche Funkturm", Option(4)),
-					Entity("Deutschen Telekom AG", "Deutsche Telekom", Option(59))
+					EntityLink("Deutsche Funkturm", "Deutsche Funkturm", Option(4)),
+					EntityLink("Deutschen Telekom AG", "Deutsche Telekom", Option(59))
 				)
 			)
 		)
@@ -1571,8 +1571,8 @@ object TestData {
 
 	def moreSentences(): List[Sentence] = {
 		List(
-			Sentence("Audi",0,"Audi ist Audi AG.",List(Entity("Audi","Audi",Some(0)), Entity("Audi AG","Audi",Some(9)))),
-			Sentence("Audi",18,"VW ist Volkswagen AG",List(Entity("VW","VW",Some(0)), Entity("Volkswagen AG","VW",Some(7))))
+			Sentence("Audi",0,"Audi ist Audi AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Audi AG","Audi",Some(9)))),
+			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))
 		)
 	}
 	def bigLinkExtenderPagesSet(): Set[Page] = {
