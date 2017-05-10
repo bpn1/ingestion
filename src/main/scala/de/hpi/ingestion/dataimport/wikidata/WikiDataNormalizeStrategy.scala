@@ -1,5 +1,7 @@
 package de.hpi.ingestion.dataimport.wikidata
 
+import de.hpi.ingestion.implicits.RegexImplicits._
+
 /**
   * Strategies for the normalization of WikiData entities
   */
@@ -10,9 +12,8 @@ object WikiDataNormalizeStrategy {
 	  * @return normalized coordinates list
 	  */
 	def normalizeCoords(values: List[String]): List[String] = {
-		val coordinatesPattern = "([-+]?[0-9]+\\.?[0-9]*);([-+]?[0-9]+\\.?[0-9]*)".r
 		values.flatMap {
-			case coordinatesPattern(lat, long) => List(lat, long)
+			case r"""([-+]?[0-9]+\.?[0-9]*)${lat};([-+]?[0-9]+\.?[0-9]*)${long}""" => List(lat, long)
 			case _ => None
 		}
 	}
@@ -23,9 +24,8 @@ object WikiDataNormalizeStrategy {
 	  * @return normalized countries
 	  */
 	def normalizeCountry(values: List[String]): List[String] = {
-		val countryPattern = "Q[1-9][0-9]*".r
 		values.flatMap {
-			case countryPattern() => None
+			case r"Q[0-9]+" => None
 			case other => List(other)
 		}
 	}
