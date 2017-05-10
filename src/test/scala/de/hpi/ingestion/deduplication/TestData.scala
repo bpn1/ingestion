@@ -189,12 +189,14 @@ object TestData {
 	}
 
 	def expectedCompareStrategies: List[(List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) => Double] = List(
-		CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
+			CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
 	)
 
-	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = {
-		(List("very", "generic", "values"), List("even", "more", "values"), testConfig().head._2.head)
-	}
+	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (
+		List("very", "generic", "values"),
+		List("even", "more", "values"),
+		testConfig().head._2.head
+	)
 
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()
