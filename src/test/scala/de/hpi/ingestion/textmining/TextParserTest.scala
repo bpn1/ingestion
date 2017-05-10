@@ -324,7 +324,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	they should "be replaced" in {
-		val cleanedEntry = TextParser.cleanNLBSpaces(TestData.rawEntryWithAlternativeWhitespace())
+		val cleanedEntry = TextParser.cleanRedirectsAndWhitespaces(TestData.rawEntryWithAlternativeWhitespace())
 		val expectedEntry = TestData.rawEntryWithStandardWhitespace()
 		cleanedEntry shouldEqual expectedEntry
 	}

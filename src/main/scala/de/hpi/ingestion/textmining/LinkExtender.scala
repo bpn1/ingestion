@@ -8,7 +8,7 @@ import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, hdfsFileStream}
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 import scala.collection.mutable
 

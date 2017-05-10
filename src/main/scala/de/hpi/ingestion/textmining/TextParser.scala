@@ -421,7 +421,7 @@ object TextParser extends SparkJob {
 		val redirectRegex = "(?i)(weiterleitung|redirect)\\s?:?\\s?"
 		val replaceString = parsableRedirect + " "
 		var cleanedText = entry.getText().replaceAll(redirectRegex, replaceString)
-		cleanedText = cleanedText.replace("\u00a0", " ")
+		cleanedText = cleanedText.replaceAll("(\u00a0|&nbsp;)", " ")
 		entry.setText(cleanedText)
 		entry
 	}
@@ -458,16 +458,6 @@ object TextParser extends SparkJob {
 	  */
 	def cleanMetapageLinks(linkList: List[Link]): List[Link] = {
 		linkList.filterNot(link => badNamespaces().exists(link.page.startsWith))
-	}
-
-	/**
-	  * Removes non line breaking spaces from the Wikimarkup since the Wikimarkup Parser does not handle them properly.
-	  * @param entry Wikipedia Entry containing the bad spaces
-	  * @return cleaned Wikipedia Entry without non line breaking spaces
-	  */
-	def cleanNLBSpaces(entry: WikipediaEntry): WikipediaEntry = {
-		val cleanText = entry.text.map(_.replaceAll("&nbsp;", " "))
-		entry.copy(text = cleanText)
 	}
 
 	/**
@@ -525,7 +515,6 @@ object TextParser extends SparkJob {
 		val rawArticles = input.fromAnyRDD[WikipediaEntry]().head
 		val parsedArticles = rawArticles
 			.filter(!isMetaPage(_))
-			.map(cleanNLBSpaces)
 			.map(parseWikipediaEntry)
 		List(parsedArticles).toAnyRDD()
 	}
