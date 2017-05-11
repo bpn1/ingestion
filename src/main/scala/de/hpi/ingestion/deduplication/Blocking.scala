@@ -24,7 +24,7 @@ object Blocking extends SparkJob {
 	var settings = Map[String, String]()
 	var blockingSchemes = List[BlockingScheme](
 		ListBlockingScheme("geo_country_scheme", "geo_country"),
-		ListBlockingScheme("geo_coords_scheme", "geo_coords"),
+		ListBlockingScheme("gen_urls_scheme", "gen_urls"),
 		SimpleBlockingScheme("simple_scheme"))
 
 	// $COVERAGE-OFF$
