@@ -33,15 +33,13 @@ object TestData {
 		))
 	}
 
-	def precisionRecallResults(sc: SparkContext) : RDD[PrecisionRecallDataTuple] = {
-		sc.parallelize(
-			List(
-				PrecisionRecallDataTuple(0.0, 0.6666666666666666, 1, 0.8),
-				PrecisionRecallDataTuple(0.5, 0.5, 0.5, 0.5),
-				PrecisionRecallDataTuple(0.6, 0.6666666666666666, 0.5, 0.5714285714285715),
-				PrecisionRecallDataTuple(0.7, 1, 0.5, 0.6666666666666666),
-				PrecisionRecallDataTuple(0.8, 1, 0.25, 0.4)
-			)
+	def precisionRecallResults(sc: SparkContext) : List[PrecisionRecallDataTuple] = {
+		List(
+			PrecisionRecallDataTuple(0.0, 0.6666666666666666, 1, 0.8),
+			PrecisionRecallDataTuple(0.5, 0.5, 0.5, 0.5),
+			PrecisionRecallDataTuple(0.6, 0.6666666666666666, 0.5, 0.5714285714285715),
+			PrecisionRecallDataTuple(0.7, 1, 0.5, 0.6666666666666666),
+			PrecisionRecallDataTuple(0.8, 1, 0.25, 0.4)
 		)
 	}
 
