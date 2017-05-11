@@ -38,15 +38,13 @@ object TestData {
 		))
 	}
 
-	def precisionRecallResults(sc: SparkContext) : RDD[PrecisionRecallDataTuple] = {
-		sc.parallelize(
-			List(
-				PrecisionRecallDataTuple(0.0, 0.6666666666666666, 1, 0.8),
-				PrecisionRecallDataTuple(0.5, 0.5, 0.5, 0.5),
-				PrecisionRecallDataTuple(0.6, 0.6666666666666666, 0.5, 0.5714285714285715),
-				PrecisionRecallDataTuple(0.7, 1, 0.5, 0.6666666666666666),
-				PrecisionRecallDataTuple(0.8, 1, 0.25, 0.4)
-			)
+	def precisionRecallResults(sc: SparkContext) : List[PrecisionRecallDataTuple] = {
+		List(
+			PrecisionRecallDataTuple(0.0, 0.6666666666666666, 1, 0.8),
+			PrecisionRecallDataTuple(0.5, 0.5, 0.5, 0.5),
+			PrecisionRecallDataTuple(0.6, 0.6666666666666666, 0.5, 0.5714285714285715),
+			PrecisionRecallDataTuple(0.7, 1, 0.5, 0.6666666666666666),
+			PrecisionRecallDataTuple(0.8, 1, 0.25, 0.4)
 		)
 	}
 
@@ -194,12 +192,14 @@ object TestData {
 	}
 
 	def expectedCompareStrategies: List[(List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) => Double] = List(
-		CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
+			CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
 	)
 
-	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = {
-		(List("very", "generic", "values"), List("even", "more", "values"), testConfig().head._2.head)
-	}
+	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (
+		List("very", "generic", "values"),
+		List("even", "more", "values"),
+		testConfig().head._2.head
+	)
 
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()
@@ -364,6 +364,7 @@ object TestData {
 		List("undefined"),
 		List("undefined")
 	)
+	def geoCoordsBlockingScheme: List[List[String]] = List(List("52,11"), List("undefined"), List("52,13"), List("53,14"))
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
 
 	def features(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(

@@ -1,5 +1,7 @@
-package de.hpi.ingestion.textmining
+package de.hpi.ingestion.textmining.tokenizer
 
+import de.hpi.ingestion.textmining.TestData
+import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.scalatest.{FlatSpec, Matchers}
 
 class IngestionTokenizerTest extends FlatSpec with Matchers {
@@ -168,6 +170,30 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 			}
 	}
 
+	they should "not contain stopwords" in {
+		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, true, false)
+		val tokens = TestData.testSentences()
+			.map(tokenizer.processWithOffsets)
+			.map(_.map(_.token))
+		val expectedTokens = TestData.filteredUncleanTokenizedSentences()
+		tokens shouldEqual expectedTokens
+	}
+
+	they should "be stemmed" in {
+		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, true, true)
+		val tokens = TestData.testSentences()
+			.map(tokenizer.processWithOffsets)
+			.map(_.map(_.token))
+		val expectedTokens = TestData.stemmedAndFilteredUncleanTokenizedSentences()
+		tokens shouldEqual expectedTokens
+	}
+
+	they should "only be computed if the tokenizer supports them" in {
+		val tokenizer = new WhitespaceTokenizer
+		val tokens = tokenizer.tokenizeWithOffsets("This is a test String.")
+		tokens shouldBe empty
+	}
+
 	"Cleaned tokenized sentences" should "contain multiple tokens" in {
 		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, false)
 		TestData.testSentences()
@@ -180,6 +206,21 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 		val tokenizedSentences = TestData.testSentences()
 			.map(tokenizer.process)
 		tokenizedSentences shouldEqual TestData.tokenizedTestSentencesWithoutSpecialCharacters()
+	}
+
+	"Clean Whitespace Tokenizer" should "reverse token lists" in {
+		val tokenizer = new CleanWhitespaceTokenizer
+		val reversedTexts = TestData.tokenizedTestSentencesWithoutSpecialCharacters().map(tokenizer.reverse)
+		val expectedTexts = TestData.cleanedReversedSentences()
+		reversedTexts shouldEqual expectedTexts
+	}
+
+	it should "strip tokens of bad tokens" in {
+		val tokenizer = new CleanWhitespaceTokenizer
+		val badCharacters = "().!?,;:'`\"„“"
+		val tokens = List("", "a.", ".", ".a", "a.a", "...(.a").map(tokenizer.stripAll(_, badCharacters))
+		val expectedTokens = List("", "a", "", "a", "a.a", "a")
+		tokens shouldEqual expectedTokens
 	}
 
 	def isSpecialCharacter(text: String, beginOffset: Int, endOffset: Int): Boolean = {

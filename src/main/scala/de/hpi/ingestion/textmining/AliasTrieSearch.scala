@@ -12,6 +12,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FileSystem, Path}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 import scala.collection.mutable
 
@@ -28,7 +30,7 @@ object AliasTrieSearch extends SparkJob {
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
 	val trieName = "trie_full.bin"
-	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.TrieKryoRegistrator"
+	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
 
 	// $COVERAGE-OFF$
 	var trieStreamFunction = hdfsFileStream _

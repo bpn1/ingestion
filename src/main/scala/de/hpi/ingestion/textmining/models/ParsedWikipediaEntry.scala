@@ -38,7 +38,7 @@ case class ParsedWikipediaEntry(
 	  * @return all links
 	  */
 	def allLinks(): List[Link] = {
-		textlinks ++ templatelinks ++ categorylinks ++ listlinks ++ disambiguationlinks
+		textlinks ++ templatelinks ++ categorylinks ++ listlinks ++ disambiguationlinks ++ extendedlinks
 	}
 
 	/**
@@ -52,5 +52,6 @@ case class ParsedWikipediaEntry(
 		categorylinks = categorylinks.filter(filterFunction)
 		disambiguationlinks = disambiguationlinks.filter(filterFunction)
 		listlinks = listlinks.filter(filterFunction)
+		extendedlinks = extendedlinks.filter(filterFunction)
 	}
 }
