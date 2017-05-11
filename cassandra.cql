@@ -52,6 +52,29 @@ CREATE TABLE wikidumps.wikipediatfidf (
     tokens map<text, double>
 );
 
+CREATE TABLE wikidumps.featureentries (
+    id uuid PRIMARY KEY,
+    alias text,
+    correct boolean,
+    cosine_sim double,
+    entity text,
+    prob_entity double,
+    prob_link double
+);
+
+CREATE TYPE wikidumps.precisionrecalldatatuple (
+    threshold double,
+    precision double,
+    recall double,
+    fscore double
+);
+
+CREATE TABLE wikidumps.sim_measure_stats (
+    id timeuuid PRIMARY KEY,
+    comment text,
+    data list<frozen<precisionrecalldatatuple>>
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,
