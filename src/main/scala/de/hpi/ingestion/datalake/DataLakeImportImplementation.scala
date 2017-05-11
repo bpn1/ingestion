@@ -96,13 +96,24 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 		this.parseConfig(configPath)
 		val version = Version(appName, dataSources, sc)
 		val mapping = parseNormalizationConfig(this.normalizationFile)
-		input
+
+		val filteredInput = input.fromAnyRDD[T]().map(_.filter(this.filterEntities))
+		println("#############")
+		println("#############")
+		println("#############")
+		println(filteredInput.head.count())
+		println("#############")
+		println("#############")
+		println("#############")
+
+		filteredInput.map(_.map(translateToSubject(_, version, mapping))).toAnyRDD()
+		/*input
 			.fromAnyRDD[T]()
 			.map(rdd =>
 				rdd
 					.filter(filterEntities)
 					.map(translateToSubject(_, version, mapping)))
-			.toAnyRDD()
+			.toAnyRDD()*/
 	}
 
 	// $COVERAGE-OFF$

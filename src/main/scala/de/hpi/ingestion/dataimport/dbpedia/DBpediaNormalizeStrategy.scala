@@ -69,9 +69,9 @@ object DBpediaNormalizeStrategy extends NormalizationStrategies("categorization_
 	def apply(attribute: String): (List[String]) => List[String] = {
 		attribute match {
 			case "gen_sector" => this.normalizeSector
-			case "gen_employees" => normalizeEmployees
-			case "geo_country" => normalizeCountry
-			case "geo_coords" => normalizeCoords
+			case "gen_employees" => this.normalizeEmployees
+			case "geo_country" => this.normalizeCountry
+			case "geo_coords" => this.normalizeCoords
 			case _ => identity
 		}
 	}

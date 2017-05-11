@@ -1,10 +1,8 @@
 package de.hpi.ingestion.datalake
 
 import java.net.URL
-import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version, WZCategory}
+import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 import scala.collection.mutable
-import scala.io.Source
-import scala.xml.XML
 
 /**
   * Trait for imports into the Datalake
@@ -41,34 +39,6 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @return a Map containing the normalized attributes mapped to the new subject attributes
 	  */
 	protected def parseNormalizationConfig(url: URL): Map[String, List[String]]
-
-	protected def parseCategorizationConfig(url: URL): Map[WZCategory, List[WZCategory]] = {
-		val xml = XML.loadString(Source
-			.fromURL(url)
-			.getLines()
-			.mkString("\n"))
-
-		val categoryMap = mutable.Map[WZCategory, List[WZCategory]]()
-		(xml \\ "Workbook" \ "Worksheet" \ "Table" \ "Row").foreach { row =>
-			val cells = (row \ "Cell").toList
-			val label = (cells(1) \ "Data").text
-			val description = (cells(2) \ "Data").text
-			val category = WZCategory(label, description)
-
-			if(label == "A") {
-				categoryMap(category) = Nil
-			} else {
-				val key = categoryMap.last._1
-				categoryMap(key) = categoryMap.getOrElse(key, Nil) ::: List(category)
-			}
-		}
-		categoryMap.toMap
-	}
-
-	protected def parseCategorizationConfig(path: String): Map[WZCategory, List[WZCategory]] = {
-		val url = getClass.getResource(s"/$path")
-		this.parseCategorizationConfig(url)
-	}
 
 	/**
 	  * Parses the normalization config file into a Map.
