@@ -11,13 +11,44 @@
         <versionTable>version</versionTable>
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
         <statsTable>blockingstats</statsTable>
-        <confidence>0.8</confidence>
+        <confidence>0.7</confidence>
     </sourceSettings>
     <simMeasurements>
         <attribute>
             <key>name</key>
             <feature>
                 <similarityMeasure>JaroWinkler</similarityMeasure>
+                <weight>1</weight>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>MongeElkan</similarityMeasure>
+                <weight>1</weight>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
+            <key>geo_country</key>
+            <feature>
+                <similarityMeasure>ExactMatch</similarityMeasure>
+                <weight>0.5</weight>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>Jaccard</similarityMeasure>
+                <weight>1</weight>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
+            <key>geo_country</key>
+            <feature>
+                <similarityMeasure>ExactMatch</similarityMeasure>
+                <weight>0.5</weight>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>Jaccard</similarityMeasure>
                 <weight>1</weight>
                 <scale>1</scale>
             </feature>
