@@ -70,7 +70,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	}
 
 
-	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : RDD[PrecisionRecallDataTuple] = {
+	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : List[PrecisionRecallDataTuple] = {
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
 
 		val precision = metrics.precisionByThreshold
@@ -82,7 +82,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 			.join(f1Score)
 			.map { case (threshold, ((precision, recall), f1Score)) =>
 				PrecisionRecallDataTuple(threshold, precision, recall, f1Score)
-			}.sortBy(_.threshold)
+			}.sortBy(_.threshold).collect.toList
 	}
 
 	/**
