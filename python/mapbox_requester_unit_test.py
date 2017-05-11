@@ -65,13 +65,13 @@ class MyTestCase(unittest.TestCase):
         expected_value = {u'attribution': u'NOTICE: \xa9 2017 Mapbox and its suppliers. All rights reserved. Use of this data is subject to the Mapbox Terms of Service (https://www.mapbox.com/about/maps/). This response and the information it contains may not be retained.', u'query': [u'1600', u'pennsylvania'], u'type': u'FeatureCollection', u'features': [{u'center': [-76.981041, 38.878649], u'geometry': {u'type': u'Point', u'coordinates': [-76.981041, 38.878649], u'interpolated': True}, u'text': u'Pennsylvania Ave SE', u'place_type': [u'address'], u'properties': {}, u'context': [{u'text': u'Barney Circle', u'id': u'neighborhood.295468'}, {u'text': u'Washington', u'wikidata': u'Q61', u'id': u'place.11387590027246050'}, {u'text': u'20003', u'id': u'postcode.7407455452898840'}, {u'short_code': u'US-DC', u'text': u'District of Columbia', u'wikidata': u'Q61', u'id': u'region.3403'}, {u'short_code': u'us', u'text': u'United States', u'wikidata': u'Q30', u'id': u'country.3145'}], u'address': u'1600', u'relevance': 0.99, u'type': u'Feature', u'id': u'address.11159252373890170', u'place_name': u'1600 Pennsylvania Ave SE, Washington, District of Columbia 20003, United States'}]}
 
 
-        expected_value_1 = {
-            "coordinates": [-76.981041, 38.878649],
-            "name": "Pennsylvania Ave SE",
-            "place_name": "1600 Pennsylvania Ave SE, Washington, District of Columbia 20003, United States",
-            "wikidata": "",
-            "type": ""
-        }
+        # expected_value_1 = {
+        #     "coordinates": [-76.981041, 38.878649],
+        #     "name": "Pennsylvania Ave SE",
+        #     "place_name": "1600 Pennsylvania Ave SE, Washington, District of Columbia 20003, United States",
+        #     "wikidata": "",
+        #     "type": ""
+        # }
 
         self.assertEqual(computed_value, expected_value)
 
@@ -89,19 +89,21 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(computed_value_1, expected_value_1)
         self.assertEqual(computed_value_2, expected_value_2)
 
-    def test_fill_up_wait_list_geocoding(self):
-        expected_value = Queue.Queue()
-        sample_subject_1 = requester.MapboxSubject("Berlin")
-        sample_subject_2 = requester.MapboxSubject("Kastrop-Rauxel")
-        sample_subject_3 = requester.MapboxSubject("Buxtehude")
-        expected_value\
-            .put(sample_subject_1)
-            .put(sample_subject_2)
-            .put(sample_subject_3)
-
-
-
-        self.assertEqual(expected_value, computed_value)
+    # def test_fill_up_wait_list_geocoding(self):
+    #     expected_value = Queue.Queue()
+    #     sample_subject_1 = requester.MapboxSubject("Veit im Winkel")
+    #     sample_subject_2 = requester.MapboxSubject("Kastrup-Rauxel")
+    #     sample_subject_3 = requester.MapboxSubject("Buxtehude")
+    #     expected_value.put(sample_subject_1)
+    #     expected_value.put(sample_subject_2)
+    #     expected_value.put(sample_subject_3)
+    #
+    #     computed_value =
+    #
+    #     while not expected_value.empty():
+    #         print expected_value.get()
+    #
+    #     self.assertEqual(expected_value, computed_value)
 
 if __name__ == '__main__':
     unittest.main()

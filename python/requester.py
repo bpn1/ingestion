@@ -2,6 +2,7 @@ from mapbox import Geocoder
 import uuid
 import urllib
 import Queue
+import time
 # from cassandra.cluster import Cluster
 
 
@@ -123,10 +124,28 @@ def evaluate_geocoding_response_status(response):
         return False
 
 
+def generate_subjects_from_ortschaften():
+    filename = 'resources/ortschaften.txt'
+
+    with open(filename) as f:
+        subjects = f.readlines()
+        return subjects
+    return False
+
+
 def fill_up_wait_list_geocoding(wait_list_geocoding, subjects):
 
-    for subject in subjects:
-        # Something
+    if subjects:
+        subjects = [x.strip() for x in subjects]
+
+        for subject in subjects:
+            mapbox_subject = MapboxSubject(uuid.uuid4(), subject, subject)
+            wait_list_geocoding.put(mapbox_subject)
+
+        while not wait_list_geocoding.empty():
+            i = wait_list_geocoding.get()
+            print i.name
+
         return True
 
     return False
@@ -143,7 +162,8 @@ def execute_geocoding(wait_list_geocoding):
 
 def main():
     wait_list_geocoding = Queue.Queue()
-    fill_up_wait_list_geocoding(wait_list_geocoding)
+    subjects = generate_subjects_from_ortschaften()
+    fill_up_wait_list_geocoding(wait_list_geocoding, subjects)
 
 
 if __name__ == '__main__':
