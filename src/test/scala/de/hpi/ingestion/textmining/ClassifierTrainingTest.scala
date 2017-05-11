@@ -21,8 +21,8 @@ class ClassifierTrainingTest extends FlatSpec with Matchers with SharedSparkCont
 	}
 
 	they should "be formatted" in {
-		val statistics = TestData.predictionStatistics()
-		val formattedStats = ClassifierTraining.formatStatistics(statistics)
+		val statistics = TestData.predictionStatistics().map(ClassifierTraining.formatStatistics)
+		val formattedStats = statistics.mkString("\n")
 		val expectedString = TestData.formattedPredictionStatistics()
 		formattedStats shouldEqual expectedString
 	}

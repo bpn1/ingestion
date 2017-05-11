@@ -2,10 +2,11 @@ package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
-import org.jsoup.nodes.Element
 
+import org.jsoup.nodes.Element
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
+import de.hpi.ingestion.deduplication.models.PrecisionRecallDataTuple
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
@@ -1366,23 +1367,15 @@ object TestData {
 			(0.0, 0.0))
 	}
 
-	def predictionStatistics(): List[(String, Double, Double)] = {
-		List(
-			("precision", 1.0, 5.0/7.0),
-			("precision", 0.0, 0.6),
-			("recall", 1.0, 5.0/6.0),
-			("recall", 0.0, 1.0),
-			("fscore with beta 0.5", 1.0, 25.0/34.0),
-			("fscore with beta 0.5", 0.0, 0.6521739130434783))
+	def predictionStatistics(): List[PrecisionRecallDataTuple] = {
+		List(PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0))
 	}
 
 	def formattedPredictionStatistics(): String = {
-		s"precision\t1.0\t${5.0/7.0}" + "\n" +
-			"precision\t0.0\t0.6" + "\n" +
-			s"recall\t1.0\t${5.0/6.0}" + "\n" +
-			"recall\t0.0\t1.0" + "\n" +
-			s"fscore with beta 0.5\t1.0\t${25.0/34.0}" + "\n" +
-			"fscore with beta 0.5\t0.0\t0.6521739130434783"
+		s"threshold: 1.0" + "\t" +
+		s"precision: ${5.0/7.0}" + "\t" +
+		s"recall: ${5.0/6.0}" + "\t" +
+		s"fscore: ${25.0/34.0}"
 	}
 }
 
