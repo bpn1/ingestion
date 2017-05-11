@@ -9,7 +9,7 @@ class ForceableTask(luigi.Task):
     def __init__(self, *args, **kwargs):
         super(ForceableTask, self).__init__(*args, **kwargs)
         # To force execution, we just remove all outputs before `complete()` is called
-        if self.force is True:
+        if self.force:
             outputs = luigi.task.flatten(self.output())
             for out in outputs:
                 if out.exists():

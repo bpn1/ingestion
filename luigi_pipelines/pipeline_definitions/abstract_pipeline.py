@@ -4,10 +4,12 @@ from models.forceable_task import ForceableTask
 
 class AbstractPipeline(ForceableTask):
     def __init__(self, *args, **kwargs):
-        self.upstream_task = self._define_upstream_task()
+        self.upstream_task = None
         super(AbstractPipeline, self).__init__(*args, **kwargs)
 
     def requires(self):
+        if self.upstream_task is None:
+            self.upstream_task = self._define_upstream_task()
         return self.upstream_task
 
     def output(self):
