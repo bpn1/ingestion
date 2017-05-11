@@ -104,7 +104,7 @@ object FeatureCalculation extends SparkJob {
 		val scores = config.map { case (attribute, scoreConfigs) =>
 			val subjectValues = subject.get(attribute)
 			val stagingValues = staging.get(attribute)
-			val scores = scoreConfigs.map(compare(attribute, subjectValues, stagingValues, _))
+			val scores = scoreConfigs.map(this.compare(attribute, subjectValues, stagingValues, _))
 			(attribute, scores)
 		}
 		FeatureEntry(subject, staging, scores)

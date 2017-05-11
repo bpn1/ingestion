@@ -28,10 +28,10 @@ class FeatureCalculationUnitTest extends FlatSpec with Matchers with SharedSpark
 	}
 
 	"createFeature" should "create a FeatureEntry of a given subject pair" in {
-		FeatureCalculation.config = TestData.testConfig("geo_city")
+		val config = TestData.testConfig("geo_city")
 		val subject = TestData.testSubjects.head
 		val staging = TestData.testSubjects(1)
-		val feature = FeatureCalculation.createFeature(subject, staging)
+		val feature = FeatureCalculation.createFeature(subject, staging, config)
 		val expected = FeatureEntry(subject, staging, Map("geo_city" -> List(0.8, 0.7)))
 
 		feature shouldEqual expected

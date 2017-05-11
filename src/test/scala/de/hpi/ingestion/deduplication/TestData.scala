@@ -1,20 +1,13 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-<<<<<<< HEAD
 import de.hpi.ingestion.deduplication.models.{BlockEvaluation, FeatureEntry, PrecisionRecallDataTuple, ScoreConfig}
-import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler, MongeElkan, SimilarityMeasure}
-=======
 import de.hpi.ingestion.deduplication.blockingschemes.ListBlockingScheme
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan, SimilarityMeasure}
->>>>>>> e122ddfeae1ae0a8e7372937ba8490513e6fe8de
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
-import scala.collection.mutable
 
 // scalastyle:off line.size.limit
 // scalastyle:off number.of.methods
