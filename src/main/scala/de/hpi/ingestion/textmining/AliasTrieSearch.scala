@@ -30,7 +30,7 @@ object AliasTrieSearch extends SparkJob {
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
 	val trieName = "trie_full.bin"
-	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.TrieKryoRegistrator"
+	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
 
 	// $COVERAGE-OFF$
 	var trieStreamFunction = hdfsFileStream _
