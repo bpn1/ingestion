@@ -171,14 +171,6 @@
         <mapping>11</mapping>
     </category>
     <category>
-        <key>Verkehr</key>
-        <mapping>49</mapping>
-        <mapping>49.4</mapping>
-        <mapping>50</mapping>
-        <mapping>51</mapping>
-        <mapping>52</mapping>
-    </category>
-    <category>
         <key>Tourismus</key>
         <mapping>55</mapping>
     </category>
