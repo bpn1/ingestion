@@ -1,12 +1,12 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
-import de.hpi.ingestion.dataimport.NormalizationStrategies
+import de.hpi.ingestion.dataimport.NormalizationStrategy
 import de.hpi.ingestion.implicits.RegexImplicits._
 
 /**
   * Strategies for the normalization of DBPedia entities
   */
-object DBpediaNormalizeStrategy extends NormalizationStrategies("categorization_dbpedia.xml") with Serializable {
+object DBpediaNormalizationStrategy extends NormalizationStrategy("categorization_dbpedia.xml") with Serializable {
 	mapping = this.parseNormalizationConfig()
 
 	/**
@@ -16,9 +16,9 @@ object DBpediaNormalizeStrategy extends NormalizationStrategies("categorization_
 	  */
 	def normalizeEmployees(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""([-+]?[0-9]+\.?[0-9]*)${number}\^\^xsd:integer""" => List(number)
-			case r"""([-+]?[0-9]+\.?[0-9]*)${number}\^\^xsd:nonNegativeInteger""" => List(number)
-			case r"""über (\d+)${number}@de \.""" => List(number)
+			case r"""([-+]?[0-9]+\.?[0-9]*)${employees}\^\^xsd:integer""" => List(employees)
+			case r"""([-+]?[0-9]+\.?[0-9]*)${employees}\^\^xsd:nonNegativeInteger""" => List(employees)
+			case r"""über (\d+)${employees}@de \.""" => List(employees)
 			case _ => None
 		}.distinct
 	}
@@ -64,7 +64,7 @@ object DBpediaNormalizeStrategy extends NormalizationStrategies("categorization_
 	/**
 	  * Normalizes cities
 	  * @param values city list
-	  * @return normalized countries
+	  * @return normalized cities
 	  */
 	def normalizeCity(values: List[String]): List[String] = {
 		values.flatMap {

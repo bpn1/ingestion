@@ -3,7 +3,7 @@ package de.hpi.ingestion.dataimport
 import scala.io.Source
 import scala.xml.XML
 
-class NormalizationStrategies(categoryConfigFile: String) {
+class NormalizationStrategy(categoryConfigFile: String) {
 	var mapping = Map[String, List[String]]()
 
 	/**
