@@ -116,6 +116,8 @@ object TestData {
 			"geo:lat" -> List("52"),
 			"property-de:latitude" -> List("53"),
 			"geo:long" -> List("100"),
+			"dbo:country" -> List("Koblenz@de ."),
+			"property-de:mitarbeiteranzahl" -> List("12^^xsd:integer", "13^^xsd:nonNegativeInteger"),
 			"testProperty" -> List("test")
 		)
 	)
@@ -126,7 +128,9 @@ object TestData {
 		"id_wikipedia" -> List("dbpedianame"),
 		"id_viaf" -> List("dbo:viafId", "property-de:viaf"),
 		"geo_coords_lat" -> List("geo:lat", "property-de:latitude", "property-de:breitengrad"),
-		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad")
+		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad"),
+		"geo_country" -> List("dbo:country", "property-de:land"),
+		"gen_employees" -> List("dbo:numberOfEmployees", "property-de:mitarbeiteranzahl")
 	)
 
 	def unnormalizedEmployees: List[String] = List("27000^^xsd:integer", "27000^^xsd:nonNegativeInteger", "10^^xsd:nonNegativeInteger", "über 1000@de .", "1 Million")
