@@ -78,11 +78,10 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 		mapping: Map[String, List[String]]
 	): Map[String, List[String]] = {
 		mapping
-			.mapValues { values =>
-				values
-					.map(value => normalizeAttribute(value, entity.get(value)))
-					.reduce(_ ::: _)
-					.distinct
+			.map { case (normalized, notNormalized) =>
+				val values = notNormalized.flatMap(entity.get)
+				val normalizedValues = normalizeAttribute(normalized, values)
+				(normalized, normalizedValues)
 			}.filter(_._2.nonEmpty)
 	}
 

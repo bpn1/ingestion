@@ -6,31 +6,49 @@
         <keyspaceStagingTable>evaluation</keyspaceStagingTable>
         <stagingTable>subject_wikidata</stagingTable>
         <keyspaceDuplicatesTable>evaluation</keyspaceDuplicatesTable>
-        <duplicatesTable>dbpedia_wikidata_deduplication</duplicatesTable>
+        <duplicatesTable>dbpedia_wikidata_deduplication_only_uuid</duplicatesTable>
         <keyspaceVersionTable>evaluation</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
         <statsTable>blockingstats</statsTable>
-        <confidence>0.2</confidence>
+        <confidence>0.7</confidence>
     </sourceSettings>
     <simMeasurements>
         <attribute>
             <key>name</key>
             <feature>
-                <similarityMeasure>MongeElkan</similarityMeasure>
-                <weight>0.7</weight>
+                <similarityMeasure>JaroWinkler</similarityMeasure>
+                <weight>1</weight>
                 <scale>1</scale>
             </feature>
             <feature>
-                <similarityMeasure>JaroWinkler</similarityMeasure>
-                <weight>0.5</weight>
+                <similarityMeasure>MongeElkan</similarityMeasure>
+                <weight>1</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
         <attribute>
-            <key>geo_postal</key>
+            <key>geo_country</key>
             <feature>
-                <similarityMeasure>ExactMatchString</similarityMeasure>
+                <similarityMeasure>ExactMatch</similarityMeasure>
+                <weight>0.5</weight>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>Jaccard</similarityMeasure>
+                <weight>1</weight>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
+            <key>geo_country</key>
+            <feature>
+                <similarityMeasure>ExactMatch</similarityMeasure>
+                <weight>0.5</weight>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>Jaccard</similarityMeasure>
                 <weight>1</weight>
                 <scale>1</scale>
             </feature>

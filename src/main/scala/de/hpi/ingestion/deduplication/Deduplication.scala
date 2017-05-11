@@ -9,7 +9,6 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
 import scala.io.Source
 import scala.xml.{Node, XML}
 
@@ -83,13 +82,13 @@ object Deduplication extends SparkJob {
 			.mkString("\n"))
 
 		val configSettings = xml \\ "config" \ "sourceSettings"
-		settings = configSettings.head.child
+		this.settings = configSettings.head.child
 			.collect {
 				case node: Node if node.text.trim.nonEmpty => (node.label, node.text)
 			}.toMap
 
 		val attributes = xml \\ "config" \ "simMeasurements" \ "attribute"
-		config = attributes.map { node =>
+		this.config = attributes.map { node =>
 			val key = (node \ "key").text
 			val scoreConfigs = (node \ "feature").map { feature =>
 				val similarityMeasure = (feature \ "similarityMeasure").text
@@ -142,7 +141,7 @@ object Deduplication extends SparkJob {
 		val stagingTable = this.settings("stagingTable")
 		subjectPairs
 			.map { case (subject1, subject2, score) =>
-				(subject1.id, List((subject2, stagingTable, score)))
+				(subject1.id, List((subject2.id, stagingTable, score)))
 			}.reduceByKey(_ ::: _)
 			.map(DuplicateCandidates.tupled)
 	}

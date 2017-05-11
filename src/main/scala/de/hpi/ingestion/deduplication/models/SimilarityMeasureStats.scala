@@ -2,7 +2,6 @@ package de.hpi.ingestion.deduplication.models
 
 import java.util.UUID
 import com.datastax.driver.core.utils.UUIDs
-import org.apache.spark.rdd.RDD
 
 /**
   * Case class for corresponding sim_measure_stats cassandra table
