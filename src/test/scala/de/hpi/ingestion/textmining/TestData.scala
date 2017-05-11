@@ -2,7 +2,7 @@ package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
-
+import scala.collection.JavaConversions._
 import org.jsoup.nodes.Element
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
@@ -10,6 +10,11 @@ import de.hpi.ingestion.deduplication.models.PrecisionRecallDataTuple
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.mllib.regression.LabeledPoint
+import org.jsoup.Jsoup
+import org.jsoup.nodes.{Element, TextNode}
 
 import scala.io.{BufferedSource, Source}
 
@@ -56,6 +61,15 @@ object TestData {
 		)
 	}
 
+	def filteredUncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence", "."),
+			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", ",", "Main-Kinzig-Kreis", "Hessen", "."),
+			List(":", "Audi", ",", "Brachttal", ",", "historisches", "Jahr", ".", ":", "Hessen", ",", "Main-Kinzig-Kreis", ",", "Büdinger", "Wald", ",", "Backfisch", "nochmal", "Hessen", "."),
+			List("Satz", "enthält", "Klammern", "-LRB-", "evtl", ".", "problematisch", "-RRB-", ".")
+		)
+	}
+
 	def stemmedTokenizedSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
@@ -74,12 +88,30 @@ object TestData {
 		)
 	}
 
+	def stemmedAndFilteredUncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("thi", "is", "a", "test", "sentenc", "."),
+			List("streitberg", "ortsteil", "gemei", "brachttal", ",", "main-kinzig-kreis", "hess", "."),
+			List(":", "audi", ",", "brachttal", ",", "historisch", "jahr", ".", ":", "hess", ",", "main-kinzig-kreis", ",", "buding", "wald", ",", "backfisch", "nochmal", "hess", "."),
+			List("satx", "enthal", "klamm", "-lrb-", "evtl", ".", "problematisch", "-rrb-", ".")
+		)
+	}
+
 	def reversedSentences(): List[String] = {
 		List(
 			"This is a test sentence",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
 			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
 			"Dieser Satz enthält Klammern -LRB- evtl problematisch -RRB-"
+		)
+	}
+
+	def cleanedReversedSentences(): List[String] = {
+		List(
+			"This is a test sentence",
+			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
+			"Dieser Satz enthält Klammern evtl problematisch"
 		)
 	}
 
@@ -130,7 +162,7 @@ object TestData {
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
-	def articlesWithContextTestSet(): Set[ParsedWikipediaEntry] = {
+	def articlesWithContextSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
@@ -170,7 +202,7 @@ object TestData {
 			Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
-	def articlesWithLinkContextsTestSet(): Set[ParsedWikipediaEntry] = {
+	def articlesWithLinkContextsSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
@@ -309,35 +341,35 @@ object TestData {
 
 	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {
 		sc.parallelize(List(
-			Alias("Audi", Map(), 1, 1),
-			Alias("Audi", Map(), 1, 1),
-			Alias("Audi", Map(), 0, 1),
-			Alias("Brachttal", Map(), 1, 1),
-			Alias("Brachttal", Map(), 1, 1),
-			Alias("Main-Kinzig-Kreis", Map(), 1, 1),
-			Alias("Main-Kinzig-Kreis", Map(), 0, 1),
-			Alias("Hessen", Map(), 1, 1),
-			Alias("Hessen", Map(), 0, 1),
-			Alias("1377", Map(), 1, 1),
-			Alias("Büdinger Wald", Map(), 1, 1),
-			Alias("Büdinger Wald", Map(), 0, 1),
-			Alias("Backfisch", Map(), 0, 1),
-			Alias("Streitberg", Map(), 0, 1),
-			Alias("historisches Jahr", Map(), 1, 1)
+			Alias("Audi", Map(), Option(1), Option(1)),
+			Alias("Audi", Map(), Option(1), Option(1)),
+			Alias("Audi", Map(), Option(0), Option(1)),
+			Alias("Brachttal", Map(), Option(1), Option(1)),
+			Alias("Brachttal", Map(), Option(1), Option(1)),
+			Alias("Main-Kinzig-Kreis", Map(), Option(1), Option(1)),
+			Alias("Main-Kinzig-Kreis", Map(), Option(0), Option(1)),
+			Alias("Hessen", Map(), Option(1), Option(1)),
+			Alias("Hessen", Map(), Option(0), Option(1)),
+			Alias("1377", Map(), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map(), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map(), Option(0), Option(1)),
+			Alias("Backfisch", Map(), Option(0), Option(1)),
+			Alias("Streitberg", Map(), Option(0), Option(1)),
+			Alias("historisches Jahr", Map(), Option(1), Option(1))
 		))
 	}
 
 	def countedAliasesTestRDD(sc: SparkContext): RDD[Alias] = {
 		sc.parallelize(List(
-			Alias("Audi", Map(), 2, 3),
-			Alias("Brachttal", Map(), 2, 2),
-			Alias("Main-Kinzig-Kreis", Map(), 1, 2),
-			Alias("Hessen", Map(), 1, 2),
-			Alias("1377", Map(), 1, 1),
-			Alias("Büdinger Wald", Map(), 1, 2),
-			Alias("Backfisch", Map(), 0, 1),
-			Alias("Streitberg", Map(), 0, 1),
-			Alias("historisches Jahr", Map(), 1, 1)
+			Alias("Audi", Map(), Option(2), Option(3)),
+			Alias("Brachttal", Map(), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map(), Option(1), Option(2)),
+			Alias("Hessen", Map(), Option(1), Option(2)),
+			Alias("1377", Map(), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map(), Option(1), Option(2)),
+			Alias("Backfisch", Map(), Option(0), Option(1)),
+			Alias("Streitberg", Map(), Option(0), Option(1)),
+			Alias("historisches Jahr", Map(), Option(1), Option(1))
 		))
 	}
 
@@ -349,35 +381,49 @@ object TestData {
 			Alias("Hessen", Map("Hessen" -> 1)),
 			Alias("1377", Map("1377" -> 1)),
 			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1)),
-			Alias("historisches Jahr", Map("1337" -> 1))
+			Alias("historisches Jahr", Map("1377" -> 1))
 		)
 	}
 
-	def aliasCountsSet(): Set[(String, Int, Int)] = {
+	def aliasCountsSet(): Set[(String, Option[Int], Option[Int])] = {
 		Set(
-			("Audi", 2, 3),
-			("Brachttal", 2, 2),
-			("Main-Kinzig-Kreis", 1, 2),
-			("Hessen", 1, 2),
-			("1377", 1, 1),
-			("Büdinger Wald", 1, 2),
-			("Backfisch", 0, 1),
-			("Streitberg", 0, 1),
-			("historisches Jahr", 1, 1))
+			("Audi", Option(2), Option(3)),
+			("Brachttal", Option(2), Option(2)),
+			("Main-Kinzig-Kreis", Option(1), Option(2)),
+			("Hessen", Option(1), Option(2)),
+			("1377", Option(1), Option(1)),
+			("Büdinger Wald", Option(1), Option(2)),
+			("Backfisch", Option(0), Option(1)),
+			("Streitberg", Option(0), Option(1)),
+			("historisches Jahr", Option(1), Option(1))
+		)
 	}
 
-	def linkProbabilitiesTestRDD(sc: SparkContext): RDD[(String, Double)] = {
-		sc.parallelize(List(
-			("Audi", 2.0 / 3),
-			("Brachttal", 1.0),
-			("Main-Kinzig-Kreis", 1.0 / 2),
-			("Hessen", 1.0 / 2),
-			("1377", 1.0),
-			("Büdinger Wald", 1.0 / 2),
-			("Backfisch", 0.0),
-			("Streitberg", 0.0),
-			("historisches Jahr", 1.0)))
-			.sortBy(_._1)
+	def finalAliasesSet(): Set[Alias] = {
+		Set(
+			Alias("Audi", Map("Audi" -> 2), Option(2), Option(3)),
+			Alias("Brachttal", Map("Brachttal" -> 2), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Option(1), Option(2)),
+			Alias("Hessen", Map("Hessen" -> 1), Option(1), Option(2)),
+			Alias("1377", Map("1377" -> 1), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("1377" -> 1), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Audi" -> 1), Option(1), Option(2)), // negative example
+			Alias("historisches Jahr", Map("1377" -> 1)) // incomplete table entry
+		)
+	}
+
+	def aliasesWithExistingPagesSet(): Set[Alias] = {
+		// these pages do not fit to the aliases but are required for the tests
+		Set(
+			Alias("Audi", Map("Audi Test mit Link" -> 2), Option(2), Option(3)),
+			Alias("Brachttal", Map("Audi Test ohne Link" -> 2), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Streitberg (Brachttal)" -> 1), Option(1), Option(2)),
+			Alias("Hessen", Map("Streitberg (Brachttal)" -> 1), Option(1), Option(2)),
+			Alias("1377", Map("Testartikel" -> 1), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Testartikel" -> 1), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("Testartikel" -> 1), Option(1), Option(1))
+		)
 	}
 
 	def allPageNamesTestRDD(sc: SparkContext): RDD[String] = {
@@ -392,20 +438,20 @@ object TestData {
 	}
 
 	def allPageNamesOfTestArticleList(): Set[String] = {
-		Set(
-			"Audi",
+		Set("Audi",
 			"Brachttal",
 			"1377")
 	}
 
-	def articleContextwordSets(): Map[String, Set[String]] = {
+	def articleContextWordSets(): Map[String, Set[String]] = {
 		Map(
 			"Testartikel" -> Set("Links", "Audi", "Brachttal", "historisches", "Jahr", "Keine",
 				"Main-Kinzig-Kreis", "Büdinger", "Wald", "Backfisch", "und", "nochmal", "Hessen"),
 			"Streitberg (Brachttal)" ->
 				Set("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde",
 					"Im", "Jahre", "1500", "ist", "von", "Stridberg", "die", "Vom", "Mittelalter",
-					"bis", "ins", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte"))
+					"bis", "ins", "Jahrhundert", "hatte", "der", "Ort", "Waldrechte")
+		)
 	}
 
 	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
@@ -438,7 +484,8 @@ object TestData {
 			DocumentFrequency("einer", 2),
 			DocumentFrequency("ein", 2),
 			DocumentFrequency("Einer", 1),
-			DocumentFrequency("Ein", 1))
+			DocumentFrequency("Ein", 1)
+		)
 	}
 
 	def incorrectStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
@@ -471,10 +518,11 @@ object TestData {
 			DocumentFrequency("historisch", 1),
 			DocumentFrequency("kein", 1),
 			DocumentFrequency("backfisch", 1),
-			DocumentFrequency("nochmal", 1))
+			DocumentFrequency("nochmal", 1)
+		)
 	}
 
-	def filteredStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def filteredStemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("audi", 3),
@@ -486,19 +534,21 @@ object TestData {
 			DocumentFrequency("buding", 2),
 			DocumentFrequency("wald", 2),
 			DocumentFrequency("jahr", 2),
-			DocumentFrequency("und", 2))
+			DocumentFrequency("und", 2)
+		)
 	}
 
-	def filteredStemmedDocumentFrequenciesSmallTestSet(): Set[DocumentFrequency] = {
+	def filteredStemmedDocumentFrequenciesSmallSet(): Set[DocumentFrequency] = {
 		// without article about Streitburg
 		Set(
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("ist", 2),
 			DocumentFrequency("hier", 2),
-			DocumentFrequency("verlink", 2))
+			DocumentFrequency("verlink", 2)
+		)
 	}
 
-	def inverseDocumentFrequenciesTestSet(): Set[(String, Double)] = {
+	def inverseDocumentFrequenciesSet(): Set[(String, Double)] = {
 		val oneOccurrence = 0.6020599913279624
 		val threeOccurrences = 0.12493873660829993
 		Set(
@@ -506,7 +556,7 @@ object TestData {
 			("backfisch", oneOccurrence))
 	}
 
-	def tfidfContextsTestSet(): Set[(String, Map[String, Double])] = {
+	def tfidfContextsSet(): Set[(String, Map[String, Double])] = {
 		val tf1df1 = 0.47712125471966244
 		val tf1df2 = 0.17609125905568124
 		val tf2df1 = 0.9542425094393249
@@ -514,7 +564,70 @@ object TestData {
 		Set(
 			("Audi Test mit Link", Map("audi" -> df3, "verlink" -> tf1df2)),
 			("Audi Test ohne Link", Map("audi" -> df3, "verlink" -> tf1df2)),
-			("Testartikel", Map("audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
+			("Testartikel", Map("audi" -> df3, "brachttal" -> tf1df1, "historisch" -> tf1df1, "jahr" -> tf1df1, "hess" -> tf2df1, "main-kinzig-kreis" -> tf1df1, "buding" -> tf1df1, "wald" -> tf1df1, "backfisch" -> tf1df1, "nochmal" -> tf1df1))
+		)
+	}
+
+	def articleWordsTfidfMap(): Map[String, Map[String, Double]] = {
+		// considered to be retrieved from 7 documents
+		val tf1df1 = 0.845
+		val tf1df2 = 0.544
+		val tf1df3 = 0.368
+		Map(
+			"Audi" -> Map("audi" -> tf1df1, "ist" -> tf1df3, "ein" -> tf1df3, "automobilhersteller" -> tf1df1),
+			"Brachttal" -> Map("brachttal" -> tf1df1, "ist" -> tf1df3, "irgendein" -> tf1df1, "ortsteil" -> tf1df1),
+			"Main-Kinzig-Kreis" -> Map("der" -> tf1df2, "main-kinzig-kreis" -> tf1df2, "ein" -> tf1df3, "einwohnerzahl" -> tf1df1),
+			"Hessen" -> Map("hessen" -> tf1df1, "ist" -> tf1df3, "der" -> tf1df2, "main-kinzig-kreis" -> tf1df2),
+			"1377" -> Map("ein" -> tf1df3, "jahr" -> tf1df2),
+			"Büdinger Wald" -> Map("waldrech" -> tf1df1),
+			"historisches Jahr" -> Map("jahr" -> tf1df2)
+		)
+	}
+
+	def shortLinkContextsTfidfList(): List[(Link, Map[String, Double])] = {
+		// considered to be retrieved from 7 documents
+		val tf1df1 = 0.845
+		val tf1df2 = 0.544
+		val tf1df3 = 0.368
+		List(
+			(Link("Audi", "Audi", Option(9)), Map("hier" -> tf1df2, "ist" -> tf1df3, "automobilhersteller" -> tf1df1)),
+			(Link("Audi", "Audi", Option(7)), Map("audi" -> tf1df2, "ein" -> tf1df3)),
+			(Link("Brachttal", "Brachttal", Option(55)), Map("ist" -> tf1df3, "ortsteil" -> tf1df1)),
+			(Link("Brachttal", "Brachttal", Option(13)), Map("tal" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)), Map("einwohnerzahl" -> tf1df1, "ein" -> tf1df3, "hessen" -> tf1df2)),
+			(Link("Hessen", "Hessen", Option(87)), Map("main-kinzig-kreis" -> tf1df2)),
+			(Link("1377", "1377", Option(225)), Map("jahr" -> tf1df2)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546)), Map("waldrech" -> tf1df1)),
+			(Link("historisches Jahr", "1377", Option(24)), Map("jahr" -> tf1df2))
+		)
+	}
+
+	def aliasProbabilitiesSet(): Set[(String, (String, Double, Double))] = {
+		Set(
+			("Audi", ("Audi", 0.6666666666666666, 1.0)),
+			("Brachttal", ("Brachttal", 1.0, 1.0)),
+			("Main-Kinzig-Kreis", ("Main-Kinzig-Kreis", 0.5, 1.0)),
+			("Hessen", ("Hessen", 0.5, 1.0)),
+			("1377", ("1377", 1.0, 1.0)),
+			("Büdinger Wald", ("Büdinger Wald", 0.5, 1.0)),
+			("historisches Jahr", ("1377", 1.0, 1.0)),
+			("Büdinger Wald", ("Audi", 0.5, 1.0))
+		)
+	}
+
+	def featureEntriesSet(): Set[FeatureEntry] = {
+		Set(
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, true, null),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, true, null),
+			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
+			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
+			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
+		)
 	}
 
 	def unstemmedGermanWordsTestSet(): Set[String] = {
@@ -677,6 +790,22 @@ object TestData {
 		)
 	}
 
+	def rawEntryWithAlternativeWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("""Der '''Fehler 2.&nbsp;Art''', auch als '''β-Fehler''' (Beta-Fehler)"""))
+	}
+
+	def rawEntryWithStandardWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("""Der '''Fehler 2. Art''', auch als '''β-Fehler''' (Beta-Fehler)"""))
+	}
+
+	def entryWithAlternativeWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
+	}
+
+	def entryWithStandardWhitespaces(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
+	}
+
 	def groupedAliasesSet(): Set[Alias] = {
 		Set(
 			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
@@ -717,7 +846,8 @@ object TestData {
 			"Ingolstadt" -> 0.0,
 			"Bayern" -> 1.0,
 			"Automobilhersteller" -> 0.0,
-			"Zerfall" -> 0.0)
+			"Zerfall" -> 0.0
+		)
 	}
 
 	def allPagesTestList(): List[String] = {
@@ -725,7 +855,8 @@ object TestData {
 			"Automobilhersteller",
 			"Ingolstadt",
 			"Bayern",
-			"Zerfall (Album)")
+			"Zerfall (Album)"
+		)
 	}
 
 	def smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
@@ -967,6 +1098,69 @@ object TestData {
 				Link("Duden", "Duden", Option(3639)),
 				Link("Galgenhumor", "Galgenhumor", Option(3806))
 			))
+	}
+
+	def parsedEntryFoundAliases(): Set[String] = {
+		Set(
+			"Hickelkasten",
+			"Humor",
+			"satirischer",
+			"paradoxer",
+			"Stilfiguren",
+			"Kontroversen",
+			"guten Geschmacks",
+			"Surrealisten",
+			"André Breton",
+			"Desillusion",
+			"Nihilismus",
+			"Freud",
+			"Hegel",
+			"Anthologie",
+			"Jonathan Swift",
+			"Directions to Servants",
+			"A Modest Proposal",
+			"A Meditation on a Broom-Stick",
+			"Aphorismen",
+			"Nathanael West",
+			"Vladimir Nabokov",
+			"Joseph Heller",
+			"Catch-22",
+			"Kurt Vonnegut",
+			"Slaughterhouse Five",
+			"Thomas Pynchon",
+			"V.",
+			"Gravity 's Rainbow",
+			"Stanley Kubrick",
+			"Dr. Strangelove",
+			"Absurden Theater",
+			"Eugène Ionesco",
+			"Shakespeares",
+			"Christian-Albrechts-Universität zu Kiel",
+			"Komödientyp",
+			"sarkastischen",
+			"absurden",
+			"morbiden",
+			"tabuisierte",
+			"sakrosankt",
+			"politischen Unkorrektheiten",
+			"sexuellen und skatologischen",
+			"zynischer",
+			"Satire",
+			"Robert Altmans",
+			"M * A * S * H",
+			"Mike Nichols",
+			"Catch-22",
+			"Joseph Heller",
+			"Postmoderne",
+			"Quentin Tarantinos",
+			"Pulp Fiction",
+			"Lars von Triers",
+			"Idioterne",
+			"François Bondy",
+			"Die Zeit",
+			"Witz",
+			"Duden",
+			"Galgenhumor")
 	}
 
 	def parsedEntryWithDifferentLinkTypes(): ParsedWikipediaEntry = {
@@ -1265,11 +1459,18 @@ object TestData {
 		trie
 	}
 
-	def uncleanedFoundAliaes(): List[String] = {
+	def fullTrieStream(): ByteArrayInputStream = {
+		val aliasStream = Source.fromURL(getClass.getResource("/textmining/triealiases"))
+		val trieStream = new ByteArrayOutputStream(1024 * 10)
+		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
+		new ByteArrayInputStream(trieStream.toByteArray)
+	}
+
+	def uncleanedFoundAliases(): List[String] = {
 		List("Alias 1", "", "Alias 2", "Alias 1", "Alias 3")
 	}
 
-	def cleanedFoundAliaes(): List[String] = {
+	def cleanedFoundAliases(): List[String] = {
 		List("Alias 1", "Alias 2", "Alias 3")
 	}
 
@@ -1278,6 +1479,234 @@ object TestData {
 		val trieStream = new ByteArrayOutputStream(1024)
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
+	}
+
+  def linkExtenderPagesSet(): Set[Page] = {
+		Set(
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
+			Page("Bayern", Map("Bayern" -> 1)),
+			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+		)
+	}
+
+	def linkExtenderPagesMap(): Map[String, Map[String, Int]] = {
+		Map(
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
+			"Bayern" -> Map("Bayern" -> 1),
+			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1),
+			"Zerfall (Album)" -> Map("Zerfall" -> 1)
+		)
+	}
+
+	def linkExtenderParsedEntry(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry("Audi", Option("Audi ist Audi AG. VW ist Volkswagen AG"),
+			List(
+				Link("VW", "VW", Option(18))
+			)
+		)
+	}
+
+	def linkExtenderFoundPages(): Map[String, Map[String, Int]] = {
+		Map(
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
+			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1)
+		)
+	}
+
+	def linkExtenderFoundAliases(): Map[String, String] = {
+		Map(
+			"Audi" -> "Audi",
+			"Audi AG" -> "Audi",
+			"VW" -> "VW",
+			"Volkswagen AG" -> "VW"
+		)
+	}
+
+	def linkExtenderExtendedParsedEntry(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("Audi ist Audi AG. VW ist Volkswagen AG"),
+				List(Link("VW", "VW", Option(18), Map())),
+				extendedlinks = List(
+					Link("Audi", "Audi", Option(0)),
+					Link("Audi AG", "Audi", Option(9)),
+					Link("VW", "VW", Option(18)),
+					Link("Volkswagen AG", "VW", Option(25))
+				)
+			)
+		)
+	}
+
+	def linkExtenderTrie(tokenizer: IngestionTokenizer): TrieNode = {
+		val trie = new TrieNode()
+		val aliasList = List("Audi", "Audi AG", "VW", "Volkswagen AG")
+		for(alias <- aliasList) {
+			trie.append(tokenizer.process(alias))
+		}
+		trie
+	}
+
+	def bigLinkExtenderParsedEntry(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Postbank-Hochhaus (Berlin)",
+			Option("Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg. Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig. Aufgrund der Deutschen Teilung wurde das Postscheckamt in der Dorotheenstraße nur noch von der Deutschen Post der DDR genutzt. Für den Westteil von Berlin gab es damit zunächst kein eigenes Postscheckamt und daher wurde dort 1948 das Postscheckamt West eröffnet. 2014 kaufte die CG-Gruppe das Gebäude von der Postbank, die das Gebäude als Mieter bis Mitte 2016 weiternutzen will. Nach dem Auszug der Postbank soll das Hochhaus saniert und zu einem Wohn-und Hotelkomplex umgebaut werden. Gottfried Gruner Nach den Plänen des Oberpostdirektors Prosper Lemoine wurde das Gebäude des damaligen Postscheckamtes Berlin West von 1965 bis 1971 errichtet. Es hat 23 Geschosse und gehört mit einer Höhe von 89 Metern bis heute zu den höchsten Gebäuden in Berlin. Das Hochhaus besitzt eine Aluminium-Glas-Fassade und wurde im sogenannten „Internationalen Stil“ errichtet. Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. Zu dem Gebäude gehören zwei Anbauten. In dem zweigeschossigen Flachbau waren ein Rechenzentrum und die Schalterhalle untergebracht. In dem sechsgeschossiges Gebäude waren ein Heizwerk und eine Werkstatt untergebracht. Vor dem Hochhaus befindet sich der Große Brunnen von Gottfried Gruner. Er besteht aus 18 Säulen aus Bronze und wurde 1972 in Betrieb genommen. Im Postbank-Hochhaus befinden sich mehrere UKW-Sender, die von Media Broadcast betrieben werden. Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit. Über die Antennenträger auf dem Dach werden u. a. folgende Hörfunkprogramme auf Ultrakurzwelle ausgestrahlt: Was ist das für eins Masashi \"Jumbo\" Ozaki?"),
+			List(
+				Link("Hochhaus", "Hochhaus", Option(113)),
+				Link("Postbank", "Postbank", Option(126)),
+				Link("Berliner", "Berlin", Option(190)),
+				Link("Kreuzberg", "Berlin-Kreuzberg", Option(208)),
+				Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(465)),
+				Link("Potsdam", "Potsdam", Option(483)),
+				Link("Magdeburg", "Magdeburg", Option(492)),
+				Link("Stettin", "Stettin", Option(506)),
+				Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
+				Link("New York.", "New York City", Option(1472)),
+				Link("Bronze", "Bronze", Option(1800)),
+				Link("Media Broadcast", "Media Broadcast", Option(1906)),
+				Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
+				Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
+				Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2008))
+			)
+		)
+	}
+
+	def bigLinkExtenderPagesSet(): Set[Page] = {
+		Set(
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
+			Page("VW", Map("Volkswagen AG" -> 2, "VW" -> 2)),
+			Page("Hochhaus", Map("Hochhaus" -> 2, "Gebäude" -> 1)),
+			Page("Postbank", Map("Postbank" -> 2)),
+			Page("Berlin", Map("Berlin" -> 2, "(" -> 1, "Berliner" -> 2)),
+			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 2)),
+			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 2)),
+			Page("Potsdam", Map("Potsdam" -> 2)),
+			Page("Magdeburg", Map("Magdeburg" -> 2)),
+			Page("Stettin", Map("Stettin" -> 2)),
+			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 2)),
+			Page("New York City", Map("New York." -> 2)),
+			Page("Bronze", Map("Bronze" -> 2)),
+			Page("Media Broadcast", Map("Media Broadcast" -> 2)),
+			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 2, "DFMG" -> 11)),
+			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 2)),
+			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 2))
+		)
+	}
+
+	def bigLinkExtenderExtendedParsedEntry(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Postbank-Hochhaus (Berlin)",
+				Option("Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg. Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig. Aufgrund der Deutschen Teilung wurde das Postscheckamt in der Dorotheenstraße nur noch von der Deutschen Post der DDR genutzt. Für den Westteil von Berlin gab es damit zunächst kein eigenes Postscheckamt und daher wurde dort 1948 das Postscheckamt West eröffnet. 2014 kaufte die CG-Gruppe das Gebäude von der Postbank, die das Gebäude als Mieter bis Mitte 2016 weiternutzen will. Nach dem Auszug der Postbank soll das Hochhaus saniert und zu einem Wohn-und Hotelkomplex umgebaut werden. Gottfried Gruner Nach den Plänen des Oberpostdirektors Prosper Lemoine wurde das Gebäude des damaligen Postscheckamtes Berlin West von 1965 bis 1971 errichtet. Es hat 23 Geschosse und gehört mit einer Höhe von 89 Metern bis heute zu den höchsten Gebäuden in Berlin. Das Hochhaus besitzt eine Aluminium-Glas-Fassade und wurde im sogenannten „Internationalen Stil“ errichtet. Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. Zu dem Gebäude gehören zwei Anbauten. In dem zweigeschossigen Flachbau waren ein Rechenzentrum und die Schalterhalle untergebracht. In dem sechsgeschossiges Gebäude waren ein Heizwerk und eine Werkstatt untergebracht. Vor dem Hochhaus befindet sich der Große Brunnen von Gottfried Gruner. Er besteht aus 18 Säulen aus Bronze und wurde 1972 in Betrieb genommen. Im Postbank-Hochhaus befinden sich mehrere UKW-Sender, die von Media Broadcast betrieben werden. Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit. Über die Antennenträger auf dem Dach werden u. a. folgende Hörfunkprogramme auf Ultrakurzwelle ausgestrahlt:"),
+				List(
+					Link("Hochhaus", "Hochhaus", Option(113)),
+					Link("Postbank", "Postbank", Option(126)),
+					Link("Berliner", "Berlin", Option(190)),
+					Link("Kreuzberg", "Berlin-Kreuzberg", Option(208)),
+					Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(465)),
+					Link("Potsdam", "Potsdam", Option(483)),
+					Link("Magdeburg", "Magdeburg", Option(492)),
+					Link("Stettin", "Stettin", Option(506)),
+					Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
+					Link("New York.", "New York City", Option(1472)),
+					Link("Bronze", "Bronze", Option(1800)),
+					Link("Media Broadcast", "Media Broadcast", Option(1906)),
+					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
+					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
+					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
+				),
+				extendedlinks = List(
+					Link("Berlin", "Berlin", Option(53)),
+					Link("Berlin", "Berlin", Option(97)),
+					Link("Hochhaus", "Hochhaus", Option(113)),
+					Link("Postbank", "Postbank", Option(126)),
+					Link("Berliner", "Berlin", Option(190)),
+					Link("Kreuzberg", "Berlin-Kreuzberg", Option(208)),
+					Link("Berlin", "Berlin", Option(241)),
+					Link("Berlin", "Berlin", Option(457)),
+					Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(465)),
+					Link("Potsdam", "Potsdam", Option(483)),
+					Link("Magdeburg", "Magdeburg", Option(492)),
+					Link("Stettin", "Stettin", Option(506)),
+					Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
+					Link("Berlin", "Berlin", Option(673)),
+					Link("Gebäude", "Hochhaus", Option(818)),
+					Link("Postbank", "Postbank", Option(834)),
+					Link("Gebäude", "Hochhaus", Option(852)),
+					Link("Postbank", "Postbank", Option(925)),
+					Link("Hochhaus", "Hochhaus", Option(943)),
+					Link("Gebäude", "Hochhaus", Option(1093)),
+					Link("Berlin", "Berlin", Option(1131)),
+					Link("Berlin", "Berlin", Option(1270)),
+					Link("Hochhaus", "Hochhaus", Option(1282)),
+					Link("New York.", "New York City", Option(1472)),
+					Link("Gebäude", "Hochhaus", Option(1489)),
+					Link("Gebäude", "Hochhaus", Option(1639)),
+					Link("Hochhaus", "Hochhaus", Option(1708)),
+					Link("Bronze", "Bronze", Option(1800)),
+					Link("Media Broadcast", "Media Broadcast", Option(1906)),
+					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
+					Link("DFMG", "Deutsche Funkturm", Option(1963)),
+					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
+					Link("Berliner", "Berlin", Option(2052)),
+					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
+				)
+			)
+		)
+  }
+
+  def featureEntries(): List[FeatureEntry] = {
+		List(
+			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
+			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
+			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true),
+			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false),
+			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false))
+	}
+
+	def labeledPoints(): List[LabeledPoint] = {
+		List(
+			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
+			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
+			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
+			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
+			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
+	}
+
+	def textLinkHtml(): List[Element] = {
+		val elements = Source.fromURL(getClass.getResource("/textmining/textlinks.html"))
+			.getLines()
+			.toList
+			.map(_.replaceAll("\\\\n", "\n"))
+			.map(Jsoup.parse)
+			.map(_.body)
+		elements(3).childNodes.head.asInstanceOf[TextNode].text("\n")
+		elements
+	}
+
+	def redirectHTML(): List[(String, String, String)] = {
+		Source.fromURL(getClass.getResource("/textmining/textlinks.html"))
+			.getLines()
+			.toList
+			.map(_.replaceAll("\\\\n", "\n"))
+			.map(("title", _, ""))
+	}
+
+	def extractedRedirects(): List[List[Link]] = {
+		List(
+			List(Link("title", "Zwillinge")),
+			List(Link("title", "Zwillinge")),
+			Nil,
+			Nil)
+	}
+
+	def textLinkTuples(): List[(String, List[Link])] = {
+		List(
+			("Wort Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(5)))),
+			("Wort 2", List(Link("Zwillinge", "Zwillinge", Option(7)))),
+			("Wort 3", Nil),
+			("", Nil))
 	}
 
 	def wikidataEntities(): List[WikiDataEntity] = {

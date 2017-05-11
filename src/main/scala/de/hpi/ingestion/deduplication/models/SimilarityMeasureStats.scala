@@ -15,4 +15,3 @@ case class SimilarityMeasureStats(
 	data: List[PrecisionRecallDataTuple] = Nil,
 	comment: Option[String] = None
 )
-

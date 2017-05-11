@@ -12,6 +12,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FileSystem, Path}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 import scala.collection.mutable
 
@@ -31,6 +33,7 @@ object AliasTrieSearch extends SparkJob {
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.TrieKryoRegistrator"
 
 	// $COVERAGE-OFF$
+	var trieStreamFunction = hdfsFileStream _
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
 	  *
@@ -62,7 +65,7 @@ object AliasTrieSearch extends SparkJob {
 	  *
 	  * @return Input Stream pointing to the file in the HDFS
 	  */
-	def hdfsFileStream(): FSDataInputStream = {
+	def hdfsFileStream(): InputStream = {
 		val hadoopConf = new Configuration()
 		val fs = FileSystem.get(hadoopConf)
 		fs.open(new Path(trieName))
@@ -136,7 +139,7 @@ object AliasTrieSearch extends SparkJob {
 			.map(articles =>
 				articles
 					.mapPartitions({ partition =>
-						val trie = deserializeTrie(hdfsFileStream())
+						val trie = deserializeTrie(trieStreamFunction())
 						partition.map(matchEntry(_, trie, tokenizer))
 					}, true))
 			.toAnyRDD()

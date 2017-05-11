@@ -5,6 +5,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
+import de.hpi.ingestion.textmining.tokenizer.{CleanCoreNLPTokenizer, IngestionTokenizer}
 
 class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Matchers {
 
@@ -31,7 +32,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	}
 
 	"Wikipedia articles with contexts" should "be exactly these wikipedia articles" in {
-		val expectedArticles = TestData.articlesWithContextTestSet()
+		val expectedArticles = TestData.articlesWithContextSet()
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.filter(article => expectedArticles.exists(_.title == article.title))
@@ -60,7 +61,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	they should "be exactly these articles" in {
 		val enrichedLinkArticles = TestData.parsedWikipediaTestSet()
 			.map(TermFrequencyCounter.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
-		val expectedArticles = TestData.articlesWithLinkContextsTestSet()
+		val expectedArticles = TestData.articlesWithLinkContextsSet()
 		enrichedLinkArticles shouldEqual expectedArticles
 	}
 
