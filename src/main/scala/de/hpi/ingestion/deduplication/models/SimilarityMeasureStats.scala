@@ -12,5 +12,5 @@ import com.datastax.driver.core.utils.UUIDs
 case class SimilarityMeasureStats(
 	id: UUID = UUIDs.timeBased(),
 	data: List[PrecisionRecallDataTuple] = Nil,
-	comment: Option[String]
+	comment: Option[String] = None
 )
