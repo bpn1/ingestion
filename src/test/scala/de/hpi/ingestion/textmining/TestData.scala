@@ -1,6 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+
 import scala.collection.JavaConversions._
 import org.jsoup.nodes.Element
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
@@ -8,6 +9,7 @@ import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.jsoup.Jsoup
@@ -58,6 +60,15 @@ object TestData {
 		)
 	}
 
+	def filteredUncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence", "."),
+			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", ",", "Main-Kinzig-Kreis", "Hessen", "."),
+			List(":", "Audi", ",", "Brachttal", ",", "historisches", "Jahr", ".", ":", "Hessen", ",", "Main-Kinzig-Kreis", ",", "Büdinger", "Wald", ",", "Backfisch", "nochmal", "Hessen", "."),
+			List("Satz", "enthält", "Klammern", "-LRB-", "evtl", ".", "problematisch", "-RRB-", ".")
+		)
+	}
+
 	def stemmedTokenizedSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
@@ -76,12 +87,30 @@ object TestData {
 		)
 	}
 
+	def stemmedAndFilteredUncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("thi", "is", "a", "test", "sentenc", "."),
+			List("streitberg", "ortsteil", "gemei", "brachttal", ",", "main-kinzig-kreis", "hess", "."),
+			List(":", "audi", ",", "brachttal", ",", "historisch", "jahr", ".", ":", "hess", ",", "main-kinzig-kreis", ",", "buding", "wald", ",", "backfisch", "nochmal", "hess", "."),
+			List("satx", "enthal", "klamm", "-lrb-", "evtl", ".", "problematisch", "-rrb-", ".")
+		)
+	}
+
 	def reversedSentences(): List[String] = {
 		List(
 			"This is a test sentence",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
 			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
 			"Dieser Satz enthält Klammern -LRB- evtl problematisch -RRB-"
+		)
+	}
+
+	def cleanedReversedSentences(): List[String] = {
+		List(
+			"This is a test sentence",
+			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
+			"Dieser Satz enthält Klammern evtl problematisch"
 		)
 	}
 
@@ -758,6 +787,14 @@ object TestData {
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
 			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet."""
 		)
+	}
+
+	def rawEntryWithAlternativeWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("""Der '''Fehler 2.&nbsp;Art''', auch als '''β-Fehler''' (Beta-Fehler)"""))
+	}
+
+	def rawEntryWithStandardWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("""Der '''Fehler 2. Art''', auch als '''β-Fehler''' (Beta-Fehler)"""))
 	}
 
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
@@ -1443,7 +1480,182 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
-	def featureEntries(): List[FeatureEntry] = {
+  def linkExtenderPagesSet(): Set[Page] = {
+		Set(
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
+			Page("Bayern", Map("Bayern" -> 1)),
+			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+		)
+	}
+
+	def linkExtenderPagesMap(): Map[String, Map[String, Int]] = {
+		Map(
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
+			"Bayern" -> Map("Bayern" -> 1),
+			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1),
+			"Zerfall (Album)" -> Map("Zerfall" -> 1)
+		)
+	}
+
+	def linkExtenderParsedEntry(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry("Audi", Option("Audi ist Audi AG. VW ist Volkswagen AG"),
+			List(
+				Link("VW", "VW", Option(18))
+			)
+		)
+	}
+
+	def linkExtenderFoundPages(): Map[String, Map[String, Int]] = {
+		Map(
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
+			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1)
+		)
+	}
+
+	def linkExtenderFoundAliases(): Map[String, String] = {
+		Map(
+			"Audi" -> "Audi",
+			"Audi AG" -> "Audi",
+			"VW" -> "VW",
+			"Volkswagen AG" -> "VW"
+		)
+	}
+
+	def linkExtenderExtendedParsedEntry(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("Audi ist Audi AG. VW ist Volkswagen AG"),
+				List(Link("VW", "VW", Option(18), Map())),
+				extendedlinks = List(
+					Link("Audi", "Audi", Option(0)),
+					Link("Audi AG", "Audi", Option(9)),
+					Link("VW", "VW", Option(18)),
+					Link("Volkswagen AG", "VW", Option(25))
+				)
+			)
+		)
+	}
+
+	def linkExtenderTrie(tokenizer: IngestionTokenizer): TrieNode = {
+		val trie = new TrieNode()
+		val aliasList = List("Audi", "Audi AG", "VW", "Volkswagen AG")
+		for(alias <- aliasList) {
+			trie.append(tokenizer.process(alias))
+		}
+		trie
+	}
+
+	def bigLinkExtenderParsedEntry(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Postbank-Hochhaus (Berlin)",
+			Option("Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg. Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig. Aufgrund der Deutschen Teilung wurde das Postscheckamt in der Dorotheenstraße nur noch von der Deutschen Post der DDR genutzt. Für den Westteil von Berlin gab es damit zunächst kein eigenes Postscheckamt und daher wurde dort 1948 das Postscheckamt West eröffnet. 2014 kaufte die CG-Gruppe das Gebäude von der Postbank, die das Gebäude als Mieter bis Mitte 2016 weiternutzen will. Nach dem Auszug der Postbank soll das Hochhaus saniert und zu einem Wohn-und Hotelkomplex umgebaut werden. Gottfried Gruner Nach den Plänen des Oberpostdirektors Prosper Lemoine wurde das Gebäude des damaligen Postscheckamtes Berlin West von 1965 bis 1971 errichtet. Es hat 23 Geschosse und gehört mit einer Höhe von 89 Metern bis heute zu den höchsten Gebäuden in Berlin. Das Hochhaus besitzt eine Aluminium-Glas-Fassade und wurde im sogenannten „Internationalen Stil“ errichtet. Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. Zu dem Gebäude gehören zwei Anbauten. In dem zweigeschossigen Flachbau waren ein Rechenzentrum und die Schalterhalle untergebracht. In dem sechsgeschossiges Gebäude waren ein Heizwerk und eine Werkstatt untergebracht. Vor dem Hochhaus befindet sich der Große Brunnen von Gottfried Gruner. Er besteht aus 18 Säulen aus Bronze und wurde 1972 in Betrieb genommen. Im Postbank-Hochhaus befinden sich mehrere UKW-Sender, die von Media Broadcast betrieben werden. Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit. Über die Antennenträger auf dem Dach werden u. a. folgende Hörfunkprogramme auf Ultrakurzwelle ausgestrahlt: Was ist das für eins Masashi \"Jumbo\" Ozaki?"),
+			List(
+				Link("Hochhaus", "Hochhaus", Option(113)),
+				Link("Postbank", "Postbank", Option(126)),
+				Link("Berliner", "Berlin", Option(190)),
+				Link("Kreuzberg", "Berlin-Kreuzberg", Option(208)),
+				Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(465)),
+				Link("Potsdam", "Potsdam", Option(483)),
+				Link("Magdeburg", "Magdeburg", Option(492)),
+				Link("Stettin", "Stettin", Option(506)),
+				Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
+				Link("New York.", "New York City", Option(1472)),
+				Link("Bronze", "Bronze", Option(1800)),
+				Link("Media Broadcast", "Media Broadcast", Option(1906)),
+				Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
+				Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
+				Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2008))
+			)
+		)
+	}
+
+	def bigLinkExtenderPagesSet(): Set[Page] = {
+		Set(
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
+			Page("VW", Map("Volkswagen AG" -> 2, "VW" -> 2)),
+			Page("Hochhaus", Map("Hochhaus" -> 2, "Gebäude" -> 1)),
+			Page("Postbank", Map("Postbank" -> 2)),
+			Page("Berlin", Map("Berlin" -> 2, "(" -> 1, "Berliner" -> 2)),
+			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 2)),
+			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 2)),
+			Page("Potsdam", Map("Potsdam" -> 2)),
+			Page("Magdeburg", Map("Magdeburg" -> 2)),
+			Page("Stettin", Map("Stettin" -> 2)),
+			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 2)),
+			Page("New York City", Map("New York." -> 2)),
+			Page("Bronze", Map("Bronze" -> 2)),
+			Page("Media Broadcast", Map("Media Broadcast" -> 2)),
+			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 2, "DFMG" -> 11)),
+			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 2)),
+			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 2))
+		)
+	}
+
+	def bigLinkExtenderExtendedParsedEntry(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Postbank-Hochhaus (Berlin)",
+				Option("Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg. Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig. Aufgrund der Deutschen Teilung wurde das Postscheckamt in der Dorotheenstraße nur noch von der Deutschen Post der DDR genutzt. Für den Westteil von Berlin gab es damit zunächst kein eigenes Postscheckamt und daher wurde dort 1948 das Postscheckamt West eröffnet. 2014 kaufte die CG-Gruppe das Gebäude von der Postbank, die das Gebäude als Mieter bis Mitte 2016 weiternutzen will. Nach dem Auszug der Postbank soll das Hochhaus saniert und zu einem Wohn-und Hotelkomplex umgebaut werden. Gottfried Gruner Nach den Plänen des Oberpostdirektors Prosper Lemoine wurde das Gebäude des damaligen Postscheckamtes Berlin West von 1965 bis 1971 errichtet. Es hat 23 Geschosse und gehört mit einer Höhe von 89 Metern bis heute zu den höchsten Gebäuden in Berlin. Das Hochhaus besitzt eine Aluminium-Glas-Fassade und wurde im sogenannten „Internationalen Stil“ errichtet. Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. Zu dem Gebäude gehören zwei Anbauten. In dem zweigeschossigen Flachbau waren ein Rechenzentrum und die Schalterhalle untergebracht. In dem sechsgeschossiges Gebäude waren ein Heizwerk und eine Werkstatt untergebracht. Vor dem Hochhaus befindet sich der Große Brunnen von Gottfried Gruner. Er besteht aus 18 Säulen aus Bronze und wurde 1972 in Betrieb genommen. Im Postbank-Hochhaus befinden sich mehrere UKW-Sender, die von Media Broadcast betrieben werden. Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit. Über die Antennenträger auf dem Dach werden u. a. folgende Hörfunkprogramme auf Ultrakurzwelle ausgestrahlt:"),
+				List(
+					Link("Hochhaus", "Hochhaus", Option(113)),
+					Link("Postbank", "Postbank", Option(126)),
+					Link("Berliner", "Berlin", Option(190)),
+					Link("Kreuzberg", "Berlin-Kreuzberg", Option(208)),
+					Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(465)),
+					Link("Potsdam", "Potsdam", Option(483)),
+					Link("Magdeburg", "Magdeburg", Option(492)),
+					Link("Stettin", "Stettin", Option(506)),
+					Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
+					Link("New York.", "New York City", Option(1472)),
+					Link("Bronze", "Bronze", Option(1800)),
+					Link("Media Broadcast", "Media Broadcast", Option(1906)),
+					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
+					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
+					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
+				),
+				extendedlinks = List(
+					Link("Berlin", "Berlin", Option(53)),
+					Link("Berlin", "Berlin", Option(97)),
+					Link("Hochhaus", "Hochhaus", Option(113)),
+					Link("Postbank", "Postbank", Option(126)),
+					Link("Berliner", "Berlin", Option(190)),
+					Link("Kreuzberg", "Berlin-Kreuzberg", Option(208)),
+					Link("Berlin", "Berlin", Option(241)),
+					Link("Berlin", "Berlin", Option(457)),
+					Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(465)),
+					Link("Potsdam", "Potsdam", Option(483)),
+					Link("Magdeburg", "Magdeburg", Option(492)),
+					Link("Stettin", "Stettin", Option(506)),
+					Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
+					Link("Berlin", "Berlin", Option(673)),
+					Link("Gebäude", "Hochhaus", Option(818)),
+					Link("Postbank", "Postbank", Option(834)),
+					Link("Gebäude", "Hochhaus", Option(852)),
+					Link("Postbank", "Postbank", Option(925)),
+					Link("Hochhaus", "Hochhaus", Option(943)),
+					Link("Gebäude", "Hochhaus", Option(1093)),
+					Link("Berlin", "Berlin", Option(1131)),
+					Link("Berlin", "Berlin", Option(1270)),
+					Link("Hochhaus", "Hochhaus", Option(1282)),
+					Link("New York.", "New York City", Option(1472)),
+					Link("Gebäude", "Hochhaus", Option(1489)),
+					Link("Gebäude", "Hochhaus", Option(1639)),
+					Link("Hochhaus", "Hochhaus", Option(1708)),
+					Link("Bronze", "Bronze", Option(1800)),
+					Link("Media Broadcast", "Media Broadcast", Option(1906)),
+					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
+					Link("DFMG", "Deutsche Funkturm", Option(1963)),
+					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
+					Link("Berliner", "Berlin", Option(2052)),
+					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
+				)
+			)
+		)
+  }
+
+  def featureEntries(): List[FeatureEntry] = {
 		List(
 			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
 			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
