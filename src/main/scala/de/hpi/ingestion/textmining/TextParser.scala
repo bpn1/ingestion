@@ -421,7 +421,7 @@ object TextParser extends SparkJob {
 		val redirectRegex = "(?i)(weiterleitung|redirect)\\s?:?\\s?"
 		val replaceString = parsableRedirect + " "
 		var cleanedText = entry.getText().replaceAll(redirectRegex, replaceString)
-		cleanedText = cleanedText.replace("\u00a0", " ")
+		cleanedText = cleanedText.replaceAll("(\u00a0|&nbsp;)", " ")
 		entry.setText(cleanedText)
 		entry
 	}
@@ -504,7 +504,7 @@ object TextParser extends SparkJob {
 
 	/**
 	  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links. Also removes all metapages
-	  * except {@categoryNamespace } pages.
+	  * except {@categoryNamespace} pages.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

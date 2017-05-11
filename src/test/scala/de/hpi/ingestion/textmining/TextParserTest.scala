@@ -323,6 +323,12 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		cleanedEntry shouldEqual TestData.entryWithStandardWhitespaces()
 	}
 
+	they should "be replaced" in {
+		val cleanedEntry = TextParser.cleanRedirectsAndWhitespaces(TestData.rawEntryWithAlternativeWhitespace())
+		val expectedEntry = TestData.rawEntryWithStandardWhitespace()
+		cleanedEntry shouldEqual expectedEntry
+	}
+
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {
 		val substring = text.substring(link.offset.get, link.offset.get + link.alias.length)
 		substring == link.alias

@@ -1,9 +1,10 @@
 package de.hpi.ingestion.textmining
 
 import org.scalatest.{FlatSpec, Matchers}
-import com.holdenkarau.spark.testing.{SharedSparkContext}
+import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 
 class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
