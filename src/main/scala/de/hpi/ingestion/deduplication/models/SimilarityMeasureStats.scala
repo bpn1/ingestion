@@ -12,6 +12,6 @@ import org.apache.spark.rdd.RDD
   */
 case class SimilarityMeasureStats(
 	id: UUID = UUIDs.timeBased(),
-	data: List[PrecisionRecallDataTuple] = List[PrecisionRecallDataTuple](),
-	comment: Option[String]
+	data: List[PrecisionRecallDataTuple] = Nil,
+	comment: Option[String] = None
 )
