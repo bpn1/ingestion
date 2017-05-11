@@ -24,13 +24,22 @@ class WikiDataNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 		result shouldEqual expected
 	}
 
+	"normalizeEmployees" should "normalize employees values" in {
+		val employees = TestData.unnormalizedEmployees
+		val result = WikiDataNormalizationStrategy.normalizeEmployees(employees)
+		val expected = TestData.normalizedEmployees
+		result shouldEqual expected
+	}
+
 	"apply" should "return the right normalization method based on a given attribute" in {
 		val inputs = List(
 			TestData.unnormalizedCoordinates,
 			TestData.unnormalizedCountries,
+			TestData.unnormalizedSectors,
+			TestData.unnormalizedEmployees,
 			List("default")
 		)
-		val attributes = List("geo_coords", "geo_country", "default")
+		val attributes = List("geo_coords", "geo_country", "gen_sectors", "gen_employees", "default")
 		val results = attributes.map(WikiDataNormalizationStrategy(_))
 		val strategies: List[(List[String] => List[String])] = List(
 			WikiDataNormalizationStrategy.normalizeCoords, WikiDataNormalizationStrategy.normalizeCountry, identity
