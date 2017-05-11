@@ -261,6 +261,11 @@ CREATE TABLE evaluation.version (
     timestamp timestamp
 );
 
+CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
+    subject_id uuid PRIMARY KEY,
+    candidates list<frozen<tuple<subject, text, double>>>
+);
+
 CREATE TABLE evaluation.dbpedia_wikidata_deduplication_only_uuid (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<uuid, text, double>>>
