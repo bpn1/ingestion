@@ -62,6 +62,19 @@ object DBpediaNormalizeStrategy extends NormalizationStrategies("categorization_
 	}
 
 	/**
+	  * Normalizes cities
+	  * @param values city list
+	  * @return normalized countries
+	  */
+	def normalizeCity(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""dbpedia-de:(.+)${city}""" => List(city)
+			case r"""(.+)${city}@de \.""" => List(city)
+			case other => List(other)
+		}
+	}
+
+	/**
 	  * Chooses the right normalization method
 	  * @param attribute Attribute to be normalized
 	  * @return Normalization method
@@ -72,6 +85,7 @@ object DBpediaNormalizeStrategy extends NormalizationStrategies("categorization_
 			case "gen_employees" => this.normalizeEmployees
 			case "geo_country" => this.normalizeCountry
 			case "geo_coords" => this.normalizeCoords
+			case "geo_city" => this.normalizeCity
 			case _ => identity
 		}
 	}

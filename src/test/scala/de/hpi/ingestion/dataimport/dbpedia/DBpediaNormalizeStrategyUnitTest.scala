@@ -5,16 +5,21 @@ import org.scalatest.{FlatSpec, Matchers}
 class DBpediaNormalizeStrategyUnitTest extends FlatSpec with Matchers {
 	"apply" should "decide, which strategy should be used regarding the input attribute" in {
 		val inputs = List(
+			TestData.unnormalizedEmployees,
 			TestData.unnormalizedCoords,
 			TestData.unnormalizedCountries,
+			TestData.unnormalizedCities,
+			TestData.unnormalizedSectors,
 			List("default")
 		)
-		val attributes = List("gen_employees", "geo_country", "geo_coords", "default")
+		val attributes = List("gen_employees", "geo_coords", "geo_country", "geo_city", "gen_sector", "default")
 		val results = attributes.map(DBpediaNormalizeStrategy(_))
 		val strategies: List[(List[String] => List[String])] = List(
 			DBpediaNormalizeStrategy.normalizeEmployees,
-			DBpediaNormalizeStrategy.normalizeCountry,
 			DBpediaNormalizeStrategy.normalizeCoords,
+			DBpediaNormalizeStrategy.normalizeCountry,
+			DBpediaNormalizeStrategy.normalizeCity,
+			DBpediaNormalizeStrategy.normalizeSector,
 			identity
 		)
 		(results, strategies, inputs).zipped
@@ -51,6 +56,13 @@ class DBpediaNormalizeStrategyUnitTest extends FlatSpec with Matchers {
 		val employeesCount = TestData.unnormalizedEmployees
 		val result = DBpediaNormalizeStrategy.normalizeEmployees(employeesCount)
 		val expected = TestData.normalizedEmployees
+		result shouldEqual expected
+	}
+
+	"normalizeCity" should "normalize all possible appearances of city values" in {
+		val cities = TestData.unnormalizedCities
+		val result = DBpediaNormalizeStrategy.normalizeCity(cities)
+		val expected = TestData.normalizedCities
 		result shouldEqual expected
 	}
 }
