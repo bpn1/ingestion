@@ -12,7 +12,10 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 		Deduplication.config = TestData.testConfig()
 		val subjects = TestData.testSubjects
-		val score = Deduplication.compare(subjects.head, subjects(1), Deduplication.config)
+		val simMeasures = Deduplication
+			.config("simMeasures")
+			.asInstanceOf[Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]]
+		val score = Deduplication.compare(subjects.head, subjects(1), simMeasures)
 		val expected = TestData.testSubjectScore(subjects.head, subjects(1))
 		score shouldEqual expected
 
@@ -22,9 +25,12 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	it should "just return the weighted score if the configuration contains only one element" in {
 		val originalConfig = Deduplication.config
 
-		Deduplication.config = Map("name" -> List(ScoreConfig[String, SimilarityMeasure[String]](MongeElkan, 0.5)))
+		Deduplication.config = TestData.simpleTestConfig()
 		val subjects = TestData.testSubjects
-		val score = Deduplication.compare(subjects.head, subjects(1), Deduplication.config)
+		val simMeasures = Deduplication
+			.config("simMeasures")
+			.asInstanceOf[Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]]
+		val score = Deduplication.compare(subjects.head, subjects(1), simMeasures)
 		val expected = MongeElkan.compare(subjects.head.name.get, subjects(1).name.get)
 		score shouldEqual expected
 

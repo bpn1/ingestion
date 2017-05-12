@@ -168,11 +168,18 @@ object TestData {
 				List((subjects(3).id, stagingTable, 0.9446913580246914))))
 	}
 
-	def testConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
-		Map(
-			key -> List(
-				ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
-				ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)))
+	def testConfig(key: String = "name"): Map[String, Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]] = {
+		Map("simMeasures" ->
+			Map(
+				key -> List(
+					ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
+					ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7))
+			)
+		)
+	}
+
+	def simpleTestConfig(key: String = "name"): Map[String, Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]] = {
+		Map("simMeasures" -> Map(key -> List(ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8))))
 	}
 
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
@@ -191,7 +198,7 @@ object TestData {
 	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (
 		List("very", "generic", "values"),
 		List("even", "more", "values"),
-		testConfig().head._2.head
+		testConfig().head._2.head._2.head
 	)
 
 	def cityBlockingScheme: ListBlockingScheme = {
@@ -361,9 +368,9 @@ object TestData {
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
 
 	def features(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
-		FeatureEntry(Subject(id = idList.head), Subject(id = idList(1))),
-		FeatureEntry(Subject(id = idList(2)), Subject(id = idList(3))),
-		FeatureEntry(Subject(id = idList(4)), Subject(id = idList(5)))
+		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1))),
+		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3))),
+		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5)))
 	))
 
 	def goldStandard(sc: SparkContext): RDD[(UUID, UUID)] = sc.parallelize(List(
@@ -371,9 +378,9 @@ object TestData {
 	))
 
 	def labeledFeatures(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
-		FeatureEntry(Subject(id = idList.head), Subject(id = idList(1)), correct = true),
-		FeatureEntry(Subject(id = idList(2)), Subject(id = idList(3)), correct = true),
-		FeatureEntry(Subject(id = idList(4)), Subject(id = idList(5)), correct = false)
+		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1)), correct = true),
+		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3)), correct = true),
+		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5)))
 	))
 
 	def requiredSettings: List[String] = {

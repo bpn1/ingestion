@@ -1,8 +1,7 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.{Configurable, SparkJob}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -12,67 +11,58 @@ import de.hpi.ingestion.deduplication.models.{Block, FeatureEntry, ScoreConfig}
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-import scala.io.Source
-import scala.xml.{Node, XML}
-
 /**
   * Job for calculation of feature entries
   */
-object FeatureCalculation extends SparkJob {
+object FeatureCalculation extends SparkJob with Configurable {
 	appName = "Feature calculation"
-	val keyspace = "evaluation"
-	val dbpediaTable = "subject_dbpedia"
-	val wikidataTable = "subject_wikidata"
-	val goldStandardTable = "goldstandard"
-	val featuresTable = "sim_measure_features"
-	var settings = Map[String, String]()
-	var config = Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
-	val configFile: Option[String] = None
+	configFile = "feature_calculation.xml"
 	val blockingSchemes = List[BlockingScheme](SimpleBlockingScheme("simple_scheme"))
 
+	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.cassandraTable[Subject](keyspace, dbpediaTable)
-		val wikidata = sc.cassandraTable[Subject](keyspace, wikidataTable)
-		val goldStandard = sc.cassandraTable[(UUID, UUID)](keyspace, goldStandardTable)
+		val settings = this.config("settings").asInstanceOf[Map[String, String]]
+		val dbpedia = sc.cassandraTable[Subject](settings("keyspaceDBpediaTable"), settings("dBpediaTable"))
+		val wikidata = sc.cassandraTable[Subject](settings("keyspaceWikiDataTable"), settings("wikiDataTable"))
+		val goldStandard = sc.cassandraTable[(UUID, UUID)](
+			settings("keyspaceGoldStandardTable"),
+			settings("goldStandardTable")
+		)
 		List(dbpedia, wikidata).toAnyRDD() ::: List(goldStandard).toAnyRDD()
 	}
 
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		output
 			.fromAnyRDD[FeatureEntry]()
 			.head
-			.saveToCassandra(keyspace, featuresTable)
+			.saveToCassandra(settings("keyspaceFeatureTable"), settings("featureTable"))
 	}
 
-	def parseConfig(): Unit = {
-		val path = this.configFile.getOrElse("config.xml")
-		val xml = XML.loadString(Source
-			.fromURL(getClass.getResource(s"/$path"))
-			.getLines()
-			.mkString("\n"))
+	override def assertConditions(args: Array[String]): Boolean = {
+		this.parseConfig(this.configFile, Map("simMeasures" -> Deduplication.parseSimilarityMeasures))
+		super.assertConditions(args)
+	}
+	// $COVERAGE-ON$
 
-		val configSettings = xml \\ "config" \ "sourceSettings"
-		this.settings = configSettings.head.child
-			.collect {
-				case node: Node if node.text.trim.nonEmpty => (node.label, node.text)
-			}.toMap
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val inputSubjects = input.fromAnyRDD[Subject]()
+		val dbpedia = inputSubjects.head
+		val wikidata = inputSubjects(1)
+		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().head
 
-		val attributes = xml \\ "config" \ "simMeasurements" \ "attribute"
-		this.config = attributes.map { node =>
-			val key = (node \ "key").text
-			val scoreConfigs = (node \ "feature").map { feature =>
-				val similarityMeasure = (feature \ "similarityMeasure").text
-				val weight = (feature \ "weight").text.toDouble
-				val scale = (feature \ "scale").text.toInt
-				ScoreConfig[String, SimilarityMeasure[String]](
-					SimilarityMeasure.get[String](similarityMeasure),
-					weight,
-					scale)
-			}
-			(key, scoreConfigs.toList)
-		}.toMap
+		val blocks = Blocking.blocking(dbpedia, wikidata, this.blockingSchemes)
+		val features = findDuplicates(blocks.values, sc)
+		val labeledPoints = labelFeature(features, goldStandard)
+		List(labeledPoints).toAnyRDD()
 	}
 
+	/**
+	  * Labels the feature corresponding to a gold standard
+	  * @param features Features to be labeled
+	  * @param goldStandard The Goldstandard whom the labels are taken from
+	  * @return Features with correct labels
+	  */
 	def labelFeature(features: RDD[FeatureEntry], goldStandard: RDD[(UUID, UUID)]): RDD[FeatureEntry] = {
 		val keyedFeatures = features.keyBy(feature => (feature.subject.id, feature.staging.id))
 		val keyedGoldStandard = goldStandard.map((_, true))
@@ -85,6 +75,14 @@ object FeatureCalculation extends SparkJob {
 			}
 	}
 
+	/**
+	  * Compares to subjects regarding an attribute
+	  * @param attribute Attribute to be compared
+	  * @param subjectValues Values of the attribute of the subject
+	  * @param stagingValues Values of the attribute of the staging subject
+	  * @param scoreConfig configuration
+	  * @return Normalized score or 0.0 if one of the values are empty
+	  */
 	def compare(
 		attribute: String,
 		subjectValues: List[String],
@@ -96,6 +94,13 @@ object FeatureCalculation extends SparkJob {
 		case _ => 0.0
 	}
 
+	/**
+	  * Creates a FeatureEntry from two given subjects and a config
+	  * @param subject subject
+	  * @param staging staging
+	  * @param config configuration
+	  * @return FeatureEntry
+	  */
 	def createFeature(
 		subject: Subject,
 		staging: Subject,
@@ -107,35 +112,22 @@ object FeatureCalculation extends SparkJob {
 			val scores = scoreConfigs.map(this.compare(attribute, subjectValues, stagingValues, _))
 			(attribute, scores)
 		}
-		FeatureEntry(subject, staging, scores)
+		FeatureEntry(subject = subject, staging = staging, scores = scores)
 	}
 
 	/**
-	  * Finds the duplicates of each block by comparing the Subjects and filtering all Subjects pairs below the
-	  * threshold {@confidence}.
+	  * Finds the duplicates of each block by comparing the Subjects
 	  * @param blocks RDD of BLocks containing the Subjects that are compared
-	  * @return tuple of Subjects with their score, which is greater or equal the given threshold.
+	  * @return tuple of Subjects with their score
 	  */
 	def findDuplicates(blocks: RDD[Block], sc: SparkContext): RDD[FeatureEntry] = {
-		val threshold = this.settings("confidence").toDouble
-		val confBroad = sc.broadcast(this.config)
+		val confBroad = sc.broadcast(
+			this.config("simMeasures").asInstanceOf[Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]]
+		)
 		blocks
 			.flatMap(_.crossProduct())
 			.map { case (subject1, subject2) =>
 				createFeature(subject1, subject2, confBroad.value)
-			}.filter(_.scores.toList.flatMap(_._2).sum >= threshold)
-	}
-
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val inputSubjects = input.fromAnyRDD[Subject]()
-		val dbpedia = inputSubjects.head
-		val wikidata = inputSubjects(1)
-		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().head
-
-		this.parseConfig()
-		val blocks = Blocking.blocking(dbpedia, wikidata, this.blockingSchemes)
-		val features = findDuplicates(blocks.values, sc)
-		val labeledPoints = labelFeature(features, goldStandard)
-		List(labeledPoints).toAnyRDD()
+			}
 	}
 }

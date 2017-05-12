@@ -5,55 +5,40 @@ import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.similarity._
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.{Configurable, SparkJob}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import scala.io.Source
-import scala.xml.{Node, XML}
+import scala.xml.Node
 
 /**
   * Compares two groups of Subjects by first blocking with multiple Blocking Schemes, then compares all Subjects
   * in every block and filters all pairs below a given threshold.
   */
-object Deduplication extends SparkJob {
+object Deduplication extends SparkJob with Configurable {
 	appName = "Deduplication"
-	var config = Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
-	var settings = Map[String, String]()
-	val configFile: Option[String] = None
+	configFile = "deduplication.xml"
 	val blockingSchemes = List[BlockingScheme](SimpleBlockingScheme("simple_scheme"))
 
 	// $COVERAGE-OFF$
-	/**
-	  * Loads the Subjects and the staged Subjects from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
 		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
 		(subjects ++ staging).toAnyRDD()
 	}
-
-	/**
-	  * Saves the duplicates in the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		output
 			.fromAnyRDD[DuplicateCandidates]()
 			.head
 			.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
-	// $COVERAGE-ON$
-
 	override def assertConditions(args: Array[String]): Boolean = {
-		parseConfig()
+		this.parseConfig(this.configFile, Map("simMeasures" -> this.parseSimilarityMeasures))
 		super.assertConditions(args)
 	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Blocks the Subjects and finds duplicates between them between the Subjects and staged Subjects.
@@ -71,24 +56,13 @@ object Deduplication extends SparkJob {
 	}
 
 	/**
-	  * Reads the configuration from an xml file.
-	  * @return a list containing scoreConfig entities parsed from the xml file
+	  * Parses the similarity measures from a xml node
+	  * @param head Head node
+	  * @return Map containing attributes with thier score configurations
 	  */
-	def parseConfig(): Unit = {
-		val path = this.configFile.getOrElse("config.xml")
-		val xml = XML.loadString(Source
-			.fromURL(getClass.getResource(s"/$path"))
-			.getLines()
-			.mkString("\n"))
-
-		val configSettings = xml \\ "config" \ "sourceSettings"
-		this.settings = configSettings.head.child
-			.collect {
-				case node: Node if node.text.trim.nonEmpty => (node.label, node.text)
-			}.toMap
-
-		val attributes = xml \\ "config" \ "simMeasurements" \ "attribute"
-		this.config = attributes.map { node =>
+	def parseSimilarityMeasures(head: Node): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		val attributes = head \ "simMeasures" \ "attribute"
+		attributes.map { node =>
 			val key = (node \ "key").text
 			val scoreConfigs = (node \ "feature").map { feature =>
 				val similarityMeasure = (feature \ "similarityMeasure").text
@@ -138,7 +112,7 @@ object Deduplication extends SparkJob {
 	  * @return RDD of grouped Duplicate Candidates
 	  */
 	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
-		val stagingTable = this.settings("stagingTable")
+		val stagingTable = this.config("settings")("stagingTable").asInstanceOf[String]
 		subjectPairs
 			.map { case (subject1, subject2, score) =>
 				(subject1.id, List((subject2.id, stagingTable, score)))
@@ -153,8 +127,10 @@ object Deduplication extends SparkJob {
 	  * @return tuple of Subjects with their score, which is greater or equal the given threshold.
 	  */
 	def findDuplicates(blocks: RDD[Block], sc: SparkContext): RDD[(Subject, Subject, Double)] = {
-		val threshold = this.settings("confidence").toDouble
-		val confBroad = sc.broadcast(this.config)
+		val threshold = this.config("settings")("stagingTable").asInstanceOf[String].toDouble
+		val confBroad = sc.broadcast(
+			this.config("simMeasures").asInstanceOf[Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]]
+		)
 		blocks
 			.flatMap(_.crossProduct())
 			.map { case (subject1, subject2) =>

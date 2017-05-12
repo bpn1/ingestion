@@ -1,6 +1,6 @@
 package de.hpi.ingestion.deduplication
 
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.{Configurable, SparkJob}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -11,13 +11,14 @@ import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 /**
   * Job for training the similarity measure classifier
   */
-object ClassificationTraining extends SparkJob {
+object ClassificationTraining extends SparkJob with Configurable {
 	appName = s"Similarity Measure Classifier Training"
-	val keyspace = "evaluation"
-	val inputTable = "sim_measure_features"
+	configFile = "classification.xml"
 
+	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val entries = sc.cassandraTable[FeatureEntry](keyspace, inputTable)
+		val settings = this.config("settings").asInstanceOf[Map[String, String]]
+		val entries = sc.cassandraTable[FeatureEntry](settings("keyspaceFeatureTable"), settings("featureTable"))
 		List(entries).toAnyRDD()
 	}
 
@@ -28,6 +29,12 @@ object ClassificationTraining extends SparkJob {
 			.first
 			.save(sc, s"dbpedia_wikidata_naivebayes_model_${System.currentTimeMillis()}")
 	}
+
+	override def assertConditions(args: Array[String]): Boolean = {
+		this.parseConfig(this.configFile)
+		super.assertConditions(args)
+	}
+	// $COVERAGE-ON$
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
