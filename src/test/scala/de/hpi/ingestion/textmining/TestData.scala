@@ -1481,7 +1481,7 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
-  def linkExtenderPagesSet(): Set[Page] = {
+	def linkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
@@ -1654,9 +1654,9 @@ object TestData {
 				)
 			)
 		)
-  }
+	}
 
-  def featureEntries(): List[FeatureEntry] = {
+	def featureEntries(): List[FeatureEntry] = {
 		List(
 			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
 			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
@@ -1796,8 +1796,21 @@ object TestData {
 			(0.0, 0.0))
 	}
 
-	def predictionStatistics(): List[PrecisionRecallDataTuple] = {
-		List(PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0))
+	def predictionStatistics(): PrecisionRecallDataTuple = {
+		PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0)
+	}
+
+	def statisticTuples(): List[PrecisionRecallDataTuple] = {
+		List(
+			PrecisionRecallDataTuple(1.0, 0.4, 1.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.6, 0.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.6, 0.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.4, 0.0, 0.0)
+		)
+	}
+
+	def averagedStatisticTuples(): PrecisionRecallDataTuple = {
+		PrecisionRecallDataTuple(1.0, 0.5, 0.25, 0.75)
 	}
 
 	def formattedPredictionStatistics(): String = {
