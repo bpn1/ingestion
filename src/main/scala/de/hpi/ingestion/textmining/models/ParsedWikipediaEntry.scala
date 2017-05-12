@@ -14,6 +14,7 @@ package de.hpi.ingestion.textmining.models
   * @param linkswithcontext    all textlinks containing the term frequencies of their context
   * @param context             term frequencies of this articles plain text
   * @param extendedlinks       all occurrences of aliases of other links in this article
+  * @param triealiases         the longest aliases found by the trie with their offset and context
   */
 case class ParsedWikipediaEntry(
 	title: String,
@@ -26,7 +27,8 @@ case class ParsedWikipediaEntry(
 	var disambiguationlinks: List[Link] = Nil,
 	var linkswithcontext: List[Link] = Nil,
 	var context: Map[String, Int] = Map[String, Int](),
-	var extendedlinks: List[Link] = Nil
+	var extendedlinks: List[Link] = Nil,
+	var triealiases: List[TrieAlias] = Nil
 ) {
 	def setText(t: String): Unit = text = Option(t)
 
