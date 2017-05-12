@@ -1488,7 +1488,7 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
-  def linkExtenderPagesSet(): Set[Page] = {
+	def linkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
@@ -1663,8 +1663,6 @@ object TestData {
 		)
   }
 
-
-
 	def textLinkHtml(): List[Element] = {
 		val elements = Source.fromURL(getClass.getResource("/textmining/textlinks.html"))
 			.getLines()
@@ -1689,7 +1687,8 @@ object TestData {
 			List(Link("title", "Zwillinge")),
 			List(Link("title", "Zwillinge")),
 			Nil,
-			Nil)
+			Nil,
+			List(Link("title", "Zwillinge")))
 	}
 
 	def textLinkTuples(): List[(String, List[Link])] = {
@@ -1697,7 +1696,8 @@ object TestData {
 			("Wort Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(5)))),
 			("Wort 2", List(Link("Zwillinge", "Zwillinge", Option(7)))),
 			("Wort 3", Nil),
-			("", Nil))
+			("", Nil),
+			("Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(0)))))
 	}
 
 	def wikidataEntities(): List[WikiDataEntity] = {
