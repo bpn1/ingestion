@@ -52,7 +52,6 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 		val predictionAndLabels = SimilarityMeasureEvaluation.generatePredictionAndLabels(trainingData, testData)
 		val computed = SimilarityMeasureEvaluation.generateStats(predictionAndLabels)
 		val expected = TestData.precisionRecallResults(sc)
-
 		computed shouldEqual expected
 	}
 }
