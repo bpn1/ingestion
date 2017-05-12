@@ -21,7 +21,6 @@ object GoldStandard extends SparkJob with Configurable {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		val dbpedia = sc.cassandraTable[Subject](settings("keyspaceDBpediaTable"), settings("dBpediaTable"))
 		val wikidata = sc.cassandraTable[Subject](settings("keyspaceWikiDataTable"), settings("wikiDataTable"))
 		List(dbpedia, wikidata).toAnyRDD()
@@ -34,18 +33,17 @@ object GoldStandard extends SparkJob with Configurable {
 	  * @param args arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		output
 			.fromAnyRDD[(UUID, UUID)]()
 			.head
 			.saveToCassandra(settings("keyspaceGoldStandardTable"), settings("goldStandardTable"))
 	}
+	// $COVERAGE-ON$
 
 	override def assertConditions(args: Array[String]): Boolean = {
-		this.parseConfig(this.configFile)
+		parseConfig()
 		super.assertConditions(args)
 	}
-	// $COVERAGE-ON$
 
 	/**
 	  * Joins DBpedia and Wikidata.

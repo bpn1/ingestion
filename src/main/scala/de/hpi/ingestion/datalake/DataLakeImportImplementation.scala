@@ -41,7 +41,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 			.mkString("\n")
 		)
 
-		val configSettings = xml \\ "config" \ "sourceSettings"
+		val configSettings = xml \\ "config" \ "settings"
 		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
 			settings(node.label) = node.text
 	}

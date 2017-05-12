@@ -16,26 +16,25 @@ object SimilarityMeasureEvaluation extends SparkJob with Configurable {
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		val training = sc.cassandraTable[DuplicateCandidates](
 			settings("keyspaceTrainingTable"),
-			settings("trainingTable")
-		)
+			settings("trainingTable"))
 		val test = sc.cassandraTable[(UUID, UUID)](settings("keyspaceTestTable"), settings("testTable"))
 		List(training).toAnyRDD() ++ List(test).toAnyRDD()
 	}
+
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		output
 			.fromAnyRDD[SimilarityMeasureStats]()
 			.head
 			.saveToCassandra(settings("keyspaceSimMeasureStatsTable"), settings("simMeasureStatsTable"))
 	}
+	// $COVERAGE-ON$
+
 	override def assertConditions(args: Array[String]): Boolean = {
-		this.parseConfig(this.configFile, Map("buckets" -> this.parseBuckets))
+		parseConfig()
 		super.assertConditions(args)
 	}
-	// $COVERAGE-ON$
 
 	/**
 	  * Calculates precision, recall and f1 score using the training and test data.
@@ -56,16 +55,6 @@ object SimilarityMeasureEvaluation extends SparkJob with Configurable {
 		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
 
 		List(sc.parallelize(Seq(stats))).toAnyRDD()
-	}
-
-	/**
-	  * Parses the number of buckets from a xml node
-	  * @param head Head node
-	  * @return Map containing the number of buckets
-	  */
-	def parseBuckets(head: Node): Map[String, Int] = {
-		val buckets = (head \ "buckets").head.text.toInt
-		Map("buckets" -> buckets)
 	}
 
 	/**
@@ -98,7 +87,7 @@ object SimilarityMeasureEvaluation extends SparkJob with Configurable {
 	  * @return List of PrecisionRecallDataTuples
 	  */
 	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : List[PrecisionRecallDataTuple] = {
-		val buckets = this.config("settings")("buckets").asInstanceOf[Int]
+		val buckets = settings("buckets").toInt
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels, buckets)
 
 		val precision = metrics.precisionByThreshold

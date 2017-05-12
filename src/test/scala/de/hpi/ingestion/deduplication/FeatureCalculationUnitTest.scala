@@ -3,6 +3,7 @@ package de.hpi.ingestion.deduplication
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.models.{FeatureEntry, ScoreConfig}
 import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, SimilarityMeasure}
+import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.scalatest.{FlatSpec, Matchers}
 
 class FeatureCalculationUnitTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
@@ -32,7 +33,7 @@ class FeatureCalculationUnitTest extends FlatSpec with Matchers with SharedSpark
 		val subject = TestData.testSubjects.head
 		val staging = TestData.testSubjects(1)
 		val feature = FeatureCalculation.createFeature(subject, staging, config)
-		val expected = FeatureEntry(subject, staging, Map("geo_city" -> List(0.8, 0.7)))
+		val expected = FeatureEntry(feature.id, subject, staging, Map("geo_city" -> List(0.8, 0.7)))
 
 		feature shouldEqual expected
 	}
@@ -40,9 +41,8 @@ class FeatureCalculationUnitTest extends FlatSpec with Matchers with SharedSpark
 	"labelFeature" should "label a FeatureEntries by a given Gold-Standard" in {
 		val features = TestData.features(sc)
 		val goldStandard = TestData.goldStandard(sc)
-		val labeledFeatures = FeatureCalculation.labelFeature(features, goldStandard)
-		val expected = TestData.labeledFeatures(sc)
-
+		val labeledFeatures = FeatureCalculation.labelFeature(features, goldStandard).map(_.copy(id = null))
+		val expected = TestData.labeledFeatures(sc).map(_.copy(id = null))
 		assertRDDEquals(expected, labeledFeatures)
 	}
 }

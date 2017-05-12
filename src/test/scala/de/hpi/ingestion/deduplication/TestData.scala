@@ -168,18 +168,15 @@ object TestData {
 				List((subjects(3).id, stagingTable, 0.9446913580246914))))
 	}
 
-	def testConfig(key: String = "name"): Map[String, Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]] = {
-		Map("simMeasures" ->
-			Map(
-				key -> List(
-					ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
-					ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7))
-			)
-		)
+	def testConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		Map(
+			key -> List(
+				ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
+				ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)))
 	}
 
-	def simpleTestConfig(key: String = "name"): Map[String, Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]] = {
-		Map("simMeasures" -> Map(key -> List(ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8))))
+	def simpleTestConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		Map(key -> List(ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8)))
 	}
 
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
@@ -195,11 +192,9 @@ object TestData {
 			CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
 	)
 
-	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (
-		List("very", "generic", "values"),
-		List("even", "more", "values"),
-		testConfig().head._2.head._2.head
-	)
+	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = {
+		(List("very", "generic", "values"), List("even", "more", "values"), testConfig().head._2.head)
+	}
 
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()

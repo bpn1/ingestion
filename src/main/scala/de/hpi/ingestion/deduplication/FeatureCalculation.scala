@@ -21,35 +21,31 @@ object FeatureCalculation extends SparkJob with Configurable {
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		val dbpedia = sc.cassandraTable[Subject](settings("keyspaceDBpediaTable"), settings("dBpediaTable"))
 		val wikidata = sc.cassandraTable[Subject](settings("keyspaceWikiDataTable"), settings("wikiDataTable"))
 		val goldStandard = sc.cassandraTable[(UUID, UUID)](
 			settings("keyspaceGoldStandardTable"),
-			settings("goldStandardTable")
-		)
+			settings("goldStandardTable"))
 		List(dbpedia, wikidata).toAnyRDD() ::: List(goldStandard).toAnyRDD()
 	}
 
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		output
 			.fromAnyRDD[FeatureEntry]()
 			.head
 			.saveToCassandra(settings("keyspaceFeatureTable"), settings("featureTable"))
 	}
-
-	override def assertConditions(args: Array[String]): Boolean = {
-		this.parseConfig(this.configFile, Map("simMeasures" -> Deduplication.parseSimilarityMeasures))
-		super.assertConditions(args)
-	}
 	// $COVERAGE-ON$
 
+	override def assertConditions(args: Array[String]): Boolean = {
+		parseConfig()
+		super.assertConditions(args)
+	}
+
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val inputSubjects = input.fromAnyRDD[Subject]()
-		val dbpedia = inputSubjects.head
-		val wikidata = inputSubjects(1)
-		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().head
+		val dbpedia = input.head.asInstanceOf[RDD[Subject]]
+		val wikidata = input(1).asInstanceOf[RDD[Subject]]
+		val goldStandard = input(2).asInstanceOf[RDD[(UUID, UUID)]]
 
 		val blocks = Blocking.blocking(dbpedia, wikidata, this.blockingSchemes)
 		val features = findDuplicates(blocks.values, sc)
@@ -121,13 +117,9 @@ object FeatureCalculation extends SparkJob with Configurable {
 	  * @return tuple of Subjects with their score
 	  */
 	def findDuplicates(blocks: RDD[Block], sc: SparkContext): RDD[FeatureEntry] = {
-		val confBroad = sc.broadcast(
-			this.config("simMeasures").asInstanceOf[Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]]
-		)
+		val confBroad = sc.broadcast(scoreConfigSettings)
 		blocks
 			.flatMap(_.crossProduct())
-			.map { case (subject1, subject2) =>
-				createFeature(subject1, subject2, confBroad.value)
-			}
+			.map { case (subject1, subject2) => createFeature(subject1, subject2, confBroad.value) }
 	}
 }

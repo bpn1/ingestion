@@ -17,7 +17,6 @@ object ClassificationTraining extends SparkJob with Configurable {
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		val entries = sc.cassandraTable[FeatureEntry](settings("keyspaceFeatureTable"), settings("featureTable"))
 		List(entries).toAnyRDD()
 	}
@@ -31,7 +30,7 @@ object ClassificationTraining extends SparkJob with Configurable {
 	}
 
 	override def assertConditions(args: Array[String]): Boolean = {
-		this.parseConfig(this.configFile)
+		parseConfig()
 		super.assertConditions(args)
 	}
 	// $COVERAGE-ON$

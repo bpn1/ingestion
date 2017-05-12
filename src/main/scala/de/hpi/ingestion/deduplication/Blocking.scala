@@ -31,7 +31,6 @@ object Blocking extends SparkJob with Configurable {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
 		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
 		(subjects ++ staging).toAnyRDD()
@@ -43,7 +42,6 @@ object Blocking extends SparkJob with Configurable {
 	  * @param args arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val settings = this.config("settings").asInstanceOf[Map[String, String]]
 		output
 			.fromAnyRDD[BlockEvaluation]()
 			.head
@@ -55,7 +53,7 @@ object Blocking extends SparkJob with Configurable {
 	  * @return true if the program can continue, false if it should be terminated
 	  */
 	override def assertConditions(args: Array[String]): Boolean = {
-		this.parseConfig(this.configFile)
+		parseConfig()
 		super.assertConditions(args)
 	}
 	// $COVERAGE-ON$
