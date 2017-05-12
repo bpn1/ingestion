@@ -2,6 +2,7 @@ package de.hpi.ingestion.textmining
 
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
+import com.datastax.spark.connector.cql.CassandraConnector
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
@@ -108,6 +109,8 @@ object LinkAnalysis extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		CassandraConnector(sc.getConf).withSessionDo { session =>
+			session.execute("TRUNCATE TABLE wikidumps.wikipedialinks") }
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
 		val validLinks = extractValidLinks(articles)
 		val aliases = groupByAliases(validLinks)

@@ -157,26 +157,24 @@ object CosineContextComparator extends SparkJob {
 		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
-		linkContexts
+		val joinableLinks = linkContexts
 			.map(t => (t._1.alias, t))
 			.join(aliasPageProbabilities)
 			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
 				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, pageProb)))
 			}.reduceByKey(_ ++ _)
-			.join(articleContexts)
-			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
-				protoFeatureEntries.map { protoFeatureEntry =>
-					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
-					FeatureEntry(
-						protoFeatureEntry.alias,
-						page,
-						protoFeatureEntry.totalProbability,
-						protoFeatureEntry.pageProbability,
-						cosineSim,
-						protoFeatureEntry.link.page == page
-					)
+		val weights = (0 until 10).map(t => 1.0).toArray
+		val linkSegements = joinableLinks.randomSplit(weights)
+		linkSegements.map { rdd =>
+			rdd
+				.join(articleContexts)
+				.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
+					protoFeatureEntries.map { protoFeatureEntry =>
+							val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
+							protoFeatureEntry.toFeatureEntry(page, cosineSim)
+					}
 				}
-			}
+		}.reduce(_.union(_))
 	}
 
 	/**
