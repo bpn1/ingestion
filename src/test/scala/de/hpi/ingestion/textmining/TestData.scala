@@ -483,6 +483,12 @@ object TestData {
 		)
 	}
 
+	def filteredDocumentFrequenciesWithSymbols(): List[DocumentFrequency] = {
+		List(
+			DocumentFrequency("audi", 3),
+			DocumentFrequency(".", 4))
+	}
+
 	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
@@ -1195,41 +1201,6 @@ object TestData {
 			"Galgenhumor")
 	}
 
-	def parsedEntryWithDifferentLinkTypes(): ParsedWikipediaEntry = {
-		ParsedWikipediaEntry(
-			"Origineller Titel",
-			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
-			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
-			templatelinks = List(Link("Charlie", "Charlie C.")),
-			categorylinks = List(Link("Dora", "Dora")),
-			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
-			disambiguationlinks = List(Link("Esel", "Esel"))
-		)
-	}
-
-	def allLinksListFromEntryList(): List[Link] = {
-		List(
-			Link("Apfel", "Apfel", Option(0)),
-			Link("Baum", "Baum", Option(4)),
-			Link("Charlie", "Charlie C."),
-			Link("Dora", "Dora"),
-			Link("Fund", "Fund"),
-			Link("Grieß", "Brei"),
-			Link("Esel", "Esel")
-		)
-	}
-
-	def parsedEntryWithFilteredLinks(): ParsedWikipediaEntry = {
-		ParsedWikipediaEntry(
-			"Origineller Titel",
-			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
-			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
-			categorylinks = List(Link("Dora", "Dora")),
-			listlinks = List(Link("Fund", "Fund")),
-			disambiguationlinks = List(Link("Esel", "Esel"))
-		)
-	}
-
 	def testNamespacePages(): List[WikipediaEntry] = {
 		List(
 			WikipediaEntry("lol"),
@@ -1692,23 +1663,7 @@ object TestData {
 		)
   }
 
-  def featureEntries(): List[FeatureEntry] = {
-		List(
-			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
-			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
-			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true),
-			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false),
-			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false))
-	}
 
-	def labeledPoints(): List[LabeledPoint] = {
-		List(
-			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
-			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
-			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
-			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
-			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
-	}
 
 	def textLinkHtml(): List[Element] = {
 		val elements = Source.fromURL(getClass.getResource("/textmining/textlinks.html"))

@@ -40,6 +40,8 @@ object LinkAnalysis extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		CassandraConnector(sc.getConf).withSessionDo { session =>
+			session.execute("TRUNCATE TABLE wikidumps.wikipedialinks") }
 		val aliases = output.head.asInstanceOf[RDD[Alias]]
 		val pages = output(1).asInstanceOf[RDD[Page]]
 		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))
@@ -109,8 +111,6 @@ object LinkAnalysis extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		CassandraConnector(sc.getConf).withSessionDo { session =>
-			session.execute("TRUNCATE TABLE wikidumps.wikipedialinks") }
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
 		val validLinks = extractValidLinks(articles)
 		val aliases = groupByAliases(validLinks)
