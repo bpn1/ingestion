@@ -20,7 +20,7 @@ task_definitions = [TaskDefinition("TextParser"),
                     TaskDefinition("TermFrequencyCounter", ["CompanyLinkFilter"]),
                     TaskDefinition("CosineContextComparator", ["DocumentFrequencyCounter", "AliasCounter",
                                                                "TermFrequencyCounter", "LinkAnalysis2"]),
-                    TaskDefinition("Classifier", ["CosineContextComparator"])]
+                    TaskDefinition("ClassifierTraining", ["CosineContextComparator"])]
 
 
 class TextminingPipeline(AbstractPipeline):
