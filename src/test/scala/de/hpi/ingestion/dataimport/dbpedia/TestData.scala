@@ -116,6 +116,8 @@ object TestData {
 			"geo:lat" -> List("52"),
 			"property-de:latitude" -> List("53"),
 			"geo:long" -> List("100"),
+			"dbo:country" -> List("Koblenz@de ."),
+			"property-de:mitarbeiteranzahl" -> List("12^^xsd:integer", "13^^xsd:nonNegativeInteger"),
 			"testProperty" -> List("test")
 		)
 	)
@@ -126,7 +128,20 @@ object TestData {
 		"id_wikipedia" -> List("dbpedianame"),
 		"id_viaf" -> List("dbo:viafId", "property-de:viaf"),
 		"geo_coords_lat" -> List("geo:lat", "property-de:latitude", "property-de:breitengrad"),
-		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad")
+		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad"),
+		"geo_country" -> List("dbo:country", "property-de:land"),
+		"gen_employees" -> List("dbo:numberOfEmployees", "property-de:mitarbeiteranzahl")
 	)
+
+	def unnormalizedEmployees: List[String] = List("27000^^xsd:integer", "27000^^xsd:nonNegativeInteger", "10^^xsd:nonNegativeInteger", "über 1000@de .", "1 Million")
+	def normalizedEmployees: List[String] = List("27000", "10", "1000")
+	def unnormalizedCoords: List[String] = List("48.34822^^xsd:float", "10.905282^^xsd:float","48348220^^xsd:integer", "10905282^^xsd:integer", "48.34822^^xsd:double", "10.905282^^xsd:double")
+	def normalizedCoords: List[String] = List("48.34822", "10.905282")
+	def unnormalizedCountries: List[String] = List("dbpedia-de:Japanisches_Kaiser-reich", "LI@de .", "Deutschland@de .", "dbpedia-de:Datei:Flag_of_Bavaria_(striped).svg", "15^^xsd:integer")
+	def normalizedCountries: List[String] = List("Japanisches Kaiser-reich", "Deutschland")
+	def unnormalizedCities: List[String] = List("Frankfurt a.M.@de .", "Frankfurt/Main@de .", "London", "dbpedia-de:Berlin-Tegel")
+	def normalizedCities: List[String] = List("Frankfurt a.M.", "Frankfurt/Main", "London", "Berlin-Tegel")
+	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Automobilindustrie")
+	def normalizedCSectors: List[String] = List("29", "45", "11")
 	// scalastyle:on line.size.limit
 }

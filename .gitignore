@@ -19,5 +19,5 @@ target/
 # Logfiles
 *.log
 
-# Compiled python
+# Compiled Python
 *.pyc

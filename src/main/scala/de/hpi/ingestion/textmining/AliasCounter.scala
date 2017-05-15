@@ -37,21 +37,11 @@ object AliasCounter extends SparkJob {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[(String, Int, Int)]()
+			.fromAnyRDD[(String, Option[Int], Option[Int])]()
 			.head
 			.saveToCassandra(keyspace, linksTablename, SomeColumns("alias", "linkoccurrences", "totaloccurrences"))
 	}
 	// $COVERAGE-ON$
-
-	/**
-	  * Calculates the probability that an Alias is a link.
-	  *
-	  * @param aliasCounts Alias of a given Alias
-	  * @return percentage of the occurrences as link
-	  */
-	def probabilityIsLink(aliasCounts: Alias): Double = {
-		aliasCounts.linkoccurrences.toDouble / aliasCounts.totaloccurrences
-	}
 
 	/**
 	  * Extracts list of link and general Alias occurrences for an article.
@@ -66,13 +56,13 @@ object AliasCounter extends SparkJob {
 
 		val links = linkSet
 			.toList
-			.map(Alias(_, Map(), 1, 1))
+			.map(Alias(_, Map(), Option(1), Option(1)))
 
 		val aliases = entry.foundaliases
 			.toSet
 			.filterNot(linkSet)
 			.toList
-			.map(Alias(_, Map(), 0, 1))
+			.map(Alias(_, Map(), Option(0), Option(1)))
 
 		links ++ aliases
 	}
@@ -88,8 +78,8 @@ object AliasCounter extends SparkJob {
 		Alias(
 			alias1.alias,
 			alias1.pages ++ alias2.pages,
-			alias1.linkoccurrences + alias2.linkoccurrences,
-			alias1.totaloccurrences + alias2.totaloccurrences)
+			Option(alias1.linkoccurrences.get + alias2.linkoccurrences.get),
+			Option(alias1.totaloccurrences.get + alias2.totaloccurrences.get))
 	}
 
 	/**

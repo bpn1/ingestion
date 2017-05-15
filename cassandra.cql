@@ -14,15 +14,16 @@ CREATE TYPE wikidumps.link (
 
 CREATE TABLE wikidumps.parsedwikipedia (
     title text PRIMARY KEY,
-    textlinks frozen<list<frozen<link>>>,
-    templatelinks frozen<list<frozen<link>>>,
     categorylinks frozen<list<frozen<link>>>,
-    disambiguationlinks frozen<list<frozen<link>>>,
-    listlinks frozen<list<frozen<link>>>,
-    linkswithcontext frozen<list<frozen<link>>>,
-    foundaliases list<text>,
-    text text,
     context map<text, int>,
+    disambiguationlinks frozen<list<frozen<link>>>,
+    extendedlinks frozen<list<frozen<link>>>,
+    foundaliases list<text>,
+    linkswithcontext frozen<list<frozen<link>>>,
+    listlinks list<frozen<link>>,
+    templatelinks list<frozen<link>>,
+    text text,
+    textlinks list<frozen<link>>
 );
 
 CREATE TABLE wikidumps.wikipedia (
@@ -50,6 +51,16 @@ CREATE TABLE wikidumps.wikipediadocfreq (
 CREATE TABLE wikidumps.wikipediatfidf (
     page text PRIMARY KEY,
     tokens map<text, double>
+);
+
+CREATE TABLE wikidumps.featureentries (
+	id uuid PRIMARY KEY,
+	alias text,
+	entity text,
+	prob_link double,
+	prob_entity double,
+	cosine_sim double,
+	correct boolean
 );
 
 -- Wikidumps.Wikidata
@@ -163,15 +174,35 @@ CREATE TABLE datalake.object (
     properties_history map<text, frozen<list<frozen<version>>>>
 );
 
-CREATE TABLE datalake.deduplicationstats (
+CREATE TABLE datalake.blockingstats (
     id uuid PRIMARY KEY,
     comment text,
-    data map<frozen<list<text>>, int>
+    data map<text, int>
+);
+
+CREATE TYPE datalake.blockstats (
+    key text,
+    numsubjects int,
+    numstaging int
+);
+
+CREATE TABLE datalake.blockingstats (
+    jobid timeuuid,
+    schemetag text,
+    comment text,
+    data frozen<set<frozen<blockstats>>>,
+    PRIMARY KEY (jobid, schemetag)
 );
 
 CREATE TABLE datalake.duplicatecandidates (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<subject, text, double>>>
+);
+
+CREATE TABLE datalake.sim_measure_stats (
+    id timeuuid PRIMARY KEY,
+    comment text,
+    data text
 );
 
 -- Evaluation
@@ -188,6 +219,13 @@ CREATE TYPE evaluation.version (
     datasources frozen<list<text>>,
     timestamp timestamp,
     program text
+);
+
+CREATE TYPE evaluation.precisionrecalldatatuple (
+    threshold double,
+    precision double,
+    recall double,
+    fscore double
 );
 
 CREATE TYPE evaluation.subject (
@@ -240,7 +278,7 @@ CREATE TABLE evaluation.subject_wikidata (
 
 CREATE TABLE evaluation.sim_measure_stats (
     id uuid PRIMARY KEY,
-    data list<frozen<tuple<double, double, double, double>>>,
+    data list<frozen<precisionrecalldatatuple>>,
     comment text
 );
 
@@ -254,4 +292,9 @@ CREATE TABLE evaluation.version (
 CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<subject, text, double>>>
+);
+
+CREATE TABLE evaluation.dbpedia_wikidata_deduplication_only_uuid (
+    subject_id uuid PRIMARY KEY,
+    candidates list<frozen<tuple<uuid, text, double>>>
 );
