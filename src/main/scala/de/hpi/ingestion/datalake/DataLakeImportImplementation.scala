@@ -57,15 +57,11 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 			.getLines()
 			.mkString("\n"))
 
-		(xml \\ "normalization" \ "attributeMapping" \ "attribute")
-			.toList
-			.map { attribute =>
-				val key = (attribute \ "key").text
-				val values = (attribute \ "mapping")
-					.toList
-					.map(_.text)
-				(key, values)
-			}.toMap
+		(xml \\ "normalization" \ "attributeMapping" \ "attribute").map { attribute =>
+			val key = (attribute \ "key").text
+			val values = (attribute \ "mapping").map(_.text).toList
+			(key, values)
+		}.toMap
 	}
 
 	protected def parseNormalizationConfig(path: String): Map[String, List[String]] = {
@@ -78,11 +74,10 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 		mapping: Map[String, List[String]]
 	): Map[String, List[String]] = {
 		mapping
-			.mapValues { values =>
-				values
-					.map(value => normalizeAttribute(value, entity.get(value)))
-					.reduce(_ ::: _)
-					.distinct
+			.map { case (normalized, notNormalized) =>
+				val values = notNormalized.flatMap(entity.get)
+				val normalizedValues = normalizeAttribute(normalized, values)
+				(normalized, normalizedValues)
 			}.filter(_._2.nonEmpty)
 	}
 
