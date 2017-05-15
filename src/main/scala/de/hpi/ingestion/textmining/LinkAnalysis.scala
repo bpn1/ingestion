@@ -18,6 +18,7 @@ object LinkAnalysis extends SparkJob {
 	val inputParsedTablename = "parsedwikipedia"
 	val outputAliasToPagesTablename = "wikipedialinks"
 	val outputPageToAliasesTablename = "wikipediapages"
+	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipedialinks"
 
 	// $COVERAGE-OFF$
 	/**
@@ -40,8 +41,6 @@ object LinkAnalysis extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		CassandraConnector(sc.getConf).withSessionDo { session =>
-			session.execute("TRUNCATE TABLE wikidumps.wikipedialinks") }
 		val aliases = output.head.asInstanceOf[RDD[Alias]]
 		val pages = output(1).asInstanceOf[RDD[Page]]
 		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))

@@ -73,7 +73,7 @@ class DocumentFrequencyCounterTest extends FlatSpec with SharedSparkContext with
 		filteredDocumentFrequencies should contain allElementsOf testFilteredDocumentFrequencies
 	}
 
-	"Run" should "compute the document frequencies" in {
+	they should "be exactly these document frequencies" in {
 		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
 
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 3
