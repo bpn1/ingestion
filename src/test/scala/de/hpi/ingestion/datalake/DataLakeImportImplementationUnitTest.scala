@@ -24,6 +24,3 @@ class DataLakeImportImplementationUnitTest extends FlatSpec with Matchers {
 		properties shouldEqual expected
 	}
 }
-
-
-
