@@ -28,7 +28,8 @@ CREATE TABLE wikidumps.parsedwikipedia (
     listlinks list<frozen<link>>,
     templatelinks list<frozen<link>>,
     text text,
-    textlinks list<frozen<link>>
+    textlinks list<frozen<link>>,
+    triealiases frozen<list<frozen<triealias>>>
 );
 
 CREATE TABLE wikidumps.wikipedia (
@@ -67,6 +68,12 @@ CREATE TABLE wikidumps.featureentries (
   rank_entity int,
 	cosine_sim double,
 	correct boolean
+);
+
+CREATE TYPE wikidumps.triealias (
+	alias text,
+	offset int,
+	context map<text, int>
 );
 
 -- Wikidumps.Wikidata
@@ -270,4 +277,9 @@ CREATE TABLE evaluation.version (
 CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<subject, text, double>>>
+);
+
+CREATE TABLE evaluation.dbpedia_wikidata_deduplication_only_uuid (
+    subject_id uuid PRIMARY KEY,
+    candidates list<frozen<tuple<uuid, text, double>>>
 );
