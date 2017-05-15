@@ -59,7 +59,7 @@ object SimilarityMeasureEvaluation extends SparkJob with Configurable {
 
 	/**
 	  * Generate (prediction, label) tuples for evaluation
-	  * @param training Predictions from the training data
+	  * @param training	Predictions from the training data
 	  * @param test		Labels from the test data
 	  * @return			RDD containing (prediction, label) tuples
 	  */

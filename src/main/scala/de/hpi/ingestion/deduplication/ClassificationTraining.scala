@@ -6,6 +6,7 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.deduplication.models.FeatureEntry
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.ClassifierTraining.calculateStatistics
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 
 /**
@@ -41,8 +42,8 @@ object ClassificationTraining extends SparkJob with Configurable {
 		val Array(training, test) = data.randomSplit(Array(0.6, 0.4), seed = 11L)
 		val model = NaiveBayes.train(training, 1.0)
 		val predictionAndLabel = test.map(point => (model.predict(point.features), point.label))
-		val accuracy = 1.0 * predictionAndLabel.filter(x => x._1 != x._2).count / test.count
-		println(s"accuracy of the model: $accuracy")
+		val statistics = calculateStatistics(predictionAndLabel, 0.5)
+
 		List(sc.parallelize(Seq(model))).toAnyRDD()
 	}
 }
