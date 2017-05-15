@@ -9,13 +9,13 @@ import com.twitter.chill.Kryo
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FSDataInputStream, FileSystem, Path}
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
-import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 /**
   * Finds all occurrences of the aliases in the given trie in all Wikipedia articles and writes them to the
@@ -70,11 +70,12 @@ object AliasTrieSearch extends SparkJob {
 		val fs = FileSystem.get(hadoopConf)
 		fs.open(new Path(trieName))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
-	  * Finds all occurrences of aliases in the text of a Wikipedia entry.
+	  * Finds all occurrences of aliases in the text of a Wikipedia entry. All found aliases are saved in the
+	  * foundalias column and the longest match of each alias is saved with its offset and context in the triealiases
+	  * column. These triealiases are only those which are not an extended link.
 	  *
 	  * @param entry     parsed Wikipedia entry to use
 	  * @param trie      Trie containing the aliases we look for
@@ -86,15 +87,46 @@ object AliasTrieSearch extends SparkJob {
 		trie: TrieNode,
 		tokenizer: IngestionTokenizer
 	): ParsedWikipediaEntry = {
-		val resultList = mutable.ListBuffer[String]()
-		val tokens = tokenizer.process(entry.getText())
+		val resultList = ListBuffer[String]()
+		var contextAliases = List[TrieAlias]()
+		val tokens = tokenizer.processWithOffsets(entry.getText())
 		for(i <- tokens.indices) {
 			val testTokens = tokens.slice(i, tokens.length)
-			val aliasMatches = trie.matchTokens(testTokens)
-			resultList ++= aliasMatches.map(tokenizer.reverse)
+			val aliasMatches = trie.matchTokens(testTokens.map(_.token))
+			val offsetMatches = aliasMatches.map(tokens => testTokens.take(tokens.length))
+			resultList ++= offsetMatches.map(tokens =>
+				entry.getText().substring(tokens.head.beginOffset, tokens.last.endOffset))
+			if(aliasMatches.nonEmpty) {
+				val longestMatch = offsetMatches.maxBy(_.length)
+				val offset = Option(longestMatch.head.beginOffset)
+				val alias = entry.getText().substring(longestMatch.head.beginOffset, longestMatch.last.endOffset)
+				val context = extractAliasContext(longestMatch, tokens, i).getCounts()
+				contextAliases :+= TrieAlias(alias, offset, context)
+			}
 		}
-		entry.foundaliases = cleanFoundAliases(resultList.toList)
-		entry
+
+		contextAliases = contextAliases.filterNot(alias =>
+			entry.extendedlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias))
+		entry.copy(foundaliases = cleanFoundAliases(resultList.toList), triealiases = contextAliases)
+	}
+
+	/**
+	  * Extracts the context of a found alias from the tokenized text and returns a Bag of words of this context.
+	  * @param alias tokenized alias
+	  * @param text tokenized text
+	  * @param index offset of the tokenized alias in the tokenized text
+	  * @return Bag of words of the context of the alias
+	  */
+	def extractAliasContext(alias: List[OffsetToken], text: List[OffsetToken], index: Int): Bag[String, Int] = {
+		val tokenizer = IngestionTokenizer(true, true)
+		val contextSize = TermFrequencyCounter.contextSize
+		val contextStart = Math.max(index - contextSize, 0)
+		val preAliasContext = text.slice(contextStart, index)
+		val aliasEndIndex = index + alias.length
+		val contextEnd = Math.min(aliasEndIndex + contextSize, text.length)
+		val postAliasContext = text.slice(aliasEndIndex, contextEnd)
+		val context = (preAliasContext ++ postAliasContext).map(_.token)
+		TermFrequencyCounter.extractBagOfWords(tokenizer.process(context))
 	}
 
 	/**
