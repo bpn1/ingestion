@@ -20,3 +20,9 @@ Humor und an den Einstieg anknüpfend: Wir sehen wieder das Facebook-Fake-Profil
 Demonstration: Animierte Fahrt in den Graphen, Komplexität zeigen und Relationen zwischen zwei Beispielunternehmen zeigen, mit treibender Elektromusik, sehr dynamisch mit vielen Sprüngen und sehr konkreten Beispielen
 
 # Kernbotschaft
+
+- Wir bilden mithilfe öffentlicher Daten die deutsche Wirtschaft in einem Netzwerk ab.
+- TEXTMINING Wir analysieren dafür automatisiert Veröffentlichungen wie Spiegel, heise.de und Kompass. Wir erkennen, welcher Unternehmen in den Texten gennat werden, und welche Beziehungen zwischen den Unternehmen bestehen.
+- DEDUPLICATION Wir finden automatisiert und laufzeit-effizient Dubletten aus Millionen von Unternehmen in unserer Datenbank.
+- CURATION INTERFACE Wir ermöglichen dem Endbenutzer, die Daten manuell zu ediieren und bieten spannende Insights über die Struktur des Netzwerkes an.
+
