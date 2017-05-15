@@ -1138,6 +1138,28 @@ object TestData {
 			))
 	}
 
+	def parsedEntriesWithLessText(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Schwarzer Humor",
+				Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod.""")),
+			ParsedWikipediaEntry(
+				"Schwarzer Humor",
+				Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod."""),
+				extendedlinks = List(Link("Hickelkasten", "Hickelkasten", Option(0)))),
+			ParsedWikipediaEntry(
+				"Schwarzer Humor",
+				Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod."""),
+				textlinks = List(Link("Hickelkasten", "Hickelkasten", Option(0)))))
+	}
+
+	def foundTrieAliases(): List[List[TrieAlias]] = {
+		List(
+			List(TrieAlias("Hickelkasten", Option(0), Map("``" -> 1, "." -> 1, "barcelona" -> 1, "tod" -> 1, "," -> 1, "„" -> 1, "sprung" -> 2, "spanie" -> 1, "himmel" -> 1, ":" -> 1))),
+			Nil,
+			Nil)
+	}
+
 	def parsedEntryFoundAliases(): Set[String] = {
 		Set(
 			"Hickelkasten",
@@ -1167,7 +1189,7 @@ object TestData {
 			"Slaughterhouse Five",
 			"Thomas Pynchon",
 			"V.",
-			"Gravity 's Rainbow",
+			"Gravity’s Rainbow",
 			"Stanley Kubrick",
 			"Dr. Strangelove",
 			"Absurden Theater",
@@ -1185,7 +1207,7 @@ object TestData {
 			"zynischer",
 			"Satire",
 			"Robert Altmans",
-			"M * A * S * H",
+			"M*A*S*H",
 			"Mike Nichols",
 			"Catch-22",
 			"Joseph Heller",
