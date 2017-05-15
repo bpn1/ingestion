@@ -24,5 +24,5 @@ Demonstration: Animierte Fahrt in den Graphen, Komplexität zeigen und Relatione
 - Wir bilden mithilfe öffentlicher Daten die deutsche Wirtschaft in einem Netzwerk ab.
 - TEXTMINING Wir analysieren dafür automatisiert Veröffentlichungen wie Spiegel, heise.de und Kompass. Wir erkennen, welcher Unternehmen in den Texten gennat werden, und welche Beziehungen zwischen den Unternehmen bestehen.
 - DEDUPLICATION Wir finden automatisiert und laufzeit-effizient Dubletten aus Millionen von Unternehmen in unserer Datenbank.
-- CURATION INTERFACE Wir ermöglichen dem Endbenutzer, die Daten manuell zu ediieren und bieten spannende Insights über die Struktur des Netzwerkes an.
+- CURATION INTERFACE Wir ermöglichen dem Endbenutzer, die Daten manuell zu editieren und bieten spannende Insights über die Struktur des Netzwerkes an.
 
