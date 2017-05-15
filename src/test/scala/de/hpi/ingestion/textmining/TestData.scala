@@ -374,13 +374,13 @@ object TestData {
 
 	def linksSet(): Set[Alias] = {
 		Set(
-			Alias("Audi", Map("Audi" -> 2)),
-			Alias("Brachttal", Map("Brachttal" -> 2)),
-			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1)),
-			Alias("Hessen", Map("Hessen" -> 1)),
-			Alias("1377", Map("1377" -> 1)),
-			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1)),
-			Alias("historisches Jahr", Map("1377" -> 1))
+			Alias("Audi", Map("Audi" -> RankedOccurrence(2))),
+			Alias("Brachttal", Map("Brachttal" -> RankedOccurrence(2))),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> RankedOccurrence(1))),
+			Alias("Hessen", Map("Hessen" -> RankedOccurrence(1))),
+			Alias("1377", Map("1377" -> RankedOccurrence(1))),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> RankedOccurrence(1))),
+			Alias("historisches Jahr", Map("1377" -> RankedOccurrence(1)))
 		)
 	}
 
@@ -400,28 +400,28 @@ object TestData {
 
 	def finalAliasesSet(): Set[Alias] = {
 		Set(
-			Alias("Audi", Map("Audi" -> 2), Option(2), Option(3)),
-			Alias("Brachttal", Map("Brachttal" -> 2), Option(2), Option(2)),
-			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Option(1), Option(2)),
-			Alias("Hessen", Map("Hessen" -> 1), Option(1), Option(2)),
-			Alias("1377", Map("1377" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), Option(1), Option(2)),
-			Alias("historisches Jahr", Map("1377" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Audi" -> 1), Option(1), Option(2)), // negative example
-			Alias("historisches Jahr", Map("1377" -> 1)) // incomplete table entry
+			Alias("Audi", Map("Audi" -> RankedOccurrence(2)), Option(2), Option(3)),
+			Alias("Brachttal", Map("Brachttal" -> RankedOccurrence(2)), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> RankedOccurrence(1)), Option(1), Option(2)),
+			Alias("Hessen", Map("Hessen" -> RankedOccurrence(1)), Option(1), Option(2)),
+			Alias("1377", Map("1377" -> RankedOccurrence(1)), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> RankedOccurrence(1)), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("1377" -> RankedOccurrence(1)), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Audi" -> RankedOccurrence(1)), Option(1), Option(2)), // negative example
+			Alias("historisches Jahr", Map("1377" -> RankedOccurrence(1))) // incomplete table entry
 		)
 	}
 
 	def aliasesWithExistingPagesSet(): Set[Alias] = {
 		// these pages do not fit to the aliases but are required for the tests
 		Set(
-			Alias("Audi", Map("Audi Test mit Link" -> 2), Option(2), Option(3)),
-			Alias("Brachttal", Map("Audi Test ohne Link" -> 2), Option(2), Option(2)),
-			Alias("Main-Kinzig-Kreis", Map("Streitberg (Brachttal)" -> 1), Option(1), Option(2)),
-			Alias("Hessen", Map("Streitberg (Brachttal)" -> 1), Option(1), Option(2)),
-			Alias("1377", Map("Testartikel" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Testartikel" -> 1), Option(1), Option(2)),
-			Alias("historisches Jahr", Map("Testartikel" -> 1), Option(1), Option(1))
+			Alias("Audi", Map("Audi Test mit Link" -> RankedOccurrence(2)), Option(2), Option(3)),
+			Alias("Brachttal", Map("Audi Test ohne Link" -> RankedOccurrence(2)), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Streitberg (Brachttal)" -> RankedOccurrence(1)), Option(1), Option(2)),
+			Alias("Hessen", Map("Streitberg (Brachttal)" -> RankedOccurrence(1)), Option(1), Option(2)),
+			Alias("1377", Map("Testartikel" -> RankedOccurrence(1)), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Testartikel" -> RankedOccurrence(1)), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("Testartikel" -> RankedOccurrence(1)), Option(1), Option(1))
 		)
 	}
 
@@ -807,30 +807,30 @@ object TestData {
 
 	def groupedAliasesSet(): Set[Alias] = {
 		Set(
-			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
-			Alias("Bayern", Map("Bayern" -> 1)),
-			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Radioaktiver Zerfall", Map("Radioaktivität" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Radioaktivität" -> 1))
+			Alias("Ingolstadt", Map("Ingolstadt" -> RankedOccurrence(1))),
+			Alias("Bayern", Map("Bayern" -> RankedOccurrence(1))),
+			Alias("Automobilhersteller", Map("Automobilhersteller" -> RankedOccurrence(1))),
+			Alias("Radioaktiver Zerfall", Map("Radioaktivität" -> RankedOccurrence(1))),
+			Alias("Zerfall", Map("Zerfall (Album)" -> RankedOccurrence(1), "Radioaktivität" -> RankedOccurrence(1)))
 		)
 	}
 
 	def groupedPagesSet(): Set[Page] = {
 		Set(
-			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
-			Page("Bayern", Map("Bayern" -> 1)),
-			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
-			Page("Radioaktivität", Map("Zerfall" -> 1, "Radioaktiver Zerfall" -> 1))
+			Page("Ingolstadt", Map("Ingolstadt" -> RankedOccurrence(1))),
+			Page("Bayern", Map("Bayern" -> RankedOccurrence(1))),
+			Page("Automobilhersteller", Map("Automobilhersteller" -> RankedOccurrence(1))),
+			Page("Zerfall (Album)", Map("Zerfall" -> RankedOccurrence(1))),
+			Page("Radioaktivität", Map("Zerfall" -> RankedOccurrence(1), "Radioaktiver Zerfall" -> RankedOccurrence(1)))
 		)
 	}
 
 	def cleanedGroupedPagesSet(): Set[Page] = {
 		Set(
-			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
-			Page("Bayern", Map("Bayern" -> 1)),
-			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+			Page("Ingolstadt", Map("Ingolstadt" -> RankedOccurrence(1))),
+			Page("Bayern", Map("Bayern" -> RankedOccurrence(1))),
+			Page("Automobilhersteller", Map("Automobilhersteller" -> RankedOccurrence(1))),
+			Page("Zerfall (Album)", Map("Zerfall" -> RankedOccurrence(1)))
 		)
 	}
 
@@ -1482,19 +1482,19 @@ object TestData {
 
   def linkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
-			Page("Bayern", Map("Bayern" -> 1)),
-			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+			Page("Audi", Map("Audi AG" -> RankedOccurrence(10), "Audi" -> RankedOccurrence(10), "VW" -> RankedOccurrence(1))),
+			Page("Bayern", Map("Bayern" -> RankedOccurrence(1))),
+			Page("VW", Map("Volkswagen AG" -> RankedOccurrence(1), "VW" -> RankedOccurrence(1))),
+			Page("Zerfall (Album)", Map("Zerfall" -> RankedOccurrence(1)))
 		)
 	}
 
-	def linkExtenderPagesMap(): Map[String, Map[String, Int]] = {
+	def linkExtenderPagesMap(): Map[String, Map[String, RankedOccurrence]] = {
 		Map(
-			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
-			"Bayern" -> Map("Bayern" -> 1),
-			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1),
-			"Zerfall (Album)" -> Map("Zerfall" -> 1)
+			"Audi" -> Map("Audi AG" -> RankedOccurrence(10), "Audi" -> RankedOccurrence(10), "VW" -> RankedOccurrence(1)),
+			"Bayern" -> Map("Bayern" -> RankedOccurrence(1)),
+			"VW" -> Map("Volkswagen AG" -> RankedOccurrence(1), "VW" -> RankedOccurrence(1)),
+			"Zerfall (Album)" -> Map("Zerfall" -> RankedOccurrence(1))
 		)
 	}
 
@@ -1506,10 +1506,10 @@ object TestData {
 		)
 	}
 
-	def linkExtenderFoundPages(): Map[String, Map[String, Int]] = {
+	def linkExtenderFoundPages(): Map[String, Map[String, RankedOccurrence]] = {
 		Map(
-			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
-			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1)
+			"Audi" -> Map("Audi AG" -> RankedOccurrence(10), "Audi" -> RankedOccurrence(10), "VW" -> RankedOccurrence(1)),
+			"VW" -> Map("Volkswagen AG" -> RankedOccurrence(1), "VW" -> RankedOccurrence(1))
 		)
 	}
 
@@ -1573,23 +1573,23 @@ object TestData {
 
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
-			Page("VW", Map("Volkswagen AG" -> 2, "VW" -> 2)),
-			Page("Hochhaus", Map("Hochhaus" -> 2, "Gebäude" -> 1)),
-			Page("Postbank", Map("Postbank" -> 2)),
-			Page("Berlin", Map("Berlin" -> 2, "(" -> 1, "Berliner" -> 2)),
-			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 2)),
-			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 2)),
-			Page("Potsdam", Map("Potsdam" -> 2)),
-			Page("Magdeburg", Map("Magdeburg" -> 2)),
-			Page("Stettin", Map("Stettin" -> 2)),
-			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 2)),
-			Page("New York City", Map("New York." -> 2)),
-			Page("Bronze", Map("Bronze" -> 2)),
-			Page("Media Broadcast", Map("Media Broadcast" -> 2)),
-			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 2, "DFMG" -> 11)),
-			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 2)),
-			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 2))
+			Page("Audi", Map("Audi AG" -> RankedOccurrence(10), "Audi" -> RankedOccurrence(10), "VW" -> RankedOccurrence(2))),
+			Page("VW", Map("Volkswagen AG" -> RankedOccurrence(2), "VW" -> RankedOccurrence(2))),
+			Page("Hochhaus", Map("Hochhaus" -> RankedOccurrence(2), "Gebäude" -> RankedOccurrence(1))),
+			Page("Postbank", Map("Postbank" -> RankedOccurrence(2))),
+			Page("Berlin", Map("Berlin" -> RankedOccurrence(2), "(" -> RankedOccurrence(1), "Berliner" -> RankedOccurrence(2))),
+			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> RankedOccurrence(2))),
+			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> RankedOccurrence(2))),
+			Page("Potsdam", Map("Potsdam" -> RankedOccurrence(2))),
+			Page("Magdeburg", Map("Magdeburg" -> RankedOccurrence(2))),
+			Page("Stettin", Map("Stettin" -> RankedOccurrence(2))),
+			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> RankedOccurrence(2))),
+			Page("New York City", Map("New York." -> RankedOccurrence(2))),
+			Page("Bronze", Map("Bronze" -> RankedOccurrence(2))),
+			Page("Media Broadcast", Map("Media Broadcast" -> RankedOccurrence(2))),
+			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> RankedOccurrence(2), "DFMG" -> RankedOccurrence(11))),
+			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> RankedOccurrence(2))),
+			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> RankedOccurrence(2)))
 		)
 	}
 
@@ -1724,12 +1724,12 @@ object TestData {
 
 	def companyPages(): List[Page] = {
 		List(
-			Page("Page 1", Map("P1Alias1" -> 1, "P1Alias2" -> 1)),
-			Page("Page 2", Map("P2Alias1" -> 1, "P2Alias2" -> 1)),
-			Page("Page 3", Map("P3Alias1" -> 1, "P1Alias1" -> 1)),
-			Page("Page 4", Map("P4Alias1" -> 1, "P4Alias3" -> 1)),
-			Page("Page 5", Map("P5Alias1" -> 1)),
-			Page("Page 6", Map("P6Alias1" -> 1)))
+			Page("Page 1", Map("P1Alias1" -> RankedOccurrence(1), "P1Alias2" -> RankedOccurrence(1))),
+			Page("Page 2", Map("P2Alias1" -> RankedOccurrence(1), "P2Alias2" -> RankedOccurrence(1))),
+			Page("Page 3", Map("P3Alias1" -> RankedOccurrence(1), "P1Alias1" -> RankedOccurrence(1))),
+			Page("Page 4", Map("P4Alias1" -> RankedOccurrence(1), "P4Alias3" -> RankedOccurrence(1))),
+			Page("Page 5", Map("P5Alias1" -> RankedOccurrence(1))),
+			Page("Page 6", Map("P6Alias1" -> RankedOccurrence(1))))
 	}
 
 	def companyAliases(): Set[String] = {

@@ -192,8 +192,11 @@ object CosineContextComparator extends SparkJob {
 			.filter(alias => alias.linkoccurrences.isDefined && alias.totaloccurrences.isDefined)
 			.flatMap { alias =>
 				val totalProb = alias.linkoccurrences.get.toDouble / alias.totaloccurrences.get.toDouble
-				val numPages = alias.pages.values.sum.toDouble
-				val pageProb = alias.pages.mapValues(_.toDouble / numPages)
+				val numPages = alias.pages.values
+					.map(_.value)
+					.sum
+					.toDouble
+				val pageProb = alias.pages.mapValues(_.value.toDouble / numPages)
 				alias.pages.keySet.map(page => (alias.alias, (page, totalProb, pageProb(page))))
 			}
 	}

@@ -44,6 +44,7 @@ object LinkAnalysis extends SparkJob {
 		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))
 		pages.saveToCassandra(keyspace, outputPageToAliasesTablename)
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -85,16 +86,18 @@ object LinkAnalysis extends SparkJob {
 
 	/**
 	  * Groups link data on the key, counts the number of elements per key and filters entries with an empty field.
+	  *
 	  * @param links RDD containing the link data in a predefined format
-	  * @return RDD containing the counted and filtered link data
+	  * @return RDD containing the counted, filtered and ranked link data
 	  */
-	def groupLinks(links: RDD[(String, List[String])]): RDD[(String, Map[String, Int])] = {
+	def groupLinks(links: RDD[(String, List[String])]): RDD[(String, Map[String, RankedOccurrence])] = {
 		links
 			.reduceByKey(_ ++ _)
 			.map { case (key, valueList) =>
 				val countedValues = valueList
 					.filter(_.nonEmpty)
 					.countElements()
+					.mapValues(count => RankedOccurrence(count))
 				(key, countedValues)
 			}.filter(t => t._1.nonEmpty && t._2.nonEmpty)
 	}

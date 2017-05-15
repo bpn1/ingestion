@@ -63,17 +63,17 @@ object LinkExtender extends SparkJob {
 	  */
 	def findAllPages(
 		article: ParsedWikipediaEntry,
-		pages: Map[String, Map[String, Int]]
-	): Map[String, Map[String, Int]] = {
+		pages: Map[String, Map[String, RankedOccurrence]]
+	): Map[String, Map[String, RankedOccurrence]] = {
 		val links = article.textlinks
-		val filteredPages = mutable.Map[String, Map[String, Int]]()
+		val filteredPages = mutable.Map[String, Map[String, RankedOccurrence]]()
 		pages.get(article.title).foreach { aliases =>
 			filteredPages(article.title) = aliases
 		}
 		links.foreach(link =>
 			pages.get(link.page).foreach { aliases =>
 				filteredPages(link.page) = aliases
-		})
+			})
 		filteredPages.toMap
 	}
 
@@ -136,24 +136,28 @@ object LinkExtender extends SparkJob {
 	  * @return Map of Alias to Page
 	  */
 	def reversePages(
-		pages: Map[String, Map[String, Int]],
+		pages: Map[String, Map[String, RankedOccurrence]],
 		tokenizer: IngestionTokenizer
 	): Map[String, String] = {
 		pages.toList
 			.flatMap(t => t._2.map(kv => (kv._1, kv._2, t._1)))
-			.filter{ case (alias, count, page) =>
+			.filter { case (alias, count, page) =>
 				alias.length != 1 && (alias.charAt(0).isLetter || alias.charAt(0).isDigit)
 			}
 			.groupBy(_._1)
 			.map { case (alias, pageList) =>
 				val page = pageList
 					.reduce { (currentMax, currentAlias) =>
-						val aliasCount = pages(currentAlias._3).values.sum
-						val maxCount = pages(currentMax._3).values.sum
-						val normalizedAliasCount = currentAlias._2.toFloat / aliasCount
-						val normalizedMaxCount = currentMax._2.toFloat / maxCount
+						val aliasCount = pages(currentAlias._3).values
+							.map(_.value)
+							.sum
+						val maxCount = pages(currentMax._3).values
+							.map(_.value)
+							.sum
+						val normalizedAliasCount = currentAlias._2.value.toFloat / aliasCount
+						val normalizedMaxCount = currentMax._2.value.toFloat / maxCount
 						if(normalizedAliasCount > normalizedMaxCount) currentAlias else currentMax
-				}._3
+					}._3
 				(alias, page)
 			}
 	}

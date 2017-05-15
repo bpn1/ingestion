@@ -98,7 +98,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	"Counted number of link occurrences" should "equal number of page references" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val expectedOccurrences = TestData.linksSet()
-			.map(link => (link.alias, link.pages.foldLeft(0)(_ + _._2)))
+			.map(link => (link.alias, link.pages.foldLeft(0)(_ + _._2.value)))
 			.toMap
 		AliasCounter.run(List(articles).toAnyRDD(), sc)
 			.fromAnyRDD[(String, Option[Int], Option[Int])]()
