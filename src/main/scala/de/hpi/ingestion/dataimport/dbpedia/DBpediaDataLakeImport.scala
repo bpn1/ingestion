@@ -39,7 +39,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 	}
 
 	override def normalizeAttribute(attribute: String, values: List[String]): List[String] = {
-		DBpediaNormalizationStrategy(attribute)(values)
+		DBpediaNormalizationStrategy.apply(attribute)(values)
 	}
 
 	override def translateToSubject(
