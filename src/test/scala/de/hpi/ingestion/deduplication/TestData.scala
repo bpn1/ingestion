@@ -150,10 +150,10 @@ object TestData {
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((subjects(1), stagingTable, 0.7117948717948718))),
+				List((subjects(1).id, stagingTable, 0.7117948717948718))),
 			DuplicateCandidates(
 				subjects(2).id,
-				List((subjects(3), stagingTable, 0.9446913580246914))))
+				List((subjects(3).id, stagingTable, 0.9446913580246914))))
 	}
 
 	def duplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
@@ -161,13 +161,13 @@ object TestData {
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((subjects(1), stagingTable, 0.7117948717948718), (subjects(4), stagingTable, 0.5761904761904763))),
+				List((subjects(1).id, stagingTable, 0.7117948717948718), (subjects(4).id, stagingTable, 0.5761904761904763))),
 			DuplicateCandidates(
 				subjects(1).id,
-				List((subjects(4), stagingTable, 0.5654212454212454))),
+				List((subjects(4).id, stagingTable, 0.5654212454212454))),
 			DuplicateCandidates(
 				subjects(2).id,
-				List((subjects(3), stagingTable, 0.9446913580246914))))
+				List((subjects(3).id, stagingTable, 0.9446913580246914))))
 	}
 
 	def testConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
