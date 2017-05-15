@@ -23,6 +23,8 @@ object LinkExtender extends SparkJob {
 	val inputParsedTablename = "parsedwikipedia"
 	val outputParsedTablename = "parsedwikipedia"
 	val inputPageToAliasesTablename = "wikipediapages"
+	var keyError = 0
+	var collisionError = 0
 
 	// $COVERAGE-OFF$
 	/**
@@ -73,7 +75,7 @@ object LinkExtender extends SparkJob {
 		links.foreach(link =>
 			pages.get(link.page).foreach { aliases =>
 				filteredPages(link.page) = aliases
-		})
+			})
 		filteredPages.toMap
 	}
 
@@ -119,10 +121,16 @@ object LinkExtender extends SparkJob {
 			if(aliasMatches.nonEmpty) {
 				val longestMatch = aliasMatches.maxBy(_.length)
 				val found = text.substring(longestMatch.head.beginOffset, longestMatch.last.endOffset)
-				val page = aliases(found)
-				val offset = longestMatch.head.beginOffset
-				resultList += Link(found, page, Option(offset))
-				i += longestMatch.length - 1
+				if(aliases.contains(found)) {
+					val page = aliases(found)
+					val offset = longestMatch.head.beginOffset
+					resultList += Link(found, page, Option(offset))
+					i += longestMatch.length - 1
+				}
+				else {
+					keyError += 1
+					println(s"Key Error: Found Alias: $found, on page: ${entry.title}, was not in aliases: $aliases")
+				}
 			}
 		}
 		entry.extendedlinks = resultList.toList
@@ -141,21 +149,22 @@ object LinkExtender extends SparkJob {
 	): Map[String, String] = {
 		pages.toList
 			.flatMap(t => t._2.map(kv => (kv._1, kv._2, t._1)))
-			.filter{ case (alias, count, page) =>
+			.filter { case (alias, count, page) =>
 				alias.length != 1 && (alias.charAt(0).isLetter || alias.charAt(0).isDigit)
 			}
 			.groupBy(_._1)
 			.map { case (alias, pageList) =>
-				val page = pageList
-					.reduce { (currentMax, currentAlias) =>
-						val aliasCount = pages(currentAlias._3).values.sum
-						val maxCount = pages(currentMax._3).values.sum
-						val normalizedAliasCount = currentAlias._2.toFloat / aliasCount
-						val normalizedMaxCount = currentMax._2.toFloat / maxCount
-						if(normalizedAliasCount > normalizedMaxCount) currentAlias else currentMax
-				}._3
+				var page = ""
+				if (pageList.length == 1) {
+					 page = pageList.head._3
+				}
+				else {
+					collisionError += 1
+					println(s"Collision Error: Found Pages: $pageList, for Alias: $alias")
+				}
 				(alias, page)
 			}
+			.filter(!_._2.isEmpty)
 	}
 
 	/**
@@ -184,7 +193,9 @@ object LinkExtender extends SparkJob {
 				findAliasOccurrences(entry, aliases, trie, tokenizer)
 			}
 		}, true)
-
+		println(s"Error Summary: KeyErrors: $keyError, " +
+			s"CollisionErrors: $collisionError, " +
+			s"in ${parsedArticles.count} articles")
 		List(parsedArticlesWithExtendedLinks).toAnyRDD()
 	}
 }

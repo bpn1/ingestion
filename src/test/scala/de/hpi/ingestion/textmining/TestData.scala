@@ -1482,7 +1482,7 @@ object TestData {
 
   def linkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
 			Page("Bayern", Map("Bayern" -> 1)),
 			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1)),
 			Page("Zerfall (Album)", Map("Zerfall" -> 1))
@@ -1491,7 +1491,7 @@ object TestData {
 
 	def linkExtenderPagesMap(): Map[String, Map[String, Int]] = {
 		Map(
-			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10),
 			"Bayern" -> Map("Bayern" -> 1),
 			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1),
 			"Zerfall (Album)" -> Map("Zerfall" -> 1)
@@ -1508,7 +1508,7 @@ object TestData {
 
 	def linkExtenderFoundPages(): Map[String, Map[String, Int]] = {
 		Map(
-			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10),
 			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1)
 		)
 	}
@@ -1573,7 +1573,7 @@ object TestData {
 
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
 			Page("VW", Map("Volkswagen AG" -> 2, "VW" -> 2)),
 			Page("Hochhaus", Map("Hochhaus" -> 2, "Gebäude" -> 1)),
 			Page("Postbank", Map("Postbank" -> 2)),
