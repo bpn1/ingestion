@@ -1686,11 +1686,11 @@ object TestData {
 
 	def labeledPoints(): List[LabeledPoint] = {
 		List(
-			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
-			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
-			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
-			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
-			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
+			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 1, 0.8))),
+			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 1, 0.7))),
+			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 1, 0.1))),
+			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 1, 0.3))),
+			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 1, 0.7))))
 	}
 
 	def textLinkHtml(): List[Element] = {
