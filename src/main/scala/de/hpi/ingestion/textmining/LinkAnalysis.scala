@@ -85,9 +85,10 @@ object LinkAnalysis extends SparkJob {
 	}
 
 	/**
+	  * Computes the rank for the counted occurrences of aliases or pages.
 	  *
-	  * @param countedOccurrences
-	  * @return
+	  * @param countedOccurrences counts for aliases or pages
+	  * @return ranks for the counted occurrences (starting with 1)
 	  */
 	def rankOccurrences(countedOccurrences: Map[String, Int]): Map[String, RankedOccurrence] = {
 		var rank = 1
