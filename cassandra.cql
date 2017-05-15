@@ -39,14 +39,14 @@ CREATE TABLE wikidumps.wikipedia (
 
 CREATE TABLE wikidumps.wikipedialinks (
     alias text PRIMARY KEY,
-    pages map<text, rankedvalue>,
+    pages map<text, frozen<rankedvalue>>,
     linkoccurrences int,
     totaloccurrences int
 );
 
 CREATE TABLE wikidumps.wikipediapages (
     page text PRIMARY KEY,
-    aliases map<text, rankedvalue>
+    aliases map<text, frozen<rankedvalue>>
 );
 
 CREATE TABLE wikidumps.wikipediadocfreq (
