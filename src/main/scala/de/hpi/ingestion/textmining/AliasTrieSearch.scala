@@ -20,10 +20,8 @@ import scala.collection.mutable.ListBuffer
 /**
   * Finds all occurrences of the aliases in the given trie in all Wikipedia articles and writes them to the
   * foundaliases column.
-  * recommended spark-submit flags
-  * --driver-memory 16G				<< needed for building the Trie
-  * --driver-java-options -Xss1ging	<< needed for serialization of Trie
-  * --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000" << needed for deserialization of Trie
+  * recommended spark-submit flags (needed for deserialization of Trie)
+  * --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
   */
 object AliasTrieSearch extends SparkJob {
 	appName = "Alias Trie Search"
