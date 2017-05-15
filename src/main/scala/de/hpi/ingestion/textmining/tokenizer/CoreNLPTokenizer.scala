@@ -20,8 +20,8 @@ class CoreNLPTokenizer() extends Tokenizer {
 
 	override def tokenizeWithOffsets(text: String): List[OffsetToken] = {
 		val annotation = new Annotation(text)
-		val tokens = new TokenizerAnnotator(true, "German")
-			.annotate(annotation)
+		val tokenizer = new TokenizerAnnotator(false, "German")
+		tokenizer.annotate(annotation)
 		annotation
 			.get(classOf[CoreAnnotations.TokensAnnotation])
 			.asScala
