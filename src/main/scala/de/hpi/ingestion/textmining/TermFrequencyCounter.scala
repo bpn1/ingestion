@@ -77,7 +77,7 @@ object TermFrequencyCounter extends SparkJob {
 	}
 
 	/**
-	  * Extracts context of the links of a given Wikipedia entry. The contexts are {@contextSize } tokens in front of
+	  * Extracts context of the links of a given Wikipedia entry. The contexts are {@contextSize} tokens in front of
 	  * and behind the location of the links alias in the tokenized text.
 	  *
 	  * @param entry Wikipedia entry containing the used links
