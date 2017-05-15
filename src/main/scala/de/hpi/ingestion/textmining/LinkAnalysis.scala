@@ -85,6 +85,30 @@ object LinkAnalysis extends SparkJob {
 	}
 
 	/**
+	  *
+	  * @param countedOccurrences
+	  * @return
+	  */
+	def rankOccurrences(countedOccurrences: Map[String, Int]): Map[String, RankedOccurrence] = {
+		var rank = 1
+		val ranksMap = countedOccurrences
+			.values
+			.countElements()
+			.toSeq
+			.sortBy(-_._1)
+			.map { case (value, count) =>
+				val rankedValue = (value, rank)
+				rank += count
+				rankedValue
+			}
+			.toMap
+
+		countedOccurrences.mapValues { count =>
+			RankedOccurrence(count, ranksMap(count))
+		}.map(identity)
+	}
+
+	/**
 	  * Groups link data on the key, counts the number of elements per key and filters entries with an empty field.
 	  *
 	  * @param links RDD containing the link data in a predefined format
@@ -97,8 +121,8 @@ object LinkAnalysis extends SparkJob {
 				val countedValues = valueList
 					.filter(_.nonEmpty)
 					.countElements()
-					.mapValues(count => RankedOccurrence(count))
-				(key, countedValues)
+				val rankedValues = rankOccurrences(countedValues)
+				(key, rankedValues)
 			}.filter(t => t._1.nonEmpty && t._2.nonEmpty)
 	}
 

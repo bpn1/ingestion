@@ -887,6 +887,26 @@ object TestData {
 		)
 	}
 
+	def countedOccurrences(): Map[String, Int] = {
+		Map(
+			"Audi" -> 5,
+			"BMW" -> 7,
+			"Chevrolet" -> 5,
+			"Dacia" -> 2,
+			"Ferrari" -> 7
+		)
+	}
+
+	def rankedOccurrences(): Map[String, RankedOccurrence] = {
+		Map(
+			"Audi" -> RankedOccurrence(5, 3),
+			"BMW" -> RankedOccurrence(7, 1),
+			"Chevrolet" -> RankedOccurrence(5, 3),
+			"Dacia" -> RankedOccurrence(2, 5),
+			"Ferrari" -> RankedOccurrence(7, 1)
+		)
+	}
+
 	def parsedArticlesWithoutLinksSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Volvo", Option("lorem")),

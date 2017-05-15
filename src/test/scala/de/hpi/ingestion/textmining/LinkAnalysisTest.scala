@@ -68,18 +68,6 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		groupedAliases shouldEqual TestData.groupedAliasesSet()
 	}
 
-	they should "have different ranks" in {
-		val links = sc.parallelize(TestData.validLinkSet().toList)
-		LinkAnalysis
-			.groupByAliases(links)
-			.collect
-			.foreach(alias => alias.pages.mapValues(_.value).toSet shouldEqual alias.pages.size)
-	}
-
-	they should "have successive ranks starting from 1" in {
-		// todo
-	}
-
 	"Aliases grouped by page names" should "not be empty" in {
 		val links = sc.parallelize(TestData.validLinkSet().toList)
 		val groupedPageNames = LinkAnalysis
@@ -122,6 +110,12 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 			.collect
 			.toSet
 		groupedPages shouldEqual TestData.groupedPagesSet()
+	}
+
+	"Ranked occurrences" should "be exactly these values" in {
+		val countedOccurrences = TestData.countedOccurrences()
+		val rankedOccurrences = LinkAnalysis.rankOccurrences(countedOccurrences)
+		rankedOccurrences shouldEqual TestData.rankedOccurrences()
 	}
 
 	"Link data" should "be grouped and counted" in {
