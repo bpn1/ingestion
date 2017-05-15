@@ -79,6 +79,15 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
+	  * Returns default value for the Document Frequency used in the idf calculation.
+	  * @param threshold least significant Document Frequency
+	  * @return default Document Frequency used for idf calculation
+	  */
+	def calculateDefaultDf(threshold: Int = DocumentFrequencyCounter.leastSignificantDocumentFrequency): Int = {
+		threshold - 1
+	}
+
+	/**
 	  * Transforms articles into a format needed to calculate the tfIdf for every article.
 	  *
 	  * @param articles                   RDD of parsed Wikipedia articles with known term frequencies
@@ -236,7 +245,8 @@ object CosineContextComparator extends SparkJob {
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
 
 		val numDocuments = articlesWithTermFrequencies.count()
-		val defaultIdf = calculateIdf(DocumentFrequencyCounter.leastSignificantDocumentFrequency - 1, numDocuments)
+		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
+		val defaultIdf = calculateIdf(defaultDf, numDocuments)
 
 		val articleTfs = transformArticleTfs(articlesWithTermFrequencies)
 		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf)

@@ -40,10 +40,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val documentFrequencyThreshold = 2
+		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold - 1, numDocuments)
+		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val contexts = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformArticleTfs(articles),
@@ -61,13 +61,13 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq2") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val documentFrequencyThreshold = 2
+		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(
 			TestData.articlesWithCompleteContexts()
 				.toList
 				.filter(_.title != "Streitberg (Brachttal)"))
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold - 1, numDocuments)
+		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val contexts = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformArticleTfs(articles),
@@ -86,11 +86,11 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq2") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val documentFrequencyThreshold = 2
+		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 			.filter(_.title != "Streitberg (Brachttal)")
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold - 1, numDocuments)
+		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val contexts = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformArticleTfs(articles),
@@ -109,10 +109,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
 
-		val documentFrequencyThreshold = 2
+		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold - 1, numDocuments)
+		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val linkContextValues = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformLinkContextTfs(articles),
@@ -129,10 +129,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val documentFrequencyThreshold = 2
+		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold - 1, numDocuments)
+		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val linkContextValues = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformLinkContextTfs(articles),
