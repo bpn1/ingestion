@@ -71,7 +71,7 @@ object DBpediaNormalizationStrategy extends NormalizationStrategy("categorizatio
 			case r"""dbpedia-de:(.+)${city}""" => List(city)
 			case r"""(.+)${city}@de \.""" => List(city)
 			case other => List(other)
-		}
+		}.distinct
 	}
 
 	/**
