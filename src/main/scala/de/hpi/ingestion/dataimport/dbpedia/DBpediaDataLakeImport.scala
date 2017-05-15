@@ -7,7 +7,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
-
 import scala.collection.mutable
 
 /**
@@ -40,7 +39,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 	}
 
 	override def normalizeAttribute(attribute: String, values: List[String]): List[String] = {
-		DBpediaNormalizeStrategy(attribute)(values)
+		DBpediaNormalizationStrategy(attribute)(values)
 	}
 
 	override def translateToSubject(

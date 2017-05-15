@@ -1,11 +1,14 @@
 package de.hpi.ingestion.dataimport.wikidata
 
+import de.hpi.ingestion.dataimport.NormalizationStrategy
 import de.hpi.ingestion.implicits.RegexImplicits._
 
 /**
   * Strategies for the normalization of WikiData entities
   */
-object WikiDataNormalizeStrategy {
+object WikiDataNormalizationStrategy extends NormalizationStrategy("categorization_wikidata.xml") with Serializable {
+	mapping = this.parseNormalizationConfig()
+
 	/**
 	  * Normalizes coordinates: e.g. "-1,1"
 	  * @param values coordinates list
@@ -31,14 +34,40 @@ object WikiDataNormalizeStrategy {
 	}
 
 	/**
+	  * Normalizes sector
+	  * @param values sector list
+	  * @return normalized sectors
+	  */
+	def normalizeSector(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"Q[0-9]+" => None
+			case other => this.mapSector(other)
+		}
+	}
+
+	/**
+	  * Normalizes employees
+	  * @param values list of employees
+	  * @return normalized employees
+	  */
+	def normalizeEmployees(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""\+(\d+)${employees};1""" => List(employees)
+			case _ => None
+		}
+	}
+
+	/**
 	  * Chooses the right normalization method
 	  * @param attribute Attribute to be normalized
 	  * @return Normalization method
 	  */
 	def apply(attribute: String): (List[String]) => List[String] = {
 		attribute match {
+			case "gen_sector" => this.normalizeSector
 			case "geo_coords" => this.normalizeCoords
 			case "geo_country" => this.normalizeCountry
+			case "gen_employees" => this.normalizeEmployees
 			case _ => identity
 		}
 	}

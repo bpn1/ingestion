@@ -32,7 +32,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 	}
 
 	override def normalizeAttribute(attribute: String, values: List[String]): List[String] = {
-		WikiDataNormalizeStrategy(attribute)(values)
+		WikiDataNormalizationStrategy(attribute)(values)
 	}
 
 	override def translateToSubject(
