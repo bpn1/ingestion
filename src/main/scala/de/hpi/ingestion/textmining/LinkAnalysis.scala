@@ -90,7 +90,7 @@ object LinkAnalysis extends SparkJob {
 	  * @param countedOccurrences counts for aliases or pages
 	  * @return ranks for the counted occurrences (starting with 1)
 	  */
-	def rankOccurrences(countedOccurrences: Map[String, Int]): Map[String, RankedOccurrence] = {
+	def rankOccurrences(countedOccurrences: Map[String, Int]): Map[String, RankedValue] = {
 		var rank = 1
 		val ranksMap = countedOccurrences
 			.values
@@ -105,7 +105,7 @@ object LinkAnalysis extends SparkJob {
 			.toMap
 
 		countedOccurrences.mapValues { count =>
-			RankedOccurrence(count, ranksMap(count))
+			RankedValue(count, ranksMap(count))
 		}.map(identity)
 	}
 
@@ -115,7 +115,7 @@ object LinkAnalysis extends SparkJob {
 	  * @param links RDD containing the link data in a predefined format
 	  * @return RDD containing the counted, filtered and ranked link data
 	  */
-	def groupLinks(links: RDD[(String, List[String])]): RDD[(String, Map[String, RankedOccurrence])] = {
+	def groupLinks(links: RDD[(String, List[String])]): RDD[(String, Map[String, RankedValue])] = {
 		links
 			.reduceByKey(_ ++ _)
 			.map { case (key, valueList) =>

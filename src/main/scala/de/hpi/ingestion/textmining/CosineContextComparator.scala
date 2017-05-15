@@ -187,7 +187,7 @@ object CosineContextComparator extends SparkJob {
 	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
 	  * @return aliases with probability features
 	  */
-	def computeAliasProbabilities(aliases: RDD[Alias]): RDD[(String, (String, Double, Double))] = {
+	def computeAliasProbabilities(aliases: RDD[Alias]): RDD[(String, (String, Double, Double, Int))] = {
 		aliases
 			.filter(alias => alias.linkoccurrences.isDefined && alias.totaloccurrences.isDefined)
 			.flatMap { alias =>
@@ -196,8 +196,9 @@ object CosineContextComparator extends SparkJob {
 					.map(_.value)
 					.sum
 					.toDouble
-				val pageProb = alias.pages.mapValues(_.value.toDouble / numPages)
-				alias.pages.keySet.map(page => (alias.alias, (page, totalProb, pageProb(page))))
+				val pageProbs = alias.pages.mapValues(_.value.toDouble / numPages)
+				val pageRanks = alias.pages.mapValues(_.rank)
+				alias.pages.keySet.map(page => (alias.alias, (page, totalProb, pageProbs(page), pageRanks(page))))
 			}
 	}
 
@@ -210,14 +211,14 @@ object CosineContextComparator extends SparkJob {
 	  */
 	def compareLinksWithArticles(
 		linkContexts: RDD[(Link, Map[String, Double])],
-		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
+		aliasPageProbabilities: RDD[(String, (String, Double, Double, Int))],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
 		linkContexts
 			.map(t => (t._1.alias, t))
 			.join(aliasPageProbabilities)
-			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
-				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, pageProb)))
+			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb, pageRank))) =>
+				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, pageProb, pageRank)))
 			}.reduceByKey(_ ++ _)
 			.join(articleContexts)
 			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
@@ -228,6 +229,7 @@ object CosineContextComparator extends SparkJob {
 						page,
 						protoFeatureEntry.totalProbability,
 						protoFeatureEntry.pageProbability,
+						protoFeatureEntry.pageRank,
 						cosineSim,
 						protoFeatureEntry.link.page == page
 					)

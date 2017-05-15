@@ -63,10 +63,10 @@ object LinkExtender extends SparkJob {
 	  */
 	def findAllPages(
 		article: ParsedWikipediaEntry,
-		pages: Map[String, Map[String, RankedOccurrence]]
-	): Map[String, Map[String, RankedOccurrence]] = {
+		pages: Map[String, Map[String, RankedValue]]
+	): Map[String, Map[String, RankedValue]] = {
 		val links = article.textlinks
-		val filteredPages = mutable.Map[String, Map[String, RankedOccurrence]]()
+		val filteredPages = mutable.Map[String, Map[String, RankedValue]]()
 		pages.get(article.title).foreach { aliases =>
 			filteredPages(article.title) = aliases
 		}
@@ -136,7 +136,7 @@ object LinkExtender extends SparkJob {
 	  * @return Map of Alias to Page
 	  */
 	def reversePages(
-		pages: Map[String, Map[String, RankedOccurrence]],
+		pages: Map[String, Map[String, RankedValue]],
 		tokenizer: IngestionTokenizer
 	): Map[String, String] = {
 		pages.toList

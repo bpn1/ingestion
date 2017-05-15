@@ -10,7 +10,7 @@ package de.hpi.ingestion.textmining.models
   */
 case class Alias(
 	alias: String,
-	pages: Map[String, RankedOccurrence] = Map(),
+	pages: Map[String, RankedValue] = Map(),
 	var linkoccurrences: Option[Int] = None,
 	var totaloccurrences: Option[Int] = None
 )

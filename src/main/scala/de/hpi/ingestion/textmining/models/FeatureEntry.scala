@@ -11,6 +11,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
   * @param entity      possible entity the alias might be pointing to
   * @param prob_link   probability that the alias is a link
   * @param prob_entity probability that the alias points to the entity given it is a link
+  * @param rank_entity rank of prob_entity compared to other aliases
   * @param cosine_sim  cosine similarity of the context of the alias and the entities article/context
   * @param correct     whether or not this alias actually points to the entity
   * @param id          unique uuid used as Cassandra primary key
@@ -20,6 +21,7 @@ case class FeatureEntry(
 	entity: String,
 	prob_link: Double,
 	prob_entity: Double,
+	rank_entity: Int,
 	cosine_sim: Double,
 	correct: Boolean = false,
 	id: UUID = UUID.randomUUID()
@@ -30,7 +32,7 @@ case class FeatureEntry(
 	  * @return Labeled Point containing the features and the label
 	  */
 	def labeledPoint(): LabeledPoint = {
-		val features = new DenseVector(Array(prob_link, prob_entity, cosine_sim))
+		val features = new DenseVector(Array(prob_link, prob_entity, rank_entity, cosine_sim))
 		val label = if(correct) 1.0 else 0.0
 		LabeledPoint(label, features)
 	}

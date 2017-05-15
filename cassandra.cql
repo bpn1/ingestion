@@ -5,6 +5,11 @@ CREATE KEYSPACE wikidumps WITH REPLICATION = {
 };
 
 -- Wikidumps.Wikipedia
+CREATE TYPE wikidumps.rankedvalue (
+    value int,
+    rank int
+);
+
 CREATE TYPE wikidumps.link (
     alias text,
     page text,
@@ -33,14 +38,14 @@ CREATE TABLE wikidumps.wikipedia (
 
 CREATE TABLE wikidumps.wikipedialinks (
     alias text PRIMARY KEY,
-    pages map<text, int>,
+    pages map<text, rankedvalue>,
     linkoccurrences int,
     totaloccurrences int
 );
 
 CREATE TABLE wikidumps.wikipediapages (
     page text PRIMARY KEY,
-    aliases map<text, int>
+    aliases map<text, rankedvalue>
 );
 
 CREATE TABLE wikidumps.wikipediadocfreq (
@@ -59,6 +64,7 @@ CREATE TABLE wikidumps.featureentries (
 	entity text,
 	prob_link double,
 	prob_entity double,
+  rank_entity int,
 	cosine_sim double,
 	correct boolean
 );
