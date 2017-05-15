@@ -23,7 +23,8 @@ CREATE TABLE wikidumps.parsedwikipedia (
     listlinks list<frozen<link>>,
     templatelinks list<frozen<link>>,
     text text,
-    textlinks list<frozen<link>>
+    textlinks list<frozen<link>>,
+    triealiases frozen<list<frozen<triealias>>>
 );
 
 CREATE TABLE wikidumps.wikipedia (
@@ -61,6 +62,12 @@ CREATE TABLE wikidumps.featureentries (
 	prob_entity double,
 	cosine_sim double,
 	correct boolean
+);
+
+CREATE TYPE wikidumps.triealias (
+	alias text,
+	offset int,
+	context map<text, int>
 );
 
 -- Wikidumps.Wikidata
