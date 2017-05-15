@@ -4,6 +4,8 @@ import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import java.net.URL
 
+import de.hpi.ingestion.dataimport.NormalizationStrategy
+import de.hpi.ingestion.dataimport.dbpedia.DBpediaNormalizationStrategy
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 import de.hpi.ingestion.framework.SparkJob
@@ -28,6 +30,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	dataSources: List[String],
 	configFile: Option[String],
 	normalizationFile: String,
+	categoryConfigFile: String,
 	inputKeyspace: String,
 	inputTable: String
 ) extends DataLakeImport[T] with SparkJob {
@@ -69,14 +72,29 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 		this.parseNormalizationConfig(url)
 	}
 
+	protected def parseCategoryConfig(path: String): Map[String, List[String]] = {
+		val url = this.getClass.getResource(s"/$path")
+		val xml = XML.loadString(Source
+			.fromURL(url)
+			.getLines()
+			.mkString("\n"))
+
+		(xml \\ "categorization" \ "category").map { attribute =>
+			val key = (attribute \ "key").text
+			val values = (attribute \ "mapping").map(_.text).toList
+			(key, values)
+		}.toMap
+	}
+
 	protected def normalizeProperties(
 		entity: T,
-		mapping: Map[String, List[String]]
+		mapping: Map[String, List[String]],
+		strategies: Map[String, List[String]]
 	): Map[String, List[String]] = {
 		mapping
 			.map { case (normalized, notNormalized) =>
 				val values = notNormalized.flatMap(entity.get)
-				val normalizedValues = this.normalizeAttribute(normalized, values)
+				val normalizedValues = this.normalizeAttribute(normalized, values, strategies)
 				(normalized, normalizedValues)
 			}.filter(_._2.nonEmpty)
 	}
@@ -95,12 +113,13 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 		this.parseConfig(configPath)
 		val version = Version(appName, dataSources, sc)
 		val mapping = parseNormalizationConfig(this.normalizationFile)
+		val strategies = parseCategoryConfig(this.categoryConfigFile)
 		input
 			.fromAnyRDD[T]()
 			.map(rdd =>
 				rdd
 					.filter(filterEntities)
-					.map(translateToSubject(_, version, mapping)))
+					.map((entity: T) => translateToSubject(entity, version, mapping, strategies)))
 			.toAnyRDD()
 	}
 
@@ -118,6 +137,5 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 			.head
 			.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
 	}
-
 	// $COVERAGE-ON$
 }

@@ -1,6 +1,7 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import com.datastax.spark.connector._
+import de.hpi.ingestion.dataimport.NormalizationStrategy
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
@@ -15,6 +16,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 	List("wikidata_20161117"),
 	Option("datalakeimport_config.xml"),
 	"normalization_wikidata.xml",
+	"categorization_wikidata.xml",
 	"wikidumps",
 	"wikidata"
 ){
@@ -31,14 +33,20 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		entity.instancetype.isDefined
 	}
 
-	override def normalizeAttribute(attribute: String, values: List[String]): List[String] = {
-		WikiDataNormalizationStrategy(attribute)(values)
+	override def normalizeAttribute(
+		attribute: String,
+		values: List[String],
+		strategies: Map[String, List[String]]
+	): List[String] = {
+		val normalized = WikiDataNormalizationStrategy(attribute)(values)
+		if (attribute == "gen_sectors") normalized.flatMap(x => strategies.getOrElse(x, List(x))) else normalized
 	}
 
 	override def translateToSubject(
 		entity: WikiDataEntity,
 		version: Version,
-		mapping: Map[String, List[String]]
+		mapping: Map[String, List[String]],
+		strategies: Map[String, List[String]]
 	): Subject = {
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
@@ -47,7 +55,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 		if(entity.aliases.nonEmpty) sm.addAliases(entity.aliases)
 
-		val normalizedProperties = normalizeProperties(entity, mapping)
+		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
 
 		sm.addProperties(entity.data ++ normalizedProperties)
 		subject
