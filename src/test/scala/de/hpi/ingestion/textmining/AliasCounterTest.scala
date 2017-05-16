@@ -6,7 +6,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkContext with Matchers {
 	"Counted aliases" should "have the same size as all links" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		val allAliases = TestData.allAliasesTestRDD(sc)
 		val countedAliases = AliasCounter
 			.countAliases(articles)
@@ -14,7 +14,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	}
 
 	they should "have the same aliases as all links" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		val countedAliases = AliasCounter
 				.countAliases(articles)
 				.map(_.alias)
@@ -22,7 +22,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	}
 
 	they should "have counted any occurrence" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		AliasCounter
 			.countAliases(articles)
 			.collect
@@ -31,7 +31,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	}
 
 	they should "have consistent counts" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		AliasCounter
 			.countAliases(articles)
 			.collect
@@ -43,14 +43,14 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	}
 
 	they should "be exactly these counted aliases" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		val countedAliases = AliasCounter
 			.countAliases(articles)
 		assertRDDEquals(countedAliases, TestData.countedAliasesTestRDD(sc))
 	}
 
 	"Extracted alias lists" should "contain all links and aliases" in {
-		val aliasListsRDD = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val aliasListsRDD = sc.parallelize(TestData.parsedWikipediaSet().toList)
 			.map(AliasCounter.extractAliasList)
 		    .map(_.map(_.alias).toSet)
 		val testAliasLists = TestData.aliasOccurrencesInArticlesTestRDD(sc)
@@ -59,7 +59,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	}
 
 	they should "have the alias counter set properly" in {
-		sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		sc.parallelize(TestData.parsedWikipediaSet().toList)
 			.flatMap(AliasCounter.extractAliasList)
 			.collect
 			.foreach { alias =>
@@ -71,7 +71,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 
 	they should "be exactly the same Alias counters" in {
 		val testAliasCounterData = TestData.startAliasCounterTestRDD(sc)
-		val aliasCounterRDD = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val aliasCounterRDD = sc.parallelize(TestData.parsedWikipediaSet().toList)
 			.flatMap(AliasCounter.extractAliasList)
 		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
 	}
@@ -86,7 +86,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	}
 
 	"Alias counts" should "be exactly these tuples" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		val mergedLinks = AliasCounter.run(List(articles).toAnyRDD(), sc)
 			.fromAnyRDD[(String, Option[Int], Option[Int])]()
 			.head
@@ -96,7 +96,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	}
 
 	"Counted number of link occurrences" should "equal number of page references" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		val expectedOccurrences = TestData.linksSet()
 			.map(link => (link.alias, link.pages.foldLeft(0)(_ + _._2)))
 			.toMap

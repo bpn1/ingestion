@@ -5,14 +5,14 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class DocumentFrequencyCounterTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Document frequencies" should "not be empty" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		val documentFrequencies = DocumentFrequencyCounter
 			.countDocumentFrequencies(articles)
 		documentFrequencies should not be empty
 	}
 
 	they should "be greater than zero" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		DocumentFrequencyCounter
 			.countDocumentFrequencies(articles)
 			.collect
@@ -20,7 +20,7 @@ class DocumentFrequencyCounterTest extends FlatSpec with SharedSparkContext with
 	}
 
 	they should "contain these document frequencies" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		val documentFrequencies = DocumentFrequencyCounter.countDocumentFrequencies(articles)
 			.collect
 			.toSet
@@ -59,7 +59,7 @@ class DocumentFrequencyCounterTest extends FlatSpec with SharedSparkContext with
 
 	they should "contain these document frequencies" in {
 		val threshold = 3
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)
 		val documentFrequencies = DocumentFrequencyCounter
 			.countDocumentFrequencies(articles)
 		val filteredDocumentFrequencies = DocumentFrequencyCounter

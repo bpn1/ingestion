@@ -128,7 +128,7 @@ object TestData {
 			.sortBy(identity)
 	}
 
-	def parsedWikipediaTestSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
@@ -894,7 +894,7 @@ object TestData {
 		)
 	}
 
-	def parsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaSetWithoutText(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry(
 				"Audi",
