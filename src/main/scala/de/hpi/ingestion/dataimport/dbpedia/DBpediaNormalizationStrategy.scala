@@ -1,11 +1,14 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
+import de.hpi.ingestion.dataimport.NormalizationStrategy
 import de.hpi.ingestion.implicits.RegexImplicits._
 
 /**
   * Strategies for the normalization of DBPedia entities
   */
-object DBpediaNormalizeStrategy extends Serializable {
+object DBpediaNormalizationStrategy extends NormalizationStrategy("categorization_dbpedia.xml") with Serializable {
+	mapping = this.parseNormalizationConfig()
+
 	/**
 	  * Normalizes Employees
 	  * @param values employees list
@@ -13,9 +16,9 @@ object DBpediaNormalizeStrategy extends Serializable {
 	  */
 	def normalizeEmployees(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""([-+]?[0-9]+\.?[0-9]*)${number}\^\^xsd:integer""" => List(number)
-			case r"""([-+]?[0-9]+\.?[0-9]*)${number}\^\^xsd:nonNegativeInteger""" => List(number)
-			case r"""über (\d+)${number}@de \.""" => List(number)
+			case r"""([-+]?[0-9]+\.?[0-9]*)${employees}\^\^xsd:integer""" => List(employees)
+			case r"""([-+]?[0-9]+\.?[0-9]*)${employees}\^\^xsd:nonNegativeInteger""" => List(employees)
+			case r"""über (\d+)${employees}@de \.""" => List(employees)
 			case _ => None
 		}.distinct
 	}
@@ -47,15 +50,42 @@ object DBpediaNormalizeStrategy extends Serializable {
 	}
 
 	/**
+	  * Normalizes sector
+	  * @param values sector list
+	  * @return normalized sectors
+	  */
+	def normalizeSector(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${sector}""" => this.mapSector(sector)
+			case _ => None
+		}
+	}
+
+	/**
+	  * Normalizes cities
+	  * @param values city list
+	  * @return normalized cities
+	  */
+	def normalizeCity(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""dbpedia-de:(.+)${city}""" => List(city)
+			case r"""(.+)${city}@de \.""" => List(city)
+			case other => List(other)
+		}.distinct
+	}
+
+	/**
 	  * Chooses the right normalization method
 	  * @param attribute Attribute to be normalized
 	  * @return Normalization method
 	  */
 	def apply(attribute: String): (List[String]) => List[String] = {
 		attribute match {
-			case "gen_employees" => normalizeEmployees
-			case "geo_country" => normalizeCountry
-			case "geo_coords" => normalizeCoords
+			case "gen_sector" => this.normalizeSector
+			case "gen_employees" => this.normalizeEmployees
+			case "geo_country" => this.normalizeCountry
+			case "geo_coords" => this.normalizeCoords
+			case "geo_city" => this.normalizeCity
 			case _ => identity
 		}
 	}

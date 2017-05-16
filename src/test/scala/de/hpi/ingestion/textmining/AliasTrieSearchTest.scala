@@ -11,10 +11,11 @@ import scala.io.Source
 class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Alias matches" should "be found" in {
-		val tokenizer = IngestionTokenizer(new WhitespaceTokenizer, false, false)
+		val tokenizer = IngestionTokenizer()
+		val contextTokenizer = IngestionTokenizer(true, true)
 		val trie = TestData.testDataTrie(tokenizer)
 		val entry = TestData.parsedEntry()
-		val resultEntry = AliasTrieSearch.matchEntry(entry, trie, tokenizer)
+		val resultEntry = AliasTrieSearch.matchEntry(entry, trie, tokenizer, contextTokenizer)
 		resultEntry.foundaliases should not be empty
 	}
 
@@ -33,13 +34,35 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 
 	"Wikipedia entries" should "be enriched with found aliases" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+
 		val testTrieStreamFunction = TestData.fullTrieStream _
 		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
 		val inputEntry = sc.parallelize(Seq(TestData.parsedEntry()))
 		val searchResult = AliasTrieSearch.run(List(inputEntry).toAnyRDD(), sc)
 		val enrichedEntry = searchResult.fromAnyRDD[ParsedWikipediaEntry]().head.collect.head
-		val foundAliases = TestData.parsedEntryFoundAliases()
+		val expectedAliases = TestData.parsedEntryFoundAliases()
+		enrichedEntry.foundaliases.toSet shouldEqual expectedAliases
+
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
-		enrichedEntry.foundaliases.toSet shouldEqual foundAliases
+	}
+
+	"Trie aliases" should "be extracted" in {
+		val tokenizer = IngestionTokenizer()
+		val contextTokenizer = IngestionTokenizer(true, true)
+		val trie = TestData.testDataTrie(tokenizer)
+		val entries = TestData.parsedEntriesWithLessText()
+		val trieAliases = entries.map(AliasTrieSearch.matchEntry(_, trie, tokenizer, contextTokenizer).triealiases)
+		val expected = TestData.foundTrieAliases()
+		trieAliases shouldEqual expected
+	}
+
+	"Alias contexts" should "be extracted" in {
+		val tokenizer = IngestionTokenizer()
+		val contextTokenizer = IngestionTokenizer(true, true)
+		val text = tokenizer.processWithOffsets(TestData.parsedEntriesWithLessText().head.getText())
+		val trieAlias = TestData.foundTrieAliases().head.head
+		val alias = tokenizer.processWithOffsets(trieAlias.alias)
+		val context = AliasTrieSearch.extractAliasContext(alias, text, 0, contextTokenizer).getCounts()
+		context shouldEqual trieAlias.context
 	}
 }
