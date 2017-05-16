@@ -11,9 +11,10 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.mllib.tree.configuration.Algo
+import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
-
 import scala.io.{BufferedSource, Source}
 
 // scalastyle:off number.of.methods
@@ -1501,7 +1502,7 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
-  def linkExtenderPagesSet(): Set[Page] = {
+	def linkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
@@ -1674,9 +1675,9 @@ object TestData {
 				)
 			)
 		)
-  }
+	}
 
-  def featureEntries(): List[FeatureEntry] = {
+	def featureEntries(): List[FeatureEntry] = {
 		List(
 			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
 			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
@@ -1818,21 +1819,36 @@ object TestData {
 
 	def predictionStatistics(): List[(String, Double, Double)] = {
 		List(
-			("precision", 1.0, 5.0/7.0),
+			("precision", 1.0, 5.0 / 7.0),
 			("precision", 0.0, 0.6),
-			("recall", 1.0, 5.0/6.0),
+			("recall", 1.0, 5.0 / 6.0),
 			("recall", 0.0, 1.0),
-			("fscore with beta 0.5", 1.0, 25.0/34.0),
+			("fscore with beta 0.5", 1.0, 25.0 / 34.0),
 			("fscore with beta 0.5", 0.0, 0.6521739130434783))
 	}
 
 	def formattedPredictionStatistics(): String = {
-		s"precision\t1.0\t${5.0/7.0}" + "\n" +
+		s"precision\t1.0\t${5.0 / 7.0}" + "\n" +
 			"precision\t0.0\t0.6" + "\n" +
-			s"recall\t1.0\t${5.0/6.0}" + "\n" +
+			s"recall\t1.0\t${5.0 / 6.0}" + "\n" +
 			"recall\t0.0\t1.0" + "\n" +
-			s"fscore with beta 0.5\t1.0\t${25.0/34.0}" + "\n" +
+			s"fscore with beta 0.5\t1.0\t${25.0 / 34.0}" + "\n" +
 			"fscore with beta 0.5\t0.0\t0.6521739130434783"
+	}
+
+	def randomForestModel(): RandomForestModel = {
+		val node = new Node(0, new Predict(0.0, 1.0), 0.0, true, None, None, None, None)
+		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
+		new RandomForestModel(Algo.Classification, Array(dtmodel))
+	}
+
+	def namedEntitiesList(): List[Set[OffsetToken]] = {
+		List(
+			Set(OffsetToken("a", 0, 0)),
+			Set(OffsetToken("a", 0, 0)),
+			Set(OffsetToken("a", 0, 0)),
+			Set(OffsetToken("a", 0, 0))
+		)
 	}
 }
 

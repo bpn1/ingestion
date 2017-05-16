@@ -7,6 +7,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.apache.spark.mllib.tree.model.RandomForestModel
 
 /**
   * todo
@@ -16,6 +17,7 @@ object TextNER extends SparkJob {
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
 	val outputTablename = "namedentities"
+	var classifierModel = "wikipedia_randomforest_model_1234"
 
 	// $COVERAGE-OFF$
 	/**
@@ -48,11 +50,12 @@ object TextNER extends SparkJob {
 
 	/**
 	  * todo
+	  *
 	  * @param text
 	  * @return
 	  */
-	def findNamedEntities(text: String): List[OffsetToken] = {
-		List(OffsetToken("lorem", 0, 0))
+	def findNamedEntities(text: String, classifier: RandomForestModel): List[OffsetToken] = {
+		List(OffsetToken("lorem", 0, 5))
 	}
 
 	/**
@@ -61,7 +64,8 @@ object TextNER extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val texts = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 			.map(_.getText())
-		val namedEntities = texts.map(text => findNamedEntities(text))
+		val classifier = RandomForestModel.load(sc, classifierModel)
+		val namedEntities = texts.map(text => findNamedEntities(text, classifier))
 		List(namedEntities).toAnyRDD()
 	}
 }
