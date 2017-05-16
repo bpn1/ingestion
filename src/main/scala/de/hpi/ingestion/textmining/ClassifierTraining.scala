@@ -105,23 +105,14 @@ object ClassifierTraining extends SparkJob {
 			.filter(_._1 == 1.0)
 			.values
 			.first
-//			.collect
-//			.headOption
-//			.getOrElse(0.0)
 		val recall = metrics.recallByThreshold()
 			.filter(_._1 == 1.0)
 			.values
 			.first
-//			.collect
-//			.headOption
-//			.getOrElse(0.0)
 		val f1score = metrics.fMeasureByThreshold(beta)
 			.filter(_._1 == 1.0)
 			.values
 			.first
-//			.collect
-//			.headOption
-//			.getOrElse(0.0)
 		PrecisionRecallDataTuple(1.0, precision, recall, f1score)
 	}
 
