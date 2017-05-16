@@ -1,7 +1,6 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.dataimport.NormalizationStrategy
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
 import de.hpi.ingestion.datalake.models.{Subject, Version}

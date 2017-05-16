@@ -6,7 +6,6 @@ import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import de.hpi.ingestion.dataimport.NormalizationStrategy
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import scala.collection.mutable
 
