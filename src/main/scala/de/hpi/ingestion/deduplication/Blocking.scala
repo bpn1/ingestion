@@ -200,21 +200,48 @@ object Blocking extends SparkJob {
 			!(isUndefined && filterUndefined)
 		}
 
-		val hits = blocks
-			.values
-			.flatMap { case (subjectList, stagingList) => subjectList.cross(stagingList)}
-			.distinct
-			.filter(goldStandard.contains)
-			.count
+		val duplicates = blocks
+			.map { case ((key, tag), (subjectList, stagingList)) =>
+				val cross = subjectList.cross(stagingList)
+				val foundDupes = cross.filter(goldStandard)
+				val precision = if (cross.nonEmpty) foundDupes.size.toDouble / cross.size.toDouble else 0.0
+				val blockData = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
+				(foundDupes, (tag, blockData))
+			}
 
-		blocks.map { case ((key, tag), (subjectList, stagingList)) =>
-			val cross = subjectList.cross(stagingList)
-			val precision = cross.count(goldStandard.contains).toDouble / cross.size.toDouble
-			val blockData = BlockStats(key, subjectList.size, stagingList.size, precision)
-			(tag, Set(blockData))
-		}.reduceByKey(_ ++ _)
-		.map { case (tag, blockStatSet) =>
-			BlockEvaluation(jobid, tag, blockStatSet, Option(s"$comment; hits: $hits"))
-		}
+		/*val emptyBlocks = blocks
+			.filter { case ((key, tag), (subjectList, stagingList)) => subjectList.isEmpty || stagingList.isEmpty }
+			.map { case ((key, tag), (subjectList, stagingList)) =>
+				val blockData = Set(BlockStats(key, subjectList.size, stagingList.size))
+				(tag, blockData)
+			}
+		val blockDuplicates = blocks
+			.filter { case ((key, tag), (subjectList, stagingList)) => subjectList.nonEmpty && stagingList.nonEmpty }
+			.map { case ((key, tag), (subjectList, stagingList)) =>
+				val foundDupes = subjectList
+					.cross(stagingList)
+					.filter(goldStandard)
+				val precision = foundDupes.size.toDouble / (subjectList.size * stagingList.size).toDouble
+				val blockData = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
+				(foundDupes, (tag, blockData))
+			}*/
+
+		val tagAccuracies = duplicates
+			.flatMap { case (duplicates, (tag, block)) =>
+				duplicates.map((tag, _))
+			}.distinct
+			.map { case (tag, dupeTuple) => (tag, 1) }
+			.reduceByKey(_ + _)
+			.collect
+			.toMap
+			.mapValues(_.toDouble / goldStandard.size.toDouble)
+			.map(identity)
+
+		duplicates
+			.reduceByKey(_._2 ++ _._2)
+			.map { case (tag, blockStatSet) =>
+				val blockComment = Option(s"$comment; accuracy: ${tagAccuracies.getOrElse(tag, "")}")
+				BlockEvaluation(jobid, tag, blockStatSet, blockComment)
+			}
 	}
 }

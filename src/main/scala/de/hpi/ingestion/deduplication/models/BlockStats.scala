@@ -10,5 +10,5 @@ case class BlockStats(
 	key: String,
 	numsubjects: Int,
 	numstaging: Int,
-	precision: Double
+	precision: Double = 0.0
 )
