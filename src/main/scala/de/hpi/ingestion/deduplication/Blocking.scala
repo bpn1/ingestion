@@ -1,5 +1,6 @@
 package de.hpi.ingestion.deduplication
 
+import java.util.UUID
 import com.datastax.driver.core.utils.UUIDs
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
@@ -10,7 +11,6 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
 import scala.io.Source
 import scala.xml.{Node, XML}
 
@@ -26,6 +26,7 @@ object Blocking extends SparkJob {
 		ListBlockingScheme("geo_country_scheme", "geo_country"),
 		ListBlockingScheme("geo_coords_scheme", "geo_coords"),
 		SimpleBlockingScheme("simple_scheme"))
+	val filterUndefined = false
 
 	// $COVERAGE-OFF$
 	/**
@@ -35,9 +36,13 @@ object Blocking extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
-		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
-		(subjects ++ staging).toAnyRDD()
+		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
+		val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
+		val goldStandard = sc.cassandraTable[(UUID, UUID)](
+			settings("keyspaceGoldStandardTable"),
+			settings("goldStandardTable")
+		)
+		List(subjects,staging).toAnyRDD() ::: List(goldStandard).toAnyRDD()
 	}
 
 	/**
@@ -72,9 +77,20 @@ object Blocking extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val List(subjects, staging) = input.fromAnyRDD[Subject]()
+		val subjectInput = input.fromAnyRDD[Subject]()
+		val subjects = subjectInput.head
+		val staging = subjectInput(1)
+		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().last
 		val comment = args.headOption.getOrElse("Blocking")
-		val blockEvaluation = List(evaluationBlocking(subjects, staging, blockingSchemes, false, comment))
+		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
+		val blockEvaluation = List(evaluationBlocking(
+			subjects,
+			staging,
+			goldenBroadcast.value,
+			this.blockingSchemes,
+			this.filterUndefined,
+			comment
+		))
 		blockEvaluation.toAnyRDD()
 	}
 
@@ -167,6 +183,7 @@ object Blocking extends SparkJob {
 	def evaluationBlocking(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
+		goldStandard: Set[(UUID, UUID)],
 		blockingSchemes: List[BlockingScheme],
 		filterUndefined: Boolean = true,
 		comment: String
@@ -175,20 +192,29 @@ object Blocking extends SparkJob {
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val jobid = UUIDs.timeBased()
 
-		subjectBlocks
-			.cogroup(stagingBlocks)
-			.filter { case ((key, tag), (subjectList, stagingList)) =>
-				val isUndefined = blockingSchemes
-					.find(_.tag == tag)
-					.map(_.undefinedValue)
-					.contains(key)
-				!(isUndefined && filterUndefined)
-			}.map { case ((key, tag), (subjectList, stagingList)) =>
-				val blockData = BlockStats(key, subjectList.sum, stagingList.sum)
-				(tag, Set(blockData))
-			}.reduceByKey(_ ++ _)
-			.map { case (tag, blockStatSet) =>
-				BlockEvaluation(jobid, tag, blockStatSet, Option(comment))
-			}
+		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
+			val isUndefined = blockingSchemes
+				.find(_.tag == tag)
+				.map(_.undefinedValue)
+				.contains(key)
+			!(isUndefined && filterUndefined)
+		}
+
+		val hits = blocks
+			.values
+			.flatMap { case (subjectList, stagingList) => subjectList.cross(stagingList)}
+			.distinct
+			.filter(goldStandard.contains)
+			.count
+
+		blocks.map { case ((key, tag), (subjectList, stagingList)) =>
+			val cross = subjectList.cross(stagingList)
+			val precision = cross.count(goldStandard.contains).toDouble / cross.size.toDouble
+			val blockData = BlockStats(key, subjectList.size, stagingList.size, precision)
+			(tag, Set(blockData))
+		}.reduceByKey(_ ++ _)
+		.map { case (tag, blockStatSet) =>
+			BlockEvaluation(jobid, tag, blockStatSet, Option(s"$comment; hits: $hits"))
+		}
 	}
 }
