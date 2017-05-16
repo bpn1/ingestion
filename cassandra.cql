@@ -277,3 +277,11 @@ CREATE TABLE evaluation.dbpedia_wikidata_deduplication_only_uuid (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<uuid, text, double>>>
 );
+
+CREATE TABLE evaluation.featureentries (
+	id uuid PRIMARY KEY,
+	subject frozen<subject>,
+	staging frozen<subject>,
+	score map<text, frozen<list<double>>>,
+	correct boolean
+);

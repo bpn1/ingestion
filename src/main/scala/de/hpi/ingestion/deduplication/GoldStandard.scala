@@ -5,17 +5,13 @@ import java.util.UUID
 import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.{Configurable, SparkJob}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-object GoldStandard extends SparkJob {
+object GoldStandard extends SparkJob with Configurable {
 	appName = "GoldStandard_v1.0"
-	val dataSource = List("DBpedia", "Wikidata")
-	val keyspace = "evaluation"
-	val inputDBpedia = "subject_dbpedia"
-	val inputWikiData = "subject_wikidata"
-	val output = "goldstandard"
+	configFile = "goldstandard.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -25,8 +21,8 @@ object GoldStandard extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.cassandraTable[Subject](this.keyspace, this.inputDBpedia)
-		val wikidata = sc.cassandraTable[Subject](this.keyspace, this.inputWikiData)
+		val dbpedia = sc.cassandraTable[Subject](settings("keyspaceDBpediaTable"), settings("dBpediaTable"))
+		val wikidata = sc.cassandraTable[Subject](settings("keyspaceWikiDataTable"), settings("wikiDataTable"))
 		List(dbpedia, wikidata).toAnyRDD()
 	}
 
@@ -40,9 +36,27 @@ object GoldStandard extends SparkJob {
 		output
 			.fromAnyRDD[(UUID, UUID)]()
 			.head
-			.saveToCassandra(this.keyspace, this.output)
+			.saveToCassandra(settings("keyspaceGoldStandardTable"), settings("goldStandardTable"))
 	}
 	// $COVERAGE-ON$
+
+	override def assertConditions(args: Array[String]): Boolean = {
+		parseConfig()
+		super.assertConditions(args)
+	}
+
+	/**
+	  * Joins DBpedia and Wikidata.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val data = input.fromAnyRDD[Subject]()
+		val results = join(data.head, data(1))
+		List(results).toAnyRDD()
+	}
 
 	/**
 	  * Keys Subjects by a property value
@@ -87,18 +101,5 @@ object GoldStandard extends SparkJob {
 		val dbpediaIdJoined = joinBySingleProperty("id_dbpedia", dbpedia, wikidata)
 		val wikidataIdJoined = joinBySingleProperty("id_wikidata", dbpedia, wikidata)
 		dbpediaIdJoined.union(wikidataIdJoined).distinct
-	}
-
-	/**
-	  * Joins DBpedia and Wikidata.
-	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val data = input.fromAnyRDD[Subject]()
-		val results = join(data.head, data(1))
-		List(results).toAnyRDD()
 	}
 }
