@@ -1922,6 +1922,30 @@ object TestData {
 	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
 		(simMeasureStats(), Option(randomForestModel()))
 	}
+
+	def formattedPredictionStatistics(): String = {
+		s"precision\t1.0\t${5.0 / 7.0}" + "\n" +
+			"precision\t0.0\t0.6" + "\n" +
+			s"recall\t1.0\t${5.0 / 6.0}" + "\n" +
+			"recall\t0.0\t1.0" + "\n" +
+			s"fscore with beta 0.5\t1.0\t${25.0 / 34.0}" + "\n" +
+			"fscore with beta 0.5\t0.0\t0.6521739130434783"
+	}
+
+	def randomForestModel(): RandomForestModel = {
+		val node = new Node(0, new Predict(0.0, 1.0), 0.0, true, None, None, None, None)
+		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
+		new RandomForestModel(Algo.Classification, Array(dtmodel))
+	}
+
+	def namedEntitiesList(): List[Set[OffsetToken]] = {
+		List(
+			Set(OffsetToken("a", 0, 0)),
+			Set(OffsetToken("a", 0, 0)),
+			Set(OffsetToken("a", 0, 0)),
+			Set(OffsetToken("a", 0, 0))
+		)
+	}
 }
 
 // scalastyle:on method.length
