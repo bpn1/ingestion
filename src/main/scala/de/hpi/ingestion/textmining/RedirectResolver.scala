@@ -13,8 +13,10 @@ import de.hpi.ingestion.implicits.TupleImplicits._
   */
 object RedirectResolver extends SparkJob {
 	appName = "Redirect Resolver"
-	val tablename = "parsedwikipedia"
+	val parsedWikipediaTablename = "parsedwikipedia"
+	val redirectTablename = "redirects"
 	val keyspace = "wikidumps"
+	var saveRedirectsToCassandra = false
 
 	// $COVERAGE-OFF$
 	/**
@@ -24,8 +26,9 @@ object RedirectResolver extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
-		List(articles).toAnyRDD()
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, parsedWikipediaTablename)
+		val redirects = sc.cassandraTable[Redirect](keyspace, redirectTablename)
+		List(articles).toAnyRDD() ++ List(redirects).toAnyRDD()
 	}
 
 	/**
@@ -36,9 +39,14 @@ object RedirectResolver extends SparkJob {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-			.saveToCassandra(keyspace, tablename)
+			.asInstanceOf[RDD[ParsedWikipediaEntry]]
+			.saveToCassandra(keyspace, parsedWikipediaTablename)
+		if (saveRedirectsToCassandra) {
+			output(1)
+				.asInstanceOf[RDD[Redirect]]
+				.saveToCassandra(keyspace, redirectTablename)
+		}
 	}
 	// $COVERAGE-ON$
 
@@ -103,9 +111,16 @@ object RedirectResolver extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val redirectMap = buildRedirectDict(articles)
-		val cleanedRedirectMap = resolveTransitiveRedirects(redirectMap)
+		val articles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
+		var cleanedRedirectMap = input(1).asInstanceOf[RDD[Redirect]]
+			.map(redirect => (redirect.alias, redirect.page))
+			.collect
+			.toMap
+		if (cleanedRedirectMap.isEmpty) {
+			saveRedirectsToCassandra = true
+			val redirectMap = buildRedirectDict(articles)
+			cleanedRedirectMap = resolveTransitiveRedirects(redirectMap)
+		}
 		val dictBroadcast = sc.broadcast(cleanedRedirectMap)
 
 		val resolvedArticles = articles
@@ -113,6 +128,8 @@ object RedirectResolver extends SparkJob {
 				val localDict = dictBroadcast.value
 				entryPartition.map(entry => resolveRedirects(entry, localDict))
 			}, true)
-		List(resolvedArticles).toAnyRDD()
+
+		val redirects = cleanedRedirectMap.map{ case (alias, page)  => Redirect(alias, page)}.toList
+		List(resolvedArticles).toAnyRDD() ++ List(sc.parallelize(redirects)).toAnyRDD()
 	}
 }
