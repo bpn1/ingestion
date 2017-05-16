@@ -171,8 +171,8 @@ object Blocking extends SparkJob {
 		filterUndefined: Boolean = true,
 		comment: String
 	): RDD[BlockEvaluation] = {
-		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, s => 1))
-		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, s => 1))
+		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, subject => subject.id))
+		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val jobid = UUIDs.timeBased()
 
 		subjectBlocks
