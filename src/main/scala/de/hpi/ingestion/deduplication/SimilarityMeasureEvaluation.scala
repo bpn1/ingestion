@@ -15,7 +15,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	val numberOfBuckets = 10
 	val keyspace = "evaluation"
 	val inputTest = "goldstandard"
-	val inputTraining = "dbpedia_wikidata_deduplication"
+	val inputTraining = "dbpedia_wikidata_deduplication_only_uuid"
 	val output = "sim_measure_stats"
 
 	// $COVERAGE-OFF$
@@ -70,7 +70,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	}
 
 
-	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : RDD[PrecisionRecallDataTuple] = {
+	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : List[PrecisionRecallDataTuple] = {
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
 
 		val precision = metrics.precisionByThreshold
@@ -82,7 +82,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 			.join(f1Score)
 			.map { case (threshold, ((precision, recall), f1Score)) =>
 				PrecisionRecallDataTuple(threshold, precision, recall, f1Score)
-			}.sortBy(_.threshold)
+			}.sortBy(_.threshold).collect.toList
 	}
 
 	/**
@@ -95,7 +95,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val training = input.head.asInstanceOf[RDD[DuplicateCandidates]]
 			.flatMap { case DuplicateCandidates(subject_id, candidates) =>
-				candidates.map(candidate => ((subject_id, candidate._1.id), candidate._3))
+				candidates.map(candidate => ((subject_id, candidate._1), candidate._3))
 			}.distinct
 
 		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]].map(pair => (pair, 1.0))
