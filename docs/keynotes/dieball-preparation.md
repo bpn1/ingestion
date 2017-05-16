@@ -3,7 +3,7 @@
 ## Idee #1: Humor
 
 - Humor: “Es ist kompliziert” - Der Beziehungsstatus deutscher Unternehmen
-- Unterstützt durch eine Fake-Grafik eines Facebook-Profils mit Beziehungsstatus “Es ist kompliziert”
+- Unterstützt durch eine Fake-Grafik eines Facebook-Profils mit Beziehungsstatus “Es ist kompliziert”: Profil von "HPI GmbH", Beziehung mit Commerzbank
 
 ## Idee #2: Demonstration
 
