@@ -29,12 +29,12 @@ object ClassificationTraining extends SparkJob with Configurable {
 			.first
 			.save(sc, s"dbpedia_wikidata_naivebayes_model_${System.currentTimeMillis()}")
 	}
+	// $COVERAGE-ON$
 
 	override def assertConditions(args: Array[String]): Boolean = {
 		parseConfig()
 		super.assertConditions(args)
 	}
-	// $COVERAGE-ON$
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
