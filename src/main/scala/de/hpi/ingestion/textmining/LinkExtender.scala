@@ -23,8 +23,6 @@ object LinkExtender extends SparkJob {
 	val inputParsedTablename = "parsedwikipedia"
 	val outputParsedTablename = "parsedwikipedia"
 	val inputPageToAliasesTablename = "wikipediapages"
-	var keyError = 0
-	var collisionError = 0
 
 	// $COVERAGE-OFF$
 	/**
@@ -128,7 +126,6 @@ object LinkExtender extends SparkJob {
 					i += longestMatch.length - 1
 				}
 				else {
-					keyError += 1
 					println(s"Key Error: Found Alias: $found, on page: ${entry.title}, was not in aliases: $aliases")
 				}
 			}
@@ -159,7 +156,6 @@ object LinkExtender extends SparkJob {
 					 page = pageList.head._3
 				}
 				else {
-					collisionError += 1
 					println(s"Collision Error: Found Pages: $pageList, for Alias: $alias")
 				}
 				(alias, page)
@@ -193,9 +189,6 @@ object LinkExtender extends SparkJob {
 				findAliasOccurrences(entry, aliases, trie, tokenizer)
 			}
 		}, true)
-		println(s"Error Summary: KeyErrors: $keyError, " +
-			s"CollisionErrors: $collisionError, " +
-			s"in ${parsedArticles.count} articles")
 		List(parsedArticlesWithExtendedLinks).toAnyRDD()
 	}
 }
