@@ -20,16 +20,14 @@ import scala.collection.mutable.ListBuffer
 /**
   * Finds all occurrences of the aliases in the given trie in all Wikipedia articles and writes them to the
   * foundaliases column.
-  * recommended spark-submit flags
-  * --driver-memory 16G				<< needed for building the Trie
-  * --driver-java-options -Xss1g	<< needed for serialization of Trie
-  * --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000" << needed for deserialization of Trie
+  * recommended spark-submit flags (needed for deserialization of Trie)
+  * --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
   */
 object AliasTrieSearch extends SparkJob {
 	appName = "Alias Trie Search"
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
-	val trieName = "trie_full.bin"
+	val trieName = "wikipedia/trie_full.bin"
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
 
 	// $COVERAGE-OFF$
@@ -85,29 +83,46 @@ object AliasTrieSearch extends SparkJob {
 	def matchEntry(
 		entry: ParsedWikipediaEntry,
 		trie: TrieNode,
-		tokenizer: IngestionTokenizer
+		tokenizer: IngestionTokenizer,
+		contextTokenizer: IngestionTokenizer
 	): ParsedWikipediaEntry = {
-		val resultList = ListBuffer[String]()
+		val resultList = ListBuffer[List[OffsetToken]]()
 		var contextAliases = List[TrieAlias]()
 		val tokens = tokenizer.processWithOffsets(entry.getText())
 		for(i <- tokens.indices) {
 			val testTokens = tokens.slice(i, tokens.length)
 			val aliasMatches = trie.matchTokens(testTokens.map(_.token))
-			val offsetMatches = aliasMatches.map(tokens => testTokens.take(tokens.length))
-			resultList ++= offsetMatches.map(tokens =>
-				entry.getText().substring(tokens.head.beginOffset, tokens.last.endOffset))
+			val offsetMatches = aliasMatches.map(textTokens => testTokens.take(textTokens.length))
+			resultList ++= offsetMatches
 			if(aliasMatches.nonEmpty) {
 				val longestMatch = offsetMatches.maxBy(_.length)
-				val offset = Option(longestMatch.head.beginOffset)
-				val alias = entry.getText().substring(longestMatch.head.beginOffset, longestMatch.last.endOffset)
-				val context = extractAliasContext(longestMatch, tokens, i).getCounts()
-				contextAliases :+= TrieAlias(alias, offset, context)
+				val offset = longestMatch.headOption.map(_.beginOffset)
+				offset.foreach { begin =>
+					val alias = entry.getText().substring(begin, longestMatch.last.endOffset)
+					val context = extractAliasContext(longestMatch, tokens, i, contextTokenizer).getCounts()
+					contextAliases :+= TrieAlias(alias, offset, context)
+				}
 			}
 		}
 
-		contextAliases = contextAliases.filterNot(alias =>
-			entry.extendedlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias))
-		entry.copy(foundaliases = cleanFoundAliases(resultList.toList), triealiases = contextAliases)
+		contextAliases = contextAliases.filterNot { alias =>
+			val isLink = entry.textlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias)
+			val isExLink = entry.extendedlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias)
+			isLink || isExLink
+		}
+
+		val foundAliases = resultList
+			.filter(_.nonEmpty)
+			.map { offsetTokens =>
+				val begin = offsetTokens.headOption.map(_.beginOffset)
+				val end = offsetTokens.lastOption.map(_.endOffset)
+				(begin, end)
+			}.collect {
+				case (begin, end) if begin.isDefined && end.isDefined =>
+					entry.getText().substring(begin.get, end.get)
+			}.toList
+
+		entry.copy(foundaliases = cleanFoundAliases(foundAliases), triealiases = contextAliases)
 	}
 
 	/**
@@ -117,8 +132,12 @@ object AliasTrieSearch extends SparkJob {
 	  * @param index offset of the tokenized alias in the tokenized text
 	  * @return Bag of words of the context of the alias
 	  */
-	def extractAliasContext(alias: List[OffsetToken], text: List[OffsetToken], index: Int): Bag[String, Int] = {
-		val tokenizer = IngestionTokenizer(true, true)
+	def extractAliasContext(
+		alias: List[OffsetToken],
+		text: List[OffsetToken],
+		index: Int,
+		contextTokenizer: IngestionTokenizer
+	): Bag[String, Int] = {
 		val contextSize = TermFrequencyCounter.contextSize
 		val contextStart = Math.max(index - contextSize, 0)
 		val preAliasContext = text.slice(contextStart, index)
@@ -126,7 +145,7 @@ object AliasTrieSearch extends SparkJob {
 		val contextEnd = Math.min(aliasEndIndex + contextSize, text.length)
 		val postAliasContext = text.slice(aliasEndIndex, contextEnd)
 		val context = (preAliasContext ++ postAliasContext).map(_.token)
-		TermFrequencyCounter.extractBagOfWords(tokenizer.process(context))
+		TermFrequencyCounter.extractBagOfWords(contextTokenizer.process(context))
 	}
 
 	/**
@@ -166,13 +185,14 @@ object AliasTrieSearch extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val tokenizer = IngestionTokenizer(false, false)
+		val contextTokenizer = IngestionTokenizer(true, true)
 		input
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.map(articles =>
 				articles
 					.mapPartitions({ partition =>
 						val trie = deserializeTrie(trieStreamFunction())
-						partition.map(matchEntry(_, trie, tokenizer))
+						partition.map(matchEntry(_, trie, tokenizer, contextTokenizer))
 					}, true))
 			.toAnyRDD()
 	}

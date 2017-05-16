@@ -139,5 +139,9 @@ object TestData {
 	def normalizedCoords: List[String] = List("48.34822", "10.905282")
 	def unnormalizedCountries: List[String] = List("dbpedia-de:Japanisches_Kaiser-reich", "LI@de .", "Deutschland@de .", "dbpedia-de:Datei:Flag_of_Bavaria_(striped).svg", "15^^xsd:integer")
 	def normalizedCountries: List[String] = List("Japanisches Kaiser-reich", "Deutschland")
+	def unnormalizedCities: List[String] = List("Frankfurt a.M.@de .", "Frankfurt/Main@de .", "London", "dbpedia-de:Berlin-Tegel")
+	def normalizedCities: List[String] = List("Frankfurt a.M.", "Frankfurt/Main", "London", "Berlin-Tegel")
+	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Automobilindustrie")
+	def normalizedCSectors: List[String] = List("29", "45", "11")
 	// scalastyle:on line.size.limit
 }
