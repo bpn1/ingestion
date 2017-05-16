@@ -18,10 +18,7 @@ trait Configurable {
 	  * @return a list containing settings and some options
 	  */
 	def parseConfig(): Unit = {
-		val xml = XML.loadString(Source
-			.fromURL(getClass.getResource(s"/configs/$configFile"))
-			.getLines()
-			.mkString("\n"))
+		val xml = XML.load(getClass.getResource(s"/configs/$configFile"))
 		settings ++= parseSettings(xml)
 		scoreConfigSettings ++= parseSimilarityMeasures(xml)
 	}

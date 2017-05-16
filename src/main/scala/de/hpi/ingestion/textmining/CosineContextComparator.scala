@@ -13,11 +13,7 @@ import de.hpi.ingestion.implicits.TupleImplicits._
   */
 object CosineContextComparator extends SparkJob {
 	appName = "Cosine Context Comparator"
-	val keyspace = "wikidumps"
-	val inputArticlesTablename = "parsedwikipedia"
-	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
-	val linksTable = "wikipedialinks"
-	val featureEntryTable = "featureentries"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -29,9 +25,9 @@ object CosineContextComparator extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
-		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
+		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+		val documentFrequencies = sc.cassandraTable[DocumentFrequency](settings("keyspace"), settings("dfTable"))
+		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
 		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
 
@@ -46,7 +42,7 @@ object CosineContextComparator extends SparkJob {
 		output
 			.fromAnyRDD[FeatureEntry]()
 			.head
-			.saveToCassandra(keyspace, featureEntryTable)
+			.saveToCassandra(settings("keyspace"), settings("featureTable"))
 	}
 
 	// $COVERAGE-ON$
