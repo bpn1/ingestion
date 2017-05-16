@@ -28,10 +28,26 @@
             </feature>
         </attribute>
         <attribute>
-            <key>geo_postal</key>
+            <key>gen_urls</key>
             <feature>
                 <similarityMeasure>ExactMatchString</similarityMeasure>
                 <weight>1</weight>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
+            <key>gen_employees</key>
+            <feature>
+                <similarityMeasure>RoughlyEqualNumbers</similarityMeasure>
+                <weight>0.5</weight>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
+            <key>geo_city</key>
+            <feature>
+                <similarityMeasure>Jaccard</similarityMeasure>
+                <weight>0.3</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
