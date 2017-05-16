@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
   <deduplication>
-    <sourceSettings>
+    <settings>
       <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
       <subjectTable>testsubject</subjectTable>
       <keyspaceStagingTable>datalake</keyspaceStagingTable>
@@ -11,7 +11,7 @@
       <versionTable>version</versionTable>
       <keyspaceStatsTable>datalake</keyspaceStatsTable>
       <statsTable>deduplicationstats</statsTable>
-    </sourceSettings>
+    </settings>
     <simMeasurements>
       <item>
         <attribute>name</attribute>
