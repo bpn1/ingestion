@@ -1937,15 +1937,6 @@ object TestData {
 		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
 		new RandomForestModel(Algo.Classification, Array(dtmodel))
 	}
-
-	def namedEntitiesList(): List[Set[OffsetToken]] = {
-		List(
-			Set(OffsetToken("a", 0, 0)),
-			Set(OffsetToken("a", 0, 0)),
-			Set(OffsetToken("a", 0, 0)),
-			Set(OffsetToken("a", 0, 0))
-		)
-	}
 }
 
 // scalastyle:on method.length
