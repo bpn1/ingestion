@@ -1937,6 +1937,15 @@ object TestData {
 		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
 		new RandomForestModel(Algo.Classification, Array(dtmodel))
 	}
+
+	def linkCandidates(): List[Set[LinkCandidate]] = {
+		List(
+			Set(LinkCandidate(OffsetToken("Audi", 9, 13), "Audi")),
+			Set(LinkCandidate(OffsetToken("Audi", 9, 13), "Audi")),
+			Set(),
+			Set(LinkCandidate(OffsetToken("Audi", 7, 11), "Audi"))
+		)
+	}
 }
 
 // scalastyle:on method.length
