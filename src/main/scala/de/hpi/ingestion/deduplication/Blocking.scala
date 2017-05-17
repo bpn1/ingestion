@@ -160,7 +160,7 @@ object Blocking extends SparkJob {
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val jobid = UUIDs.timeBased()
 		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
-			if (filterUndefined) !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key) else false
+			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
 		}
 		val duplicates = blocks.map { case ((key, tag), (subjectList, stagingList)) =>
 			val cross = subjectList.cross(stagingList)
