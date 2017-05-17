@@ -6,7 +6,7 @@ import org.scalatest.{FlatSpec, Matchers}
 class DataLakeImportImplementationUnitTest extends FlatSpec with Matchers {
 	"parseConfig" should "set the parsed configuration as settings" in {
 		val expected = TestData.configMapping
-		Import.parseConfig("datalakeimport_config.xml")
+		Import.parseConfig("configs/datalake_import.xml")
 		Import.settings shouldEqual expected
 	}
 

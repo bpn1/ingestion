@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <keyspaceTrainingTable>evaluation</keyspaceTrainingTable>
+        <trainingTable>subject_dbpedia</trainingTable>
+        <keyspaceTestTable>evaluation</keyspaceTestTable>
+        <testTable>subject_wikidata</testTable>
+        <keyspaceSimMeasureStatsTable>evaluation</keyspaceSimMeasureStatsTable>
+        <simMeasureStatsTable>goldstandard</simMeasureStatsTable>
+        <buckets>10</buckets>
+    </settings>
+</config>
