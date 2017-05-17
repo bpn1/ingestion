@@ -1,7 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.textmining.models.{OffsetToken, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.models.{LinkCandidate, OffsetToken, ParsedWikipediaEntry}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -54,11 +54,23 @@ object TextNER extends SparkJob {
 	  * todo
 	  *
 	  * @param text
+	  * @param tokenizer
 	  * @return
 	  */
-	def generateDataPoints(text: String, tokenizer: IngestionTokenizer): List[(OffsetToken, LabeledPoint)] = {
-		List((OffsetToken("lorem", 0, 5), LabeledPoint(0.0, new DenseVector(Array(0, 0, 0)))))
-		//		val tokens = tokenizer.processWithOffsets(text)
+	def generateLinkCandiates(text: String, tokenizer: IngestionTokenizer): List[LinkCandidate] = {
+		tokenizer.processWithOffsets(text)
+			.map(offsetToken => LinkCandidate(offsetToken, "Audi"))
+	}
+
+	/**
+	  * todo
+	  *
+	  * @return
+	  */
+	def generateDataPoints(linkCandidates: List[LinkCandidate]): List[(LinkCandidate, LabeledPoint)] = {
+		linkCandidates.map { linkCandidate =>
+			(linkCandidate, LabeledPoint(0.0, new DenseVector(Array(0, 0, 0))))
+		}
 	}
 
 	/**
@@ -67,13 +79,16 @@ object TextNER extends SparkJob {
 	  * @param data
 	  * @return
 	  */
-	def findNamedEntities(data: List[(OffsetToken, LabeledPoint)], classifier: RandomForestModel): List[OffsetToken] = {
-		val predictionsAndLabels = data.map { case (offsetToken, LabeledPoint(label, features)) =>
+	def findNamedEntities(
+		data: List[(LinkCandidate, LabeledPoint)],
+		classifier: RandomForestModel
+	): List[LinkCandidate] = {
+		val predictionsAndLabels = data.map { case (linkCandidate, LabeledPoint(label, features)) =>
 			val prediction = classifier.predict(features)
 			(prediction, label)
 		}
 
-		List(OffsetToken("lorem", 0, 5))
+		List(LinkCandidate(OffsetToken("lorem", 0, 5), "ipsum"))
 	}
 
 	/**
@@ -85,9 +100,10 @@ object TextNER extends SparkJob {
 			.map(_.getText())
 		val textsRDD = sc.parallelize(texts)
 		val classifier = RandomForestModel.load(sc, classifierModel)
-		val tokenizer = IngestionTokenizer(true, true)
+		val tokenizer = IngestionTokenizer(true, false)
 		val namedEntities = textsRDD.map { text =>
-			val data = generateDataPoints(text, tokenizer)
+			val linkCanditates = generateLinkCandiates(text, tokenizer)
+			val data = generateDataPoints(linkCanditates)
 			findNamedEntities(data, classifier)
 		}
 		List(namedEntities).toAnyRDD()
