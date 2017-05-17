@@ -61,7 +61,7 @@ object AliasTrieSearch extends SparkJob {
 	  *
 	  * @return Input Stream pointing to the file in the HDFS
 	  */
-	def hdfsFileStream(): InputStream = {
+	def hdfsFileStream(file: String): InputStream = {
 		val hadoopConf = new Configuration()
 		val fs = FileSystem.get(hadoopConf)
 		fs.open(new Path(settings("trieFile")))
@@ -189,7 +189,7 @@ object AliasTrieSearch extends SparkJob {
 			.map(articles =>
 				articles
 					.mapPartitions({ partition =>
-						val trie = deserializeTrie(trieStreamFunction())
+						val trie = deserializeTrie(trieStreamFunction(trieName))
 						partition.map(matchEntry(_, trie, tokenizer, contextTokenizer))
 					}, true))
 			.toAnyRDD()
