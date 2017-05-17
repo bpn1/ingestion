@@ -844,7 +844,6 @@ object TestData {
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
-
 	def entryWithStandardWhitespaces(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
@@ -1601,11 +1600,53 @@ object TestData {
 				Link("Media Broadcast", "Media Broadcast", Option(1906)),
 				Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
 				Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
-				Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2008))
+				Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2117))
 			)
 		)
 	}
 
+	def sentenceList(): List[Sentence] = {
+		List(
+			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				0,
+				"Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg.",
+				List(
+					EntityLink("Hochhaus", "Hochhaus", Option(113)),
+					EntityLink("Postbank", "Postbank", Option(126)),
+					EntityLink("Berliner", "Berlin", Option(190)),
+					EntityLink("Kreuzberg", "Berlin-Kreuzberg", Option(208))
+				)
+			),
+			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				219,
+				"Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig.",
+				List(
+					EntityLink("Frankfurt (Oder)", "Frankfurt (Oder)", Option(246)),
+					EntityLink("Potsdam", "Potsdam", Option(264)),
+					EntityLink("Magdeburg", "Magdeburg", Option(273)),
+					EntityLink("Stettin", "Stettin", Option(287))
+				)
+			),
+			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				1940,
+				"Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit.",
+				List(
+					EntityLink("Deutsche Funkturm", "Deutsche Funkturm", Option(4)),
+					EntityLink("Deutschen Telekom AG", "Deutsche Telekom", Option(59))
+				)
+			)
+		)
+	}
+
+	def alternativeSentenceList(): List[Sentence] = {
+		List(
+			Sentence("Audi",0,"Audi ist Audi AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Audi AG","Audi",Some(9)))),
+			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))
+		)
+	}
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
