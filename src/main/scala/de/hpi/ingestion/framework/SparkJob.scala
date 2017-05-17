@@ -1,9 +1,11 @@
 package de.hpi.ingestion.framework
 
+import com.datastax.spark.connector.cql.CassandraConnector
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 /**
   * Spark Job framework trait implementing the main method and defining the load, run and save methods.
@@ -11,6 +13,8 @@ import scala.collection.mutable
 trait SparkJob {
 	var appName = "Ingestion Spark Job"
 	val sparkOptions = mutable.Map[String, String]()
+	val cassandraLoadQueries = ListBuffer[String]()
+	val cassandraSaveQueries = ListBuffer[String]()
 
 	/**
 	  * Loads a four-tuple of RDD-Options used in the job.
@@ -64,6 +68,15 @@ trait SparkJob {
 	def sparkContext(): SparkContext = {
 		new SparkContext(createSparkConf())
 	}
+
+	/**
+	  * Executes multiple CQL queries on the Cassandra.
+	  * @param queries List of queries to execute
+	  * @param sc Spark Context containing the Cassandra connection
+	  */
+	def executeQueries(queries: List[String], sc: SparkContext): Unit = {
+		CassandraConnector(sc.getConf).withSessionDo(session => queries.foreach(session.execute))
+	}
 	// $COVERAGE-ON$
 
 	/**
@@ -75,8 +88,10 @@ trait SparkJob {
 			return
 		}
 		val sc = sparkContext()
+		executeQueries(cassandraLoadQueries.toList, sc)
 		val data = load(sc, args)
 		val results = run(data, sc, args)
+		executeQueries(cassandraSaveQueries.toList, sc)
 		save(results, sc, args)
 	}
 }

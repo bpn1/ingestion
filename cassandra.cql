@@ -69,13 +69,26 @@ CREATE TABLE wikidumps.wikipediasentences (
 );
 
 CREATE TABLE wikidumps.featureentries (
-	id uuid PRIMARY KEY,
-	alias text,
-	entity text,
-	prob_link double,
-	prob_entity double,
-	cosine_sim double,
-	correct boolean
+    id uuid PRIMARY KEY,
+    alias text,
+    correct boolean,
+    cosine_sim double,
+    entity text,
+    prob_entity double,
+    prob_link double
+);
+
+CREATE TYPE wikidumps.precisionrecalldatatuple (
+    threshold double,
+    precision double,
+    recall double,
+    fscore double
+);
+
+CREATE TABLE wikidumps.sim_measure_stats (
+    id timeuuid PRIMARY KEY,
+    comment text,
+    data list<frozen<precisionrecalldatatuple>>
 );
 
 CREATE TYPE wikidumps.triealias (

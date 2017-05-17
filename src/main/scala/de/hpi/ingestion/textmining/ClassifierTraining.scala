@@ -3,10 +3,13 @@ package de.hpi.ingestion.textmining
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
+import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.apache.spark.mllib.tree.RandomForest
+import org.apache.spark.mllib.tree.model.RandomForestModel
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.regression.LabeledPoint
 
@@ -17,8 +20,10 @@ object ClassifierTraining extends SparkJob {
 	appName = "Classifier Training"
 	val keyspace = "wikidumps"
 	val tablename = "featureentries"
+	val statisticsTable = "sim_measure_stats"
 
 	// $COVERAGE-OFF$
+	var trainingFunction = crossValidateAndEvaluate _
 	/**
 	  * Loads Feature entries from the Cassandra.
 	  *
@@ -39,13 +44,50 @@ object ClassifierTraining extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[NaiveBayesModel]()
-			.head
+		val List(stats, model) = output
+		stats
+			.asInstanceOf[RDD[SimilarityMeasureStats]]
+			.saveToCassandra(keyspace, statisticsTable)
+		model
+			.asInstanceOf[RDD[Option[RandomForestModel]]]
 			.first
-			.save(sc, s"wikipedia_naivebayes_model_${System.currentTimeMillis()}")
+			.foreach(_.save(sc, s"wikipedia_randomforest_model_${System.currentTimeMillis()}"))
 	}
 	// $COVERAGE-ON$
+
+	/**
+	  * Uses the input data to train a Naive Bayes model.
+	  * @param trainingData RDD of labeled points
+	  * @return the trained model
+	  */
+	def trainNaiveBayes(trainingData: RDD[LabeledPoint]): NaiveBayesModel = {
+		NaiveBayes.train(trainingData, 1.0)
+	}
+
+	/**
+	  * Uses the provided data to train a Random Forest model and returns the model.
+	  * @param trainingData RDD of labeled points used to train the model
+	  * @param numTrees number of trees used
+	  * @param maxDepth maximum depth used
+	  * @param maxBins maximum number of bins used
+	  * @return the trained model
+	  */
+	def trainRandomForest(
+		trainingData: RDD[LabeledPoint],
+		numTrees: Int,
+		maxDepth: Int,
+		maxBins: Int
+	): RandomForestModel = {
+		RandomForest.trainClassifier(
+			trainingData,
+			numClasses = 2,
+			categoricalFeaturesInfo = Map[Int, Int](),
+			numTrees = numTrees,
+			featureSubsetStrategy = "auto",
+			impurity = "gini",
+			maxDepth = maxDepth,
+			maxBins = maxDepth)
+	}
 
 	/**
 	  * Calculates Precision, Recall and F1-Score of the given prediction results.
@@ -56,36 +98,100 @@ object ClassifierTraining extends SparkJob {
 	  */
 	def calculateStatistics(
 		predictionAndLabels: RDD[(Double, Double)],
-		beta: Double
-	): List[(String, Double, Double)] = {
+		beta: Double = 1.0
+	): PrecisionRecallDataTuple = {
 		val metrics = new BinaryClassificationMetrics(predictionAndLabels)
 		val precision = metrics.precisionByThreshold()
+			.filter(_._1 == 1.0)
+			.values
+			.first
 		val recall = metrics.recallByThreshold()
+			.filter(_._1 == 1.0)
+			.values
+			.first
 		val f1score = metrics.fMeasureByThreshold(beta)
-		val precisionOutput = precision.map { case (t, p) => ("precision", t, p) }
-		val recallOutput = recall.map { case (t, r) => ("recall", t, r) }
-		val fscoreOutput = f1score.map { case (t, f) => (s"fscore with beta $beta", t, f) }
-		precisionOutput
-			.union(recallOutput)
-			.union(fscoreOutput)
-			.collect
-			.toList
+			.filter(_._1 == 1.0)
+			.values
+			.first
+		PrecisionRecallDataTuple(1.0, precision, recall, f1score)
 	}
 
 	/**
-	  * Formats List of statistic three-tuples into a printable String.
-	  *
-	  * @param stats List of statistic three-tuples in the format (statistic, threshold, value)
-	  * @return formatted String of the statistics
+	  * Cross validates a Random Forest model with the input data and the given number of folds.
+	  * @param data input data used to train the classifier
+	  * @param numFolds number of folds used for the cross validation
+	  * @param numTrees number of trees used
+	  * @param maxDepth maximum depth
+	  * @param maxBins number of bins used
+	  * @return statistical data for each fold
 	  */
-	def formatStatistics(stats: List[(String, Double, Double)]): String = {
-		stats
-			.map(t => s"${t._1}\t${t._2}\t${t._3}")
-			.mkString("\n")
+	def crossValidate(
+		data: RDD[LabeledPoint],
+		numFolds: Int,
+		numTrees: Int,
+		maxDepth: Int,
+		maxBins: Int
+	): (List[PrecisionRecallDataTuple], List[RandomForestModel]) = {
+		val weights = (0 until numFolds).map(t => 1.0 / numFolds).toArray
+		val folds = data.randomSplit(weights)
+		val segments = folds.indices.map { index =>
+			val test = folds(index)
+			val training = folds.slice(0, index) ++ folds.slice(index + 1, folds.length)
+			(test, training)
+		}
+		segments.map { case (test, trainingList) =>
+			val training = trainingList.reduce(_.union(_))
+			val model = trainRandomForest(training, numTrees, maxDepth, maxBins)
+			val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
+				val prediction = model.predict(features)
+				(prediction, label)
+			}
+			(calculateStatistics(predictionAndLabels), model)
+		}.toList
+		.unzip
 	}
 
 	/**
-	  * Uses 60% of the entries to train a Naive Bayes model and tests the model with the other 40% of the data.
+	  * Averages a List of Precision Recall Data Tuples. Uses the Threshold of the first element or 1.0 as default.
+	  * @param stats List of input statistics to average
+	  * @return Precision Recall Data Tuples with the mean precision, recall & fscore
+	  */
+	def averageStatistics(stats: List[PrecisionRecallDataTuple]): PrecisionRecallDataTuple = {
+		val n = stats.length
+		val threshold = stats.headOption.map(_.threshold).getOrElse(1.0)
+		stats.map { case PrecisionRecallDataTuple(threshold, precision, recall, fscore) =>
+			(precision, recall, fscore)
+		}.unzip3 match {
+			case (precision, recall, fscore) =>
+				PrecisionRecallDataTuple(threshold, precision.sum / n, recall.sum / n, fscore.sum / n)
+		}
+	}
+
+	/**
+	  * Trains and cross validates a Random Forest Model.
+	  * @param data data used to train and test the model
+	  * @param numFolds number of folds used for the cross validation
+	  * @param numTrees number of trees used
+	  * @param maxDepth maximum depth
+	  * @param maxBins number of bins used
+	  * @return statistics of the cross validation and a Random Forest Model
+	  */
+	def crossValidateAndEvaluate(
+		data: RDD[LabeledPoint],
+		numFolds: Int = 3,
+		numTrees: Int = 5,
+		maxDepth: Int = 4,
+		maxBins: Int = 32
+	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
+		val (cvResult, models) = crossValidate(data, numFolds, numTrees, maxDepth, maxBins)
+		val statistic = averageStatistics(cvResult)
+		val model = models.headOption
+		val results = SimilarityMeasureStats(data = List(statistic), comment = Option("Random Forest Cross Validation"))
+		(results, model)
+	}
+
+	/**
+	  * Partitions the entries to train and test a Classification model.
 	  * Example code: https://spark.apache.org/docs/latest/mllib-naive-bayes.html
 	  *
 	  * @param input List of RDDs containing the input data
@@ -95,16 +201,10 @@ object ClassifierTraining extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
-		val data = entries.map(_.labeledPoint())
-		val Array(training, test) = data.randomSplit(Array(0.6, 0.4))
-
-		val model = NaiveBayes.train(training, 1.0)
-		val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
-			val prediction = model.predict(features)
-			(prediction, label)
-		}
-		val statistics = calculateStatistics(predictionAndLabels, 0.5)
-
-		List(sc.parallelize(Seq(model))).toAnyRDD()
+		val data = entries.map(_.labeledPoint()).cache
+		val (stats, model) = trainingFunction(data, 5, 5, 4, 32)
+		val statsList = List(sc.parallelize(List(stats))).toAnyRDD()
+		val modelList = List(sc.parallelize(List(model))).toAnyRDD()
+		statsList ++ modelList
 	}
 }
