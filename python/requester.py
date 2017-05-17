@@ -3,6 +3,7 @@ import uuid
 import urllib
 import Queue
 import time
+import pause
 # from cassandra.cluster import Cluster
 
 
@@ -39,16 +40,21 @@ def is_not_blank(some_string):
 
 
 def generate_request(
-        address_line_1="",
-        address_line_2="",
-        postal_code="",
-        city="",
-        country="de"
+        name = "",
+        address_line_1 = "",
+        address_line_2 = "",
+        postal_code = "",
+        city = "",
+        country = "de"
 ):
-    requestLine = ""
+    request_line = (name + " ") if is_not_blank(name) else ""
+    request_line += (address_line_1 + " ") if is_not_blank(address_line_1) else ""
+    request_line += (address_line_2 + " ") if is_not_blank(address_line_2) else ""
+    request_line += (postal_code + " ") if is_not_blank(postal_code) else ""
+    request_line += (city + " ") if is_not_blank(city) else ""
+    request_line += (country + " ") if is_not_blank(country) else ""
 
-    if is_not_blank(address_line_1):
-        requestLine += ""
+    return request_line
 
 
 def process_api_response(response):
@@ -101,9 +107,15 @@ def fire_single_request_to_obtain_coordinates(request_string):
             request_string,
             limit = 1,
             types = ('place', 'locality', 'neighborhood', 'address', 'region', 'district')
-
         )
         status = evaluate_geocoding_response_status(response)
+
+        if status == "Pause":
+            fire_single_request_to_obtain_coordinates(request_string)
+        elif status == "Error":
+            print "Error on request " + request_string + "\n"
+        else:
+            response = process_api_response(response)
         return response
     else:
         return False
@@ -116,16 +128,19 @@ def evaluate_geocoding_response_status(response):
             "response": response,
         }
     elif response.status_code == 429:
-        return {
-            "response": 429,
-            "reset_time": response.headers['x-rate-limit-reset']
-        }
+        if response.headers['x-rate-reset']:
+            print "Let's wait until" + response.headers['x-rate-reset']
+            pause.until(response.headers['x-rate-reset'])
+            return "Pause"
+        else:
+            return "Error"
+
     else:
         return False
 
 
 def generate_subjects_from_ortschaften():
-    filename = 'resources/ortschaften.txt'
+    filename = 'resources/orte.txt'
 
     with open(filename) as f:
         subjects = f.readlines()
@@ -141,10 +156,6 @@ def fill_up_wait_list_geocoding(wait_list_geocoding, subjects):
         for subject in subjects:
             mapbox_subject = MapboxSubject(uuid.uuid4(), subject, subject)
             wait_list_geocoding.put(mapbox_subject)
-
-        while not wait_list_geocoding.empty():
-            i = wait_list_geocoding.get()
-            print i.name
 
         return True
 
@@ -164,6 +175,13 @@ def main():
     wait_list_geocoding = Queue.Queue()
     subjects = generate_subjects_from_ortschaften()
     fill_up_wait_list_geocoding(wait_list_geocoding, subjects)
+
+    while not wait_list_geocoding.empty():
+        subject = wait_list_geocoding.get()
+        request = generate_request(subject)
+        response = fire_single_request_to_obtain_coordinates(request)
+
+
 
 
 if __name__ == '__main__':
