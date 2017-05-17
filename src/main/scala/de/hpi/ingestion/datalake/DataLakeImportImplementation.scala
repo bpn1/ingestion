@@ -32,6 +32,22 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	inputTable: String
 ) extends DataLakeImport[T] with SparkJob {
 
+	// $COVERAGE-OFF$
+	/**
+	  * Writes the Subjects to the {@outputTable } table in keyspace {@outputKeyspace }.
+	  *
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
+	  */
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		output
+			.fromAnyRDD[Subject]()
+			.head
+			.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
+	}
+	// $COVERAGE-ON$
+
 	override protected def filterEntities(entity: T): Boolean = true
 
 	protected def parseConfig(url: URL): Unit = {
@@ -41,7 +57,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 			.mkString("\n")
 		)
 
-		val configSettings = xml \\ "config" \ "sourceSettings"
+		val configSettings = xml \\ "config" \ "settings"
 		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
 			settings(node.label) = node.text
 	}
@@ -103,21 +119,4 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 					.map(translateToSubject(_, version, mapping)))
 			.toAnyRDD()
 	}
-
-	// $COVERAGE-OFF$
-	/**
-	  * Writes the Subjects to the {@outputTable } table in keyspace {@outputKeyspace }.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Subject]()
-			.head
-			.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
-	}
-
-	// $COVERAGE-ON$
 }
