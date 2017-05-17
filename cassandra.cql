@@ -147,6 +147,34 @@ CREATE TABLE datalake.subject (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
+CREATE TABLE datalake.subject_dbpedia (
+    id uuid PRIMARY KEY,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+CREATE TABLE datalake.subject_wikidata (
+    id uuid PRIMARY KEY,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
 CREATE TABLE datalake.version (
     version timeuuid PRIMARY KEY,
     datasources list<text>,
@@ -289,4 +317,12 @@ CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
 CREATE TABLE evaluation.dbpedia_wikidata_deduplication_only_uuid (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<uuid, text, double>>>
+);
+
+CREATE TABLE evaluation.featureentries (
+	id uuid PRIMARY KEY,
+	subject frozen<subject>,
+	staging frozen<subject>,
+	score map<text, frozen<list<double>>>,
+	correct boolean
 );
