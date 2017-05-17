@@ -56,4 +56,11 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		val expected = TestData.geoCoordsBlockingScheme
 		keys.toSet shouldEqual expected.toSet
 	}
+
+	it should "be created with the proper tag" in {
+		val name = "Test Geo Scheme"
+		val scheme = GeoCoordsBlockingScheme(name)
+		scheme.tag shouldEqual name
+		scheme.isInstanceOf[GeoCoordsBlockingScheme] shouldBe true
+	}
 }

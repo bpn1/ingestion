@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-
+import java.io._
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
@@ -13,7 +12,6 @@ import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
-
 import scala.io.{BufferedSource, Source}
 
 // scalastyle:off number.of.methods
@@ -300,6 +298,26 @@ object TestData {
 			))
 	}
 
+	def transformedArticles(): Set[(String, Bag[String, Int])] = {
+		Set(
+			("Audi Test mit Link", Bag("audi" -> 1, "verlink" -> 1)),
+			("Audi Test ohne Link", Bag("audi" -> 1, "verlink" -> 1)),
+			("Streitberg (Brachttal)", Bag("1554" -> 1, "waldrech" -> 1, "einwohnerzahl" -> 1, "streidtburgk" -> 1, "19" -> 1, "brachttal" -> 1, "ort" -> 1, "jahrhu" -> 1, "nachweislich" -> 1, "-lrb-" -> 3, "huterech" -> 1, "eingeburg" -> 1, "steytberg" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "-" -> 1, "stridberg" -> 1, "kleinst" -> 1, "-rrb-" -> 3, "stamm" -> 1, "hess" -> 1, "holx" -> 1, "buding" -> 1, "tauch" -> 1, "stripurgk" -> 1, "1500" -> 1, "gemei" -> 1, "1377" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "1528" -> 1, "namensvaria" -> 1, "ortsnam" -> 1, "streitberg" -> 2, "mittelal" -> 1, "red" -> 1)),
+			("Testartikel", Bag("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
+	}
+
+	def transformedLinkContexts(): Set[(Link, Bag[String, Int])] = {
+		Set(
+			(Link("Audi", "Audi", Option(9), Map("verlink" -> 1)), Bag("verlink" -> 1)),
+			(Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)), Bag("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
+			(Link("Hessen", "Hessen", Option(87), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+			(Link("1377", "1377", Option(225), Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)), Bag("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)), Bag("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)),
+			(Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)), Bag("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			(Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)), Bag("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			(Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)), Bag("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
+	}
 
 	def linkContextsTfidf(): Set[(Link, Map[String, Double])] = {
 		// retrieved from 4 documents
@@ -465,6 +483,12 @@ object TestData {
 		)
 	}
 
+	def filteredDocumentFrequenciesWithSymbols(): List[DocumentFrequency] = {
+		List(
+			DocumentFrequency("audi", 3),
+			DocumentFrequency(".", 4))
+	}
+
 	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
@@ -544,6 +568,22 @@ object TestData {
 			DocumentFrequency("hier", 2),
 			DocumentFrequency("verlink", 2)
 		)
+	}
+
+	def filteredStemmedIdfMap(): Map[String, Double] = {
+		val numDoc = 4.0
+		Map(
+			"ist" -> 3.0 / numDoc,
+			"audi" -> 3.0 / numDoc,
+			"hier" -> 2.0 / numDoc,
+			"verlink" -> 2.0 / numDoc,
+			"brachttal" -> 2.0 / numDoc,
+			"main-kinzig-kreis" -> 2.0 / numDoc,
+			"hess" -> 2.0 / numDoc,
+			"buding" -> 2.0 / numDoc,
+			"wald" -> 2.0 / numDoc,
+			"jahr" -> 2.0 / numDoc,
+			"und" -> 2.0 / numDoc)
 	}
 
 	def inverseDocumentFrequenciesSet(): Set[(String, Double)] = {
@@ -1183,41 +1223,6 @@ object TestData {
 			"Galgenhumor")
 	}
 
-	def parsedEntryWithDifferentLinkTypes(): ParsedWikipediaEntry = {
-		ParsedWikipediaEntry(
-			"Origineller Titel",
-			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
-			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
-			templatelinks = List(Link("Charlie", "Charlie C.")),
-			categorylinks = List(Link("Dora", "Dora")),
-			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
-			disambiguationlinks = List(Link("Esel", "Esel"))
-		)
-	}
-
-	def allLinksListFromEntryList(): List[Link] = {
-		List(
-			Link("Apfel", "Apfel", Option(0)),
-			Link("Baum", "Baum", Option(4)),
-			Link("Charlie", "Charlie C."),
-			Link("Dora", "Dora"),
-			Link("Fund", "Fund"),
-			Link("Grieß", "Brei"),
-			Link("Esel", "Esel")
-		)
-	}
-
-	def parsedEntryWithFilteredLinks(): ParsedWikipediaEntry = {
-		ParsedWikipediaEntry(
-			"Origineller Titel",
-			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
-			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
-			categorylinks = List(Link("Dora", "Dora")),
-			listlinks = List(Link("Fund", "Fund")),
-			disambiguationlinks = List(Link("Esel", "Esel"))
-		)
-	}
-
 	def testNamespacePages(): List[WikipediaEntry] = {
 		List(
 			WikipediaEntry("lol"),
@@ -1479,11 +1484,15 @@ object TestData {
 		trie
 	}
 
-	def fullTrieStream(): ByteArrayInputStream = {
+	def fullTrieStream(file: String): ByteArrayInputStream = {
 		val aliasStream = Source.fromURL(getClass.getResource("/textmining/triealiases"))
 		val trieStream = new ByteArrayOutputStream(1024 * 10)
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
+	}
+
+	def docfreqStream(file: String)(file2: String): InputStream = {
+		new FileInputStream(new File(getClass.getResource(s"/textmining/$file").toURI))
 	}
 
 	def uncleanedFoundAliases(): List[String] = {
@@ -1501,7 +1510,7 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
-  def linkExtenderPagesSet(): Set[Page] = {
+	def linkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
@@ -1676,24 +1685,6 @@ object TestData {
 		)
   }
 
-  def featureEntries(): List[FeatureEntry] = {
-		List(
-			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
-			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
-			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true),
-			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false),
-			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false))
-	}
-
-	def labeledPoints(): List[LabeledPoint] = {
-		List(
-			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
-			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
-			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
-			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
-			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
-	}
-
 	def textLinkHtml(): List[Element] = {
 		val elements = Source.fromURL(getClass.getResource("/textmining/textlinks.html"))
 			.getLines()
@@ -1718,7 +1709,8 @@ object TestData {
 			List(Link("title", "Zwillinge")),
 			List(Link("title", "Zwillinge")),
 			Nil,
-			Nil)
+			Nil,
+			List(Link("title", "Zwillinge")))
 	}
 
 	def textLinkTuples(): List[(String, List[Link])] = {
@@ -1726,7 +1718,8 @@ object TestData {
 			("Wort Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(5)))),
 			("Wort 2", List(Link("Zwillinge", "Zwillinge", Option(7)))),
 			("Wort 3", Nil),
-			("", Nil))
+			("", Nil),
+			("Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(0)))))
 	}
 
 	def wikidataEntities(): List[WikiDataEntity] = {

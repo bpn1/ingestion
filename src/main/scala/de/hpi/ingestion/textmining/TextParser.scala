@@ -352,22 +352,16 @@ object TextParser extends SparkJob {
 	  * @param linkMatch regex match containing link
 	  * @return link constructed from regex
 	  */
-	def constructLinkFromRegexMatch(linkMatch: Regex.Match): Link = {
-		val page = linkMatch.group(1)
-		if(page.startsWith("Datei:")) {
-			return null
-		}
-		var alias = ""
-		if(linkMatch.groupCount > 2) {
-			alias = linkMatch.group(2)
-		}
-		if(alias != null) {
-			alias = alias.stripPrefix("|")
-		}
-		if(alias == null || alias.isEmpty) {
-			alias = page
-		}
-		Link(alias, page)
+	def constructLinkFromRegexMatch(linkMatch: Regex.Match): Option[Link] = {
+		Option(linkMatch.group(1))
+			.filter(!_.startsWith("Datei:"))
+			.map { page =>
+				val alias = Option(linkMatch.group(2))
+					.map(_.stripPrefix("|"))
+					.filter(_.nonEmpty)
+					.getOrElse(page)
+				Link(alias, page)
+			}
 	}
 
 	/**
@@ -385,9 +379,7 @@ object TextParser extends SparkJob {
 			.matchData
 			.foreach { linkMatch =>
 				val link = constructLinkFromRegexMatch(linkMatch)
-				if(link != null) {
-					linkList += link
-				}
+				link.foreach(link => linkList += link)
 			}
 		linkList.toList
 	}
