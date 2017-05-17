@@ -6,6 +6,9 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.model.RandomForestModel
 
 /**
@@ -53,7 +56,23 @@ object TextNER extends SparkJob {
 	  * @param text
 	  * @return
 	  */
-	def findNamedEntities(text: String, classifier: RandomForestModel): List[OffsetToken] = {
+	def generateDataPoints(text: String, tokenizer: IngestionTokenizer): List[(OffsetToken, LabeledPoint)] = {
+		List((OffsetToken("lorem", 0, 5), LabeledPoint(0.0, new DenseVector(Array(0, 0, 0)))))
+		//		val tokens = tokenizer.processWithOffsets(text)
+	}
+
+	/**
+	  * todo
+	  *
+	  * @param data
+	  * @return
+	  */
+	def findNamedEntities(data: List[(OffsetToken, LabeledPoint)], classifier: RandomForestModel): List[OffsetToken] = {
+		val predictionsAndLabels = data.map { case (offsetToken, LabeledPoint(label, features)) =>
+			val prediction = classifier.predict(features)
+			(prediction, label)
+		}
+
 		List(OffsetToken("lorem", 0, 5))
 	}
 
@@ -66,7 +85,11 @@ object TextNER extends SparkJob {
 			.map(_.getText())
 		val textsRDD = sc.parallelize(texts)
 		val classifier = RandomForestModel.load(sc, classifierModel)
-		val namedEntities = textsRDD.map(text => findNamedEntities(text, classifier))
+		val tokenizer = IngestionTokenizer(true, true)
+		val namedEntities = textsRDD.map { text =>
+			val data = generateDataPoints(text, tokenizer)
+			findNamedEntities(data, classifier)
+		}
 		List(namedEntities).toAnyRDD()
 	}
 }
