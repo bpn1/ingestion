@@ -27,7 +27,7 @@ object Blocking extends SparkJob with Configurable {
 
 	// $COVERAGE-OFF$
 	/**
-	  * Loads the Subjects and staged Subjects from the Cassandra.
+	  * Loads the Subjects, staged Subjects and the GoldStandard from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
@@ -169,11 +169,7 @@ object Blocking extends SparkJob with Configurable {
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val jobid = UUIDs.timeBased()
 		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
-			val isUndefined = blockingSchemes
-				.find(_.tag == tag)
-				.map(_.undefinedValue)
-				.contains(key)
-			!(isUndefined && filterUndefined)
+			if (filterUndefined) !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key) else false
 		}
 		val duplicates = blocks.map { case ((key, tag), (subjectList, stagingList)) =>
 			val cross = subjectList.cross(stagingList)
