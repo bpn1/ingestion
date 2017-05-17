@@ -16,21 +16,20 @@ class MapboxSubject:
     def __init__(
             self,
             identifier=uuid.uuid4(),
-            name="",
-            request_string="",
-            latitude="",
-            longitude=""
+            name = "",
+            request_string = "",
+            coordinates = ""
     ):
         self.uuid = identifier
         self.name = name
         self.request_string = request_string
-        self.coordinates = [latitude, longitude]
+        self.coordinates = coordinates
 
     def add_request_string(self, request):
         self.request_string = request
 
-    def add_geocode(self, latitude, longitude):
-        self.coordinates = [latitude, longitude]
+    def add_geocode(self, coordinates):
+        self.coordinates = [coordinates]
 
 
 def is_not_blank(some_string):
@@ -58,45 +57,46 @@ def generate_request(
 
 
 def process_api_response(response):
-    if 'center' in response.json()['features'][0]:
-        coordinates = response.json()['features'][0]['center']
-    else:
-        coordinates = ""
-
-    if 'text' in response.json()['features'][0]:
-        name = response.json()['features'][0]['text']
-    else:
-        name = ""
-
-    if 'place_name' in response.json()['features'][0]:
-        place_name = response.json()['features'][0]['place_name']
-    else:
-        place_name = ""
-
-    if 'properties' in response.json()['features'][0]:
-        properties = response.json()['features'][0]['properties']
-
-        if 'wikidata' in properties:
-            wikidata = properties[0]['wikidata']
+    if 0 in response.json()['features']:
+        if 'center' in response.json()['features'][0]:
+            coordinates = response.json()['features'][0]['center']
         else:
-            wikidata = ""
+            coordinates = ""
 
-        # Filter for the right type, according https://www.mapbox.com/api-documentation/?language=Python#geocoding
-        if 'type' in properties:
-            kind = properties[0]['type']
+        if 'text' in response.json()['features'][0]:
+            name = response.json()['features'][0]['text']
         else:
-            kind = ""
-    else:
+            name = ""
+
+        if 'place_name' in response.json()['features'][0]:
+            place_name = response.json()['features'][0]['place_name']
+        else:
+            place_name = ""
+
+        #if 'properties' in response.json()['features'][0]:
+        #    properties = response.json()['features'][0]['properties']
+
+
+            #wikidata = properties[0]['wikidata'] if 'wikidata' in properties else ""
+
+            # Filter for the right type, according https://www.mapbox.com/api-documentation/?language=Python#geocoding
+            #if 'type' in properties:
+            #    kind = properties[0]['type']
+            #else:
+            #    kind = ""
+        #else:
         wikidata = ""
         kind = ""
 
-    return {
-        "coordinates": coordinates,
-        "name": name,
-        "place_name": place_name,
-        "wikidata": wikidata,
-        "type": kind
-    }
+        return {
+            "coordinates": coordinates,
+            "name": name,
+            "place_name": place_name,
+            "wikidata": wikidata,
+            "type": kind
+        }
+    else:
+        return None
 
 
 def fire_single_request_to_obtain_coordinates(request_string):
@@ -116,6 +116,7 @@ def fire_single_request_to_obtain_coordinates(request_string):
             print "Error on request " + request_string + "\n"
         else:
             response = process_api_response(response)
+
         return response
     else:
         return False
@@ -178,10 +179,12 @@ def main():
 
     while not wait_list_geocoding.empty():
         subject = wait_list_geocoding.get()
-        request = generate_request(subject)
+        request = generate_request(subject.name)
         response = fire_single_request_to_obtain_coordinates(request)
 
-
+        if response:
+            subject.add_geocode(response.coordinates)
+        print subject.name + " " + subject.coordinates
 
 
 if __name__ == '__main__':
