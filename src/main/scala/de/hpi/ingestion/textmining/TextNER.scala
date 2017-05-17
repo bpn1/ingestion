@@ -1,6 +1,5 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models.{OffsetToken, ParsedWikipediaEntry}
 import org.apache.spark.SparkContext
@@ -16,8 +15,7 @@ object TextNER extends SparkJob {
 	appName = "Text NER"
 	val keyspace = "wikidumps"
 	val tablename = "parsedwikipedia"
-	val outputTablename = "namedentities"
-	var classifierModel = "wikipedia_randomforest_model_1234"
+	var classifierModel = "wikipedia_randomforest_model_1494495223381"
 
 	// $COVERAGE-OFF$
 	/**
@@ -28,7 +26,7 @@ object TextNER extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
+		val wikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
 		List(wikipedia).toAnyRDD()
 	}
 
@@ -40,10 +38,11 @@ object TextNER extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		val timestamp = System.currentTimeMillis / 1000
 		output
 			.fromAnyRDD[OffsetToken]()
 			.head
-			.saveToCassandra(keyspace, outputTablename)
+			.saveAsTextFile(s"named_entities_$timestamp")
 	}
 
 	// $COVERAGE-ON$
@@ -63,9 +62,11 @@ object TextNER extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val texts = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
+			.take(100)
 			.map(_.getText())
+		val textsRDD = sc.parallelize(texts)
 		val classifier = RandomForestModel.load(sc, classifierModel)
-		val namedEntities = texts.map(text => findNamedEntities(text, classifier))
+		val namedEntities = textsRDD.map(text => findNamedEntities(text, classifier))
 		List(namedEntities).toAnyRDD()
 	}
 }
