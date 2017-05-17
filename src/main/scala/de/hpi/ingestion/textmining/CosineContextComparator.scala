@@ -215,7 +215,7 @@ object CosineContextComparator extends SparkJob {
 	  * @return Map of every term and its inverse document frequency
 	  */
 	def inverseDocumentFrequencies(numDocs: Long): Map[String, Double] = {
-		val docfreqStream = AliasTrieSearch.trieStreamFunction(settings("dfTable"))
+		val docfreqStream = AliasTrieSearch.trieStreamFunction(settings("dfFile"))
 		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
 		val idfMap = mutable.Map[String, Double]()
 		var line = reader.readLine()

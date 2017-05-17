@@ -12,6 +12,7 @@
         <simMeasureStatsTable>sim_measure_stats</simMeasureStatsTable>
         <featureTable>featureentries</featureTable>
         <trieFile>wikipedia/trie_full.bin</trieFile>
+        <dfFile>wikipedia/wikipedia_docfreq</dfFile>
         <sentenceTable>wikipediasentences</sentenceTable>
         <contextSize>20</contextSize>
     </settings>
