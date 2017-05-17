@@ -5,11 +5,11 @@ import java.util.UUID
 import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.{Configurable, SparkJob}
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-object GoldStandard extends SparkJob with Configurable {
+object GoldStandard extends SparkJob {
 	appName = "GoldStandard_v1.0"
 	configFile = "goldstandard.xml"
 
@@ -39,11 +39,6 @@ object GoldStandard extends SparkJob with Configurable {
 			.saveToCassandra(settings("keyspaceGoldStandardTable"), settings("goldStandardTable"))
 	}
 	// $COVERAGE-ON$
-
-	override def assertConditions(args: Array[String]): Boolean = {
-		parseConfig()
-		super.assertConditions(args)
-	}
 
 	/**
 	  * Joins DBpedia and Wikidata.

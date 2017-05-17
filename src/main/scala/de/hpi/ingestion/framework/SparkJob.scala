@@ -1,16 +1,20 @@
 package de.hpi.ingestion.framework
 
+import com.datastax.spark.connector.cql.CassandraConnector
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 /**
   * Spark Job framework trait implementing the main method and defining the load, run and save methods.
   */
-trait SparkJob {
+trait SparkJob extends Configurable {
 	var appName = "Ingestion Spark Job"
 	val sparkOptions = mutable.Map[String, String]()
+	val cassandraLoadQueries = ListBuffer[String]()
+	val cassandraSaveQueries = ListBuffer[String]()
 
 	/**
 	  * Loads a four-tuple of RDD-Options used in the job.
@@ -39,11 +43,19 @@ trait SparkJob {
 
 	/**
 	  * Called before running the job. Used to assert specifics of the input arguments. Returns false if the program
-	  * should be terminated.
+	  * should be terminated. Parses the xml config if a path is given in args or {@configFile} is set.
 	  * @param args arguments of the program
 	  * @return true if the program can continue, false if it should be terminated
 	  */
-	def assertConditions(args: Array[String]): Boolean = true
+	def assertConditions(args: Array[String]): Boolean = {
+		args
+			.headOption
+			.foreach(file => configFile = file)
+		if(configFile.nonEmpty) {
+			parseConfig()
+		}
+		true
+	}
 
 	/**
 	  * Creates the Spark Conf and sets extra options. {@appName} is used as name and {@sparkOptions} is used as
@@ -64,6 +76,15 @@ trait SparkJob {
 	def sparkContext(): SparkContext = {
 		new SparkContext(createSparkConf())
 	}
+
+	/**
+	  * Executes multiple CQL queries on the Cassandra.
+	  * @param queries List of queries to execute
+	  * @param sc Spark Context containing the Cassandra connection
+	  */
+	def executeQueries(queries: List[String], sc: SparkContext): Unit = {
+		CassandraConnector(sc.getConf).withSessionDo(session => queries.foreach(session.execute))
+	}
 	// $COVERAGE-ON$
 
 	/**
@@ -75,8 +96,10 @@ trait SparkJob {
 			return
 		}
 		val sc = sparkContext()
+		executeQueries(cassandraLoadQueries.toList, sc)
 		val data = load(sc, args)
 		val results = run(data, sc, args)
+		executeQueries(cassandraSaveQueries.toList, sc)
 		save(results, sc, args)
 	}
 }

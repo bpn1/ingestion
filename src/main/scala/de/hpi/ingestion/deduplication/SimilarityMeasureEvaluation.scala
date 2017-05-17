@@ -6,11 +6,11 @@ import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, PrecisionRecallDataTuple, SimilarityMeasureStats}
-import de.hpi.ingestion.framework.{Configurable, SparkJob}
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import scala.xml.Node
 
-object SimilarityMeasureEvaluation extends SparkJob with Configurable {
+object SimilarityMeasureEvaluation extends SparkJob {
 	appName = "SimilarityMeasureEvaluation"
 	configFile = "similarity_measure_evaluation.xml"
 
@@ -30,11 +30,6 @@ object SimilarityMeasureEvaluation extends SparkJob with Configurable {
 			.saveToCassandra(settings("keyspaceSimMeasureStatsTable"), settings("simMeasureStatsTable"))
 	}
 	// $COVERAGE-ON$
-
-	override def assertConditions(args: Array[String]): Boolean = {
-		parseConfig()
-		super.assertConditions(args)
-	}
 
 	/**
 	  * Calculates precision, recall and f1 score using the training and test data.

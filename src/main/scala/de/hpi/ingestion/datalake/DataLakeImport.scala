@@ -9,7 +9,6 @@ import scala.collection.mutable
   * @tparam T
   */
 trait DataLakeImport[T <: DLImportEntity] extends Serializable {
-	val settings = mutable.Map[String, String]()
 	val outputKeyspace = "datalake"
 	val outputTable = "subject_temp"
 	val versionTable = "version"
