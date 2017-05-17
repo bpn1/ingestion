@@ -189,7 +189,7 @@ object AliasTrieSearch extends SparkJob {
 			.map(articles =>
 				articles
 					.mapPartitions({ partition =>
-						val trie = deserializeTrie(trieStreamFunction(trieName))
+						val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
 						partition.map(matchEntry(_, trie, tokenizer, contextTokenizer))
 					}, true))
 			.toAnyRDD()

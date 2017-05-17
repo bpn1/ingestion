@@ -45,7 +45,7 @@ object ClassifierTraining extends SparkJob {
 		val List(stats, model) = output
 		stats
 			.asInstanceOf[RDD[SimilarityMeasureStats]]
-			.saveToCassandra(keyspace, statisticsTable)
+			.saveToCassandra(settings("keyspace"), settings("simMeasureStatsTable"))
 		model
 			.asInstanceOf[RDD[Option[RandomForestModel]]]
 			.first
