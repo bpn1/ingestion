@@ -1,15 +1,20 @@
 package de.hpi.ingestion.textmining
 
+
+import java.net.URI
 import java.io._
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
+import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.mllib.tree.configuration.Algo
+import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
 import scala.io.{BufferedSource, Source}
@@ -1683,7 +1688,25 @@ object TestData {
 				)
 			)
 		)
-  }
+	}
+
+	def featureEntries(): List[FeatureEntry] = {
+		List(
+			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
+			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
+			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true),
+			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false),
+			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false))
+	}
+
+	def labeledPoints(): List[LabeledPoint] = {
+		List(
+			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
+			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
+			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
+			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
+			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
+	}
 
 	def textLinkHtml(): List[Element] = {
 		val elements = Source.fromURL(getClass.getResource("/textmining/textlinks.html"))
@@ -1795,6 +1818,10 @@ object TestData {
 			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
 	}
 
+	def extendedClassifierFeatureEntries(n: Int): List[FeatureEntry] = {
+		(0 until n).flatMap(t => classifierFeatureEntries()).toList
+	}
+
 	def labeledPredictions(): List[(Double, Double)] = {
 		List(
 			(1.0, 1.0),
@@ -1809,23 +1836,41 @@ object TestData {
 			(0.0, 0.0))
 	}
 
-	def predictionStatistics(): List[(String, Double, Double)] = {
-		List(
-			("precision", 1.0, 5.0/7.0),
-			("precision", 0.0, 0.6),
-			("recall", 1.0, 5.0/6.0),
-			("recall", 0.0, 1.0),
-			("fscore with beta 0.5", 1.0, 25.0/34.0),
-			("fscore with beta 0.5", 0.0, 0.6521739130434783))
+	def predictionStatistics(): PrecisionRecallDataTuple = {
+		PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0)
 	}
 
-	def formattedPredictionStatistics(): String = {
-		s"precision\t1.0\t${5.0/7.0}" + "\n" +
-			"precision\t0.0\t0.6" + "\n" +
-			s"recall\t1.0\t${5.0/6.0}" + "\n" +
-			"recall\t0.0\t1.0" + "\n" +
-			s"fscore with beta 0.5\t1.0\t${25.0/34.0}" + "\n" +
-			"fscore with beta 0.5\t0.0\t0.6521739130434783"
+	def statisticTuples(): List[PrecisionRecallDataTuple] = {
+		List(
+			PrecisionRecallDataTuple(1.0, 0.4, 1.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.6, 0.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.6, 0.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.4, 0.0, 0.0)
+		)
+	}
+
+	def averagedStatisticTuples(): PrecisionRecallDataTuple = {
+		PrecisionRecallDataTuple(1.0, 0.5, 0.25, 0.75)
+	}
+
+	def simMeasureStats(): SimilarityMeasureStats = {
+		SimilarityMeasureStats(null, List(averagedStatisticTuples()), Option("Test comment"))
+	}
+
+	def randomForestModel(): RandomForestModel = {
+		val node = new Node(0, new Predict(0.0, 1.0), 0.0, true, None, None, None, None)
+		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
+		new RandomForestModel(Algo.Classification, Array(dtmodel))
+	}
+
+	def testCrossValidationMethod(
+		data: RDD[LabeledPoint],
+		numFolds: Int = 3,
+		numTrees: Int = 5,
+		maxDepth: Int = 4,
+		maxBins: Int = 32
+	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
+		(simMeasureStats(), Option(randomForestModel()))
 	}
 }
 
