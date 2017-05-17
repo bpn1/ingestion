@@ -1,16 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
     <settings>
-        <keyspaceSubjectTable>evaluation</keyspaceSubjectTable>
-        <subjectTable>subject_dbpedia</subjectTable>
-        <keyspaceStagingTable>evaluation</keyspaceStagingTable>
-        <stagingTable>subject_wikidata</stagingTable>
-        <keyspaceDuplicatesTable>evaluation</keyspaceDuplicatesTable>
-        <duplicatesTable>dbpedia_wikidata_deduplication</duplicatesTable>
-        <keyspaceVersionTable>evaluation</keyspaceVersionTable>
-        <versionTable>version</versionTable>
-        <keyspaceStatsTable>datalake</keyspaceStatsTable>
-        <statsTable>blockingstats</statsTable>
+        <key1>val 1</key1>
+        <key2>val 2</key2>
+        <key3>val 3</key3>
+        <key4>val 4</key4>
     </settings>
     <simMeasurements>
         <attribute>

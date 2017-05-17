@@ -35,4 +35,8 @@ class MockConditionSparkJob extends FlatSpec with SparkJob with SharedSparkConte
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		methodCalls += "save"
 	}
+
+	override def executeQueries(queries: List[String], sc: SparkContext): Unit = {
+		methodCalls += "execQ"
+	}
 }
