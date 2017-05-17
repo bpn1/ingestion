@@ -116,25 +116,24 @@ object RedirectResolver extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val articles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
-		val redirects = input(1).asInstanceOf[RDD[Redirect]]
-			.map(redirect => (redirect.alias, redirect.page))
+		var redirects = input(1).asInstanceOf[RDD[Redirect]]
+			.map(Redirect.unapply(_).get)
 			.collect
 			.toMap
-		var dictBroadcast = sc.broadcast(redirects)
-		var cleanedRedirectMap = Map[String, String]()
+		var saveRedirectsToCassandra = false
 		if(redirects.isEmpty) {
+			saveRedirectsToCassandra = true
 			val redirectMap = buildRedirectDict(articles)
-			cleanedRedirectMap = resolveTransitiveRedirects(redirectMap)
-			dictBroadcast = sc.broadcast(cleanedRedirectMap)
+			redirects = resolveTransitiveRedirects(redirectMap)
 		}
-
+		val dictBroadcast = sc.broadcast(redirects)
 		val resolvedArticles = articles
 			.mapPartitions({ entryPartition =>
 				val localDict = dictBroadcast.value
 				entryPartition.map(entry => resolveRedirects(entry, localDict))
 			}, true)
-
-		val redirectsList = cleanedRedirectMap.map(Redirect.tupled).toList
+		var redirectsList = List[Redirect]()
+		if (saveRedirectsToCassandra) redirectsList = redirects.map(Redirect.tupled).toList
 		List(resolvedArticles).toAnyRDD() ++ List(sc.parallelize(redirectsList)).toAnyRDD()
 	}
 }
