@@ -223,6 +223,20 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 		tokens shouldEqual expectedTokens
 	}
 
+	"Whitespace Tokenizer" should "tokenize text" in {
+		val tokenizer = new WhitespaceTokenizer
+		val tokenList = TestData.testSentences().map(tokenizer.tokenize)
+		val expected = TestData.uncleanTokenizedSentences()
+		tokenList shouldEqual expected
+	}
+
+	it should "reverse tokens into text" in {
+		val tokenizer = new WhitespaceTokenizer
+		val sentences = TestData.uncleanTokenizedSentences().map(tokenizer.reverse)
+		val expected = TestData.testSentences()
+		sentences shouldEqual expected
+	}
+
 	def isSpecialCharacter(text: String, beginOffset: Int, endOffset: Int): Boolean = {
 		val length = endOffset - beginOffset
 		val character = text.charAt(beginOffset)

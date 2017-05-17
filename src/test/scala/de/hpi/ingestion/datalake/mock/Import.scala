@@ -8,7 +8,6 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 
 object Import extends DataLakeImportImplementation[Entity](
 	List("TestSource"),
-	Option("datalakeimport.xml"),
 	"normalization.xml",
 	"inputKeySpace",
 	"inputTable"
@@ -27,7 +26,6 @@ object Import extends DataLakeImportImplementation[Entity](
 		version: Version,
 		mapping: Map[String, List[String]]
 	): Subject = Subject()
-	override def parseConfig(path: String): Unit = super.parseConfig(path)
 	override def parseNormalizationConfig(path: String): Map[String, List[String]] = {
 		val url = getClass.getResource(s"/$path")
 		super.parseNormalizationConfig(url)

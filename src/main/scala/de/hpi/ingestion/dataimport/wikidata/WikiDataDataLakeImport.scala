@@ -13,7 +13,6 @@ import org.apache.spark.rdd.RDD
   */
 object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntity](
 	List("wikidata_20161117"),
-	Option("datalakeimport_wikidata_config.xml"),
 	"normalization_wikidata.xml",
 	"wikidumps",
 	"wikidata"

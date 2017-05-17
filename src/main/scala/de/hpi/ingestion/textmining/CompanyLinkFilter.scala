@@ -13,10 +13,7 @@ import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
   */
 object CompanyLinkFilter extends SparkJob {
 	appName = "Company Link Filter"
-	val keyspace = "wikidumps"
-	val wikidataTable = "wikidata"
-	val articleTable = "parsedwikipedia"
-	val pageTable = "wikipediapages"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -26,9 +23,9 @@ object CompanyLinkFilter extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = List(sc.cassandraTable[WikiDataEntity](keyspace, wikidataTable))
-		val pages = List(sc.cassandraTable[Page](keyspace, pageTable))
-		val articles = List(sc.cassandraTable[ParsedWikipediaEntry](keyspace, articleTable))
+		val wikidata = List(sc.cassandraTable[WikiDataEntity](settings("keyspace"), settings("wikidataTable")))
+		val pages = List(sc.cassandraTable[Page](settings("keyspace"), settings("pageTable")))
+		val articles = List(sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable")))
 		wikidata.toAnyRDD() ++ pages.toAnyRDD() ++ articles.toAnyRDD()
 	}
 
@@ -42,7 +39,7 @@ object CompanyLinkFilter extends SparkJob {
 		output
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-			.saveToCassandra(keyspace, articleTable)
+			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
 	// $COVERAGE-ON$
 

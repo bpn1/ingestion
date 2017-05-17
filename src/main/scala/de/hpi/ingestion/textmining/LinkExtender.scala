@@ -19,10 +19,7 @@ import scala.collection.mutable
   */
 object LinkExtender extends SparkJob {
 	appName = "Link Extender"
-	val keyspace = "wikidumps"
-	val inputParsedTablename = "parsedwikipedia"
-	val outputParsedTablename = "parsedwikipedia"
-	val inputPageToAliasesTablename = "wikipediapages"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -33,8 +30,8 @@ object LinkExtender extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
-		val pages = sc.cassandraTable[Page](keyspace, inputPageToAliasesTablename)
+		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+		val pages = sc.cassandraTable[Page](settings("keyspace"), settings("pageTable"))
 		List(parsedWikipedia).toAnyRDD() ++ List(pages).toAnyRDD()
 	}
 
@@ -49,9 +46,8 @@ object LinkExtender extends SparkJob {
 		output
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-			.saveToCassandra(keyspace, outputParsedTablename)
+			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**

@@ -16,12 +16,7 @@ import scala.collection.mutable
   */
 object CosineContextComparator extends SparkJob {
 	appName = "Cosine Context Comparator"
-	val keyspace = "wikidumps"
-	val inputArticlesTablename = "parsedwikipedia"
-	val inputDocumentFrequenciesTablename = "wikipediadocfreq"
-	val linksTable = "wikipedialinks"
-	val featureEntryTable = "featureentries"
-	val docfreqFile = "wikipedia/wikipedia_docfreq"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -33,9 +28,10 @@ object CosineContextComparator extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
-		List(tfArticles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+		val documentFrequencies = sc.cassandraTable[DocumentFrequency](settings("keyspace"), settings("dfTable"))
+		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
+		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
 
 	/**
@@ -49,7 +45,7 @@ object CosineContextComparator extends SparkJob {
 		output
 			.fromAnyRDD[FeatureEntry]()
 			.head
-			.saveToCassandra(keyspace, featureEntryTable)
+			.saveToCassandra(settings("keyspace"), settings("featureTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -219,7 +215,7 @@ object CosineContextComparator extends SparkJob {
 	  * @return Map of every term and its inverse document frequency
 	  */
 	def inverseDocumentFrequencies(numDocs: Long): Map[String, Double] = {
-		val docfreqStream = AliasTrieSearch.trieStreamFunction(docfreqFile)
+		val docfreqStream = AliasTrieSearch.trieStreamFunction(settings("dfFile"))
 		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
 		val idfMap = mutable.Map[String, Double]()
 		var line = reader.readLine()

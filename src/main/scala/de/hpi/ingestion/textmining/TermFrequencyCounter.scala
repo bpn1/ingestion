@@ -1,7 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models._
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
@@ -13,10 +13,7 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
   */
 object TermFrequencyCounter extends SparkJob {
 	appName = "Term Frequency Counter"
-	val keyspace = "wikidumps"
-	val inputArticlesTablename = "parsedwikipedia"
-	val outputArticlesTablename = "parsedwikipedia"
-	val contextSize = 20
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -26,7 +23,7 @@ object TermFrequencyCounter extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		List(articles).toAnyRDD()
 	}
 
@@ -40,7 +37,7 @@ object TermFrequencyCounter extends SparkJob {
 		output
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-			.saveToCassandra(keyspace, outputArticlesTablename)
+			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -77,13 +74,14 @@ object TermFrequencyCounter extends SparkJob {
 	}
 
 	/**
-	  * Extracts context of the links of a given Wikipedia entry. The contexts are {@contextSize} tokens in front of
+	  * Extracts context of the links of a given Wikipedia entry. The contexts are n tokens in front of
 	  * and behind the location of the links alias in the tokenized text.
 	  *
 	  * @param entry Wikipedia entry containing the used links
 	  * @return list of tuples containing the link and its context
 	  */
 	def extractLinkContexts(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): ParsedWikipediaEntry = {
+		val contextSize = settings("contextSize").toInt
 		val tokens = tokenizer.onlyTokenize(entry.getText())
 		val contextLinks = entry.textlinks.map { link =>
 			val aliasTokens = tokenizer.onlyTokenize(link.alias)

@@ -12,8 +12,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
   */
 object LinkCleaner extends SparkJob {
 	appName = "Link Cleaner"
-	val keyspace = "wikidumps"
-	val tablename = "parsedwikipedia"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -23,7 +22,7 @@ object LinkCleaner extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		List(articles).toAnyRDD()
 	}
 
@@ -37,7 +36,7 @@ object LinkCleaner extends SparkJob {
 		output
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-			.saveToCassandra(keyspace, tablename)
+			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
 	// $COVERAGE-ON$
 

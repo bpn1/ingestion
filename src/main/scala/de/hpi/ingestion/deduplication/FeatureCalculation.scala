@@ -1,7 +1,7 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-import de.hpi.ingestion.framework.{Configurable, SparkJob}
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -14,7 +14,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 /**
   * Job for calculation of feature entries
   */
-object FeatureCalculation extends SparkJob with Configurable {
+object FeatureCalculation extends SparkJob {
 	appName = "Feature calculation"
 	configFile = "feature_calculation.xml"
 	val blockingSchemes = List[BlockingScheme](SimpleBlockingScheme("simple_scheme"))
@@ -36,11 +36,6 @@ object FeatureCalculation extends SparkJob with Configurable {
 			.saveToCassandra(settings("keyspaceFeatureTable"), settings("featureTable"))
 	}
 	// $COVERAGE-ON$
-
-	override def assertConditions(args: Array[String]): Boolean = {
-		parseConfig()
-		super.assertConditions(args)
-	}
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val dbpedia = input.head.asInstanceOf[RDD[Subject]]
