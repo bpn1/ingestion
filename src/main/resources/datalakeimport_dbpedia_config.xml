@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
     <sourceSettings>
-        <outputKeyspace>evaluation</outputKeyspace>
+        <outputKeyspace>datalake</outputKeyspace>
         <outputTable>subject_dbpedia</outputTable>
         <versionTable>version</versionTable>
     </sourceSettings>

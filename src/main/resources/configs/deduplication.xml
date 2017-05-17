@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
-    <sourceSettings>
+    <settings>
         <keyspaceSubjectTable>evaluation</keyspaceSubjectTable>
         <subjectTable>subject_dbpedia</subjectTable>
         <keyspaceStagingTable>evaluation</keyspaceStagingTable>
@@ -12,7 +12,7 @@
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
         <statsTable>blockingstats</statsTable>
         <confidence>0.7</confidence>
-    </sourceSettings>
+    </settings>
     <simMeasurements>
         <attribute>
             <key>name</key>

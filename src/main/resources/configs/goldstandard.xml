@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <keyspaceDBpediaTable>evaluation</keyspaceDBpediaTable>
+        <dBpediaTable>subject_dbpedia</dBpediaTable>
+        <keyspaceWikiDataTable>evaluation</keyspaceWikiDataTable>
+        <wikiDataTable>subject_wikidata</wikiDataTable>
+        <keyspaceGoldStandardTable>evaluation</keyspaceGoldStandardTable>
+        <goldStandardTable>goldstandard</goldStandardTable>
+    </settings>
+</config>
