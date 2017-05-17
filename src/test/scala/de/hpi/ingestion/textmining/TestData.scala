@@ -35,6 +35,15 @@ object TestData {
 		)
 	}
 
+	def uncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence."),
+			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal,", "Main-Kinzig-Kreis", "in", "Hessen."),
+			List("Links:", "Audi,", "Brachttal,", "historisches", "Jahr.\nKeine", "Links:", "Hessen,", "Main-Kinzig-Kreis,", "Büdinger", "Wald,", "Backfisch", "und", "nochmal", "Hessen."),
+			List("Dieser", "Satz", "enthält", "Klammern", "(evtl.", "problematisch).")
+		)
+	}
+
 	def tokenizedTestSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),

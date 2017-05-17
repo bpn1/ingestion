@@ -3,7 +3,6 @@ package de.hpi.ingestion.datalake
 import de.hpi.ingestion.datalake.mock.Entity
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 
 // scalastyle:off line.size.limit
 object TestData {
@@ -30,6 +29,12 @@ object TestData {
 	def propertyMapping: Map[String, List[String]] = Map(
 		"rootKey" -> List("test_key"),
 		"nestedKey1" -> List("test_value:1.1", "test_value:1.2.1", "test_value:1.2.2")
+	)
+
+	def strategyMapping: Map[String, List[String]] = Map(
+		"cars" -> List("45", "29"),
+		"music" -> List("1337"),
+		"games" -> List("1996")
 	)
 
 	def subjects: List[Subject] = {

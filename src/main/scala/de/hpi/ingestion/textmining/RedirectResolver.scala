@@ -13,8 +13,7 @@ import de.hpi.ingestion.implicits.TupleImplicits._
   */
 object RedirectResolver extends SparkJob {
 	appName = "Redirect Resolver"
-	val tablename = "parsedwikipedia"
-	val keyspace = "wikidumps"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -24,7 +23,7 @@ object RedirectResolver extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		List(articles).toAnyRDD()
 	}
 
@@ -38,7 +37,7 @@ object RedirectResolver extends SparkJob {
 		output
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-			.saveToCassandra(keyspace, tablename)
+			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
 	// $COVERAGE-ON$
 

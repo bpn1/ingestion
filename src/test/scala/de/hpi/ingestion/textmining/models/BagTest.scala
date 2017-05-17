@@ -1,6 +1,5 @@
-package de.hpi.ingestion.textmining
+package de.hpi.ingestion.textmining.models
 
-import de.hpi.ingestion.textmining.models.Bag
 import org.scalatest.{FlatSpec, Matchers}
 
 class BagTest extends FlatSpec with Matchers {

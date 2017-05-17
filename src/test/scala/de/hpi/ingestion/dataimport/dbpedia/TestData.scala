@@ -118,6 +118,7 @@ object TestData {
 			"geo:long" -> List("100"),
 			"dbo:country" -> List("Koblenz@de ."),
 			"property-de:mitarbeiteranzahl" -> List("12^^xsd:integer", "13^^xsd:nonNegativeInteger"),
+			"dbo:industry" -> List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei"),
 			"testProperty" -> List("test")
 		)
 	)
@@ -130,7 +131,13 @@ object TestData {
 		"geo_coords_lat" -> List("geo:lat", "property-de:latitude", "property-de:breitengrad"),
 		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad"),
 		"geo_country" -> List("dbo:country", "property-de:land"),
-		"gen_employees" -> List("dbo:numberOfEmployees", "property-de:mitarbeiteranzahl")
+		"gen_employees" -> List("dbo:numberOfEmployees", "property-de:mitarbeiteranzahl"),
+		"gen_sectors" -> List("dbo:industry")
+	)
+
+	def strategies: Map[String, List[String]] = Map(
+		"Kraftfahrzeughersteller" -> List("29", "45"),
+		"Brauerei" -> List("11")
 	)
 
 	def unnormalizedEmployees: List[String] = List("27000^^xsd:integer", "27000^^xsd:nonNegativeInteger", "10^^xsd:nonNegativeInteger", "über 1000@de .", "1 Million")
@@ -141,7 +148,7 @@ object TestData {
 	def normalizedCountries: List[String] = List("Japanisches Kaiser-reich", "Deutschland")
 	def unnormalizedCities: List[String] = List("Frankfurt a.M.@de .", "Frankfurt/Main@de .", "London", "dbpedia-de:Berlin-Tegel")
 	def normalizedCities: List[String] = List("Frankfurt a.M.", "Frankfurt/Main", "London", "Berlin-Tegel")
-	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Automobilindustrie")
-	def normalizedCSectors: List[String] = List("29", "45", "11")
+	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Unknown")
+	def normalizedSectors: List[String] = List("Kraftfahrzeughersteller", "Brauerei")
 	// scalastyle:on line.size.limit
 }

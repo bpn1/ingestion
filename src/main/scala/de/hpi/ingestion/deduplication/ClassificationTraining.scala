@@ -1,6 +1,6 @@
 package de.hpi.ingestion.deduplication
 
-import de.hpi.ingestion.framework.{Configurable, SparkJob}
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -12,7 +12,7 @@ import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 /**
   * Job for training the similarity measure classifier
   */
-object ClassificationTraining extends SparkJob with Configurable {
+object ClassificationTraining extends SparkJob {
 	appName = s"Similarity Measure Classifier Training"
 	configFile = "classification.xml"
 
@@ -30,11 +30,6 @@ object ClassificationTraining extends SparkJob with Configurable {
 			.save(sc, s"dbpedia_wikidata_naivebayes_model_${System.currentTimeMillis()}")
 	}
 	// $COVERAGE-ON$
-
-	override def assertConditions(args: Array[String]): Boolean = {
-		parseConfig()
-		super.assertConditions(args)
-	}
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val entries = input.fromAnyRDD[FeatureEntry]().head

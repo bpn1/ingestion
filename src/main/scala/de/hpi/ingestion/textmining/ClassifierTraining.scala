@@ -18,9 +18,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
   */
 object ClassifierTraining extends SparkJob {
 	appName = "Classifier Training"
-	val keyspace = "wikidumps"
-	val tablename = "featureentries"
-	val statisticsTable = "sim_measure_stats"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	var trainingFunction = crossValidateAndEvaluate _
@@ -32,7 +30,7 @@ object ClassifierTraining extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val entries = sc.cassandraTable[FeatureEntry](keyspace, tablename)
+		val entries = sc.cassandraTable[FeatureEntry](settings("keyspace"), settings("featureentries"))
 		List(entries).toAnyRDD()
 	}
 
@@ -47,7 +45,7 @@ object ClassifierTraining extends SparkJob {
 		val List(stats, model) = output
 		stats
 			.asInstanceOf[RDD[SimilarityMeasureStats]]
-			.saveToCassandra(keyspace, statisticsTable)
+			.saveToCassandra(settings("keyspace"), settings("simMeasureStatsTable"))
 		model
 			.asInstanceOf[RDD[Option[RandomForestModel]]]
 			.first

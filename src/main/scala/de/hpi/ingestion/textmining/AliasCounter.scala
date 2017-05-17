@@ -12,9 +12,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
   */
 object AliasCounter extends SparkJob {
 	appName = "Alias Counter"
-	val keyspace = "wikidumps"
-	val inputArticlesTablename = "parsedwikipedia"
-	val linksTablename = "wikipedialinks"
+	configFile = "textmining.xml"
 	val maximumAliasLength = 1000
 
 	// $COVERAGE-OFF$
@@ -25,7 +23,7 @@ object AliasCounter extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		List(articles).toAnyRDD()
 	}
 
@@ -39,7 +37,10 @@ object AliasCounter extends SparkJob {
 		output
 			.fromAnyRDD[(String, Option[Int], Option[Int])]()
 			.head
-			.saveToCassandra(keyspace, linksTablename, SomeColumns("alias", "linkoccurrences", "totaloccurrences"))
+			.saveToCassandra(
+				settings("keyspace"),
+				settings("linkTable"),
+				SomeColumns("alias", "linkoccurrences", "totaloccurrences"))
 	}
 	// $COVERAGE-ON$
 

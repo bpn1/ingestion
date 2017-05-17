@@ -13,9 +13,7 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
   */
 object DocumentFrequencyCounter extends SparkJob {
 	appName = "Document Frequency Counter"
-	val keyspace = "wikidumps"
-	val inputArticlesTablename = "parsedwikipedia"
-	val outputDocumentFrequenciesTablename = "wikipediadocfreq"
+	configFile = "textmining.xml"
 	val removeStopwords = true
 	val stem = true
 	var leastSignificantDocumentFrequency = 5
@@ -28,7 +26,7 @@ object DocumentFrequencyCounter extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		List(articles).toAnyRDD()
 	}
 
@@ -42,7 +40,7 @@ object DocumentFrequencyCounter extends SparkJob {
 		output
 			.fromAnyRDD[DocumentFrequency]()
 			.head
-			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
+			.saveToCassandra(settings("keyspace"), settings("dfTable"))
 	}
 	// $COVERAGE-ON$
 

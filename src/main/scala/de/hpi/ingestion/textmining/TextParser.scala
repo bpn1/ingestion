@@ -8,7 +8,7 @@ import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
-import org.jsoup.nodes.{Document, Element, TextNode, Comment}
+import org.jsoup.nodes.{Comment, Document, Element, TextNode}
 import java.net.URLDecoder
 
 import scala.collection.mutable.ListBuffer
@@ -24,9 +24,7 @@ import scala.io.Source
   */
 object TextParser extends SparkJob {
 	appName = "Text Parser"
-	val keyspace = "wikidumps"
-	val tablename = "wikipedia"
-	val outputTablename = "parsedwikipedia"
+	configFile = "textmining.xml"
 	val namespaceFile = "dewiki_namespaces"
 	val categoryNamespace = "Kategorie:"
 	val parsableRedirect = "WEITERLEITUNG"
@@ -42,7 +40,7 @@ object TextParser extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
+		val wikipedia = sc.cassandraTable[WikipediaEntry](settings("keyspace"), settings("rawWikiTable"))
 		List(wikipedia).toAnyRDD()
 	}
 
@@ -57,9 +55,8 @@ object TextParser extends SparkJob {
 		output
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-			.saveToCassandra(keyspace, outputTablename)
+			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**

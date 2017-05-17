@@ -25,9 +25,7 @@ import scala.collection.mutable.ListBuffer
   */
 object AliasTrieSearch extends SparkJob {
 	appName = "Alias Trie Search"
-	val keyspace = "wikidumps"
-	val tablename = "parsedwikipedia"
-	val trieName = "wikipedia/trie_full.bin"
+	configFile = "textmining.xml"
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
 
 	// $COVERAGE-OFF$
@@ -40,7 +38,7 @@ object AliasTrieSearch extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
+		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		List(parsedWikipedia).toAnyRDD()
 	}
 
@@ -55,7 +53,7 @@ object AliasTrieSearch extends SparkJob {
 		output
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-			.saveToCassandra(keyspace, tablename)
+			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
 
 	/**
@@ -66,7 +64,7 @@ object AliasTrieSearch extends SparkJob {
 	def hdfsFileStream(file: String): InputStream = {
 		val hadoopConf = new Configuration()
 		val fs = FileSystem.get(hadoopConf)
-		fs.open(new Path(trieName))
+		fs.open(new Path(settings("trieFile")))
 	}
 	// $COVERAGE-ON$
 
@@ -138,7 +136,7 @@ object AliasTrieSearch extends SparkJob {
 		index: Int,
 		contextTokenizer: IngestionTokenizer
 	): Bag[String, Int] = {
-		val contextSize = TermFrequencyCounter.contextSize
+		val contextSize = settings("contextSize").toInt
 		val contextStart = Math.max(index - contextSize, 0)
 		val preAliasContext = text.slice(contextStart, index)
 		val aliasEndIndex = index + alias.length
@@ -191,7 +189,7 @@ object AliasTrieSearch extends SparkJob {
 			.map(articles =>
 				articles
 					.mapPartitions({ partition =>
-						val trie = deserializeTrie(trieStreamFunction(trieName))
+						val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
 						partition.map(matchEntry(_, trie, tokenizer, contextTokenizer))
 					}, true))
 			.toAnyRDD()
