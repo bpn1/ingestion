@@ -78,14 +78,15 @@ object TermFrequencyCounter extends SparkJob {
 
 	/**
 	  * Extracts context of the links of a given Wikipedia entry. The contexts are {@contextSize} tokens in front of
-	  * and behind the location of the links alias in the tokenized text.
+	  * and behind the location of the links alias in the tokenized text. Extracts the links for the textlinks and the
+	  * extendedlinks column
 	  *
 	  * @param entry Wikipedia entry containing the used links
 	  * @return list of tuples containing the link and its context
 	  */
 	def extractLinkContexts(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): ParsedWikipediaEntry = {
 		val tokens = tokenizer.onlyTokenize(entry.getText())
-		val contextLinks = entry.textlinks.map { link =>
+		val contextLinks = (entry.textlinks ++ entry.extendedlinks).map { link =>
 			val aliasTokens = tokenizer.onlyTokenize(link.alias)
 			val aliasIndex = tokens.indexOfSlice(aliasTokens)
 			val contextStart = Math.max(aliasIndex - contextSize, 0)

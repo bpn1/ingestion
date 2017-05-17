@@ -1,6 +1,5 @@
 package de.hpi.ingestion.textmining.models
 
-import de.hpi.ingestion.textmining.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class FeatureEntryTest extends FlatSpec with Matchers {

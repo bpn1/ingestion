@@ -17,7 +17,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
   */
 case class FeatureEntry(
 	alias: String,
-	entity: String,
+	entity: Option[String],
 	prob_link: Double,
 	prob_entity: Double,
 	cosine_sim: Double,

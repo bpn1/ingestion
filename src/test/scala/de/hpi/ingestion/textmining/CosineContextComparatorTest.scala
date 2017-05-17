@@ -85,8 +85,24 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 				val smallLink = link
 				smallLink.context = Map() // allows smaller test data
 				(smallLink, tfidfContext)
-			}
-			.collect
+			}.collect
+			.toSet
+		val expectedTfidf = TestData.linkContextsTfidf()
+		linkContextValues shouldBe expectedTfidf
+	}
+
+	they should "compute the tf-Idf values for the linkswithcontext and trialiases contexts" in {
+		val documentFrequencyThreshold = 2
+		val articles = sc.parallelize(TestData.articlesWithLinkAndAliasContexts().toList)
+		val numDocuments = articles.count
+		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
+		val linkContextValues = CosineContextComparator
+			.calculateLinkContextsTfidf(articles, documentFrequencies, numDocuments, documentFrequencyThreshold)
+			.map { case (link, tfidfContext) =>
+				val smallLink = link
+				smallLink.context = Map() // allows smaller test data
+				(smallLink, tfidfContext)
+			}.collect
 			.toSet
 		val expectedTfidf = TestData.linkContextsTfidf()
 		linkContextValues shouldBe expectedTfidf

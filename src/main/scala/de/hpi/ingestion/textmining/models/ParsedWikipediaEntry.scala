@@ -56,4 +56,22 @@ case class ParsedWikipediaEntry(
 		listlinks = listlinks.filter(filterFunction)
 		extendedlinks = extendedlinks.filter(filterFunction)
 	}
+
+	/**
+	  * Filters the linkswithcontext links and returns only the textlinks with their contexts.
+	  * @return textlinks and their contexts
+	  */
+	def textlinkContexts(): List[Link] = {
+		linkswithcontext.filter(contextLink =>
+			textlinks.exists(link => link.alias == contextLink.alias && link.offset == contextLink.offset))
+	}
+
+	/**
+	  * Filters the linkswithcontext links and returns only the extendedlinks with their contexts.
+	  * @return extendedlinks and their contexts
+	  */
+	def extendedlinkContexts(): List[Link] = {
+		linkswithcontext.filter(contextLink =>
+			extendedlinks.exists(link => link.alias == contextLink.alias && link.offset == contextLink.offset))
+	}
 }

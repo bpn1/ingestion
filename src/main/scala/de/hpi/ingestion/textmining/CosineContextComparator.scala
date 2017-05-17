@@ -137,7 +137,7 @@ object CosineContextComparator extends SparkJob {
 		documentFrequencyThreshold: Int
 	): RDD[(Link, Map[String, Double])] = {
 		val contextTermFrequencies = articles
-			.flatMap(_.linkswithcontext)
+			.flatMap(entry => entry.linkswithcontext ++ entry.triealiases.map(_.toLink()))
 			.map(link => (link, Bag(link.context)))
 			.flatMap(t => joinableTermFrequencies(t._1, t._2))
 
@@ -222,12 +222,11 @@ object CosineContextComparator extends SparkJob {
 					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
 					FeatureEntry(
 						protoFeatureEntry.alias,
-						page,
+						Option(page),
 						protoFeatureEntry.totalProbability,
 						protoFeatureEntry.pageProbability,
 						cosineSim,
-						protoFeatureEntry.link.page == page
-					)
+						protoFeatureEntry.link.page == page)
 				}
 			}
 	}

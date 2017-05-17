@@ -1,12 +1,12 @@
 package de.hpi.ingestion.textmining.models
 
 /**
-  *
-  * @param alias
-  * @param link
-  * @param linkContext
-  * @param totalProbability
-  * @param pageProbability
+  * Prototype for a Feature entry.
+  * @param alias alias of the entry
+  * @param link link this entry represents
+  * @param linkContext context of the link containing the tfidf values of the terms
+  * @param totalProbability probability this alias is a link
+  * @param pageProbability probability this alias points to the specific page this object will be keyed by
   */
 case class ProtoFeatureEntry(
 	alias: String,
