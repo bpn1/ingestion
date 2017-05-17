@@ -215,6 +215,11 @@ object TestData {
 		Subject(name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53","14"), "gen_income" -> List("600")))
 	)
 
+	def goldStandard(subjects: List[Subject], stagings: List[Subject]): Set[(UUID, UUID)] = Set(
+		(subjects.head.id, stagings.head.id),
+		(subjects(1).id, stagings.last.id)
+	)
+
 	def flatSubjectBlocks(sc: SparkContext, subjects: List[Subject]): RDD[((String, String), Subject)] = {
 		sc.parallelize(List(
 			(("Berlin", "GeoBlocking"), subjects.head),
@@ -291,20 +296,21 @@ object TestData {
 				null,
 				"GeoBlocking",
 				Set(
-					BlockStats("Berlin", 2, 1),
+					BlockStats("Berlin", 2, 1, 0.5),
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2),
 					BlockStats("undefined", 2, 0)),
-				Option("Blocking")),
+				Option("Blocking; accuracy: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1),
-					BlockStats("Aud", 1, 1),
+					BlockStats("Vol", 1, 1, 1.0),
+					BlockStats("Aud", 1, 1, 1.0),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("Blocking"))))
+				Option("Blocking; accuracy: 1.0"))
+		))
 	}
 
 	def filteredBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -313,19 +319,19 @@ object TestData {
 				null,
 				"GeoBlocking",
 				Set(
-					BlockStats("Berlin", 2, 1),
+					BlockStats("Berlin", 2, 1, 0.5),
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2)),
-				Option("Blocking")),
+				Option("Blocking; accuracy: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1),
-					BlockStats("Aud", 1, 1),
+					BlockStats("Vol", 1, 1, 1.0),
+					BlockStats("Aud", 1, 1, 1.0),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("Blocking"))))
+				Option("Blocking; accuracy: 1.0"))))
 	}
 
 	def blockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -334,20 +340,21 @@ object TestData {
 				null,
 				"GeoBlocking",
 				Set(
-					BlockStats("Berlin", 2, 1),
+					BlockStats("Berlin", 2, 1, 0.5),
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2),
 					BlockStats("undefined", 2, 0)),
-				Option("Test comment")),
+				Option("Test comment; accuracy: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1),
-					BlockStats("Aud", 1, 1),
+					BlockStats("Vol", 1, 1, 1.0),
+					BlockStats("Aud", 1, 1, 1.0),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("Test comment"))))
+				Option("Test comment; accuracy: 1.0"))
+		))
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))

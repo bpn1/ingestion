@@ -1,5 +1,6 @@
 package de.hpi.ingestion.deduplication
 
+import java.util.UUID
 import com.datastax.driver.core.utils.UUIDs
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
@@ -22,18 +23,21 @@ object Blocking extends SparkJob {
 		ListBlockingScheme("geo_country_scheme", "geo_country"),
 		ListBlockingScheme("geo_coords_scheme", "geo_coords"),
 		SimpleBlockingScheme("simple_scheme"))
-
 	// $COVERAGE-OFF$
 	/**
-	  * Loads the Subjects and staged Subjects from the Cassandra.
+	  * Loads the Subjects, staged Subjects and the GoldStandard from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
-		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
-		(subjects ++ staging).toAnyRDD()
+		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
+		val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
+		val goldStandard = sc.cassandraTable[(UUID, UUID)](
+			settings("keyspaceGoldStandardTable"),
+			settings("goldStandardTable")
+		)
+		List(subjects,staging).toAnyRDD() ::: List(goldStandard).toAnyRDD()
 	}
 	/**
 	  * Saves the Blocking Evaluation to the Cassandra.
@@ -57,9 +61,21 @@ object Blocking extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val List(subjects, staging) = input.fromAnyRDD[Subject]()
+		val subjectInput = input.fromAnyRDD[Subject]()
+		val subjects = subjectInput.head
+		val staging = subjectInput(1)
+		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().last
 		val comment = args.headOption.getOrElse("Blocking")
-		val blockEvaluation = List(evaluationBlocking(subjects, staging, blockingSchemes, false, comment))
+		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
+		val filterUndefined = this.settings.getOrElse("filterUndefined", "false") == "true"
+		val blockEvaluation = List(evaluationBlocking(
+			subjects,
+			staging,
+			goldenBroadcast.value,
+			this.blockingSchemes,
+			filterUndefined,
+			comment
+		))
 		blockEvaluation.toAnyRDD()
 	}
 
@@ -134,28 +150,42 @@ object Blocking extends SparkJob {
 	def evaluationBlocking(
 		subjects: RDD[Subject],
 		stagingSubjects: RDD[Subject],
+		goldStandard: Set[(UUID, UUID)],
 		blockingSchemes: List[BlockingScheme],
 		filterUndefined: Boolean = true,
 		comment: String
 	): RDD[BlockEvaluation] = {
-		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, s => 1))
-		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, s => 1))
+		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, subject => subject.id))
+		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val jobid = UUIDs.timeBased()
+		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
+			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
+		}
+		val duplicates = blocks.map { case ((key, tag), (subjectList, stagingList)) =>
+			val cross = subjectList.cross(stagingList)
+			val duplicates = cross.filter(goldStandard)
+			val precision = if (cross.nonEmpty) duplicates.size.toDouble / cross.size.toDouble else 0.0
+			val blockStats = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
+			(duplicates, (tag, blockStats))
+		}
+		val accuracy = duplicates
+			.map { case (duplicates, (tag, block)) =>
+				(tag, duplicates)
+			}.distinct
+			.map { case (tag, duplicates) => (tag, duplicates.size) }
+			.reduceByKey(_ + _)
+			.collect
+			.toMap
+			.mapValues(_.toDouble / goldStandard.size.toDouble)
+			.map(identity)
 
-		subjectBlocks
-			.cogroup(stagingBlocks)
-			.filter { case ((key, tag), (subjectList, stagingList)) =>
-				val isUndefined = blockingSchemes
-					.find(_.tag == tag)
-					.map(_.undefinedValue)
-					.contains(key)
-				!(isUndefined && filterUndefined)
-			}.map { case ((key, tag), (subjectList, stagingList)) =>
-				val blockData = BlockStats(key, subjectList.sum, stagingList.sum)
-				(tag, Set(blockData))
-			}.reduceByKey(_ ++ _)
-			.map { case (tag, blockStatSet) =>
-				BlockEvaluation(jobid, tag, blockStatSet, Option(comment))
+		duplicates
+			.values
+			.reduceByKey(_ ++ _)
+			.map { case (tag, blockStats) =>
+				val tagAccuracy = accuracy.getOrElse(tag, 0.0)
+				val blockComment = Option(s"$comment; accuracy: $tagAccuracy")
+				BlockEvaluation(jobid, tag, blockStats, blockComment)
 			}
 	}
 }

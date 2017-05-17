@@ -9,4 +9,6 @@ package de.hpi.ingestion.deduplication.models
 case class BlockStats(
 	key: String,
 	numsubjects: Int,
-	numstaging: Int)
+	numstaging: Int,
+	precision: Double = 0.0
+)

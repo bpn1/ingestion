@@ -5,12 +5,15 @@
         <subjectTable>subject_dbpedia</subjectTable>
         <keyspaceStagingTable>evaluation</keyspaceStagingTable>
         <stagingTable>subject_wikidata</stagingTable>
+        <keyspaceGoldStandardTable>evaluation</keyspaceGoldStandardTable>
+        <goldStandardTable>goldstandard</goldStandardTable>
         <keyspaceDuplicatesTable>evaluation</keyspaceDuplicatesTable>
         <duplicatesTable>dbpedia_wikidata_deduplication_only_uuid</duplicatesTable>
         <keyspaceVersionTable>evaluation</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
         <statsTable>blockingstats</statsTable>
+        <filterUndefined>false</filterUndefined>
         <confidence>0.7</confidence>
     </settings>
     <simMeasurements>
