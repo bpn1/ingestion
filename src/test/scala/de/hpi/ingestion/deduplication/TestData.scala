@@ -1,15 +1,13 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.models.{Subject, Version}
+import de.hpi.ingestion.deduplication.models.{BlockEvaluation, FeatureEntry, PrecisionRecallDataTuple, ScoreConfig}
 import de.hpi.ingestion.deduplication.blockingschemes.ListBlockingScheme
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan, SimilarityMeasure}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
-import scala.collection.mutable
 
 // scalastyle:off line.size.limit
 // scalastyle:off number.of.methods
@@ -33,15 +31,13 @@ object TestData {
 		))
 	}
 
-	def precisionRecallResults(sc: SparkContext) : RDD[PrecisionRecallDataTuple] = {
-		sc.parallelize(
-			List(
-				PrecisionRecallDataTuple(0.0, 0.6666666666666666, 1, 0.8),
-				PrecisionRecallDataTuple(0.5, 0.5, 0.5, 0.5),
-				PrecisionRecallDataTuple(0.6, 0.6666666666666666, 0.5, 0.5714285714285715),
-				PrecisionRecallDataTuple(0.7, 1, 0.5, 0.6666666666666666),
-				PrecisionRecallDataTuple(0.8, 1, 0.25, 0.4)
-			)
+	def precisionRecallResults(sc: SparkContext) : List[PrecisionRecallDataTuple] = {
+		List(
+			PrecisionRecallDataTuple(0.0, 0.6666666666666666, 1, 0.8),
+			PrecisionRecallDataTuple(0.5, 0.5, 0.5, 0.5),
+			PrecisionRecallDataTuple(0.6, 0.6666666666666666, 0.5, 0.5714285714285715),
+			PrecisionRecallDataTuple(0.7, 1, 0.5, 0.6666666666666666),
+			PrecisionRecallDataTuple(0.8, 1, 0.25, 0.4)
 		)
 	}
 
@@ -152,10 +148,10 @@ object TestData {
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((subjects(1), stagingTable, 0.7117948717948718))),
+				List((subjects(1).id, stagingTable, 0.7117948717948718))),
 			DuplicateCandidates(
 				subjects(2).id,
-				List((subjects(3), stagingTable, 0.9446913580246914))))
+				List((subjects(3).id, stagingTable, 0.9446913580246914))))
 	}
 
 	def duplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
@@ -163,13 +159,13 @@ object TestData {
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((subjects(1), stagingTable, 0.7117948717948718), (subjects(4), stagingTable, 0.5761904761904763))),
+				List((subjects(1).id, stagingTable, 0.7117948717948718), (subjects(4).id, stagingTable, 0.5761904761904763))),
 			DuplicateCandidates(
 				subjects(1).id,
-				List((subjects(4), stagingTable, 0.5654212454212454))),
+				List((subjects(4).id, stagingTable, 0.5654212454212454))),
 			DuplicateCandidates(
 				subjects(2).id,
-				List((subjects(3), stagingTable, 0.9446913580246914))))
+				List((subjects(3).id, stagingTable, 0.9446913580246914))))
 	}
 
 	def testConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
@@ -177,6 +173,10 @@ object TestData {
 			key -> List(
 				ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
 				ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)))
+	}
+
+	def simpleTestConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		Map(key -> List(ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8)))
 	}
 
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
@@ -189,7 +189,7 @@ object TestData {
 	}
 
 	def expectedCompareStrategies: List[(List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) => Double] = List(
-		CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
+			CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
 	)
 
 	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = {
@@ -359,7 +359,24 @@ object TestData {
 		List("undefined"),
 		List("undefined")
 	)
+	def geoCoordsBlockingScheme: List[List[String]] = List(List("52,11"), List("undefined"), List("52,13"), List("53,14"))
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
+
+	def features(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
+		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1))),
+		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3))),
+		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5)))
+	))
+
+	def goldStandard(sc: SparkContext): RDD[(UUID, UUID)] = sc.parallelize(List(
+		(idList.head, idList(1)), (idList(2), idList(3)), (idList(5), idList(6))
+	))
+
+	def labeledFeatures(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
+		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1)), correct = true),
+		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3)), correct = true),
+		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5)))
+	))
 
 	def requiredSettings: List[String] = {
 		List("keyspaceSubjectTable", "subjectTable", "keyspaceStagingTable", "stagingTable", "keyspaceStatsTable", "statsTable")

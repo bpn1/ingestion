@@ -1,54 +1,66 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, PrecisionRecallDataTuple, SimilarityMeasureStats}
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.{Configurable, SparkJob}
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import scala.xml.Node
 
-object SimilarityMeasureEvaluation extends SparkJob {
+object SimilarityMeasureEvaluation extends SparkJob with Configurable {
 	appName = "SimilarityMeasureEvaluation"
-	val numberOfBuckets = 10
-	val keyspace = "evaluation"
-	val inputTest = "goldstandard"
-	val inputTraining = "dbpedia_wikidata_deduplication"
-	val output = "sim_measure_stats"
+	configFile = "similarity_measure_evaluation.xml"
 
 	// $COVERAGE-OFF$
-	/**
-	  * Loads training and test data from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val training = sc.cassandraTable[DuplicateCandidates](this.keyspace, this.inputTraining)
-		val test = sc.cassandraTable[(UUID, UUID)](this.keyspace, this.inputTest)
+		val training = sc.cassandraTable[DuplicateCandidates](
+			settings("keyspaceTrainingTable"),
+			settings("trainingTable"))
+		val test = sc.cassandraTable[(UUID, UUID)](settings("keyspaceTestTable"), settings("testTable"))
 		List(training).toAnyRDD() ++ List(test).toAnyRDD()
 	}
 
-	/**
-	  * Saves the Similarity Measure Stats to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
 			.fromAnyRDD[SimilarityMeasureStats]()
 			.head
-			.saveToCassandra(this.keyspace, this.output)
+			.saveToCassandra(settings("keyspaceSimMeasureStatsTable"), settings("simMeasureStatsTable"))
 	}
 	// $COVERAGE-ON$
 
+	override def assertConditions(args: Array[String]): Boolean = {
+		parseConfig()
+		super.assertConditions(args)
+	}
+
+	/**
+	  * Calculates precision, recall and f1 score using the training and test data.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		val training = input.head.asInstanceOf[RDD[DuplicateCandidates]]
+			.flatMap { case DuplicateCandidates(subject_id, candidates) =>
+				candidates.map(candidate => ((subject_id, candidate._1), candidate._3))
+			}.distinct
+
+		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]].map(pair => (pair, 1.0))
+		val predictionAndLabels = generatePredictionAndLabels(training, test)
+		val data = generateStats(predictionAndLabels)
+		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
+
+		List(sc.parallelize(Seq(stats))).toAnyRDD()
+	}
+
 	/**
 	  * Generate (prediction, label) tuples for evaluation
-	  * @param training Precictions from the training data
-	  * @param test		Labels from the testdata
+	  * @param training	Predictions from the training data
+	  * @param test		Labels from the test data
 	  * @return			RDD containing (prediction, label) tuples
 	  */
 	def generatePredictionAndLabels(
@@ -69,9 +81,14 @@ object SimilarityMeasureEvaluation extends SparkJob {
 			.values
 	}
 
-
-	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : RDD[PrecisionRecallDataTuple] = {
-		val metrics = new BinaryClassificationMetrics(predictionAndLabels, this.numberOfBuckets)
+	/**
+	  * Generates Precision, Recall and FScore
+	  * @param predictionAndLabels Data to be generated from
+	  * @return List of PrecisionRecallDataTuples
+	  */
+	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : List[PrecisionRecallDataTuple] = {
+		val buckets = settings("buckets").toInt
+		val metrics = new BinaryClassificationMetrics(predictionAndLabels, buckets)
 
 		val precision = metrics.precisionByThreshold
 		val recall = metrics.recallByThreshold
@@ -82,27 +99,6 @@ object SimilarityMeasureEvaluation extends SparkJob {
 			.join(f1Score)
 			.map { case (threshold, ((precision, recall), f1Score)) =>
 				PrecisionRecallDataTuple(threshold, precision, recall, f1Score)
-			}.sortBy(_.threshold)
-	}
-
-	/**
-	  * Calculates precision, recall and f1 score using the training and test data.
-	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val training = input.head.asInstanceOf[RDD[DuplicateCandidates]]
-			.flatMap { case DuplicateCandidates(subject_id, candidates) =>
-				candidates.map(candidate => ((subject_id, candidate._1.id), candidate._3))
-			}.distinct
-
-		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]].map(pair => (pair, 1.0))
-		val predictionAndLabels = generatePredictionAndLabels(training, test)
-		val data = generateStats(predictionAndLabels)
-		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
-
-		List(sc.parallelize(Seq(stats))).toAnyRDD()
+			}.sortBy(_.threshold).collect.toList
 	}
 }

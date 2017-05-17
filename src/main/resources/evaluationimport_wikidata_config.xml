@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<config>
-    <sourceSettings>
-        <outputKeyspace>evaluation</outputKeyspace>
-        <outputTable>subject_wikidata</outputTable>
-        <versionTable>version</versionTable>
-    </sourceSettings>
-</config>

@@ -6,6 +6,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 /**
   * Calculates term frequency per article and link.
@@ -76,7 +77,7 @@ object TermFrequencyCounter extends SparkJob {
 	}
 
 	/**
-	  * Extracts context of the links of a given Wikipedia entry. The contexts are {@contextSize } tokens in front of
+	  * Extracts context of the links of a given Wikipedia entry. The contexts are {@contextSize} tokens in front of
 	  * and behind the location of the links alias in the tokenized text.
 	  *
 	  * @param entry Wikipedia entry containing the used links

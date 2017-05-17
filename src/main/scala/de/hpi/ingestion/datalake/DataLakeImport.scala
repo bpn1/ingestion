@@ -1,124 +1,69 @@
 package de.hpi.ingestion.datalake
 
-import org.apache.spark.SparkContext
-import com.datastax.spark.connector._
 import java.net.URL
-
-import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
-import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
-
-import scala.io.Source
-import scala.xml.XML
+import scala.collection.mutable
 
 /**
-  * An abstract DataLakeImport to import new sources to the staging table.
-  *
-  * @constructor Create a new DataLakeImport with an appName, dataSources, an inputKeyspace
-  *              and an inputTable.
-  * @param dataSources       list of the sources where the new data is fetched from
-  * @param configFile        name of config file in resource folder
-  * @param normalizationFile name of normalization file in resource folder
-  * @param inputKeyspace     the name of the keyspace where the new data is saved in the database
-  * @param inputTable        the name of the table where the new data is saved in the database
-  * @tparam T the type of Objects of the new data
+  * Trait for imports into the Datalake
+  * @tparam T
   */
-abstract case class DataLakeImport[T <: DLImportEntity](
-	dataSources: List[String],
-	configFile: Option[String],
-	normalizationFile: String,
-	inputKeyspace: String,
-	inputTable: String
-) extends DLImport[T] with SparkJob {
+trait DataLakeImport[T <: DLImportEntity] extends Serializable {
+	val settings = mutable.Map[String, String]()
+	val outputKeyspace = "datalake"
+	val outputTable = "subject_temp"
+	val versionTable = "version"
 
-	override protected def filterEntities(entity: T): Boolean = true
+	/**
+	  * Filters non companies.
+	  *
+	  * @param entity the entity to be filtered
+	  * @return Boolean if the entity matches the filter
+	  */
+	protected def filterEntities(entity: T): Boolean
 
-	protected def parseConfig(url: URL): Unit = {
-		val xml = XML.loadString(Source
-			.fromURL(url)
-			.getLines()
-			.mkString("\n")
-		)
+	/**
+	  * Translates an entity of the datasource into a Subject, which is the schema of the staging table.
+	  *
+	  * @param entity  the object to be converted to a Subject
+	  * @param version the version of the new Subject
+	  * @param mapping Map of the attribute renaming schema for the attribute normalization
+	  * @return a new Subject created from the given object
+	  */
+	protected def translateToSubject(entity: T, version: Version, mapping: Map[String, List[String]]): Subject
 
-		val configSettings = xml \\ "config" \ "sourceSettings"
-		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
-			settings(node.label) = node.text
-	}
+	/**
+	  * Parses the normalization config file into a Map.
+	  *
+	  * @param url the path to the config file
+	  * @return a Map containing the normalized attributes mapped to the new subject attributes
+	  */
+	protected def parseNormalizationConfig(url: URL): Map[String, List[String]]
 
-	protected def parseConfig(path: String): Unit = {
-		val url = getClass.getResource(s"/$path")
-		this.parseConfig(url)
-	}
+	/**
+	  * Parses the normalization config file into a Map.
+	  *
+	  * @param path the path to the config file
+	  * @return a Map containing the normalized attributes mapped to the new subject attributes
+	  */
+	protected def parseNormalizationConfig(path: String): Map[String, List[String]]
 
-	protected def parseNormalizationConfig(url: URL): Map[String, List[String]] = {
-		val xml = XML.loadString(Source
-			.fromURL(url)
-			.getLines()
-			.mkString("\n"))
-
-		(xml \\ "normalization" \ "attributeMapping" \ "attribute")
-			.toList
-			.map { attribute =>
-				val key = (attribute \ "key").text
-				val values = (attribute \ "mapping")
-					.toList
-					.map(_.text)
-				(key, values)
-			}.toMap
-	}
-
-	protected def parseNormalizationConfig(path: String): Map[String, List[String]] = {
-		val url = getClass.getResource(s"/$path")
-		this.parseNormalizationConfig(url)
-	}
-
+	/**
+	  * Normalizes a given entity into a map.
+	  *
+	  * @param entity the object to be normalized
+	  * @return a Map containing the normalized information of the entity
+	  */
 	protected def normalizeProperties(
 		entity: T,
 		mapping: Map[String, List[String]]
-	): Map[String, List[String]] = {
-		mapping
-			.mapValues(_.map(value => entity.get(value)).reduce(_ ::: _).distinct)
-			.filter { case (key, values) => values.nonEmpty }
-	}
+	): Map[String, List[String]]
 
 	/**
-	  * Filters the input entities and then transforms them to Subjects.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
+	  * Normalizes a given attribute
+	  * @param attribute attribute name
+	  * @param values attribute values
+	  * @return normalized attribute values
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val path = args.headOption
-		val configPath = path.orElse(this.configFile).getOrElse("datalakeimport_config.xml")
-		this.parseConfig(configPath)
-		val version = Version(appName, dataSources, sc)
-		val mapping = parseNormalizationConfig(this.normalizationFile)
-		input
-			.fromAnyRDD[T]()
-			.map(rdd =>
-				rdd
-					.filter(filterEntities)
-					.map(translateToSubject(_, version, mapping)))
-			.toAnyRDD()
-	}
-
-	// $COVERAGE-OFF$
-	/**
-	  * Writes the Subjects to the {@outputTable } table in keyspace {@outputKeyspace }.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Subject]()
-			.head
-			.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
-	}
-
-	// $COVERAGE-ON$
+	protected def normalizeAttribute(attribute: String, values: List[String]): List[String]
 }

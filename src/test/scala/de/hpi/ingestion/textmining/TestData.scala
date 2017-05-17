@@ -1,13 +1,14 @@
 package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+
 import scala.collection.JavaConversions._
-import org.jsoup.nodes.Element
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.jsoup.Jsoup
@@ -58,6 +59,15 @@ object TestData {
 		)
 	}
 
+	def filteredUncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence", "."),
+			List("Streitberg", "Ortsteilen", "Gemeinde", "Brachttal", ",", "Main-Kinzig-Kreis", "Hessen", "."),
+			List(":", "Audi", ",", "Brachttal", ",", "historisches", "Jahr", ".", ":", "Hessen", ",", "Main-Kinzig-Kreis", ",", "Büdinger", "Wald", ",", "Backfisch", "nochmal", "Hessen", "."),
+			List("Satz", "enthält", "Klammern", "-LRB-", "evtl", ".", "problematisch", "-RRB-", ".")
+		)
+	}
+
 	def stemmedTokenizedSentences(): List[List[String]] = {
 		List(
 			List("thi", "is", "a", "test", "sentenc"),
@@ -76,12 +86,30 @@ object TestData {
 		)
 	}
 
+	def stemmedAndFilteredUncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("thi", "is", "a", "test", "sentenc", "."),
+			List("streitberg", "ortsteil", "gemei", "brachttal", ",", "main-kinzig-kreis", "hess", "."),
+			List(":", "audi", ",", "brachttal", ",", "historisch", "jahr", ".", ":", "hess", ",", "main-kinzig-kreis", ",", "buding", "wald", ",", "backfisch", "nochmal", "hess", "."),
+			List("satx", "enthal", "klamm", "-lrb-", "evtl", ".", "problematisch", "-rrb-", ".")
+		)
+	}
+
 	def reversedSentences(): List[String] = {
 		List(
 			"This is a test sentence",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
 			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
 			"Dieser Satz enthält Klammern -LRB- evtl problematisch -RRB-"
+		)
+	}
+
+	def cleanedReversedSentences(): List[String] = {
+		List(
+			"This is a test sentence",
+			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal Main-Kinzig-Kreis in Hessen",
+			"Links Audi Brachttal historisches Jahr Keine Links Hessen Main-Kinzig-Kreis Büdinger Wald Backfisch und nochmal Hessen",
+			"Dieser Satz enthält Klammern evtl problematisch"
 		)
 	}
 
@@ -760,6 +788,14 @@ object TestData {
 		)
 	}
 
+	def rawEntryWithAlternativeWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("""Der '''Fehler 2.&nbsp;Art''', auch als '''β-Fehler''' (Beta-Fehler)"""))
+	}
+
+	def rawEntryWithStandardWhitespace(): WikipediaEntry = {
+		WikipediaEntry("Fehler 2. Art", Option("""Der '''Fehler 2. Art''', auch als '''β-Fehler''' (Beta-Fehler)"""))
+	}
+
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
@@ -1061,6 +1097,28 @@ object TestData {
 			))
 	}
 
+	def parsedEntriesWithLessText(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Schwarzer Humor",
+				Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod.""")),
+			ParsedWikipediaEntry(
+				"Schwarzer Humor",
+				Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod."""),
+				extendedlinks = List(Link("Hickelkasten", "Hickelkasten", Option(0)))),
+			ParsedWikipediaEntry(
+				"Schwarzer Humor",
+				Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod."""),
+				textlinks = List(Link("Hickelkasten", "Hickelkasten", Option(0)))))
+	}
+
+	def foundTrieAliases(): List[List[TrieAlias]] = {
+		List(
+			List(TrieAlias("Hickelkasten", Option(0), Map("``" -> 1, "." -> 1, "barcelona" -> 1, "tod" -> 1, "," -> 1, "„" -> 1, "sprung" -> 2, "spanie" -> 1, "himmel" -> 1, ":" -> 1))),
+			Nil,
+			Nil)
+	}
+
 	def parsedEntryFoundAliases(): Set[String] = {
 		Set(
 			"Hickelkasten",
@@ -1090,7 +1148,7 @@ object TestData {
 			"Slaughterhouse Five",
 			"Thomas Pynchon",
 			"V.",
-			"Gravity 's Rainbow",
+			"Gravity’s Rainbow",
 			"Stanley Kubrick",
 			"Dr. Strangelove",
 			"Absurden Theater",
@@ -1108,7 +1166,7 @@ object TestData {
 			"zynischer",
 			"Satire",
 			"Robert Altmans",
-			"M * A * S * H",
+			"M*A*S*H",
 			"Mike Nichols",
 			"Catch-22",
 			"Joseph Heller",
@@ -1658,6 +1716,7 @@ object TestData {
 			)
 		)
   }
+
   def featureEntries(): List[FeatureEntry] = {
 		List(
 			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),

@@ -2,7 +2,8 @@ package de.hpi.ingestion.textmining
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.{ParsedWikipediaEntry, Sentence}
+import de.hpi.ingestion.textmining.models.Sentence
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.scalatest.{FlatSpec, Matchers}
 
 class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {

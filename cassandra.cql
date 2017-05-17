@@ -29,7 +29,8 @@ CREATE TABLE wikidumps.parsedwikipedia (
     listlinks list<frozen<link>>,
     templatelinks list<frozen<link>>,
     text text,
-    textlinks list<frozen<link>>
+    textlinks list<frozen<link>>,
+    triealiases frozen<list<frozen<triealias>>>
 );
 
 CREATE TABLE wikidumps.wikipedia (
@@ -75,6 +76,12 @@ CREATE TABLE wikidumps.featureentries (
 	prob_entity double,
 	cosine_sim double,
 	correct boolean
+);
+
+CREATE TYPE wikidumps.triealias (
+	alias text,
+	offset int,
+	context map<text, int>
 );
 
 -- Wikidumps.Wikidata
@@ -128,6 +135,34 @@ CREATE TYPE datalake.subject (
 );
 
 CREATE TABLE datalake.subject (
+    id uuid PRIMARY KEY,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+CREATE TABLE datalake.subject_dbpedia (
+    id uuid PRIMARY KEY,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+CREATE TABLE datalake.subject_wikidata (
     id uuid PRIMARY KEY,
     aliases list<text>,
     aliases_history list<frozen<version>>,
@@ -278,4 +313,17 @@ CREATE TABLE evaluation.version (
 CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<subject, text, double>>>
+);
+
+CREATE TABLE evaluation.dbpedia_wikidata_deduplication_only_uuid (
+    subject_id uuid PRIMARY KEY,
+    candidates list<frozen<tuple<uuid, text, double>>>
+);
+
+CREATE TABLE evaluation.featureentries (
+	id uuid PRIMARY KEY,
+	subject frozen<subject>,
+	staging frozen<subject>,
+	score map<text, frozen<list<double>>>,
+	correct boolean
 );

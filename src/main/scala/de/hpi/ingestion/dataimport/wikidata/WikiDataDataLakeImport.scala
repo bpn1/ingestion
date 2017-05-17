@@ -2,7 +2,7 @@ package de.hpi.ingestion.dataimport.wikidata
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
-import de.hpi.ingestion.datalake.{DataLakeImport, SubjectManager}
+import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
@@ -11,9 +11,9 @@ import org.apache.spark.rdd.RDD
 /**
   * This job translates Wikidata entities into Subjects and writes them into a staging table.
   */
-object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
+object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntity](
 	List("wikidata_20161117"),
-	Option("datalakeimport_config.xml"),
+	Option("datalakeimport_wikidata_config.xml"),
 	"normalization_wikidata.xml",
 	"wikidumps",
 	"wikidata"
@@ -29,6 +29,10 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 
 	override def filterEntities(entity: WikiDataEntity): Boolean = {
 		entity.instancetype.isDefined
+	}
+
+	override def normalizeAttribute(attribute: String, values: List[String]): List[String] = {
+		WikiDataNormalizationStrategy(attribute)(values)
 	}
 
 	override def translateToSubject(

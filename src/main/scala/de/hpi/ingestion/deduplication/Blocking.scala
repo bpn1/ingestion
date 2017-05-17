@@ -5,23 +5,19 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.{Configurable, SparkJob}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import scala.io.Source
-import scala.xml.{Node, XML}
-
 /**
   * Blocks two groups of Subjects with multiple Blocking Schemes and evaluates the resulting blocks by counting their
   * sizes and writing the results to the Cassandra.
   */
-object Blocking extends SparkJob {
+object Blocking extends SparkJob with Configurable {
 	appName = "Blocking"
-	val configFile: Option[String] = None
-	var settings = Map[String, String]()
+	configFile = "deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
 		ListBlockingScheme("geo_country_scheme", "geo_country"),
 		ListBlockingScheme("geo_coords_scheme", "geo_coords"),
@@ -39,7 +35,6 @@ object Blocking extends SparkJob {
 		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
 		(subjects ++ staging).toAnyRDD()
 	}
-
 	/**
 	  * Saves the Blocking Evaluation to the Cassandra.
 	  * @param output List of RDDs containing the output of the job
@@ -52,8 +47,6 @@ object Blocking extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 	}
-	// $COVERAGE-ON$
-
 	/**
 	  * Parses the config before asserting the Conditions of the super class.
 	  * @param args arguments of the program
@@ -63,6 +56,7 @@ object Blocking extends SparkJob {
 		parseConfig()
 		super.assertConditions(args)
 	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Blocks the input Subjects and counts the block sizes.
@@ -90,24 +84,6 @@ object Blocking extends SparkJob {
 	  */
 	def setBlockingSchemes(schemes: List[BlockingScheme]): Unit = {
 		blockingSchemes = if(schemes.nonEmpty) schemes else List(new SimpleBlockingScheme)
-	}
-
-	/**
-	  * Reads the configuration from an xml file.
-	  * @return a list containing scoreConfig entities parsed from the xml file
-	  */
-	def parseConfig(): Unit = {
-		val path = this.configFile.getOrElse("config.xml")
-		val xml = XML.loadString(Source
-			.fromURL(getClass.getResource(s"/$path"))
-			.getLines()
-			.mkString("\n"))
-
-		val configSettings = xml \\ "config" \ "sourceSettings"
-		settings = configSettings.head.child
-			.collect {
-				case node: Node if node.text.trim.nonEmpty => (node.label, node.text)
-			}.toMap
 	}
 
 	/**
