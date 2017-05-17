@@ -13,6 +13,7 @@
         <versionTable>version</versionTable>
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
         <statsTable>blockingstats</statsTable>
+        <filterUndefined>false</filterUndefined>
         <confidence>0.7</confidence>
     </settings>
     <simMeasurements>

@@ -23,8 +23,6 @@ object Blocking extends SparkJob {
 		ListBlockingScheme("geo_country_scheme", "geo_country"),
 		ListBlockingScheme("geo_coords_scheme", "geo_coords"),
 		SimpleBlockingScheme("simple_scheme"))
-	val filterUndefined = false
-
 	// $COVERAGE-OFF$
 	/**
 	  * Loads the Subjects, staged Subjects and the GoldStandard from the Cassandra.
@@ -69,12 +67,13 @@ object Blocking extends SparkJob {
 		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().last
 		val comment = args.headOption.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
+		val filterUndefined = this.settings.getOrElse("filterUndefined", "false") == "true"
 		val blockEvaluation = List(evaluationBlocking(
 			subjects,
 			staging,
 			goldenBroadcast.value,
 			this.blockingSchemes,
-			this.filterUndefined,
+			filterUndefined,
 			comment
 		))
 		blockEvaluation.toAnyRDD()
