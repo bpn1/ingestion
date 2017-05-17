@@ -1,6 +1,5 @@
 package de.hpi.ingestion.datalake.mock
 
-import de.hpi.ingestion.dataimport.NormalizationStrategy
 import de.hpi.ingestion.datalake.DataLakeImportImplementation
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
