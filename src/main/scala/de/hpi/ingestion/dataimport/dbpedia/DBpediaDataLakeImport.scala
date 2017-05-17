@@ -14,12 +14,12 @@ import scala.collection.mutable
   */
 object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity](
 	List("dbpedia"),
-	Option("datalakeimport_config.xml"),
 	"normalization_dbpedia.xml",
 	"wikidumps",
 	"dbpedia"
 ){
 	appName = s"DataLakeImportDBpedia_v1.0_${System.currentTimeMillis()}"
+	configFile = "datalakeimport_config.xml"
 
 	// $COVERAGE-OFF$
 	/**

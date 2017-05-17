@@ -38,4 +38,14 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 		conf.get("option1") shouldEqual testOptions("option1")
 		conf.get("option2") shouldEqual testOptions("option2")
 	}
+
+	"Config" should "be read before run is executed" in {
+		val sparkJob = new MockSparkJob
+		sparkJob.settings shouldBe empty
+		sparkJob.assertConditions(Array[String]())
+		sparkJob.settings shouldBe empty
+		sparkJob.configFile = "test.xml"
+		sparkJob.parseConfig()
+		sparkJob.settings should not be empty
+	}
 }

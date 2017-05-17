@@ -13,12 +13,12 @@ import org.apache.spark.rdd.RDD
   */
 object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntity](
 	List("wikidata_20161117"),
-	Option("datalakeimport_config.xml"),
 	"normalization_wikidata.xml",
 	"wikidumps",
 	"wikidata"
 ){
 	appName = s"WikiDataDataLakeImport_v1.0_${System.currentTimeMillis()}"
+	configFile = "datalakeimport_config.xml"
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
