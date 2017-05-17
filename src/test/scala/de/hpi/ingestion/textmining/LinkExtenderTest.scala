@@ -19,7 +19,7 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 		val pages = TestData.linkExtenderPagesMap()
 		val entry = TestData.linkExtenderParsedEntry()
 		val allPages = LinkExtender.findAllPages(entry, pages)
-		allPages shouldBe TestData.linkExtenderFoundPages()
+		allPages shouldEqual TestData.linkExtenderFoundPages()
 	}
 
 
@@ -27,11 +27,10 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 		val tokenizer = IngestionTokenizer(false, false)
 		val pages = TestData.linkExtenderFoundPages()
 		val aliases = LinkExtender.reversePages(pages, tokenizer)
-
-		aliases shouldBe TestData.linkExtenderFoundAliases()
+		aliases shouldEqual TestData.linkExtenderFoundAliases()
 	}
 
-	"Trie" should "include exactly these" in {
+	"Trie" should "include exactly these tokens" in {
 		val tokenizer = IngestionTokenizer(false, false)
 		val aliases = TestData.linkExtenderFoundAliases()
 		val trie = LinkExtender.buildTrieFromAliases(aliases, tokenizer)
@@ -58,14 +57,12 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 		val aliases = TestData.linkExtenderFoundAliases()
 		val tokenizer = IngestionTokenizer(false, false)
 		val trie = TestData.linkExtenderTrie(tokenizer)
-
 		val parsedEntry = LinkExtender.findAliasOccurrences(
 			entry,
 			aliases,
 			trie,
 			tokenizer
 		)
-
 		parsedEntry.extendedlinks shouldEqual TestData.linkExtenderExtendedParsedEntry().head.extendedlinks
 	}
 

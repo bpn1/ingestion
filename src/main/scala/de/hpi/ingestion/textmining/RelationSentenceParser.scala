@@ -9,7 +9,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.AliasTrieSearch.appName
 
 /**
-  * Parses all Sentences with entities from Wikipedia
+  * Parses all Sentences with entities from Wikipedia.
   */
 object RelationSentenceParser extends SparkJob {
 	appName = "Relation Sentence Parser"
@@ -48,7 +48,7 @@ object RelationSentenceParser extends SparkJob {
 
 	/**
 	  * Parses all Sentences from a parsed Wikipedia etry with at least 2 entities
-	  * and recalculating relative offsets of entities
+	  * and recalculating relative offsets of entities.
 	  *
 	  * @param entry     Parsed Wikipedia Entry to be processed into sentences
 	  * @param tokenizer tokenizer to be used
@@ -56,16 +56,16 @@ object RelationSentenceParser extends SparkJob {
 	  */
 	def entryToSentencesWithEntities(
 		entry: ParsedWikipediaEntry,
-		tokenizer: CoreNLPSentenceTokenizer
+		tokenizer: IngestionTokenizer
 	): List[Sentence] = {
 		val text = entry.getText()
-		val sentences = tokenizer.tokenize(text)
+		val sentences = tokenizer.process(text)
 		val links = entry.allLinks().filter(_.offset.getOrElse(-1) >= 0).distinct
 		var offset = 0
 		sentences.map { sentence =>
 			offset = text.indexOf(sentence, offset)
 			val sentenceEntities = links.filter { link =>
-				link.offset.get >= offset && link.offset.get < (offset + sentence.length)
+				link.offset.exists(_ >= offset) && link.offset.exists(_ < offset + sentence.length)
 			}
 				.map(link => EntityLink(link.alias, link.page, link.offset.map(_ - offset)))
 			offset += sentence.length
@@ -74,7 +74,7 @@ object RelationSentenceParser extends SparkJob {
 	}
 
 	/**
-	  * Parses all Sentences with at least 2 entities from every Wikipedia article and puts them into an RDD
+	  * Parses all Sentences with at least 2 entities from every Wikipedia article and puts them into an RDD.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
@@ -83,7 +83,7 @@ object RelationSentenceParser extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val tokenizer = new CoreNLPSentenceTokenizer()
+		val tokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
 		val sentences = articles.flatMap(entry => entryToSentencesWithEntities(entry, tokenizer))
 		List(sentences).toAnyRDD()
 	}

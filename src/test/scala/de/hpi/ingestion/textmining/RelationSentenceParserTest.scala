@@ -8,16 +8,14 @@ import org.scalatest.{FlatSpec, Matchers}
 class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"Wikipedia text" should "be split into exactly these Sentences with these entities" in {
 		val parsedEntry = TestData.bigLinkExtenderParsedEntry()
-		val tokenizer = new CoreNLPSentenceTokenizer
+		val tokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
 		val sentences = RelationSentenceParser.entryToSentencesWithEntities(parsedEntry, tokenizer)
-		sentences shouldBe TestData.sentenceList()
+		sentences shouldEqual TestData.sentenceList()
 	}
 
 	"Wikipedia articles" should "be split into exactly these Sentences with these entities" in {
 		val entries = sc.parallelize(
-
 			(Set(TestData.bigLinkExtenderParsedEntry()) ++ TestData.linkExtenderExtendedParsedEntry()).toList
-
 		)
 		val input = List(entries).toAnyRDD()
 		val sentences = RelationSentenceParser.run(input, sc)
@@ -25,6 +23,6 @@ class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with M
 			.head
 			.collect
 			.toList
-		sentences shouldEqual TestData.sentenceList() ++ TestData.moreSentences()
+		sentences shouldEqual TestData.sentenceList() ++ TestData.alternativeSentenceList()
 	}
 }

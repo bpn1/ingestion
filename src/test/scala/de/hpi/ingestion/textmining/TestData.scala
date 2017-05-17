@@ -1569,7 +1569,7 @@ object TestData {
 		)
 	}
 
-	def moreSentences(): List[Sentence] = {
+	def alternativeSentenceList(): List[Sentence] = {
 		List(
 			Sentence("Audi",0,"Audi ist Audi AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Audi AG","Audi",Some(9)))),
 			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))

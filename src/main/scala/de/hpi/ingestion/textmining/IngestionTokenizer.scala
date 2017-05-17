@@ -123,6 +123,7 @@ object IngestionTokenizer {
 				case "WhitespaceTokenizer" => new WhitespaceTokenizer
 				case "CleanWhitespaceTokenizer" => new CleanWhitespaceTokenizer
 				case "CleanCoreNLPTokenizer" => new CleanCoreNLPTokenizer
+				case "SentenceTokenizer" => new CoreNLPSentenceTokenizer
 				case "CoreNLPTokenizer" | _ => new CoreNLPTokenizer
 			}
 		}
