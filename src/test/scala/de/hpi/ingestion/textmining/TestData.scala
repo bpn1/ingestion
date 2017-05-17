@@ -1938,14 +1938,17 @@ object TestData {
 		new RandomForestModel(Algo.Classification, Array(dtmodel))
 	}
 
-	def linkCandidates(): List[Set[LinkCandidate]] = {
-		List(
-			Set(LinkCandidate(OffsetToken("Audi", 9, 13), "Audi")),
-			Set(LinkCandidate(OffsetToken("Audi", 9, 13), "Audi")),
-			Set(),
-			Set(LinkCandidate(OffsetToken("Audi", 7, 11), "Audi"))
-		)
-	}
+//	def linkCandidates(): List[Set[LinkCandidate]] = {
+//		List(
+//			Set(LinkCandidate(OffsetToken("Audi", 9, 13), "Audi")),
+//			Set(LinkCandidate(OffsetToken("Audi", 9, 13), "Audi")),
+//			Set(
+//				LinkCandidate(OffsetToken("Streitberg", 0, 10), "Streitberg (Brachttal)"),
+//				LinkCandidate(OffsetToken("Streitberg", 0, 10), "Streitberg (Wiesenttal)")
+//			),
+//			Set(LinkCandidate(OffsetToken("Audi", 7, 11), "Audi"))
+//		)
+//	}
 }
 
 // scalastyle:on method.length
