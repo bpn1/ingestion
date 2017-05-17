@@ -27,7 +27,7 @@ object LinkExtender extends SparkJob {
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * @return List of RDDs containing the data processed in the job
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
@@ -51,11 +51,12 @@ object LinkExtender extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Filters all Pages for the Links and title of an Wikipedia article.
+	  * Gets all Pages for the Links and title of an Wikipedia article.
+	  * Using get+map instead of filter for performance of O(n) instead of O(n*n).
 	  *
 	  * @param article Wikipedia article to be used
-	  * @param pages   raw Pages map
-	  * @return filtered Pages map
+	  * @param pages   raw Map of Pages to Aliases Map(page -> Map(Alias -> Alias Count))
+	  * @return filtered Map of Pages appearing in the article to aliases Map(page -> Map(Alias -> Alias Count))
 	  */
 	def findAllPages(
 		article: ParsedWikipediaEntry,
@@ -76,7 +77,7 @@ object LinkExtender extends SparkJob {
 	/**
 	  * Builds trie from given Aliases.
 	  *
-	  * @param aliases   Aliases to be used
+	  * @param aliases   Map of Alias to Page to be used Map(alias -> page)
 	  * @param tokenizer tokenizer to be uses to process Aliases
 	  * @return built trie
 	  */
@@ -128,8 +129,8 @@ object LinkExtender extends SparkJob {
 	/**
 	  * Reverts map of Page to Aliases to a map of Alias to Page.
 	  *
-	  * @param pages Map of Page to Aliases
-	  * @return Map of Alias to Page
+	  * @param pages Map of Page pointing to Aliases Map(page -> Map(Alias -> Alias Count))
+	  * @return Map of Alias to Page Map(alias -> page)
 	  */
 	def reversePages(
 		pages: Map[String, Map[String, Int]],
