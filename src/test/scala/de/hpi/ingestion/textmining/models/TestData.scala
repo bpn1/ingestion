@@ -4,14 +4,22 @@ import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 
 object TestData {
+	def protoFeatureEntries(): List[(ProtoFeatureEntry, String, Double)] = {
+		List(
+			(ProtoFeatureEntry("a", Link("a", "b"), Map(), 0.1, 0.2), "b", 0.8),
+			(ProtoFeatureEntry("c", Link("c", "a"), Map(), 0.4, 0.0), "d", 0.7),
+			(ProtoFeatureEntry("e", Link("e", "f"), Map(), 0.7, 1.0), "f", 0.1),
+			(ProtoFeatureEntry("g", Link("g", "a"), Map(), 0.8, 0.2), "h", 0.3),
+			(ProtoFeatureEntry("i", Link("i", "a"), Map(), 0.9, 0.4), "j", 0.7))
+	}
 
 	def featureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("a", Option("b"), 0.1, 0.2, 0.8, true),
-			FeatureEntry("c", Option("d"), 0.4, 0.0, 0.7, false),
-			FeatureEntry("e", Option("f"), 0.7, 1.0, 0.1, true),
-			FeatureEntry("g", Option("h"), 0.8, 0.2, 0.3, false),
-			FeatureEntry("i", Option("j"), 0.9, 0.4, 0.7, false))
+			FeatureEntry("a", Option("b"), 0.1, 0.2, 0.8, true, null),
+			FeatureEntry("c", Option("d"), 0.4, 0.0, 0.7, false, null),
+			FeatureEntry("e", Option("f"), 0.7, 1.0, 0.1, true, null),
+			FeatureEntry("g", Option("h"), 0.8, 0.2, 0.3, false, null),
+			FeatureEntry("i", Option("j"), 0.9, 0.4, 0.7, false, null))
 	}
 
 	def labeledPoints(): List[LabeledPoint] = {

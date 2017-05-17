@@ -12,6 +12,12 @@ CREATE TYPE wikidumps.link (
     context map<text, int>
 );
 
+CREATE TYPE wikidumps.entitylink (
+    alias text,
+    entity text,
+    offset int
+);
+
 CREATE TABLE wikidumps.parsedwikipedia (
     title text PRIMARY KEY,
     categorylinks frozen<list<frozen<link>>>,
@@ -69,14 +75,35 @@ CREATE TABLE wikidumps.wikipediatfidf (
     tokens map<text, double>
 );
 
+CREATE TABLE wikidumps.wikipediasentences (
+   articletitle text,
+   articleoffset int,
+   text text,
+   entities frozen<list<frozen<entitylink>>>,
+   PRIMARY KEY (articletitle, articleoffset)
+);
+
 CREATE TABLE wikidumps.featureentries (
-	id uuid PRIMARY KEY,
-	alias text,
-	entity text,
-	prob_link double,
-	prob_entity double,
-	cosine_sim double,
-	correct boolean
+    id uuid PRIMARY KEY,
+    alias text,
+    correct boolean,
+    cosine_sim double,
+    entity text,
+    prob_entity double,
+    prob_link double
+);
+
+CREATE TYPE wikidumps.precisionrecalldatatuple (
+    threshold double,
+    precision double,
+    recall double,
+    fscore double
+);
+
+CREATE TABLE wikidumps.sim_measure_stats (
+    id timeuuid PRIMARY KEY,
+    comment text,
+    data list<frozen<precisionrecalldatatuple>>
 );
 
 CREATE TYPE wikidumps.triealias (

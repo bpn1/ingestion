@@ -18,7 +18,6 @@ import scala.xml.XML
   * @constructor Create a new DataLakeImportImplementation with an appName, dataSources, an inputKeyspace
   *              and an inputTable.
   * @param dataSources       list of the sources where the new data is fetched from
-  * @param configFile        name of config file in resource folder
   * @param normalizationFile name of normalization file in resource folder
   * @param inputKeyspace     the name of the keyspace where the new data is saved in the database
   * @param inputTable        the name of the table where the new data is saved in the database
@@ -26,11 +25,11 @@ import scala.xml.XML
   */
 abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	dataSources: List[String],
-	configFile: Option[String],
 	normalizationFile: String,
 	inputKeyspace: String,
 	inputTable: String
 ) extends DataLakeImport[T] with SparkJob {
+	configFile = "datalake_import.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -49,23 +48,6 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	// $COVERAGE-ON$
 
 	override protected def filterEntities(entity: T): Boolean = true
-
-	protected def parseConfig(url: URL): Unit = {
-		val xml = XML.loadString(Source
-			.fromURL(url)
-			.getLines()
-			.mkString("\n")
-		)
-
-		val configSettings = xml \\ "config" \ "settings"
-		for(node <- configSettings.head.child if node.text.trim.nonEmpty)
-			settings(node.label) = node.text
-	}
-
-	protected def parseConfig(path: String): Unit = {
-		val url = getClass.getResource(s"/$path")
-		this.parseConfig(url)
-	}
 
 	protected def parseNormalizationConfig(url: URL): Map[String, List[String]] = {
 		val xml = XML.loadString(Source
@@ -106,9 +88,6 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val path = args.headOption
-		val configPath = path.orElse(this.configFile).getOrElse("datalakeimport_config.xml")
-		this.parseConfig(configPath)
 		val version = Version(appName, dataSources, sc)
 		val mapping = parseNormalizationConfig(this.normalizationFile)
 		input

@@ -5,7 +5,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
-import de.hpi.ingestion.framework.{Configurable, SparkJob}
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 import org.apache.spark.SparkContext
@@ -15,7 +15,7 @@ import org.apache.spark.rdd.RDD
   * Blocks two groups of Subjects with multiple Blocking Schemes and evaluates the resulting blocks by counting their
   * sizes and writing the results to the Cassandra.
   */
-object Blocking extends SparkJob with Configurable {
+object Blocking extends SparkJob {
 	appName = "Blocking"
 	configFile = "deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
@@ -46,15 +46,6 @@ object Blocking extends SparkJob with Configurable {
 			.fromAnyRDD[BlockEvaluation]()
 			.head
 			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
-	}
-	/**
-	  * Parses the config before asserting the Conditions of the super class.
-	  * @param args arguments of the program
-	  * @return true if the program can continue, false if it should be terminated
-	  */
-	override def assertConditions(args: Array[String]): Boolean = {
-		parseConfig()
-		super.assertConditions(args)
 	}
 	// $COVERAGE-ON$
 
