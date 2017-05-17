@@ -13,7 +13,6 @@ object Import extends DataLakeImportImplementation[Entity](
 	"inputTable"
 ){
 	appName = "TestImport"
-	configFile = "datalakeimport.xml"
 
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		List(sc.parallelize(Seq(Subject()))).toAnyRDD()

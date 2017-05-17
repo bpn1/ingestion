@@ -29,6 +29,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	inputKeyspace: String,
 	inputTable: String
 ) extends DataLakeImport[T] with SparkJob {
+	configFile = "datalake_import.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -87,9 +88,6 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val path = args.headOption
-		val configPath = path.getOrElse("datalakeimport_config.xml")
-		this.parseNormalizationConfig(configPath)
 		val version = Version(appName, dataSources, sc)
 		val mapping = parseNormalizationConfig(this.normalizationFile)
 		input

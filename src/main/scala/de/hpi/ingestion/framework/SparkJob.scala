@@ -43,11 +43,14 @@ trait SparkJob extends Configurable {
 
 	/**
 	  * Called before running the job. Used to assert specifics of the input arguments. Returns false if the program
-	  * should be terminated. Parses the xml config if {@configFile} is set.
+	  * should be terminated. Parses the xml config if a path is given in args or {@configFile} is set.
 	  * @param args arguments of the program
 	  * @return true if the program can continue, false if it should be terminated
 	  */
 	def assertConditions(args: Array[String]): Boolean = {
+		args
+			.headOption
+			.foreach(file => configFile = file)
 		if(configFile.nonEmpty) {
 			parseConfig()
 		}

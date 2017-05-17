@@ -19,7 +19,6 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 	"dbpedia"
 ){
 	appName = s"DataLakeImportDBpedia_v1.0_${System.currentTimeMillis()}"
-	configFile = "datalakeimport_config.xml"
 
 	// $COVERAGE-OFF$
 	/**
