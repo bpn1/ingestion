@@ -53,12 +53,10 @@ class OptionSerializer() extends Serializer[Option[_]] {
 				output.writeInt(2, true)
 				val len = a.length
 				output.writeInt(len, true)
-				if(len != 0) {
-					val it = a.iterator
-					while(it.hasNext) {
-						val t = it.next
-						kryo.writeClassAndObject(output, t)
-					}
+				val it = a.iterator
+				while(it.hasNext) {
+					val t = it.next
+					kryo.writeClassAndObject(output, t)
 				}
 			case None | _ => output.writeInt(3, true)
 		}

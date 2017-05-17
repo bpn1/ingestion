@@ -1,7 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models.{DocumentFrequency, ParsedWikipediaEntry}
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
@@ -18,7 +18,7 @@ object DocumentFrequencyCounter extends SparkJob {
 	val outputDocumentFrequenciesTablename = "wikipediadocfreq"
 	val removeStopwords = true
 	val stem = true
-	val leastSignificantDocumentFrequency = 5
+	var leastSignificantDocumentFrequency = 5
 
 	// $COVERAGE-OFF$
 	/**

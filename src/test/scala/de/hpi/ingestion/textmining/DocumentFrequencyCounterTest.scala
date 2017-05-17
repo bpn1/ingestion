@@ -2,6 +2,8 @@ package de.hpi.ingestion.textmining
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.models.DocumentFrequency
 
 class DocumentFrequencyCounterTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Document frequencies" should "not be empty" in {
@@ -69,5 +71,20 @@ class DocumentFrequencyCounterTest extends FlatSpec with SharedSparkContext with
 		val testFilteredDocumentFrequencies = TestData.filteredDocumentFrequenciesTestList()
 			.toSet
 		filteredDocumentFrequencies should contain allElementsOf testFilteredDocumentFrequencies
+	}
+
+	they should "be exactly these document frequencies" in {
+		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
+
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 3
+		val input = List(sc.parallelize(TestData.parsedWikipediaTestSet().toList)).toAnyRDD()
+		val df = DocumentFrequencyCounter.run(input, sc).fromAnyRDD[DocumentFrequency]().head.collect.toList
+		val expectedDf = TestData.filteredDocumentFrequenciesWithSymbols()
+		df shouldEqual expectedDf
+
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
+
+		val df2 = DocumentFrequencyCounter.run(input, sc).fromAnyRDD[DocumentFrequency]().head.collect.toList
+		df2 shouldBe empty
 	}
 }
