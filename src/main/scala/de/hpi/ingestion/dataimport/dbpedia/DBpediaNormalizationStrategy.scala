@@ -1,14 +1,11 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
-import de.hpi.ingestion.dataimport.NormalizationStrategy
 import de.hpi.ingestion.implicits.RegexImplicits._
 
 /**
   * Strategies for the normalization of DBPedia entities
   */
-object DBpediaNormalizationStrategy extends NormalizationStrategy("categorization_dbpedia.xml") with Serializable {
-	mapping = this.parseNormalizationConfig()
-
+object DBpediaNormalizationStrategy extends Serializable {
 	/**
 	  * Normalizes Employees
 	  * @param values employees list
@@ -56,7 +53,7 @@ object DBpediaNormalizationStrategy extends NormalizationStrategy("categorizatio
 	  */
 	def normalizeSector(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${sector}""" => this.mapSector(sector)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${sector}""" => List(sector)
 			case _ => None
 		}
 	}
@@ -81,7 +78,7 @@ object DBpediaNormalizationStrategy extends NormalizationStrategy("categorizatio
 	  */
 	def apply(attribute: String): (List[String]) => List[String] = {
 		attribute match {
-			case "gen_sector" => this.normalizeSector
+			case "gen_sectors" => this.normalizeSector
 			case "gen_employees" => this.normalizeEmployees
 			case "geo_country" => this.normalizeCountry
 			case "geo_coords" => this.normalizeCoords

@@ -293,8 +293,13 @@ object TestData {
 		"id_viaf" -> List("VIAF ID")
 	)
 
+	def strategies: Map[String, List[String]] = Map(
+		"Automobilindustrie" -> List("29", "45"),
+		"Einzelhandel" -> List("47")
+	)
+
 	def unnormalizedSectors: List[String] = List("Automobilindustrie", "Q126793", "Einzelhandel")
-	def normalizedSectors: List[String] = List("29", "45", "47")
+	def normalizedSectors: List[String] = List("Automobilindustrie", "Einzelhandel")
 	def unnormalizedCoordinates: List[String] = List("-1;1", "55;48.88", "0.133;-1", "xxx;-1.0")
 	def normalizedCoordinates: List[String] = List("-1", "1", "55", "48.88", "0.133", "-1")
 	def unnormalizedCountries: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")

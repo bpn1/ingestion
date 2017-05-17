@@ -42,7 +42,11 @@ class WikiDataNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 		val attributes = List("geo_coords", "geo_country", "gen_sectors", "gen_employees", "default")
 		val results = attributes.map(WikiDataNormalizationStrategy(_))
 		val strategies: List[(List[String] => List[String])] = List(
-			WikiDataNormalizationStrategy.normalizeCoords, WikiDataNormalizationStrategy.normalizeCountry, identity
+			WikiDataNormalizationStrategy.normalizeCoords,
+			WikiDataNormalizationStrategy.normalizeCountry,
+			WikiDataNormalizationStrategy.normalizeSector,
+			WikiDataNormalizationStrategy.normalizeEmployees,
+			identity
 		)
 		(results, strategies, inputs).zipped
 			.map { case (result, expected, input) =>

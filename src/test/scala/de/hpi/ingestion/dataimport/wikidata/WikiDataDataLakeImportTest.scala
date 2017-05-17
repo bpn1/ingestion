@@ -9,7 +9,8 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 	"translateToSubject" should "map label, aliases and category correctly" in {
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping)
+		val strategies = TestData.strategies
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies)
 		subject.name shouldEqual entity.label
 		subject.aliases shouldEqual entity.aliases
 		subject.category shouldEqual entity.instancetype
@@ -18,7 +19,8 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 	it should "normalize the data attributes" in {
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping)
+		val strategies = TestData.strategies
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies)
 		subject.properties("id_wikidata") shouldEqual List("Q21110253")
 		subject.properties("id_wikipedia") shouldEqual List("testwikiname")
 		subject.properties("id_dbpedia") shouldEqual List("testwikiname")
@@ -29,7 +31,8 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 	it should "copy all old data attributes" in {
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping)
+		val strategies = TestData.strategies
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies)
 		subject.properties("testProperty") shouldEqual List("test")
 	}
 }
