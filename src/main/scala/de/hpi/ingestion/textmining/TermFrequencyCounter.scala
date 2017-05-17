@@ -1,7 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models._
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
