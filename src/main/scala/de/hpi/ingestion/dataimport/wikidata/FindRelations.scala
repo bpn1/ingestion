@@ -21,7 +21,7 @@ object FindRelations extends SparkJob {
 	appName = s"FindRelations_v1.1_${System.currentTimeMillis()}"
 	val datasources = List("wikidata_20161117")
 	val keyspace = "datalake"
-	val tablename = "subject"
+	val tablename = "subject_wikidata"
 	val versionTablename = "version"
 	val wikiDataIdKey = "wikidata_id"
 

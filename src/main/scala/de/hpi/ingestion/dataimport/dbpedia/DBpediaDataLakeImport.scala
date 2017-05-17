@@ -10,7 +10,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import scala.collection.mutable
 
 /**
-  * Import-Job to import DBpedia Subjects into the staging table of our datalake.
+  * Import-Job to import DBpedia Subjects into the staging table of the datalake.
   */
 object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity](
 	List("dbpedia"),
