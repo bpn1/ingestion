@@ -296,20 +296,21 @@ object TestData {
 				null,
 				"GeoBlocking",
 				Set(
-					BlockStats("Berlin", 2, 1),
+					BlockStats("Berlin", 2, 1, 0.5),
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2),
 					BlockStats("undefined", 2, 0)),
-				Option("Blocking")),
+				Option("Blocking; accuracy: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1),
-					BlockStats("Aud", 1, 1),
+					BlockStats("Vol", 1, 1, 1.0),
+					BlockStats("Aud", 1, 1, 1.0),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("Blocking"))))
+				Option("Blocking; accuracy: 1.0"))
+		))
 	}
 
 	def filteredBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -318,19 +319,19 @@ object TestData {
 				null,
 				"GeoBlocking",
 				Set(
-					BlockStats("Berlin", 2, 1),
+					BlockStats("Berlin", 2, 1, 0.5),
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2)),
-				Option("Blocking")),
+				Option("Blocking; accuracy: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1),
-					BlockStats("Aud", 1, 1),
+					BlockStats("Vol", 1, 1, 1.0),
+					BlockStats("Aud", 1, 1, 1.0),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("Blocking"))))
+				Option("Blocking; accuracy: 1.0"))))
 	}
 
 	def blockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -343,16 +344,17 @@ object TestData {
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2),
 					BlockStats("undefined", 2, 0)),
-				Option("Test comment; hits: 2")),
+				Option("Test comment; accuracy: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
 					BlockStats("Vol", 1, 1, 1.0),
-					BlockStats("Aud", 1, 1),
+					BlockStats("Aud", 1, 1, 1.0),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("Test comment; hits: 2"))))
+				Option("Test comment; accuracy: 1.0"))
+		))
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))

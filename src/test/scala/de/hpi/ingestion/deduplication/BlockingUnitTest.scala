@@ -62,7 +62,6 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			false,
 			comment
 		).map(_.copy(jobid = null))
-		evaluationBlocks.foreach(println)
 		val expected = TestData.blockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -80,10 +79,9 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			stagingRDD,
 			goldStandard,
 			blockingSchemes,
-			false,
+			true,
 			comment
 		).map(_.copy(jobid = null))
-		evaluationBlocks.foreach(println)
 		val expected = TestData.filteredBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -93,7 +91,9 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val subjectRDD = sc.parallelize(subjects)
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
-		val input = List(subjectRDD, stagingRDD).toAnyRDD()
+		val goldStandard = TestData.goldStandard(subjects, staging)
+		val goldStandardRDD = sc.parallelize(goldStandard.toList)
+		val input = List(subjectRDD, stagingRDD).toAnyRDD() ::: List(goldStandardRDD).toAnyRDD()
 		Blocking.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
 		val evaluationBlocks = Blocking.run(input, sc).fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))
@@ -106,7 +106,9 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val subjectRDD = sc.parallelize(subjects)
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
-		val input = List(subjectRDD, stagingRDD).toAnyRDD()
+		val goldStandard = TestData.goldStandard(subjects, staging)
+		val goldStandardRDD = sc.parallelize(goldStandard.toList)
+		val input = List(subjectRDD, stagingRDD).toAnyRDD() ::: List(goldStandardRDD).toAnyRDD()
 		Blocking.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
 		val evaluationBlocks = Blocking.run(input, sc, Array("Test comment")).fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))

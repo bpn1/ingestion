@@ -191,7 +191,6 @@ object Blocking extends SparkJob {
 		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val jobid = UUIDs.timeBased()
-
 		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
 			val isUndefined = blockingSchemes
 				.find(_.tag == tag)
@@ -199,38 +198,18 @@ object Blocking extends SparkJob {
 				.contains(key)
 			!(isUndefined && filterUndefined)
 		}
-
-		val duplicates = blocks
-			.map { case ((key, tag), (subjectList, stagingList)) =>
-				val cross = subjectList.cross(stagingList)
-				val foundDupes = cross.filter(goldStandard)
-				val precision = if (cross.nonEmpty) foundDupes.size.toDouble / cross.size.toDouble else 0.0
-				val blockData = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
-				(foundDupes, (tag, blockData))
-			}
-
-		/*val emptyBlocks = blocks
-			.filter { case ((key, tag), (subjectList, stagingList)) => subjectList.isEmpty || stagingList.isEmpty }
-			.map { case ((key, tag), (subjectList, stagingList)) =>
-				val blockData = Set(BlockStats(key, subjectList.size, stagingList.size))
-				(tag, blockData)
-			}
-		val blockDuplicates = blocks
-			.filter { case ((key, tag), (subjectList, stagingList)) => subjectList.nonEmpty && stagingList.nonEmpty }
-			.map { case ((key, tag), (subjectList, stagingList)) =>
-				val foundDupes = subjectList
-					.cross(stagingList)
-					.filter(goldStandard)
-				val precision = foundDupes.size.toDouble / (subjectList.size * stagingList.size).toDouble
-				val blockData = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
-				(foundDupes, (tag, blockData))
-			}*/
-
-		val tagAccuracies = duplicates
-			.flatMap { case (duplicates, (tag, block)) =>
-				duplicates.map((tag, _))
+		val duplicates = blocks.map { case ((key, tag), (subjectList, stagingList)) =>
+			val cross = subjectList.cross(stagingList)
+			val duplicates = cross.filter(goldStandard)
+			val precision = if (cross.nonEmpty) duplicates.size.toDouble / cross.size.toDouble else 0.0
+			val blockStats = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
+			(duplicates, (tag, blockStats))
+		}
+		val accuracy = duplicates
+			.map { case (duplicates, (tag, block)) =>
+				(tag, duplicates)
 			}.distinct
-			.map { case (tag, dupeTuple) => (tag, 1) }
+			.map { case (tag, duplicates) => (tag, duplicates.size) }
 			.reduceByKey(_ + _)
 			.collect
 			.toMap
@@ -238,10 +217,12 @@ object Blocking extends SparkJob {
 			.map(identity)
 
 		duplicates
-			.reduceByKey(_._2 ++ _._2)
-			.map { case (tag, blockStatSet) =>
-				val blockComment = Option(s"$comment; accuracy: ${tagAccuracies.getOrElse(tag, "")}")
-				BlockEvaluation(jobid, tag, blockStatSet, blockComment)
+			.values
+			.reduceByKey(_ ++ _)
+			.map { case (tag, blockStats) =>
+				val tagAccuracy = accuracy.getOrElse(tag, 0.0)
+				val blockComment = Option(s"$comment; accuracy: $tagAccuracy")
+				BlockEvaluation(jobid, tag, blockStats, blockComment)
 			}
 	}
 }
