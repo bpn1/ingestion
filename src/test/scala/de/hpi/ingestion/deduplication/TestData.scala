@@ -1,15 +1,13 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.models.{Subject, Version}
+import de.hpi.ingestion.deduplication.models.{BlockEvaluation, FeatureEntry, PrecisionRecallDataTuple, ScoreConfig}
 import de.hpi.ingestion.deduplication.blockingschemes.ListBlockingScheme
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan, SimilarityMeasure}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
-import scala.collection.mutable
 
 // scalastyle:off line.size.limit
 // scalastyle:off number.of.methods
@@ -177,6 +175,10 @@ object TestData {
 				ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)))
 	}
 
+	def simpleTestConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		Map(key -> List(ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8)))
+	}
+
 	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
 		MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
 		JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7
@@ -190,11 +192,9 @@ object TestData {
 			CompareStrategy.singleStringCompare, CompareStrategy.coordinatesCompare, CompareStrategy.defaultCompare
 	)
 
-	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = (
-		List("very", "generic", "values"),
-		List("even", "more", "values"),
-		testConfig().head._2.head
-	)
+	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = {
+		(List("very", "generic", "values"), List("even", "more", "values"), testConfig().head._2.head)
+	}
 
 	def cityBlockingScheme: ListBlockingScheme = {
 		val scheme = new ListBlockingScheme()
@@ -213,6 +213,11 @@ object TestData {
 	def stagings: List[Subject] = List(
 		Subject(name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "gen_income" -> List("12"))),
 		Subject(name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53","14"), "gen_income" -> List("600")))
+	)
+
+	def goldStandard(subjects: List[Subject], stagings: List[Subject]): Set[(UUID, UUID)] = Set(
+		(subjects.head.id, stagings.head.id),
+		(subjects(1).id, stagings.last.id)
 	)
 
 	def flatSubjectBlocks(sc: SparkContext, subjects: List[Subject]): RDD[((String, String), Subject)] = {
@@ -291,20 +296,21 @@ object TestData {
 				null,
 				"GeoBlocking",
 				Set(
-					BlockStats("Berlin", 2, 1),
+					BlockStats("Berlin", 2, 1, 0.5),
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2),
 					BlockStats("undefined", 2, 0)),
-				Option("Blocking")),
+				Option("Blocking; accuracy: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1),
-					BlockStats("Aud", 1, 1),
+					BlockStats("Vol", 1, 1, 1.0),
+					BlockStats("Aud", 1, 1, 1.0),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("Blocking"))))
+				Option("Blocking; accuracy: 1.0"))
+		))
 	}
 
 	def filteredBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -313,19 +319,19 @@ object TestData {
 				null,
 				"GeoBlocking",
 				Set(
-					BlockStats("Berlin", 2, 1),
+					BlockStats("Berlin", 2, 1, 0.5),
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2)),
-				Option("Blocking")),
+				Option("Blocking; accuracy: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1),
-					BlockStats("Aud", 1, 1),
+					BlockStats("Vol", 1, 1, 1.0),
+					BlockStats("Aud", 1, 1, 1.0),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("Blocking"))))
+				Option("Blocking; accuracy: 1.0"))))
 	}
 
 	def blockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -334,20 +340,21 @@ object TestData {
 				null,
 				"GeoBlocking",
 				Set(
-					BlockStats("Berlin", 2, 1),
+					BlockStats("Berlin", 2, 1, 0.5),
 					BlockStats("Hamburg", 1, 1),
 					BlockStats("New York", 0, 2),
 					BlockStats("undefined", 2, 0)),
-				Option("Test comment")),
+				Option("Test comment; accuracy: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1),
-					BlockStats("Aud", 1, 1),
+					BlockStats("Vol", 1, 1, 1.0),
+					BlockStats("Aud", 1, 1, 1.0),
 					BlockStats("Por", 1, 0),
 					BlockStats("Fer", 1, 0)),
-				Option("Test comment"))))
+				Option("Test comment; accuracy: 1.0"))
+		))
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
@@ -361,6 +368,22 @@ object TestData {
 	)
 	def geoCoordsBlockingScheme: List[List[String]] = List(List("52,11"), List("undefined"), List("52,13"), List("53,14"))
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
+
+	def features(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
+		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1))),
+		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3))),
+		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5)))
+	))
+
+	def goldStandard(sc: SparkContext): RDD[(UUID, UUID)] = sc.parallelize(List(
+		(idList.head, idList(1)), (idList(2), idList(3)), (idList(5), idList(6))
+	))
+
+	def labeledFeatures(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
+		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1)), correct = true),
+		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3)), correct = true),
+		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5)))
+	))
 
 	def requiredSettings: List[String] = {
 		List("keyspaceSubjectTable", "subjectTable", "keyspaceStagingTable", "stagingTable", "keyspaceStatsTable", "statsTable")

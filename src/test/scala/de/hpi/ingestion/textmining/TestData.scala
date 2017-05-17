@@ -1,19 +1,22 @@
 package de.hpi.ingestion.textmining
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
+import java.net.URI
+import java.io._
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
+import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.mllib.tree.configuration.Algo
+import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
-
 import scala.io.{BufferedSource, Source}
 
 // scalastyle:off number.of.methods
@@ -29,6 +32,15 @@ object TestData {
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen.",
 			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.",
 			"Dieser Satz enthält Klammern (evtl. problematisch)."
+		)
+	}
+
+	def uncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence."),
+			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal,", "Main-Kinzig-Kreis", "in", "Hessen."),
+			List("Links:", "Audi,", "Brachttal,", "historisches", "Jahr.\nKeine", "Links:", "Hessen,", "Main-Kinzig-Kreis,", "Büdinger", "Wald,", "Backfisch", "und", "nochmal", "Hessen."),
+			List("Dieser", "Satz", "enthält", "Klammern", "(evtl.", "problematisch).")
 		)
 	}
 
@@ -300,6 +312,26 @@ object TestData {
 			))
 	}
 
+	def transformedArticles(): Set[(String, Bag[String, Int])] = {
+		Set(
+			("Audi Test mit Link", Bag("audi" -> 1, "verlink" -> 1)),
+			("Audi Test ohne Link", Bag("audi" -> 1, "verlink" -> 1)),
+			("Streitberg (Brachttal)", Bag("1554" -> 1, "waldrech" -> 1, "einwohnerzahl" -> 1, "streidtburgk" -> 1, "19" -> 1, "brachttal" -> 1, "ort" -> 1, "jahrhu" -> 1, "nachweislich" -> 1, "-lrb-" -> 3, "huterech" -> 1, "eingeburg" -> 1, "steytberg" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "-" -> 1, "stridberg" -> 1, "kleinst" -> 1, "-rrb-" -> 3, "stamm" -> 1, "hess" -> 1, "holx" -> 1, "buding" -> 1, "tauch" -> 1, "stripurgk" -> 1, "1500" -> 1, "gemei" -> 1, "1377" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "1528" -> 1, "namensvaria" -> 1, "ortsnam" -> 1, "streitberg" -> 2, "mittelal" -> 1, "red" -> 1)),
+			("Testartikel", Bag("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
+	}
+
+	def transformedLinkContexts(): Set[(Link, Bag[String, Int])] = {
+		Set(
+			(Link("Audi", "Audi", Option(9), Map("verlink" -> 1)), Bag("verlink" -> 1)),
+			(Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)), Bag("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
+			(Link("Hessen", "Hessen", Option(87), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+			(Link("1377", "1377", Option(225), Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)), Bag("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)), Bag("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)),
+			(Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)), Bag("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			(Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)), Bag("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			(Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)), Bag("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
+	}
 
 	def linkContextsTfidf(): Set[(Link, Map[String, Double])] = {
 		// retrieved from 4 documents
@@ -465,6 +497,12 @@ object TestData {
 		)
 	}
 
+	def filteredDocumentFrequenciesWithSymbols(): List[DocumentFrequency] = {
+		List(
+			DocumentFrequency("audi", 3),
+			DocumentFrequency(".", 4))
+	}
+
 	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
@@ -544,6 +582,22 @@ object TestData {
 			DocumentFrequency("hier", 2),
 			DocumentFrequency("verlink", 2)
 		)
+	}
+
+	def filteredStemmedIdfMap(): Map[String, Double] = {
+		val numDoc = 4.0
+		Map(
+			"ist" -> 3.0 / numDoc,
+			"audi" -> 3.0 / numDoc,
+			"hier" -> 2.0 / numDoc,
+			"verlink" -> 2.0 / numDoc,
+			"brachttal" -> 2.0 / numDoc,
+			"main-kinzig-kreis" -> 2.0 / numDoc,
+			"hess" -> 2.0 / numDoc,
+			"buding" -> 2.0 / numDoc,
+			"wald" -> 2.0 / numDoc,
+			"jahr" -> 2.0 / numDoc,
+			"und" -> 2.0 / numDoc)
 	}
 
 	def inverseDocumentFrequenciesSet(): Set[(String, Double)] = {
@@ -799,7 +853,6 @@ object TestData {
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
-
 	def entryWithStandardWhitespaces(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
@@ -1183,41 +1236,6 @@ object TestData {
 			"Galgenhumor")
 	}
 
-	def parsedEntryWithDifferentLinkTypes(): ParsedWikipediaEntry = {
-		ParsedWikipediaEntry(
-			"Origineller Titel",
-			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
-			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
-			templatelinks = List(Link("Charlie", "Charlie C.")),
-			categorylinks = List(Link("Dora", "Dora")),
-			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
-			disambiguationlinks = List(Link("Esel", "Esel"))
-		)
-	}
-
-	def allLinksListFromEntryList(): List[Link] = {
-		List(
-			Link("Apfel", "Apfel", Option(0)),
-			Link("Baum", "Baum", Option(4)),
-			Link("Charlie", "Charlie C."),
-			Link("Dora", "Dora"),
-			Link("Fund", "Fund"),
-			Link("Grieß", "Brei"),
-			Link("Esel", "Esel")
-		)
-	}
-
-	def parsedEntryWithFilteredLinks(): ParsedWikipediaEntry = {
-		ParsedWikipediaEntry(
-			"Origineller Titel",
-			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
-			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
-			categorylinks = List(Link("Dora", "Dora")),
-			listlinks = List(Link("Fund", "Fund")),
-			disambiguationlinks = List(Link("Esel", "Esel"))
-		)
-	}
-
 	def testNamespacePages(): List[WikipediaEntry] = {
 		List(
 			WikipediaEntry("lol"),
@@ -1479,11 +1497,15 @@ object TestData {
 		trie
 	}
 
-	def fullTrieStream(): ByteArrayInputStream = {
+	def fullTrieStream(file: String): ByteArrayInputStream = {
 		val aliasStream = Source.fromURL(getClass.getResource("/textmining/triealiases"))
 		val trieStream = new ByteArrayOutputStream(1024 * 10)
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
+	}
+
+	def docfreqStream(file: String)(file2: String): InputStream = {
+		new FileInputStream(new File(getClass.getResource(s"/textmining/$file").toURI))
 	}
 
 	def uncleanedFoundAliases(): List[String] = {
@@ -1501,7 +1523,7 @@ object TestData {
 		new ByteArrayInputStream(trieStream.toByteArray)
 	}
 
-  def linkExtenderPagesSet(): Set[Page] = {
+	def linkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
 			Page("Bayern", Map("Bayern" -> 1)),
@@ -1587,11 +1609,53 @@ object TestData {
 				Link("Media Broadcast", "Media Broadcast", Option(1906)),
 				Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
 				Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
-				Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2008))
+				Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2117))
 			)
 		)
 	}
 
+	def sentenceList(): List[Sentence] = {
+		List(
+			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				0,
+				"Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg.",
+				List(
+					EntityLink("Hochhaus", "Hochhaus", Option(113)),
+					EntityLink("Postbank", "Postbank", Option(126)),
+					EntityLink("Berliner", "Berlin", Option(190)),
+					EntityLink("Kreuzberg", "Berlin-Kreuzberg", Option(208))
+				)
+			),
+			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				219,
+				"Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig.",
+				List(
+					EntityLink("Frankfurt (Oder)", "Frankfurt (Oder)", Option(246)),
+					EntityLink("Potsdam", "Potsdam", Option(264)),
+					EntityLink("Magdeburg", "Magdeburg", Option(273)),
+					EntityLink("Stettin", "Stettin", Option(287))
+				)
+			),
+			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				1940,
+				"Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit.",
+				List(
+					EntityLink("Deutsche Funkturm", "Deutsche Funkturm", Option(4)),
+					EntityLink("Deutschen Telekom AG", "Deutsche Telekom", Option(59))
+				)
+			)
+		)
+	}
+
+	def alternativeSentenceList(): List[Sentence] = {
+		List(
+			Sentence("Audi",0,"Audi ist Audi AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Audi AG","Audi",Some(9)))),
+			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))
+		)
+	}
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
@@ -1674,9 +1738,9 @@ object TestData {
 				)
 			)
 		)
-  }
+	}
 
-  def featureEntries(): List[FeatureEntry] = {
+	def featureEntries(): List[FeatureEntry] = {
 		List(
 			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
 			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
@@ -1718,7 +1782,8 @@ object TestData {
 			List(Link("title", "Zwillinge")),
 			List(Link("title", "Zwillinge")),
 			Nil,
-			Nil)
+			Nil,
+			List(Link("title", "Zwillinge")))
 	}
 
 	def textLinkTuples(): List[(String, List[Link])] = {
@@ -1726,7 +1791,8 @@ object TestData {
 			("Wort Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(5)))),
 			("Wort 2", List(Link("Zwillinge", "Zwillinge", Option(7)))),
 			("Wort 3", Nil),
-			("", Nil))
+			("", Nil),
+			("Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(0)))))
 	}
 
 	def wikidataEntities(): List[WikiDataEntity] = {
@@ -1802,6 +1868,10 @@ object TestData {
 			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
 	}
 
+	def extendedClassifierFeatureEntries(n: Int): List[FeatureEntry] = {
+		(0 until n).flatMap(t => classifierFeatureEntries()).toList
+	}
+
 	def labeledPredictions(): List[(Double, Double)] = {
 		List(
 			(1.0, 1.0),
@@ -1816,23 +1886,41 @@ object TestData {
 			(0.0, 0.0))
 	}
 
-	def predictionStatistics(): List[(String, Double, Double)] = {
-		List(
-			("precision", 1.0, 5.0/7.0),
-			("precision", 0.0, 0.6),
-			("recall", 1.0, 5.0/6.0),
-			("recall", 0.0, 1.0),
-			("fscore with beta 0.5", 1.0, 25.0/34.0),
-			("fscore with beta 0.5", 0.0, 0.6521739130434783))
+	def predictionStatistics(): PrecisionRecallDataTuple = {
+		PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0)
 	}
 
-	def formattedPredictionStatistics(): String = {
-		s"precision\t1.0\t${5.0/7.0}" + "\n" +
-			"precision\t0.0\t0.6" + "\n" +
-			s"recall\t1.0\t${5.0/6.0}" + "\n" +
-			"recall\t0.0\t1.0" + "\n" +
-			s"fscore with beta 0.5\t1.0\t${25.0/34.0}" + "\n" +
-			"fscore with beta 0.5\t0.0\t0.6521739130434783"
+	def statisticTuples(): List[PrecisionRecallDataTuple] = {
+		List(
+			PrecisionRecallDataTuple(1.0, 0.4, 1.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.6, 0.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.6, 0.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.4, 0.0, 0.0)
+		)
+	}
+
+	def averagedStatisticTuples(): PrecisionRecallDataTuple = {
+		PrecisionRecallDataTuple(1.0, 0.5, 0.25, 0.75)
+	}
+
+	def simMeasureStats(): SimilarityMeasureStats = {
+		SimilarityMeasureStats(null, List(averagedStatisticTuples()), Option("Test comment"))
+	}
+
+	def randomForestModel(): RandomForestModel = {
+		val node = new Node(0, new Predict(0.0, 1.0), 0.0, true, None, None, None, None)
+		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
+		new RandomForestModel(Algo.Classification, Array(dtmodel))
+	}
+
+	def testCrossValidationMethod(
+		data: RDD[LabeledPoint],
+		numFolds: Int = 3,
+		numTrees: Int = 5,
+		maxDepth: Int = 4,
+		maxBins: Int = 32
+	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
+		(simMeasureStats(), Option(randomForestModel()))
 	}
 }
 
