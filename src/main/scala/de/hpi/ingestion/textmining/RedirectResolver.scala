@@ -120,9 +120,8 @@ object RedirectResolver extends SparkJob {
 			.map(Redirect.unapply(_).get)
 			.collect
 			.toMap
-		var saveRedirectsToCassandra = false
-		if(redirects.isEmpty) {
-			saveRedirectsToCassandra = true
+		val saveRedirectsToCassandra = redirects.isEmpty
+		if(saveRedirectsToCassandra) {
 			val redirectMap = buildRedirectDict(articles)
 			redirects = resolveTransitiveRedirects(redirectMap)
 		}
@@ -132,8 +131,7 @@ object RedirectResolver extends SparkJob {
 				val localDict = dictBroadcast.value
 				entryPartition.map(entry => resolveRedirects(entry, localDict))
 			}, true)
-		var redirectsList = List[Redirect]()
-		if (saveRedirectsToCassandra) redirectsList = redirects.map(Redirect.tupled).toList
+		val redirectsList = if(saveRedirectsToCassandra) redirects.map(Redirect.tupled).toList else Nil
 		List(resolvedArticles).toAnyRDD() ++ List(sc.parallelize(redirectsList)).toAnyRDD()
 	}
 }
