@@ -373,13 +373,13 @@ object TestData {
 
 	def linksSet(): Set[Alias] = {
 		Set(
-			Alias("Audi", Map("Audi" -> 2)),
-			Alias("Brachttal", Map("Brachttal" -> 2)),
-			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1)),
-			Alias("Hessen", Map("Hessen" -> 1)),
-			Alias("1377", Map("1377" -> 1)),
-			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1)),
-			Alias("historisches Jahr", Map("1377" -> 1))
+			Alias("Audi", Map("Audi" -> RankedValue(2))),
+			Alias("Brachttal", Map("Brachttal" -> RankedValue(2))),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> RankedValue(1))),
+			Alias("Hessen", Map("Hessen" -> RankedValue(1))),
+			Alias("1377", Map("1377" -> RankedValue(1))),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> RankedValue(1))),
+			Alias("historisches Jahr", Map("1377" -> RankedValue(1)))
 		)
 	}
 
@@ -399,28 +399,28 @@ object TestData {
 
 	def finalAliasesSet(): Set[Alias] = {
 		Set(
-			Alias("Audi", Map("Audi" -> 2), Option(2), Option(3)),
-			Alias("Brachttal", Map("Brachttal" -> 2), Option(2), Option(2)),
-			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Option(1), Option(2)),
-			Alias("Hessen", Map("Hessen" -> 1), Option(1), Option(2)),
-			Alias("1377", Map("1377" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), Option(1), Option(2)),
-			Alias("historisches Jahr", Map("1377" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Audi" -> 1), Option(1), Option(2)), // negative example
-			Alias("historisches Jahr", Map("1377" -> 1)) // incomplete table entry
+			Alias("Audi", Map("Audi" -> RankedValue(2)), Option(2), Option(3)),
+			Alias("Brachttal", Map("Brachttal" -> RankedValue(2)), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> RankedValue(1)), Option(1), Option(2)),
+			Alias("Hessen", Map("Hessen" -> RankedValue(1)), Option(1), Option(2)),
+			Alias("1377", Map("1377" -> RankedValue(1)), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> RankedValue(1)), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("1377" -> RankedValue(1)), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Audi" -> RankedValue(1)), Option(1), Option(2)), // negative example
+			Alias("historisches Jahr", Map("1377" -> RankedValue(1))) // incomplete table entry
 		)
 	}
 
 	def aliasesWithExistingPagesSet(): Set[Alias] = {
 		// these pages do not fit to the aliases but are required for the tests
 		Set(
-			Alias("Audi", Map("Audi Test mit Link" -> 2), Option(2), Option(3)),
-			Alias("Brachttal", Map("Audi Test ohne Link" -> 2), Option(2), Option(2)),
-			Alias("Main-Kinzig-Kreis", Map("Streitberg (Brachttal)" -> 1), Option(1), Option(2)),
-			Alias("Hessen", Map("Streitberg (Brachttal)" -> 1), Option(1), Option(2)),
-			Alias("1377", Map("Testartikel" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Testartikel" -> 1), Option(1), Option(2)),
-			Alias("historisches Jahr", Map("Testartikel" -> 1), Option(1), Option(1))
+			Alias("Audi", Map("Audi Test mit Link" -> RankedValue(2)), Option(2), Option(3)),
+			Alias("Brachttal", Map("Audi Test ohne Link" -> RankedValue(2)), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Streitberg (Brachttal)" -> RankedValue(1)), Option(1), Option(2)),
+			Alias("Hessen", Map("Streitberg (Brachttal)" -> RankedValue(1)), Option(1), Option(2)),
+			Alias("1377", Map("Testartikel" -> RankedValue(1)), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Testartikel" -> RankedValue(1)), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("Testartikel" -> RankedValue(1)), Option(1), Option(1))
 		)
 	}
 
@@ -600,31 +600,31 @@ object TestData {
 		)
 	}
 
-	def aliasProbabilitiesSet(): Set[(String, (String, Double, Double))] = {
+	def aliasProbabilitiesSet(): Set[(String, (String, Double, Double, Int))] = {
 		Set(
-			("Audi", ("Audi", 0.6666666666666666, 1.0)),
-			("Brachttal", ("Brachttal", 1.0, 1.0)),
-			("Main-Kinzig-Kreis", ("Main-Kinzig-Kreis", 0.5, 1.0)),
-			("Hessen", ("Hessen", 0.5, 1.0)),
-			("1377", ("1377", 1.0, 1.0)),
-			("Büdinger Wald", ("Büdinger Wald", 0.5, 1.0)),
-			("historisches Jahr", ("1377", 1.0, 1.0)),
-			("Büdinger Wald", ("Audi", 0.5, 1.0))
+			("Audi", ("Audi", 0.6666666666666666, 1.0, 1)),
+			("Brachttal", ("Brachttal", 1.0, 1.0, 1)),
+			("Main-Kinzig-Kreis", ("Main-Kinzig-Kreis", 0.5, 1.0, 1)),
+			("Hessen", ("Hessen", 0.5, 1.0, 1)),
+			("1377", ("1377", 1.0, 1.0, 1)),
+			("Büdinger Wald", ("Büdinger Wald", 0.5, 1.0, 1)),
+			("historisches Jahr", ("1377", 1.0, 1.0, 1)),
+			("Büdinger Wald", ("Audi", 0.5, 1.0, 1))
 		)
 	}
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, true, null),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, true, null),
-			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
-			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
-			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 1, 0.608944778982726, true, null),
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 1, 0.6951672143063198, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 1, 0.6107163643669525, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 1, 0.0, true, null),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 1, 0.6611213869640233, true, null),
+			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 1, 0.4531255411026077, true, null),
+			FeatureEntry("1377", "1377", 1.0, 1.0, 1, 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1, 1.0, true, null),
+			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 1, 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 1, 0.0, false, null)
 		)
 	}
 
@@ -806,30 +806,30 @@ object TestData {
 
 	def groupedAliasesSet(): Set[Alias] = {
 		Set(
-			Alias("Ingolstadt", Map("Ingolstadt" -> 1)),
-			Alias("Bayern", Map("Bayern" -> 1)),
-			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Alias("Radioaktiver Zerfall", Map("Radioaktivität" -> 1)),
-			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Radioaktivität" -> 1))
+			Alias("Ingolstadt", Map("Ingolstadt" -> RankedValue(1))),
+			Alias("Bayern", Map("Bayern" -> RankedValue(1))),
+			Alias("Automobilhersteller", Map("Automobilhersteller" -> RankedValue(1))),
+			Alias("Radioaktiver Zerfall", Map("Radioaktivität" -> RankedValue(1))),
+			Alias("Zerfall", Map("Zerfall (Album)" -> RankedValue(1), "Radioaktivität" -> RankedValue(1)))
 		)
 	}
 
 	def groupedPagesSet(): Set[Page] = {
 		Set(
-			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
-			Page("Bayern", Map("Bayern" -> 1)),
-			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
-			Page("Radioaktivität", Map("Zerfall" -> 1, "Radioaktiver Zerfall" -> 1))
+			Page("Ingolstadt", Map("Ingolstadt" -> RankedValue(1))),
+			Page("Bayern", Map("Bayern" -> RankedValue(1))),
+			Page("Automobilhersteller", Map("Automobilhersteller" -> RankedValue(1))),
+			Page("Zerfall (Album)", Map("Zerfall" -> RankedValue(1))),
+			Page("Radioaktivität", Map("Zerfall" -> RankedValue(1), "Radioaktiver Zerfall" -> RankedValue(1)))
 		)
 	}
 
 	def cleanedGroupedPagesSet(): Set[Page] = {
 		Set(
-			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
-			Page("Bayern", Map("Bayern" -> 1)),
-			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+			Page("Ingolstadt", Map("Ingolstadt" -> RankedValue(1))),
+			Page("Bayern", Map("Bayern" -> RankedValue(1))),
+			Page("Automobilhersteller", Map("Automobilhersteller" -> RankedValue(1))),
+			Page("Zerfall (Album)", Map("Zerfall" -> RankedValue(1)))
 		)
 	}
 
@@ -883,6 +883,26 @@ object TestData {
 			Link("Zerfall", "Zerfall (Album)", Option(4711)),
 			Link("Zerfall", "Radioaktivität", Option(4711)),
 			Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711))
+		)
+	}
+
+	def countedOccurrences(): Map[String, Int] = {
+		Map(
+			"Audi" -> 5,
+			"BMW" -> 7,
+			"Chevrolet" -> 5,
+			"Dacia" -> 2,
+			"Ferrari" -> 7
+		)
+	}
+
+	def rankedOccurrences(): Map[String, RankedValue] = {
+		Map(
+			"Audi" -> RankedValue(5, 3),
+			"BMW" -> RankedValue(7, 1),
+			"Chevrolet" -> RankedValue(5, 3),
+			"Dacia" -> RankedValue(2, 5),
+			"Ferrari" -> RankedValue(7, 1)
 		)
 	}
 
@@ -1503,19 +1523,19 @@ object TestData {
 
   def linkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
-			Page("Bayern", Map("Bayern" -> 1)),
-			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+			Page("Audi", Map("Audi AG" -> RankedValue(10), "Audi" -> RankedValue(10), "VW" -> RankedValue(1))),
+			Page("Bayern", Map("Bayern" -> RankedValue(1))),
+			Page("VW", Map("Volkswagen AG" -> RankedValue(1), "VW" -> RankedValue(1))),
+			Page("Zerfall (Album)", Map("Zerfall" -> RankedValue(1)))
 		)
 	}
 
-	def linkExtenderPagesMap(): Map[String, Map[String, Int]] = {
+	def linkExtenderPagesMap(): Map[String, Map[String, RankedValue]] = {
 		Map(
-			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
-			"Bayern" -> Map("Bayern" -> 1),
-			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1),
-			"Zerfall (Album)" -> Map("Zerfall" -> 1)
+			"Audi" -> Map("Audi AG" -> RankedValue(10), "Audi" -> RankedValue(10), "VW" -> RankedValue(1)),
+			"Bayern" -> Map("Bayern" -> RankedValue(1)),
+			"VW" -> Map("Volkswagen AG" -> RankedValue(1), "VW" -> RankedValue(1)),
+			"Zerfall (Album)" -> Map("Zerfall" -> RankedValue(1))
 		)
 	}
 
@@ -1527,10 +1547,10 @@ object TestData {
 		)
 	}
 
-	def linkExtenderFoundPages(): Map[String, Map[String, Int]] = {
+	def linkExtenderFoundPages(): Map[String, Map[String, RankedValue]] = {
 		Map(
-			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
-			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1)
+			"Audi" -> Map("Audi AG" -> RankedValue(10), "Audi" -> RankedValue(10), "VW" -> RankedValue(1)),
+			"VW" -> Map("Volkswagen AG" -> RankedValue(1), "VW" -> RankedValue(1))
 		)
 	}
 
@@ -1594,23 +1614,23 @@ object TestData {
 
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
-			Page("VW", Map("Volkswagen AG" -> 2, "VW" -> 2)),
-			Page("Hochhaus", Map("Hochhaus" -> 2, "Gebäude" -> 1)),
-			Page("Postbank", Map("Postbank" -> 2)),
-			Page("Berlin", Map("Berlin" -> 2, "(" -> 1, "Berliner" -> 2)),
-			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 2)),
-			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 2)),
-			Page("Potsdam", Map("Potsdam" -> 2)),
-			Page("Magdeburg", Map("Magdeburg" -> 2)),
-			Page("Stettin", Map("Stettin" -> 2)),
-			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 2)),
-			Page("New York City", Map("New York." -> 2)),
-			Page("Bronze", Map("Bronze" -> 2)),
-			Page("Media Broadcast", Map("Media Broadcast" -> 2)),
-			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 2, "DFMG" -> 11)),
-			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 2)),
-			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 2))
+			Page("Audi", Map("Audi AG" -> RankedValue(10), "Audi" -> RankedValue(10), "VW" -> RankedValue(2))),
+			Page("VW", Map("Volkswagen AG" -> RankedValue(2), "VW" -> RankedValue(2))),
+			Page("Hochhaus", Map("Hochhaus" -> RankedValue(2), "Gebäude" -> RankedValue(1))),
+			Page("Postbank", Map("Postbank" -> RankedValue(2))),
+			Page("Berlin", Map("Berlin" -> RankedValue(2), "(" -> RankedValue(1), "Berliner" -> RankedValue(2))),
+			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> RankedValue(2))),
+			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> RankedValue(2))),
+			Page("Potsdam", Map("Potsdam" -> RankedValue(2))),
+			Page("Magdeburg", Map("Magdeburg" -> RankedValue(2))),
+			Page("Stettin", Map("Stettin" -> RankedValue(2))),
+			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> RankedValue(2))),
+			Page("New York City", Map("New York." -> RankedValue(2))),
+			Page("Bronze", Map("Bronze" -> RankedValue(2))),
+			Page("Media Broadcast", Map("Media Broadcast" -> RankedValue(2))),
+			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> RankedValue(2), "DFMG" -> RankedValue(11))),
+			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> RankedValue(2))),
+			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> RankedValue(2)))
 		)
 	}
 
@@ -1678,20 +1698,20 @@ object TestData {
 
   def featureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
-			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
-			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true),
-			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false),
-			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false))
+			FeatureEntry("a", "b", 0.1, 0.2, 1, 0.8, true),
+			FeatureEntry("c", "d", 0.4, 0.0, 1, 0.7, false),
+			FeatureEntry("e", "f", 0.7, 1.0, 1, 0.1, true),
+			FeatureEntry("g", "h", 0.8, 0.2, 1, 0.3, false),
+			FeatureEntry("i", "j", 0.9, 0.4, 1, 0.7, false))
 	}
 
 	def labeledPoints(): List[LabeledPoint] = {
 		List(
-			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
-			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
-			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
-			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
-			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
+			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 1, 0.8))),
+			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 1, 0.7))),
+			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 1, 0.1))),
+			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 1, 0.3))),
+			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 1, 0.7))))
 	}
 
 	def textLinkHtml(): List[Element] = {
@@ -1745,12 +1765,12 @@ object TestData {
 
 	def companyPages(): List[Page] = {
 		List(
-			Page("Page 1", Map("P1Alias1" -> 1, "P1Alias2" -> 1)),
-			Page("Page 2", Map("P2Alias1" -> 1, "P2Alias2" -> 1)),
-			Page("Page 3", Map("P3Alias1" -> 1, "P1Alias1" -> 1)),
-			Page("Page 4", Map("P4Alias1" -> 1, "P4Alias3" -> 1)),
-			Page("Page 5", Map("P5Alias1" -> 1)),
-			Page("Page 6", Map("P6Alias1" -> 1)))
+			Page("Page 1", Map("P1Alias1" -> RankedValue(1), "P1Alias2" -> RankedValue(1))),
+			Page("Page 2", Map("P2Alias1" -> RankedValue(1), "P2Alias2" -> RankedValue(1))),
+			Page("Page 3", Map("P3Alias1" -> RankedValue(1), "P1Alias1" -> RankedValue(1))),
+			Page("Page 4", Map("P4Alias1" -> RankedValue(1), "P4Alias3" -> RankedValue(1))),
+			Page("Page 5", Map("P5Alias1" -> RankedValue(1))),
+			Page("Page 6", Map("P6Alias1" -> RankedValue(1))))
 	}
 
 	def companyAliases(): Set[String] = {
@@ -1793,13 +1813,13 @@ object TestData {
 
 	def classifierFeatureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
-			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, true),
-			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3, false),
-			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2, false),
-			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
-			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
-			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
+			FeatureEntry("alias1", "page1", 0.01, 0.01, 1, 0.1, false),
+			FeatureEntry("alias2", "page2", 0.3, 0.7, 1, 0.9, true),
+			FeatureEntry("alias3", "page3", 0.1, 0.2, 1, 0.3, false),
+			FeatureEntry("alias4", "page4", 0.2, 0.1, 1, 0.2, false),
+			FeatureEntry("alias5", "page5", 0.05, 0.6, 1, 0.7, true),
+			FeatureEntry("alias6", "page6", 0.03, 0.1, 1, 0.3, false),
+			FeatureEntry("alias7", "page7", 0.2, 0.7, 1, 0.6, true))
 	}
 
 	def labeledPredictions(): List[(Double, Double)] = {

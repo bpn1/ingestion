@@ -112,6 +112,12 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		groupedPages shouldEqual TestData.groupedPagesSet()
 	}
 
+	"Ranked occurrences" should "be exactly these values" in {
+		val countedOccurrences = TestData.countedOccurrences()
+		val rankedOccurrences = LinkAnalysis.rankOccurrences(countedOccurrences)
+		rankedOccurrences shouldEqual TestData.rankedOccurrences()
+	}
+
 	"Link data" should "be grouped and counted" in {
 		val linkData = TestData.validLinkSet()
 			.map(link => (link.alias, List(link.page)))

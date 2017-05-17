@@ -44,6 +44,7 @@ object LinkAnalysis extends SparkJob {
 		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))
 		pages.saveToCassandra(keyspace, outputPageToAliasesTablename)
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -84,18 +85,45 @@ object LinkAnalysis extends SparkJob {
 	}
 
 	/**
-	  * Groups link data on the key, counts the number of elements per key and filters entries with an empty field.
-	  * @param links RDD containing the link data in a predefined format
-	  * @return RDD containing the counted and filtered link data
+	  * Computes the rank for the counted occurrences of aliases or pages.
+	  *
+	  * @param countedOccurrences counts for aliases or pages
+	  * @return ranks for the counted occurrences (starting with 1)
 	  */
-	def groupLinks(links: RDD[(String, List[String])]): RDD[(String, Map[String, Int])] = {
+	def rankOccurrences(countedOccurrences: Map[String, Int]): Map[String, RankedValue] = {
+		var rank = 1
+		val ranksMap = countedOccurrences
+			.values
+			.countElements()
+			.toSeq
+			.sortBy(-_._1)
+			.map { case (value, count) =>
+				val rankedValue = (value, rank)
+				rank += count
+				rankedValue
+			}
+			.toMap
+
+		countedOccurrences.mapValues { count =>
+			RankedValue(count, ranksMap(count))
+		}.map(identity)
+	}
+
+	/**
+	  * Groups link data on the key, counts the number of elements per key and filters entries with an empty field.
+	  *
+	  * @param links RDD containing the link data in a predefined format
+	  * @return RDD containing the counted, filtered and ranked link data
+	  */
+	def groupLinks(links: RDD[(String, List[String])]): RDD[(String, Map[String, RankedValue])] = {
 		links
 			.reduceByKey(_ ++ _)
 			.map { case (key, valueList) =>
 				val countedValues = valueList
 					.filter(_.nonEmpty)
 					.countElements()
-				(key, countedValues)
+				val rankedValues = rankOccurrences(countedValues)
+				(key, rankedValues)
 			}.filter(t => t._1.nonEmpty && t._2.nonEmpty)
 	}
 
