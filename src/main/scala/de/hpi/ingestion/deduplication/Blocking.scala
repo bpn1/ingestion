@@ -21,8 +21,8 @@ object Blocking extends SparkJob {
 	configFile = "deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
 		ListBlockingScheme("geo_country_scheme", "geo_country"),
-		ListBlockingScheme("gen_urls_scheme", "gen_urls"),
-		SimpleBlockingScheme("simple_scheme"))
+		ListBlockingScheme("gen_sectors_scheme", "gen_sectors")
+	)
 	// $COVERAGE-OFF$
 	/**
 	  * Loads the Subjects, staged Subjects and the GoldStandard from the Cassandra.
