@@ -9,7 +9,8 @@ CREATE TYPE wikidumps.link (
     alias text,
     page text,
     offset int,
-    context map<text, int>
+    context map<text, int>,
+    article text
 );
 
 CREATE TYPE wikidumps.entitylink (
