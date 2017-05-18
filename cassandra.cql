@@ -208,16 +208,11 @@ CREATE TABLE datalake.object (
     properties_history map<text, frozen<list<frozen<version>>>>
 );
 
-CREATE TABLE datalake.blockingstats (
-    id uuid PRIMARY KEY,
-    comment text,
-    data map<text, int>
-);
-
 CREATE TYPE datalake.blockstats (
     key text,
     numsubjects int,
-    numstaging int
+    numstaging int,
+    precision double
 );
 
 CREATE TABLE datalake.blockingstats (
