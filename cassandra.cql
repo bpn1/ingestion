@@ -23,10 +23,10 @@ CREATE TABLE wikidumps.parsedwikipedia (
     categorylinks frozen<list<frozen<link>>>,
     context map<text, int>,
     disambiguationlinks frozen<list<frozen<link>>>,
-    extendedlinks frozen<list<frozen<link>>>,
     foundaliases list<text>,
     linkswithcontext frozen<list<frozen<link>>>,
     listlinks list<frozen<link>>,
+    rawextendedlinks frozen<list<frozen<extendedlink>>>,
     templatelinks list<frozen<link>>,
     text text,
     textlinks list<frozen<link>>,
@@ -119,6 +119,12 @@ CREATE TABLE wikidumps.dbpedia (
     label text,
     wikipageid text,
     wikidataid text
+);
+
+CREATE TYPE wikidumps.extendedlink (
+    alias text,
+    page map<text, int>,
+    offset int
 );
 
 -- Datalake
