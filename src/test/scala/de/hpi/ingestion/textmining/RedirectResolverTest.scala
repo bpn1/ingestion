@@ -42,8 +42,8 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
 		val emptyRedirectsMap = sc.parallelize(Map[String, String]().toList)
 		val output = RedirectResolver.run(
-			List(unresolvedEntries).toAnyRDD() ++ List(emptyRedirectsMap).toAnyRDD()
-			, sc
+			List(unresolvedEntries).toAnyRDD() ++ List(emptyRedirectsMap).toAnyRDD(),
+			sc
 		)
 		val resolvedEntries = output.head
 			.asInstanceOf[RDD[ParsedWikipediaEntry]]
@@ -61,8 +61,8 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
 		val redirectsMap = sc.parallelize(TestData.redirectDict().toList.map(Redirect.tupled))
 		val resolvedEntries = RedirectResolver.run(
-			List(unresolvedEntries).toAnyRDD() ++ List(redirectsMap).toAnyRDD()
-			, sc
+			List(unresolvedEntries).toAnyRDD() ++ List(redirectsMap).toAnyRDD(),
+			sc
 		)
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
