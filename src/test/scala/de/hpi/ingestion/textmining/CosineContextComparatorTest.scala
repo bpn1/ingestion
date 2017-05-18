@@ -242,6 +242,19 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		featureEntries shouldEqual TestData.featureEntriesSet()
 	}
 
+	they should "be calculated for trie aliases as well" in {
+		val contextTfidf = sc.parallelize(TestData.shortLinkAndAliasContextsTfidfList())
+		val aliasPageProbabilities = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
+		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
+		val featureEntries = CosineContextComparator
+			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.collect
+			.map(_.copy(id = null))
+			.toSet
+		val expected = TestData.featureEntriesWithAliasesSet()
+		featureEntries shouldEqual expected
+	}
+
 	"Extracted feature entries from links with missing pages" should "be empty" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
 		val oldSettings = CosineContextComparator.settings

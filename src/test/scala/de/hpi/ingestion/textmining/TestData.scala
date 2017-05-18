@@ -726,6 +726,24 @@ object TestData {
 		)
 	}
 
+	def shortLinkAndAliasContextsTfidfList(): List[(Link, Map[String, Double])] = {
+		// considered to be retrieved from 7 documents
+		val tf1df1 = 0.845
+		val tf1df2 = 0.544
+		val tf1df3 = 0.368
+		List(
+			(Link("Audi", "Audi", Option(9)), Map("hier" -> tf1df2, "ist" -> tf1df3, "automobilhersteller" -> tf1df1)),
+			(Link("Audi", "Audi", Option(7)), Map("audi" -> tf1df2, "ein" -> tf1df3)),
+			(Link("Brachttal", "Brachttal", Option(55)), Map("ist" -> tf1df3, "ortsteil" -> tf1df1)),
+			(Link("Brachttal", null, Option(13)), Map("tal" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", null, Option(66)), Map("einwohnerzahl" -> tf1df1, "ein" -> tf1df3, "hessen" -> tf1df2)),
+			(Link("Hessen", "Hessen", Option(87)), Map("main-kinzig-kreis" -> tf1df2)),
+			(Link("1377", null, Option(225)), Map("jahr" -> tf1df2)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546)), Map("waldrech" -> tf1df1)),
+			(Link("historisches Jahr", "1377", Option(24)), Map("jahr" -> tf1df2))
+		)
+	}
+
 	def aliasProbabilitiesSet(): Set[(String, (String, Double, Double))] = {
 		Set(
 			("Audi", ("Audi", 0.6666666666666666, 1.0)),
@@ -741,16 +759,31 @@ object TestData {
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
 		Set(
-			FeatureEntry("Audi", Option("Audi"), 0.6666666666666666, 1.0, 0.608944778982726, true, null),
-			FeatureEntry("Audi", Option("Audi"), 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
-			FeatureEntry("Brachttal", Option("Brachttal"), 1.0, 1.0, 0.6107163643669525, true, null),
-			FeatureEntry("Brachttal", Option("Brachttal"), 1.0, 1.0, 0.0, true, null),
-			FeatureEntry("Main-Kinzig-Kreis", Option("Main-Kinzig-Kreis"), 0.5, 1.0, 0.6611213869640233, true, null),
-			FeatureEntry("Hessen", Option("Hessen"), 0.5, 1.0, 0.4531255411026077, true, null),
-			FeatureEntry("1377", Option("1377"), 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", Option("Büdinger Wald"), 0.5, 1.0, 1.0, true, null),
-			FeatureEntry("historisches Jahr", Option("1377"), 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", Option("Audi"), 0.5, 1.0, 0.0, false, null)
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, true, null),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, true, null),
+			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
+			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
+			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
+		)
+	}
+
+	def featureEntriesWithAliasesSet(): Set[FeatureEntry] = {
+		Set(
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, false, null),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, false, null),
+			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
+			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, false, null),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
+			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
 		)
 	}
 
@@ -1913,13 +1946,13 @@ object TestData {
 
 	def classifierFeatureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("alias1", Option("page1"), 0.01, 0.01, 0.1, false),
-			FeatureEntry("alias2", Option("page2"), 0.3, 0.7, 0.9, true),
-			FeatureEntry("alias3", Option("page3"), 0.1, 0.2, 0.3, false),
-			FeatureEntry("alias4", Option("page4"), 0.2, 0.1, 0.2, false),
-			FeatureEntry("alias5", Option("page5"), 0.05, 0.6, 0.7, true),
-			FeatureEntry("alias6", Option("page6"), 0.03, 0.1, 0.3, false),
-			FeatureEntry("alias7", Option("page7"), 0.2, 0.7, 0.6, true))
+			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
+			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, true),
+			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3, false),
+			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2, false),
+			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
+			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
+			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
 	}
 
 	def extendedClassifierFeatureEntries(n: Int): List[FeatureEntry] = {

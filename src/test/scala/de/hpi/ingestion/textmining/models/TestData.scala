@@ -15,11 +15,11 @@ object TestData {
 
 	def featureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("a", Option("b"), 0.1, 0.2, 0.8, true, null),
-			FeatureEntry("c", Option("d"), 0.4, 0.0, 0.7, false, null),
-			FeatureEntry("e", Option("f"), 0.7, 1.0, 0.1, true, null),
-			FeatureEntry("g", Option("h"), 0.8, 0.2, 0.3, false, null),
-			FeatureEntry("i", Option("j"), 0.9, 0.4, 0.7, false, null))
+			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true, null),
+			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false, null),
+			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true, null),
+			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false, null),
+			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false, null))
 	}
 
 	def labeledPoints(): List[LabeledPoint] = {
