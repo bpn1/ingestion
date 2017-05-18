@@ -49,17 +49,7 @@ object TermFrequencyCounter extends SparkJob {
 	  */
 	def extractBagOfWords(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): Bag[String, Int] = {
 		val tokens = tokenizer.process(entry.getText())
-		extractBagOfWords(tokens)
-	}
-
-	/**
-	  * Extracts the stemmed terms of a list of tokens and their relative frequency (between 0.0 and 1.0).
-	  *
-	  * @param tokens list of tokens to be counted
-	  * @return a Bag containing every term and its frequency
-	  */
-	def extractBagOfWords(tokens: List[String]): Bag[String, Int] = {
-		Bag[String, Int](tokens)
+		Bag.extract(tokens)
 	}
 
 	/**
@@ -92,7 +82,7 @@ object TermFrequencyCounter extends SparkJob {
 			val contextEnd = Math.min(aliasIndex + contextSize, tokens.length)
 			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
 			val context = preAliasContext ++ postAliasContext
-			val bag = extractBagOfWords(tokenizer.process(context))
+			val bag = Bag.extract(tokenizer.process(context))
 			link.copy(context = bag.getCounts())
 		}
 		entry.copy(linkswithcontext = contextLinks)

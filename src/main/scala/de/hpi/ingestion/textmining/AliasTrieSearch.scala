@@ -143,7 +143,7 @@ object AliasTrieSearch extends SparkJob {
 		val contextEnd = Math.min(aliasEndIndex + contextSize, text.length)
 		val postAliasContext = text.slice(aliasEndIndex, contextEnd)
 		val context = (preAliasContext ++ postAliasContext).map(_.token)
-		TermFrequencyCounter.extractBagOfWords(contextTokenizer.process(context))
+		Bag.extract(contextTokenizer.process(context))
 	}
 
 	/**

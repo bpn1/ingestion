@@ -90,7 +90,7 @@ object CosineContextComparator extends SparkJob {
 	  * @return RDD of tuples containing the page name and the tfIdfs of every term on that page
 	  */
 	def transformArticleTfs(articles: RDD[ParsedWikipediaEntry]): RDD[(String, Bag[String, Int])] = {
-		articles.map(entry => (entry.title, Bag(entry.context)))
+		articles.map(entry => (entry.title, Bag.extract(entry.context)))
 	}
 
 	/**
@@ -102,7 +102,7 @@ object CosineContextComparator extends SparkJob {
 	def transformLinkContextTfs(articles: RDD[ParsedWikipediaEntry]): RDD[(Link, Bag[String, Int])] = {
 		articles
 			.flatMap(entry => entry.linkswithcontext ++ entry.triealiases.map(_.toLink()))
-			.map(link => (link, Bag(link.context)))
+			.map(link => (link, Bag.extract(link.context)))
 	}
 
 	/**

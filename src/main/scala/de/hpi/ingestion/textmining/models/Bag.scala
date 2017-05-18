@@ -187,4 +187,14 @@ object Bag {
 	def apply[A, B: ClassTag](elems: Map[A, B])(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag(elems)
 	}
+
+	// $COVERAGE-OFF$
+	def extract(tokens: List[String]): Bag[String, Int] = {
+		this.apply(tokens)
+	}
+
+	def extract(context: Map[String, Int]): Bag[String, Int] = {
+		this.apply(context)
+	}
+	// $COVERAGE-ON$
 }

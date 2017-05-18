@@ -1641,7 +1641,7 @@ object TestData {
 		Map(
 			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
 			"Bayern" -> Map("Bayern" -> 1),
-			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1),
+			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1, "1337VW" -> 1),
 			"Zerfall (Album)" -> Map("Zerfall" -> 1)
 		)
 	}
@@ -1657,7 +1657,7 @@ object TestData {
 	def linkExtenderFoundPages(): Map[String, Map[String, Int]] = {
 		Map(
 			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
-			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1)
+			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1, "1337VW" -> 1)
 		)
 	}
 
@@ -1666,7 +1666,8 @@ object TestData {
 			"Audi" -> "Audi",
 			"Audi AG" -> "Audi",
 			"VW" -> "VW",
-			"Volkswagen AG" -> "VW"
+			"Volkswagen AG" -> "VW",
+			"1337VW" -> "VW"
 		)
 	}
 
