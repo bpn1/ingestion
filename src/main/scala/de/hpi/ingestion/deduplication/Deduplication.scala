@@ -62,20 +62,15 @@ object Deduplication extends SparkJob {
 		scoreConfigMap: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]],
 		scale: Int = 1
 	): Double = {
-		val weights = scoreConfigMap
-			.values
-			.flatMap(_.map(_.weight))
-			.sum
-
-		val scores = scoreConfigMap.flatMap { case (attribute, configs) =>
+		val (scores, weights) = scoreConfigMap.flatMap { case (attribute, configs) =>
 			val valueSubject1 = subject1.get(attribute)
 			val valueSubject2 = subject2.get(attribute)
 			configs.collect {
 				case scoreConfig if valueSubject1.nonEmpty && valueSubject2.nonEmpty =>
-					CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
+					(CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig), scoreConfig.weight)
 			}
-		}
-		scores.sum / weights
+		}.unzip
+		scores.sum / weights.sum
 	}
 
 	/**
