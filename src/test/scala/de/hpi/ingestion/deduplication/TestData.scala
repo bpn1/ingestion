@@ -172,12 +172,12 @@ object TestData {
 	def testConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
 		Map(
 			key -> List(
-				ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
-				ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)))
+				ScoreConfig(MongeElkan, 0.8),
+				ScoreConfig(JaroWinkler, 0.7)))
 	}
 
 	def simpleTestConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
-		Map("name" -> List(ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8)))
+		Map("name" -> List(ScoreConfig(MongeElkan, 0.8)))
 	}
 
 	def complexTestConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
