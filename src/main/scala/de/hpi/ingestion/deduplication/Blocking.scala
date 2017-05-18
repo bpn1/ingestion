@@ -20,8 +20,7 @@ object Blocking extends SparkJob {
 	appName = "Blocking"
 	configFile = "deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
-		ListBlockingScheme("geo_country_scheme", "geo_country"),
-		ListBlockingScheme("gen_sectors_scheme", "gen_sectors")
+		SimpleBlockingScheme("simple_scheme")
 	)
 	// $COVERAGE-OFF$
 	/**
@@ -67,7 +66,7 @@ object Blocking extends SparkJob {
 		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().last
 		val comment = args.headOption.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
-		val filterUndefined = this.settings.getOrElse("filterUndefined", "false") == "true"
+		val filterUndefined = true//this.settings.getOrElse("filterUndefined", "false") == "true"
 		val blockEvaluation = List(evaluationBlocking(
 			subjects,
 			staging,
