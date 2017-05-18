@@ -57,7 +57,8 @@ def generate_request(
 
 
 def process_api_response(response):
-    if 0 in response.json()['features']:
+    try:
+        response.json()['features'][0]
         if 'center' in response.json()['features'][0]:
             coordinates = response.json()['features'][0]['center']
         else:
@@ -73,29 +74,12 @@ def process_api_response(response):
         else:
             place_name = ""
 
-        #if 'properties' in response.json()['features'][0]:
-        #    properties = response.json()['features'][0]['properties']
-
-
-            #wikidata = properties[0]['wikidata'] if 'wikidata' in properties else ""
-
-            # Filter for the right type, according https://www.mapbox.com/api-documentation/?language=Python#geocoding
-            #if 'type' in properties:
-            #    kind = properties[0]['type']
-            #else:
-            #    kind = ""
-        #else:
-        wikidata = ""
-        kind = ""
-
         return {
             "coordinates": coordinates,
             "name": name,
             "place_name": place_name,
-            "wikidata": wikidata,
-            "type": kind
         }
-    else:
+    except:
         return None
 
 
@@ -115,8 +99,9 @@ def fire_single_request_to_obtain_coordinates(request_string):
         elif status == "Error":
             print "Error on request " + request_string + "\n"
         else:
-            response = process_api_response(response)
 
+            response = process_api_response(response)
+            print response
         return response
     else:
         return False
@@ -182,9 +167,10 @@ def main():
         request = generate_request(subject.name)
         response = fire_single_request_to_obtain_coordinates(request)
 
-        if response:
-            subject.add_geocode(response.coordinates)
-        print subject.name + " " + subject.coordinates
+        if response is not None:
+            print response
+            subject.add_geocode(response['coordinates'])
+        print subject.name + " ".join(str(i) for i in subject.coordinates)
 
 
 if __name__ == '__main__':
