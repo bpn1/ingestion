@@ -20,39 +20,37 @@
         <attribute>
             <key>name</key>
             <feature>
-                <similarityMeasure>JaroWinkler</similarityMeasure>
-                <weight>1</weight>
-                <scale>1</scale>
-            </feature>
-            <feature>
                 <similarityMeasure>MongeElkan</similarityMeasure>
+                <weight>0.7</weight>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>JaroWinkler</similarityMeasure>
+                <weight>0.5</weight>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
+            <key>gen_urls</key>
+            <feature>
+                <similarityMeasure>ExactMatchString</similarityMeasure>
                 <weight>1</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
         <attribute>
-            <key>geo_country</key>
+            <key>gen_employees</key>
             <feature>
-                <similarityMeasure>ExactMatch</similarityMeasure>
+                <similarityMeasure>RoughlyEqualNumbers</similarityMeasure>
                 <weight>0.5</weight>
-                <scale>1</scale>
-            </feature>
-            <feature>
-                <similarityMeasure>Jaccard</similarityMeasure>
-                <weight>1</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
         <attribute>
-            <key>geo_country</key>
-            <feature>
-                <similarityMeasure>ExactMatch</similarityMeasure>
-                <weight>0.5</weight>
-                <scale>1</scale>
-            </feature>
+            <key>geo_city</key>
             <feature>
                 <similarityMeasure>Jaccard</similarityMeasure>
-                <weight>1</weight>
+                <weight>0.3</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
