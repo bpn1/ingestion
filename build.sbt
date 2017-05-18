@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
 	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.1",
 	"org.scalactic" % "scalactic_2.11" % "3.0.1" % "provided",
 	"org.scalatest" % "scalatest_2.11" % "3.0.1" % "provided",
-	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0" % "provided" excludeAll(
+	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0" % "test" excludeAll(
 		ExclusionRule(organization = "org.scalacheck"), // https://github.com/holdenk/spark-testing-base/issues/170
 		ExclusionRule(organization = "org.scalactic"),
 		ExclusionRule(organization = "org.scalatest")
