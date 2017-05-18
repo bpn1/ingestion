@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining.models
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.textmining.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class ParsedWikipediaEntryTest extends FlatSpec with SharedSparkContext with Matchers {

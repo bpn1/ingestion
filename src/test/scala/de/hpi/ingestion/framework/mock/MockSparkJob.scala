@@ -11,6 +11,7 @@ import scala.collection.mutable.ListBuffer
 class MockSparkJob extends FlatSpec with SparkJob with SharedSparkContext {
 
 	val methodCalls = ListBuffer[String]()
+	val queryCalls = ListBuffer[String]()
 
 	override def sparkContext(): SparkContext = {
 		methodCalls += "sparkContext"
@@ -34,5 +35,10 @@ class MockSparkJob extends FlatSpec with SparkJob with SharedSparkContext {
 
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		methodCalls += "save"
+	}
+
+	override def executeQueries(queries: List[String], sc: SparkContext): Unit = {
+		queryCalls ++= queries
+		methodCalls += "execQ"
 	}
 }
