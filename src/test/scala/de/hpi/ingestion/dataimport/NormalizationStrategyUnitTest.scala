@@ -1,8 +1,15 @@
 package de.hpi.ingestion.dataimport
 
-/**
-  * Created by janehmueller on 18.05.17.
-  */
-class NormalizationStrategyUnitTest {
+import org.scalatest.{FlatSpec, Matchers}
 
+class NormalizationStrategyUnitTest extends FlatSpec with Matchers {
+
+//	"Normalisation config" should "be parsed" in {
+//		val strat = new NormalizationStrategy("categorization_dbpedia.xml")
+//		val config = strat.pa
+//	}
+//	
+//	"Sector" should "be mapped" in {
+//
+//	}
 }
