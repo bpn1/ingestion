@@ -4,18 +4,22 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
 class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with Matchers {
-	val entity = TestData.testEntity()
-
 	"translateToSubject" should "map label, aliases and category correctly" in {
+		val entities = TestData.wikidataEntities()
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping)
-		subject.name shouldEqual entity.label
-		subject.aliases shouldEqual entity.aliases
-		subject.category shouldEqual entity.instancetype
+		val translatedSubjects = entities.map(entity =>
+			(entity, WikiDataDataLakeImport.translateToSubject(entity, version, mapping)))
+		translatedSubjects should not be empty
+		translatedSubjects.foreach { case (entity, subject) =>
+			subject.name shouldEqual entity.label
+			subject.aliases shouldEqual entity.aliases
+			subject.category shouldEqual entity.instancetype
+		}
 	}
 
 	it should "normalize the data attributes" in {
+		val entity = TestData.testEntity()
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping)
@@ -27,6 +31,7 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 	}
 
 	it should "copy all old data attributes" in {
+		val entity = TestData.testEntity()
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping)
