@@ -7,7 +7,7 @@ package de.hpi.ingestion.textmining.models
   * @param page    page this link points to
   * @param offset  character offset of this alias in the plain text of the page it appears in.cq
   * @param context term frequencies of the context of this link
-  *                todo
+  * @param article article from which the link was retrieved
   */
 case class Link(
 	alias: String,

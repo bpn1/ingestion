@@ -153,8 +153,11 @@ object TextNER extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val articlesWithTermFrequencies = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(100))
+		println(s"articles: ${articlesWithTermFrequencies.count}")
 		val documentFrequencies = input(1).asInstanceOf[RDD[DocumentFrequency]]
+		println(s"df: ${documentFrequencies.count}")
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
+		println(s"aliases: ${aliases.count}")
 		val numDocuments = articlesWithTermFrequencies.count()
 
 		val articleTfidf = CosineContextComparator.calculateArticleTfidf(
@@ -162,12 +165,15 @@ object TextNER extends SparkJob {
 			documentFrequencies,
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
+		println(s"articleTfidf: ${articleTfidf.count}")
 
 		val aliasPageProbabilities = CosineContextComparator.computeAliasProbabilities(aliases)
+		println(s"aliasPageProbs: ${aliasPageProbabilities.count}")
 
 		val classifier = modelFunction(sc)
 		val tokenizer = IngestionTokenizer(true, false)
 		val articleTexts = articlesWithTermFrequencies.map(article => (article.title, article.getText()))
+		println(s"articleTexts: ${articleTexts.count}")
 
 		val contextTfidf = calculateTokenContextsTfidf(
 			articleTexts,
@@ -178,11 +184,16 @@ object TextNER extends SparkJob {
 			tokenizer,
 			sc
 		)
+		println(s"contextTfidf: ${contextTfidf.count}")
+
 		val linkFeatureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+		println(s"linkFeatureEntries: ${linkFeatureEntries.count}")
 		val data = linkFeatureEntries
 			.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
+		println(s"data: ${data.count}")
 		val namedEntities = findNamedEntities(data, classifier)
+		println(s"namedEntities: ${namedEntities.count}")
 		List(namedEntities).toAnyRDD()
 	}
 }
