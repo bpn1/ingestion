@@ -6,4 +6,4 @@ package de.hpi.ingestion.textmining.models
   * @param word  the term
   * @param count the number of documents the term appears in
   */
-case class Cooccurrence(entityList: List[String], count: Int)
+case class Cooccurrence(entitylist: List[String], count: Int)

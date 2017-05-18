@@ -15,7 +15,7 @@ object CooccurrenceCounter extends SparkJob {
 	appName = "Cooccurrence Counter"
 	val keyspace = "wikidumps"
 	val inputTablename = "wikipediasentences"
-	val outputTablename = "wikipediaentitycooccurrences"
+	val outputTablename = "wikipediacooccurrences"
 
 	// $COVERAGE-OFF$
 	/**
