@@ -7,6 +7,14 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class TextNERTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Found named entities" should "be empty" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldCCCSettings = CosineContextComparator.settings
+		val oldSettings = TextNER.settings
+		CosineContextComparator.parseConfig()
+		TextNER.parseConfig()
+		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
@@ -19,5 +27,9 @@ class TextNERTest extends FlatSpec with SharedSparkContext with Matchers {
 			.head
 			.collect
 		namedEntities shouldBe empty
+
+		TextNER.settings = oldSettings
+		CosineContextComparator.settings = oldCCCSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 }
