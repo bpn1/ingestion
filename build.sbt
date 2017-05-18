@@ -23,11 +23,7 @@ libraryDependencies ++= Seq(
 	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.1",
 	"org.scalactic" % "scalactic_2.11" % "3.0.1" % "provided",
 	"org.scalatest" % "scalatest_2.11" % "3.0.1" % "provided",
-	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0" % "test" excludeAll(
-		ExclusionRule(organization = "org.scalacheck"), // https://github.com/holdenk/spark-testing-base/issues/170
-		ExclusionRule(organization = "org.scalactic"),
-		ExclusionRule(organization = "org.scalatest")
-	),
+	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0" % "provided",
 	"com.databricks" % "spark-xml_2.11" % "0.4.1",
 	"info.bliki.wiki" % "bliki-core" % "3.1.0" exclude("ch.qos.logback", "logback-classic"),
 	"org.jsoup" % "jsoup" % "1.10.2",
