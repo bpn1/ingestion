@@ -12,7 +12,7 @@ class DBpediaNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 			TestData.unnormalizedSectors,
 			List("default")
 		)
-		val attributes = List("gen_employees", "geo_coords", "geo_country", "geo_city", "gen_sector", "default")
+		val attributes = List("gen_employees", "geo_coords", "geo_country", "geo_city", "gen_sectors", "default")
 		val results = attributes.map(DBpediaNormalizationStrategy(_))
 		val strategies: List[(List[String] => List[String])] = List(
 			DBpediaNormalizationStrategy.normalizeEmployees,
@@ -53,9 +53,9 @@ class DBpediaNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 	}
 
 	"normalizeSector" should "normalize and map the sectors" in {
-		val employeesCount = TestData.unnormalizedEmployees
-		val result = DBpediaNormalizationStrategy.normalizeEmployees(employeesCount)
-		val expected = TestData.normalizedEmployees
+		val sectors = TestData.unnormalizedSectors
+		val result = DBpediaNormalizationStrategy.normalizeSector(sectors)
+		val expected = TestData.normalizedSectors
 		result shouldEqual expected
 	}
 

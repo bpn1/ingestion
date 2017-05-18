@@ -8,7 +8,7 @@ class NormalizationStrategyUnitTest extends FlatSpec with Matchers {
 //		val strat = new NormalizationStrategy("categorization_dbpedia.xml")
 //		val config = strat.pa
 //	}
-//	
+//
 //	"Sector" should "be mapped" in {
 //
 //	}

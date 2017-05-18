@@ -19,11 +19,9 @@ class DataLakeImportImplementationUnitTest extends FlatSpec with Matchers {
 	"normalizeProperties" should "normalize the properties of an entity" in {
 		val entity = TestData.testEntity
 		val mapping = TestData.normalizationMapping
-		val properties = Import.normalizeProperties(entity, mapping)
+		val strategies = TestData.strategyMapping
+		val properties = Import.normalizeProperties(entity, mapping, strategies)
 		val expected = TestData.propertyMapping
 		properties shouldEqual expected
 	}
 }
-
-
-
