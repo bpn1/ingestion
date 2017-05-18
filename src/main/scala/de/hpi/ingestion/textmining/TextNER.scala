@@ -6,6 +6,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.CosineContextComparator.{inputArticlesTablename, inputDocumentFrequenciesTablename, keyspace, linksTable}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.model.RandomForestModel
@@ -32,9 +33,10 @@ object TextNER extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, articlesTablename)
-		val aliases = sc.cassandraTable[Alias](keyspace, aliasesTablename)
-		List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
+		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
+		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
 
 	/**
