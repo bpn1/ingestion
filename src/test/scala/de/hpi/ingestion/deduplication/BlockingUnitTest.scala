@@ -134,7 +134,6 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 
 		Blocking.configFile = "test.xml"
 		Blocking.parseConfig()
-		val expected = TestData.parsedConfig
 		Blocking.settings should not be empty
 
 		Blocking.settings = originalSettings
