@@ -70,40 +70,40 @@ object LinkExtender extends SparkJob {
 		links.foreach(link =>
 			pages.get(link.page).foreach { aliases =>
 				filteredPages(link.page) = aliases
-		})
+			})
 		filteredPages.toMap
 	}
 
 	/**
 	  * Builds trie from given Aliases.
 	  *
-	  * @param aliases   Map of Alias to Page to be used Map(alias -> page)
+	  * @param aliases   Aliases to be used Map(alias -> (page -> alias count))
 	  * @param tokenizer tokenizer to be uses to process Aliases
 	  * @return built trie
 	  */
-	def buildTrieFromAliases(aliases: Map[String, String], tokenizer: IngestionTokenizer): TrieNode = {
+	def buildTrieFromAliases(aliases: Map[String, Map[String, Int]], tokenizer: IngestionTokenizer): TrieNode = {
 		val trie = new TrieNode()
 		aliases.keys.foreach(alias => trie.append(tokenizer.process(alias)))
 		trie
 	}
 
 	/**
-	  * Finds all Aliases in a given text of already linked entities and adds new Links
+	  * Finds all Aliases in a given text of already linked entities and adds new Extended Links
 	  * for all occurrences.
 	  *
 	  * @param entry     Wikipedia entry to be extended
-	  * @param aliases   map of Alias to Page
+	  * @param aliases   map of Alias to Page to alias occurrence Map(alias -> (page -> alias count))
 	  * @param trie      prebuilt trie from Aliases
 	  * @param tokenizer tokenizer to be used to process text
 	  * @return Wikipedia entry with extended Links
 	  */
 	def findAliasOccurrences(
 		entry: ParsedWikipediaEntry,
-		aliases: Map[String, String],
+		aliases: Map[String, Map[String, Int]],
 		trie: TrieNode,
 		tokenizer: IngestionTokenizer
 	): ParsedWikipediaEntry = {
-		val resultList = ListBuffer[Link]()
+		val resultList = ListBuffer[ExtendedLink]()
 		val tokens = tokenizer.processWithOffsets(entry.getText())
 		val text = entry.getText()
 		var i = 0
@@ -116,13 +116,15 @@ object LinkExtender extends SparkJob {
 			if(aliasMatches.nonEmpty) {
 				val longestMatch = aliasMatches.maxBy(_.length)
 				val found = text.substring(longestMatch.head.beginOffset, longestMatch.last.endOffset)
-				val page = aliases(found)
-				val offset = longestMatch.head.beginOffset
-				resultList += Link(found, page, Option(offset))
-				i += longestMatch.length - 1
+				if(aliases.contains(found)) {
+					val pages = aliases(found)
+					val offset = longestMatch.head.beginOffset
+					resultList += ExtendedLink(found, pages, Option(offset))
+					i += longestMatch.length - 1
+				}
 			}
 		}
-		entry.extendedlinks = resultList.toList
+		entry.rawextendedlinks = resultList.toList
 		entry
 	}
 
@@ -135,24 +137,19 @@ object LinkExtender extends SparkJob {
 	def reversePages(
 		pages: Map[String, Map[String, Int]],
 		tokenizer: IngestionTokenizer
-	): Map[String, String] = {
+	): Map[String, Map[String, Int]] = {
 		pages.toList
-			.flatMap(t => t._2.map(kv => (kv._1, kv._2, t._1)))
-			.filter{ case (alias, count, page) =>
+			.flatMap(t => t._2.map(kv => (kv._1, t._1, kv._2)))
+			.filter { case (alias, count, page) =>
 				alias.length != 1 && (alias.charAt(0).isLetter || alias.charAt(0).isDigit)
 			}
 			.groupBy(_._1)
 			.map { case (alias, pageList) =>
-				val page = pageList
-					.reduce { (currentMax, currentAlias) =>
-						val aliasCount = pages(currentAlias._3).values.sum
-						val maxCount = pages(currentMax._3).values.sum
-						val normalizedAliasCount = currentAlias._2.toFloat / aliasCount
-						val normalizedMaxCount = currentMax._2.toFloat / maxCount
-						if(normalizedAliasCount > normalizedMaxCount) currentAlias else currentMax
-				}._3
-				(alias, page)
+				(alias, pageList.map { case (alias, page, count) =>
+					(page, count)
+				}.toMap)
 			}
+			.filter(_._2.nonEmpty)
 	}
 
 	/**
@@ -181,7 +178,6 @@ object LinkExtender extends SparkJob {
 				findAliasOccurrences(entry, aliases, trie, tokenizer)
 			}
 		}, true)
-
 		List(parsedArticlesWithExtendedLinks).toAnyRDD()
 	}
 }

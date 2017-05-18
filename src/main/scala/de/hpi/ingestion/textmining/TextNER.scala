@@ -6,7 +6,8 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.CosineContextComparator.{inputArticlesTablename, inputDocumentFrequenciesTablename, keyspace, linksTable}
+import de.hpi.ingestion.textmining.CosineContextComparator.{calculateDefaultDf, calculateIdf, calculateTfidf,
+transformArticleTfs}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.model.RandomForestModel
@@ -16,11 +17,7 @@ import org.apache.spark.mllib.tree.model.RandomForestModel
   */
 object TextNER extends SparkJob {
 	appName = "Text NER"
-	val keyspace = "wikidumps"
-	val articlesTablename = "parsedwikipedia"
-	val aliasesTablename = "wikipedialinks"
-	var classifierModelPath = "wikipedia_randomforest_model_1494495223381"
-	val contextSize = 20
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	var modelFunction = loadModel _
@@ -33,9 +30,9 @@ object TextNER extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
-		val documentFrequencies = sc.cassandraTable[DocumentFrequency](keyspace, inputDocumentFrequenciesTablename)
-		val aliases = sc.cassandraTable[Alias](keyspace, linksTable)
+		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+		val documentFrequencies = sc.cassandraTable[DocumentFrequency](settings("keyspace"), settings("dfTable"))
+		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
 		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
 
@@ -60,7 +57,7 @@ object TextNER extends SparkJob {
 	  * @return
 	  */
 	def loadModel(sc: SparkContext): RandomForestModel = {
-		RandomForestModel.load(sc, classifierModelPath)
+		RandomForestModel.load(sc, settings("classifierModelPath"))
 	}
 
 	// $COVERAGE-ON$
@@ -96,9 +93,9 @@ object TextNER extends SparkJob {
 		linkCandidates.map { link =>
 			val aliasTokens = tokenizer.onlyTokenize(link.alias)
 			val aliasIndex = tokens.indexOfSlice(aliasTokens)
-			val contextStart = Math.max(aliasIndex - contextSize, 0)
+			val contextStart = Math.max(aliasIndex - settings("contextSize").toInt, 0)
 			val preAliasContext = tokens.slice(contextStart, aliasIndex)
-			val contextEnd = Math.min(aliasIndex + contextSize, tokens.length)
+			val contextEnd = Math.min(aliasIndex + settings("contextSize").toInt, tokens.length)
 			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
 			val context = preAliasContext ++ postAliasContext
 			val bag = TermFrequencyCounter.extractBagOfWords(tokenizer.process(context))
@@ -122,6 +119,7 @@ object TextNER extends SparkJob {
 		numDocuments: Long,
 		documentFrequencyThreshold: Int,
 		tokenizer: IngestionTokenizer,
+		defaultIdf: Double,
 		sc: SparkContext
 	): RDD[(Link, Map[String, Double])] = {
 		val aliasPages = aliases.flatMap(alias => alias.pages.map(page => (alias.alias, page._1)))
@@ -138,13 +136,12 @@ object TextNER extends SparkJob {
 			.flatMap { case ((articleName, tokens), linkCandidates) =>
 				extractTokenContexts(tokens, linkCandidates, tokenizer)
 			}
-			.flatMap(link => CosineContextComparator.joinableTermFrequencies(link, Bag(link.context)))
+			.map(link => (link, Bag(link.context)))
 
 		CosineContextComparator.calculateTfidf(
 			contextTermFrequencies,
-			documentFrequencies,
 			numDocuments,
-			documentFrequencyThreshold)
+			defaultIdf)
 			.reduceByKey(_ ++ _)
 	}
 
@@ -160,11 +157,10 @@ object TextNER extends SparkJob {
 		println(s"aliases: ${aliases.count}")
 		val numDocuments = articlesWithTermFrequencies.count()
 
-		val articleTfidf = CosineContextComparator.calculateArticleTfidf(
-			articlesWithTermFrequencies,
-			documentFrequencies,
-			numDocuments,
-			DocumentFrequencyCounter.leastSignificantDocumentFrequency)
+		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
+		val defaultIdf = calculateIdf(defaultDf, numDocuments)
+		val articleTfs = transformArticleTfs(articlesWithTermFrequencies)
+		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf)
 		println(s"articleTfidf: ${articleTfidf.count}")
 
 		val aliasPageProbabilities = CosineContextComparator.computeAliasProbabilities(aliases)
@@ -182,6 +178,7 @@ object TextNER extends SparkJob {
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency,
 			tokenizer,
+			defaultIdf,
 			sc
 		)
 		println(s"contextTfidf: ${contextTfidf.count}")
