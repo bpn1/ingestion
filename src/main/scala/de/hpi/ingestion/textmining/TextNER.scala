@@ -18,10 +18,12 @@ object TextNER extends SparkJob {
 	val keyspace = "wikidumps"
 	val articlesTablename = "parsedwikipedia"
 	val aliasesTablename = "wikipedialinks"
-	var classifierModel = "wikipedia_randomforest_model_1494495223381"
+	var classifierModelPath = "wikipedia_randomforest_model_1494495223381"
 	val contextSize = 20
 
 	// $COVERAGE-OFF$
+	var modelFunction = loadModel _
+
 	/**
 	  * Loads Wikipedia entries from the Cassandra.
 	  *
@@ -50,38 +52,16 @@ object TextNER extends SparkJob {
 			.saveAsTextFile(s"named_entities_$timestamp")
 	}
 
+	/**
+	  * todo
+	  *
+	  * @return
+	  */
+	def loadModel(sc: SparkContext): RandomForestModel = {
+		RandomForestModel.load(sc, classifierModelPath)
+	}
+
 	// $COVERAGE-ON$
-
-	//	/**
-	//	  * todo
-	//	  *
-	//	  * @param text
-	//	  * @param tokenizer
-	//	  * @return
-	//	  */
-	//	def generateLinkCandidates(
-	//		text: String,
-	//		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
-	//		tokenizer: IngestionTokenizer,
-	//		sc: SparkContext
-	//	): List[LinkCandidate] = {
-	//		val tokens = sc.parallelize(tokenizer.processWithOffsets(text))
-	//		tokens
-	//			.keyBy(_.token)
-	//			.join(aliasPageProbabilities.keyBy(_._1))
-	//
-	//	}
-
-	//	/**
-	//	  * todo
-	//	  *
-	//	  * @return
-	//	  */
-	//	def generateDataPoints(linkCandidates: List[LinkCandidate]): List[(LinkCandidate, LabeledPoint)] = {
-	//		linkCandidates.map { linkCandidate =>
-	//			(linkCandidate, LabeledPoint(0.0, new DenseVector(Array(0, 0, 0))))
-	//		}
-	//	}
 
 	/**
 	  * todo
@@ -90,9 +70,9 @@ object TextNER extends SparkJob {
 	  * @return
 	  */
 	def findNamedEntities(
-		data: List[(Link, LabeledPoint)],
+		data: RDD[(Link, LabeledPoint)],
 		classifier: RandomForestModel
-	): List[Link] = {
+	): RDD[Link] = {
 		data.map { case (linkCandidate, LabeledPoint(label, features)) =>
 			val prediction = classifier.predict(features)
 			(linkCandidate, prediction)
@@ -103,17 +83,14 @@ object TextNER extends SparkJob {
 	/**
 	  * todo
 	  *
-	  * @param text
-	  * @param tokenizer
+	  * @param
 	  * @return
 	  */
-	def extractTokenContexts(text: String, tokenizer: IngestionTokenizer): List[Link] = {
-		val offsetTokens = tokenizer.processWithOffsets(text)
-		val linkCandidates = offsetTokens.map {
-			offsetToken => Link(offsetToken.token, "invalid", Option(offsetToken.beginOffset))
-		}
-		val tokens = offsetTokens.map(_.token)
-
+	def extractTokenContexts(
+		tokens: List[String],
+		linkCandidates: List[Link],
+		tokenizer: IngestionTokenizer
+	): List[Link] = {
 		linkCandidates.map { link =>
 			val aliasTokens = tokenizer.onlyTokenize(link.alias)
 			val aliasIndex = tokens.indexOfSlice(aliasTokens)
@@ -130,28 +107,39 @@ object TextNER extends SparkJob {
 	/**
 	  * todo
 	  *
-	  * @param text                       RDD of parsed Wikipedia articles containing the links and their contexts
+	  * @param articles                   RDD of parsed Wikipedia articles containing the links and their contexts
 	  * @param documentFrequencies        RDD of document frequencies
 	  * @param numDocuments               number of documents that was used to calculate the document frequencies
 	  * @param documentFrequencyThreshold lower threshold for document frequencies
 	  * @return RDD of tuples containing the link and the tfIdfs of ever term in its context
 	  */
 	def calculateTokenContextsTfidf(
-		text: String,
+		articles: RDD[(String, String)],
 		documentFrequencies: RDD[DocumentFrequency],
+		aliases: RDD[Alias],
 		numDocuments: Long,
 		documentFrequencyThreshold: Int,
 		tokenizer: IngestionTokenizer,
 		sc: SparkContext
 	): RDD[(Link, Map[String, Double])] = {
-		val contextTermFrequencies = extractTokenContexts(text, tokenizer)
-			.map(link => (link, Bag(link.context)))
-			.flatMap(t => CosineContextComparator.joinableTermFrequencies(t._1, t._2))
-
-		val contextTermFrequenciesRDD = sc.parallelize(contextTermFrequencies)
+		val aliasPages = aliases.flatMap(alias => alias.pages.map(page => (alias.alias, page._1)))
+		val contextTermFrequencies = articles
+			.flatMap { case (articleName, text) =>
+				val offsetTokens = tokenizer.processWithOffsets(text)
+				val tokens = offsetTokens.map(_.token)
+				offsetTokens.map(offsetToken => (offsetToken.token, (articleName, tokens, offsetToken.beginOffset)))
+			}
+			.join(aliasPages)
+			.map { case (alias, ((articleName, tokens, beginOffset), page)) =>
+				((articleName, tokens), List(Link(alias, page, Option(beginOffset), article = Option(articleName))))
+			}.reduceByKey(_ ++ _)
+			.flatMap { case ((articleName, tokens), linkCandidates) =>
+				extractTokenContexts(tokens, linkCandidates, tokenizer)
+			}
+			.flatMap(link => CosineContextComparator.joinableTermFrequencies(link, Bag(link.context)))
 
 		CosineContextComparator.calculateTfidf(
-			contextTermFrequenciesRDD,
+			contextTermFrequencies,
 			documentFrequencies,
 			numDocuments,
 			documentFrequencyThreshold)
@@ -175,25 +163,24 @@ object TextNER extends SparkJob {
 
 		val aliasPageProbabilities = CosineContextComparator.computeAliasProbabilities(aliases)
 
-		val classifier = RandomForestModel.load(sc, classifierModel)
+		val classifier = modelFunction(sc)
 		val tokenizer = IngestionTokenizer(true, false)
-		val namedEntities = articlesWithTermFrequencies.map { article =>
-			val contextTfidf = calculateTokenContextsTfidf(
-				article.getText(),
-				documentFrequencies,
-				numDocuments,
-				DocumentFrequencyCounter.leastSignificantDocumentFrequency,
-				tokenizer,
-				sc
-			)
-			val linkFeatureEntries = CosineContextComparator
-				.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
-			val data = linkFeatureEntries
-				.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
-				.collect
-				.toList
-			(article.title, findNamedEntities(data, classifier))
-		}
+		val articleTexts = articlesWithTermFrequencies.map(article => (article.title, article.getText()))
+
+		val contextTfidf = calculateTokenContextsTfidf(
+			articleTexts,
+			documentFrequencies,
+			aliases,
+			numDocuments,
+			DocumentFrequencyCounter.leastSignificantDocumentFrequency,
+			tokenizer,
+			sc
+		)
+		val linkFeatureEntries = CosineContextComparator
+			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+		val data = linkFeatureEntries
+			.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
+		val namedEntities = findNamedEntities(data, classifier)
 		List(namedEntities).toAnyRDD()
 	}
 }
