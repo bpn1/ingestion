@@ -97,6 +97,11 @@ CREATE TYPE wikidumps.triealias (
 	context map<text, int>
 );
 
+CREATE TABLE wikidumps.wikipediacooccurrences (
+      entityList frozen<list<text>> PRIMARY KEY,
+      count int
+  );
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,
