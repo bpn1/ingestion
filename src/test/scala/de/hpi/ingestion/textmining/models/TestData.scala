@@ -66,4 +66,55 @@ object TestData {
 			disambiguationlinks = List(Link("Esel", "Esel"))
 		)
 	}
+
+	def edgeCaseExtendedLinks(): List[ExtendedLink] = {
+		List(
+			ExtendedLink("Berlin", Map("Berlin" -> 5), Option(0)),
+			ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1), Option(1)),
+			ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1, "Backfisch" -> 1), Option(2)),
+			ExtendedLink("Berlin", Map("Berlin" -> 5, "Brandenburg" -> 1), Option(3)),
+			ExtendedLink("Berlin", Map("Berlin" -> 5, "Brandenburg" -> 1, "Backfisch" -> 1), Option(4)),
+			ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 2, "Backfisch" -> 1), Option(5)),
+			ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 99, "Backfisch" -> 13), Option(6)),
+			ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 99, "Backfisch" -> 1), Option(7))
+		)
+	}
+
+	def edgeCaseFilteredExtendedLinkPages(): List[Option[String]] = {
+		List(
+			Option("Berlin"),
+			Option("Berlin"),
+			Option("Berlin"),
+			None,
+			None,
+			None,
+			None,
+			None
+		)
+	}
+
+	def extendedLinksParsedWikipediaEntry(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Berlin",
+			Option("Berlin ist cool"),
+			rawextendedlinks = List(
+				ExtendedLink("Berlin", Map("Berlin" -> 5), Option(0)),
+				ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1), Option(1)),
+				ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1, "Backfisch" -> 1), Option(2)),
+				ExtendedLink("Berlin", Map("Berlin" -> 5, "Brandenburg" -> 1), Option(3)),
+				ExtendedLink("Berlin", Map("Berlin" -> 5, "Brandenburg" -> 1, "Backfisch" -> 1), Option(4)),
+				ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 2, "Backfisch" -> 1), Option(5)),
+				ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 99, "Backfisch" -> 13), Option(6)),
+				ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 99, "Backfisch" -> 1), Option(7))
+			)
+		)
+	}
+
+	def edgeCaseExtendedLinksToLinks(): List[Link] = {
+		List(
+			Link("Berlin", "Berlin", Option(0)),
+			Link("Berlin", "Berlin", Option(1)),
+			Link("Berlin", "Berlin", Option(2))
+		)
+	}
 }

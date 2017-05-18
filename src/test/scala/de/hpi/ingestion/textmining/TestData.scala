@@ -1740,57 +1740,6 @@ object TestData {
 		)
 	}
 
-	def edgeCaseExtendedLinks(): List[ExtendedLink] = {
-		List(
-			ExtendedLink("Berlin", Map("Berlin" -> 5), Option(0)),
-			ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1), Option(1)),
-			ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1, "Backfisch" -> 1), Option(2)),
-			ExtendedLink("Berlin", Map("Berlin" -> 5, "Brandenburg" -> 1), Option(3)),
-			ExtendedLink("Berlin", Map("Berlin" -> 5, "Brandenburg" -> 1, "Backfisch" -> 1), Option(4)),
-			ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 2, "Backfisch" -> 1), Option(5)),
-			ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 99, "Backfisch" -> 13), Option(6)),
-			ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 99, "Backfisch" -> 1), Option(7))
-		)
-	}
-
-	def edgeCaseFilteredExtendedLinkPages(): List[Option[String]] = {
-		List(
-			Option("Berlin"),
-			Option("Berlin"),
-			Option("Berlin"),
-			None,
-			None,
-			None,
-			None,
-			None
-		)
-	}
-
-	def extendedLinksParsedWikipediaEntry(): ParsedWikipediaEntry = {
-		ParsedWikipediaEntry(
-			"Berlin",
-			Option("Berlin ist cool"),
-			rawextendedlinks = List(
-				ExtendedLink("Berlin", Map("Berlin" -> 5), Option(0)),
-				ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1), Option(1)),
-				ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1, "Backfisch" -> 1), Option(2)),
-				ExtendedLink("Berlin", Map("Berlin" -> 5, "Brandenburg" -> 1), Option(3)),
-				ExtendedLink("Berlin", Map("Berlin" -> 5, "Brandenburg" -> 1, "Backfisch" -> 1), Option(4)),
-				ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 2, "Backfisch" -> 1), Option(5)),
-				ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 99, "Backfisch" -> 13), Option(6)),
-				ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 99, "Backfisch" -> 1), Option(7))
-			)
-		)
-	}
-
-	def edgeCaseExtendedLinksToLinks(): List[Link] = {
-		List(
-			Link("Berlin", "Berlin", Option(0)),
-			Link("Berlin", "Berlin", Option(1)),
-			Link("Berlin", "Berlin", Option(2))
-		)
-	}
-
 	def featureEntries(): List[FeatureEntry] = {
 		List(
 			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
@@ -1943,23 +1892,6 @@ object TestData {
 
 	def statisticTuples(): List[PrecisionRecallDataTuple] = {
 		List(
-<<<<<<< HEAD
-			("precision", 1.0, 5.0 / 7.0),
-			("precision", 0.0, 0.6),
-			("recall", 1.0, 5.0 / 6.0),
-			("recall", 0.0, 1.0),
-			("fscore with beta 0.5", 1.0, 25.0 / 34.0),
-			("fscore with beta 0.5", 0.0, 0.6521739130434783))
-	}
-
-	def formattedPredictionStatistics(): String = {
-		s"precision\t1.0\t${5.0 / 7.0}" + "\n" +
-			"precision\t0.0\t0.6" + "\n" +
-			s"recall\t1.0\t${5.0 / 6.0}" + "\n" +
-			"recall\t0.0\t1.0" + "\n" +
-			s"fscore with beta 0.5\t1.0\t${25.0 / 34.0}" + "\n" +
-			"fscore with beta 0.5\t0.0\t0.6521739130434783"
-=======
 			PrecisionRecallDataTuple(1.0, 0.4, 1.0, 1.0),
 			PrecisionRecallDataTuple(1.0, 0.6, 0.0, 1.0),
 			PrecisionRecallDataTuple(1.0, 0.6, 0.0, 1.0),
@@ -1989,7 +1921,6 @@ object TestData {
 		maxBins: Int = 32
 	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
 		(simMeasureStats(), Option(randomForestModel()))
->>>>>>> master
 	}
 }
 
