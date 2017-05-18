@@ -8,7 +8,8 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping)
+		val strategies = TestData.strategies
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies)
 		subject.name shouldEqual entity.label
 	}
 
@@ -16,11 +17,14 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping)
+		val strategies = TestData.strategies
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies)
 		subject.properties("id_wikidata") shouldEqual List("Q123")
 		subject.properties("id_wikipedia") shouldEqual List("dbpedia-de:List_von_Autoren")
 		subject.properties("id_dbpedia") shouldEqual List("dbpedia-de:List_von_Autoren")
 		subject.properties("id_viaf") shouldEqual List("X123", "Y123")
+		subject.properties("geo_country") shouldEqual List("Koblenz")
+		subject.properties("gen_employees") shouldEqual List("12", "13")
 		subject.properties shouldNot contain key "id_lccn"
 	}
 
@@ -28,7 +32,8 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping)
+		val strategies = TestData.strategies
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies)
 		subject.properties("testProperty") shouldEqual List("test")
 	}
 
@@ -36,7 +41,8 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
-		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping)
+		val strategies = TestData.strategies
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies)
 		subject.properties("geo_coords") shouldEqual List("52", "100")
 	}
 }

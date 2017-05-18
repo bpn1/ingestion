@@ -1,7 +1,10 @@
 package de.hpi.ingestion.datalake
 
 import java.net.URL
+
+import de.hpi.ingestion.dataimport.NormalizationStrategy
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
+
 import scala.collection.mutable
 
 /**
@@ -9,11 +12,9 @@ import scala.collection.mutable
   * @tparam T
   */
 trait DataLakeImport[T <: DLImportEntity] extends Serializable {
-	val settings = mutable.Map[String, String]()
 	val outputKeyspace = "datalake"
 	val outputTable = "subject_temp"
 	val versionTable = "version"
-
 	/**
 	  * Filters non companies.
 	  *
@@ -30,7 +31,12 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param mapping Map of the attribute renaming schema for the attribute normalization
 	  * @return a new Subject created from the given object
 	  */
-	protected def translateToSubject(entity: T, version: Version, mapping: Map[String, List[String]]): Subject
+	protected def translateToSubject(
+		entity: T,
+		version: Version,
+		mapping: Map[String, List[String]],
+		strategies: Map[String, List[String]]
+	): Subject
 
 	/**
 	  * Parses the normalization config file into a Map.
@@ -56,7 +62,8 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  */
 	protected def normalizeProperties(
 		entity: T,
-		mapping: Map[String, List[String]]
+		mapping: Map[String, List[String]],
+		strategies: Map[String, List[String]]
 	): Map[String, List[String]]
 
 	/**
@@ -65,5 +72,14 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param values attribute values
 	  * @return normalized attribute values
 	  */
-	protected def normalizeAttribute(attribute: String, values: List[String]): List[String]
+	protected def normalizeAttribute(
+		attribute: String,
+		values: List[String],
+		strategies: Map[String, List[String]]
+	): List[String]
 }
+
+import de.hpi.ingestion.datalake.models._
+import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.dataimport.dbpedia.DBpediaDataLakeImport

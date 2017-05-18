@@ -140,7 +140,8 @@ object DBpediaImport extends SparkJob {
 			"wikidataid" -> "owl:sameAs",
 			"label" -> "rdfs:label",
 			"description" -> "dbo:abstract",
-			"instancetype" -> "rdf:type")
+			"instancetype" -> "rdf:type"
+		)
 		val data = propertyData
 			.groupBy(_._1)
 			.mapValues(_.map(_._2).toList)

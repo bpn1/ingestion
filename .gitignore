@@ -16,5 +16,8 @@ target/
 
 *.iml
 
+# Logfiles
+*.log
+
 # Compiled Python
 *.pyc

@@ -46,13 +46,16 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 	}
 
 	"generateStats" should "create a correct computation of precision + recall" in {
+		val oldSettings = SimilarityMeasureEvaluation.settings
+
 		val testData = TestData.testData(sc)
 		val trainingData = TestData.trainingData(sc)
-
+		SimilarityMeasureEvaluation.settings += "buckets" -> "10"
 		val predictionAndLabels = SimilarityMeasureEvaluation.generatePredictionAndLabels(trainingData, testData)
 		val computed = SimilarityMeasureEvaluation.generateStats(predictionAndLabels)
 		val expected = TestData.precisionRecallResults(sc)
+		computed shouldEqual expected
 
-		assertRDDEquals(computed, expected)
+		SimilarityMeasureEvaluation.settings = oldSettings
 	}
 }
