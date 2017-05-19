@@ -50,7 +50,7 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		input
 			.fromAnyRDD[String]()
 			.map(_.map(parseJSON))
@@ -69,7 +69,7 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 		val content = extractString(json, List("content"))
 		val text = content
 			.map(Jsoup.parse)
-			.map(htmlDoc => htmlDoc.head().text() + " " + htmlDoc.body().text())
+			.map(htmlDoc => s"${htmlDoc.head().text()} ${htmlDoc.body().text()}".trim)
 		SpiegelArticle(id, title, text, url)
 	}
 }
