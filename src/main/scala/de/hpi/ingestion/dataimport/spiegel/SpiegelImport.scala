@@ -68,6 +68,7 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 		val title = extractString(json, List("title"))
 		val content = extractString(json, List("content"))
 		val text = content
+			.map(_.replaceAll("&nbsp;", " "))
 			.map(Jsoup.parse)
 			.map(htmlDoc => s"${htmlDoc.head().text()} ${htmlDoc.body().text()}".trim)
 		SpiegelArticle(id, title, text, url)
