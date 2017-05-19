@@ -46,10 +46,38 @@ object SimilarityMeasureEvaluation extends SparkJob {
 
 		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]].map(pair => (pair, 1.0))
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
-		val data = generateStats(predictionAndLabels)
+		//val data = generateStats(predictionAndLabels)
+		val data = generateBuckets(predictionAndLabels)
 		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
 
 		List(sc.parallelize(Seq(stats))).toAnyRDD()
+	}
+
+	def generateBuckets(labeledPoints: RDD[(Double, Double)]): List[PrecisionRecallDataTuple] = {
+		val buckets = this.settings("buckets").toInt
+		val bucketList = List
+			.range(0, buckets + 1)
+			.map(_.toDouble / buckets.toDouble)
+
+		bucketList
+			.map(bucket => (bucket, generatePrecisionRecall(bucket, labeledPoints)))
+			.map { case (threshold, (precision, recall, fMeasure)) =>
+				PrecisionRecallDataTuple(threshold, precision, recall, fMeasure)
+			}
+	}
+
+	def generatePrecisionRecall(
+		threshold: Double,
+		labeledPoints: RDD[(Double, Double)]
+	): (Double, Double, Double) = {
+		val tp = labeledPoints.filter{ case (prediction, label) => prediction >= threshold && label == 1.0}.count()
+		val fp = labeledPoints.filter{ case (prediction, label) => prediction >= threshold && label == 0.0}.count()
+		val fn = labeledPoints.filter{ case (prediction, label) => prediction == 0.0 && label == 1.0}.count()
+
+		val precision = tp.toDouble / (tp + fp).toDouble
+		val recall = tp.toDouble / (tp + fn).toDouble
+		val fMeasure = (2 * recall * precision) / (recall + precision)
+		(precision, recall, fMeasure)
 	}
 
 	/**
@@ -64,7 +92,8 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	): RDD[(Double, Double)] = {
 		training
 			.fullOuterJoin(test)
-			.mapValues {
+			.values
+			.map {
 				// True Positives
 				case (Some(prediction), Some(label)) => (prediction, label)
 				// False Positives
@@ -73,7 +102,6 @@ object SimilarityMeasureEvaluation extends SparkJob {
 				case (None, Some(label)) => (0.0, label)
 				case _ => (-1.0, -1.0)
 			}
-			.values
 	}
 
 	/**
