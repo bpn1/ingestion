@@ -70,6 +70,11 @@ object DBpediaNormalizationStrategy extends Serializable {
 		}.map(_.replaceAll("-", " ")).distinct
 	}
 
+	/**
+	  * Normalizes all other values by default (removing pre- and suffixes and dashes)
+	  * @param values Strings to be normalized
+	  * @return normalized strings
+	  */
 	def normalizeDefault(values: List[String]): List[String] = {
 		values.flatMap {
 			case r"""(.+)${value}\^\^xsd:.+""" => List(value)
