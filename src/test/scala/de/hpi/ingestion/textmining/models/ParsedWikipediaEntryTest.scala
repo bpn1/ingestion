@@ -14,4 +14,9 @@ class ParsedWikipediaEntryTest extends FlatSpec with SharedSparkContext with Mat
 		entry.filterLinks(link => link.alias == link.page)
 		entry shouldEqual TestData.parsedEntryWithFilteredLinks()
 	}
+
+	"Filtered Extended Links" should "be exactly these Links" in {
+		val entry = TestData.extendedLinksParsedWikipediaEntry()
+		entry.extendedlinks() shouldEqual TestData.edgeCaseExtendedLinksToLinks()
+	}
 }
