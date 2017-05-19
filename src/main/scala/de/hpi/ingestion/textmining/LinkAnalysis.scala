@@ -13,11 +13,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
   */
 object LinkAnalysis extends SparkJob {
 	appName = "Link Analysis"
-	val keyspace = "wikidumps"
-	val inputRawTablename = "wikipedia"
-	val inputParsedTablename = "parsedwikipedia"
-	val outputAliasToPagesTablename = "wikipedialinks"
-	val outputPageToAliasesTablename = "wikipediapages"
+	configFile = "textmining.xml"
 	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipedialinks"
 
 	// $COVERAGE-OFF$
@@ -29,7 +25,7 @@ object LinkAnalysis extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputParsedTablename)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		List(articles).toAnyRDD()
 	}
 
@@ -43,8 +39,8 @@ object LinkAnalysis extends SparkJob {
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val aliases = output.head.asInstanceOf[RDD[Alias]]
 		val pages = output(1).asInstanceOf[RDD[Page]]
-		aliases.saveToCassandra(keyspace, outputAliasToPagesTablename, SomeColumns("alias", "pages"))
-		pages.saveToCassandra(keyspace, outputPageToAliasesTablename)
+		aliases.saveToCassandra(settings("keyspace"), settings("linkTable"), SomeColumns("alias", "pages"))
+		pages.saveToCassandra(settings("keyspace"), settings("pageTable"))
 	}
 	// $COVERAGE-ON$
 

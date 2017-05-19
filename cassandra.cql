@@ -12,15 +12,21 @@ CREATE TYPE wikidumps.link (
     context map<text, int>
 );
 
+CREATE TYPE wikidumps.entitylink (
+    alias text,
+    entity text,
+    offset int
+);
+
 CREATE TABLE wikidumps.parsedwikipedia (
     title text PRIMARY KEY,
     categorylinks frozen<list<frozen<link>>>,
     context map<text, int>,
     disambiguationlinks frozen<list<frozen<link>>>,
-    extendedlinks frozen<list<frozen<link>>>,
     foundaliases list<text>,
     linkswithcontext frozen<list<frozen<link>>>,
     listlinks list<frozen<link>>,
+    rawextendedlinks frozen<list<frozen<extendedlink>>>,
     templatelinks list<frozen<link>>,
     text text,
     textlinks list<frozen<link>>,
@@ -54,14 +60,35 @@ CREATE TABLE wikidumps.wikipediatfidf (
     tokens map<text, double>
 );
 
+CREATE TABLE wikidumps.wikipediasentences (
+   articletitle text,
+   articleoffset int,
+   text text,
+   entities frozen<list<frozen<entitylink>>>,
+   PRIMARY KEY (articletitle, articleoffset)
+);
+
 CREATE TABLE wikidumps.featureentries (
-	id uuid PRIMARY KEY,
-	alias text,
-	entity text,
-	prob_link double,
-	prob_entity double,
-	cosine_sim double,
-	correct boolean
+    id uuid PRIMARY KEY,
+    alias text,
+    correct boolean,
+    cosine_sim double,
+    entity text,
+    prob_entity double,
+    prob_link double
+);
+
+CREATE TYPE wikidumps.precisionrecalldatatuple (
+    threshold double,
+    precision double,
+    recall double,
+    fscore double
+);
+
+CREATE TABLE wikidumps.sim_measure_stats (
+    id timeuuid PRIMARY KEY,
+    comment text,
+    data list<frozen<precisionrecalldatatuple>>
 );
 
 CREATE TYPE wikidumps.triealias (
@@ -97,6 +124,12 @@ CREATE TABLE wikidumps.dbpedia (
     label text,
     wikipageid text,
     wikidataid text
+);
+
+CREATE TYPE wikidumps.extendedlink (
+    alias text,
+    page map<text, int>,
+    offset int
 );
 
 -- Datalake
@@ -186,16 +219,11 @@ CREATE TABLE datalake.object (
     properties_history map<text, frozen<list<frozen<version>>>>
 );
 
-CREATE TABLE datalake.blockingstats (
-    id uuid PRIMARY KEY,
-    comment text,
-    data map<text, int>
-);
-
 CREATE TYPE datalake.blockstats (
     key text,
     numsubjects int,
-    numstaging int
+    numstaging int,
+    precision double
 );
 
 CREATE TABLE datalake.blockingstats (

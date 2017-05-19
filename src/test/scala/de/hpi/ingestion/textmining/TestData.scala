@@ -1,15 +1,20 @@
 package de.hpi.ingestion.textmining
 
+
+import java.net.URI
 import java.io._
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
+import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.mllib.tree.configuration.Algo
+import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
 import scala.io.{BufferedSource, Source}
@@ -27,6 +32,15 @@ object TestData {
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen.",
 			"Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.",
 			"Dieser Satz enthält Klammern (evtl. problematisch)."
+		)
+	}
+
+	def uncleanTokenizedSentences(): List[List[String]] = {
+		List(
+			List("This", "is", "a", "test", "sentence."),
+			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal,", "Main-Kinzig-Kreis", "in", "Hessen."),
+			List("Links:", "Audi,", "Brachttal,", "historisches", "Jahr.\nKeine", "Links:", "Hessen,", "Main-Kinzig-Kreis,", "Büdinger", "Wald,", "Backfisch", "und", "nochmal", "Hessen."),
+			List("Dieser", "Satz", "enthält", "Klammern", "(evtl.", "problematisch).")
 		)
 	}
 
@@ -839,7 +853,6 @@ object TestData {
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
-
 	def entryWithStandardWhitespaces(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
@@ -1146,7 +1159,7 @@ object TestData {
 			ParsedWikipediaEntry(
 				"Schwarzer Humor",
 				Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod."""),
-				extendedlinks = List(Link("Hickelkasten", "Hickelkasten", Option(0)))),
+				rawextendedlinks = List(ExtendedLink("Hickelkasten", Map("Hickelkasten" -> 10), Option(0)))),
 			ParsedWikipediaEntry(
 				"Schwarzer Humor",
 				Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod."""),
@@ -1512,19 +1525,19 @@ object TestData {
 
 	def linkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
-			Page("Bayern", Map("Bayern" -> 1)),
-			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
+			Page("Bayern", Map("Bayern" -> 10)),
+			Page("VW", Map("Volkswagen AG" -> 10, "VW" -> 10)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 10))
 		)
 	}
 
 	def linkExtenderPagesMap(): Map[String, Map[String, Int]] = {
 		Map(
-			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
-			"Bayern" -> Map("Bayern" -> 1),
-			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1),
-			"Zerfall (Album)" -> Map("Zerfall" -> 1)
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10),
+			"Bayern" -> Map("Bayern" -> 10),
+			"VW" -> Map("Volkswagen AG" -> 10, "VW" -> 10),
+			"Zerfall (Album)" -> Map("Zerfall" -> 10)
 		)
 	}
 
@@ -1538,17 +1551,17 @@ object TestData {
 
 	def linkExtenderFoundPages(): Map[String, Map[String, Int]] = {
 		Map(
-			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
-			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1)
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10),
+			"VW" -> Map("Volkswagen AG" -> 10, "VW" -> 10)
 		)
 	}
 
-	def linkExtenderFoundAliases(): Map[String, String] = {
+	def linkExtenderFoundAliases(): Map[String, Map[String, Int]] = {
 		Map(
-			"Audi" -> "Audi",
-			"Audi AG" -> "Audi",
-			"VW" -> "VW",
-			"Volkswagen AG" -> "VW"
+			"Audi" -> Map("Audi" -> 10),
+			"Audi AG" -> Map("Audi" -> 10),
+			"VW" -> Map("VW" -> 10),
+			"Volkswagen AG" -> Map("VW" -> 10)
 		)
 	}
 
@@ -1558,11 +1571,11 @@ object TestData {
 				"Audi",
 				Option("Audi ist Audi AG. VW ist Volkswagen AG"),
 				List(Link("VW", "VW", Option(18), Map())),
-				extendedlinks = List(
-					Link("Audi", "Audi", Option(0)),
-					Link("Audi AG", "Audi", Option(9)),
-					Link("VW", "VW", Option(18)),
-					Link("Volkswagen AG", "VW", Option(25))
+				rawextendedlinks = List(
+					ExtendedLink("Audi", Map("Audi" -> 10), Option(0)),
+					ExtendedLink("Audi AG", Map("Audi" -> 10), Option(9)),
+					ExtendedLink("VW", Map("VW" -> 10), Option(18)),
+					ExtendedLink("Volkswagen AG", Map("VW" -> 10), Option(25))
 				)
 			)
 		)
@@ -1596,30 +1609,72 @@ object TestData {
 				Link("Media Broadcast", "Media Broadcast", Option(1906)),
 				Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
 				Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
-				Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2008))
+				Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2117))
 			)
 		)
 	}
 
+	def sentenceList(): List[Sentence] = {
+		List(
+			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				0,
+				"Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg.",
+				List(
+					EntityLink("Hochhaus", "Hochhaus", Option(113)),
+					EntityLink("Postbank", "Postbank", Option(126)),
+					EntityLink("Berliner", "Berlin", Option(190)),
+					EntityLink("Kreuzberg", "Berlin-Kreuzberg", Option(208))
+				)
+			),
+			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				219,
+				"Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig.",
+				List(
+					EntityLink("Frankfurt (Oder)", "Frankfurt (Oder)", Option(246)),
+					EntityLink("Potsdam", "Potsdam", Option(264)),
+					EntityLink("Magdeburg", "Magdeburg", Option(273)),
+					EntityLink("Stettin", "Stettin", Option(287))
+				)
+			),
+			Sentence(
+				"Postbank-Hochhaus (Berlin)",
+				1940,
+				"Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit.",
+				List(
+					EntityLink("Deutsche Funkturm", "Deutsche Funkturm", Option(4)),
+					EntityLink("Deutschen Telekom AG", "Deutsche Telekom", Option(59))
+				)
+			)
+		)
+	}
+
+	def alternativeSentenceList(): List[Sentence] = {
+		List(
+			Sentence("Audi",0,"Audi ist Audi AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Audi AG","Audi",Some(9)))),
+			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))
+		)
+	}
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
-			Page("VW", Map("Volkswagen AG" -> 2, "VW" -> 2)),
-			Page("Hochhaus", Map("Hochhaus" -> 2, "Gebäude" -> 1)),
-			Page("Postbank", Map("Postbank" -> 2)),
-			Page("Berlin", Map("Berlin" -> 2, "(" -> 1, "Berliner" -> 2)),
-			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 2)),
-			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 2)),
-			Page("Potsdam", Map("Potsdam" -> 2)),
-			Page("Magdeburg", Map("Magdeburg" -> 2)),
-			Page("Stettin", Map("Stettin" -> 2)),
-			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 2)),
-			Page("New York City", Map("New York." -> 2)),
-			Page("Bronze", Map("Bronze" -> 2)),
-			Page("Media Broadcast", Map("Media Broadcast" -> 2)),
-			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 2, "DFMG" -> 11)),
-			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 2)),
-			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 2))
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
+			Page("VW", Map("Volkswagen AG" -> 10, "VW" -> 10)),
+			Page("Hochhaus", Map("Hochhaus" -> 10, "Gebäude" -> 10)),
+			Page("Postbank", Map("Postbank" -> 10)),
+			Page("Berlin", Map("Berlin" -> 10, "(" -> 10, "Berliner" -> 10)),
+			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 10)),
+			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 10)),
+			Page("Potsdam", Map("Potsdam" -> 10)),
+			Page("Magdeburg", Map("Magdeburg" -> 10)),
+			Page("Stettin", Map("Stettin" -> 10)),
+			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 10)),
+			Page("New York City", Map("New York." -> 10)),
+			Page("Bronze", Map("Bronze" -> 10)),
+			Page("Media Broadcast", Map("Media Broadcast" -> 10)),
+			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 10, "DFMG" -> 10)),
+			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 10)),
+			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 10))
 		)
 	}
 
@@ -1645,45 +1700,63 @@ object TestData {
 					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
 					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
 				),
-				extendedlinks = List(
-					Link("Berlin", "Berlin", Option(53)),
-					Link("Berlin", "Berlin", Option(97)),
-					Link("Hochhaus", "Hochhaus", Option(113)),
-					Link("Postbank", "Postbank", Option(126)),
-					Link("Berliner", "Berlin", Option(190)),
-					Link("Kreuzberg", "Berlin-Kreuzberg", Option(208)),
-					Link("Berlin", "Berlin", Option(241)),
-					Link("Berlin", "Berlin", Option(457)),
-					Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(465)),
-					Link("Potsdam", "Potsdam", Option(483)),
-					Link("Magdeburg", "Magdeburg", Option(492)),
-					Link("Stettin", "Stettin", Option(506)),
-					Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
-					Link("Berlin", "Berlin", Option(673)),
-					Link("Gebäude", "Hochhaus", Option(818)),
-					Link("Postbank", "Postbank", Option(834)),
-					Link("Gebäude", "Hochhaus", Option(852)),
-					Link("Postbank", "Postbank", Option(925)),
-					Link("Hochhaus", "Hochhaus", Option(943)),
-					Link("Gebäude", "Hochhaus", Option(1093)),
-					Link("Berlin", "Berlin", Option(1131)),
-					Link("Berlin", "Berlin", Option(1270)),
-					Link("Hochhaus", "Hochhaus", Option(1282)),
-					Link("New York.", "New York City", Option(1472)),
-					Link("Gebäude", "Hochhaus", Option(1489)),
-					Link("Gebäude", "Hochhaus", Option(1639)),
-					Link("Hochhaus", "Hochhaus", Option(1708)),
-					Link("Bronze", "Bronze", Option(1800)),
-					Link("Media Broadcast", "Media Broadcast", Option(1906)),
-					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
-					Link("DFMG", "Deutsche Funkturm", Option(1963)),
-					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
-					Link("Berliner", "Berlin", Option(2052)),
-					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
+				rawextendedlinks = List(
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(53)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(97)),
+					ExtendedLink("Hochhaus", Map("Hochhaus" -> 10), Option(113)),
+					ExtendedLink("Postbank", Map("Postbank" -> 10), Option(126)),
+					ExtendedLink("Berliner", Map("Berlin" -> 10), Option(190)),
+					ExtendedLink("Kreuzberg", Map("Berlin-Kreuzberg" -> 10), Option(208)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(241)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(457)),
+					ExtendedLink("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 10), Option(465)),
+					ExtendedLink("Potsdam", Map("Potsdam" -> 10), Option(483)),
+					ExtendedLink("Magdeburg", Map("Magdeburg" -> 10), Option(492)),
+					ExtendedLink("Stettin", Map("Stettin" -> 10), Option(506)),
+					ExtendedLink("Deutschen Post der DDR", Map("Deutsche Post (DDR)" -> 10), Option(620)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(673)),
+					ExtendedLink("Gebäude", Map("Hochhaus" -> 10), Option(818)),
+					ExtendedLink("Postbank", Map("Postbank" -> 10), Option(834)),
+					ExtendedLink("Gebäude", Map("Hochhaus" -> 10), Option(852)),
+					ExtendedLink("Postbank", Map("Postbank" -> 10), Option(925)),
+					ExtendedLink("Hochhaus", Map("Hochhaus" -> 10), Option(943)),
+					ExtendedLink("Gebäude", Map("Hochhaus" -> 10), Option(1093)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(1131)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(1270)),
+					ExtendedLink("Hochhaus", Map("Hochhaus" -> 10), Option(1282)),
+					ExtendedLink("New York.", Map("New York City" -> 10), Option(1472)),
+					ExtendedLink("Gebäude", Map("Hochhaus" -> 10), Option(1489)),
+					ExtendedLink("Gebäude", Map("Hochhaus" -> 10), Option(1639)),
+					ExtendedLink("Hochhaus", Map("Hochhaus" -> 10), Option(1708)),
+					ExtendedLink("Bronze", Map("Bronze" -> 10), Option(1800)),
+					ExtendedLink("Media Broadcast", Map("Media Broadcast" -> 10), Option(1906)),
+					ExtendedLink("Deutsche Funkturm", Map("Deutsche Funkturm" -> 10), Option(1944)),
+					ExtendedLink("DFMG", Map("Deutsche Funkturm" -> 10), Option(1963)),
+					ExtendedLink("Deutschen Telekom AG", Map("Deutsche Telekom" -> 10), Option(1999)),
+					ExtendedLink("Berliner", Map("Berlin" -> 10), Option(2052)),
+					ExtendedLink("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 10), Option(2217))
 				)
 			)
 		)
-  }
+	}
+
+	def featureEntries(): List[FeatureEntry] = {
+		List(
+			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
+			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
+			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true),
+			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false),
+			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false))
+	}
+
+	def labeledPoints(): List[LabeledPoint] = {
+		List(
+			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
+			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
+			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
+			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
+			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
+	}
 
 	def textLinkHtml(): List[Element] = {
 		val elements = Source.fromURL(getClass.getResource("/textmining/textlinks.html"))
@@ -1795,6 +1868,10 @@ object TestData {
 			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
 	}
 
+	def extendedClassifierFeatureEntries(n: Int): List[FeatureEntry] = {
+		(0 until n).flatMap(t => classifierFeatureEntries()).toList
+	}
+
 	def labeledPredictions(): List[(Double, Double)] = {
 		List(
 			(1.0, 1.0),
@@ -1809,23 +1886,41 @@ object TestData {
 			(0.0, 0.0))
 	}
 
-	def predictionStatistics(): List[(String, Double, Double)] = {
-		List(
-			("precision", 1.0, 5.0/7.0),
-			("precision", 0.0, 0.6),
-			("recall", 1.0, 5.0/6.0),
-			("recall", 0.0, 1.0),
-			("fscore with beta 0.5", 1.0, 25.0/34.0),
-			("fscore with beta 0.5", 0.0, 0.6521739130434783))
+	def predictionStatistics(): PrecisionRecallDataTuple = {
+		PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0)
 	}
 
-	def formattedPredictionStatistics(): String = {
-		s"precision\t1.0\t${5.0/7.0}" + "\n" +
-			"precision\t0.0\t0.6" + "\n" +
-			s"recall\t1.0\t${5.0/6.0}" + "\n" +
-			"recall\t0.0\t1.0" + "\n" +
-			s"fscore with beta 0.5\t1.0\t${25.0/34.0}" + "\n" +
-			"fscore with beta 0.5\t0.0\t0.6521739130434783"
+	def statisticTuples(): List[PrecisionRecallDataTuple] = {
+		List(
+			PrecisionRecallDataTuple(1.0, 0.4, 1.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.6, 0.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.6, 0.0, 1.0),
+			PrecisionRecallDataTuple(1.0, 0.4, 0.0, 0.0)
+		)
+	}
+
+	def averagedStatisticTuples(): PrecisionRecallDataTuple = {
+		PrecisionRecallDataTuple(1.0, 0.5, 0.25, 0.75)
+	}
+
+	def simMeasureStats(): SimilarityMeasureStats = {
+		SimilarityMeasureStats(null, List(averagedStatisticTuples()), Option("Test comment"))
+	}
+
+	def randomForestModel(): RandomForestModel = {
+		val node = new Node(0, new Predict(0.0, 1.0), 0.0, true, None, None, None, None)
+		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
+		new RandomForestModel(Algo.Classification, Array(dtmodel))
+	}
+
+	def testCrossValidationMethod(
+		data: RDD[LabeledPoint],
+		numFolds: Int = 3,
+		numTrees: Int = 5,
+		maxDepth: Int = 4,
+		maxBins: Int = 32
+	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
+		(simMeasureStats(), Option(randomForestModel()))
 	}
 }
 

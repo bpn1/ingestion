@@ -5,7 +5,7 @@ import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.similarity._
-import de.hpi.ingestion.framework.{Configurable, SparkJob}
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -15,7 +15,7 @@ import scala.xml.Node
   * Compares two groups of Subjects by first blocking with multiple Blocking Schemes, then compares all Subjects
   * in every block and filters all pairs below a given threshold.
   */
-object Deduplication extends SparkJob with Configurable {
+object Deduplication extends SparkJob {
 	appName = "Deduplication"
 	configFile = "deduplication.xml"
 	val blockingSchemes = List[BlockingScheme](SimpleBlockingScheme("simple_scheme"))
@@ -34,11 +34,6 @@ object Deduplication extends SparkJob with Configurable {
 			.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 	// $COVERAGE-ON$
-
-	override def assertConditions(args: Array[String]): Boolean = {
-		parseConfig()
-		super.assertConditions(args)
-	}
 
 	/**
 	  * Blocks the Subjects and finds duplicates between them between the Subjects and staged Subjects.
@@ -67,20 +62,15 @@ object Deduplication extends SparkJob with Configurable {
 		scoreConfigMap: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]],
 		scale: Int = 1
 	): Double = {
-		val weights = scoreConfigMap
-			.values
-			.flatMap(_.map(_.weight))
-			.sum
-
-		val scores = scoreConfigMap.flatMap { case (attribute, configs) =>
+		val (scores, weights) = scoreConfigMap.flatMap { case (attribute, configs) =>
 			val valueSubject1 = subject1.get(attribute)
 			val valueSubject2 = subject2.get(attribute)
 			configs.collect {
 				case scoreConfig if valueSubject1.nonEmpty && valueSubject2.nonEmpty =>
-					CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig)
+					(CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig), scoreConfig.weight)
 			}
-		}
-		scores.sum / weights
+		}.unzip
+		scores.sum / weights.sum
 	}
 
 	/**

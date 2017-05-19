@@ -43,29 +43,47 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	}
 
 	"Link contexts" should "be exactly these bag of words" in {
+		val oldSettings = TermFrequencyCounter.settings
+		TermFrequencyCounter.parseConfig()
+
 		val linkContexts = TestData.parsedWikipediaTestSet()
 			.map(TermFrequencyCounter.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
 		    .flatMap(_.linkswithcontext)
 		val expectedContexts = TestData.linksWithContextsTestSet()
 		linkContexts shouldEqual expectedContexts
+
+		TermFrequencyCounter.settings = oldSettings
 	}
 
 	"Articles with link context" should "contain exactly these link contexts" in {
+		val oldSettings = TermFrequencyCounter.settings
+		TermFrequencyCounter.parseConfig()
+
 		val expectedLinks = TestData.linksWithContextsTestSet()
 		val enrichedLinks = TestData.parsedWikipediaTestSet()
 			.map(TermFrequencyCounter.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
 			.flatMap(_.linkswithcontext)
 		enrichedLinks shouldEqual expectedLinks
+
+		TermFrequencyCounter.settings = oldSettings
 	}
 
 	they should "be exactly these articles" in {
+		val oldSettings = TermFrequencyCounter.settings
+		TermFrequencyCounter.parseConfig()
+
 		val enrichedLinkArticles = TestData.parsedWikipediaTestSet()
 			.map(TermFrequencyCounter.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
 		val expectedArticles = TestData.articlesWithLinkContextsSet()
 		enrichedLinkArticles shouldEqual expectedArticles
+
+		TermFrequencyCounter.settings = oldSettings
 	}
 
 	"Articles without any context" should "be fully enriched with article and link contexts" in {
+		val oldSettings = TermFrequencyCounter.settings
+		TermFrequencyCounter.parseConfig()
+
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val enrichedArticles = TermFrequencyCounter
 			.run(List(articles).toAnyRDD(), sc, Array("CleanCoreNLPTokenizer", "true", "true"))
@@ -75,5 +93,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 			.toSet
 		val expectedArticles = TestData.articlesWithCompleteContexts()
 		enrichedArticles shouldEqual expectedArticles
+
+		TermFrequencyCounter.settings = oldSettings
 	}
 }

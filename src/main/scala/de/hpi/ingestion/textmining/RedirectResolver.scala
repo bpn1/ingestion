@@ -14,9 +14,7 @@ import de.hpi.ingestion.implicits.TupleImplicits._
   */
 object RedirectResolver extends SparkJob {
 	appName = "Redirect Resolver"
-	val parsedWikipediaTablename = "parsedwikipedia"
-	val redirectTablename = "redirects"
-	val keyspace = "wikidumps"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -27,8 +25,9 @@ object RedirectResolver extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, parsedWikipediaTablename)
-		val redirects = sc.cassandraTable[Redirect](keyspace, redirectTablename)
+
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+		val redirects = sc.cassandraTable[Redirect](settings("keyspace"), settings("redirectTable"))
 		List(articles).toAnyRDD() ++ List(redirects).toAnyRDD()
 	}
 
@@ -44,10 +43,9 @@ object RedirectResolver extends SparkJob {
 		output
 			.head
 			.asInstanceOf[RDD[ParsedWikipediaEntry]]
-			.saveToCassandra(keyspace, parsedWikipediaTablename)
+			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 		val redirects = output(1).asInstanceOf[RDD[Redirect]]
-		if(!redirects.isEmpty()) redirects.saveToCassandra(keyspace, redirectTablename)
-
+		if(!redirects.isEmpty()) redirects.saveToCassandra(settings("keyspace"), settings("redirectTable"))
 	}
 
 	// $COVERAGE-ON$

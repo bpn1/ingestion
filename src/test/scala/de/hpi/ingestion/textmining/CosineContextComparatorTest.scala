@@ -24,6 +24,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	they should "be read and calculated from a file" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TestData.docfreqStream("smalldocfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -32,11 +34,14 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val expectedIdfs = TestData.inverseDocumentFrequenciesSet().toMap
 		idfMap shouldEqual expectedIdfs
 
+		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	"Tf-idf contexts for parsed Wikipedia articles with complete document frequencies" should "not be empty" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -53,11 +58,14 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		contexts should not be empty
 		contexts.foreach(context => context._2 should not be empty)
 
+		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	they should "be exactly these contexts" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq2") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -77,12 +85,15 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.toSet
 		contexts shouldEqual TestData.tfidfContextsSet()
 
+		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	"Tf-idf contexts for parsed Wikipedia articles with missing document frequencies" should
 		"be exactly these contexts" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq2") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -100,11 +111,14 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.toSet
 		contexts shouldEqual TestData.tfidfContextsSet()
 
+		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	"Tf-Idf of link contexts" should "exist" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -121,11 +135,14 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.collect
 		linkContextValues should not be empty
 
+		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	they should "be exactly these tf-Idf values (disregarding the contexts)" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -147,6 +164,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val expectedTfidf = TestData.linkContextsTfidf()
 		linkContextValues shouldBe expectedTfidf
 
+		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
@@ -198,6 +216,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Extracted feature entries from links with missing pages" should "be empty" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -211,11 +231,14 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.collect
 		featureEntries shouldBe empty
 
+		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	"Extracted feature entries from links with existing pages" should "not be empty" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -229,11 +252,14 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.collect
 		featureEntries should not be empty
 
+		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	they should "be the same amount as links" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -247,6 +273,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.collect
 		val linkCount = articles.flatMap(_.allLinks()).count
 		featureEntries.length shouldBe linkCount
+
+		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
