@@ -104,6 +104,11 @@ CREATE TABLE wikidumps.spiegel (
     url text
 );
 
+CREATE TABLE wikidumps.redirects (
+	alias text PRIMARY KEY,
+	page text
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,
