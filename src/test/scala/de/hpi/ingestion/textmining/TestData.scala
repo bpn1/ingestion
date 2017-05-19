@@ -1159,7 +1159,7 @@ object TestData {
 			ParsedWikipediaEntry(
 				"Schwarzer Humor",
 				Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod."""),
-				extendedlinks = List(Link("Hickelkasten", "Hickelkasten", Option(0)))),
+				rawextendedlinks = List(ExtendedLink("Hickelkasten", Map("Hickelkasten" -> 10), Option(0)))),
 			ParsedWikipediaEntry(
 				"Schwarzer Humor",
 				Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod."""),
@@ -1525,19 +1525,19 @@ object TestData {
 
 	def linkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1)),
-			Page("Bayern", Map("Bayern" -> 1)),
-			Page("VW", Map("Volkswagen AG" -> 1, "VW" -> 1)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 1))
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
+			Page("Bayern", Map("Bayern" -> 10)),
+			Page("VW", Map("Volkswagen AG" -> 10, "VW" -> 10)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 10))
 		)
 	}
 
 	def linkExtenderPagesMap(): Map[String, Map[String, Int]] = {
 		Map(
-			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
-			"Bayern" -> Map("Bayern" -> 1),
-			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1),
-			"Zerfall (Album)" -> Map("Zerfall" -> 1)
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10),
+			"Bayern" -> Map("Bayern" -> 10),
+			"VW" -> Map("Volkswagen AG" -> 10, "VW" -> 10),
+			"Zerfall (Album)" -> Map("Zerfall" -> 10)
 		)
 	}
 
@@ -1551,17 +1551,17 @@ object TestData {
 
 	def linkExtenderFoundPages(): Map[String, Map[String, Int]] = {
 		Map(
-			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 1),
-			"VW" -> Map("Volkswagen AG" -> 1, "VW" -> 1)
+			"Audi" -> Map("Audi AG" -> 10, "Audi" -> 10),
+			"VW" -> Map("Volkswagen AG" -> 10, "VW" -> 10)
 		)
 	}
 
-	def linkExtenderFoundAliases(): Map[String, String] = {
+	def linkExtenderFoundAliases(): Map[String, Map[String, Int]] = {
 		Map(
-			"Audi" -> "Audi",
-			"Audi AG" -> "Audi",
-			"VW" -> "VW",
-			"Volkswagen AG" -> "VW"
+			"Audi" -> Map("Audi" -> 10),
+			"Audi AG" -> Map("Audi" -> 10),
+			"VW" -> Map("VW" -> 10),
+			"Volkswagen AG" -> Map("VW" -> 10)
 		)
 	}
 
@@ -1571,11 +1571,11 @@ object TestData {
 				"Audi",
 				Option("Audi ist Audi AG. VW ist Volkswagen AG"),
 				List(Link("VW", "VW", Option(18), Map())),
-				extendedlinks = List(
-					Link("Audi", "Audi", Option(0)),
-					Link("Audi AG", "Audi", Option(9)),
-					Link("VW", "VW", Option(18)),
-					Link("Volkswagen AG", "VW", Option(25))
+				rawextendedlinks = List(
+					ExtendedLink("Audi", Map("Audi" -> 10), Option(0)),
+					ExtendedLink("Audi AG", Map("Audi" -> 10), Option(9)),
+					ExtendedLink("VW", Map("VW" -> 10), Option(18)),
+					ExtendedLink("Volkswagen AG", Map("VW" -> 10), Option(25))
 				)
 			)
 		)
@@ -1658,23 +1658,23 @@ object TestData {
 	}
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
-			Page("VW", Map("Volkswagen AG" -> 2, "VW" -> 2)),
-			Page("Hochhaus", Map("Hochhaus" -> 2, "Gebäude" -> 1)),
-			Page("Postbank", Map("Postbank" -> 2)),
-			Page("Berlin", Map("Berlin" -> 2, "(" -> 1, "Berliner" -> 2)),
-			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 2)),
-			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 2)),
-			Page("Potsdam", Map("Potsdam" -> 2)),
-			Page("Magdeburg", Map("Magdeburg" -> 2)),
-			Page("Stettin", Map("Stettin" -> 2)),
-			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 2)),
-			Page("New York City", Map("New York." -> 2)),
-			Page("Bronze", Map("Bronze" -> 2)),
-			Page("Media Broadcast", Map("Media Broadcast" -> 2)),
-			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 2, "DFMG" -> 11)),
-			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 2)),
-			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 2))
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
+			Page("VW", Map("Volkswagen AG" -> 10, "VW" -> 10)),
+			Page("Hochhaus", Map("Hochhaus" -> 10, "Gebäude" -> 10)),
+			Page("Postbank", Map("Postbank" -> 10)),
+			Page("Berlin", Map("Berlin" -> 10, "(" -> 10, "Berliner" -> 10)),
+			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 10)),
+			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 10)),
+			Page("Potsdam", Map("Potsdam" -> 10)),
+			Page("Magdeburg", Map("Magdeburg" -> 10)),
+			Page("Stettin", Map("Stettin" -> 10)),
+			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 10)),
+			Page("New York City", Map("New York." -> 10)),
+			Page("Bronze", Map("Bronze" -> 10)),
+			Page("Media Broadcast", Map("Media Broadcast" -> 10)),
+			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 10, "DFMG" -> 10)),
+			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 10)),
+			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 10))
 		)
 	}
 
@@ -1700,41 +1700,41 @@ object TestData {
 					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
 					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
 				),
-				extendedlinks = List(
-					Link("Berlin", "Berlin", Option(53)),
-					Link("Berlin", "Berlin", Option(97)),
-					Link("Hochhaus", "Hochhaus", Option(113)),
-					Link("Postbank", "Postbank", Option(126)),
-					Link("Berliner", "Berlin", Option(190)),
-					Link("Kreuzberg", "Berlin-Kreuzberg", Option(208)),
-					Link("Berlin", "Berlin", Option(241)),
-					Link("Berlin", "Berlin", Option(457)),
-					Link("Frankfurt (Oder)", "Frankfurt (Oder)", Option(465)),
-					Link("Potsdam", "Potsdam", Option(483)),
-					Link("Magdeburg", "Magdeburg", Option(492)),
-					Link("Stettin", "Stettin", Option(506)),
-					Link("Deutschen Post der DDR", "Deutsche Post (DDR)", Option(620)),
-					Link("Berlin", "Berlin", Option(673)),
-					Link("Gebäude", "Hochhaus", Option(818)),
-					Link("Postbank", "Postbank", Option(834)),
-					Link("Gebäude", "Hochhaus", Option(852)),
-					Link("Postbank", "Postbank", Option(925)),
-					Link("Hochhaus", "Hochhaus", Option(943)),
-					Link("Gebäude", "Hochhaus", Option(1093)),
-					Link("Berlin", "Berlin", Option(1131)),
-					Link("Berlin", "Berlin", Option(1270)),
-					Link("Hochhaus", "Hochhaus", Option(1282)),
-					Link("New York.", "New York City", Option(1472)),
-					Link("Gebäude", "Hochhaus", Option(1489)),
-					Link("Gebäude", "Hochhaus", Option(1639)),
-					Link("Hochhaus", "Hochhaus", Option(1708)),
-					Link("Bronze", "Bronze", Option(1800)),
-					Link("Media Broadcast", "Media Broadcast", Option(1906)),
-					Link("Deutsche Funkturm", "Deutsche Funkturm", Option(1944)),
-					Link("DFMG", "Deutsche Funkturm", Option(1963)),
-					Link("Deutschen Telekom AG", "Deutsche Telekom", Option(1999)),
-					Link("Berliner", "Berlin", Option(2052)),
-					Link("Masashi \"Jumbo\" Ozaki", "Masashi \"Jumbo\" Ozaki", Option(2217))
+				rawextendedlinks = List(
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(53)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(97)),
+					ExtendedLink("Hochhaus", Map("Hochhaus" -> 10), Option(113)),
+					ExtendedLink("Postbank", Map("Postbank" -> 10), Option(126)),
+					ExtendedLink("Berliner", Map("Berlin" -> 10), Option(190)),
+					ExtendedLink("Kreuzberg", Map("Berlin-Kreuzberg" -> 10), Option(208)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(241)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(457)),
+					ExtendedLink("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 10), Option(465)),
+					ExtendedLink("Potsdam", Map("Potsdam" -> 10), Option(483)),
+					ExtendedLink("Magdeburg", Map("Magdeburg" -> 10), Option(492)),
+					ExtendedLink("Stettin", Map("Stettin" -> 10), Option(506)),
+					ExtendedLink("Deutschen Post der DDR", Map("Deutsche Post (DDR)" -> 10), Option(620)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(673)),
+					ExtendedLink("Gebäude", Map("Hochhaus" -> 10), Option(818)),
+					ExtendedLink("Postbank", Map("Postbank" -> 10), Option(834)),
+					ExtendedLink("Gebäude", Map("Hochhaus" -> 10), Option(852)),
+					ExtendedLink("Postbank", Map("Postbank" -> 10), Option(925)),
+					ExtendedLink("Hochhaus", Map("Hochhaus" -> 10), Option(943)),
+					ExtendedLink("Gebäude", Map("Hochhaus" -> 10), Option(1093)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(1131)),
+					ExtendedLink("Berlin", Map("Berlin" -> 10), Option(1270)),
+					ExtendedLink("Hochhaus", Map("Hochhaus" -> 10), Option(1282)),
+					ExtendedLink("New York.", Map("New York City" -> 10), Option(1472)),
+					ExtendedLink("Gebäude", Map("Hochhaus" -> 10), Option(1489)),
+					ExtendedLink("Gebäude", Map("Hochhaus" -> 10), Option(1639)),
+					ExtendedLink("Hochhaus", Map("Hochhaus" -> 10), Option(1708)),
+					ExtendedLink("Bronze", Map("Bronze" -> 10), Option(1800)),
+					ExtendedLink("Media Broadcast", Map("Media Broadcast" -> 10), Option(1906)),
+					ExtendedLink("Deutsche Funkturm", Map("Deutsche Funkturm" -> 10), Option(1944)),
+					ExtendedLink("DFMG", Map("Deutsche Funkturm" -> 10), Option(1963)),
+					ExtendedLink("Deutschen Telekom AG", Map("Deutsche Telekom" -> 10), Option(1999)),
+					ExtendedLink("Berliner", Map("Berlin" -> 10), Option(2052)),
+					ExtendedLink("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 10), Option(2217))
 				)
 			)
 		)

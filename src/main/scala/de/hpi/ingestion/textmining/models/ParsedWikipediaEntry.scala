@@ -13,8 +13,8 @@ package de.hpi.ingestion.textmining.models
   * @param disambiguationlinks all links on this page if this page is a disambiguation page
   * @param linkswithcontext    all textlinks containing the term frequencies of their context
   * @param context             term frequencies of this articles plain text
-  * @param extendedlinks       all occurrences of aliases of other links in this article
   * @param triealiases         the longest aliases found by the trie with their offset and context
+  * @param rawextendedlinks    all occurrences of aliases of other links in this article
   */
 case class ParsedWikipediaEntry(
 	title: String,
@@ -27,8 +27,8 @@ case class ParsedWikipediaEntry(
 	var disambiguationlinks: List[Link] = Nil,
 	var linkswithcontext: List[Link] = Nil,
 	var context: Map[String, Int] = Map[String, Int](),
-	var extendedlinks: List[Link] = Nil,
-	var triealiases: List[TrieAlias] = Nil
+	var triealiases: List[TrieAlias] = Nil,
+	var rawextendedlinks: List[ExtendedLink] = Nil
 ) {
 	def setText(t: String): Unit = text = Option(t)
 
@@ -40,7 +40,7 @@ case class ParsedWikipediaEntry(
 	  * @return all links
 	  */
 	def allLinks(): List[Link] = {
-		textlinks ++ templatelinks ++ categorylinks ++ listlinks ++ disambiguationlinks ++ extendedlinks
+		textlinks ++ templatelinks ++ categorylinks ++ listlinks ++ disambiguationlinks ++ extendedlinks()
 	}
 
 	/**
@@ -54,6 +54,20 @@ case class ParsedWikipediaEntry(
 		categorylinks = categorylinks.filter(filterFunction)
 		disambiguationlinks = disambiguationlinks.filter(filterFunction)
 		listlinks = listlinks.filter(filterFunction)
-		extendedlinks = extendedlinks.filter(filterFunction)
 	}
+
+	/**
+	  * Filters and parsed Extended Links to Links
+	  * @return List of parsed Links
+	  */
+	def extendedlinks(): List[Link] = {
+		rawextendedlinks
+			.map(t => (t, t.filterExtendedLink(1, 0.1)))
+			.collect {
+				case (t, Some(page)) => (t, page)
+			}.map { case (exLink, page) =>
+				Link(exLink.alias, page, exLink.offset)
+			}
+	}
+
 }
