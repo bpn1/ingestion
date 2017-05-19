@@ -13,7 +13,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 	  */
 	def normalizeCoords(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""([-+]?[0-9]+\.?[0-9]*)${lat};([-+]?[0-9]+\.?[0-9]*)${long}""" => List(lat, long)
+			case r"""([-+]?[0-9]+\.?[0-9]*)$lat;([-+]?[0-9]+\.?[0-9]*)$long""" => List(s"$lat;$long")
 			case _ => None
 		}
 	}
@@ -25,8 +25,8 @@ object WikiDataNormalizationStrategy extends Serializable {
 	  */
 	def normalizeCountry(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"Q[0-9]+" => None
-			case other => List(other)
+			case r"""([A-Za-zÄäÖöÜüß\-_]*)$country""" => List(country)
+			case _ => None
 		}
 	}
 
@@ -37,8 +37,8 @@ object WikiDataNormalizationStrategy extends Serializable {
 	  */
 	def normalizeSector(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"Q[0-9]+" => None
-			case other => List(other)
+			case r"""([A-Za-zÄäÖöÜüß\-_]*)$sector""" => List(sector)
+			case _ => None
 		}
 	}
 

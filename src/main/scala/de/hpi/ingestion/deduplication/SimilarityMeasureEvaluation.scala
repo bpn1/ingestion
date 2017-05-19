@@ -8,7 +8,6 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, PrecisionRecallDataTuple, SimilarityMeasureStats}
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import scala.xml.Node
 
 object SimilarityMeasureEvaluation extends SparkJob {
 	appName = "SimilarityMeasureEvaluation"
