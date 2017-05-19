@@ -9,11 +9,10 @@ class SimpleBlockingScheme extends BlockingScheme {
 	tag = "SimpleBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
 		subject.name.map { name =>
-			List(name.substring(0, Math.min(3, name.length)))
+			List(name.substring(0, Math.min(5, name.length)))
 		}.getOrElse(List(undefinedValue))
 	}
 }
-
 /**
   * Companion object adding an easy to use constructor via apply.
   */
