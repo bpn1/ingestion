@@ -1,9 +1,10 @@
 package de.hpi.ingestion.textmining
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
+import de.hpi.ingestion.textmining.models.{ParsedWikipediaEntry, Redirect}
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.apache.spark.rdd.RDD
 
 class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"All redirects in an entry" should "be resolved" in {
@@ -37,9 +38,32 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 		redirectDict shouldEqual expectedDict
 	}
 
-	"Redirect resolver" should "resolve all redirects" in {
+	"Redirect resolver" should "resolve all redirects with self found redirects" in {
 		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
-		val resolvedEntries = RedirectResolver.run(List(unresolvedEntries).toAnyRDD(), sc)
+		val emptyRedirectsMap = sc.parallelize(Map[String, String]().toList)
+		val output = RedirectResolver.run(
+			List(unresolvedEntries).toAnyRDD() ++ List(emptyRedirectsMap).toAnyRDD(),
+			sc
+		)
+		val resolvedEntries = output.head
+			.asInstanceOf[RDD[ParsedWikipediaEntry]]
+		val redirects = output(1).asInstanceOf[RDD[Redirect]]
+
+		val expectedEntries = sc.parallelize(TestData.parsedEntriesWithResolvedRedirects().toList)
+		val expectedRedirects = sc.parallelize(
+			TestData.redirectDict().map(Redirect.tupled).toList
+		)
+		assertRDDEquals(resolvedEntries, expectedEntries)
+		assertRDDEquals(redirects, expectedRedirects)
+	}
+
+	"Redirect resolver" should "resolve all redirects with given redirects" in {
+		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
+		val redirectsMap = sc.parallelize(TestData.redirectDict().toList.map(Redirect.tupled))
+		val resolvedEntries = RedirectResolver.run(
+			List(unresolvedEntries).toAnyRDD() ++ List(redirectsMap).toAnyRDD(),
+			sc
+		)
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
 		val expectedEntries = sc.parallelize(TestData.parsedEntriesWithResolvedRedirects().toList)
