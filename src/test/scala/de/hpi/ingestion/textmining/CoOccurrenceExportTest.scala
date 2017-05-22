@@ -8,7 +8,7 @@ class CoOccurrenceExportTest extends FlatSpec with Matchers with SharedSparkCont
 
 	"Nodes and Edges" should "be extracted" in {
 		val input = List(sc.parallelize(TestData.exportCooccurrences())).toAnyRDD()
-		val List(nodes, edges) = CoOccurrenceExport.run(input, sc).fromAnyRDD[String]().map(_.collect.toList)
+		val List(nodes, edges) = CoOccurrenceExport.run(input, sc).fromAnyRDD[String]().map(_.collect.toSet)
 		val expectedNodes = TestData.cooccurrenceNodes()
 		val expectedEdges = TestData.cooccurrenceEdges()
 		nodes shouldEqual expectedNodes
