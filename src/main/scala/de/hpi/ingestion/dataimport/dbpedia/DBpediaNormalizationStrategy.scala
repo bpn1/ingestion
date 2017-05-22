@@ -30,7 +30,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" => List(country)
 			case r"""([A-Za-zÄäÖöÜüß\-]{3,})${country}@de \.""" => List(country)
 			case _ => None
-		}.map(_.replaceAll("_", " ").replaceAll("-", " ")).distinct
+		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
 
 	/**
@@ -67,7 +67,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case r"""dbpedia-de:(.+)${city}""" => List(city)
 			case r"""(.+)${city}@de \.""" => List(city)
 			case other => List(other)
-		}.map(_.replaceAll("-", " ")).distinct
+		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
 
 	/**
@@ -81,7 +81,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case r"""(.+)${value}@de \.""" => List(value)
 			case r"""dbpedia-de:(.+)${value}""" => List(value)
 			case other => List(other)
-		}.map(_.replaceAll("-", " ")).distinct
+		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
 
 	/**
