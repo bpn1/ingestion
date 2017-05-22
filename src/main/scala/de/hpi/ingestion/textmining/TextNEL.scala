@@ -57,7 +57,7 @@ object TextNEL extends SparkJob {
 	  * @return
 	  */
 	def loadModel(sc: SparkContext): RandomForestModel = {
-		RandomForestModel.load(sc, settings("classifierModelPath"))
+		RandomForestModel.load(sc, settings("classifierModel"))
 	}
 
 	// $COVERAGE-ON$
@@ -149,30 +149,21 @@ object TextNEL extends SparkJob {
 	  * todo
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val oldCCCSettings = CosineContextComparator.settings
-		CosineContextComparator.parseConfig()
-
 		val articlesWithTermFrequencies = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(100))
-		println(s"AAAAA articles: ${articlesWithTermFrequencies.count}")
 		val documentFrequencies = input(1).asInstanceOf[RDD[DocumentFrequency]]
-		println(s"AAAAA df: ${documentFrequencies.count}")
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
-		println(s"aliases: ${aliases.count}")
 		val numDocuments = articlesWithTermFrequencies.count()
 
 		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 		val defaultIdf = calculateIdf(defaultDf, numDocuments)
 		val articleTfs = transformArticleTfs(articlesWithTermFrequencies)
 		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf)
-		println(s"AAAAA articleTfidf: ${articleTfidf.count}")
 
 		val aliasPageProbabilities = CosineContextComparator.computeAliasProbabilities(aliases)
-		println(s"AAAAA aliasPageProbs: ${aliasPageProbabilities.count}")
 
 		val classifier = modelFunction(sc)
 		val tokenizer = IngestionTokenizer(true, false)
 		val articleTexts = articlesWithTermFrequencies.map(article => (article.title, article.getText()))
-		println(s"AAAAA articleTexts: ${articleTexts.count}")
 
 		val contextTfidf = calculateTokenContextsTfidf(
 			articleTexts,
@@ -184,18 +175,12 @@ object TextNEL extends SparkJob {
 			defaultIdf,
 			sc
 		)
-		println(s"AAAAA contextTfidf: ${contextTfidf.count}")
 
 		val linkFeatureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
-		println(s"AAAAA linkFeatureEntries: ${linkFeatureEntries.count}")
 		val data = linkFeatureEntries
 			.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
-		println(s"AAAAA data: ${data.count}")
 		val namedEntities = findNamedEntities(data, classifier)
-		println(s"AAAAA namedEntities: ${namedEntities.count}")
-
-		CosineContextComparator.settings = oldCCCSettings
 
 		List(namedEntities).toAnyRDD()
 	}

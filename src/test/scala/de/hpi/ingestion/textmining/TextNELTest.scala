@@ -8,10 +8,6 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Found named entities" should "be empty" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldCCCSettings = CosineContextComparator.settings
-		val oldSettings = TextNEL.settings
-		CosineContextComparator.parseConfig()
-		TextNEL.parseConfig()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
 
@@ -28,8 +24,6 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			.collect
 		namedEntities shouldBe empty
 
-		TextNEL.settings = oldSettings
-		CosineContextComparator.settings = oldCCCSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 }
