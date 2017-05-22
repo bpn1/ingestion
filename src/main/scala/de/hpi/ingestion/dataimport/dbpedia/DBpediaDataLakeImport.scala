@@ -66,7 +66,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		if (normalizedProperties.contains("geo_coords_lat") && normalizedProperties.contains("geo_coords_long")) {
 			properties("geo_coords") = normalizedProperties("geo_coords_lat")
 				.zip(normalizedProperties("geo_coords_long"))
-				.map { case (lat, long) => s"$lat;$long"}
+				.map {case (lat, long) => s"$lat;$long"}
 		}
 
 		sm.addProperties(properties.toMap)
