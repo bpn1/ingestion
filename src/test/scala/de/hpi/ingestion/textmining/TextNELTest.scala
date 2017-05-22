@@ -4,6 +4,8 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.textmining.models._
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.jsoup.Jsoup
+import scala.util.matching.Regex
 
 class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Found named entities" should "be empty (due to empty classifier model)" in {
@@ -33,5 +35,35 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val links = sc.parallelize(TestData.linksWithArticleAnnotation().toList)
 		val articlesWithLinks = TextNEL.generateArticlesWithLinks(articles, links)
 		articlesWithLinks should not be empty
+	}
+
+	they should "contain html links" in {
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+			.map(article => Article(article.title, article.getText()))
+		val links = sc.parallelize(TestData.linksWithArticleAnnotation().toList)
+		val anchorRegex = new Regex("<a href=\".+?\">.+?<\\/a>")
+		TextNEL.generateArticlesWithLinks(articles, links)
+			.map(_.text)
+			.collect
+			.foreach(text => anchorRegex.findFirstIn(text) should not be empty)
+	}
+
+	they should "retain the original text" in {
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+			.map(article => Article(article.title, article.getText()))
+		val links = sc.parallelize(TestData.linksWithArticleAnnotation().toList)
+		val originalTexts = articles
+			.map(_.text)
+			.collect
+			.toSet
+		val texts = TextNEL.generateArticlesWithLinks(articles, links)
+			.map { article =>
+				// Escape newlines with an improbable string. Otherwise Jsoup will replace them with spaces.
+				val escapedNewlines = Jsoup.parse(article.text.replaceAll("\n", "#EscapedNewline")).body.text
+				escapedNewlines.replaceAll("#EscapedNewline", "\n")
+			}
+			.collect
+			.toSet
+		originalTexts should contain allElementsOf texts
 	}
 }

@@ -158,7 +158,20 @@ object TextNEL extends SparkJob {
 	  * @return
 	  */
 	def generateArticleWithLinks(title: String, text: String, links: List[Link]): Article = {
-		Article(title, text)
+		var html = ""
+		var processedCharacters = 0
+		links
+			.sortBy(_.offset)
+			.foreach { link =>
+				html += text.substring(processedCharacters, link.offset.get)
+				processedCharacters = link.offset.get
+				html += "<a href=\"" + link.page + "\">"
+				html += text.substring(processedCharacters, processedCharacters + link.alias.length)
+				processedCharacters += link.alias.length
+				html += "</a>"
+			}
+		html += text.substring(processedCharacters, text.length)
+		Article(title, html)
 	}
 
 	/**
