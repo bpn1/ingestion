@@ -13,24 +13,24 @@
       <statsTable>deduplicationstats</statsTable>
     </settings>
     <simMeasurements>
-      <item>
-        <attribute>name</attribute>
-        <similartyMeasure>MongeElkan</similartyMeasure>
-        <weight>0.8</weight>
-        <scale>1</scale>
-      </item>
-      <item>
-        <attribute>name</attribute>
-        <similartyMeasure>JaroWinkler</similartyMeasure>
-        <weight>0.7</weight>
-        <scale>1</scale>
-      </item>
-      <item>
-        <attribute>name</attribute>
-        <similartyMeasure>ExactMatchString</similartyMeasure>
-        <weight>0.2</weight>
-        <scale>1</scale>
-      </item>
+        <feature>
+            <attribute>name</attribute>
+            <similartyMeasure>MongeElkan</similartyMeasure>
+            <weight>0.8</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>name</attribute>
+            <similartyMeasure>JaroWinkler</similartyMeasure>
+            <weight>0.7</weight>
+            <scale>1</scale>
+        </feature>
+        <feature>
+            <attribute>name</attribute>
+            <similartyMeasure>ExactMatchString</similartyMeasure>
+            <weight>0.2</weight>
+            <scale>1</scale>
+        </feature>
     </simMeasurements>
-  </deduplication>
+</config>
 
