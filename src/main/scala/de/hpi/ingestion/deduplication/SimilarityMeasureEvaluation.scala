@@ -84,34 +84,34 @@ object SimilarityMeasureEvaluation extends SparkJob {
 		(implicit buckets: List[Double]): List[PrecisionRecallDataTuple] = {
 		val bag = labeledPoints.map { case (prediction, label) =>
 			val bucketLabel = bucket(prediction)
-			val key = s"${label.toString};$bucketLabel"
+			val key = s"$label;$bucketLabel"
 			Bag(key -> 1)
 		}.reduce(_ ++ _).getCounts()
 
 		buckets.map { bucket =>
-			val tp = bag.filterKeys { key =>
-				val Array(label, bucketLabel) = key.split(';')
-				(label == "1.0") && (bucketLabel.toDouble >= bucket)
-			}.values.sum
+			val positiveNegativeCount = bag
+				.toList
+				.map { case (key, value) =>
+					val Array(label, bucketLabel) = key.split(';')
+					val positiveOrNegative = if(bucketLabel.toDouble >= bucket) "p" else "n"
+					val trueOrFalse = if((label == "1.0") == (positiveOrNegative == "p")) "t" else "f"
+					(s"$trueOrFalse$positiveOrNegative", value)
+				}.groupBy(_._1)
+				.mapValues(_.map(_._2).sum)
+				.map(identity)
 
-			val fp = bag.filterKeys { key =>
-				val Array(label, bucketLabel) = key.split(';')
-				(label == "0.0") && (bucketLabel.toDouble >= bucket)
-			}.values.sum
-
-			val fn = bag.filterKeys { key =>
-				val Array(label, bucketLabel) = key.split(';')
-				(label == "1.0") && (bucketLabel.toDouble < bucket)
-			}.values.sum
+			val tp = positiveNegativeCount.getOrElse("tp", 0)
+			val fp = positiveNegativeCount.getOrElse("fp", 0)
+			val fn = positiveNegativeCount.getOrElse("fn", 0)
 
 			val precision = tp.toDouble / (tp + fp).toDouble
 			val recall = tp.toDouble / (tp + fn).toDouble
 			val fMeasure = (2 * recall * precision) / (recall + precision)
 			PrecisionRecallDataTuple(
 				bucket,
-				if (precision.isNaN) 0.0 else precision,
+				if(precision.isNaN) 0.0 else precision,
 				recall,
-				if (fMeasure.isNaN) 0.0 else fMeasure
+				if(fMeasure.isNaN) 0.0 else fMeasure
 			)
 		}
 	}
