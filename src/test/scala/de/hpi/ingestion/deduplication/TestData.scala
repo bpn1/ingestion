@@ -14,6 +14,17 @@ import org.apache.spark.rdd.RDD
 // scalastyle:off number.of.methods
 object TestData {
 	val idList = List.fill(8)(UUID.randomUUID())
+
+	def bucketsList: Map[Int, List[Double]] = Map(
+		10 -> List(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0),
+		5 -> List(0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+	)
+
+	def testScores: List[Map[Double, Double]] = List(
+		Map(0.5 -> 0.5, 0.79 -> 0.7),
+		Map(0.5 -> 0.4, 0.79 -> 0.6)
+	)
+
 	def testData(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
 		sc.parallelize(Seq(
 			((idList.head, idList(1)), 1.0),
@@ -32,16 +43,6 @@ object TestData {
 		))
 	}
 
-	def precisionRecallResults(sc: SparkContext) : List[PrecisionRecallDataTuple] = {
-		List(
-			PrecisionRecallDataTuple(0.0, 0.6666666666666666, 1, 0.8),
-			PrecisionRecallDataTuple(0.5, 0.5, 0.5, 0.5),
-			PrecisionRecallDataTuple(0.6, 0.6666666666666666, 0.5, 0.5714285714285715),
-			PrecisionRecallDataTuple(0.7, 1, 0.5, 0.6666666666666666),
-			PrecisionRecallDataTuple(0.8, 1, 0.25, 0.4)
-		)
-	}
-
 	def truePositives(sc: SparkContext): RDD[(Double, Double)] = {
 		sc.parallelize(List((0.7, 1.0), (0.8, 1.0)))
 	}
@@ -53,6 +54,24 @@ object TestData {
 	def falseNegatives(sc: SparkContext): RDD[(Double, Double)] = {
 		sc.parallelize(List.fill(2)((0: Double, 1: Double)))
 	}
+
+	def labeledPoints(sc: SparkContext): RDD[(Double, Double)] = {
+		truePositives(sc).union(falsePositives(sc)).union(falseNegatives(sc))
+	}
+
+	def precisionRecallResults: List[PrecisionRecallDataTuple] = List(
+		PrecisionRecallDataTuple(0.0,0.6666666666666666,1.0,0.8),
+		PrecisionRecallDataTuple(0.1,0.5,0.5,0.5),
+		PrecisionRecallDataTuple(0.2,0.5,0.5,0.5),
+		PrecisionRecallDataTuple(0.3,0.5,0.5,0.5),
+		PrecisionRecallDataTuple(0.4,0.5,0.5,0.5),
+		PrecisionRecallDataTuple(0.5,0.5,0.5,0.5),
+		PrecisionRecallDataTuple(0.6,0.6666666666666666,0.5,0.5714285714285715),
+		PrecisionRecallDataTuple(0.7,1.0,0.5,0.6666666666666666),
+		PrecisionRecallDataTuple(0.8,1.0,0.25,0.4),
+		PrecisionRecallDataTuple(0.9,0.0,0.0,0.0),
+		PrecisionRecallDataTuple(1.0,0.0,0.0,0.0)
+	)
 
 	val dbpediaList = List(
 		Subject(
