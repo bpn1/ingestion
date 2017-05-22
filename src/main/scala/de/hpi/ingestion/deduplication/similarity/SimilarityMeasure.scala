@@ -32,7 +32,7 @@ object SimilarityMeasure {
 		"N-Gram" -> NGram,
 		"Overlap" -> Overlap,
 		"EuclidianDistance" -> EuclidianDistance,
-		"RoughlyEqualNumbers" -> RoughlyEqualNumbers
+		"RelativeNumbersSimilarity" -> RelativeNumbersSimilarity
 	)
 
 	/**

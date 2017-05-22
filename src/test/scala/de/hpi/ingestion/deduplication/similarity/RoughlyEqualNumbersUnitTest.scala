@@ -3,14 +3,14 @@ package de.hpi.ingestion.deduplication.similarity
 import de.hpi.ingestion.deduplication.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
-class RoughlyEqualNumbersUnitTest extends FlatSpec with Matchers {
+class RelativeNumbersSimilarityUnitTest extends FlatSpec with Matchers {
 	"compare" should "calculate the similarity of two numbers" in {
 		val subjects = TestData.testSubjects
-		val computedScore1 = RoughlyEqualNumbers.compare(
+		val computedScore1 = RelativeNumbersSimilarity.compare(
 			subjects.head.properties("gen_income").head,
 			subjects(1).properties("gen_income").head
 		)
-		val computedScore2 = RoughlyEqualNumbers.compare(
+		val computedScore2 = RelativeNumbersSimilarity.compare(
 			subjects(2).properties("gen_income").head,
 			subjects(3).properties("gen_income").head
 		)

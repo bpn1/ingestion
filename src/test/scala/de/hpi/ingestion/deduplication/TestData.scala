@@ -185,7 +185,7 @@ object TestData {
 			"name" -> List(ScoreConfig(MongeElkan, 0.8), ScoreConfig(JaroWinkler, 0.7)),
 			"geo_city" -> List(ScoreConfig(Jaccard, 1)),
 			"geo_coords" -> List(ScoreConfig(EuclidianDistance, 1)),
-			"gen_income" -> List(ScoreConfig(RoughlyEqualNumbers, 1))
+			"gen_income" -> List(ScoreConfig(RelativeNumbersSimilarity, 1))
 		)
 	}
 
@@ -200,7 +200,7 @@ object TestData {
 		MongeElkan.compare(subject.name.get, staging.name.get) * 0.8,
 		JaroWinkler.compare(subject.name.get, staging.name.get) * 0.7,
 		Jaccard.compare("Berlin", "Berlin"),
-		RoughlyEqualNumbers.compare("1234", "12")
+		RelativeNumbersSimilarity.compare("1234", "12")
 	).sum / (0.8 + 0.7 + 1 + 1)
 
 	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String], scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]): Double = {
