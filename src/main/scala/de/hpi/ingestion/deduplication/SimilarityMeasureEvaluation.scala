@@ -56,9 +56,9 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	  * @return List of Doubles defining the buckets
 	  */
 	def generateBuckets(size: Int): List[Double] = {
-		List
-			.range(0, size + 1)
+		(0 to size)
 			.map(_.toDouble / size.toDouble)
+			.toList
 	}
 
 	/**
@@ -68,10 +68,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	  * @return The bucket containing the score
 	  */
 	def bucket(score: Double)(implicit buckets: List[Double]): Double = {
-		buckets
-			.map(_ - score)
-			.takeWhile(_ <= 0)
-			.last + score
+		(score * buckets.size).toInt / buckets.size.toDouble
 	}
 
 	/**
@@ -129,14 +126,13 @@ object SimilarityMeasureEvaluation extends SparkJob {
 		training
 			.fullOuterJoin(test)
 			.values
-			.map {
+			.collect {
 				// True Positives
 				case (Some(prediction), Some(label)) => (prediction, label)
 				// False Positives
 				case (Some(prediction), None) => (prediction, 0.0)
 				// False negatives
 				case (None, Some(label)) => (0.0, label)
-				case _ => (-1.0, -1.0)
 			}
 	}
 }
