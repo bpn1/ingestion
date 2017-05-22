@@ -1925,19 +1925,19 @@ object TestData {
 
 	def exportCooccurrences(): List[Cooccurrence] = {
 		List(
-			Cooccurrence(List("e 1", "e 2", "e 3"), 5),
+			Cooccurrence(List("e 1", "e\" 2", "e 3"), 5),
 			Cooccurrence(List("e 1", "d 2"), 2))
 	}
 
 	def cooccurrenceNodes(): Set[String] = {
-		Set("\"e 1\"", "\"e 2\"", "\"e 3\"", "\"d 2\"")
+		Set("\"e 1\"", "\"e\\\" 2\"", "\"e 3\"", "\"d 2\"")
 	}
 
 	def cooccurrenceEdges(): Set[String] = {
 		Set(
-			"\"e 1\",5,\"e 2\",CO_OCCURRENCE",
+			"\"e 1\",5,\"e\\\" 2\",CO_OCCURRENCE",
 			"\"e 1\",5,\"e 3\",CO_OCCURRENCE",
-			"\"e 2\",5,\"e 3\",CO_OCCURRENCE",
+			"\"e\\\" 2\",5,\"e 3\",CO_OCCURRENCE",
 			"\"e 1\",2,\"d 2\",CO_OCCURRENCE")
 	}
 }

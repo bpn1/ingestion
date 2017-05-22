@@ -52,11 +52,15 @@ object CoOccurrenceExport extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]().head
-		val nodes = cooccurrences
+		val cleanedCooccurrences = cooccurrences.map { occurrence =>
+			val cleanedEntities = occurrence.entitylist.map(_.replaceAll("\"", "\\\\\""))
+			occurrence.copy(entitylist = cleanedEntities)
+		}
+		val nodes = cleanedCooccurrences
 			.flatMap(_.entitylist)
 			.distinct
 			.map(node => s"${quote}${node}${quote}")
-		val edges = cooccurrences.flatMap { case Cooccurrence(entities, count) =>
+		val edges = cleanedCooccurrences.flatMap { case Cooccurrence(entities, count) =>
 			entities.asymSquare().map { case (start, end) =>
 				s"${quote}${start}${quote},${count},${quote}${end}${quote},CO_OCCURRENCE"
 			}
