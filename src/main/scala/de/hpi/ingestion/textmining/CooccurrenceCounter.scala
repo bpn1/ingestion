@@ -13,9 +13,7 @@ import org.apache.spark.rdd.RDD
   */
 object CooccurrenceCounter extends SparkJob {
 	appName = "Cooccurrence Counter"
-	val keyspace = "wikidumps"
-	val inputTablename = "wikipediasentences"
-	val outputTablename = "wikipediacooccurrences"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -26,7 +24,7 @@ object CooccurrenceCounter extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val sentences = sc.cassandraTable[Sentence](keyspace, inputTablename)
+		val sentences = sc.cassandraTable[Sentence](settings("keyspace"), settings("sentenceTable"))
 		List(sentences).toAnyRDD()
 	}
 
@@ -41,7 +39,7 @@ object CooccurrenceCounter extends SparkJob {
 		output
 			.fromAnyRDD[Cooccurrence]()
 			.head
-			.saveToCassandra(keyspace, outputTablename)
+			.saveToCassandra(settings("keyspace"), settings("cooccurrenceTable"))
 	}
 
 	// $COVERAGE-ON$
@@ -53,7 +51,7 @@ object CooccurrenceCounter extends SparkJob {
 	  * @return List of unique entities in order of entity link offset
 	  */
 	def sentenceToEntityList(sentence: Sentence): List[String] = {
-		sentence.entities.sortBy(_.offset).map(e => e.entity).distinct
+		sentence.entities.sortBy(_.offset).map(_.entity).distinct
 	}
 
 	/**
