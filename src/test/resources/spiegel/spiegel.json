@@ -1,0 +1,5 @@
+{ "_id": { "$oid": "spiegel id 1" }, "url": "spiegel.de/test1", "title": "test title 1", "content": "<html><head><title>test title 1</title></head><body>test body 1</body></html>" }
+{ "_id": { "$oid": "spiegel id 2" }, "url": "spiegel.de/test2", "title": "test title 2", "content": "<html><body>test&nbsp;body 2</body></html>" }
+{ "_id": { "$oid": "spiegel id 3" }, "title": "test title 3", "content": "<html><head><title>test title 3</title></head></html>" }
+{ "_id": { "$oid": "spiegel id 4" }, "url": "spiegel.de/test4", "content": "<html>abc</html>" }
+{ "_id": { "$oid": "spiegel id 5" }, "url": "spiegel.de/test5", "title": "test title 5" }
