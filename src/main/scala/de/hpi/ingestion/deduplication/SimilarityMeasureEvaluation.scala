@@ -2,13 +2,12 @@ package de.hpi.ingestion.deduplication
 
 import java.util.UUID
 import org.apache.spark.SparkContext
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, PrecisionRecallDataTuple, SimilarityMeasureStats}
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import scala.xml.Node
+import de.hpi.ingestion.textmining.models.Bag
 
 object SimilarityMeasureEvaluation extends SparkJob {
 	appName = "SimilarityMeasureEvaluation"
@@ -43,13 +42,76 @@ object SimilarityMeasureEvaluation extends SparkJob {
 			.flatMap { case DuplicateCandidates(subject_id, candidates) =>
 				candidates.map(candidate => ((subject_id, candidate._1), candidate._3))
 			}.distinct
-
 		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]].map(pair => (pair, 1.0))
+		implicit val buckets = generateBuckets(this.settings("buckets").toInt)
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
-		val data = generateStats(predictionAndLabels)
+		val data = generatePrecisionRecallData(predictionAndLabels)
 		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
 
 		List(sc.parallelize(Seq(stats))).toAnyRDD()
+	}
+
+	/**
+	  * Generates a List of Buckets regarding the Config
+	  * @return List of Doubles defining the buckets
+	  */
+	def generateBuckets(size: Int): List[Double] = {
+		(0 to size)
+			.map(_.toDouble / size.toDouble)
+			.toList
+	}
+
+	/**
+	  * Returns a bucket corresponding to a score
+	  * @param score The score
+	  * @param buckets The bucket List, to choose the correct bucket from
+	  * @return The bucket containing the score
+	  */
+	def bucket(score: Double)(implicit buckets: List[Double]): Double = {
+		val size = buckets.size - 1
+		(score * size).toInt / size.toDouble
+	}
+
+	/**
+	  * Generates PrecisionRecallDataTuple from labeledPoints for each bucket
+	  * @param labeledPoints Labeled Points
+	  * @param buckets Buckets
+	  * @return List of PrecisionRecallDataTuple for each bucket
+	  */
+	def generatePrecisionRecallData(labeledPoints: RDD[(Double, Double)])
+		(implicit buckets: List[Double]): List[PrecisionRecallDataTuple] = {
+		val bag = labeledPoints.map { case (prediction, label) =>
+			val bucketLabel = bucket(prediction)
+			val key = s"$label;$bucketLabel"
+			Bag(key -> 1)
+		}.reduce(_ ++ _).getCounts()
+
+		buckets.map { bucket =>
+			val positiveNegativeCount = bag
+				.toList
+				.map { case (key, value) =>
+					val Array(label, bucketLabel) = key.split(';')
+					val positiveOrNegative = if(bucketLabel.toDouble >= bucket) "p" else "n"
+					val trueOrFalse = if((label == "1.0") == (positiveOrNegative == "p")) "t" else "f"
+					(s"$trueOrFalse$positiveOrNegative", value)
+				}.groupBy(_._1)
+				.mapValues(_.map(_._2).sum)
+				.map(identity)
+
+			val tp = positiveNegativeCount.getOrElse("tp", 0)
+			val fp = positiveNegativeCount.getOrElse("fp", 0)
+			val fn = positiveNegativeCount.getOrElse("fn", 0)
+
+			val precision = tp.toDouble / (tp + fp).toDouble
+			val recall = tp.toDouble / (tp + fn).toDouble
+			val fMeasure = (2 * recall * precision) / (recall + precision)
+			PrecisionRecallDataTuple(
+				bucket,
+				if(precision.isNaN) 0.0 else precision,
+				recall,
+				if(fMeasure.isNaN) 0.0 else fMeasure
+			)
+		}
 	}
 
 	/**
@@ -64,36 +126,10 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	): RDD[(Double, Double)] = {
 		training
 			.fullOuterJoin(test)
-			.mapValues {
-				// True Positives
-				case (Some(prediction), Some(label)) => (prediction, label)
-				// False Positives
-				case (Some(prediction), None) => (prediction, 0.0)
-				// False negatives
-				case (None, Some(label)) => (0.0, label)
-				case _ => (-1.0, -1.0)
-			}
 			.values
-	}
-
-	/**
-	  * Generates Precision, Recall and FScore
-	  * @param predictionAndLabels Data to be generated from
-	  * @return List of PrecisionRecallDataTuples
-	  */
-	def generateStats(predictionAndLabels: RDD[(Double, Double)] ) : List[PrecisionRecallDataTuple] = {
-		val buckets = settings("buckets").toInt
-		val metrics = new BinaryClassificationMetrics(predictionAndLabels, buckets)
-
-		val precision = metrics.precisionByThreshold
-		val recall = metrics.recallByThreshold
-		val f1Score = metrics.fMeasureByThreshold
-
-		precision
-			.join(recall)
-			.join(f1Score)
-			.map { case (threshold, ((precision, recall), f1Score)) =>
-				PrecisionRecallDataTuple(threshold, precision, recall, f1Score)
-			}.sortBy(_.threshold).collect.toList
+			.collect {
+				case (prediction, label) if prediction.isDefined || label.isDefined =>
+					(prediction.getOrElse(0.0), label.getOrElse(0.0))
+			}
 	}
 }
