@@ -1,7 +1,6 @@
 package de.hpi.ingestion.datalake.models
 
-import scala.reflect.runtime.universe._
-import java.util.{Date, UUID}
+import java.util.UUID
 import scala.collection.mutable
 
 case class Subject(
@@ -41,7 +40,7 @@ case class Subject(
 	  * @return list of the attribute values
 	  */
 	def get(attribute: String): List[String] = {
-		if(this.fieldNames[Subject].contains(attribute)) {
+		if(this.fieldNames[Subject]().contains(attribute)) {
 			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {
@@ -55,19 +54,5 @@ case class Subject(
 		} else {
 			properties.getOrElse(attribute, Nil)
 		}
-	}
-
-	def toProperties(prefix: String): Map[String, List[String]] = {
-		val mappedProperties = mutable.Map[String, List[String]]()
-
-
-		this.name.foreach(name => mappedProperties(s"$prefix.name") = List(name))
-		this.category.foreach(category => mappedProperties(s"$prefix.category") = List(category))
-		if (this.aliases.nonEmpty) mappedProperties(s"$prefix.aliases") = this.aliases
-
-		val prefixedProperties = this.properties.map { case (key, value) => s"$prefix.$key" -> value }
-
-		mappedProperties ++= prefixedProperties
-		mappedProperties.toMap
 	}
 }

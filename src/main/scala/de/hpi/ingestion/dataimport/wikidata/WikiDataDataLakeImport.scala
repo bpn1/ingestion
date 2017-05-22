@@ -2,40 +2,49 @@ package de.hpi.ingestion.dataimport.wikidata
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
-import de.hpi.ingestion.datalake.{DataLakeImport, SubjectManager}
+import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
+import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
-import scala.collection.mutable
 
 /**
   * This job translates Wikidata entities into Subjects and writes them into a staging table.
   */
-object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
-	"WikiDataDataLakeImport_v1.0",
+object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntity](
 	List("wikidata_20161117"),
-	Option("datalakeimport_config.xml"),
 	"normalization_wikidata.xml",
+	"categorization_wikidata.xml",
 	"wikidumps",
-	"wikidata")
-{
-	override def readInput(sc: SparkContext, version: Version): RDD[Subject] = {
-		val mapping = parseNormalizationConfig(this.normalizationFile)
-		sc
-			.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
-			.filter(filterEntities)
-			.map(translateToSubject(_, version, mapping))
+	"wikidata"
+){
+	appName = s"WikiDataDataLakeImport_v1.0_${System.currentTimeMillis()}"
+
+	// $COVERAGE-OFF$
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val wikidata = sc.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
+		List(wikidata).toAnyRDD()
 	}
+	// $COVERAGE-ON$
 
 	override def filterEntities(entity: WikiDataEntity): Boolean = {
 		entity.instancetype.isDefined
 	}
 
+	override def normalizeAttribute(
+		attribute: String,
+		values: List[String],
+		strategies: Map[String, List[String]]
+	): List[String] = {
+		val normalized = WikiDataNormalizationStrategy(attribute)(values)
+		if (attribute == "gen_sectors") normalized.flatMap(x => strategies.getOrElse(x, List(x))) else normalized
+	}
+
 	override def translateToSubject(
 		entity: WikiDataEntity,
 		version: Version,
-		mapping: Map[String, List[String]]
+		mapping: Map[String, List[String]],
+		strategies: Map[String, List[String]]
 	): Subject = {
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
@@ -44,14 +53,10 @@ object WikiDataDataLakeImport extends DataLakeImport[WikiDataEntity](
 		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 		if(entity.aliases.nonEmpty) sm.addAliases(entity.aliases)
 
-		val normalizedProperties = normalizeProperties(entity, mapping)
+		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
 
 		sm.addProperties(entity.data ++ normalizedProperties)
 		subject
-	}
-
-	def main(args: Array[String]): Unit = {
-		importToCassandra(args.headOption)
 	}
 
 }

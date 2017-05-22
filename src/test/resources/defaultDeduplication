@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<config>
-    <sourceSettings>
-        <keyspace>datalake</keyspace>
-        <subjectTable>subject</subjectTable>
-        <stagingTable>subject_temp</stagingTable>
-        <duplicatesTable>duplicatecandidates</duplicatesTable>
-        <versionTable>version</versionTable>
-        <statsTable>stats</statsTable>
-    </sourceSettings>
+  <deduplication>
+    <settings>
+      <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
+      <subjectTable>testsubject</subjectTable>
+      <keyspaceStagingTable>datalake</keyspaceStagingTable>
+      <stagingTable>subject_temp</stagingTable>
+      <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
+      <duplicatesTable>duplicatecandidates</duplicatesTable>
+      <keyspaceVersionTable>datalake</keyspaceVersionTable>
+      <versionTable>version</versionTable>
+      <keyspaceStatsTable>datalake</keyspaceStatsTable>
+      <statsTable>deduplicationstats</statsTable>
+    </settings>
     <simMeasurements>
         <feature>
             <attribute>name</attribute>

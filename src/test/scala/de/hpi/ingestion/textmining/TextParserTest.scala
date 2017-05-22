@@ -5,7 +5,7 @@ import org.scalatest.FlatSpec
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.textmining.models.{Link, ParsedWikipediaEntry}
 import org.jsoup.Jsoup
-
+import de.hpi.ingestion.implicits.CollectionImplicits._
 import scala.util.matching.Regex
 import org.scalatest._
 
@@ -85,6 +85,12 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.foreach(entry => entry.textlinks shouldEqual textLinks(entry.title))
 	}
 
+	they should "be extracted" in {
+		val linkTuples = TestData.textLinkHtml().map(TextParser.extractTextAndTextLinks)
+		val expectedTuples = TestData.textLinkTuples()
+		linkTuples shouldEqual expectedTuples
+	}
+
 	"Wikipedia text link offsets" should "be consistent with text" in {
 		TestData.wikipediaEntries()
 			.map(TextParser.parseWikipediaEntry)
@@ -107,9 +113,9 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"All redirects" should "contain #WEITERLEITUNG link" in {
- 		val entries = TestData.testEntriesWithBadRedirects()
-		entries.map(entry => TextParser.cleanRedirects(entry))
-		    .map(entry => entry.getText should startWith (s"#${TextParser.parsableRedirect}"))
+		val entries = TestData.testEntriesWithBadRedirects()
+		entries.map(entry => TextParser.cleanRedirectsAndWhitespaces(entry))
+			.map(entry => entry.getText should startWith(s"#${TextParser.parsableRedirect}"))
 	}
 
 	"Wikipedia disambiguation pages" should "be recognized as such" in {
@@ -124,7 +130,9 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
 			.filter(entry => TestData.wikipediaDisambiguationPagesTestSet().contains(entry.title))
 		TextParser
-			.run(wikipedia)
+			.run(List(wikipedia).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
 			.collect
 			.foreach { entry =>
 				entry.disambiguationlinks should not be empty
@@ -136,7 +144,9 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
 			.filter(entry => TestData.wikipediaDisambiguationPagesTestSet().contains(entry.title))
 		TextParser
-			.run(wikipedia)
+			.run(List(wikipedia).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
 			.collect
 			.foreach { entry =>
 				entry.disambiguationlinks.foreach { link =>
@@ -152,7 +162,9 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
 			.filter(entry => templateArticlesTest.contains(entry.title))
 		TextParser
-			.run(wikipedia)
+			.run(List(wikipedia).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
 			.map(_.templatelinks)
 			.collect
 			.foreach(templateLinks => templateLinks should not be empty)
@@ -171,7 +183,9 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
 		val templateLinks = TestData.wikipediaTestTemplateLinks()
 		TextParser
-			.run(wikipedia)
+			.run(List(wikipedia).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
 			.filter(entry => templateLinks.contains(entry.title))
 			.collect
 			.foreach(entry => entry.templatelinks shouldEqual templateLinks(entry.title))
@@ -225,12 +239,31 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Cleaned Wikipedia document" should "not contain other tags than anchors" in {
-		TestData.documentTestList()
+		List(TestData.document())
 			.map(Jsoup.parse)
 			.map(TextParser.removeTags)
 			.map(_.toString)
 			.foreach(document => document should (not include "</span>"
 				and not include "</p>" and not include "</abbr>"))
+	}
+
+	they should "contain headlines" in {
+		List(TestData.documentWithHeadlines())
+			.map(Jsoup.parse)
+			.map(TextParser.removeTags)
+			.map(_.body.text)
+			.foreach { text =>
+				TestData.wikipediaEntryHeadlines()
+					.foreach(headline => assert(text.contains(headline)))
+			}
+	}
+
+	it should "have exactly this text" in {
+		List(TestData.documentWithHeadlines())
+			.map(Jsoup.parse)
+			.map(TextParser.removeTags)
+			.map(_.body.text)
+			.foreach(_ shouldEqual TestData.parsedArticleTextWithHeadlines())
 	}
 
 	"Redirect page entries" should "be identified as such" in {
@@ -242,9 +275,58 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	"Wikipedia articles" should "be parsed" in {
 		val rawArticles = sc.parallelize(TestData.wikipediaEntriesForParsing())
-		val parsedArticles = TextParser.run(rawArticles).collect.toList
+		val parsedArticles = TextParser
+			.run(List(rawArticles).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.collect
+			.toList
 		val expectedArticles = TestData.parsedWikipediaEntries()
 		parsedArticles shouldEqual expectedArticles
+	}
+
+	"Redirects" should "be extracted" in {
+		val redirectLinks = TestData.redirectHTML().map((TextParser.extractRedirect _).tupled)
+		val expectedLinks = TestData.extractedRedirects()
+		redirectLinks shouldEqual expectedLinks
+	}
+
+	"Parsed Wikipedia article" should "contain headlines" in {
+		val article = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
+		val parsedArticleText = TextParser
+			.run(List(article).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.collect
+			.head
+			.getText()
+
+		TestData.wikipediaEntryHeadlines()
+			.foreach(headline => assert(parsedArticleText.contains(headline)))
+	}
+
+	it should "have exactly this text" in {
+		val article = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
+		val parsedArticleText = TextParser
+			.run(List(article).toAnyRDD(), sc)
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.collect
+			.head
+			.getText()
+		parsedArticleText shouldEqual TestData.parsedArticleTextWithHeadlines()
+	}
+
+	"Alternative whitespace characters" should "be replaced with standard whitespaces" in {
+		val entry = TestData.entryWithAlternativeWhitespace()
+		val cleanedEntry = TextParser.cleanRedirectsAndWhitespaces(entry)
+		cleanedEntry shouldEqual TestData.entryWithStandardWhitespaces()
+	}
+
+	they should "be replaced" in {
+		val cleanedEntry = TextParser.cleanRedirectsAndWhitespaces(TestData.rawEntryWithAlternativeWhitespace())
+		val expectedEntry = TestData.rawEntryWithStandardWhitespace()
+		cleanedEntry shouldEqual expectedEntry
 	}
 
 	def isTextLinkConsistent(link: Link, text: String): Boolean = {

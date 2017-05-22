@@ -4,7 +4,9 @@ import java.io.{FileOutputStream, OutputStream}
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Output
+import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
 import de.hpi.ingestion.textmining.models.TrieNode
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 import scala.io.{BufferedSource, Source}
 
@@ -17,8 +19,9 @@ object LocalTrieBuilder {
 
 	/**
 	  * Creates Trie of the aliases in the given file and serializes it to a binary of the given name.
+	  *
 	  * @param aliasStream stream of the file containing the aliases with one alias per line
-	  * @param trieStream output stream of the binary file of the trie
+	  * @param trieStream  output stream of the binary file of the trie
 	  */
 	def serializeTrie(aliasStream: BufferedSource, trieStream: OutputStream): Unit = {
 		val kryo = new Kryo()
@@ -36,6 +39,7 @@ object LocalTrieBuilder {
 		trieBinary.close()
 	}
 
+	// $COVERAGE-OFF$
 	// recommended scala flags
 	// -J-Xmx16g
 	// -J-Xss1g
@@ -43,4 +47,5 @@ object LocalTrieBuilder {
 	def main(args: Array[String]): Unit = {
 		serializeTrie(Source.fromFile(aliasFileName), new FileOutputStream(trieFileName))
 	}
+	// $COVERAGE-ON$
 }
