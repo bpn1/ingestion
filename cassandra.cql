@@ -98,6 +98,11 @@ CREATE TYPE wikidumps.triealias (
 	context map<text, int>
 );
 
+CREATE TABLE wikidumps.linkedarticles (
+	title text PRIMARY KEY,
+	text text
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,

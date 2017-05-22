@@ -45,10 +45,10 @@ object TextNEL extends SparkJob {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val timestamp = System.currentTimeMillis / 1000
-		output
-			.fromAnyRDD[OffsetToken]()
-			.head
-			.saveAsTextFile(s"named_entities_$timestamp")
+		val namedEntities = output.head.asInstanceOf[RDD[Link]]
+		val articlesWithLinks = output(1).asInstanceOf[RDD[Article]]
+		namedEntities.saveAsTextFile(s"named_entities_$timestamp")
+		articlesWithLinks.saveToCassandra(settings("keyspace"), settings("linkedArticlesTable"))
 	}
 
 	/**
@@ -68,7 +68,7 @@ object TextNEL extends SparkJob {
 	  * @param data
 	  * @return
 	  */
-	def findNamedEntities(
+	def findAndLinkNamedEntities(
 		data: RDD[(Link, LabeledPoint)],
 		classifier: RandomForestModel
 	): RDD[Link] = {
@@ -77,6 +77,10 @@ object TextNEL extends SparkJob {
 			(linkCandidate, prediction)
 		}.filter(_._2 == 1)
 			.map(_._1)
+			.map { link =>
+				link.context = Map[String, Int]()
+				link
+			}
 	}
 
 	/**
@@ -113,7 +117,7 @@ object TextNEL extends SparkJob {
 	  * @return RDD of tuples containing the link and the tfIdfs of ever term in its context
 	  */
 	def calculateTokenContextsTfidf(
-		articles: RDD[(String, String)],
+		articles: RDD[Article],
 		documentFrequencies: RDD[DocumentFrequency],
 		aliases: RDD[Alias],
 		numDocuments: Long,
@@ -124,16 +128,16 @@ object TextNEL extends SparkJob {
 	): RDD[(Link, Map[String, Double])] = {
 		val aliasPages = aliases.flatMap(alias => alias.pages.map(page => (alias.alias, page._1)))
 		val contextTermFrequencies = articles
-			.flatMap { case (articleName, text) =>
+			.flatMap { case Article(title, text) =>
 				val offsetTokens = tokenizer.processWithOffsets(text)
 				val tokens = offsetTokens.map(_.token)
-				offsetTokens.map(offsetToken => (offsetToken.token, (articleName, tokens, offsetToken.beginOffset)))
+				offsetTokens.map(offsetToken => (offsetToken.token, (title, tokens, offsetToken.beginOffset)))
 			}
 			.join(aliasPages)
-			.map { case (alias, ((articleName, tokens, beginOffset), page)) =>
-				((articleName, tokens), List(Link(alias, page, Option(beginOffset), article = Option(articleName))))
+			.map { case (alias, ((title, tokens, beginOffset), page)) =>
+				((title, tokens), List(Link(alias, page, Option(beginOffset), article = Option(title))))
 			}.reduceByKey(_ ++ _)
-			.flatMap { case ((articleName, tokens), linkCandidates) =>
+			.flatMap { case ((title, tokens), linkCandidates) =>
 				extractTokenContexts(tokens, linkCandidates, tokenizer)
 			}
 			.map(link => (link, Bag(link.context)))
@@ -147,9 +151,37 @@ object TextNEL extends SparkJob {
 
 	/**
 	  * todo
+	  *
+	  * @param title
+	  * @param text
+	  * @param links
+	  * @return
+	  */
+	def generateArticleWithLinks(title: String, text: String, links: List[Link]): Article = {
+		Article(title, text)
+	}
+
+	/**
+	  * todo
+	  *
+	  * @param links
+	  * @return
+	  */
+	def generateArticlesWithLinks(articles: RDD[Article], links: RDD[Link]): RDD[Article] = {
+		val groupedLinks = links
+			.map(link => (link.article.get, List(link)))
+			.reduceByKey(_ ++ _)
+		articles
+			.map(article => (article.title, article.text))
+			.join(groupedLinks)
+			.map { case (title, (text, linksForArticle)) => generateArticleWithLinks(title, text, linksForArticle) }
+	}
+
+	/**
+	  * todo
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articlesWithTermFrequencies = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(100))
+		val articlesWithTermFrequencies = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(500))
 		val documentFrequencies = input(1).asInstanceOf[RDD[DocumentFrequency]]
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val numDocuments = articlesWithTermFrequencies.count()
@@ -163,10 +195,10 @@ object TextNEL extends SparkJob {
 
 		val classifier = modelFunction(sc)
 		val tokenizer = IngestionTokenizer(true, false)
-		val articleTexts = articlesWithTermFrequencies.map(article => (article.title, article.getText()))
+		val articles = articlesWithTermFrequencies.map(article => Article(article.title, article.getText()))
 
 		val contextTfidf = calculateTokenContextsTfidf(
-			articleTexts,
+			articles,
 			documentFrequencies,
 			aliases,
 			numDocuments,
@@ -180,8 +212,9 @@ object TextNEL extends SparkJob {
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
 		val data = linkFeatureEntries
 			.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
-		val namedEntities = findNamedEntities(data, classifier)
+		val namedEntities = findAndLinkNamedEntities(data, classifier)
+		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)
 
-		List(namedEntities).toAnyRDD()
+		List(namedEntities).toAnyRDD() ++ List(articlesWithLinks).toAnyRDD()
 	}
 }

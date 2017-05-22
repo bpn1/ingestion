@@ -260,6 +260,20 @@ object TestData {
 			))
 	}
 
+	def linksWithArticleAnnotation(): Set[Link] = {
+		Set(
+			Link("Audi", "Audi", Option(9), article = Option("Audi Test mit Link")),
+			Link("Brachttal", "Brachttal", Option(55), article = Option("Streitberg (Brachttal)")),
+			Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), article = Option("Streitberg (Brachttal)")),
+			Link("Hessen", "Hessen", Option(87), article = Option("Streitberg (Brachttal)")),
+			Link("1377", "1377", Option(225), article = Option("Streitberg (Brachttal)")),
+			Link("Büdinger Wald", "Büdinger Wald", Option(546), article = Option("Streitberg (Brachttal)")),
+			Link("Audi", "Audi", Option(7), article = Option("Testartikel")),
+			Link("Brachttal", "Brachttal", Option(13), article = Option("Testartikel")),
+			Link("historisches Jahr", "1377", Option(24), article = Option("Testartikel"))
+		)
+	}
+
 	def articlesWithCompleteContexts(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
@@ -853,6 +867,7 @@ object TestData {
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
+
 	def entryWithStandardWhitespaces(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
@@ -1652,10 +1667,11 @@ object TestData {
 
 	def alternativeSentenceList(): List[Sentence] = {
 		List(
-			Sentence("Audi",0,"Audi ist Audi AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Audi AG","Audi",Some(9)))),
-			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))
+			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9)))),
+			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))))
 		)
 	}
+
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
@@ -1887,7 +1903,7 @@ object TestData {
 	}
 
 	def predictionStatistics(): PrecisionRecallDataTuple = {
-		PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0)
+		PrecisionRecallDataTuple(1.0, 5.0 / 7.0, 5.0 / 6.0, 25.0 / 34.0)
 	}
 
 	def statisticTuples(): List[PrecisionRecallDataTuple] = {
