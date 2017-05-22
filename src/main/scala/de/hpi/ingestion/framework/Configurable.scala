@@ -10,21 +10,63 @@ import scala.xml.{Node, XML}
   */
 trait Configurable {
 	var configFile: String = ""
-	var settings: Map[String, String] = Map()
-	var scoreConfigSettings: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = Map()
+	private var _settings: Map[String, String] = Map()
+	private var _scoreConfigSettings: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = Map()
 
 	/**
 	  * Reads the configuration from an xml file.
+	  *
 	  * @return a list containing settings and some options
 	  */
 	def parseConfig(): Unit = {
 		val xml = XML.load(getClass.getResource(s"/configs/$configFile"))
-		settings ++= parseSettings(xml)
-		scoreConfigSettings ++= parseSimilarityMeasures(xml)
+		_settings ++= parseSettings(xml)
+		_scoreConfigSettings ++= parseSimilarityMeasures(xml)
+	}
+
+	/**
+	  * Getter for _settings. Sets _settings if not yet done.
+	  *
+	  * @return _settings
+	  */
+	def settings = {
+		if(_settings.isEmpty && !configFile.isEmpty) {
+			parseConfig()
+		}
+		_settings
+	}
+
+	/**
+	  * Setter for _settings.
+	  *
+	  * @param newSettings new settings
+	  */
+	def settings_=(newSettings: Map[String, String]) = _settings = newSettings
+
+	/**
+	  * Getter for _scoreConfigSettings. Sets _scoreConfigSettings if not yet done.
+	  *
+	  * @return _scoreConfigSettings
+	  */
+	def scoreConfigSettings = {
+		if(_scoreConfigSettings.isEmpty && !configFile.isEmpty) {
+			parseConfig()
+		}
+		_scoreConfigSettings
+	}
+
+	/**
+	  * Setter for _scoreConfigSettings.
+	  *
+	  * @param newSettings new score config settings
+	  */
+	def scoreConfigSettings_=(newSettings: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]) = {
+		_scoreConfigSettings = newSettings
 	}
 
 	/**
 	  * Parses the settings in the settings tag with xml tags as keys.
+	  *
 	  * @param node the XML node containing the settings tag as child.
 	  * @return Map containing the settings
 	  */
@@ -39,6 +81,7 @@ trait Configurable {
 
 	/**
 	  * Parses the similarity measures in the simMeasurements tag.
+	  *
 	  * @param node the XML node containing the simMeasurements tag as child.
 	  * @return Map containing attributes with their score configurations
 	  */

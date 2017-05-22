@@ -64,7 +64,7 @@ object AliasTrieSearch extends SparkJob {
 	def hdfsFileStream(file: String): InputStream = {
 		val hadoopConf = new Configuration()
 		val fs = FileSystem.get(hadoopConf)
-		fs.open(new Path(settings("trieFile")))
+		fs.open(new Path(file))
 	}
 	// $COVERAGE-ON$
 
