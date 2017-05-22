@@ -47,8 +47,8 @@ object EuclidianDistance extends SimilarityMeasure[String] {
 	  * 0.0 as default value if one of the input strings is empty
 	  */
 	override def compare(s: String, t: String, u: Int = 1) : Double = {
-		val geoPoint1 = s.split(",").toList.map(_.toDouble)
-		val geoPoint2 = t.split(",").toList.map(_.toDouble)
+		val geoPoint1 = s.split(";").toList.map(_.toDouble)
+		val geoPoint2 = t.split(";").toList.map(_.toDouble)
 		val distance = computeDistance(
 			geoPoint1(0),
 			geoPoint1(1),

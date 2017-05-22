@@ -7,10 +7,10 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 	"computeDistance" should "compute the distnace between two points in terms of kilometers" in {
 		val subjects = TestData.testSubjects
 		val distance = EuclidianDistance.computeDistance(
-			subjects(4).properties("geo_coords").head.toDouble,
-			subjects(4).properties("geo_coords")(1).toDouble,
-			subjects(5).properties("geo_coords").head.toDouble,
-			subjects(5).properties("geo_coords")(1).toDouble
+			subjects(4).properties("geo_coords").head.split(";").head.toDouble,
+			subjects(4).properties("geo_coords").head.split(";")(1).toDouble,
+			subjects(5).properties("geo_coords").head.split(";").head.toDouble,
+			subjects(5).properties("geo_coords").head.split(";")(1).toDouble
 		)
 		val expected = 111.70485139435159
 
