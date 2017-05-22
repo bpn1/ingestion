@@ -6,13 +6,14 @@ import de.hpi.ingestion.textmining.models.Cooccurrence
 import org.scalatest.{FlatSpec, Matchers}
 
 class CooccurrenceCounterTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
-	"All entity pairs" should "be extracted" in {
+	"All entity lists" should "be extracted" in {
 		val sentences = TestData.sentenceList()
 		val entityList = sentences.map(CooccurrenceCounter.sentenceToEntityList)
 		entityList shouldEqual TestData.entityLists()
 	}
 
-	"Redirect resolver" should "resolve all redirects" in {
+
+	"Found cooccurrences" should "exactly these cooccurrences" in {
 		val sentences = sc.parallelize(TestData.sentencesWithCooccurrences())
 		val cooccurrences = CooccurrenceCounter.run(List(sentences).toAnyRDD(), sc)
 			.fromAnyRDD[Cooccurrence]()
