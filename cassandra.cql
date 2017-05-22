@@ -97,6 +97,13 @@ CREATE TYPE wikidumps.triealias (
 	context map<text, int>
 );
 
+CREATE TABLE wikidumps.spiegel (
+    id text PRIMARY KEY,
+    title text,
+    text text,
+    url text
+);
+
 CREATE TABLE wikidumps.redirects (
 	alias text PRIMARY KEY,
 	page text
