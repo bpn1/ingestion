@@ -53,7 +53,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.calculateTfidf(
 				CosineContextComparator.transformArticleTfs(articles),
 				numDocuments,
-				defaultIdf)
+				defaultIdf,
+				CosineContextComparator.settings)
 			.collect
 		contexts should not be empty
 		contexts.foreach(context => context._2 should not be empty)

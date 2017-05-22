@@ -117,11 +117,12 @@ object CosineContextComparator extends SparkJob {
 	def calculateTfidf[T](
 		termFrequencies: RDD[(T, Bag[String, Int])],
 		numDocuments: Long,
-		defaultIdf: Double
+		defaultIdf: Double,
+		settings: Map[String, String] = this.settings
 	): RDD[(T, Map[String, Double])] = {
 		termFrequencies
 			.mapPartitions({ partition =>
-				val idfMap = inverseDocumentFrequencies(numDocuments)
+				val idfMap = inverseDocumentFrequencies(numDocuments, settings)
 				partition.map { case (identifier, bagOfWords) =>
 					val idfs = bagOfWords.getCounts().map { case (token, tf) =>
 						val idf = idfMap.getOrElse(token, defaultIdf)
@@ -214,7 +215,10 @@ object CosineContextComparator extends SparkJob {
 	  * @param numDocs number of documents used to create the document frequency data
 	  * @return Map of every term and its inverse document frequency
 	  */
-	def inverseDocumentFrequencies(numDocs: Long): Map[String, Double] = {
+	def inverseDocumentFrequencies(
+		numDocs: Long,
+		settings: Map[String, String] = this.settings
+	): Map[String, Double] = {
 		val docfreqStream = AliasTrieSearch.trieStreamFunction(settings("dfFile"))
 		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
 		val idfMap = mutable.Map[String, Double]()
@@ -236,19 +240,21 @@ object CosineContextComparator extends SparkJob {
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].cache
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
+		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
 
 		val numDocuments = articlesWithTermFrequencies.count()
 		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 		val defaultIdf = calculateIdf(defaultDf, numDocuments)
 
+		val settingsBroadcast = sc.broadcast(settings)
+
 		val articleTfs = transformArticleTfs(articlesWithTermFrequencies)
-		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf)
+		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf, settingsBroadcast.value)
 
 		val contextTfs = transformLinkContextTfs(articlesWithTermFrequencies)
-		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf)
+		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf, settingsBroadcast.value)
 
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
 		val featureEntries = compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
