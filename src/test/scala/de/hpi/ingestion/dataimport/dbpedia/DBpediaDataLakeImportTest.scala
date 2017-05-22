@@ -43,6 +43,6 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
 		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies)
-		subject.properties("geo_coords") shouldEqual List("52", "100")
+		subject.properties("geo_coords") shouldEqual List("52;100")
 	}
 }
