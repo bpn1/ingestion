@@ -5,13 +5,13 @@ import de.hpi.ingestion.textmining.models.Link
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-class TextNERTest extends FlatSpec with SharedSparkContext with Matchers {
+class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Found named entities" should "be empty" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
 		val oldCCCSettings = CosineContextComparator.settings
-		val oldSettings = TextNER.settings
+		val oldSettings = TextNEL.settings
 		CosineContextComparator.parseConfig()
-		TextNER.parseConfig()
+		TextNEL.parseConfig()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
 
@@ -20,15 +20,15 @@ class TextNERTest extends FlatSpec with SharedSparkContext with Matchers {
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val input = List(articles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
 
-		TextNER.modelFunction = TestData.loadRandomForestModel _
-		val namedEntities = TextNER
+		TextNEL.modelFunction = TestData.loadRandomForestModel _
+		val namedEntities = TextNEL
 			.run(input, sc)
 			.fromAnyRDD[Link]()
 			.head
 			.collect
 		namedEntities shouldBe empty
 
-		TextNER.settings = oldSettings
+		TextNEL.settings = oldSettings
 		CosineContextComparator.settings = oldCCCSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}

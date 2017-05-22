@@ -15,8 +15,8 @@ import org.apache.spark.mllib.tree.model.RandomForestModel
 /**
   * todo
   */
-object TextNER extends SparkJob {
-	appName = "Text NER"
+object TextNEL extends SparkJob {
+	appName = "Text NEL"
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
