@@ -59,12 +59,14 @@ object CoOccurrenceExport extends SparkJob {
 		val nodes = cleanedCooccurrences
 			.flatMap(_.entitylist)
 			.distinct
-			.map(node => s"${quote}${node}${quote}")
-		val edges = cleanedCooccurrences.flatMap { case Cooccurrence(entities, count) =>
-			entities.asymSquare().map { case (start, end) =>
+			.map(node => s"${quote}${node}${quote},${quote}${node}${quote},Entity")
+		val edges = cleanedCooccurrences
+			.flatMap { case Cooccurrence(entities, count) =>
+				entities.asymSquare().map((_, count))
+			}.reduceByKey(_ + _)
+			.map { case ((start, end), count) =>
 				s"${quote}${start}${quote},${count},${quote}${end}${quote},CO_OCCURRENCE"
 			}
-		}
 		List(nodes, edges).toAnyRDD()
 	}
 }

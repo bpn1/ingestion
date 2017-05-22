@@ -29,12 +29,11 @@ object CollectionImplicits {
 		  * @return filtered cross product of xs with itself
 		  */
 		def asymSquare(reflexive: Boolean = false): Traversable[(X, X)] = {
-			xs
-				.cross(xs)
-				.collect { case (x, y) if x != y || reflexive => Set((x, y), (y, x)) }
-				.toList
-				.distinct
-				.map(set => set.head)
+			val data = xs.toList
+			val offset = if(reflexive) 0 else 1
+			data
+				.indices
+				.flatMap(i => xs.slice(i + offset, xs.size).map((data(i), _)))
 		}
 	}
 
