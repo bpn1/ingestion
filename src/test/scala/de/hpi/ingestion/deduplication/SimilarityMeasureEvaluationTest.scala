@@ -2,7 +2,8 @@ package de.hpi.ingestion.deduplication
 
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-
+import de.hpi.ingestion.deduplication.models.SimilarityMeasureStats
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class SimilarityMeasureEvaluationTest extends FlatSpec
 	with Matchers
@@ -69,6 +70,22 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 		implicit val buckets = TestData.bucketsList.values.head
 		val data = SimilarityMeasureEvaluation.generatePrecisionRecallData(labeledPoints)
 		val expected = TestData.precisionRecallResults
+		data shouldEqual expected
+	}
+
+	"run" should "calculate Precision, Recall and F-Score" in {
+		val training = TestData.trainingCandidates(sc)
+		val test = TestData.testData2(sc)
+		val input = List(training).toAnyRDD() ::: List(test).toAnyRDD()
+		val settings = Map("buckets" -> "5")
+		SimilarityMeasureEvaluation.settings = settings
+		val data = SimilarityMeasureEvaluation
+			.run(input, sc)
+			.fromAnyRDD[SimilarityMeasureStats]()
+			.head
+			.first
+			.data
+		val expected = TestData.similarityMeasureStats.data
 		data shouldEqual expected
 	}
 }

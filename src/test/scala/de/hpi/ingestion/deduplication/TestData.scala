@@ -43,6 +43,24 @@ object TestData {
 		))
 	}
 
+	def testData2(sc: SparkContext): RDD[(UUID, UUID)] = {
+		sc.parallelize(Seq(
+			(idList.head, idList(1)),
+			(idList(2), idList(3)),
+			(idList(4), idList(5)),
+			(idList(6), idList(7))
+		))
+	}
+
+	def trainingCandidates(sc: SparkContext): RDD[DuplicateCandidates] = {
+		sc.parallelize(Seq(
+			DuplicateCandidates(idList.head, List((idList(1), "test", 0.7))),
+			DuplicateCandidates(idList(2), List((idList(3), "test", 0.8))),
+			DuplicateCandidates(idList(4), List((idList(7), "test", 0.5))),
+			DuplicateCandidates(idList(6), List((idList(5), "test", 0.6)))
+		))
+	}
+
 	def truePositives(sc: SparkContext): RDD[(Double, Double)] = {
 		sc.parallelize(List((0.7, 1.0), (0.8, 1.0)))
 	}
@@ -71,6 +89,18 @@ object TestData {
 		PrecisionRecallDataTuple(0.8,1.0,0.25,0.4),
 		PrecisionRecallDataTuple(0.9,0.0,0.0,0.0),
 		PrecisionRecallDataTuple(1.0,0.0,0.0,0.0)
+	)
+
+	def similarityMeasureStats: SimilarityMeasureStats = SimilarityMeasureStats(
+		data = List(
+			PrecisionRecallDataTuple(0.0,0.6666666666666666,1.0,0.8),
+			PrecisionRecallDataTuple(0.2,0.5,0.5,0.5),
+			PrecisionRecallDataTuple(0.4,0.5,0.5,0.5),
+			PrecisionRecallDataTuple(0.6,0.6666666666666666,0.5,0.5714285714285715),
+			PrecisionRecallDataTuple(0.8,1.0,0.25,0.4),
+			PrecisionRecallDataTuple(1.0,0.0,0.0,0.0)
+		),
+		comment = Option("Naive Deduplication")
 	)
 
 	val dbpediaList = List(
