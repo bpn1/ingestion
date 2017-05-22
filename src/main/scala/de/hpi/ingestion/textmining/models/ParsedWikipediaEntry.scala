@@ -69,19 +69,4 @@ case class ParsedWikipediaEntry(
 			Link(exLink.alias, page, exLink.offset)
 		}
 	}
-
-	/**
-	  * Filters and parsed Extended Links to Links
-	  * @return List of parsed Links
-	  */
-	def extendedlinks(): List[Link] = {
-		rawextendedlinks
-			.map(t => (t, t.filterExtendedLink(1, 0.1)))
-			.collect {
-				case (t, Some(page)) => (t, page)
-			}.map { case (exLink, page) =>
-				Link(exLink.alias, page, exLink.offset)
-			}
-	}
-
 }

@@ -200,7 +200,7 @@ object TextNEL extends SparkJob {
 	  * todo
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articlesWithTermFrequencies = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(500))
+		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val documentFrequencies = input(1).asInstanceOf[RDD[DocumentFrequency]]
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val numDocuments = articlesWithTermFrequencies.count()
