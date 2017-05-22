@@ -27,13 +27,23 @@ trait Configurable {
 	/**
 	  * Getter for _settings. Sets _settings if not yet done.
 	  *
+	  * @param loadIfEmpty load configuration if not yet done (true by default)
 	  * @return _settings
 	  */
-	def settings = {
-		if(_settings.isEmpty && !configFile.isEmpty) {
+	def settings(loadIfEmpty: Boolean = true): Map[String, String] = {
+		if(_settings.isEmpty && !configFile.isEmpty && loadIfEmpty) {
 			parseConfig()
 		}
 		_settings
+	}
+
+	/**
+	  * Getter for _settings. Sets _settings if not yet done.
+	  *
+	  * @return _settings
+	  */
+	def settings: Map[String, String] = {
+		settings()
 	}
 
 	/**
@@ -41,18 +51,30 @@ trait Configurable {
 	  *
 	  * @param newSettings new settings
 	  */
-	def settings_=(newSettings: Map[String, String]) = _settings = newSettings
+	def settings_=(newSettings: Map[String, String]): Unit = _settings = newSettings
+
+	/**
+	  * Getter for _scoreConfigSettings. Sets _scoreConfigSettings if not yet done.
+	  *
+	  * @param loadIfEmpty load configuration if not yet done (true by default)
+	  * @return _scoreConfigSettings
+	  */
+	def scoreConfigSettings(
+		loadIfEmpty: Boolean = true
+	): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		if(_scoreConfigSettings.isEmpty && !configFile.isEmpty && loadIfEmpty) {
+			parseConfig()
+		}
+		_scoreConfigSettings
+	}
 
 	/**
 	  * Getter for _scoreConfigSettings. Sets _scoreConfigSettings if not yet done.
 	  *
 	  * @return _scoreConfigSettings
 	  */
-	def scoreConfigSettings = {
-		if(_scoreConfigSettings.isEmpty && !configFile.isEmpty) {
-			parseConfig()
-		}
-		_scoreConfigSettings
+	def scoreConfigSettings: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		scoreConfigSettings()
 	}
 
 	/**
@@ -60,7 +82,7 @@ trait Configurable {
 	  *
 	  * @param newSettings new score config settings
 	  */
-	def scoreConfigSettings_=(newSettings: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]) = {
+	def scoreConfigSettings_=(newSettings: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]): Unit  = {
 		_scoreConfigSettings = newSettings
 	}
 
