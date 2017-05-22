@@ -68,7 +68,8 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	  * @return The bucket containing the score
 	  */
 	def bucket(score: Double)(implicit buckets: List[Double]): Double = {
-		(score * buckets.size).toInt / buckets.size.toDouble
+		val size = buckets.size - 1
+		(score * size).toInt / size.toDouble
 	}
 
 	/**
@@ -127,12 +128,8 @@ object SimilarityMeasureEvaluation extends SparkJob {
 			.fullOuterJoin(test)
 			.values
 			.collect {
-				// True Positives
-				case (Some(prediction), Some(label)) => (prediction, label)
-				// False Positives
-				case (Some(prediction), None) => (prediction, 0.0)
-				// False negatives
-				case (None, Some(label)) => (0.0, label)
+				case (prediction, label) if prediction.isDefined || label.isDefined =>
+					(prediction.getOrElse(0.0), label.getOrElse(0.0))
 			}
 	}
 }
