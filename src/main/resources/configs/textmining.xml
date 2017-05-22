@@ -15,5 +15,7 @@
         <dfFile>wikipedia/wikipedia_docfreq</dfFile>
         <sentenceTable>wikipediasentences</sentenceTable>
         <contextSize>20</contextSize>
+        <spiegelFile>spiegel.json</spiegelFile>
+        <spiegelTable>spiegel</spiegelTable>
     </settings>
 </config>
