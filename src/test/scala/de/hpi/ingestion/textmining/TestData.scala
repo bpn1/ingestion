@@ -1674,23 +1674,23 @@ object TestData {
 
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10, "VW" -> 2)),
-			Page("VW", Map("Volkswagen AG" -> 2, "VW" -> 2)),
-			Page("Hochhaus", Map("Hochhaus" -> 2, "Gebäude" -> 1)),
-			Page("Postbank", Map("Postbank" -> 2)),
-			Page("Berlin", Map("Berlin" -> 2, "(" -> 1, "Berliner" -> 2)),
-			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 2)),
-			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 2)),
-			Page("Potsdam", Map("Potsdam" -> 2)),
-			Page("Magdeburg", Map("Magdeburg" -> 2)),
-			Page("Stettin", Map("Stettin" -> 2)),
-			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 2)),
-			Page("New York City", Map("New York." -> 2)),
-			Page("Bronze", Map("Bronze" -> 2)),
-			Page("Media Broadcast", Map("Media Broadcast" -> 2)),
-			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 2, "DFMG" -> 11)),
-			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 2)),
-			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 2))
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
+			Page("VW", Map("Volkswagen AG" -> 10, "VW" -> 10)),
+			Page("Hochhaus", Map("Hochhaus" -> 10, "Gebäude" -> 10)),
+			Page("Postbank", Map("Postbank" -> 10)),
+			Page("Berlin", Map("Berlin" -> 10, "(" -> 10, "Berliner" -> 10)),
+			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 10)),
+			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 10)),
+			Page("Potsdam", Map("Potsdam" -> 10)),
+			Page("Magdeburg", Map("Magdeburg" -> 10)),
+			Page("Stettin", Map("Stettin" -> 10)),
+			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 10)),
+			Page("New York City", Map("New York." -> 10)),
+			Page("Bronze", Map("Bronze" -> 10)),
+			Page("Media Broadcast", Map("Media Broadcast" -> 10)),
+			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 10, "DFMG" -> 10)),
+			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 10)),
+			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 10))
 		)
 	}
 

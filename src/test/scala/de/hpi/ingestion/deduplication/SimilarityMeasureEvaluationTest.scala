@@ -46,7 +46,7 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 	}
 
 	"generateStats" should "create a correct computation of precision + recall" in {
-		val oldSettings = SimilarityMeasureEvaluation.settings
+		val oldSettings = SimilarityMeasureEvaluation.settings(false)
 
 		val testData = TestData.testData(sc)
 		val trainingData = TestData.trainingData(sc)

@@ -129,21 +129,17 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 	}
 
 	"Config" should "be read" in {
-		val originalSettings = Blocking.settings
+		val originalSettings = Blocking.settings(false)
 
-		Blocking.settings shouldBe empty
-		Blocking.parseConfig()
+		Blocking.configFile = "test.xml"
 		Blocking.settings should not be empty
-		TestData.requiredSettings.foreach { setting =>
-			Blocking.settings should contain key setting
-		}
+
 		Blocking.settings = originalSettings
 	}
 
 	it should "be read before run is executed" in {
-		val originalSettings = Blocking.settings
+		val originalSettings = Blocking.settings(false)
 
-		Blocking.settings shouldBe empty
 		Blocking.assertConditions(Array[String]())
 		Blocking.settings should not be empty
 

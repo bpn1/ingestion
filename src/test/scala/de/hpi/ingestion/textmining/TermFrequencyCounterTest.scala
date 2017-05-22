@@ -43,7 +43,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	}
 
 	"Link contexts" should "be exactly these bag of words" in {
-		val oldSettings = TermFrequencyCounter.settings
+		val oldSettings = TermFrequencyCounter.settings(false)
 		TermFrequencyCounter.parseConfig()
 
 		val linkContexts = TestData.parsedWikipediaSet()
@@ -56,7 +56,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	}
 
 	"Articles with link context" should "contain exactly these link contexts" in {
-		val oldSettings = TermFrequencyCounter.settings
+		val oldSettings = TermFrequencyCounter.settings(false)
 		TermFrequencyCounter.parseConfig()
 
 		val expectedLinks = TestData.linksWithContextsTestSet()
@@ -69,7 +69,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	}
 
 	they should "be exactly these articles" in {
-		val oldSettings = TermFrequencyCounter.settings
+		val oldSettings = TermFrequencyCounter.settings(false)
 		TermFrequencyCounter.parseConfig()
 
 		val enrichedLinkArticles = TestData.parsedWikipediaSet()
@@ -81,7 +81,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	}
 
 	"Articles without any context" should "be fully enriched with article and link contexts" in {
-		val oldSettings = TermFrequencyCounter.settings
+		val oldSettings = TermFrequencyCounter.settings(false)
 		TermFrequencyCounter.parseConfig()
 
 		val articles = sc.parallelize(TestData.parsedWikipediaSet().toList)

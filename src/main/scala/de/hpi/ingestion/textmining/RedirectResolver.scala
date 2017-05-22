@@ -9,7 +9,8 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.TupleImplicits._
 
 /**
-  * Resolves all redirects in Parsed Wikipedia entries by replacing them with the pages they point to.
+  * Resolves all redirects in Parsed Wikipedia entries by replacing them with the pages they point to
+  * and writing the redirects to a cassandra table.
   */
 object RedirectResolver extends SparkJob {
 	appName = "Redirect Resolver"
@@ -18,27 +19,35 @@ object RedirectResolver extends SparkJob {
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(articles).toAnyRDD()
+		val redirects = sc.cassandraTable[Redirect](settings("keyspace"), settings("redirectTable"))
+		List(articles).toAnyRDD() ++ List(redirects).toAnyRDD()
 	}
 
 	/**
-	  * Saves Parsed Wikipedia entries with resolved redirects to the Cassandra.
+	  * Saves Parsed Wikipedia entries with resolved redirects
+	  * and the redirects themselves to the Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
+			.asInstanceOf[RDD[ParsedWikipediaEntry]]
 			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
+		val redirects = output(1).asInstanceOf[RDD[Redirect]]
+		if(!redirects.isEmpty()) redirects.saveToCassandra(settings("keyspace"), settings("redirectTable"))
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -94,24 +103,33 @@ object RedirectResolver extends SparkJob {
 	}
 
 	/**
-	  * Resolves redirects for every Parsed Wikipedia entry. It finds all redirects, resolves transitive redirects
+	  * Resolves redirects for every Parsed Wikipedia entry. It checks if redirects where already found,
+	  * if not it finds all redirects, resolves transitive redirects
 	  * and then replaces links to redirect pages with links to the page the redirect directs to.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val redirectMap = buildRedirectDict(articles)
-		val cleanedRedirectMap = resolveTransitiveRedirects(redirectMap)
-		val dictBroadcast = sc.broadcast(cleanedRedirectMap)
-
+		val articles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
+		var redirects = input(1).asInstanceOf[RDD[Redirect]]
+			.map(Redirect.unapply(_).get)
+			.collect
+			.toMap
+		val saveRedirectsToCassandra = redirects.isEmpty
+		if(saveRedirectsToCassandra) {
+			val redirectMap = buildRedirectDict(articles)
+			redirects = resolveTransitiveRedirects(redirectMap)
+		}
+		val dictBroadcast = sc.broadcast(redirects)
 		val resolvedArticles = articles
 			.mapPartitions({ entryPartition =>
 				val localDict = dictBroadcast.value
 				entryPartition.map(entry => resolveRedirects(entry, localDict))
 			}, true)
-		List(resolvedArticles).toAnyRDD()
+		val redirectsList = if(saveRedirectsToCassandra) redirects.map(Redirect.tupled).toList else Nil
+		List(resolvedArticles).toAnyRDD() ++ List(sc.parallelize(redirectsList)).toAnyRDD()
 	}
 }

@@ -1,11 +1,12 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
+
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.{BlockEvaluation, FeatureEntry, PrecisionRecallDataTuple, ScoreConfig}
 import de.hpi.ingestion.deduplication.blockingschemes.ListBlockingScheme
 import de.hpi.ingestion.deduplication.models._
-import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan, SimilarityMeasure}
+import de.hpi.ingestion.deduplication.similarity._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -143,15 +144,15 @@ object TestData {
 			(testSubjects(2), testSubjects(3), 0.9446913580246914))
 	}
 
-	def trueDuplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
+	def trueDuplicateCandidates(subjects: List[Subject], stagings: List[Subject]): List[DuplicateCandidates] = {
 		val stagingTable = "subject_wikidata"
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((subjects(1).id, stagingTable, 0.7117948717948718))),
+				List((stagings.head.id, stagingTable, 0.7117948717948718))),
 			DuplicateCandidates(
-				subjects(2).id,
-				List((subjects(3).id, stagingTable, 0.9446913580246914))))
+				subjects(1).id,
+				List((stagings(1).id, stagingTable, 0.9446913580246914))))
 	}
 
 	def duplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
@@ -171,18 +172,36 @@ object TestData {
 	def testConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
 		Map(
 			key -> List(
-				ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
-				ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)))
+				ScoreConfig(MongeElkan, 0.8),
+				ScoreConfig(JaroWinkler, 0.7)))
 	}
 
-	def simpleTestConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
-		Map(key -> List(ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8)))
+	def simpleTestConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		Map("name" -> List(ScoreConfig(MongeElkan, 0.8)))
 	}
 
-	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
+	def complexTestConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		Map(
+			"name" -> List(ScoreConfig(MongeElkan, 0.8), ScoreConfig(JaroWinkler, 0.7)),
+			"geo_city" -> List(ScoreConfig(Jaccard, 1)),
+			"geo_coords" -> List(ScoreConfig(EuclidianDistance, 1)),
+			"gen_income" -> List(ScoreConfig(RoughlyEqualNumbers, 1))
+		)
+	}
+
+	def testConfigScore(subject1: Subject, subject2: Subject): Double = List(
 		MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
 		JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7
 	).sum / (0.8 + 0.7)
+
+	def simpleTestConfigScore(subject: Subject, staging: Subject): Double = MongeElkan.compare(subject.name.get, staging.name.get)
+
+	def complexTestConfigScore(subject: Subject, staging: Subject): Double = List(
+		MongeElkan.compare(subject.name.get, staging.name.get) * 0.8,
+		JaroWinkler.compare(subject.name.get, staging.name.get) * 0.7,
+		Jaccard.compare("Berlin", "Berlin"),
+		RoughlyEqualNumbers.compare("1234", "12")
+	).sum / (0.8 + 0.7 + 1 + 1)
 
 	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String], scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]): Double = {
 		simMeasure.compare(subject1.name.get, subject2.name.get, scoreConfig.scale) * scoreConfig.weight

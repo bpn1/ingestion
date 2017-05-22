@@ -24,10 +24,10 @@ CREATE TABLE wikidumps.parsedwikipedia (
     categorylinks frozen<list<frozen<link>>>,
     context map<text, int>,
     disambiguationlinks frozen<list<frozen<link>>>,
-    extendedlinks frozen<list<frozen<link>>>,
     foundaliases list<text>,
     linkswithcontext frozen<list<frozen<link>>>,
     listlinks list<frozen<link>>,
+    rawextendedlinks frozen<list<frozen<extendedlink>>>,
     templatelinks list<frozen<link>>,
     text text,
     textlinks list<frozen<link>>,
@@ -103,6 +103,11 @@ CREATE TABLE wikidumps.linkedarticles (
 	text text
 );
 
+CREATE TABLE wikidumps.redirects (
+	alias text PRIMARY KEY,
+	page text
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,
@@ -125,6 +130,12 @@ CREATE TABLE wikidumps.dbpedia (
     label text,
     wikipageid text,
     wikidataid text
+);
+
+CREATE TYPE wikidumps.extendedlink (
+    alias text,
+    page map<text, int>,
+    offset int
 );
 
 -- Datalake
@@ -214,16 +225,11 @@ CREATE TABLE datalake.object (
     properties_history map<text, frozen<list<frozen<version>>>>
 );
 
-CREATE TABLE datalake.blockingstats (
-    id uuid PRIMARY KEY,
-    comment text,
-    data map<text, int>
-);
-
 CREATE TYPE datalake.blockstats (
     key text,
     numsubjects int,
-    numstaging int
+    numstaging int,
+    precision double
 );
 
 CREATE TABLE datalake.blockingstats (
