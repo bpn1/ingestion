@@ -43,9 +43,12 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val links = sc.parallelize(TestData.linksWithArticleAnnotation().toList)
 		val anchorRegex = new Regex("<a href=\".+?\">.+?<\\/a>")
 		TextNEL.generateArticlesWithLinks(articles, links)
-			.map(_.text)
 			.collect
-			.foreach(text => anchorRegex.findFirstIn(text) should not be empty)
+			.foreach { article =>
+				if(article.title != "Audi Test ohne Link") {
+					anchorRegex.findFirstIn(article.text) should not be empty
+				}
+			}
 	}
 
 	they should "retain the original text" in {
@@ -64,6 +67,6 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			}
 			.collect
 			.toSet
-		originalTexts should contain allElementsOf texts
+		originalTexts shouldEqual texts
 	}
 }

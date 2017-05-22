@@ -186,8 +186,14 @@ object TextNEL extends SparkJob {
 			.reduceByKey(_ ++ _)
 		articles
 			.map(article => (article.title, article.text))
-			.join(groupedLinks)
-			.map { case (title, (text, linksForArticle)) => generateArticleWithLinks(title, text, linksForArticle) }
+			.leftOuterJoin(groupedLinks)
+			.map { case (title, (text, linksForArticle)) =>
+				linksForArticle match {
+					case Some(linksList) => (title, text, linksList)
+					case None => (title, text, Nil)
+				}
+			}
+			.map((generateArticleWithLinks _).tupled)
 	}
 
 	/**
