@@ -27,7 +27,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 		values.flatMap {
 			case r"""([A-Za-zÄäÖöÜüß\-_ ]*)$country""" => List(country)
 			case _ => None
-		}.map(_.replaceAll("-", " ")).distinct
+		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
 
 	/**
@@ -55,6 +55,15 @@ object WikiDataNormalizationStrategy extends Serializable {
 	}
 
 	/**
+	  * Normalizes all other values by default dashes
+	  * @param values Strings to be normalized
+	  * @return normalized strings
+	  */
+	def normalizeDefault(values: List[String]): List[String] = {
+		values.map(_.replaceAll("(_|-)", " ")).distinct
+	}
+
+	/**
 	  * Chooses the right normalization method
 	  * @param attribute Attribute to be normalized
 	  * @return Normalization method
@@ -65,7 +74,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 			case "geo_coords" => this.normalizeCoords
 			case "geo_country" => this.normalizeCountry
 			case "gen_employees" => this.normalizeEmployees
-			case _ => identity
+			case _ => this.normalizeDefault
 		}
 	}
 }
