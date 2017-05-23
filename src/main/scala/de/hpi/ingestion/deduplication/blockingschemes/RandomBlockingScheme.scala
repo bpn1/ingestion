@@ -8,7 +8,7 @@ import de.hpi.ingestion.datalake.models.Subject
 class RandomBlockingScheme extends BlockingScheme {
 	tag = "RandomBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
-		List((subject.get("id").hashCode % 1000).toString)
+		List((subject.id.hashCode % 1000).toString)
 	}
 }
 

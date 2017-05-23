@@ -386,7 +386,7 @@ object TestData {
 		List("undefined")
 	)
 	def geoCoordsBlockingScheme: List[List[String]] = List(List("52,11"), List("undefined"), List("52,13"), List("53,14"))
-	def randomBlockingScheme: List[List[String]] = List(List("Not correct")) // ToDo: Make it correct
+	def randomBlockingScheme: List[List[String]] = List(List("-534"), List("42"), List("-545"), List("43"), List("400"), List("75"))
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
 
 	def features(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
