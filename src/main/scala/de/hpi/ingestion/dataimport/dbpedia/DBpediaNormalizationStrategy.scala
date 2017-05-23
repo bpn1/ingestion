@@ -28,9 +28,9 @@ object DBpediaNormalizationStrategy extends Serializable {
 	def normalizeCountry(values: List[String]): List[String] = {
 		values.flatMap {
 			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" => List(country)
-			case r"""([A-Za-zÄäÖöÜüß-]{3,})${country}@de \.""" => List(country)
+			case r"""([A-Za-zÄäÖöÜüß\-]{3,})${country}@de \.""" => List(country)
 			case _ => None
-		}.map(_.replaceAll("_", " ")).distinct
+		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
 
 	/**
@@ -40,10 +40,9 @@ object DBpediaNormalizationStrategy extends Serializable {
 	  */
 	def normalizeCoords(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""([-+]?[0-9]+\.?[0-9]*)${coordinate}\^\^xsd:float""" => List(coordinate)
-			case r"""([-+]?[0-9]+\.?[0-9]*)${coordinate}\^\^xsd:double""" => List(coordinate)
+			case r"""(\d+\.\d*)${lat}\^\^xsd:.+;(\d+\.\d*)${long}\^\^xsd:.+""" => List(s"$lat;$long")
 			case _ => None
-		}.grouped(2).toList.distinct.flatten
+		}.distinct
 	}
 
 	/**
@@ -68,7 +67,21 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case r"""dbpedia-de:(.+)${city}""" => List(city)
 			case r"""(.+)${city}@de \.""" => List(city)
 			case other => List(other)
-		}.distinct
+		}.map(_.replaceAll("(_|-)", " ")).distinct
+	}
+
+	/**
+	  * Normalizes all other values by default (removing pre- and suffixes and dashes)
+	  * @param values Strings to be normalized
+	  * @return normalized strings
+	  */
+	def normalizeDefault(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""(.+)${value}\^\^xsd:.+""" => List(value)
+			case r"""(.+)${value}@de \.""" => List(value)
+			case r"""dbpedia-de:(.+)${value}""" => List(value)
+			case other => List(other)
+		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
 
 	/**
@@ -83,7 +96,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case "geo_country" => this.normalizeCountry
 			case "geo_coords" => this.normalizeCoords
 			case "geo_city" => this.normalizeCity
-			case _ => identity
+			case _ => this.normalizeDefault
 		}
 	}
 }
