@@ -116,8 +116,7 @@ object LinkExtender extends SparkJob {
 			if(aliasMatches.nonEmpty) {
 				val longestMatch = aliasMatches.maxBy(_.length)
 				val found = text.substring(longestMatch.head.beginOffset, longestMatch.last.endOffset)
-				if(aliases.contains(found)) {
-					val pages = aliases(found)
+				aliases.get(found).foreach { pages =>
 					val offset = longestMatch.head.beginOffset
 					resultList += ExtendedLink(found, pages, Option(offset))
 					i += longestMatch.length - 1

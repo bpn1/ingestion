@@ -48,8 +48,8 @@ object GoldStandard extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val data = input.fromAnyRDD[Subject]()
-		val results = join(data.head, data(1))
+		val List(dbpedia, wikidata) = input.fromAnyRDD[Subject]()
+		val results = join(dbpedia, wikidata)
 		List(results).toAnyRDD()
 	}
 
