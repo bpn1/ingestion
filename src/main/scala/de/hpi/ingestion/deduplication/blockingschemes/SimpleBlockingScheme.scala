@@ -9,7 +9,8 @@ class SimpleBlockingScheme extends BlockingScheme {
 	tag = "SimpleBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
 		subject.name.map { name =>
-			List(name.substring(0, Math.min(3, name.length)))
+			val start = Math.max(0, name.length - 3)
+			List(name.substring(start, name.length))
 		}.getOrElse(List(undefinedValue))
 	}
 }
