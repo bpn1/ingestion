@@ -3,7 +3,8 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.FeatureEntry
+import de.hpi.ingestion.textmining.models.{Alias, FeatureEntry, ParsedWikipediaEntry}
+import org.apache.spark.rdd.RDD
 
 class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Inverse document frequencies" should "contain as many tokens as document frequencies" in {
@@ -265,7 +266,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
 		val featureEntries = CosineContextComparator
 			.run(input, sc)
 			.fromAnyRDD[FeatureEntry]()
@@ -286,7 +287,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
 		val featureEntries = CosineContextComparator
 			.run(input, sc)
 			.fromAnyRDD[FeatureEntry]()
@@ -307,7 +308,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
 		val featureEntries = CosineContextComparator
 			.run(input, sc)
 			.fromAnyRDD[FeatureEntry]()
@@ -336,5 +337,35 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.toSet
 		val expectedLinks = TestData.transformedLinkContexts()
 		transformedLinks shouldEqual expectedLinks
+	}
+
+	"Input split" should "split input into 10 parts" in {
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val splitInput = CosineContextComparator.splitInput(input).toList
+		splitInput should have length 10
+		splitInput.foreach { case inputPartition =>
+			inputPartition should have length 3
+		}
+	}
+
+	it should "make the Parsed Wikipedia Entries lean" in {
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val splitInput = CosineContextComparator.splitInput(input).toList
+		splitInput.foreach { case List(leanArticles, aliases, leanSplit) =>
+			leanArticles.asInstanceOf[RDD[ParsedWikipediaEntry]]
+				.union(leanSplit.asInstanceOf[RDD[ParsedWikipediaEntry]])
+				.collect
+				.foreach { entry =>
+					entry.templatelinks shouldBe empty
+					entry.categorylinks shouldBe empty
+					entry.listlinks shouldBe empty
+					entry.disambiguationlinks shouldBe empty
+					entry.foundaliases shouldBe empty
+				}
+		}
 	}
 }

@@ -5,7 +5,7 @@ import java.io.{BufferedReader, InputStreamReader}
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SplitSparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -14,7 +14,7 @@ import scala.collection.mutable
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
   */
-object CosineContextComparator extends SparkJob {
+object CosineContextComparator extends SplitSparkJob {
 	appName = "Cosine Context Comparator"
 	configFile = "textmining.xml"
 
@@ -29,9 +29,8 @@ object CosineContextComparator extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		val documentFrequencies = sc.cassandraTable[DocumentFrequency](settings("keyspace"), settings("dfTable"))
 		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
-		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
+		List(tfArticles).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
 
 	/**
@@ -232,6 +231,30 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
+	  * Splits the input articles into 10 partitions which will be processed sequentially. Also removes any not needed
+	  * data from the Parsed Wikipedia Entries.
+	  * @param input List of RDDs containing the input data
+	  * @param args arguments of the program
+	  * @return Collection of input RDD Lists to be processed sequentially.
+	  */
+	override def splitInput(input: List[RDD[Any]], args: Array[String] = Array()): Traversable[List[RDD[Any]]] = {
+		val List(articlesWithTermFrequencies, aliases) = input
+		val leanArticles = articlesWithTermFrequencies.asInstanceOf[RDD[ParsedWikipediaEntry]]
+			.map(_.copy(
+				templatelinks = Nil,
+				categorylinks = Nil,
+				listlinks = Nil,
+				disambiguationlinks = Nil,
+				foundaliases = Nil))
+			.cache
+		val weights = (0 until 10).map(t => 1.0).toArray
+		val articleSplit = leanArticles.randomSplit(weights)
+		articleSplit.map { articlePartition =>
+			List(leanArticles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articlePartition).toAnyRDD()
+		}
+	}
+
+	/**
 	  * Calculates the Cosine Similarities for every alias and creates feature entries containing the other two
 	  * features as well.
 	  *
@@ -243,6 +266,7 @@ object CosineContextComparator extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
+		val linkArticles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
 
 		val numDocuments = articlesWithTermFrequencies.count()
 		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
@@ -253,9 +277,8 @@ object CosineContextComparator extends SparkJob {
 		val articleTfs = transformArticleTfs(articlesWithTermFrequencies)
 		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf, settingsBroadcast.value)
 
-		val contextTfs = transformLinkContextTfs(articlesWithTermFrequencies)
+		val contextTfs = transformLinkContextTfs(linkArticles)
 		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf, settingsBroadcast.value)
-
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
 		val featureEntries = compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
 		List(featureEntries).toAnyRDD()
