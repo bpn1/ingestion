@@ -20,7 +20,7 @@ class DBpediaNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 			DBpediaNormalizationStrategy.normalizeCountry,
 			DBpediaNormalizationStrategy.normalizeCity,
 			DBpediaNormalizationStrategy.normalizeSector,
-			identity
+			DBpediaNormalizationStrategy.normalizeDefault
 		)
 		(results, strategies, inputs).zipped
 			.map { case (result, expected, input) =>
@@ -63,6 +63,13 @@ class DBpediaNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 		val cities = TestData.unnormalizedCities
 		val result = DBpediaNormalizationStrategy.normalizeCity(cities)
 		val expected = TestData.normalizedCities
+		result shouldEqual expected
+	}
+
+	"normalizeDefault" should "check for default patterns and normalize if possible or neccessary" in {
+		val defaultValues = TestData.unnormalizedDefaults
+		val result = DBpediaNormalizationStrategy.normalizeDefault(defaultValues)
+		val expected = TestData.normalizedDefaults
 		result shouldEqual expected
 	}
 }
