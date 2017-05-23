@@ -81,7 +81,7 @@ export HADOOP_USER_NAME="bp2016n1"
 if [ "$mode" = "yarn" ]; then
 	$submit_command
 elif [ "$mode" = "shell" ]; then
-	echo "spark-shell $num_exec $exec_cores $exec_mem $driver_mem $trie_option --jars $jarPath $*"
+	spark-shell "$num_exec $exec_cores $exec_mem $driver_mem $trie_option --jars $jarPath $*"
 elif [ "$mode" = "print" ]; then
 	echo "HADOOP_USER_NAME=\"bp2016n1\"" $submit_command
 else
