@@ -7,10 +7,12 @@ package de.hpi.ingestion.textmining.models
   * @param pages            all Wikipedia pages this alias points to and how often it does
   * @param linkoccurrences  in how many articles this alias appears as link
   * @param totaloccurrences in how many articles this alias appears in the plain text
+  * @param pagesreduced     all Wikipedia pages this alias points to and how often it does
   */
 case class Alias(
 	alias: String,
 	pages: Map[String, Int] = Map(),
 	var linkoccurrences: Option[Int] = None,
-	var totaloccurrences: Option[Int] = None
+	var totaloccurrences: Option[Int] = None,
+	pagesreduced: Map[String, Int] = Map()
 )

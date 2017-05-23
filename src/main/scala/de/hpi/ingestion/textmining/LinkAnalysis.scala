@@ -37,24 +37,29 @@ object LinkAnalysis extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val aliases = output.head.asInstanceOf[RDD[Alias]]
-		val pages = output(1).asInstanceOf[RDD[Page]]
-		aliases.saveToCassandra(settings("keyspace"), settings("linkTable"), SomeColumns("alias", "pages"))
-		pages.saveToCassandra(settings("keyspace"), settings("pageTable"))
+		val aliases = output.head.asInstanceOf[RDD[(String, Map[String, Int])]]
+		val pages = output(1).asInstanceOf[RDD[(String, Map[String, Int])]]
+		val toReduced = args.nonEmpty
+		val pagesColumns = if(toReduced) "pagesreduced" else "pages"
+		val aliasColumns = if(toReduced) "aliasesreduced" else "aliases"
+		aliases.saveToCassandra(settings("keyspace"), settings("linkTable"), SomeColumns("alias", pagesColumns))
+		pages.saveToCassandra(settings("keyspace"), settings("pageTable"), SomeColumns("page", aliasColumns))
 	}
 	// $COVERAGE-ON$
 
 	/**
 	  * Extracts links from Wikipedia articles that point to an existing page.
-	  *
 	  * @param articles all Wikipedia articles
+	  * @param toReduced whether or not the reduced link columns are used
 	  * @return valid links
 	  */
-	def extractValidLinks(articles: RDD[ParsedWikipediaEntry]): RDD[Link] = {
+	def extractValidLinks(articles: RDD[ParsedWikipediaEntry], toReduced: Boolean = false): RDD[Link] = {
 		val joinableExistingPages = articles.map(article => (article.title, article.title))
 		articles
-			.flatMap(_.allLinks().map(l => (l.page, l)))
-			.join(joinableExistingPages)
+			.flatMap { entry =>
+				val links = if(toReduced) entry.reducedLinks() else entry.allLinks()
+				links.map(l => (l.page, l))
+			}.join(joinableExistingPages)
 			.values
 			.map { case (link, page) => link }
 	}
@@ -65,9 +70,9 @@ object LinkAnalysis extends SparkJob {
 	  * @param links links of Wikipedia articles
 	  * @return RDD of Aliases
 	  */
-	def groupByAliases(links: RDD[Link]): RDD[Alias] = {
+	def groupByAliases(links: RDD[Link]): RDD[(String, Map[String, Int])] = {
 		val aliasData = links.map(link => (link.alias, List(link.page)))
-		groupLinks(aliasData).map(t => Alias(t._1, t._2))
+		groupLinks(aliasData)
 	}
 
 	/**
@@ -76,9 +81,9 @@ object LinkAnalysis extends SparkJob {
 	  * @param links links of Wikipedia articles
 	  * @return RDD of pages
 	  */
-	def groupByPageNames(links: RDD[Link]): RDD[Page] = {
+	def groupByPageNames(links: RDD[Link]): RDD[(String, Map[String, Int])] = {
 		val pageData = links.map(link => (link.page, List(link.alias)))
-		groupLinks(pageData).map(Page.tupled)
+		groupLinks(pageData)
 	}
 
 	/**
@@ -107,7 +112,8 @@ object LinkAnalysis extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val validLinks = extractValidLinks(articles)
+		val toReduced = args.nonEmpty
+		val validLinks = extractValidLinks(articles, toReduced)
 		val aliases = groupByAliases(validLinks)
 		val pages = groupByPageNames(validLinks)
 		List(aliases).toAnyRDD() ++ List(pages).toAnyRDD()

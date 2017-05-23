@@ -24,6 +24,15 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		validLinks shouldEqual TestData.validLinkSet()
 	}
 
+	they should "be exactly these reduced links" in {
+		val articles = sc.parallelize(TestData.closedParsedWikipediaSetWithReducedLinks().toList)
+		val validLinks = LinkAnalysis
+			.extractValidLinks(articles, true)
+			.collect
+			.toSet
+		validLinks shouldEqual TestData.validLinkSet()
+	}
+
 	"Page names grouped by aliases" should "not be empty" in {
 		val links = sc.parallelize(TestData.validLinkSet().toList)
 		val groupedAliases = LinkAnalysis
@@ -38,7 +47,7 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		LinkAnalysis
 			.groupByAliases(links)
 			.collect
-			.foreach(alias => alias.alias should not be empty)
+			.foreach(alias => alias._2 should not be empty)
 	}
 
 	they should "contain at least one page name per alias" in {
@@ -46,14 +55,14 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		LinkAnalysis
 			.groupByAliases(links)
 			.collect
-			.foreach(alias => alias.pages should not be empty)
+			.foreach(alias => alias._2 should not be empty)
 	}
 
 	they should "not contain empty page names" in {
 		val links = sc.parallelize(TestData.validLinkSet().toList)
 		LinkAnalysis
 			.groupByAliases(links)
-			.flatMap(_.pages)
+			.flatMap(_._2)
 			.map(_._1)
 			.collect
 			.foreach(page => page should not be "")
@@ -63,6 +72,7 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		val links = sc.parallelize(TestData.validLinkSet().toList)
 		val groupedAliases = LinkAnalysis
 			.groupByAliases(links)
+			.map { case (alias, pages) => Alias(alias, pages) }
 			.collect
 			.toSet
 		groupedAliases shouldEqual TestData.groupedAliasesSet()
@@ -82,7 +92,7 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		LinkAnalysis
 			.groupByPageNames(links)
 			.collect
-			.foreach(page => page.page should not be empty)
+			.foreach(page => page._1 should not be empty)
 	}
 
 	they should "contain at least one alias per page name" in {
@@ -90,14 +100,14 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		LinkAnalysis
 			.groupByPageNames(links)
 			.collect
-			.foreach(pages => pages.aliases should not be empty)
+			.foreach(pages => pages._2 should not be empty)
 	}
 
 	they should "not contain empty aliases" in {
 		val links = sc.parallelize(TestData.validLinkSet().toList)
 		LinkAnalysis
 			.groupByPageNames(links)
-			.flatMap(_.aliases)
+			.flatMap(_._2)
 			.map(_._1)
 			.collect
 			.foreach(alias => alias should not be "")
@@ -107,6 +117,7 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 		val links = sc.parallelize(TestData.validLinkSet().toList)
 		val groupedPages = LinkAnalysis
 			.groupByPageNames(links)
+			.map { case (page, aliases) => Page(page, aliases) }
 			.collect
 			.toSet
 		groupedPages shouldEqual TestData.groupedPagesSet()
@@ -123,10 +134,8 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Grouped aliases and page names from incomplete article set" should "be empty" in {
 		val articles = sc.parallelize(TestData.smallerParsedWikipediaList())
 		val List(groupedAliases, groupedPages) = LinkAnalysis.run(List(articles).toAnyRDD(), sc)
-		val groupedAliasesSet = groupedAliases.asInstanceOf[RDD[Alias]]
-			.collect
-		val groupedPagesSet = groupedPages.asInstanceOf[RDD[Page]]
-			.collect
+		val groupedAliasesSet = groupedAliases.asInstanceOf[RDD[(String, Map[String, Int])]].collect
+		val groupedPagesSet = groupedPages.asInstanceOf[RDD[(String, Map[String, Int])]].collect
 		groupedAliasesSet shouldBe empty
 		groupedPagesSet shouldBe empty
 	}
