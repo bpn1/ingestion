@@ -67,7 +67,7 @@ object Blocking extends SparkJob {
 		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().last
 		val comment = args.headOption.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
-		val filterUndefined = true//this.settings.getOrElse("filterUndefined", "false") == "true"
+		val filterUndefined = this.settings.getOrElse("filterUndefined", "false") == "true"
 		val blockEvaluation = List(evaluationBlocking(
 			subjects,
 			staging,
@@ -146,6 +146,8 @@ object Blocking extends SparkJob {
 				(tag, Block(key = key, subjects = subjectList.toList, staging = stagingList.toList))
 			}.filter { case (tag, block) =>
 				!(blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(block.key) && filterUndefined)
+			}.filter { case (tag, block) =>
+				(block.staging.size * block.subjects.size) < 500000 // filter huge blocks
 			}
 	}
 
@@ -172,7 +174,8 @@ object Blocking extends SparkJob {
 		val jobid = UUIDs.timeBased()
 		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
 			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
-		}
+		}.filter { case ((key, tag), (subjectList, stagingList)) =>
+			((subjectList.size * stagingList.size) < 500000) && ((subjectList.size * stagingList.size) > 1000) }
 		val duplicates = blocks.map(createDuplicates(_, goldStandard))
 
 		var accuracy = duplicates
@@ -190,7 +193,6 @@ object Blocking extends SparkJob {
 			.distinct
 			.count()
 			.toDouble / goldStandard.size.toDouble
-
 		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
 		accuracy ++= Map(sumTag -> totalAccuracy)
 		val statsSum = duplicates
@@ -205,6 +207,7 @@ object Blocking extends SparkJob {
 			.map { case (tag, blockStats) =>
 				val tagAccuracy = accuracy.getOrElse(tag, 0.0)
 				val blockComment = Option(s"$comment; accuracy: $tagAccuracy")
+				//val filteredStats = blockStats.filter(stat => (stat.numsubjects * stat.numstaging) > 1000)
 				BlockEvaluation(jobid, tag, blockStats, blockComment)
 			}
 	}
