@@ -158,7 +158,7 @@ object TextNEL extends SparkJob {
 	  * @return
 	  */
 	def generateArticleWithLinks(title: String, text: String, links: List[Link]): Article = {
-		var html = ""
+		var html = "<html><body>"
 		var processedCharacters = 0
 		links
 			.sortBy(_.offset)
@@ -171,6 +171,7 @@ object TextNEL extends SparkJob {
 				html += "</a>"
 			}
 		html += text.substring(processedCharacters, text.length)
+		html += "</body></html>"
 		Article(title, html)
 	}
 
@@ -200,7 +201,7 @@ object TextNEL extends SparkJob {
 	  * todo
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
+		val articlesWithTermFrequencies = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(10000))
 		val documentFrequencies = input(1).asInstanceOf[RDD[DocumentFrequency]]
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val numDocuments = articlesWithTermFrequencies.count()

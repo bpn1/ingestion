@@ -30,6 +30,7 @@ object AliasTrieSearch extends SparkJob {
 
 	// $COVERAGE-OFF$
 	var trieStreamFunction = hdfsFileStream _
+
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
 	  *
@@ -66,6 +67,7 @@ object AliasTrieSearch extends SparkJob {
 		val fs = FileSystem.get(hadoopConf)
 		fs.open(new Path(file))
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -105,7 +107,9 @@ object AliasTrieSearch extends SparkJob {
 
 		contextAliases = contextAliases.filterNot { alias =>
 			val isLink = entry.textlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias)
-			val isExLink = entry.extendedlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias)
+			val isExLink = entry.extendedlinks().exists { link =>
+				link.offset == alias.offset && link.alias == alias.alias
+			}
 			isLink || isExLink
 		}
 
@@ -116,17 +120,18 @@ object AliasTrieSearch extends SparkJob {
 				val end = offsetTokens.lastOption.map(_.endOffset)
 				(begin, end)
 			}.collect {
-				case (begin, end) if begin.isDefined && end.isDefined =>
-					entry.getText().substring(begin.get, end.get)
-			}.toList
+			case (begin, end) if begin.isDefined && end.isDefined =>
+				entry.getText().substring(begin.get, end.get)
+		}.toList
 
 		entry.copy(foundaliases = cleanFoundAliases(foundAliases), triealiases = contextAliases)
 	}
 
 	/**
 	  * Extracts the context of a found alias from the tokenized text and returns a Bag of words of this context.
+	  *
 	  * @param alias tokenized alias
-	  * @param text tokenized text
+	  * @param text  tokenized text
 	  * @param index offset of the tokenized alias in the tokenized text
 	  * @return Bag of words of the context of the alias
 	  */
