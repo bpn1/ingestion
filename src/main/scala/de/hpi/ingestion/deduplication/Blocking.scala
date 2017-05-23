@@ -20,7 +20,8 @@ object Blocking extends SparkJob {
 	appName = "Blocking"
 	configFile = "deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
-		SimpleBlockingScheme("simple_scheme")
+		SimpleBlockingScheme("simple"),
+		LastLettersBlockingScheme("last_letters")
 	)
 	// $COVERAGE-OFF$
 	/**
@@ -167,20 +168,31 @@ object Blocking extends SparkJob {
 			val blockStats = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
 			(duplicates, (tag, blockStats))
 		}
-		val accuracy = duplicates
-			.map { case (duplicates, (tag, block)) =>
-				(tag, duplicates)
+		var accuracy = duplicates
+			.flatMap { case (duplicates, (tag, block)) =>
+				duplicates.map((tag, _))
 			}.distinct
-			.map { case (tag, duplicates) => (tag, duplicates.size) }
+			.map { case (tag, duplicate) => (tag, 1) }
 			.reduceByKey(_ + _)
 			.collect
 			.toMap
 			.mapValues(_.toDouble / goldStandard.size.toDouble)
 			.map(identity)
-
+		val totalAccuracy = duplicates
+			.flatMap { case (duplicates, (tag, block)) => duplicates }
+			.distinct
+			.count()
+			.toDouble / goldStandard.size.toDouble
+		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
+		accuracy ++= Map(sumTag -> totalAccuracy)
+		val statsSum = duplicates
+			.values
+			.map { case (tag, blockStats) => (sumTag, blockStats) }
+			.reduceByKey(_ ++ _)
 		duplicates
 			.values
 			.reduceByKey(_ ++ _)
+			.union(statsSum)
 			.map { case (tag, blockStats) =>
 				val tagAccuracy = accuracy.getOrElse(tag, 0.0)
 				val blockComment = Option(s"$comment; accuracy: $tagAccuracy")
