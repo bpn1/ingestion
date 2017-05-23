@@ -6,8 +6,9 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, extractAliasContext, hdfsFileStream}
 import de.hpi.ingestion.textmining.CosineContextComparator.{calculateDefaultDf, calculateIdf, calculateTfidf,
-transformArticleTfs}
+transformArticleTfs, computeAliasProbabilities}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.model.RandomForestModel
@@ -21,6 +22,7 @@ object TextNEL extends SparkJob {
 
 	// $COVERAGE-OFF$
 	var modelFunction = loadModel _
+	var trieStreamFunction = hdfsFileStream _
 
 	/**
 	  * Loads Wikipedia entries from the Cassandra.
@@ -83,28 +85,56 @@ object TextNEL extends SparkJob {
 			}
 	}
 
+	//	/**
+	//	  * todo
+	//	  *
+	//	  * @param
+	//	  * @return
+	//	  */
+	//	def extractTokenContexts(
+	//		tokens: List[String],
+	//		linkCandidates: List[Link],
+	//		tokenizer: IngestionTokenizer
+	//	): List[Link] = {
+	//		linkCandidates.map { link =>
+	//			val aliasTokens = tokenizer.onlyTokenize(link.alias)
+	//			val aliasIndex = tokens.indexOfSlice(aliasTokens)
+	//			val contextStart = Math.max(aliasIndex - settings("contextSize").toInt, 0)
+	//			val preAliasContext = tokens.slice(contextStart, aliasIndex)
+	//			val contextEnd = Math.min(aliasIndex + settings("contextSize").toInt, tokens.length)
+	//			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
+	//			val context = preAliasContext ++ postAliasContext
+	//			val bag = TermFrequencyCounter.extractBagOfWords(tokenizer.process(context))
+	//			link.copy(context = bag.getCounts())
+	//		}
+	//	}
+
 	/**
 	  * todo
-	  *
-	  * @param
-	  * @return
 	  */
-	def extractTokenContexts(
-		tokens: List[String],
-		linkCandidates: List[Link],
-		tokenizer: IngestionTokenizer
-	): List[Link] = {
-		linkCandidates.map { link =>
-			val aliasTokens = tokenizer.onlyTokenize(link.alias)
-			val aliasIndex = tokens.indexOfSlice(aliasTokens)
-			val contextStart = Math.max(aliasIndex - settings("contextSize").toInt, 0)
-			val preAliasContext = tokens.slice(contextStart, aliasIndex)
-			val contextEnd = Math.min(aliasIndex + settings("contextSize").toInt, tokens.length)
-			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
-			val context = preAliasContext ++ postAliasContext
-			val bag = TermFrequencyCounter.extractBagOfWords(tokenizer.process(context))
-			link.copy(context = bag.getCounts())
+	def matchTrieAliases(
+		text: String,
+		trie: TrieNode,
+		tokenizer: IngestionTokenizer,
+		contextTokenizer: IngestionTokenizer
+	): List[TrieAlias] = {
+		var contextAliases = List[TrieAlias]()
+		val tokens = tokenizer.processWithOffsets(text)
+		for(i <- tokens.indices) {
+			val testTokens = tokens.slice(i, tokens.length)
+			val aliasMatches = trie.matchTokens(testTokens.map(_.token))
+			val offsetMatches = aliasMatches.map(textTokens => testTokens.take(textTokens.length))
+			if(aliasMatches.nonEmpty) {
+				val longestMatch = offsetMatches.maxBy(_.length)
+				val offset = longestMatch.headOption.map(_.beginOffset)
+				offset.foreach { begin =>
+					val alias = text.substring(begin, longestMatch.last.endOffset)
+					val context = extractAliasContext(longestMatch, tokens, i, contextTokenizer).getCounts()
+					contextAliases :+= TrieAlias(alias, offset, context)
+				}
+			}
 		}
+		contextAliases
 	}
 
 	/**
@@ -122,27 +152,25 @@ object TextNEL extends SparkJob {
 		aliases: RDD[Alias],
 		numDocuments: Long,
 		documentFrequencyThreshold: Int,
-		tokenizer: IngestionTokenizer,
 		defaultIdf: Double,
 		sc: SparkContext
 	): RDD[(Link, Map[String, Double])] = {
+		val tokenizer = IngestionTokenizer(false, false)
+		val contextTokenizer = IngestionTokenizer(true, true)
+		val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
+
 		val aliasPages = aliases.flatMap(alias => alias.pages.map(page => (alias.alias, page._1)))
 		val contextTermFrequencies = articles
-			.flatMap { case Article(title, text) =>
-				val offsetTokens = tokenizer.processWithOffsets(text)
-				val tokens = offsetTokens.map(_.token)
-				offsetTokens.map(offsetToken => (offsetToken.token, (title, tokens, offsetToken.beginOffset)))
+			.flatMap { article =>
+				val trieAlias = matchTrieAliases(article.text, trie, tokenizer, contextTokenizer)
+				trieAlias.map(trieAlias => (trieAlias.alias, (article.title, trieAlias)))
 			}
 			.join(aliasPages)
-			.map { case (alias, ((title, tokens, beginOffset), page)) =>
-				((title, tokens), List(Link(alias, page, Option(beginOffset), article = Option(title))))
-			}.reduceByKey(_ ++ _)
-			.flatMap { case ((title, tokens), linkCandidates) =>
-				extractTokenContexts(tokens, linkCandidates, tokenizer)
+			.map { case (alias, ((title, trieAlias), page)) =>
+				(Link(alias, page, trieAlias.offset, article = Option(title)), Bag(trieAlias.context))
 			}
-			.map(link => (link, Bag(link.context)))
 
-		CosineContextComparator.calculateTfidf(
+		calculateTfidf(
 			contextTermFrequencies,
 			numDocuments,
 			defaultIdf)
@@ -211,10 +239,9 @@ object TextNEL extends SparkJob {
 		val articleTfs = transformArticleTfs(articlesWithTermFrequencies)
 		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf)
 
-		val aliasPageProbabilities = CosineContextComparator.computeAliasProbabilities(aliases)
+		val aliasPageProbabilities = computeAliasProbabilities(aliases)
 
 		val classifier = modelFunction(sc)
-		val tokenizer = IngestionTokenizer(true, false)
 		val articles = articlesWithTermFrequencies.map(article => Article(article.title, article.getText()))
 
 		val contextTfidf = calculateTokenContextsTfidf(
@@ -223,7 +250,6 @@ object TextNEL extends SparkJob {
 			aliases,
 			numDocuments,
 			DocumentFrequencyCounter.leastSignificantDocumentFrequency,
-			tokenizer,
 			defaultIdf,
 			sc
 		)

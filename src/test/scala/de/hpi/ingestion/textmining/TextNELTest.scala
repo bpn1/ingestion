@@ -9,9 +9,13 @@ import scala.util.matching.Regex
 
 class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Found named entities" should "be empty (due to empty classifier model)" in {
-		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldTrieStreamFunctionAliasTrieSearch = AliasTrieSearch.trieStreamFunction
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+
+		val oldTrieStreamFunctionTextNEL = AliasTrieSearch.trieStreamFunction
+		val testTrieStreamFunction = TestData.fullTrieStream _
+		TextNEL.trieStreamFunction = testTrieStreamFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
@@ -26,7 +30,8 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			.collect
 		namedEntities shouldBe empty
 
-		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunctionAliasTrieSearch
+		TextNEL.trieStreamFunction = oldTrieStreamFunctionTextNEL
 	}
 
 	"Articles with links" should "not be empty" in {
