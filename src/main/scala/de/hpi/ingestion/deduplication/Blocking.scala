@@ -93,6 +93,18 @@ object Blocking extends SparkJob {
 		blockingSchemes = if(schemes.nonEmpty) schemes else List(new SimpleBlockingScheme)
 	}
 
+	def createDuplicates(
+		block: ((String, String), (Traversable[UUID], Traversable[UUID])),
+		goldStandard: Set[(UUID, UUID)]
+	): (Traversable[(UUID, UUID)], (String, Set[BlockStats])) = {
+		val ((key, tag), (subjectList, stagingList)) = block
+		val cross = subjectList.cross(stagingList)
+		val duplicates = cross.filter(goldStandard)
+		val precision = if (cross.nonEmpty) duplicates.size.toDouble / cross.size.toDouble else 0.0
+		val blockStats = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
+		(duplicates, (tag, blockStats))
+	}
+
 	/**
 	  * Uses input blocking schemes to generate blocks of subjects. Every subject generates an entry for every key
 	  * element for every blocking scheme.
@@ -161,13 +173,8 @@ object Blocking extends SparkJob {
 		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
 			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
 		}
-		val duplicates = blocks.map { case ((key, tag), (subjectList, stagingList)) =>
-			val cross = subjectList.cross(stagingList)
-			val duplicates = cross.filter(goldStandard)
-			val precision = if (cross.nonEmpty) duplicates.size.toDouble / cross.size.toDouble else 0.0
-			val blockStats = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
-			(duplicates, (tag, blockStats))
-		}
+		val duplicates = blocks.map(createDuplicates(_, goldStandard))
+
 		var accuracy = duplicates
 			.flatMap { case (duplicates, (tag, block)) =>
 				duplicates.map((tag, _))
@@ -183,12 +190,14 @@ object Blocking extends SparkJob {
 			.distinct
 			.count()
 			.toDouble / goldStandard.size.toDouble
+
 		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
 		accuracy ++= Map(sumTag -> totalAccuracy)
 		val statsSum = duplicates
 			.values
 			.map { case (tag, blockStats) => (sumTag, blockStats) }
 			.reduceByKey(_ ++ _)
+
 		duplicates
 			.values
 			.reduceByKey(_ ++ _)
