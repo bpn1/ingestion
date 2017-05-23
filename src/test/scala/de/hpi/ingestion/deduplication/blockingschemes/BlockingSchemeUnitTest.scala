@@ -20,6 +20,14 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		key shouldEqual List(blockingScheme.undefinedValue)
 	}
 
+	/*"LastLettersBlockingScheme" should "generate propert keys" in {
+		val subjects = TestData.testSubjects
+		val blockingScheme = SimpleBlockingScheme("Test LastLettersBS")
+		val keys = subjects.map(blockingScheme.generateKey)
+		val expected = TestData.simpleBlockingScheme
+		keys.toSet shouldEqual expected.toSet
+	}*/
+
 	"ListBlockingScheme" should "generate proper keys" in {
 		val subjects = TestData.testSubjects
 		val blockingScheme = ListBlockingScheme("Test ListBS", "geo_city", "gen_income")

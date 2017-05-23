@@ -3,14 +3,13 @@ package de.hpi.ingestion.deduplication.blockingschemes
 import de.hpi.ingestion.datalake.models.Subject
 
 /**
-  * This class uses the first three characters of the name property as key.
+  * This class uses the first five characters of the name property as key.
   */
 class SimpleBlockingScheme extends BlockingScheme {
 	tag = "SimpleBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
 		subject.name.map { name =>
-			val start = Math.max(0, name.length - 3)
-			List(name.substring(start, name.length))
+			List(name.substring(0, Math.min(5, name.length)))
 		}.getOrElse(List(undefinedValue))
 	}
 }
