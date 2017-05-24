@@ -10,12 +10,12 @@ while getopts ":hm:c:n:d:e:t" opt; do
 	case $opt in
 		h)
 			echo $usage
-			echo "-m <mode>\tmode to use (yarn|shell|print)"
-			echo "-c <class>\tclass to execute"
-			echo "-n <num_nodes>\tnumber of nodes to use"
-			echo "-d <num_gb>\tnumber of GB used as driver memory"
-			echo "-e <num_gb>\tnumber of GB used as executor memory"
-			echo "-t\t\tincrease executor stack size for trie deserialization"
+			echo -e "-m <mode>\tmode to use (yarn|shell|print)"
+			echo -e "-c <class>\tclass to execute"
+			echo -e "-n <num_nodes>\tnumber of nodes to use"
+			echo -e "-d <num_gb>\tnumber of GB used as driver memory"
+			echo -e "-e <num_gb>\tnumber of GB used as executor memory"
+			echo -e "-t\t\tincrease executor stack size for trie deserialization"
 			exit 1
 			;;
 		m)
