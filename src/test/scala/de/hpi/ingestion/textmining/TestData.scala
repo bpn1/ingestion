@@ -1,7 +1,5 @@
 package de.hpi.ingestion.textmining
 
-
-import java.net.URI
 import java.io._
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
@@ -25,6 +23,13 @@ import scala.io.{BufferedSource, Source}
 // scalastyle:off file.size.limit
 
 object TestData {
+	def valuesList(): List[Double] = {
+		List(5.0, 7.1, 5.0, 2.9, 7.1)
+	}
+
+	def ranksList(): List[Int] = {
+		List(3, 1, 3, 5, 1)
+	}
 
 	def testSentences(): List[String] = {
 		List(
@@ -673,7 +678,7 @@ object TestData {
 		)
 	}
 
-	def aliasProbabilitiesSet(): Set[(String, (String, Double, Double))] = {
+	def aliasPageScores(): Set[(String, (String, Double, Double))] = {
 		Set(
 			("Audi", ("Audi", 0.6666666666666666, 1.0)),
 			("Brachttal", ("Brachttal", 1.0, 1.0)),
@@ -683,6 +688,36 @@ object TestData {
 			("Büdinger Wald", ("Büdinger Wald", 0.5, 1.0)),
 			("historisches Jahr", ("1377", 1.0, 1.0)),
 			("Büdinger Wald", ("Audi", 0.5, 1.0))
+		)
+	}
+
+	def alternativeAliasPageScores(): Set[(String, (String, Double, Double))] = {
+		Set(
+			("Audi", ("Audi", 1.0, 0.6)),
+			("Audi", ("BMW", 1.0, 0.3)),
+			("Audi", ("Chevrolet", 1.0, 0.1)),
+			("Audi", ("Audi", 1.0, 0.6)),
+			("Audi", ("BMW", 1.0, 0.3)),
+			("Audi", ("Chevrolet", 1.0, 0.1)),
+			("BMW", ("BMW", 1.0, 0.8)),
+			("BMW", ("Chevrolet", 1.0, 0.2)),
+			("BMW", ("BMW", 1.0, 0.8)),
+			("BMW", ("Chevrolet", 1.0, 0.2))
+		)
+	}
+
+	def extendedAliasPageScores(): Set[(String, (String, Double, MultiFeature))] = {
+		Set(
+			("Audi", ("Audi", 1.0, MultiFeature(0.6, 1))),
+			("Audi", ("BMW", 1.0, MultiFeature(0.3, 2))),
+			("Audi", ("Chevrolet", 1.0, MultiFeature(0.1, 3))),
+			("Audi", ("Audi", 1.0, MultiFeature(0.6, 1))),
+			("Audi", ("BMW", 1.0, MultiFeature(0.3, 2))),
+			("Audi", ("Chevrolet", 1.0, MultiFeature(0.1, 3))),
+			("BMW", ("BMW", 1.0, MultiFeature(0.8, 1))),
+			("BMW", ("Chevrolet", 1.0, MultiFeature(0.2, 2))),
+			("BMW", ("BMW", 1.0, MultiFeature(0.8, 1))),
+			("BMW", ("Chevrolet", 1.0, MultiFeature(0.2, 2)))
 		)
 	}
 

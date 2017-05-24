@@ -155,14 +155,67 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
+	  * Computes the rank for #todo
+	  *
+	  * @param values
+	  * @return ranks for the values (starting with 1)
+	  */
+	def rankValues(values: List[Double]): List[Int] = {
+		var rank = 1
+		val ranksMap = values
+			.countElements()
+			.toSeq
+			.sortBy(-_._1)
+			.map { case (value, count) =>
+				val rankedValue = (value, rank)
+				rank += count
+				rankedValue
+			}
+			.toMap
+
+		values.map(ranksMap)
+	}
+
+	/**
+	  * #todo
+	  */
+	def generateMultiFeatures(values: List[Double]): List[MultiFeature] = {
+		values
+			.zip(rankValues(values))
+			.map { case (value, rank) => MultiFeature(value, rank) }
+	}
+
+	/**
 	  * add second order features #todo
 	  */
 	def generateProtoFeatureEntries(
-		joinedLinks: List[(Link, Map[String, Double], String, Double, Double)]
+		joinedLinks: List[(Link, Map[String, Double], String, Double, MultiFeature)]
 	): List[(String, ProtoFeatureEntry)] = {
 		joinedLinks
 			.map { case (link, linkContext, page, totalProb, pageProb) =>
-				(page, ProtoFeatureEntry(link, linkContext, totalProb, MultiFeature(pageProb)))
+				(page, ProtoFeatureEntry(link, linkContext, totalProb, pageProb))
+			}
+	}
+
+	/**
+	  * #todo
+	  *
+	  * @param aliasPageProbabilities
+	  * @return
+	  */
+	def addSecondOrderFeatures(
+		aliasPageProbabilities: RDD[(String, (String, Double, Double))]
+	): RDD[(String, (String, Double, MultiFeature))] = {
+		aliasPageProbabilities.map { case (alias, (page, linkScore, pageScore)) =>
+			(alias, List((page, linkScore, pageScore)))
+		}.reduceByKey(_ ++ _)
+			.flatMap { case (alias, scores) =>
+				val pageScores = scores.map(_._3)
+				scores
+					.zip(generateMultiFeatures(pageScores))
+					.map { case ((page, linkScore, pageScore), extendedPageScore) =>
+						(alias, (page, linkScore, extendedPageScore))
+					}
 			}
 	}
 
@@ -178,9 +231,11 @@ object CosineContextComparator extends SparkJob {
 		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
+		val aliasPageProbabilitiesWithSOF = addSecondOrderFeatures(aliasPageProbabilities)
+
 		val joinableLinks = linkContexts
 			.map(t => (t._1.alias, t))
-			.join(aliasPageProbabilities)
+			.join(aliasPageProbabilitiesWithSOF)
 			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
 				// Note: The page in the link is the actual target for the alias occurrence,
 				// the joined page is just a possible target for the alias.

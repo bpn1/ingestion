@@ -182,7 +182,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.computeAliasProbabilities(aliases)
 			.collect
 			.toSet
-		pages shouldEqual TestData.aliasProbabilitiesSet()
+		pages shouldEqual TestData.aliasPageScores()
 	}
 
 	"Cosine similarity between contexts" should "be exactly this value" in {
@@ -194,7 +194,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-		val aliasPageProbabilities = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
+		val aliasPageProbabilities = sc.parallelize(TestData.aliasPageScores().toList)
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
@@ -204,7 +204,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	they should "be exactly these feature entries" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-		val aliasPageProbabilities = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
+		val aliasPageProbabilities = sc.parallelize(TestData.aliasPageScores().toList)
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
@@ -296,16 +296,43 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		transformedLinks shouldEqual expectedLinks
 	}
 
-	"Generated Proto Feature Entries" should "not be empty" in {
-		val joinedLinks = TestData.joinedLinks().toList
-		val protoFeatureEntries = CosineContextComparator.generateProtoFeatureEntries(joinedLinks)
-		protoFeatureEntries should not be empty
+	//	"Generated Proto Feature Entries" should "not be empty" in {
+	//		val joinedLinks = TestData.joinedLinks().toList
+	//		val protoFeatureEntries = CosineContextComparator.generateProtoFeatureEntries(joinedLinks)
+	//		protoFeatureEntries should not be empty
+	//	}
+	//
+	//	they should "be exactly these Proto Feature Entries" in {
+	//		val joinedLinks = TestData.joinedLinks().toList
+	//		val protoFeatureEntries = CosineContextComparator.generateProtoFeatureEntries(joinedLinks)
+	//			.toSet
+	//		protoFeatureEntries shouldEqual TestData.protoFeatureEntriesWithPage()
+	//	}
+	//
+	//	they should "contain correctly computed second order features" in {
+	//		val joinedLinks = TestData.alternativeJoinedLinks().toList
+	//		val protoFeatureEntries = CosineContextComparator.generateProtoFeatureEntries(joinedLinks)
+	//			.toSet
+	//		protoFeatureEntries shouldEqual TestData.alternativeProtoFeatureEntriesWithPage()
+	//	}
+
+	"Alias page scores with second order features" should "not be empty" in {
+		val aliasPageScores = sc.parallelize(TestData.aliasPageScores().toList)
+		val aliasPageScoresWithSOF = CosineContextComparator.addSecondOrderFeatures(aliasPageScores)
+		aliasPageScoresWithSOF should not be empty
 	}
 
-	they should "be exactly these Proto Feature Entries" in {
-		val joinedLinks = TestData.joinedLinks().toList
-		val protoFeatureEntries = CosineContextComparator.generateProtoFeatureEntries(joinedLinks)
+	"Rank" should "be computed correctly" in {
+		val values = TestData.valuesList()
+		val ranks = CosineContextComparator.rankValues(values)
+		ranks shouldEqual TestData.ranksList()
+	}
+
+	"Ranks for alias page scores" should "be computed correctly" in {
+		val aliasPageScores = sc.parallelize(TestData.alternativeAliasPageScores().toList)
+		val aliasPageScoresWithSOF = CosineContextComparator.addSecondOrderFeatures(aliasPageScores)
+			.collect
 			.toSet
-		protoFeatureEntries shouldEqual TestData.protoFeatureEntriesWithPage()
+		aliasPageScoresWithSOF shouldEqual TestData.extendedAliasPageScores()
 	}
 }
