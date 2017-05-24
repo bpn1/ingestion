@@ -15,6 +15,7 @@ object LinkAnalysis extends SparkJob {
 	appName = "Link Analysis"
 	configFile = "textmining.xml"
 	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipedialinks"
+	val reduceFlag = "toReduced"
 
 	// $COVERAGE-OFF$
 	/**
@@ -39,7 +40,7 @@ object LinkAnalysis extends SparkJob {
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val aliases = output.head.asInstanceOf[RDD[(String, Map[String, Int])]]
 		val pages = output(1).asInstanceOf[RDD[(String, Map[String, Int])]]
-		val toReduced = args.nonEmpty
+		val toReduced = args.headOption.contains(reduceFlag)
 		val pagesColumns = if(toReduced) "pagesreduced" else "pages"
 		val aliasColumns = if(toReduced) "aliasesreduced" else "aliases"
 		aliases.saveToCassandra(settings("keyspace"), settings("linkTable"), SomeColumns("alias", pagesColumns))
@@ -112,7 +113,7 @@ object LinkAnalysis extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val toReduced = args.nonEmpty
+		val toReduced = args.headOption.contains(reduceFlag)
 		val validLinks = extractValidLinks(articles, toReduced)
 		val aliases = groupByAliases(validLinks)
 		val pages = groupByPageNames(validLinks)

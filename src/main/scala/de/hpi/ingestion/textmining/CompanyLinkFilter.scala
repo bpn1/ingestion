@@ -40,7 +40,7 @@ object CompanyLinkFilter extends SparkJob {
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
 			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
-		LinkAnalysis.main(Array("reduced"))
+		LinkAnalysis.main(Array(LinkAnalysis.reduceFlag))
 	}
 	// $COVERAGE-ON$
 
@@ -77,7 +77,7 @@ object CompanyLinkFilter extends SparkJob {
 	  * @return Parsed Wikipedia entry with cleaned links
 	  */
 	def filterCompanyLinks(article: ParsedWikipediaEntry, companyAliases: Set[String]): ParsedWikipediaEntry = {
-		article.filterLinksToReduced(link => companyAliases.contains(link.alias))
+		article.reduceLinks(link => companyAliases.contains(link.alias))
 		article
 	}
 

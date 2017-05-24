@@ -85,7 +85,7 @@ case class ParsedWikipediaEntry(
 	  * Executes a filter function on every not reduced link list and saves the result to the reduced columns.
 	  * @param filterFunction filter function
 	  */
-	def filterLinksToReduced(filterFunction: Link => Boolean): Unit = {
+	def reduceLinks(filterFunction: Link => Boolean): Unit = {
 		textlinksreduced = textlinks.filter(filterFunction)
 		templatelinksreduced = templatelinks.filter(filterFunction)
 		categorylinksreduced = categorylinks.filter(filterFunction)
