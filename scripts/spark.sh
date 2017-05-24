@@ -46,6 +46,11 @@ while getopts ":hm:c:n:d:e:t" opt; do
 			;;
 	esac
 done
+
+shift $((OPTIND - 1))
+jarPath="$1"
+shift
+
 if [ -z "$jarPath" ]; then
 	echo "Path to .jar not set"
 	exit 1
@@ -53,10 +58,6 @@ fi
 if [ -z "$nodes" ]; then
 	nodes="8"
 fi
-
-shift $((OPTIND - 1))
-jarPath="$1"
-shift
 
 ## max 3 executors per node
 executor_per_node=`expr 3`
