@@ -105,6 +105,7 @@ case class ParsedWikipediaEntry(
 			}.map { case (exLink, page) =>
 				Link(exLink.alias, page, exLink.offset)
 			}
+			.filterNot(textlinks.toSet)
 	}
 
 }
