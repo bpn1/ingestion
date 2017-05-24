@@ -76,7 +76,12 @@ object AliasCounter extends SparkJob {
 	  * @return Alias with summed link and total occurrences
 	  */
 	def aliasReduction(alias1: Alias, alias2: Alias): Alias = {
-		Alias(alias1.alias, alias1.pages ++ alias2.pages, linkoccurrences = Option(alias1.linkoccurrences.get + alias2.linkoccurrences.get), totaloccurrences = Option(alias1.totaloccurrences.get + alias2.totaloccurrences.get))
+		Alias(
+			alias1.alias,
+			alias1.pages ++ alias2.pages,
+			alias1.pagesreduced ++ alias2.pagesreduced,
+			Option(alias1.linkoccurrences.get + alias2.linkoccurrences.get),
+			Option(alias1.totaloccurrences.get + alias2.totaloccurrences.get))
 	}
 
 	/**

@@ -38,8 +38,8 @@ object LinkAnalysis extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val aliases = output.head.asInstanceOf[RDD[(String, Map[String, Int])]]
-		val pages = output(1).asInstanceOf[RDD[(String, Map[String, Int])]]
+		val aliases = output.head.asInstanceOf[RDD[Alias]].map(alias => (alias.alias, alias.pages))
+		val pages = output(1).asInstanceOf[RDD[Page]].map(page => (page.page, page.aliases))
 		val toReduced = args.headOption.contains(reduceFlag)
 		val pagesColumns = if(toReduced) "pagesreduced" else "pages"
 		val aliasColumns = if(toReduced) "aliasesreduced" else "aliases"
@@ -71,9 +71,9 @@ object LinkAnalysis extends SparkJob {
 	  * @param links links of Wikipedia articles
 	  * @return RDD of Aliases
 	  */
-	def groupByAliases(links: RDD[Link]): RDD[(String, Map[String, Int])] = {
+	def groupByAliases(links: RDD[Link]): RDD[Alias] = {
 		val aliasData = links.map(link => (link.alias, List(link.page)))
-		groupLinks(aliasData)
+		groupLinks(aliasData).map { case (alias, pages) => Alias(alias, pages) }
 	}
 
 	/**
@@ -82,9 +82,9 @@ object LinkAnalysis extends SparkJob {
 	  * @param links links of Wikipedia articles
 	  * @return RDD of pages
 	  */
-	def groupByPageNames(links: RDD[Link]): RDD[(String, Map[String, Int])] = {
+	def groupByPageNames(links: RDD[Link]): RDD[Page] = {
 		val pageData = links.map(link => (link.page, List(link.alias)))
-		groupLinks(pageData)
+		groupLinks(pageData).map { case (page, aliases) => Page(page, aliases) }
 	}
 
 	/**
