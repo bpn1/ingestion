@@ -24,7 +24,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		val subjects = TestData.testSubjects
 		val blockingScheme = LastLettersBlockingScheme("Test LastLettersBS")
 		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.simpleBlockingScheme
+		val expected = TestData.lastLettersBlockingScheme
 		keys.toSet shouldEqual expected.toSet
 	}
 

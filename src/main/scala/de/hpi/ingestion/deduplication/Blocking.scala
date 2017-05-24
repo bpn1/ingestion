@@ -20,8 +20,8 @@ object Blocking extends SparkJob {
 	appName = "Blocking"
 	configFile = "deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
-		SimpleBlockingScheme("simple"),
-		LastLettersBlockingScheme("last_letters")
+		SimpleBlockingScheme("simple_5"),
+		LastLettersBlockingScheme("last_letters_5")
 	)
 	// $COVERAGE-OFF$
 	/**
@@ -174,8 +174,7 @@ object Blocking extends SparkJob {
 		val jobid = UUIDs.timeBased()
 		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
 			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
-		}.filter { case ((key, tag), (subjectList, stagingList)) =>
-			((subjectList.size * stagingList.size) < 500000) && ((subjectList.size * stagingList.size) > 1000) }
+		}.filter { case ((key, tag), (subjectList, stagingList)) => (subjectList.size * stagingList.size) < 500000 }
 		val duplicates = blocks.map(createDuplicates(_, goldStandard))
 
 		var accuracy = duplicates
@@ -205,10 +204,11 @@ object Blocking extends SparkJob {
 			.reduceByKey(_ ++ _)
 			.union(statsSum)
 			.map { case (tag, blockStats) =>
+				val filteredStats = blockStats.filter(stat => (stat.numsubjects * stat.numstaging) > 10000)
+					// don't write tiny blocks
 				val tagAccuracy = accuracy.getOrElse(tag, 0.0)
 				val blockComment = Option(s"$comment; accuracy: $tagAccuracy")
-				//val filteredStats = blockStats.filter(stat => (stat.numsubjects * stat.numstaging) > 1000)
-				BlockEvaluation(jobid, tag, blockStats, blockComment)
+				BlockEvaluation(jobid, tag, filteredStats, blockComment)
 			}
 	}
 }
