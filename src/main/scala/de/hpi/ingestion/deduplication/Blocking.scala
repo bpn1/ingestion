@@ -18,11 +18,10 @@ import org.apache.spark.rdd.RDD
   */
 object Blocking extends SparkJob {
 	appName = "Blocking"
-	configFile = "deduplication.xml"
+	configFile = "evaluation_deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
-		ListBlockingScheme("geo_country_scheme", "geo_country"),
-		ListBlockingScheme("geo_coords_scheme", "geo_coords"),
-		SimpleBlockingScheme("simple_scheme"))
+		SimpleBlockingScheme("simple_scheme")
+	)
 	// $COVERAGE-OFF$
 	/**
 	  * Loads the Subjects, staged Subjects and the GoldStandard from the Cassandra.
