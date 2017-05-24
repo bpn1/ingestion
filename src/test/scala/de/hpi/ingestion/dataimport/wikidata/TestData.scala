@@ -171,14 +171,15 @@ object TestData {
 			.mkString("\n")
 	}
 
-	def dataTypeValues(dataType: String): String = {
+	def dataTypeValues(dataType: String): Option[String] = {
 		dataType match {
-			case "string" => "test string 1"
-			case "wikibase-entityid" => "test id 1"
-			case "time" => "test time 1"
-			case "monolingualtext" => "test text 1"
-			case "globecoordinate" => "1.0;2.0"
-			case "quantity" => "test amount;test unit"
+			case "string" => Option("test string 1")
+			case "wikibase-entityid" => Option("test id 1")
+			case "time" => Option("test time 1")
+			case "monolingualtext" => Option("test text 1")
+			case "globecoordinate" => Option("1.0;2.0")
+			case "quantity" => Option("test amount;test unit")
+			case "" => None
 		}
 	}
 
