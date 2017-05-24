@@ -1656,6 +1656,28 @@ object TestData {
 			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))
 		)
 	}
+
+	def entityLists(): List[List[String]] = {
+		List(
+			List("Hochhaus", "Postbank", "Berlin", "Berlin-Kreuzberg"),
+			List("Frankfurt (Oder)", "Potsdam", "Magdeburg", "Stettin"),
+			List("Deutsche Funkturm", "Deutsche Telekom")
+		)
+	}
+
+	def sentencesWithCooccurrences(): List[Sentence] = {
+		List(
+			Sentence("Audi",0,"Audi ist Volkswagen.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Volkswagen","Volkswagen AG",Some(1)))),
+			Sentence("Audi",18,"Audi ist Volkswagen AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Volkswagen AG","Volkswagen AG",Some(1))))
+		)
+	}
+
+	def cooccurrences(): List[Cooccurrence] = {
+		List(
+			Cooccurrence(List("Audi", "Volkswagen AG"), 2)
+		)
+	}
+
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
