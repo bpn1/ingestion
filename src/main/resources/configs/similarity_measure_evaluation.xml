@@ -2,11 +2,11 @@
 <config>
     <settings>
         <keyspaceTrainingTable>evaluation</keyspaceTrainingTable>
-        <trainingTable>subject_dbpedia</trainingTable>
+        <trainingTable>dbpedia_wikidata_deduplication_only_uuid</trainingTable>
         <keyspaceTestTable>evaluation</keyspaceTestTable>
-        <testTable>subject_wikidata</testTable>
+        <testTable>goldstandard</testTable>
         <keyspaceSimMeasureStatsTable>evaluation</keyspaceSimMeasureStatsTable>
-        <simMeasureStatsTable>goldstandard</simMeasureStatsTable>
+        <simMeasureStatsTable>sim_measure_stats</simMeasureStatsTable>
         <buckets>10</buckets>
     </settings>
 </config>
