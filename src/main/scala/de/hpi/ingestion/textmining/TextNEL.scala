@@ -111,6 +111,12 @@ object TextNEL extends SparkJob {
 
 	/**
 	  * todo
+	  *
+	  * @param text
+	  * @param trie
+	  * @param tokenizer
+	  * @param contextTokenizer
+	  * @return
 	  */
 	def matchTrieAliases(
 		text: String,
