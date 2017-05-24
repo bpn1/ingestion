@@ -139,15 +139,15 @@ object CosineContextComparator extends SplitSparkJob {
 	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
 	  * @return aliases with probability features
 	  */
-	def computeAliasProbabilities(aliases: RDD[Alias]): RDD[(String, (String, Double, Double))] = {
+	def computeAliasProbabilities(aliases: RDD[Alias]): RDD[(String, List[(String, Double, Double)])] = {
 		aliases
 			.filter(alias => alias.linkoccurrences.isDefined && alias.totaloccurrences.isDefined)
 			.flatMap { alias =>
 				val totalProb = alias.linkoccurrences.get.toDouble / alias.totaloccurrences.get.toDouble
 				val numPages = alias.pages.values.sum.toDouble
 				val pageProb = alias.pages.mapValues(_.toDouble / numPages)
-				alias.pages.keySet.map(page => (alias.alias, (page, totalProb, pageProb(page))))
-			}
+				alias.pages.keySet.map(page => (alias.alias, List((page, totalProb, pageProb(page)))))
+			}.reduceByKey(_ ++ _)
 	}
 
 	/** Adds the cosine similarity feature value to the alias probability feature values.
@@ -159,14 +159,15 @@ object CosineContextComparator extends SplitSparkJob {
 	  */
 	def compareLinksWithArticles(
 		linkContexts: RDD[(Link, Map[String, Double])],
-		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
+		aliasPageProbabilities: Map[String, List[(String, Double, Double)]],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
 		val joinableLinks = linkContexts
-			.map(t => (t._1.alias, t))
-			.join(aliasPageProbabilities)
-			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
-				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, pageProb)))
+			.flatMap { case (link, idfMap) =>
+				aliasPageProbabilities.getOrElse(link.alias, Nil)
+					.map { case (page, totalProb, pageProb) =>
+						(page, List(ProtoFeatureEntry(link.alias, link, idfMap, totalProb, pageProb)))
+					}
 			}.reduceByKey(_ ++ _)
 		val weights = (0 until 10).map(t => 1.0).toArray
 		val linkSegements = joinableLinks.randomSplit(weights)
@@ -280,6 +281,8 @@ object CosineContextComparator extends SplitSparkJob {
 		val contextTfs = transformLinkContextTfs(linkArticles)
 		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf, settingsBroadcast.value)
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
+			.collect
+			.toMap
 		val featureEntries = compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
 		List(featureEntries).toAnyRDD()
 	}

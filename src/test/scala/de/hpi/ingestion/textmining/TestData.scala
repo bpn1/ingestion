@@ -746,16 +746,15 @@ object TestData {
 		)
 	}
 
-	def aliasProbabilitiesSet(): Set[(String, (String, Double, Double))] = {
-		Set(
-			("Audi", ("Audi", 0.6666666666666666, 1.0)),
-			("Brachttal", ("Brachttal", 1.0, 1.0)),
-			("Main-Kinzig-Kreis", ("Main-Kinzig-Kreis", 0.5, 1.0)),
-			("Hessen", ("Hessen", 0.5, 1.0)),
-			("1377", ("1377", 1.0, 1.0)),
-			("Büdinger Wald", ("Büdinger Wald", 0.5, 1.0)),
-			("historisches Jahr", ("1377", 1.0, 1.0)),
-			("Büdinger Wald", ("Audi", 0.5, 1.0))
+	def aliasProbabilitiesMap(): Map[String, List[(String, Double, Double)]] = {
+		Map(
+			"Audi" -> List(("Audi", 0.6666666666666666, 1.0)),
+			"Brachttal" -> List(("Brachttal", 1.0, 1.0)),
+			"Main-Kinzig-Kreis" -> List(("Main-Kinzig-Kreis", 0.5, 1.0)),
+			"Hessen" -> List(("Hessen", 0.5, 1.0)),
+			"1377" -> List(("1377", 1.0, 1.0)),
+			"Büdinger Wald" -> List(("Büdinger Wald", 0.5, 1.0), ("Audi", 0.5, 1.0)),
+			"historisches Jahr" -> List(("1377", 1.0, 1.0))
 		)
 	}
 

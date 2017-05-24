@@ -211,8 +211,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val pages = CosineContextComparator
 			.computeAliasProbabilities(aliases)
 			.collect
-			.toSet
-		pages shouldEqual TestData.aliasProbabilitiesSet()
+			.toMap
+		pages shouldEqual TestData.aliasProbabilitiesMap()
 	}
 
 	"Cosine similarity between contexts" should "be exactly this value" in {
@@ -224,7 +224,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-		val aliasPageProbabilities = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
+		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
@@ -234,7 +234,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	they should "be exactly these feature entries" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-		val aliasPageProbabilities = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
+		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
@@ -246,7 +246,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	they should "be calculated for trie aliases as well" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkAndAliasContextsTfidfList())
-		val aliasPageProbabilities = sc.parallelize(TestData.aliasProbabilitiesSet().toList)
+		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
