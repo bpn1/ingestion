@@ -8,9 +8,9 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 
 /**
-  * Exports the Co-Occurrences to Neo4j CSV.
+  * Exports the Cooccurrences to Neo4j CSV.
   */
-object CoOccurrenceExport extends SparkJob {
+object CooccurrenceExport extends SparkJob {
 	appName = "Co-Occurrence Export"
 	configFile = "textmining.xml"
 	val separator = ","
@@ -18,7 +18,7 @@ object CoOccurrenceExport extends SparkJob {
 
 	// $COVERAGE-OFF$
 	/**
-	  * Loads Co-Occurrences from the Cassandra.
+	  * Loads Cooccurrences from the Cassandra.
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
