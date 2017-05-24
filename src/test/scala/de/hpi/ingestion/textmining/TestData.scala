@@ -362,7 +362,20 @@ object TestData {
 
 	def joinedLinks(): Set[(Link, Map[String, Double], String, Double, Double)] = {
 		Set(
+			//			("Brachttal", Link("Brachttal", "Brachttal", Some(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)), Map("einwohnerzahl" -> 0.0, "nachweislich" -> 0.0, "erwahnung" -> 0.0, "ortsteil" -> 0.0, "270" -> 0.0, "kleinst" -> 0.0, "hess" -> 0.3010299956639812, "gemei" -> 0.0, "main-kinzig-kreis" -> 0.3010299956639812, "streitberg" -> 0.0), "Audi Test ohne Link", 1.0, 1.0),
+			//			("Brachttal", Link("Brachttal", "Brachttal", Some(13), Map("jahr" -> 1, "audi" -> 1, "hess" -> 2, "buding" -> 1, "historisch" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "nochmal" -> 1, "backfisch" -> 1)), Map("jahr" -> 0.3010299956639812, "audi" -> 0.12493873660829993, "hess" -> 0.6020599913279624, "buding" -> 0.3010299956639812, "historisch" -> 0.0, "wald" -> 0.3010299956639812, "main-kinzig-kreis" -> 0.3010299956639812, "nochmal" -> 0.0, "backfisch" -> 0.0), "Audi Test ohne Link", 1.0, 1.0),
+			//			("Audi", Link("Audi", "Audi", Some(9), Map("verlink" -> 1)), Map("verlink" -> 0.3010299956639812), "Audi Test mit Link", 0.6666666666666666, 1.0)
+			(Link("Brachttal", "Brachttal", Some(55), Map("einwohnerzahl" -> 1)), Map("einwohnerzahl" -> 0.0), "Audi Test ohne Link", 1.0, 1.0),
+			(Link("Brachttal", "Brachttal", Some(13), Map("jahr" -> 1)), Map("jahr" -> 0.3010299956639812), "Audi Test ohne Link", 1.0, 1.0),
+			(Link("Audi", "Audi", Some(9), Map("verlink" -> 1)), Map("verlink" -> 0.3010299956639812), "Audi Test mit Link", 0.6666666666666666, 1.0)
+		)
+	}
 
+	def protoFeatureEntriesWithPage(): Set[(String, ProtoFeatureEntry)] = {
+		Set(
+			("Audi Test ohne Link", ProtoFeatureEntry(Link("Brachttal", "Brachttal", Some(55), Map("einwohnerzahl" -> 1)), Map("einwohnerzahl" -> 0.0), 1.0, MultiFeature(1.0, 1, 0.0, 0.0))),
+			("Audi Test ohne Link", ProtoFeatureEntry(Link("Brachttal", "Brachttal", Some(13), Map("jahr" -> 1)), Map("jahr" -> 0.3010299956639812), 1.0, MultiFeature(1.0, 1, 0.0, 0.0))),
+			("Audi Test mit Link", ProtoFeatureEntry(Link("Audi", "Audi", Some(9), Map("verlink" -> 1)), Map("verlink" -> 0.3010299956639812), 0.6666666666666666, MultiFeature(1.0, 1, 0.0, 0.0)))
 		)
 	}
 
@@ -859,6 +872,7 @@ object TestData {
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
+
 	def entryWithStandardWhitespaces(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
@@ -1658,10 +1672,11 @@ object TestData {
 
 	def alternativeSentenceList(): List[Sentence] = {
 		List(
-			Sentence("Audi",0,"Audi ist Audi AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Audi AG","Audi",Some(9)))),
-			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))
+			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9)))),
+			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))))
 		)
 	}
+
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
 			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
@@ -1893,7 +1908,7 @@ object TestData {
 	}
 
 	def predictionStatistics(): PrecisionRecallDataTuple = {
-		PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0)
+		PrecisionRecallDataTuple(1.0, 5.0 / 7.0, 5.0 / 6.0, 25.0 / 34.0)
 	}
 
 	def statisticTuples(): List[PrecisionRecallDataTuple] = {

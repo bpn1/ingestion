@@ -7,11 +7,11 @@ object TestData {
 
 	def protoFeatureEntries(): List[(ProtoFeatureEntry, String, Double)] = {
 		List(
-			(ProtoFeatureEntry("a", Link("a", "b"), Map(), 0.1, MultiFeature(0.2)), "b", 0.8),
-			(ProtoFeatureEntry("c", Link("c", "a"), Map(), 0.4, MultiFeature(0.0)), "d", 0.7),
-			(ProtoFeatureEntry("e", Link("e", "f"), Map(), 0.7, MultiFeature(1.0)), "f", 0.1),
-			(ProtoFeatureEntry("g", Link("g", "a"), Map(), 0.8, MultiFeature(0.2)), "h", 0.3),
-			(ProtoFeatureEntry("i", Link("i", "a"), Map(), 0.9, MultiFeature(0.4)), "j", 0.7))
+			(ProtoFeatureEntry(Link("a", "b"), Map(), 0.1, MultiFeature(0.2)), "b", 0.8),
+			(ProtoFeatureEntry(Link("c", "a"), Map(), 0.4, MultiFeature(0.0)), "d", 0.7),
+			(ProtoFeatureEntry(Link("e", "f"), Map(), 0.7, MultiFeature(1.0)), "f", 0.1),
+			(ProtoFeatureEntry(Link("g", "a"), Map(), 0.8, MultiFeature(0.2)), "h", 0.3),
+			(ProtoFeatureEntry(Link("i", "a"), Map(), 0.9, MultiFeature(0.4)), "j", 0.7))
 	}
 
 	def featureEntries(): List[FeatureEntry] = {

@@ -4,15 +4,13 @@ package de.hpi.ingestion.textmining.models
   * Represents the prototype of an entry used to train a classifier. Contains all precomputed values of the final
   * Feature Entry.
   *
-  * @param alias            alias of the link
-  * @param link             Link his Entry represents
+  * @param link             Link its Entry represents
   * @param linkContext      context of the link
   * @param totalProbability probability that this entries alias is a link
   * @param pageProbability  probability that this entries alias links to the page
   *                         with additional second order features
   */
 case class ProtoFeatureEntry(
-	alias: String,
 	link: Link,
 	linkContext: Map[String, Double],
 	totalProbability: Double,
@@ -26,6 +24,6 @@ case class ProtoFeatureEntry(
 	  * @return Feature Entry used to train a classifier
 	  */
 	def toFeatureEntry(page: String, cosineSim: Double): FeatureEntry = {
-		FeatureEntry(alias, page, totalProbability, pageProbability, cosineSim, link.page == page)
+		FeatureEntry(link.alias, page, totalProbability, pageProbability, cosineSim, link.page == page)
 	}
 }

@@ -10,6 +10,7 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
@@ -158,8 +159,11 @@ object CosineContextComparator extends SparkJob {
 	  */
 	def generateProtoFeatureEntries(
 		joinedLinks: List[(Link, Map[String, Double], String, Double, Double)]
-	): List[ProtoFeatureEntry] = {
-		Nil
+	): List[(String, ProtoFeatureEntry)] = {
+		joinedLinks
+			.map { case (link, linkContext, page, totalProb, pageProb) =>
+				(page, ProtoFeatureEntry(link, linkContext, totalProb, MultiFeature(pageProb)))
+			}
 	}
 
 	/** Adds the cosine similarity feature value to the alias probability feature values.
@@ -178,25 +182,27 @@ object CosineContextComparator extends SparkJob {
 			.map(t => (t._1.alias, t))
 			.join(aliasPageProbabilities)
 			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
-				println((alias, List((link, linkContext, page, totalProb, pageProb))))
-//			}.reduceByKey(_ ++ _)
-//			.map { case (alias, joinedLinks) =>
-//				generateProtoFeatureEntries(joinedLinks)
-//			}
-
-//			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
-				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, MultiFeature(pageProb))))
+				// Note: The page in the link is the actual target for the alias occurrence,
+				// the joined page is just a possible target for the alias.
+				(alias, List((link, linkContext, page, totalProb, pageProb)))
 			}.reduceByKey(_ ++ _)
+			.flatMap { case (alias, joinedLinks) =>
+				generateProtoFeatureEntries(joinedLinks).map { case (page, protoFeatureEntry) =>
+					(page, List(protoFeatureEntry))
+				}
+			}.reduceByKey(_ ++ _)
+
 		val weights = (0 until 10).map(t => 1.0).toArray
 		val linkSegements = joinableLinks.randomSplit(weights)
 		linkSegements.map { rdd =>
 			rdd
 				.join(articleContexts)
-				.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
-					protoFeatureEntries.map { protoFeatureEntry =>
-						val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
-						protoFeatureEntry.toFeatureEntry(page, cosineSim)
-					}
+				.flatMap {
+					case (page, (protoFeatureEntries, articleContext)) =>
+						protoFeatureEntries.map { protoFeatureEntry =>
+							val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
+							protoFeatureEntry.toFeatureEntry(page, cosineSim)
+						}
 				}
 		}.reduce(_.union(_))
 	}
