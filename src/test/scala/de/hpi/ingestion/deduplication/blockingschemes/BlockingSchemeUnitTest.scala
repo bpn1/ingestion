@@ -64,7 +64,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		scheme.isInstanceOf[GeoCoordsBlockingScheme] shouldBe true
 	}
 
-	"RandomBlockingScheme" should "generate inadequate keys from the UUIDs" in {
+	"RandomBlockingScheme" should "generate random keys from the UUIDs" in {
 		val subjects = TestData.testSubjects
 		val blockingScheme = new RandomBlockingScheme
 		val keys = subjects.map(blockingScheme.generateKey)
