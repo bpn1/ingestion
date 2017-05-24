@@ -1,11 +1,12 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
+
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.{BlockEvaluation, FeatureEntry, PrecisionRecallDataTuple, ScoreConfig}
 import de.hpi.ingestion.deduplication.blockingschemes.ListBlockingScheme
 import de.hpi.ingestion.deduplication.models._
-import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan, SimilarityMeasure}
+import de.hpi.ingestion.deduplication.similarity._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -13,6 +14,17 @@ import org.apache.spark.rdd.RDD
 // scalastyle:off number.of.methods
 object TestData {
 	val idList = List.fill(8)(UUID.randomUUID())
+
+	def bucketsList: Map[Int, List[Double]] = Map(
+		10 -> List(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0),
+		5 -> List(0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+	)
+
+	def testScores: List[Map[Double, Double]] = List(
+		Map(0.5 -> 0.5, 0.79 -> 0.7),
+		Map(0.5 -> 0.4, 0.79 -> 0.6)
+	)
+
 	def testData(sc: SparkContext): RDD[((UUID, UUID), Double)] = {
 		sc.parallelize(Seq(
 			((idList.head, idList(1)), 1.0),
@@ -31,14 +43,22 @@ object TestData {
 		))
 	}
 
-	def precisionRecallResults(sc: SparkContext) : List[PrecisionRecallDataTuple] = {
-		List(
-			PrecisionRecallDataTuple(0.0, 0.6666666666666666, 1, 0.8),
-			PrecisionRecallDataTuple(0.5, 0.5, 0.5, 0.5),
-			PrecisionRecallDataTuple(0.6, 0.6666666666666666, 0.5, 0.5714285714285715),
-			PrecisionRecallDataTuple(0.7, 1, 0.5, 0.6666666666666666),
-			PrecisionRecallDataTuple(0.8, 1, 0.25, 0.4)
-		)
+	def testData2(sc: SparkContext): RDD[(UUID, UUID)] = {
+		sc.parallelize(Seq(
+			(idList.head, idList(1)),
+			(idList(2), idList(3)),
+			(idList(4), idList(5)),
+			(idList(6), idList(7))
+		))
+	}
+
+	def trainingCandidates(sc: SparkContext): RDD[DuplicateCandidates] = {
+		sc.parallelize(Seq(
+			DuplicateCandidates(idList.head, List((idList(1), "test", 0.7))),
+			DuplicateCandidates(idList(2), List((idList(3), "test", 0.8))),
+			DuplicateCandidates(idList(4), List((idList(7), "test", 0.5))),
+			DuplicateCandidates(idList(6), List((idList(5), "test", 0.6)))
+		))
 	}
 
 	def truePositives(sc: SparkContext): RDD[(Double, Double)] = {
@@ -52,6 +72,36 @@ object TestData {
 	def falseNegatives(sc: SparkContext): RDD[(Double, Double)] = {
 		sc.parallelize(List.fill(2)((0: Double, 1: Double)))
 	}
+
+	def labeledPoints(sc: SparkContext): RDD[(Double, Double)] = {
+		truePositives(sc).union(falsePositives(sc)).union(falseNegatives(sc))
+	}
+
+	def precisionRecallResults: List[PrecisionRecallDataTuple] = List(
+		PrecisionRecallDataTuple(0.0,0.6666666666666666,1.0,0.8),
+		PrecisionRecallDataTuple(0.1,0.5,0.5,0.5),
+		PrecisionRecallDataTuple(0.2,0.5,0.5,0.5),
+		PrecisionRecallDataTuple(0.3,0.5,0.5,0.5),
+		PrecisionRecallDataTuple(0.4,0.5,0.5,0.5),
+		PrecisionRecallDataTuple(0.5,0.5,0.5,0.5),
+		PrecisionRecallDataTuple(0.6,0.6666666666666666,0.5,0.5714285714285715),
+		PrecisionRecallDataTuple(0.7,1.0,0.5,0.6666666666666666),
+		PrecisionRecallDataTuple(0.8,1.0,0.25,0.4),
+		PrecisionRecallDataTuple(0.9,0.0,0.0,0.0),
+		PrecisionRecallDataTuple(1.0,0.0,0.0,0.0)
+	)
+
+	def similarityMeasureStats: SimilarityMeasureStats = SimilarityMeasureStats(
+		data = List(
+			PrecisionRecallDataTuple(0.0,0.6666666666666666,1.0,0.8),
+			PrecisionRecallDataTuple(0.2,0.5,0.5,0.5),
+			PrecisionRecallDataTuple(0.4,0.5,0.5,0.5),
+			PrecisionRecallDataTuple(0.6,0.6666666666666666,0.5,0.5714285714285715),
+			PrecisionRecallDataTuple(0.8,1.0,0.25,0.4),
+			PrecisionRecallDataTuple(1.0,0.0,0.0,0.0)
+		),
+		comment = Option("Naive Deduplication")
+	)
 
 	val dbpediaList = List(
 		Subject(
@@ -143,15 +193,15 @@ object TestData {
 			(testSubjects(2), testSubjects(3), 0.9446913580246914))
 	}
 
-	def trueDuplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
+	def trueDuplicateCandidates(subjects: List[Subject], stagings: List[Subject]): List[DuplicateCandidates] = {
 		val stagingTable = "subject_wikidata"
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((subjects(1).id, stagingTable, 0.7117948717948718))),
+				List((stagings.head.id, stagingTable, 0.7117948717948718))),
 			DuplicateCandidates(
-				subjects(2).id,
-				List((subjects(3).id, stagingTable, 0.9446913580246914))))
+				subjects(1).id,
+				List((stagings(1).id, stagingTable, 0.9446913580246914))))
 	}
 
 	def duplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
@@ -171,18 +221,36 @@ object TestData {
 	def testConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
 		Map(
 			key -> List(
-				ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8),
-				ScoreConfig(similarityMeasure = JaroWinkler, weight= 0.7)))
+				ScoreConfig(MongeElkan, 0.8),
+				ScoreConfig(JaroWinkler, 0.7)))
 	}
 
-	def simpleTestConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
-		Map(key -> List(ScoreConfig(similarityMeasure = MongeElkan, weight= 0.8)))
+	def simpleTestConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		Map("name" -> List(ScoreConfig(MongeElkan, 0.8)))
 	}
 
-	def testSubjectScore(subject1: Subject, subject2: Subject): Double = List(
+	def complexTestConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+		Map(
+			"name" -> List(ScoreConfig(MongeElkan, 0.8), ScoreConfig(JaroWinkler, 0.7)),
+			"geo_city" -> List(ScoreConfig(Jaccard, 1)),
+			"geo_coords" -> List(ScoreConfig(EuclidianDistance, 1)),
+			"gen_income" -> List(ScoreConfig(RelativeNumbersSimilarity, 1))
+		)
+	}
+
+	def testConfigScore(subject1: Subject, subject2: Subject): Double = List(
 		MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
 		JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7
 	).sum / (0.8 + 0.7)
+
+	def simpleTestConfigScore(subject: Subject, staging: Subject): Double = MongeElkan.compare(subject.name.get, staging.name.get)
+
+	def complexTestConfigScore(subject: Subject, staging: Subject): Double = List(
+		MongeElkan.compare(subject.name.get, staging.name.get) * 0.8,
+		JaroWinkler.compare(subject.name.get, staging.name.get) * 0.7,
+		Jaccard.compare("Berlin", "Berlin"),
+		RelativeNumbersSimilarity.compare("1234", "12")
+	).sum / (0.8 + 0.7 + 1 + 1)
 
 	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String], scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]): Double = {
 		simMeasure.compare(subject1.name.get, subject2.name.get, scoreConfig.scale) * scoreConfig.weight

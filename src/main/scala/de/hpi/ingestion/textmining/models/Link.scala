@@ -5,7 +5,7 @@ package de.hpi.ingestion.textmining.models
   *
   * @param alias   text this link appears as on the page
   * @param page    page this link points to
-  * @param offset  character offset of this alias in the plain text of the page it appears in.
+  * @param offset  character offset of this alias in the plain text of the page it appears in
   * @param context term frequencies of the context of this link
   */
 case class Link(

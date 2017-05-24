@@ -18,7 +18,7 @@ import org.apache.spark.rdd.RDD
   */
 object Blocking extends SparkJob {
 	appName = "Blocking"
-	configFile = "deduplication.xml"
+	configFile = "evaluation_deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
 		SimpleBlockingScheme("simple_5"),
 		LastLettersBlockingScheme("last_letters_5")
