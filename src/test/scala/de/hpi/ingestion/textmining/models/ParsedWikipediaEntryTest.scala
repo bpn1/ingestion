@@ -22,7 +22,7 @@ class ParsedWikipediaEntryTest extends FlatSpec with SharedSparkContext with Mat
 
 	they should "be written to the reduced columns" in {
 		val entry = TestData.parsedEntryWithDifferentLinkTypes()
-		entry.filterLinksToReduced(link => link.alias == link.page)
+		entry.reduceLinks(link => link.alias == link.page)
 		entry shouldEqual TestData.parsedEntryWithReducedLinks()
 	}
 
