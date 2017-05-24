@@ -8,6 +8,7 @@
         <linkTable>wikipedialinks</linkTable>
         <pageTable>wikipediapages</pageTable>
         <dfTable>wikipediadocfreq</dfTable>
+        <cooccurrenceTable>wikipediacooccurrences</cooccurrenceTable>
         <redirectTable>redirects</redirectTable>
         <simMeasureStatsTable>sim_measure_stats</simMeasureStatsTable>
         <featureTable>featureentries</featureTable>
