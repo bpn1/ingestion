@@ -30,7 +30,7 @@ object ClassifierTraining extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val entries = sc.cassandraTable[FeatureEntry](settings("keyspace"), settings("featureentries"))
+		val entries = sc.cassandraTable[FeatureEntry](settings("keyspace"), settings("featureTable"))
 		List(entries).toAnyRDD()
 	}
 

@@ -17,6 +17,20 @@ object TestData {
 		)
 	}
 
+	def asymSquareWithReflexive: Set[(String, String)] = {
+		Set(
+			("a1", "a2"),
+			("a1", "a1"),
+			("a2", "a2"))
+	}
+
+	def asymSquare: Set[(String, String)] = {
+		Set(
+			("b1", "b2"),
+			("b1", "b3"),
+			("b2", "b3"))
+	}
+
 	def diffLists: (List[Int], List[Int]) = {
 		(List(1, 2, 3, 4), List(3, 4, 5, 6))
 	}

@@ -21,6 +21,20 @@ object CollectionImplicits {
 		  * @return the cross product of xs and ys
 		  */
 		def cross[Y](ys: Traversable[Y]): Traversable[(X, Y)] = for { x <- xs; y <- ys } yield (x, y)
+
+		/**
+		  * Returns the cross product of this collection with itself without symmetrical (duplicate) tuples.
+		  * By default the reflexive pairs are also filtered.
+		  * @param reflexive whether or not the reflexive pairs are kept
+		  * @return filtered cross product of xs with itself
+		  */
+		def asymSquare(reflexive: Boolean = false): Traversable[(X, X)] = {
+			val data = xs.toList
+			val offset = if(reflexive) 0 else 1
+			data
+				.indices
+				.flatMap(i => xs.slice(i + offset, xs.size).map((data(i), _)))
+		}
 	}
 
 	/**
