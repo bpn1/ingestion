@@ -13,7 +13,6 @@ class SimpleBlockingScheme extends BlockingScheme {
 		}.getOrElse(List(undefinedValue))
 	}
 }
-
 /**
   * Companion object adding an easy to use constructor via apply.
   */
