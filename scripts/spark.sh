@@ -76,13 +76,13 @@ fi
 
 exec_cores="--executor-cores $executor_cores"
 num_exec="--num-executors $num_executors"
-spark_submit="spark-submit"
-submit_command="$spark_submit $class $num_exec $exec_cores $exec_mem $driver_mem $trie_option $jarPath $*"
+submit_command="spark-submit $class $num_exec $exec_cores $exec_mem $driver_mem $trie_option $jarPath $*"
+shell_command="spark-shell $num_exec $exec_cores $exec_mem $driver_mem $trie_option --jars $jarPath $*"
 export HADOOP_USER_NAME="bp2016n1"
 if [ "$mode" = "yarn" ]; then
 	$submit_command
 elif [ "$mode" = "shell" ]; then
-	spark-shell "$num_exec $exec_cores $exec_mem $driver_mem $trie_option --jars $jarPath $*"
+	$shell_command
 elif [ "$mode" = "print" ]; then
 	echo "HADOOP_USER_NAME=\"bp2016n1\"" $submit_command
 else
