@@ -360,13 +360,19 @@ object TestData {
 			("Testartikel", Bag("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
-	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
-		sc.parallelize(List(
+	def joinedLinks(): Set[(Link, Map[String, Double], String, Double, Double)] = {
+		Set(
+
+		)
+	}
+
+	def aliasOccurrencesInArticlesList(): List[AliasOccurrencesInArticle] = {
+		List(
 			AliasOccurrencesInArticle(Set("Audi"), Set()),
 			AliasOccurrencesInArticle(Set(), Set("Audi")),
 			AliasOccurrencesInArticle(Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), Set("Streitberg")),
 			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
-		))
+		)
 	}
 
 	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {
@@ -669,16 +675,16 @@ object TestData {
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, true, null),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, true, null),
-			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
-			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
-			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, MultiFeature(1.0), 0.608944778982726, true, null),
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, MultiFeature(1.0), 0.6951672143063198, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, MultiFeature(1.0), 0.6107163643669525, true, null),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, MultiFeature(1.0), 0.0, true, null),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, MultiFeature(1.0), 0.6611213869640233, true, null),
+			FeatureEntry("Hessen", "Hessen", 0.5, MultiFeature(1.0), 0.4531255411026077, true, null),
+			FeatureEntry("1377", "1377", 1.0, MultiFeature(1.0), 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, MultiFeature(1.0), 1.0, true, null),
+			FeatureEntry("historisches Jahr", "1377", 1.0, MultiFeature(1.0), 0.828283413127963, true, null),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, MultiFeature(1.0), 0.0, false, null)
 		)
 	}
 
@@ -1742,11 +1748,11 @@ object TestData {
 
 	def featureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true),
-			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false),
-			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true),
-			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false),
-			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false))
+			FeatureEntry("a", "b", 0.1, MultiFeature(0.2), 0.8, true),
+			FeatureEntry("c", "d", 0.4, MultiFeature(0.0), 0.7, false),
+			FeatureEntry("e", "f", 0.7, MultiFeature(1.0), 0.1, true),
+			FeatureEntry("g", "h", 0.8, MultiFeature(0.2), 0.3, false),
+			FeatureEntry("i", "j", 0.9, MultiFeature(0.4), 0.7, false))
 	}
 
 	def labeledPoints(): List[LabeledPoint] = {
@@ -1859,13 +1865,13 @@ object TestData {
 
 	def classifierFeatureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
-			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, true),
-			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3, false),
-			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2, false),
-			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
-			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
-			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
+			FeatureEntry("alias1", "page1", 0.01, MultiFeature(0.01), 0.1, false),
+			FeatureEntry("alias2", "page2", 0.3, MultiFeature(0.7), 0.9, true),
+			FeatureEntry("alias3", "page3", 0.1, MultiFeature(0.2), 0.3, false),
+			FeatureEntry("alias4", "page4", 0.2, MultiFeature(0.1), 0.2, false),
+			FeatureEntry("alias5", "page5", 0.05, MultiFeature(0.6), 0.7, true),
+			FeatureEntry("alias6", "page6", 0.03, MultiFeature(0.1), 0.3, false),
+			FeatureEntry("alias7", "page7", 0.2, MultiFeature(0.7), 0.6, true))
 	}
 
 	def extendedClassifierFeatureEntries(n: Int): List[FeatureEntry] = {

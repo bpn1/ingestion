@@ -295,4 +295,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val expectedLinks = TestData.transformedLinkContexts()
 		transformedLinks shouldEqual expectedLinks
 	}
+
+	"Generated Proto Feature Entries" should "not be empty" in {
+		val joinedLinks = TestData.joinedLinks().toList
+		val protoFeatureEntries = CosineContextComparator.generateProtoFeatureEntries(joinedLinks)
+		protoFeatureEntries should not be empty
+	}
 }

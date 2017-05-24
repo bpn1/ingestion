@@ -47,6 +47,7 @@ object CosineContextComparator extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("featureTable"))
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -76,6 +77,7 @@ object CosineContextComparator extends SparkJob {
 
 	/**
 	  * Returns default value for the Document Frequency used in the idf calculation.
+	  *
 	  * @param threshold least significant Document Frequency
 	  * @return default Document Frequency used for idf calculation
 	  */
@@ -86,7 +88,7 @@ object CosineContextComparator extends SparkJob {
 	/**
 	  * Transforms articles into a format needed to calculate the tfIdf for every article.
 	  *
-	  * @param articles                   RDD of parsed Wikipedia articles with known term frequencies
+	  * @param articles RDD of parsed Wikipedia articles with known term frequencies
 	  * @return RDD of tuples containing the page name and the tfIdfs of every term on that page
 	  */
 	def transformArticleTfs(articles: RDD[ParsedWikipediaEntry]): RDD[(String, Bag[String, Int])] = {
@@ -96,7 +98,7 @@ object CosineContextComparator extends SparkJob {
 	/**
 	  * Transforms links into a format needed to calculate the tfIdf for every link.
 	  *
-	  * @param articles                   RDD of parsed Wikipedia articles containing the links and their contexts
+	  * @param articles RDD of parsed Wikipedia articles containing the links and their contexts
 	  * @return RDD of tuples containing the link and the tfIdfs of every term in its context
 	  */
 	def transformLinkContextTfs(articles: RDD[ParsedWikipediaEntry]): RDD[(Link, Bag[String, Int])] = {
@@ -107,10 +109,11 @@ object CosineContextComparator extends SparkJob {
 
 	/**
 	  * Calculates the tfIdf for every term.
+	  *
 	  * @param termFrequencies RDD of terms with their identifier and raw term frequency in the form
 	  *                        (term, (identifier, raw term frequency))
-	  * @param numDocuments number of documents used to determine the Document Frequencies
-	  * @param defaultIdf default idf value for terms without a document frequency above the threshold
+	  * @param numDocuments    number of documents used to determine the Document Frequencies
+	  * @param defaultIdf      default idf value for terms without a document frequency above the threshold
 	  * @tparam T type of the identifier for each term
 	  * @return RDD of tuples containing identifiers and a Map with the tfidf for each term
 	  */
@@ -150,6 +153,15 @@ object CosineContextComparator extends SparkJob {
 			}
 	}
 
+	/**
+	  * add second order features #todo
+	  */
+	def generateProtoFeatureEntries(
+		joinedLinks: List[(Link, Map[String, Double], String, Double, Double)]
+	): List[ProtoFeatureEntry] = {
+		Nil
+	}
+
 	/** Adds the cosine similarity feature value to the alias probability feature values.
 	  *
 	  * @param linkContexts           links with their contexts
@@ -166,7 +178,14 @@ object CosineContextComparator extends SparkJob {
 			.map(t => (t._1.alias, t))
 			.join(aliasPageProbabilities)
 			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
-				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, pageProb)))
+				println((alias, List((link, linkContext, page, totalProb, pageProb))))
+//			}.reduceByKey(_ ++ _)
+//			.map { case (alias, joinedLinks) =>
+//				generateProtoFeatureEntries(joinedLinks)
+//			}
+
+//			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
+				(page, List(ProtoFeatureEntry(alias, link, linkContext, totalProb, MultiFeature(pageProb))))
 			}.reduceByKey(_ ++ _)
 		val weights = (0 until 10).map(t => 1.0).toArray
 		val linkSegements = joinableLinks.randomSplit(weights)
@@ -175,8 +194,8 @@ object CosineContextComparator extends SparkJob {
 				.join(articleContexts)
 				.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
 					protoFeatureEntries.map { protoFeatureEntry =>
-							val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
-							protoFeatureEntry.toFeatureEntry(page, cosineSim)
+						val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
+						protoFeatureEntry.toFeatureEntry(page, cosineSim)
 					}
 				}
 		}.reduce(_.union(_))
@@ -211,6 +230,7 @@ object CosineContextComparator extends SparkJob {
 	/**
 	  * Reads the document frequencies from the hdfs, calculates the inverse document frequencies and returns them
 	  * as Map.
+	  *
 	  * @param numDocs number of documents used to create the document frequency data
 	  * @return Map of every term and its inverse document frequency
 	  */

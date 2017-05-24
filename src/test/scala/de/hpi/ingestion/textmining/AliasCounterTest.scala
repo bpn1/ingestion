@@ -53,7 +53,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 		val aliasListsRDD = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 			.map(AliasCounter.extractAliasList)
 		    .map(_.map(_.alias).toSet)
-		val testAliasLists = TestData.aliasOccurrencesInArticlesTestRDD(sc)
+		val testAliasLists = sc.parallelize(TestData.aliasOccurrencesInArticlesList())
 			.map(data => data.links ++ data.noLinks)
 		assertRDDEquals(aliasListsRDD, testAliasLists)
 	}
