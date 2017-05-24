@@ -1944,6 +1944,29 @@ object TestData {
 	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
 		(simMeasureStats(), Option(randomForestModel()))
 	}
+
+	def exportCooccurrences(): List[Cooccurrence] = {
+		List(
+			Cooccurrence(List("e 1", "e\" 2", "e 3"), 5),
+			Cooccurrence(List("e 1", "d 2"), 2),
+			Cooccurrence(List("e 1", "e 3"), 2))
+	}
+
+	def cooccurrenceNodes(): Set[String] = {
+		Set(
+			"\"e 1\",\"e 1\",Entity",
+			"\"e\\\" 2\",\"e\\\" 2\",Entity",
+			"\"e 3\",\"e 3\",Entity",
+			"\"d 2\",\"d 2\",Entity")
+	}
+
+	def cooccurrenceEdges(): Set[String] = {
+		Set(
+			"\"e 1\",5,\"e\\\" 2\",CO_OCCURRENCE",
+			"\"e 1\",7,\"e 3\",CO_OCCURRENCE",
+			"\"e\\\" 2\",5,\"e 3\",CO_OCCURRENCE",
+			"\"e 1\",2,\"d 2\",CO_OCCURRENCE")
+	}
 }
 
 // scalastyle:on method.length

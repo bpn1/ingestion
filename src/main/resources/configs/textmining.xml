@@ -15,6 +15,7 @@
         <trieFile>wikipedia/trie_full.bin</trieFile>
         <dfFile>wikipedia/wikipedia_docfreq</dfFile>
         <sentenceTable>wikipediasentences</sentenceTable>
+        <cooccurrenceTable>wikipediacooccurrences</cooccurrenceTable>
         <contextSize>20</contextSize>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
