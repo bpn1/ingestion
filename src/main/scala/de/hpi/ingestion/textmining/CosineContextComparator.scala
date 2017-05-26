@@ -222,24 +222,12 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
-	  * add second order features #todo
-	  */
-	def generateProtoFeatureEntries(
-		joinedLinks: List[(Link, Map[String, Double], String, Double, MultiFeature)]
-	): List[(String, ProtoFeatureEntry)] = {
-		joinedLinks
-			.map { case (link, linkContext, page, totalProb, pageProb) =>
-				(page, ProtoFeatureEntry(link, linkContext, totalProb, pageProb))
-			}
-	}
-
-	/**
 	  * #todo
 	  *
 	  * @param aliasPageProbabilities
 	  * @return
 	  */
-	def addSecondOrderFeatures(
+	def addSecondOrderFeaturesToPageScores(
 		aliasPageProbabilities: RDD[(String, (String, Double, Double))]
 	): RDD[(String, (String, Double, MultiFeature))] = {
 		aliasPageProbabilities.map { case (alias, (page, linkScore, pageScore)) =>
@@ -251,6 +239,29 @@ object CosineContextComparator extends SparkJob {
 					.zip(generateMultiFeatures(pageScores))
 					.map { case ((page, linkScore, pageScore), extendedPageScore) =>
 						(alias, (page, linkScore, extendedPageScore))
+					}
+			}
+	}
+
+	/**
+	  * #todo
+	  *
+	  * @param featureEntries
+	  * @return
+	  */
+	def addSecondOrderFeaturesToCosineSimilarities(featureEntries: RDD[FeatureEntry]): RDD[FeatureEntry] = {
+		featureEntries
+			.map(featureEntry => (featureEntry.alias, List(featureEntry)))
+			.reduceByKey(_ ++ _)
+			.flatMap { case (alias, entries) =>
+				val cosineSimilarities = entries.map(_.cosine_sim.value)
+				entries
+					.zip(generateMultiFeatures(cosineSimilarities))
+					.map { case (featureEntry, extendedCosineSim) =>
+						featureEntry.cosine_sim.rank = extendedCosineSim.rank
+						featureEntry.cosine_sim.deltaTop = extendedCosineSim.deltaTop
+						featureEntry.cosine_sim.deltaSuccessor = extendedCosineSim.deltaSuccessor
+						featureEntry
 					}
 			}
 	}
@@ -267,7 +278,7 @@ object CosineContextComparator extends SparkJob {
 		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
-		val aliasPageProbabilitiesWithSOF = addSecondOrderFeatures(aliasPageProbabilities)
+		val aliasPageProbabilitiesWithSOF = addSecondOrderFeaturesToPageScores(aliasPageProbabilities)
 
 		val joinableLinks = linkContexts
 			.map(t => (t._1.alias, t))
@@ -278,24 +289,24 @@ object CosineContextComparator extends SparkJob {
 				(alias, List((link, linkContext, page, totalProb, pageProb)))
 			}.reduceByKey(_ ++ _)
 			.flatMap { case (alias, joinedLinks) =>
-				generateProtoFeatureEntries(joinedLinks).map { case (page, protoFeatureEntry) =>
-					(page, List(protoFeatureEntry))
+				joinedLinks.map { case (link, linkContext, page, totalProb, pageProb) =>
+					(page, List(ProtoFeatureEntry(link, linkContext, totalProb, pageProb)))
 				}
 			}.reduceByKey(_ ++ _)
 
 		val weights = (0 until 10).map(t => 1.0).toArray
 		val linkSegements = joinableLinks.randomSplit(weights)
-		linkSegements.map { rdd =>
+		val featureEntries = linkSegements.map { rdd =>
 			rdd
 				.join(articleContexts)
-				.flatMap {
-					case (page, (protoFeatureEntries, articleContext)) =>
-						protoFeatureEntries.map { protoFeatureEntry =>
-							val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
-							protoFeatureEntry.toFeatureEntry(page, cosineSim)
-						}
+				.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
+					protoFeatureEntries.map { protoFeatureEntry =>
+						val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
+						protoFeatureEntry.toFeatureEntry(page, MultiFeature(cosineSim))
+					}
 				}
 		}.reduce(_.union(_))
+		addSecondOrderFeaturesToCosineSimilarities(featureEntries)
 	}
 
 	/**
@@ -321,11 +332,12 @@ object CosineContextComparator extends SparkJob {
 		val dotProduct = vectorA.keySet.intersect(vectorB.keySet)
 			.map(key => vectorA(key) * vectorB(key))
 			.sum
-		dotProduct / (lengthA * lengthB)
+		dotProduct / (lengthA * lengthB) // Note: This value may become NaN if
+		// DocumentFrequencyCounter.leastSignificantDocumentFrequency > number of documents
 	}
 
 	/**
-	  * Reads the document frequencies from the hdfs, calculates the inverse document frequencies and returns them
+	  * Reads the document frequencies from the HDFS, calculates the inverse document frequencies and returns them
 	  * as Map.
 	  *
 	  * @param numDocs number of documents used to create the document frequency data

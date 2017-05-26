@@ -23,7 +23,7 @@ case class ProtoFeatureEntry(
 	  * @param cosineSim cosine similarity of this entries link context and the pages article context
 	  * @return Feature Entry used to train a classifier
 	  */
-	def toFeatureEntry(page: String, cosineSim: Double): FeatureEntry = {
+	def toFeatureEntry(page: String, cosineSim: MultiFeature): FeatureEntry = {
 		FeatureEntry(link.alias, page, totalProbability, pageProbability, cosineSim, link.page == page)
 	}
 }

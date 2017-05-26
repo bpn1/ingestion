@@ -10,7 +10,7 @@ package de.hpi.ingestion.textmining.models
   */
 case class MultiFeature(
 	value: Double,
-	rank: Int = 1,
-	deltaTop: Double = 0.0,
-	deltaSuccessor: Double = 0.0 // An Option[Double] would be better but None cannot be stored in a LabeledPoint.
+	var rank: Int = 1,
+	var deltaTop: Double = 0.0,
+	var deltaSuccessor: Double = 0.0 // An Option[Double] would be better but None cannot be stored in a LabeledPoint.
 )
