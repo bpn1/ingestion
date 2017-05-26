@@ -10,7 +10,6 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
@@ -160,7 +159,7 @@ object CosineContextComparator extends SparkJob {
 	  * @param values
 	  * @return ranks for the values (starting with 1)
 	  */
-	def rankValues(values: List[Double]): List[Int] = {
+	def computeRanks(values: List[Double]): List[Int] = {
 		var rank = 1
 		val ranksMap = values
 			.countElements()
@@ -178,11 +177,48 @@ object CosineContextComparator extends SparkJob {
 
 	/**
 	  * #todo
+	  *
+	  * @param values
+	  * @return
+	  */
+	def computeDeltaTopValues(values: List[Double]): List[Double] = {
+		val maxValue = values.max
+		values.map(value => maxValue - value)
+	}
+
+	/**
+	  * #todo
+	  *
+	  * @param values
+	  * @return
+	  */
+	def computeDeltaSuccessorValues(values: List[Double]): List[Double] = {
+		val sortedValues = values
+			.distinct
+			.sortBy(-_)
+		val deltaSuccessorMap = mutable.Map[Double, Double]()
+		for(i <- 0 until sortedValues.length - 1) {
+			val deltaSuccessor = sortedValues(i) - sortedValues(i + 1)
+			deltaSuccessorMap(sortedValues(i)) = deltaSuccessor
+		}
+		deltaSuccessorMap(sortedValues.last) = 0.0
+		values.map(deltaSuccessorMap)
+	}
+
+	/**
+	  * #todo
 	  */
 	def generateMultiFeatures(values: List[Double]): List[MultiFeature] = {
+		val ranks = computeRanks(values)
+		val deltaTopValues = computeDeltaTopValues(values)
+		val deltaSuccessorValues = computeDeltaSuccessorValues(values)
 		values
-			.zip(rankValues(values))
-			.map { case (value, rank) => MultiFeature(value, rank) }
+			.zip(ranks)
+			.zip(deltaTopValues)
+			.zip(deltaSuccessorValues)
+			.map { case (((value, rank), deltaTop), deltaSuccessor) =>
+				MultiFeature(value, rank, deltaTop, deltaSuccessor)
+			}
 	}
 
 	/**

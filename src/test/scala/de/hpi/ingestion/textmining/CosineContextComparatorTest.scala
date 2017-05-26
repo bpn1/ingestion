@@ -324,8 +324,20 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Rank" should "be computed correctly" in {
 		val values = TestData.valuesList()
-		val ranks = CosineContextComparator.rankValues(values)
+		val ranks = CosineContextComparator.computeRanks(values)
 		ranks shouldEqual TestData.ranksList()
+	}
+
+	"Difference to highest value (delta top)" should "be computed correctly" in {
+		val values = TestData.valuesList()
+		val deltaTops = CosineContextComparator.computeDeltaTopValues(values)
+		deltaTops shouldEqual TestData.deltaTopValuesList()
+	}
+
+	"Difference to next value (delta successor)" should "be computed correctly" in {
+		val values = TestData.valuesList()
+		val deltaTops = CosineContextComparator.computeDeltaSuccessorValues(values)
+		deltaTops shouldEqual TestData.deltaSuccessorValuesList()
 	}
 
 	"Ranks for alias page scores" should "be computed correctly" in {

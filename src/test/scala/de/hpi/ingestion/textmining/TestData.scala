@@ -31,6 +31,14 @@ object TestData {
 		List(3, 1, 3, 5, 1)
 	}
 
+	def deltaTopValuesList(): List[Double] = {
+		List(2.0999999999999996, 0.0, 2.0999999999999996, 4.199999999999999, 0.0)
+	}
+
+	def deltaSuccessorValuesList(): List[Double] = {
+		List(2.1, 2.0999999999999996, 2.1, 0.0, 2.0999999999999996)
+	}
+
 	def testSentences(): List[String] = {
 		List(
 			"This is a test sentence.",
@@ -696,11 +704,6 @@ object TestData {
 			("Audi", ("Audi", 1.0, 0.6)),
 			("Audi", ("BMW", 1.0, 0.3)),
 			("Audi", ("Chevrolet", 1.0, 0.1)),
-			("Audi", ("Audi", 1.0, 0.6)),
-			("Audi", ("BMW", 1.0, 0.3)),
-			("Audi", ("Chevrolet", 1.0, 0.1)),
-			("BMW", ("BMW", 1.0, 0.8)),
-			("BMW", ("Chevrolet", 1.0, 0.2)),
 			("BMW", ("BMW", 1.0, 0.8)),
 			("BMW", ("Chevrolet", 1.0, 0.2))
 		)
@@ -708,16 +711,11 @@ object TestData {
 
 	def extendedAliasPageScores(): Set[(String, (String, Double, MultiFeature))] = {
 		Set(
-			("Audi", ("Audi", 1.0, MultiFeature(0.6, 1))),
-			("Audi", ("BMW", 1.0, MultiFeature(0.3, 2))),
-			("Audi", ("Chevrolet", 1.0, MultiFeature(0.1, 3))),
-			("Audi", ("Audi", 1.0, MultiFeature(0.6, 1))),
-			("Audi", ("BMW", 1.0, MultiFeature(0.3, 2))),
-			("Audi", ("Chevrolet", 1.0, MultiFeature(0.1, 3))),
-			("BMW", ("BMW", 1.0, MultiFeature(0.8, 1))),
-			("BMW", ("Chevrolet", 1.0, MultiFeature(0.2, 2))),
-			("BMW", ("BMW", 1.0, MultiFeature(0.8, 1))),
-			("BMW", ("Chevrolet", 1.0, MultiFeature(0.2, 2)))
+			("Audi", ("Audi", 1.0, MultiFeature(0.6, 1, 0.0, 0.3))),
+			("Audi", ("BMW", 1.0, MultiFeature(0.3, 2, 0.3, 0.19999999999999998))),
+			("Audi", ("Chevrolet", 1.0, MultiFeature(0.1, 3, 0.5, 0.0))),
+			("BMW", ("BMW", 1.0, MultiFeature(0.8, 1, 0.0, 0.6000000000000001))),
+			("BMW", ("Chevrolet", 1.0, MultiFeature(0.2, 2, 0.6000000000000001, 0.0)))
 		)
 	}
 
