@@ -29,13 +29,4 @@ class ParsedWikipediaEntryTest extends FlatSpec with SharedSparkContext with Mat
 		val entry = TestData.parsedWikipediaEntryWithLinkCollisions()
 		entry.allLinks() shouldEqual TestData.linksWithoutCollisions()
 	}
-
-//	"Check Function" should "always return false" in {
-//
-//	}
-//
-//	it should "always return true" in {
-//		val tuples = TestData.collisionList()
-//		tuples.foreach(ParsedWikipediaEntry.checkIfColliding()) shouldBe true
-//	}
 }
