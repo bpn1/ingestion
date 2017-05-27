@@ -186,27 +186,4 @@ object TestData {
 			Link("Berlin", "Berlin", Option(2))
 		)
 	}
-
-	def collisionList(): List[(Int, Int, Int, Int)] = {
-		List(
-			(3, 9, 2, 10),
-			(1, 11, 2, 10),
-			(2, 11, 2, 10),
-			(1, 10, 2, 10),
-			(2, 9, 2, 10),
-			(3, 10, 2, 10),
-			(3, 11, 2, 10),
-			(1, 9, 2, 10),
-			(2, 10, 2, 10),
-			(1, 2, 2, 10),
-			(10, 11, 2, 10)
-		)
-	}
-
-	def noCollisionList(): List[(Int, Int, Int, Int)] = {
-		List(
-			(0, 1, 2, 10),
-			(11, 12, 2, 10)
-		)
-	}
 }
