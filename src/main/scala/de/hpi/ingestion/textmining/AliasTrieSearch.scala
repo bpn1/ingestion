@@ -105,7 +105,9 @@ object AliasTrieSearch extends SparkJob {
 
 		contextAliases = contextAliases.filterNot { alias =>
 			val isLink = entry.textlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias)
-			val isExLink = entry.extendedlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias)
+			val isExLink = entry.extendedlinks().exists(
+				link => link.offset == alias.offset && link.alias == alias.alias
+			)
 			isLink || isExLink
 		}
 

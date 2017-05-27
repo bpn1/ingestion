@@ -15,8 +15,27 @@ class ParsedWikipediaEntryTest extends FlatSpec with SharedSparkContext with Mat
 		entry shouldEqual TestData.parsedEntryWithFilteredLinks()
 	}
 
-	"Filtered Extended Links" should "be exactly these Links" in {
+	"Reduced Extended Links" should "be exactly these Links" in {
 		val entry = TestData.extendedLinksParsedWikipediaEntry()
-		entry.extendedlinks() shouldEqual TestData.edgeCaseExtendedLinksToLinks()
+		entry.extendedlinks(noTextLinks=false) shouldEqual TestData.edgeCaseExtendedLinksToLinks()
 	}
+
+	"Filtered Extended Links" should "not contain links that are colliding with textlinks" in {
+		val entry = TestData.parsedWikipediaEntryWithLinkCollisions()
+		entry.extendedlinks().size shouldEqual 4
+	}
+
+	"All Links" should "be exactly these links" in {
+		val entry = TestData.parsedWikipediaEntryWithLinkCollisions()
+		entry.allLinks() shouldEqual TestData.linksWithoutCollisions()
+	}
+
+//	"Check Function" should "always return false" in {
+//
+//	}
+//
+//	it should "always return true" in {
+//		val tuples = TestData.collisionList()
+//		tuples.foreach(ParsedWikipediaEntry.checkIfColliding()) shouldBe true
+//	}
 }

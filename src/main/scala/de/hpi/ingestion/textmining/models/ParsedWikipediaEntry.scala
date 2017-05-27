@@ -1,5 +1,7 @@
 package de.hpi.ingestion.textmining.models
 
+import scala.collection.mutable.ListBuffer
+
 /**
   * Case class representing a Parsed Wikipedia article.
   *
@@ -60,14 +62,59 @@ case class ParsedWikipediaEntry(
 	  * Filters and parsed Extended Links to Links
 	  * @return List of parsed Links
 	  */
-	def extendedlinks(): List[Link] = {
-		rawextendedlinks
-			.map(t => (t, t.filterExtendedLink(1, 0.1)))
+	def extendedlinks(noTextLinks: Boolean = true, countThresh: Int = 1, normalizedThresh: Double = 0.1): List[Link] = {
+		var filteredLinks = rawextendedlinks
+			.map(t => (t, t.filterExtendedLink(countThresh, normalizedThresh)))
 			.collect {
 				case (t, Some(page)) => (t, page)
 			}.map { case (exLink, page) =>
 				Link(exLink.alias, page, exLink.offset)
 			}
+		if (noTextLinks) {
+			filteredLinks = filterCollidingLinks(filteredLinks, textlinks)
+		}
+		filteredLinks
 	}
 
+	/**
+	  * Filter List of Links by overlapping offsets of items in another List in O(nlogn)
+	  * @param listA List that will be filtered
+	  * @param listB List that is used to filter ListA
+	  * @return filtered List of links in ListA without collisions of Links in ListB
+	  */
+	def filterCollidingLinks(listA: List[Link], listB: List[Link]): List[Link] = {
+		val orderedListA = listA.filter(_.offset.exists(_ >= 0)).sortBy(_.offset)
+		val orderedListB = listB.filter(_.offset.exists(_ >= 0)).sortBy(_.offset)
+		var resultList = new ListBuffer[Link]()
+		var (i, j) = (0, 0)
+		while (j < orderedListB.length && i < orderedListA.length) {
+			val startA = orderedListA(i).offset.get
+			val endA = startA + orderedListA(i).alias.length-1
+			var startB = orderedListB(j).offset.get
+			var endB = startB + orderedListB(j).alias.length-1
+			while(endB < startA && j < orderedListB.length-1) {
+				j += 1
+				startB = orderedListB(j).offset.get
+				endB = startB + orderedListB(j).alias.length-1
+			}
+			if (!checkIfColliding(startA, endA, startB, endB)) {
+				resultList += orderedListA(i)
+			}
+			i += 1
+		}
+		while (i < orderedListA.length) {
+			resultList += orderedListA(i)
+			i += 1
+		}
+		resultList.toList
+	}
+
+	def checkIfColliding(startA: Int, endA: Int, startB: Int, endB: Int): Boolean = {
+		// startB---startA----endB or
+		(startB <= startA && startA <= endB) ||
+			// startB---endA----endB or
+			(startB <= endA && endA <= endB) ||
+			// startA---startB---endB---EndA
+			(startA <= startB && endB <= endA)
+	}
 }
