@@ -162,25 +162,20 @@ object CosineContextComparator extends SplitSparkJob {
 		aliasPageProbabilities: Map[String, List[(String, Double, Double)]],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
-		val joinableLinks = linkContexts
+		linkContexts
 			.flatMap { case (link, idfMap) =>
 				aliasPageProbabilities.getOrElse(link.alias, Nil)
 					.map { case (page, totalProb, pageProb) =>
 						(page, List(ProtoFeatureEntry(link.alias, link, idfMap, totalProb, pageProb)))
 					}
 			}.reduceByKey(_ ++ _)
-		val weights = (0 until 10).map(t => 1.0).toArray
-		val linkSegements = joinableLinks.randomSplit(weights)
-		linkSegements.map { rdd =>
-			rdd
-				.join(articleContexts)
-				.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
-					protoFeatureEntries.map { protoFeatureEntry =>
-							val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
-							protoFeatureEntry.toFeatureEntry(page, cosineSim)
-					}
+			.join(articleContexts)
+			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
+				protoFeatureEntries.map { protoFeatureEntry =>
+					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
+					protoFeatureEntry.toFeatureEntry(page, cosineSim)
 				}
-		}.reduce(_.union(_))
+			}
 	}
 
 	/**
@@ -247,11 +242,11 @@ object CosineContextComparator extends SplitSparkJob {
 				listlinks = Nil,
 				disambiguationlinks = Nil,
 				foundaliases = Nil))
-			.cache
-		val weights = (0 until 10).map(t => 1.0).toArray
+		val weights = (0 until 20).map(t => 1.0).toArray
 		val articleSplit = leanArticles.randomSplit(weights)
 		articleSplit.map { articlePartition =>
-			List(leanArticles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articlePartition).toAnyRDD()
+			val leanerArticles = leanArticles.map(_.copy(triealiases = Nil))
+			List(leanerArticles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articlePartition).toAnyRDD()
 		}
 	}
 

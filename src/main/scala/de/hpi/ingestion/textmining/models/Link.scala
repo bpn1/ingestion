@@ -7,10 +7,12 @@ package de.hpi.ingestion.textmining.models
   * @param page    page this link points to
   * @param offset  character offset of this alias in the plain text of the page it appears in
   * @param context term frequencies of the context of this link
+  * @param article article this link was extracted from
   */
 case class Link(
 	alias: String,
 	var page: String,
 	var offset: Option[Int] = None,
-	var context: Map[String, Int] = Map[String, Int]()
+	var context: Map[String, Int] = Map[String, Int](),
+	article: Option[String] = None
 )
