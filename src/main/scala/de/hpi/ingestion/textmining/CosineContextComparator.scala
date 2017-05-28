@@ -242,7 +242,7 @@ object CosineContextComparator extends SplitSparkJob {
 				listlinks = Nil,
 				disambiguationlinks = Nil,
 				foundaliases = Nil))
-		val weights = (0 until 20).map(t => 1.0).toArray
+		val weights = (0 until 10).map(t => 1.0).toArray
 		val articleSplit = leanArticles.randomSplit(weights)
 		articleSplit.map { articlePartition =>
 			val leanerArticles = leanArticles.map(_.copy(triealiases = Nil))
