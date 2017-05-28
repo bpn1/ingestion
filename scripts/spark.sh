@@ -34,7 +34,7 @@ while getopts ":hm:c:n:d:e:t" opt; do
 			exec_mem="--executor-memory ${OPTARG}G"
 			;;
 		t)
-			trie_option="--conf \"spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000\""
+			trie_option="--conf spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
 			;;
 		\?)
 			echo "Invalid option: -$OPTARG" >&2
