@@ -95,7 +95,7 @@ object WikiDataImport extends SparkJob {
 	  */
 	def extractList(json: JsValue, path: List[String]): List[JsValue] = {
 		val value = getValue(json, path).map(_.as[List[JsValue]])
-		value.getOrElse(List[JsValue]())
+		value.getOrElse(Nil)
 	}
 
 	/**
@@ -214,7 +214,7 @@ object WikiDataImport extends SparkJob {
 			.map(_.as[JsObject])
 		val languageList = aliasJsonObject
 			.map(_.keys.toList)
-		    .getOrElse(List[String]())
+		    .getOrElse(Nil)
 
 		languageList.flatMap { language =>
 			extractList(aliasJsonObject.get, List(language))
