@@ -34,7 +34,7 @@ while getopts ":hm:c:n:d:e:t" opt; do
 			exec_mem="--executor-memory ${OPTARG}G"
 			;;
 		t)
-			trie_option="--conf \"spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000\""
+			trie_option="--conf spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
 			;;
 		\?)
 			echo "Invalid option: -$OPTARG" >&2
@@ -77,12 +77,11 @@ fi
 exec_cores="--executor-cores $executor_cores"
 num_exec="--num-executors $num_executors"
 submit_command="spark-submit $class $num_exec $exec_cores $exec_mem $driver_mem $trie_option $jarPath $*"
-shell_command="spark-shell $num_exec $exec_cores $exec_mem $driver_mem $trie_option --jars $jarPath $*"
 export HADOOP_USER_NAME="bp2016n1"
 if [ "$mode" = "yarn" ]; then
-	$submit_command
+	spark-submit $class $num_exec $exec_cores $exec_mem $driver_mem $trie_option $jarPath $*
 elif [ "$mode" = "shell" ]; then
-	$shell_command
+	spark-shell $num_exec $exec_cores $exec_mem $driver_mem $trie_option --jars $jarPath $*
 elif [ "$mode" = "print" ]; then
 	echo "HADOOP_USER_NAME=\"bp2016n1\"" $submit_command
 else
