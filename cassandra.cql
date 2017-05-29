@@ -73,7 +73,7 @@ CREATE TYPE wikidumps.multifeature (
     rank int,
     delta_top double,
     delta_successor double
-)
+);
 
 CREATE TABLE wikidumps.featureentries (
     id uuid PRIMARY KEY,

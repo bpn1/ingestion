@@ -39,11 +39,26 @@ object TestData {
 
 	def labeledPoints(): List[LabeledPoint] = {
 		List(
-			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
-			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
-			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
-			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
-			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7)))
+			LabeledPoint(1.0, new DenseVector(Array(
+				0.1, 5, 0.8, 0.0,
+				0.2, 1, 0.0, 0.0,
+				0.8, 1, 0.0, 0.0))),
+			LabeledPoint(0.0, new DenseVector(Array(
+				0.4, 4, 0.5, 0.3,
+				0.0, 1, 0.0, 0.0,
+				0.7, 1, 0.0, 0.0))),
+			LabeledPoint(1.0, new DenseVector(Array(
+				0.7, 3, 0.2, 0.3,
+				1.0, 1, 0.0, 0.0,
+				0.1, 1, 0.0, 0.0))),
+			LabeledPoint(0.0, new DenseVector(Array(
+				0.8, 2, 0.1, 0.1,
+				0.2, 1, 0.0, 0.0,
+				0.3, 1, 0.0, 0.0))),
+			LabeledPoint(0.0, new DenseVector(Array(
+				0.9, 1, 0.0, 0.1,
+				0.4, 1, 0.0, 0.0,
+				0.7, 1, 0.0, 0.0)))
 		)
 	}
 

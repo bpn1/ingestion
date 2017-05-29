@@ -154,10 +154,10 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
-	  * Computes the rank for #todo
+	  * Computes the rank for each given value.
 	  *
-	  * @param values
-	  * @return ranks for the values (starting with 1)
+	  * @param values values
+	  * @return ranks for the values (starting with 1 for highest value)
 	  */
 	def computeRanks(values: List[Double]): List[Int] = {
 		var rank = 1
@@ -176,10 +176,10 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
-	  * #todo
+	  * Computes the (positive) difference to the highest value for each given value.
 	  *
-	  * @param values
-	  * @return
+	  * @param values values
+	  * @return differences to the highest value
 	  */
 	def computeDeltaTopValues(values: List[Double]): List[Double] = {
 		val maxValue = values.max
@@ -187,10 +187,10 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
-	  * #todo
+	  * Computes the (positive) difference to the successive value for each given value.
 	  *
-	  * @param values
-	  * @return
+	  * @param values values
+	  * @return differences to the successive value
 	  */
 	def computeDeltaSuccessorValues(values: List[Double]): List[Double] = {
 		val sortedValues = values
@@ -379,7 +379,7 @@ object CosineContextComparator extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].cache
+		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].sample(false, 0.1).cache
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
 
 		val numDocuments = articlesWithTermFrequencies.count()
