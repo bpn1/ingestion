@@ -17,7 +17,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case r"""([-+]?[0-9]+\.?[0-9]*)${employees}\^\^xsd:nonNegativeInteger""" => List(employees)
 			case r"""über (\d+)${employees}@de \.""" => List(employees)
 			case _ => None
-		}.distinct
+		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
 
 	/**
@@ -54,7 +54,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 		values.flatMap {
 			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${sector}""" => List(sector)
 			case _ => None
-		}
+		}.distinct
 	}
 
 	/**

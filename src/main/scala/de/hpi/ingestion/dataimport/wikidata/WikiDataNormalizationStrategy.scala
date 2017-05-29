@@ -13,9 +13,9 @@ object WikiDataNormalizationStrategy extends Serializable {
 	  */
 	def normalizeCoords(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""([-+]?[0-9]+\.?[0-9]*)${lat};([-+]?[0-9]+\.?[0-9]*)${long}""" => List(lat, long)
+			case r"""([-+]?[0-9]+\.?[0-9]*)$lat;([-+]?[0-9]+\.?[0-9]*)$long""" => List(s"$lat;$long")
 			case _ => None
-		}
+		}.distinct
 	}
 
 	/**
@@ -25,9 +25,9 @@ object WikiDataNormalizationStrategy extends Serializable {
 	  */
 	def normalizeCountry(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"Q[0-9]+" => None
-			case other => List(other)
-		}
+			case r"""([A-Za-zÄäÖöÜüß\-_ ]*)$country""" => List(country)
+			case _ => None
+		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
 
 	/**
@@ -37,9 +37,9 @@ object WikiDataNormalizationStrategy extends Serializable {
 	  */
 	def normalizeSector(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"Q[0-9]+" => None
-			case other => List(other)
-		}
+			case r"""([A-Za-zÄäÖöÜüß\-_]*)$sector""" => List(sector)
+			case _ => None
+		}.distinct
 	}
 
 	/**
@@ -51,7 +51,16 @@ object WikiDataNormalizationStrategy extends Serializable {
 		values.flatMap {
 			case r"""\+(\d+)${employees};1""" => List(employees)
 			case _ => None
-		}
+		}.distinct
+	}
+
+	/**
+	  * Normalizes all other values by default dashes
+	  * @param values Strings to be normalized
+	  * @return normalized strings
+	  */
+	def normalizeDefault(values: List[String]): List[String] = {
+		values.map(_.replaceAll("(_|-)", " ")).distinct
 	}
 
 	/**
@@ -65,7 +74,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 			case "geo_coords" => this.normalizeCoords
 			case "geo_country" => this.normalizeCountry
 			case "gen_employees" => this.normalizeEmployees
-			case _ => identity
+			case _ => this.normalizeDefault
 		}
 	}
 }
