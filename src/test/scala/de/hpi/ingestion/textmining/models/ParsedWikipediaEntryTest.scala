@@ -31,7 +31,7 @@ class ParsedWikipediaEntryTest extends FlatSpec with SharedSparkContext with Mat
 
 	"Reduced Extended Links" should "be exactly these Links" in {
 		val entry = TestData.extendedLinksParsedWikipediaEntry()
-		entry.extendedlinks(noTextLinks=false) shouldEqual TestData.edgeCaseExtendedLinksToLinks()
+		entry.extendedlinks(noTextLinks = false) shouldEqual TestData.edgeCaseExtendedLinksToLinks()
 	}
 
 	"Filtered Extended Links" should "not contain links that are colliding with textlinks" in {

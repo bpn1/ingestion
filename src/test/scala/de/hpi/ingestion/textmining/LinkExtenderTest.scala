@@ -64,8 +64,8 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 			trie,
 			tokenizer
 		)
-		parsedEntry.extendedlinks(noTextLinks = false) shouldEqual
-			TestData.linkExtenderExtendedParsedEntry().head.extendedlinks(noTextLinks = false)
+		val expectedLinks = TestData.linkExtenderExtendedParsedEntry().head.extendedlinks(noTextLinks = false)
+		parsedEntry.extendedlinks(noTextLinks = false) shouldEqual expectedLinks
 	}
 
 	"Entry with extended Links" should "be exactly this entry" in {
@@ -89,7 +89,7 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 			.collect
 			.toSet
 			.head
-		extendedEntry.extendedlinks(noTextLinks = false) shouldEqual
-			TestData.bigLinkExtenderExtendedParsedEntry().head.extendedlinks(noTextLinks = false)
+		val expectedLinks = TestData.bigLinkExtenderExtendedParsedEntry().head.extendedlinks(noTextLinks = false)
+		extendedEntry.extendedlinks(noTextLinks = false) shouldEqual expectedLinks
 	}
 }
