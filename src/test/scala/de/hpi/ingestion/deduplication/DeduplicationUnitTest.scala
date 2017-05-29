@@ -36,7 +36,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val originalName = Deduplication.configFile
 
 		Deduplication.configFile = "test.xml"
-    	val expected = TestData.testConfig()
+		val expected = TestData.testConfig()
 		Deduplication.parseConfig()
 		Deduplication.scoreConfigSettings shouldEqual expected
 		Deduplication.settings should not be empty
