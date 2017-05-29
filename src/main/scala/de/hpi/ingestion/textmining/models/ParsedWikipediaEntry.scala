@@ -78,11 +78,11 @@ case class ParsedWikipediaEntry(
 	}
 
 	/**
-	  * Filter List of Links by overlapping offsets of items in another List in O(nlogn)
+	  * Filters extended links by overlapping offsets of text links in O(nlogn).
 	  *
-	  * @param extendedLinks List that will be filtered
-	  * @param textLinks     List that is used to filter ListA
-	  * @return filtered List of links in ListA without collisions of Links in ListB
+	  * @param extendedLinks List of extended links that will be filtered
+	  * @param textLinks     List of text links that is used to filter
+	  * @return filtered List of extended links without colliding text links
 	  */
 	def filterCollidingLinks(extendedLinks: List[Link], textLinks: List[Link]): List[Link] = {
 		val orderedExtendedLinks = extendedLinks.filter(_.offset.exists(_ >= 0)).sortBy(_.offset)
@@ -115,7 +115,7 @@ case class ParsedWikipediaEntry(
 	}
 
 	/**
-	  * checks if two links are colliding by checking their start and end offsets
+	  * checks if two links are colliding by checking their start and end offsets.
 	  *
 	  * @param startEL start offset of extended link
 	  * @param endEL   end offset of extended link
