@@ -97,6 +97,10 @@ object TestData {
 		ParsedWikipediaEntry(
 			"Berlin",
 			Option("Berlin ist cool"),
+			textlinks = List (
+				Link("Berlin", "Berlin", Option(0)),
+				Link("Berlin", "Berlin", Option(15))
+			),
 			rawextendedlinks = List(
 				ExtendedLink("Berlin", Map("Berlin" -> 5), Option(0)),
 				ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1), Option(1)),
@@ -112,7 +116,6 @@ object TestData {
 
 	def edgeCaseExtendedLinksToLinks(): List[Link] = {
 		List(
-			Link("Berlin", "Berlin", Option(0)),
 			Link("Berlin", "Berlin", Option(1)),
 			Link("Berlin", "Berlin", Option(2))
 		)
