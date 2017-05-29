@@ -18,9 +18,9 @@ import org.apache.spark.SparkContext
 case class Version(
 	version: UUID = UUIDs.timeBased(),
 	var program: String,
-	var value: List[String] = List[String](),
+	var value: List[String] = Nil,
 	var validity: Map[String, String] = Map[String, String](),
-	var datasources: List[String] = List[String](),
+	var datasources: List[String] = Nil,
 	var timestamp: Date = new Date())
 
 /**
@@ -51,10 +51,13 @@ object Version {
 	  * @param program name of the program writing the version
 	  * @param datasources List of datasources used
 	  * @param sc Spark Context used to connect to the Cassandra
+	  * @param timestampName whether or not a timestamp will be appended to the program name
 	  * @return Version with the given parameters
 	  */
-	def apply(program: String, datasources: List[String], sc: SparkContext): Version = {
-		val version = Version(program = program, datasources = datasources)
+	def apply(program: String, datasources: List[String], sc: SparkContext, timestampName: Boolean): Version = {
+		val time = new Date()
+		val timestamp = s"_$time".filter(c => timestampName)
+		val version = Version(program = s"$program$timestamp", datasources = datasources, timestamp = time)
 		writeToCassandra(version, sc)
 		version
 	}
