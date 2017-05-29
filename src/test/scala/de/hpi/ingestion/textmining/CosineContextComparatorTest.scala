@@ -4,6 +4,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.{Alias, FeatureEntry, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.tokenizer.{CleanCoreNLPTokenizer, IngestionTokenizer}
 import org.apache.spark.rdd.RDD
 
 class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with Matchers {
@@ -367,5 +368,106 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 					entry.foundaliases shouldBe empty
 				}
 		}
+	}
+
+//	"Term frequencies" should "not be empty" in {
+//		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+//		val pagesTermFrequencies = articles
+//			.map(CosineContextComparator.extractBagOfWords(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
+//		pagesTermFrequencies should not be empty
+//		pagesTermFrequencies
+//			.map(_.getCounts())
+//			.collect
+//			.foreach(bag => bag should not be empty)
+//	}
+//
+//	they should "be exactly these term frequencies" in {
+//		val expectedTermFrequencies = TestData.termFrequenciesTestSet()
+//		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+//			.filter(article => expectedTermFrequencies.exists(_._1 == article.title))
+//		val tfSet = articles
+//			.map(CosineContextComparator.extractBagOfWords(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
+//			.collect
+//			.toSet
+//		tfSet shouldEqual expectedTermFrequencies.map(_._2)
+//	}
+
+	"Wikipedia articles with contexts" should "be exactly these wikipedia articles" in {
+		val expectedArticles = TestData.articlesWithContextSet()
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+			.filter(article => expectedArticles.exists(_.title == article.title))
+			.map(CosineContextComparator.extractArticleContext(_, tokenizer))
+			.collect
+			.toSet
+		articles shouldEqual expectedArticles
+	}
+
+	"Link contexts" should "be exactly these bag of words" in {
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
+
+		val linkContexts = TestData.parsedWikipediaTestSet()
+			.map(CosineContextComparator.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
+			.flatMap(_.linkswithcontext)
+		val expectedContexts = TestData.linksWithContextsTestSet()
+		linkContexts shouldEqual expectedContexts
+
+		CosineContextComparator.settings = oldSettings
+	}
+
+	they should "be extracted for both text and extendedlinks" in {
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
+
+		val linkContexts = TestData.parsedWikipediaExtendedLinksTestSet()
+			.map(CosineContextComparator.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
+			.flatMap(_.linkswithcontext)
+		val expectedContexts = TestData.linksWithContextsTestSet()
+		linkContexts shouldEqual expectedContexts
+
+		CosineContextComparator.settings = oldSettings
+	}
+
+	"Articles with link context" should "contain exactly these link contexts" in {
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
+
+		val expectedLinks = TestData.linksWithContextsTestSet()
+		val enrichedLinks = TestData.parsedWikipediaTestSet()
+			.map(CosineContextComparator.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
+			.flatMap(_.linkswithcontext)
+		enrichedLinks shouldEqual expectedLinks
+
+		CosineContextComparator.settings = oldSettings
+	}
+
+	they should "be exactly these articles" in {
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
+
+		val enrichedLinkArticles = TestData.parsedWikipediaTestSet()
+			.map(CosineContextComparator.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
+		val expectedArticles = TestData.articlesWithLinkContextsSet()
+		enrichedLinkArticles shouldEqual expectedArticles
+
+		CosineContextComparator.settings = oldSettings
+	}
+
+	"Articles without any context" should "be fully enriched with article and link contexts" in {
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
+
+		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val enrichedArticles = CosineContextComparator
+			.run(List(articles).toAnyRDD(), sc, Array("CleanCoreNLPTokenizer", "true", "true"))
+			.fromAnyRDD[ParsedWikipediaEntry]()
+			.head
+			.collect
+			.toSet
+		val expectedArticles = TestData.articlesWithCompleteContexts()
+		enrichedArticles shouldEqual expectedArticles
+
+		CosineContextComparator.settings = oldSettings
 	}
 }

@@ -88,4 +88,8 @@ case class ParsedWikipediaEntry(
 			}
 			.filterNot(textlinks.toSet)
 	}
+
+	def featureEntryLinks(): List[Link] = {
+		linkswithcontext ++ triealiases.map(_.toLink())
+	}
 }
