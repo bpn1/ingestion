@@ -13,9 +13,7 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
   */
 object RelationSentenceParser extends SparkJob {
 	appName = "Relation Sentence Parser"
-	val keyspace = "wikidumps"
-	val inputTablename = "parsedwikipedia"
-	val outputTablename = "wikipediasentences"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -26,7 +24,7 @@ object RelationSentenceParser extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputTablename)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		List(articles).toAnyRDD()
 	}
 
@@ -41,7 +39,7 @@ object RelationSentenceParser extends SparkJob {
 		output
 			.fromAnyRDD[Sentence]()
 			.head
-			.saveToCassandra(keyspace, outputTablename)
+			.saveToCassandra(settings("keyspace"), settings("sentenceTable"))
 	}
 
 	// $COVERAGE-ON$
