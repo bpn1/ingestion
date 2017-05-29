@@ -38,7 +38,7 @@ class DocumentFrequencyCounterTest extends FlatSpec with SharedSparkContext with
 		documentFrequencies should contain allElementsOf TestData.stemmedDFTestSet()
 	}
 
-	"Filtered document frequencies" should "not contain German stopwords" in {
+	"Filtered document frequencies" should "not contain German stopwordsSet" in {
 		val documentFrequencies = sc.parallelize(TestData.documentFrequenciesTestSet().toList)
 		val filteredWords = DocumentFrequencyCounter
 			.filterDocumentFrequencies(documentFrequencies, 1)
