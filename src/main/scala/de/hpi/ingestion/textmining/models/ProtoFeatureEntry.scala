@@ -4,17 +4,16 @@ package de.hpi.ingestion.textmining.models
   * Represents the prototype of an entry used to train a classifier. Contains all precomputed values of the final
   * Feature Entry.
   *
-  * @param link             Link its Entry represents
-  * @param linkContext      context of the link
-  * @param totalProbability probability that this entries alias is a link
-  * @param pageProbability  probability that this entries alias links to the page
-  *                         with additional second order features
+  * @param link        Link this entry represents
+  * @param linkContext context of the Link containing the tfidf values of the terms
+  * @param linkScore   score for this entry's alias being a link
+  * @param pageScore   score for this alias pointing to the specific page this object will be keyed by
   */
 case class ProtoFeatureEntry(
 	link: Link,
 	linkContext: Map[String, Double],
-	totalProbability: MultiFeature,
-	pageProbability: MultiFeature
+	linkScore: MultiFeature,
+	pageScore: MultiFeature
 ) {
 	/**
 	  * Transforms this entry into a Feature entry by filling in the missing values.
@@ -24,6 +23,6 @@ case class ProtoFeatureEntry(
 	  * @return Feature Entry used to train a classifier
 	  */
 	def toFeatureEntry(page: String, cosineSim: MultiFeature): FeatureEntry = {
-		FeatureEntry(link.alias, page, totalProbability, pageProbability, cosineSim, link.page == page)
+		FeatureEntry(link.alias, page, linkScore, pageScore, cosineSim, link.page == page)
 	}
 }
