@@ -47,6 +47,13 @@ class BagTest extends FlatSpec with Matchers {
 		Bag("X" -> 3.4, "Y" -> 1.3) - ("Z", -2.2) shouldEqual Bag("X" -> 3.4, "Y" -> 1.3, "Z" -> 2.2)
 	}
 
+	it should "be created from a Map" in {
+		val map1 = Map("X" -> 1, "Y" -> 2)
+		val map2 = Map("Y" -> 1.5, "Z" -> 2.3, "A" -> 2.0)
+		Bag(map1) shouldEqual Bag("X" -> 1, "Y" -> 2)
+		Bag(map2) shouldEqual Bag("Y" -> 1.5, "Z" -> 2.3, "A" -> 2.0)
+	}
+
 	"Bag sum" should "be correct" in {
 		val res1 = Bag(100 -> 3, 10 -> 2, 1 -> 7)
 		val res2 = Bag("X" -> 5, "Y" -> 4, "Z" -> 1)

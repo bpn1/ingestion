@@ -84,8 +84,8 @@ object CosineContextComparator extends SplitSparkJob {
 		article: ParsedWikipediaEntry,
 		dfData: DFData
 	): Double = {
-		val linkTfidf = link.context.map((dfData.calculateIdf _).tupled)
-		val articleTfidf = article.context.map((dfData.calculateIdf _).tupled)
+		val linkTfidf = link.context.map(dfData.idf)
+		val articleTfidf = article.context.map(dfData.idf)
 		calculateCosineSimilarity(linkTfidf, articleTfidf)
 	}
 
@@ -180,8 +180,8 @@ object CosineContextComparator extends SplitSparkJob {
 					val featureEntries = entry.featureEntryLinks().flatMap { link =>
 						val pages = aliasPageProbabilities.getOrElse(link.alias, Nil)
 						pages.map { case (page, totalProb, pageProb) =>
-							val linkedArticle = ParsedWikipediaEntry(page, articleTexts.get(page))
-							val cosineSim = compareContexts(link, linkedArticle, dfData)
+							val linkedEntry = ParsedWikipediaEntry(page, articleTexts.get(page))
+							val cosineSim = compareContexts(link, extractArticleContext(linkedEntry, tokenizer), dfData)
 							FeatureEntry(link.alias, page, totalProb, pageProb, cosineSim, link.page == page)
 						}
 					}

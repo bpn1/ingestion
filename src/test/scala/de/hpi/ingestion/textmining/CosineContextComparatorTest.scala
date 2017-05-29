@@ -32,38 +32,94 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		cosineSimilarity shouldBe 0.608944778982726
 	}
 
-//	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
-//		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-//		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
-//		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
-//		val featureEntries = CosineContextComparator
-//			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
-//			.collect
-//		featureEntries should not be empty
-//	}
-//
-//	they should "be exactly these feature entries" in {
-//		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-//		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
-//		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
-//		val featureEntries = CosineContextComparator
-//			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
-//			.collect
-//			.toSet
-//		featureEntries shouldEqual TestData.featureEntriesSet()
-//	}
-//
-//	they should "be calculated for trie aliases as well" in {
-//		val contextTfidf = sc.parallelize(TestData.shortLinkAndAliasContextsTfidfList())
-//		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
-//		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
-//		val featureEntries = CosineContextComparator
-//			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
-//			.collect
-//			.toSet
-//		val expected = TestData.featureEntriesWithAliasesSet()
-//		featureEntries shouldEqual expected
-//	}
+	"Contexts" should "be compared" in {
+		val link = TestData.cosSimLink()
+		val page = TestData.cosSimArticle()
+		val dfData = TestData.dfData()
+		val cosineSimilarity = CosineContextComparator.compareContexts(link, page, dfData)
+		cosineSimilarity shouldBe 0.608938862125996
+	}
+
+	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+
+		val testDocFreqFunction = TestData.docfreqStream("docfreq_cosinesim") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val dfData = DFData(7, 2)
+		val articleTexts = TestData.cosSimArticleTexts()
+		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
+		val tokenizer = IngestionTokenizer(false, false)
+		val articles = TestData.cosSimArticles()
+		val featureEntries = CosineContextComparator
+			.compareLinksWithArticles(
+				sc.parallelize(articles),
+				aliasPageProbabilities,
+				articleTexts,
+				tokenizer,
+				dfData)
+			.collect
+			.flatMap(_.featureentries)
+			.toSet
+		featureEntries should not be empty
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	they should "be exactly these feature entries" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+
+		val testDocFreqFunction = TestData.docfreqStream("docfreq_cosinesim") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val dfData = DFData(7, 2)
+		val articleTexts = TestData.cosSimArticleTexts()
+		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
+		val tokenizer = IngestionTokenizer(false, false)
+		val articles = TestData.cosSimArticles()
+		val featureEntries = CosineContextComparator
+			.compareLinksWithArticles(
+				sc.parallelize(articles),
+				aliasPageProbabilities,
+				articleTexts,
+				tokenizer,
+				dfData)
+			.collect
+			.flatMap(_.featureentries)
+			.toSet
+		featureEntries shouldEqual TestData.featureEntriesSet()
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	they should "be calculated for trie aliases as well" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+
+		val testDocFreqFunction = TestData.docfreqStream("docfreq_cosinesim") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val dfData = DFData(7, 2)
+		val articleTexts = TestData.cosSimArticleTexts()
+		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
+		val tokenizer = IngestionTokenizer(false, false)
+		val articles = TestData.cosSimArticlesWithAliases()
+		val featureEntries = CosineContextComparator
+			.compareLinksWithArticles(
+				sc.parallelize(articles),
+				aliasPageProbabilities,
+				articleTexts,
+				tokenizer,
+				dfData)
+			.collect
+			.flatMap(_.featureentries)
+			.toSet
+		featureEntries shouldEqual TestData.featureEntriesWithAliasesSet()
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
 
 //	"Extracted feature entries from links with missing pages" should "be empty" in {
 //		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
@@ -129,24 +185,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 //		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 //	}
 
-//	"Articles" should "be transformed into the correct format" in {
-//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-//		val transformedArticles = CosineContextComparator.transformArticleTfs(articles)
-//			.collect
-//			.toSet
-//		val expectedArticles = TestData.transformedArticles()
-//		transformedArticles shouldEqual expectedArticles
-//	}
-//
-//	"Link contexts" should "be transformed into the correct format" in {
-//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-//		val transformedLinks = CosineContextComparator.transformLinkContextTfs(articles)
-//			.collect
-//			.toSet
-//		val expectedLinks = TestData.transformedLinkContexts()
-//		transformedLinks shouldEqual expectedLinks
-//	}
-
 	"Input split" should "split input into 10 parts" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
@@ -176,30 +214,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 				}
 		}
 	}
-
-//	"Term frequencies" should "not be empty" in {
-//		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-//		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-//		val pagesTermFrequencies = articles
-//			.map(CosineContextComparator.extractBagOfWords(_, tokenizer))
-//		pagesTermFrequencies should not be empty
-//		pagesTermFrequencies
-//			.map(_.getCounts())
-//			.collect
-//			.foreach(bag => bag should not be empty)
-//	}
-//
-//	they should "be exactly these term frequencies" in {
-//		val expectedTermFrequencies = TestData.termFrequenciesTestSet()
-//		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-//		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-//			.filter(article => expectedTermFrequencies.exists(_._1 == article.title))
-//		val tfSet = articles
-//			.map(CosineContextComparator.extractBagOfWords(_, tokenizer))
-//			.collect
-//			.toSet
-//		tfSet shouldEqual expectedTermFrequencies.map(_._2)
-//	}
 
 	"Wikipedia articles with contexts" should "be exactly these wikipedia articles" in {
 		val expectedArticles = TestData.articlesWithContextSet()
@@ -239,6 +253,20 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		CosineContextComparator.settings = oldSettings
 	}
+
+//	"Triealias contexts" should "be exactly these bag of words" in {
+//		val oldSettings = CosineContextComparator.settings
+//		CosineContextComparator.parseConfig()
+//
+//		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+//		val linkContexts = TestData.parsedWikipediaTestSet()
+//			.map(CosineContextComparator.extractLinkContexts(_, tokenizer))
+//			.flatMap(_.triealiases)
+//		val expectedContexts = TestData.linksWithContextsTestSet()
+//		linkContexts shouldEqual expectedContexts
+//
+//		CosineContextComparator.settings = oldSettings
+//	}
 
 	"Articles with link context" should "contain exactly these link contexts" in {
 		val oldSettings = CosineContextComparator.settings
