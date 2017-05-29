@@ -95,7 +95,13 @@ object Blocking extends SparkJob {
 		blockingSchemes = if(schemes.nonEmpty) schemes else List(new SimpleBlockingScheme)
 	}
 
-	def createDuplicates(
+	/**
+	  * Uses the goldstandard to find all relevant duplicate-pairs to be possibly found in deduplication.
+	  * @param block blocked subjects
+	  * @param goldStandard tuples of duplicates we want to find
+	  * @return duplicates from the goldstandard found in the input block
+	  */
+	def createDuplicateStats(
 		block: ((String, String), (Traversable[UUID], Traversable[UUID])),
 		goldStandard: Set[(UUID, UUID)]
 	): (Traversable[(UUID, UUID)], (String, Set[BlockStats])) = {
@@ -178,7 +184,7 @@ object Blocking extends SparkJob {
 		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
 			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
 		}.filter { case ((key, tag), (subjectList, stagingList)) => (subjectList.size * stagingList.size) < 250000 }
-		val duplicates = blocks.map(createDuplicates(_, goldStandard))
+		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))
 
 		var accuracy = duplicates
 			.flatMap { case (duplicates, (tag, block)) =>
