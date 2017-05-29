@@ -272,8 +272,8 @@ object CosineContextComparator extends SparkJob {
 					.zip(generateMultiFeatures(cosineSimilarities))
 					.map { case (featureEntry, extendedCosineSim) =>
 						featureEntry.cosine_sim.rank = extendedCosineSim.rank
-						featureEntry.cosine_sim.deltaTop = extendedCosineSim.deltaTop
-						featureEntry.cosine_sim.deltaSuccessor = extendedCosineSim.deltaSuccessor
+						featureEntry.cosine_sim.delta_top = extendedCosineSim.delta_top
+						featureEntry.cosine_sim.delta_successor = extendedCosineSim.delta_successor
 						featureEntry
 					}
 			}

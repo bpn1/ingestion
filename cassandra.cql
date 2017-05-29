@@ -68,14 +68,21 @@ CREATE TABLE wikidumps.wikipediasentences (
    PRIMARY KEY (articletitle, articleoffset)
 );
 
+CREATE TYPE wikidumps.multifeature (
+    value double,
+    rank int,
+    delta_top double,
+    delta_successor double
+)
+
 CREATE TABLE wikidumps.featureentries (
     id uuid PRIMARY KEY,
     alias text,
-    correct boolean,
-    cosine_sim double,
     entity text,
-    prob_entity double,
-    prob_link double
+    link_score multifeature,
+    entity_score multifeature,
+    cosine_sim multifeature,
+    correct boolean
 );
 
 CREATE TYPE wikidumps.precisionrecalldatatuple (
