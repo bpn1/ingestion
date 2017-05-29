@@ -1,12 +1,12 @@
 package de.hpi.ingestion.textmining.models
 
 /**
-  * #todo
+  * Case class representing value for a feature with its respective values for the second order features.
   *
-  * @param value
-  * @param rank
-  * @param delta_top
-  * @param delta_successor
+  * @param value           original value for the feature
+  * @param rank            rank of the original value (1 for the highest value)
+  * @param delta_top       absolute difference to the highest value (0.0 for the highest value)
+  * @param delta_successor absolute difference to the successive (next smaller) value (0.0 for smallest value)
   */
 case class MultiFeature(
 	value: Double,

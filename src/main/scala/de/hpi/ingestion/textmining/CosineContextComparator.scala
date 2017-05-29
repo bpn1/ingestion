@@ -29,9 +29,8 @@ object CosineContextComparator extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		val documentFrequencies = sc.cassandraTable[DocumentFrequency](settings("keyspace"), settings("dfTable"))
 		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
-		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
+		List(tfArticles).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
 
 	/**
@@ -176,7 +175,7 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
-	  * Computes the (positive) difference to the highest value for each given value.
+	  * Computes the (absolute) difference to the highest value for each given value.
 	  *
 	  * @param values values
 	  * @return differences to the highest value
@@ -187,7 +186,7 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
-	  * Computes the (positive) difference to the successive value for each given value.
+	  * Computes the (absolute) difference to the successive value for each given value.
 	  *
 	  * @param values values
 	  * @return differences to the successive value
@@ -206,7 +205,10 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
-	  * #todo
+	  * Enriches original feature values with their respective second order feature values.
+	  *
+	  * @param values original feature values
+	  * @return original feature values and their second order feature values
 	  */
 	def generateMultiFeatures(values: List[Double]): List[MultiFeature] = {
 		val ranks = computeRanks(values)
@@ -222,15 +224,15 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
-	  * #todo
+	  * Enriches link scores and page scores with their respective second order feature values.
 	  *
-	  * @param aliasPageProbabilities
-	  * @return
+	  * @param linkAndPageScores original link scores and page scores
+	  * @return original link scores and page scores and their second order feature values
 	  */
 	def addSecondOrderFeaturesToLinkAndPageScores(
-		aliasPageProbabilities: RDD[(String, (String, Double, Double))]
+		linkAndPageScores: RDD[(String, (String, Double, Double))]
 	): RDD[(String, (String, MultiFeature, MultiFeature))] = {
-		val linkScoresByAlias = aliasPageProbabilities.map { case (alias, (page, linkScore, pageScore)) =>
+		val linkScoresByAlias = linkAndPageScores.map { case (alias, (page, linkScore, pageScore)) =>
 			(alias, linkScore)
 		}.sortBy(-_._2)
 			.collect
@@ -242,7 +244,7 @@ object CosineContextComparator extends SparkJob {
 			.map { case ((alias, linkScore), extendedLinkScore) => alias -> extendedLinkScore }
 			.toMap
 
-		aliasPageProbabilities.map { case (alias, (page, linkScore, pageScore)) =>
+		linkAndPageScores.map { case (alias, (page, linkScore, pageScore)) =>
 			(alias, List((page, pageScore)))
 		}.reduceByKey(_ ++ _)
 			.flatMap { case (alias, scores) =>
@@ -257,10 +259,10 @@ object CosineContextComparator extends SparkJob {
 	}
 
 	/**
-	  * #todo
+	  * Enriches cosine similarities of given FeatureEntries with their respecive second order feature values.
 	  *
-	  * @param featureEntries
-	  * @return
+	  * @param featureEntries FeatureEntries with precalculated cosine similarities
+	  * @return FeatureEntries with cosine similarities and their second order feature values
 	  */
 	def addSecondOrderFeaturesToCosineSimilarities(featureEntries: RDD[FeatureEntry]): RDD[FeatureEntry] = {
 		featureEntries
