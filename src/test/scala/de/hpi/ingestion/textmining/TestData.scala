@@ -25,6 +25,11 @@ import scala.io.{BufferedSource, Source}
 // scalastyle:off file.size.limit
 
 object TestData {
+	def stopwordsSet(): Set[String] = {
+		Source.fromURL(getClass.getResource("/textmining/german_stopwords_without_umlauts.txt"))
+			.getLines()
+			.toSet
+	}
 
 	def testSentences(): List[String] = {
 		List(

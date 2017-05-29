@@ -1397,7 +1397,7 @@ soweit
 sowie
 sowieso
 sowohl
-spaeter
+später
 spielen
 startet
 startete
@@ -3250,7 +3250,7 @@ Soweit
 Sowie
 Sowieso
 Sowohl
-Spaeter
+Später
 Spielen
 Startet
 Startete
