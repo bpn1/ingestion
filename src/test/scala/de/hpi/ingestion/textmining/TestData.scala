@@ -196,7 +196,7 @@ object TestData {
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				textlinks = List(Link("Audi", "Audi", Option(9)))
 			),
-			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr spaeter taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				textlinks = List(
 					Link("Brachttal", "Brachttal", Option(55)),
 					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66))),
@@ -360,7 +360,7 @@ object TestData {
 				linkswithcontext = List(Link("Audi", "Audi", Option(9), Map("verlink" -> 1)))
 			),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt.")),
-			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr spaeter taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				textlinks = List(
 					Link("Brachttal", "Brachttal", Option(55)),
 					Link("Hessen", "Hessen", Option(87)),
@@ -825,17 +825,30 @@ object TestData {
 	}
 
 	def featureEntriesWithAliasesSet(): Set[FeatureEntry] = {
+		val mfLink_1 = MultiFeature(1.0, 1, 0.0, 0.33333333333333337)
+		val mfLink_066 = MultiFeature(0.6666666666666666, 4, 0.33333333333333337, 0.16666666666666663)
+		val mfLink_05 = MultiFeature(0.5, 5, 0.5, 0.0)
+		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, 0.08622243532359375)
+		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 2, 0.08622243532359375, 0.0)
+		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, 0.6107163643669525)
+		val mfCosBrachttal_0 = MultiFeature(0.0, 2, 0.6107163643669525, 0.0)
+		val mfCosBüdingerWald_1 = MultiFeature(1.0, 1, 0.0, 1.0)
+		val mfCosBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, 0.0)
+		val mfCos_0661 = MultiFeature(0.6611213869640233)
+		val mfCos_0453 = MultiFeature(0.4531255411026077)
+		val mfCos_0828 = MultiFeature(0.828283413127963)
+
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, false, null),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, false, null),
-			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
-			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, false, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
-			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
+			FeatureEntry("Audi", "Audi", mfLink_066, MultiFeature(1.0), mfCosAudi_0608, true, null),
+			FeatureEntry("Audi", "Audi", mfLink_066, MultiFeature(1.0), mfCosAudi_0695, true, null),
+			FeatureEntry("Brachttal", "Brachttal", mfLink_1, MultiFeature(1.0), mfCosBrachttal_0610, true, null),
+			FeatureEntry("Brachttal", "Brachttal", mfLink_1, MultiFeature(1.0), mfCosBrachttal_0, false, null),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", mfLink_05, MultiFeature(1.0), mfCosBüdingerWald_1, true, null),
+			FeatureEntry("Büdinger Wald", "Audi", mfLink_05, MultiFeature(1.0), mfCosBüdingerWald_0, false, null),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", mfLink_05, MultiFeature(1.0), mfCos_0661, false, null),
+			FeatureEntry("Hessen", "Hessen", mfLink_05, MultiFeature(1.0), mfCos_0453, true, null),
+			FeatureEntry("1377", "1377", mfLink_1, MultiFeature(1.0), mfCos_0828, false, null),
+			FeatureEntry("historisches Jahr", "1377", mfLink_1, MultiFeature(1.0), mfCos_0828, true, null)
 		)
 	}
 

@@ -54,12 +54,13 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 		TermFrequencyCounter.settings = oldSettings
 	}
 
-	they should "be extracted for both text and extendedlinks" in {
+	they should "be extracted for both textlinks and extendedlinks" in {
 		val oldSettings = TermFrequencyCounter.settings
 		TermFrequencyCounter.parseConfig()
 
 		val linkContexts = TestData.parsedWikipediaExtendedLinksTestSet()
-			.map(TermFrequencyCounter.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
+			.map(TermFrequencyCounter.extractLinkContexts(_,
+				IngestionTokenizer(new CleanCoreNLPTokenizer, true, true, TestData.stopwordsSet())))
 			.flatMap(_.linkswithcontext)
 		val expectedContexts = TestData.linksWithContextsTestSet()
 		linkContexts shouldEqual expectedContexts
