@@ -18,22 +18,27 @@ object Import extends DataLakeImportImplementation[Entity](
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		List(sc.parallelize(Seq(Subject()))).toAnyRDD()
 	}
+
 	override def filterEntities(entity: Entity): Boolean = true
+
 	override def normalizeAttribute(
 		attribute: String,
 		values: List[String],
 		strategies: Map[String, List[String]]
 	): List[String] = values
+
 	override def translateToSubject(
 		entity: Entity,
 		version: Version,
 		mapping: Map[String, List[String]],
 		strategies: Map[String, List[String]]
 	): Subject = Subject()
+
 	override def parseNormalizationConfig(path: String): Map[String, List[String]] = {
 		val url = getClass.getResource(s"/$path")
 		super.parseNormalizationConfig(url)
 	}
+
 	override def normalizeProperties(
 		entity: Entity,
 		mapping: Map[String, List[String]],

@@ -21,3 +21,4 @@ target/
 
 # Compiled Python
 *.pyc
+__pycache__

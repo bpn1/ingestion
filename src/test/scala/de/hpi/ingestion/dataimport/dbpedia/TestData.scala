@@ -33,7 +33,8 @@ object TestData {
 	def shorterLineList: List[String] = List(
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> .""",
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> .""",
-			""
+			"",
+			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://purl.org/dc/terms/subject> <"""
 	)
 
 	def longerLineList: List[String] = List(

@@ -95,7 +95,7 @@ object WikiDataImport extends SparkJob {
 	  */
 	def extractList(json: JsValue, path: List[String]): List[JsValue] = {
 		val value = getValue(json, path).map(_.as[List[JsValue]])
-		value.getOrElse(List[JsValue]())
+		value.toList.flatten
 	}
 
 	/**
@@ -106,7 +106,7 @@ object WikiDataImport extends SparkJob {
 	  */
 	def extractMap(json: JsValue, path: List[String]): Map[String, JsValue] = {
 		val value = getValue(json, path).map(_.as[Map[String, JsValue]])
-		value.getOrElse(Map[String, JsValue]())
+		value.toList.flatten.toMap
 	}
 
 	/**
@@ -126,30 +126,28 @@ object WikiDataImport extends SparkJob {
 	  * @param dataValue JSON object to extract the data from
 	  * @return value of the data type as String
 	  */
-	def parseDataType(dataType: Option[String], dataValue: JsValue): String = {
+	def parseDataType(dataType: Option[String], dataValue: JsValue): Option[String] = {
 		val propertyPathMap = Map(
-			Option("string") -> List("value"),
-			Option("wikibase-entityid") -> List("value", "id"),
-			Option("time") -> List("value", "time"),
-			Option("monolingualtext") -> List("value", "text"))
+			"string" -> List("value"),
+			"wikibase-entityid" -> List("value", "id"),
+			"time" -> List("value", "time"),
+			"monolingualtext" -> List("value", "text"))
 
-		if(propertyPathMap.contains(dataType)) {
-			extractString(dataValue, propertyPathMap(dataType)).getOrElse("")
-		} else {
-			dataType match {
-				case Some("globecoordinate") =>
+		dataType
+			.flatMap(propertyPathMap.get)
+			.flatMap(extractString(dataValue, _))
+			.orElse(dataType.collect {
+				case "globecoordinate" =>
 					val lat = extractDouble(dataValue, List("value", "latitude")).getOrElse("")
 					val long = extractDouble(dataValue, List("value", "longitude")).getOrElse("")
 					lat + ";" + long
-				case Some("quantity") =>
+				case "quantity" =>
 					val amount = extractString(dataValue, List("value", "amount")).getOrElse("")
 					val unit = extractString(dataValue, List("value", "unit")).getOrElse("")
 						.split("/")
 						.last
 					amount + ";" + unit
-				case _ | None => ""
-			}
-		}
+			})
 	}
 
 	/**
@@ -161,19 +159,12 @@ object WikiDataImport extends SparkJob {
 	  * @return Option of the label (if it exists
 	  */
 	def extractLabels(json: JsValue, entityType: Option[String]): Option[String] = {
-		val labelMap = getValue(json, List("labels"))
-		if(labelMap.isDefined && labelMap.get.as[JsObject].keys.nonEmpty) {
-			val labelLanguages = labelMap.get.as[JsObject].keys
-			var labelLanguage = labelLanguages.head
-			if(labelLanguages.contains(language) && !entityType.contains("property")) {
-				labelLanguage = language
-			} else if(labelLanguages.contains(fallbackLanguage)) {
-				labelLanguage = fallbackLanguage
-			}
-			extractString(labelMap.get, List(labelLanguage, "value"))
-		} else {
-			None
-		}
+		val labelMap = extractMap(json, List("labels"))
+		labelMap.get(language)
+			.filter(lang => !entityType.contains("property"))
+			.orElse(labelMap.get(fallbackLanguage))
+			.orElse(labelMap.values.headOption)
+			.flatMap(extractString(_, List("value")))
 	}
 
 	/**
@@ -196,12 +187,12 @@ object WikiDataImport extends SparkJob {
 	  * @param claim JSON object of the claim
 	  * @return value of the claim as String
 	  */
-	def extractClaimValues(claim: JsValue): String = {
+	def extractClaimValues(claim: JsValue): Option[String] = {
 		val dataValue = getValue(claim, List("mainsnak", "datavalue"))
-		dataValue.map { value =>
+		dataValue.flatMap { value =>
 			val dataType = extractString(value, List("type"))
 			parseDataType(dataType, value)
-		}.getOrElse("")
+		}
 	}
 
 	/**
@@ -218,9 +209,7 @@ object WikiDataImport extends SparkJob {
 
 		languageList.flatMap { language =>
 			extractList(aliasJsonObject.get, List(language))
-				.map(extractString(_, List("value")))
-				.filter(_.isDefined)
-			    .map(_.get)
+				.flatMap(extractString(_, List("value")))
 		}
 	}
 
@@ -236,9 +225,9 @@ object WikiDataImport extends SparkJob {
 
 		val claims = extractMap(json, List("claims"))
 		entity.data = claims.mapValues { content =>
-			content.as[List[JsValue]]
-				.map(extractClaimValues)
-				.filter(_.nonEmpty)
+			content
+				.as[List[JsValue]]
+				.flatMap(extractClaimValues)
 		}
 		entity
 	}
@@ -278,7 +267,7 @@ object WikiDataImport extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val jsonFile = input.fromAnyRDD[String]().head
 		val wikiData = jsonFile
 			.map(cleanJSON)

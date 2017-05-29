@@ -171,14 +171,15 @@ object TestData {
 			.mkString("\n")
 	}
 
-	def dataTypeValues(dataType: String): String = {
+	def dataTypeValues(dataType: String): Option[String] = {
 		dataType match {
-			case "string" => "test string 1"
-			case "wikibase-entityid" => "test id 1"
-			case "time" => "test time 1"
-			case "monolingualtext" => "test text 1"
-			case "globecoordinate" => "1.0;2.0"
-			case "quantity" => "test amount;test unit"
+			case "string" => Option("test string 1")
+			case "wikibase-entityid" => Option("test id 1")
+			case "time" => Option("test time 1")
+			case "monolingualtext" => Option("test text 1")
+			case "globecoordinate" => Option("1.0;2.0")
+			case "quantity" => Option("test amount;test unit")
+			case "" => None
 		}
 	}
 
@@ -269,22 +270,44 @@ object TestData {
 
 	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", datasources = List("dataSources"), sc)
 
-	def testEntity(): WikiDataEntity = WikiDataEntity(
-		"Q21110253",
-		List("testalias"),
-		Option("human protein (annotated by UniProtKB/Swiss-Prot Q8N128)"),
-		Option("item"),
-		Option("testwikiname"),
-		Option("en_testwikiname"),
-		Option("test_instancetype"),
-		Option("Protein FAM177A1"),
-		Map(
-			"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
-			"subclass of" -> List("Protein", "FAM177 family"),
-			"VIAF ID" -> List("X123"),
-			"testProperty" -> List("test")
+	def testEntity(): WikiDataEntity = {
+		WikiDataEntity(
+			"Q21110253",
+			List("testalias"),
+			Option("human protein (annotated by UniProtKB/Swiss-Prot Q8N128)"),
+			Option("item"),
+			Option("testwikiname"),
+			Option("en_testwikiname"),
+			Option("test_instancetype"),
+			Option("Protein FAM177A1"),
+			Map(
+				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
+				"subclass of" -> List("Protein", "FAM177 family"),
+				"VIAF ID" -> List("X123"),
+				"testProperty" -> List("test")
+			)
 		)
-	)
+	}
+
+	def wikidataEntities(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity(
+				"Q21110253",
+				List("testalias"),
+				Option("human protein (annotated by UniProtKB/Swiss-Prot Q8N128)"),
+				Option("item"),
+				Option("testwikiname"),
+				Option("en_testwikiname"),
+				Option("test_instancetype"),
+				Option("Protein FAM177A1"),
+				Map(
+					"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
+					"subclass of" -> List("Protein", "FAM177 family"),
+					"VIAF ID" -> List("X123"),
+					"testProperty" -> List("test"))),
+			WikiDataEntity("Q123")
+		)
+	}
 
 	def mapping: Map[String, List[String]] = Map(
 		"id_wikidata" -> List("id"),

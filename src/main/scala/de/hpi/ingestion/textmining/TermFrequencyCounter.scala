@@ -49,17 +49,7 @@ object TermFrequencyCounter extends SparkJob {
 	  */
 	def extractBagOfWords(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): Bag[String, Int] = {
 		val tokens = tokenizer.process(entry.getText())
-		extractBagOfWords(tokens)
-	}
-
-	/**
-	  * Extracts the stemmed terms of a list of tokens and their relative frequency (between 0.0 and 1.0).
-	  *
-	  * @param tokens list of tokens to be counted
-	  * @return a Bag containing every term and its frequency
-	  */
-	def extractBagOfWords(tokens: List[String]): Bag[String, Int] = {
-		Bag[String, Int](tokens)
+		Bag.extract(tokens)
 	}
 
 	/**
@@ -75,7 +65,8 @@ object TermFrequencyCounter extends SparkJob {
 
 	/**
 	  * Extracts context of the links of a given Wikipedia entry. The contexts are n tokens in front of
-	  * and behind the location of the links alias in the tokenized text.
+	  * and behind the location of the links alias in the tokenized text. Extracts the links for the textlinks and the
+	  * extendedlinks column
 	  *
 	  * @param entry Wikipedia entry containing the used links
 	  * @return list of tuples containing the link and its context
@@ -83,7 +74,7 @@ object TermFrequencyCounter extends SparkJob {
 	def extractLinkContexts(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): ParsedWikipediaEntry = {
 		val contextSize = settings("contextSize").toInt
 		val tokens = tokenizer.onlyTokenize(entry.getText())
-		val contextLinks = entry.textlinks.map { link =>
+		val contextLinks = (entry.textlinks ++ entry.extendedlinks).map { link =>
 			val aliasTokens = tokenizer.onlyTokenize(link.alias)
 			val aliasIndex = tokens.indexOfSlice(aliasTokens)
 			val contextStart = Math.max(aliasIndex - contextSize, 0)
@@ -91,7 +82,7 @@ object TermFrequencyCounter extends SparkJob {
 			val contextEnd = Math.min(aliasIndex + contextSize, tokens.length)
 			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
 			val context = preAliasContext ++ postAliasContext
-			val bag = extractBagOfWords(tokenizer.process(context))
+			val bag = Bag.extract(tokenizer.process(context))
 			link.copy(context = bag.getCounts())
 		}
 		entry.copy(linkswithcontext = contextLinks)
@@ -105,7 +96,7 @@ object TermFrequencyCounter extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
 		val tokenizer = IngestionTokenizer(args)
 		val enrichedArticles = articles

@@ -1,14 +1,14 @@
 package de.hpi.ingestion.framework.mock
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SplitSparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.scalatest.FlatSpec
 
 import scala.collection.mutable.ListBuffer
 
-class MockSparkJob extends FlatSpec with SparkJob with SharedSparkContext {
+class MockSplitSparkJob extends FlatSpec with SplitSparkJob with SharedSparkContext {
 
 	val methodCalls = ListBuffer[String]()
 	val queryCalls = ListBuffer[String]()
@@ -20,7 +20,7 @@ class MockSparkJob extends FlatSpec with SparkJob with SharedSparkContext {
 
 	override def assertConditions(args: Array[String]): Boolean = {
 		methodCalls += "assertConditions"
-		super.assertConditions(args)
+		args.isEmpty
 	}
 
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
@@ -40,5 +40,10 @@ class MockSparkJob extends FlatSpec with SparkJob with SharedSparkContext {
 	override def executeQueries(queries: List[String], sc: SparkContext): Unit = {
 		queryCalls ++= queries
 		methodCalls += "execQ"
+	}
+
+	override def splitInput(input: List[RDD[Any]], args: Array[String]): Traversable[List[RDD[Any]]] = {
+		methodCalls += "split"
+		(0 until 3).map(t => Nil)
 	}
 }

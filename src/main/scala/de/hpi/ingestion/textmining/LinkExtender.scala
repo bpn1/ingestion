@@ -116,8 +116,7 @@ object LinkExtender extends SparkJob {
 			if(aliasMatches.nonEmpty) {
 				val longestMatch = aliasMatches.maxBy(_.length)
 				val found = text.substring(longestMatch.head.beginOffset, longestMatch.last.endOffset)
-				if(aliases.contains(found)) {
-					val pages = aliases(found)
+				aliases.get(found).foreach { pages =>
 					val offset = longestMatch.head.beginOffset
 					resultList += ExtendedLink(found, pages, Option(offset))
 					i += longestMatch.length - 1
@@ -161,7 +160,7 @@ object LinkExtender extends SparkJob {
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val parsedArticles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val pages = input(1).asInstanceOf[RDD[Page]]
 			.map(page => (page.page, page.aliases))

@@ -62,20 +62,10 @@ object DBpediaImport extends SparkJob {
 			.map(_.replaceAll("\\A<", ""))
 		    .toList
 		val filteredList = elementList.filter(_.nonEmpty)
-		if(elementList.size == 3) {
-			elementList
-		} else if(filteredList.size == 3) {
-			filteredList
-		} else {
-			if(elementList.size > 3) {
-				elementList.slice(0, 3)
-			} else {
-				elementList match {
-					case List(a, b) => List(a, b, "")
-					case List(a) => List(a, "", "")
-					case List() => List("", "", "")
-				}
-			}
+		(elementList.size, filteredList.size) match {
+			case (3, x) => elementList
+			case (x, 3) => filteredList
+			case _ => elementList.slice(0, 3) ++ (0 until (3 - elementList.length)).map(t => "")
 		}
 	}
 
@@ -86,11 +76,8 @@ object DBpediaImport extends SparkJob {
 	  * @return Cleaned String
 	  */
 	def cleanURL(str: String, prefixes: List[(String,String)]): String = {
-		var dataString = str.replaceAll("""[<>\"]""", "")
-		for (pair <- prefixes) {
-			dataString = dataString.replace(pair._1, pair._2)
-		}
-		dataString
+		val dataString = str.replaceAll("""[<>\"]""", "")
+		prefixes.foldRight(dataString)((pair, data) => data.replace(pair._1, pair._2))
 	}
 
 	/**
@@ -171,7 +158,7 @@ object DBpediaImport extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val dbpedia = input.fromAnyRDD[String]().head
 
 		val prefixFile = Source.fromURL(getClass.getResource("/prefixes.txt"))

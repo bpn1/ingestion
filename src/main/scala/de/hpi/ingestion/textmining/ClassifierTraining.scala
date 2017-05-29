@@ -197,7 +197,7 @@ object ClassifierTraining extends SparkJob {
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
 		val data = entries.map(_.labeledPoint()).cache
 		val (stats, model) = trainingFunction(data, 5, 5, 4, 32)
