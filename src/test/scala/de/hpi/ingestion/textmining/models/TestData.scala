@@ -151,6 +151,50 @@ object TestData {
 		)
 	}
 
+	def entryWithFeatureEntryLinks(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Berlin",
+			Option("Berlin ist cool"),
+			textlinks = List (
+				Link("Berlin", "Berlin", Option(0)),
+				Link("Berlin", "Berlin", Option(15))
+			),
+			rawextendedlinks = List(
+				ExtendedLink("Berlin", Map("Berlin" -> 5), Option(0)),
+				ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1), Option(1)),
+				ExtendedLink("Berlin", Map("Berlin" -> 20, "Brandenburg" -> 1, "Backfisch" -> 1), Option(2)),
+				ExtendedLink("Berlin", Map("Berlin" -> 5, "Brandenburg" -> 1), Option(3)),
+				ExtendedLink("Berlin", Map("Berlin" -> 5, "Brandenburg" -> 1, "Backfisch" -> 1), Option(4)),
+				ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 2, "Backfisch" -> 1), Option(5)),
+				ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 99, "Backfisch" -> 13), Option(6)),
+				ExtendedLink("Berlin", Map("Berlin" -> 100, "Brandenburg" -> 99, "Backfisch" -> 1), Option(7))
+			),
+			linkswithcontext = List(
+				Link("Berlin", "Berlin", Option(0)),
+				Link("Berlin", "Berlin", Option(15)),
+				Link("Berlin", "Berlin", Option(1)),
+				Link("Berlin", "Berlin", Option(2))
+			),
+			triealiases = List(
+				TrieAlias("alias 1", Option(1)),
+				TrieAlias("alias 2", Option(2)),
+				TrieAlias("alias 3", Option(3))
+			)
+		)
+	}
+
+	def featureEntryLinks(): List[Link] = {
+		List(
+			Link("Berlin", "Berlin", Option(0)),
+			Link("Berlin", "Berlin", Option(15)),
+			Link("Berlin", "Berlin", Option(1)),
+			Link("Berlin", "Berlin", Option(2)),
+			Link("alias 1", null, Option(1)),
+			Link("alias 2", null, Option(2)),
+			Link("alias 3", null, Option(3))
+		)
+	}
+
 	def edgeCaseExtendedLinksToLinks(): List[Link] = {
 		List(
 			Link("Berlin", "Berlin", Option(1)),
