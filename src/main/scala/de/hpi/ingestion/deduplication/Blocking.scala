@@ -20,8 +20,8 @@ object Blocking extends SparkJob {
 	appName = "Blocking"
 	configFile = "evaluation_deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
-		SimpleBlockingScheme("simple_5"),
-		LastLettersBlockingScheme("last_letters_5")
+		SimpleBlockingScheme("simple_scheme"),
+		LastLettersBlockingScheme("lastLetters_scheme")
 	)
 	// $COVERAGE-OFF$
 	/**
@@ -60,15 +60,15 @@ object Blocking extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val subjectInput = input.fromAnyRDD[Subject]()
 		val subjects = subjectInput.head
 		val staging = subjectInput(1)
 		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().last
 		val comment = args.headOption.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
-		val filterUndefined = this.settings.getOrElse("filterUndefined", "false") == "true"
-		val filterSmall = this.settings.getOrElse("filterSmall", "false") == "true"
+		val filterUndefined = settings(false).getOrElse("filterUndefined", "false") == "true"
+		val filterSmall = settings(false).getOrElse("filterSmall", "false") == "true"
 		val blockEvaluation = List(evaluationBlocking(
 			subjects,
 			staging,

@@ -33,7 +33,8 @@ object TestData {
 	def shorterLineList: List[String] = List(
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> .""",
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> .""",
-			""
+			"",
+			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://purl.org/dc/terms/subject> <"""
 	)
 
 	def longerLineList: List[String] = List(
@@ -104,7 +105,7 @@ object TestData {
 		))
 	}
 
-	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", datasources = List("dataSources"), sc)
+	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", List("dataSources"), sc, false)
 
 	def testEntity: DBpediaEntity = DBpediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
