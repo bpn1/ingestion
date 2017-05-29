@@ -227,18 +227,31 @@ object CosineContextComparator extends SparkJob {
 	  * @param aliasPageProbabilities
 	  * @return
 	  */
-	def addSecondOrderFeaturesToPageScores(
+	def addSecondOrderFeaturesToLinkAndPageScores(
 		aliasPageProbabilities: RDD[(String, (String, Double, Double))]
-	): RDD[(String, (String, Double, MultiFeature))] = {
+	): RDD[(String, (String, MultiFeature, MultiFeature))] = {
+		val linkScoresByAlias = aliasPageProbabilities.map { case (alias, (page, linkScore, pageScore)) =>
+			(alias, linkScore)
+		}.sortBy(-_._2)
+			.collect
+		val linkScores = linkScoresByAlias
+			.map(_._2)
+			.toList
+		val extendedLinkScoresByAlias = linkScoresByAlias
+			.zip(generateMultiFeatures(linkScores))
+			.map { case ((alias, linkScore), extendedLinkScore) => alias -> extendedLinkScore }
+			.toMap
+
 		aliasPageProbabilities.map { case (alias, (page, linkScore, pageScore)) =>
-			(alias, List((page, linkScore, pageScore)))
+			(alias, List((page, pageScore)))
 		}.reduceByKey(_ ++ _)
 			.flatMap { case (alias, scores) =>
-				val pageScores = scores.map(_._3)
+				val extendedLinkScore = extendedLinkScoresByAlias(alias)
+				val pageScores = scores.map(_._2)
 				scores
 					.zip(generateMultiFeatures(pageScores))
-					.map { case ((page, linkScore, pageScore), extendedPageScore) =>
-						(alias, (page, linkScore, extendedPageScore))
+					.map { case ((page, pageScore), extendedPageScore) =>
+						(alias, (page, extendedLinkScore, extendedPageScore))
 					}
 			}
 	}
@@ -278,19 +291,19 @@ object CosineContextComparator extends SparkJob {
 		aliasPageProbabilities: RDD[(String, (String, Double, Double))],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
-		val aliasPageProbabilitiesWithSOF = addSecondOrderFeaturesToPageScores(aliasPageProbabilities)
+		val aliasPageProbabilitiesWithSOF = addSecondOrderFeaturesToLinkAndPageScores(aliasPageProbabilities)
 
 		val joinableLinks = linkContexts
 			.map(t => (t._1.alias, t))
 			.join(aliasPageProbabilitiesWithSOF)
-			.map { case (alias, ((link, linkContext), (page, totalProb, pageProb))) =>
+			.map { case (alias, ((link, linkContext), (page, linkScore, pageScore))) =>
 				// Note: The page in the link is the actual target for the alias occurrence,
 				// the joined page is just a possible target for the alias.
-				(alias, List((link, linkContext, page, totalProb, pageProb)))
+				(alias, List((link, linkContext, page, linkScore, pageScore)))
 			}.reduceByKey(_ ++ _)
 			.flatMap { case (alias, joinedLinks) =>
-				joinedLinks.map { case (link, linkContext, page, totalProb, pageProb) =>
-					(page, List(ProtoFeatureEntry(link, linkContext, totalProb, pageProb)))
+				joinedLinks.map { case (link, linkContext, page, linkScore, pageScore) =>
+					(page, List(ProtoFeatureEntry(link, linkContext, linkScore, pageScore)))
 				}
 			}.reduceByKey(_ ++ _)
 

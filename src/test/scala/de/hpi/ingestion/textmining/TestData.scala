@@ -690,38 +690,41 @@ object TestData {
 		)
 	}
 
-	def extendedAliasPageScores(): Set[(String, (String, Double, MultiFeature))] = {
+	def extendedLinkAndPageScores(): Set[(String, (String, MultiFeature, MultiFeature))] = {
 		Set(
-			("Audi", ("Audi", 1.0, MultiFeature(0.6, 1, 0.0, 0.3))),
-			("Audi", ("BMW", 1.0, MultiFeature(0.3, 2, 0.3, 0.19999999999999998))),
-			("Audi", ("Chevrolet", 1.0, MultiFeature(0.1, 3, 0.5, 0.0))),
-			("BMW", ("BMW", 1.0, MultiFeature(0.8, 1, 0.0, 0.6000000000000001))),
-			("BMW", ("Chevrolet", 1.0, MultiFeature(0.2, 2, 0.6000000000000001, 0.0)))
+			("Audi", ("Audi", MultiFeature(1.0), MultiFeature(0.6, 1, 0.0, 0.3))),
+			("Audi", ("BMW", MultiFeature(1.0), MultiFeature(0.3, 2, 0.3, 0.19999999999999998))),
+			("Audi", ("Chevrolet", MultiFeature(1.0), MultiFeature(0.1, 3, 0.5, 0.0))),
+			("BMW", ("BMW", MultiFeature(1.0), MultiFeature(0.8, 1, 0.0, 0.6000000000000001))),
+			("BMW", ("Chevrolet", MultiFeature(1.0), MultiFeature(0.2, 2, 0.6000000000000001, 0.0)))
 		)
 	}
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
-		val mfAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, 0.08622243532359375)
-		val mfAudi_0608 = MultiFeature(0.608944778982726, 2, 0.08622243532359375, 0.0)
-		val mfBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, 0.6107163643669525)
-		val mfBrachttal_0 = MultiFeature(0.0, 2, 0.6107163643669525, 0.0)
-		val mfBüdingerWald_1 = MultiFeature(1.0, 1, 0.0, 1.0)
-		val mfBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, 0.0)
-		val mf_0661 = MultiFeature(0.6611213869640233)
-		val mf_0453 = MultiFeature(0.4531255411026077)
-		val mf_0828 = MultiFeature(0.828283413127963)
+		val mfLink_1 = MultiFeature(1.0, 1, 0.0, 0.33333333333333337)
+		val mfLink_066 = MultiFeature(0.6666666666666666, 4, 0.33333333333333337, 0.16666666666666663)
+		val mfLink_05 = MultiFeature(0.5, 5, 0.5, 0.0)
+		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, 0.08622243532359375)
+		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 2, 0.08622243532359375, 0.0)
+		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, 0.6107163643669525)
+		val mfCosBrachttal_0 = MultiFeature(0.0, 2, 0.6107163643669525, 0.0)
+		val mfCosBüdingerWald_1 = MultiFeature(1.0, 1, 0.0, 1.0)
+		val mfCosBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, 0.0)
+		val mfCos_0661 = MultiFeature(0.6611213869640233)
+		val mfCos_0453 = MultiFeature(0.4531255411026077)
+		val mfCos_0828 = MultiFeature(0.828283413127963)
 
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, MultiFeature(1.0), mfAudi_0608, true, null),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, MultiFeature(1.0), mfAudi_0695, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, MultiFeature(1.0), mfBrachttal_0610, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, MultiFeature(1.0), mfBrachttal_0, true, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, MultiFeature(1.0), mfBüdingerWald_1, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, MultiFeature(1.0), mfBüdingerWald_0, false, null),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, MultiFeature(1.0), mf_0661, true, null),
-			FeatureEntry("Hessen", "Hessen", 0.5, MultiFeature(1.0), mf_0453, true, null),
-			FeatureEntry("1377", "1377", 1.0, MultiFeature(1.0), mf_0828, true, null),
-			FeatureEntry("historisches Jahr", "1377", 1.0, MultiFeature(1.0), mf_0828, true, null)
+			FeatureEntry("Audi", "Audi", mfLink_066, MultiFeature(1.0), mfCosAudi_0608, true, null),
+			FeatureEntry("Audi", "Audi", mfLink_066, MultiFeature(1.0), mfCosAudi_0695, true, null),
+			FeatureEntry("Brachttal", "Brachttal", mfLink_1, MultiFeature(1.0), mfCosBrachttal_0610, true, null),
+			FeatureEntry("Brachttal", "Brachttal", mfLink_1, MultiFeature(1.0), mfCosBrachttal_0, true, null),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", mfLink_05, MultiFeature(1.0), mfCosBüdingerWald_1, true, null),
+			FeatureEntry("Büdinger Wald", "Audi", mfLink_05, MultiFeature(1.0), mfCosBüdingerWald_0, false, null),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", mfLink_05, MultiFeature(1.0), mfCos_0661, true, null),
+			FeatureEntry("Hessen", "Hessen", mfLink_05, MultiFeature(1.0), mfCos_0453, true, null),
+			FeatureEntry("1377", "1377", mfLink_1, MultiFeature(1.0), mfCos_0828, true, null),
+			FeatureEntry("historisches Jahr", "1377", mfLink_1, MultiFeature(1.0), mfCos_0828, true, null)
 		)
 	}
 
@@ -1786,12 +1789,19 @@ object TestData {
 	}
 
 	def featureEntries(): List[FeatureEntry] = {
+		val mfLink_09 = MultiFeature(0.9, 1, 0.0, 0.1)
+		val mfLink_08 = MultiFeature(0.8, 2, 0.1, 0.1)
+		val mfLink_07 = MultiFeature(0.7, 3, 0.2, 0.3)
+		val mfLink_04 = MultiFeature(0.4, 4, 0.5, 0.3)
+		val mfLink_01 = MultiFeature(0.1, 5, 0.8, 0.0)
+
 		List(
-			FeatureEntry("a", "b", 0.1, MultiFeature(0.2), MultiFeature(0.8), true),
-			FeatureEntry("c", "d", 0.4, MultiFeature(0.0), MultiFeature(0.7), false),
-			FeatureEntry("e", "f", 0.7, MultiFeature(1.0), MultiFeature(0.1), true),
-			FeatureEntry("g", "h", 0.8, MultiFeature(0.2), MultiFeature(0.3), false),
-			FeatureEntry("i", "j", 0.9, MultiFeature(0.4), MultiFeature(0.7), false))
+			FeatureEntry("a", "b", mfLink_01, MultiFeature(0.2), MultiFeature(0.8), true),
+			FeatureEntry("c", "d", mfLink_04, MultiFeature(0.0), MultiFeature(0.7), false),
+			FeatureEntry("e", "f", mfLink_07, MultiFeature(1.0), MultiFeature(0.1), true),
+			FeatureEntry("g", "h", mfLink_08, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry("i", "j", mfLink_09, MultiFeature(0.4), MultiFeature(0.7), false)
+		)
 	}
 
 	def labeledPoints(): List[LabeledPoint] = {
@@ -1903,14 +1913,22 @@ object TestData {
 	}
 
 	def classifierFeatureEntries(): List[FeatureEntry] = {
+		val mfLink_03 = MultiFeature(0.3, 1, 0.0, 0.1)
+		val mfLink_02 = MultiFeature(0.2, 2, 0.1, 0.1)
+		val mfLink_01 = MultiFeature(0.1, 4, 0.2, 0.05)
+		val mfLink_005 = MultiFeature(0.1, 5, 0.25, 0.02)
+		val mfLink_003 = MultiFeature(0.1, 6, 0.27, 0.02)
+		val mfLink_001 = MultiFeature(0.1, 7, 0.29, 0.0)
+
 		List(
-			FeatureEntry("alias1", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
-			FeatureEntry("alias2", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
-			FeatureEntry("alias3", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
-			FeatureEntry("alias4", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
-			FeatureEntry("alias5", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
-			FeatureEntry("alias6", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
-			FeatureEntry("alias7", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true))
+			FeatureEntry("alias1", "page1", mfLink_001, MultiFeature(0.01), MultiFeature(0.1), false),
+			FeatureEntry("alias2", "page2", mfLink_03, MultiFeature(0.7), MultiFeature(0.9), true),
+			FeatureEntry("alias3", "page3", mfLink_01, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry("alias4", "page4", mfLink_02, MultiFeature(0.1), MultiFeature(0.2), false),
+			FeatureEntry("alias5", "page5", mfLink_005, MultiFeature(0.6), MultiFeature(0.7), true),
+			FeatureEntry("alias6", "page6", mfLink_003, MultiFeature(0.1), MultiFeature(0.3), false),
+			FeatureEntry("alias7", "page7", mfLink_02, MultiFeature(0.7), MultiFeature(0.6), true)
+		)
 	}
 
 	def extendedClassifierFeatureEntries(n: Int): List[FeatureEntry] = {

@@ -6,22 +6,35 @@ import org.apache.spark.mllib.regression.LabeledPoint
 object TestData {
 
 	def protoFeatureEntries(): List[(ProtoFeatureEntry, String, MultiFeature)] = {
+		val mfLink_09 = MultiFeature(0.9, 1, 0.0, 0.1)
+		val mfLink_08 = MultiFeature(0.8, 2, 0.1, 0.1)
+		val mfLink_07 = MultiFeature(0.7, 3, 0.2, 0.3)
+		val mfLink_04 = MultiFeature(0.4, 4, 0.5, 0.3)
+		val mfLink_01 = MultiFeature(0.1, 5, 0.8, 0.0)
+
 		List(
-			(ProtoFeatureEntry(Link("a", "b"), Map(), 0.1, MultiFeature(0.2)), "b", MultiFeature(0.8)),
-			(ProtoFeatureEntry(Link("c", "a"), Map(), 0.4, MultiFeature(0.0)), "d", MultiFeature(0.7)),
-			(ProtoFeatureEntry(Link("e", "f"), Map(), 0.7, MultiFeature(1.0)), "f", MultiFeature(0.1)),
-			(ProtoFeatureEntry(Link("g", "a"), Map(), 0.8, MultiFeature(0.2)), "h", MultiFeature(0.3)),
-			(ProtoFeatureEntry(Link("i", "a"), Map(), 0.9, MultiFeature(0.4)), "j", MultiFeature(0.7))
+			(ProtoFeatureEntry(Link("a", "b"), Map(), mfLink_01, MultiFeature(0.2)), "b", MultiFeature(0.8)),
+			(ProtoFeatureEntry(Link("c", "a"), Map(), mfLink_04, MultiFeature(0.0)), "d", MultiFeature(0.7)),
+			(ProtoFeatureEntry(Link("e", "f"), Map(), mfLink_07, MultiFeature(1.0)), "f", MultiFeature(0.1)),
+			(ProtoFeatureEntry(Link("g", "a"), Map(), mfLink_08, MultiFeature(0.2)), "h", MultiFeature(0.3)),
+			(ProtoFeatureEntry(Link("i", "a"), Map(), mfLink_09, MultiFeature(0.4)), "j", MultiFeature(0.7))
 			)
 	}
 
 	def featureEntries(): List[FeatureEntry] = {
+		val mfLink_09 = MultiFeature(0.9, 1, 0.0, 0.1)
+		val mfLink_08 = MultiFeature(0.8, 2, 0.1, 0.1)
+		val mfLink_07 = MultiFeature(0.7, 3, 0.2, 0.3)
+		val mfLink_04 = MultiFeature(0.4, 4, 0.5, 0.3)
+		val mfLink_01 = MultiFeature(0.1, 5, 0.8, 0.0)
+
 		List(
-			FeatureEntry("a", "b", 0.1, MultiFeature(0.2), MultiFeature(0.8), true, null),
-			FeatureEntry("c", "d", 0.4, MultiFeature(0.0), MultiFeature(0.7), false, null),
-			FeatureEntry("e", "f", 0.7, MultiFeature(1.0), MultiFeature(0.1), true, null),
-			FeatureEntry("g", "h", 0.8, MultiFeature(0.2), MultiFeature(0.3), false, null),
-			FeatureEntry("i", "j", 0.9, MultiFeature(0.4), MultiFeature(0.7), false, null))
+			FeatureEntry("a", "b", mfLink_01, MultiFeature(0.2), MultiFeature(0.8), true, null),
+			FeatureEntry("c", "d", mfLink_04, MultiFeature(0.0), MultiFeature(0.7), false, null),
+			FeatureEntry("e", "f", mfLink_07, MultiFeature(1.0), MultiFeature(0.1), true, null),
+			FeatureEntry("g", "h", mfLink_08, MultiFeature(0.2), MultiFeature(0.3), false, null),
+			FeatureEntry("i", "j", mfLink_09, MultiFeature(0.4), MultiFeature(0.7), false, null)
+		)
 	}
 
 	def labeledPoints(): List[LabeledPoint] = {
@@ -30,7 +43,8 @@ object TestData {
 			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
 			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
 			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
-			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
+			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7)))
+		)
 	}
 
 	def parsedEntryWithDifferentLinkTypes(): ParsedWikipediaEntry = {

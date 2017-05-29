@@ -304,7 +304,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Alias page scores with second order features" should "not be empty" in {
 		val aliasPageScores = sc.parallelize(TestData.aliasPageScores().toList)
-		val aliasPageScoresWithSOF = CosineContextComparator.addSecondOrderFeaturesToPageScores(aliasPageScores)
+		val aliasPageScoresWithSOF = CosineContextComparator.addSecondOrderFeaturesToLinkAndPageScores(aliasPageScores)
 		aliasPageScoresWithSOF should not be empty
 	}
 
@@ -328,9 +328,9 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Second order features for alias page scores" should "be computed correctly" in {
 		val aliasPageScores = sc.parallelize(TestData.alternativeAliasPageScores().toList)
-		val aliasPageScoresWithSOF = CosineContextComparator.addSecondOrderFeaturesToPageScores(aliasPageScores)
+		val aliasPageScoresWithSOF = CosineContextComparator.addSecondOrderFeaturesToLinkAndPageScores(aliasPageScores)
 			.collect
 			.toSet
-		aliasPageScoresWithSOF shouldEqual TestData.extendedAliasPageScores()
+		aliasPageScoresWithSOF shouldEqual TestData.extendedLinkAndPageScores()
 	}
 }
