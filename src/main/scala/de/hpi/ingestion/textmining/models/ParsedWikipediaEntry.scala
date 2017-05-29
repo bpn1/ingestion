@@ -89,13 +89,13 @@ case class ParsedWikipediaEntry(
 		var (i, j) = (0, 0)
 		while (j < orderedListB.length && i < orderedListA.length) {
 			val startA = orderedListA(i).offset.get
-			val endA = startA + orderedListA(i).alias.length-1
+			val endA = startA + orderedListA(i).alias.length - 1
 			var startB = orderedListB(j).offset.get
-			var endB = startB + orderedListB(j).alias.length-1
-			while(endB < startA && j < orderedListB.length-1) {
+			var endB = startB + orderedListB(j).alias.length - 1
+			while(endB < startA && j < orderedListB.length - 1) {
 				j += 1
 				startB = orderedListB(j).offset.get
-				endB = startB + orderedListB(j).alias.length-1
+				endB = startB + orderedListB(j).alias.length - 1
 			}
 			if (!checkIfColliding(startA, endA, startB, endB)) {
 				resultList += orderedListA(i)
