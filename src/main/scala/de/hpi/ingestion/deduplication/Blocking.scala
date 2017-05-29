@@ -59,14 +59,14 @@ object Blocking extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val subjectInput = input.fromAnyRDD[Subject]()
 		val subjects = subjectInput.head
 		val staging = subjectInput(1)
 		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().last
 		val comment = args.headOption.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
-		val filterUndefined = this.settings.getOrElse("filterUndefined", "false") == "true"
+		val filterUndefined = settings(false).getOrElse("filterUndefined", "false") == "true"
 		val blockEvaluation = List(evaluationBlocking(
 			subjects,
 			staging,

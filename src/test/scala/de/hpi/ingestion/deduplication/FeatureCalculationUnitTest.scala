@@ -45,4 +45,14 @@ class FeatureCalculationUnitTest extends FlatSpec with Matchers with SharedSpark
 		val expected = TestData.labeledFeatures(sc).map(_.copy(id = null))
 		assertRDDEquals(expected, labeledFeatures)
 	}
+
+	"Features" should "be calculated" in {
+		val dbpedia = sc.parallelize(TestData.dbpediaEntries)
+		val wikidata = sc.parallelize(TestData.wikidataEntries)
+		val goldStandard = TestData.goldStandard(sc)
+		val input = List(dbpedia, wikidata).toAnyRDD() ++ List(goldStandard).toAnyRDD()
+		val result = FeatureCalculation.run(input, sc).fromAnyRDD[FeatureEntry]().head.map(_.copy(id = null))
+		val expectedFeatureEntries = TestData.labeledFeatures(sc).map(_.copy(id = null))
+		assertRDDEquals(expectedFeatureEntries, result)
+	}
 }
