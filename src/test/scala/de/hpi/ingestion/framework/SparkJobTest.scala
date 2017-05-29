@@ -8,21 +8,21 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Main method" should "call the methods in the proper sequence" in {
 		val sparkJob = new MockSparkJob
-		sparkJob.main(Array[String]())
+		sparkJob.main(Array())
 		val expectedSequence = List("assertConditions", "sparkContext", "execQ", "load", "run", "execQ", "save")
 		sparkJob.methodCalls.toList shouldEqual expectedSequence
 	}
 
 	"Assert conditions" should "not stop the job if the conditions are true" in {
 		val sparkJob = new MockConditionSparkJob
-		sparkJob.main(Array[String]())
+		sparkJob.main(Array())
 		val expectedSequence = List("assertConditions", "sparkContext", "execQ", "load", "run" , "execQ", "save")
 		sparkJob.methodCalls.toList shouldEqual expectedSequence
 	}
 
 	it should "stop the job if the conditions are false" in {
 		val sparkJob = new MockConditionSparkJob
-		sparkJob.main(Array[String]("test"))
+		sparkJob.main(Array("test"))
 		val expectedSequence = List("assertConditions")
 		sparkJob.methodCalls.toList shouldEqual expectedSequence
 	}
@@ -64,7 +64,7 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 		val saveQueries = List("saveQuery1")
 		sparkJob.cassandraLoadQueries ++= loadQueries
 		sparkJob.cassandraSaveQueries ++= saveQueries
-		sparkJob.main(Array[String]())
+		sparkJob.main(Array())
 		val expectedSequence = List("loadQuery 1", "loadQuery 2", "saveQuery1")
 		sparkJob.queryCalls.toList shouldEqual expectedSequence
 	}
