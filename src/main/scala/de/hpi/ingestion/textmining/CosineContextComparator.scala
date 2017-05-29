@@ -1,7 +1,5 @@
 package de.hpi.ingestion.textmining
 
-import java.io.{BufferedReader, InputStreamReader}
-
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
@@ -9,8 +7,6 @@ import de.hpi.ingestion.framework.SplitSparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
-
-import scala.collection.mutable
 
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
@@ -48,49 +44,6 @@ object CosineContextComparator extends SplitSparkJob {
 			.saveToCassandra(settings("keyspace"), settings("featureTable"))
 	}
 	// $COVERAGE-ON$
-
-	/**
-	  * Calculates the inverse document frequency (idf) using the logarithm base 10 for a given Document Frequency and
-	  * the number of documents used to calculate it.
-	  *
-	  * @param df      document frequency to use
-	  * @param numDocs number of documents used to compute the document frequency
-	  * @return calculated inverse document frequency
-	  */
-	def calculateIdf(df: Int, numDocs: Long): Double = {
-		Math.log10(numDocs.toDouble / df.toDouble)
-	}
-
-	/**
-	  * Returns default value for the Document Frequency used in the idf calculation.
-	  * @param threshold least significant Document Frequency
-	  * @return default Document Frequency used for idf calculation
-	  */
-	def calculateDefaultDf(threshold: Int = DocumentFrequencyCounter.leastSignificantDocumentFrequency): Int = {
-		threshold - 1
-	}
-
-	/**
-	  * Reads the document frequencies from the hdfs, calculates the inverse document frequencies and returns them
-	  * as Map.
-	  * @param numDocs number of documents used to create the document frequency data
-	  * @return Map of every term and its inverse document frequency
-	  */
-	def inverseDocumentFrequencies(
-		numDocs: Long,
-		settings: Map[String, String] = this.settings
-	): Map[String, Double] = {
-		val docfreqStream = AliasTrieSearch.trieStreamFunction(settings("dfFile"))
-		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
-		val idfMap = mutable.Map[String, Double]()
-		var line = reader.readLine()
-		while(line != null) {
-			val Array(count, token) = line.split("\t", 2)
-			idfMap(token) = calculateIdf(count.toInt, numDocs)
-			line = reader.readLine()
-		}
-		idfMap.toMap
-	}
 
 	/**
 	  * Calculates the length of a vector.
@@ -221,7 +174,7 @@ object CosineContextComparator extends SplitSparkJob {
 		articles
 			.map(extractLinkContexts(_, tokenizer))
 			.mapPartitions({ partition =>
-				val idfMap = inverseDocumentFrequencies(documentFrequencyData.numDocuments)
+				val idfMap = DFData.inverseDocumentFrequencies(documentFrequencyData.numDocuments)
 				val dfData = documentFrequencyData.copy(idfMap = idfMap)
 				partition.map { entry =>
 					val featureEntries = entry.featureEntryLinks().flatMap { link =>
@@ -276,8 +229,8 @@ object CosineContextComparator extends SplitSparkJob {
 		val linkArticles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
 
 		val numDocuments = articlesWithTermFrequencies.count()
-		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
-		val defaultIdf = calculateIdf(defaultDf, numDocuments)
+		val defaultDf = DFData.defaultDF(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
+		val defaultIdf = DFData.calculateIdf(defaultDf, numDocuments)
 		val dfData = DFData(numDocuments, defaultIdf)
 
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)

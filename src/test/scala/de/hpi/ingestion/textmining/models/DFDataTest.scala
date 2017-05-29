@@ -1,0 +1,171 @@
+package de.hpi.ingestion.textmining.models
+
+import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.textmining.{AliasTrieSearch, CosineContextComparator, TestData => TextTestData}
+import org.scalatest.{FlatSpec, Matchers}
+
+class DFDataTest extends FlatSpec with Matchers with SharedSparkContext {
+
+	"Tf-idf contexts for parsed Wikipedia articles with complete document frequencies" should "not be empty" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+		CosineContextComparator.parseConfig()
+
+		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val articles = TextTestData.articlesWithCompleteContexts()
+		val numDocuments = articles.size
+		val dfData = DFData(numDocuments, 2)
+
+		val contexts = articles.map(_.context.map(dfData.idf))
+		contexts should not be empty
+		contexts.foreach(context => context should not be empty)
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	they should "be exactly these contexts" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+		CosineContextComparator.parseConfig()
+
+		val testDocFreqFunction = TextTestData.docfreqStream("docfreq2") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val articles = TextTestData.articlesWithCompleteContexts()
+				.filter(_.title != "Streitberg (Brachttal)")
+		val numDocuments = articles.size
+		val dfData = DFData(numDocuments, 2)
+
+		val contexts = articles.map(article => (article.title, article.context.map(dfData.idf)))
+		contexts shouldEqual TextTestData.tfidfContextsSet()
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	"Tf-idf contexts for parsed Wikipedia articles with missing document frequencies" should
+		"be exactly these contexts" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+		CosineContextComparator.parseConfig()
+
+		val testDocFreqFunction = TextTestData.docfreqStream("docfreq2") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val articles = TextTestData.articlesWithCompleteContexts()
+			.filter(_.title != "Streitberg (Brachttal)")
+		val numDocuments = articles.size
+		val dfData = DFData(numDocuments, 2)
+
+		val contexts = articles.map(article => (article.title, article.context.map(dfData.idf)))
+		contexts shouldEqual TextTestData.tfidfContextsSet()
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	"Tf-Idf of link contexts" should "exist" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+		CosineContextComparator.parseConfig()
+
+		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val articles = TextTestData.articlesWithCompleteContexts()
+		val numDocuments = articles.size
+		val dfData = DFData(numDocuments, 2)
+
+		val linkContextValues = articles.flatMap { article =>
+			article.linkswithcontext.map(link => (link, link.context.map(dfData.idf)))
+		}
+		linkContextValues should not be empty
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	they should "be exactly these tf-Idf values (disregarding the contexts)" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+		CosineContextComparator.parseConfig()
+
+		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val articles = TextTestData.articlesWithCompleteContexts()
+		val numDocuments = articles.size
+		val dfData = DFData(numDocuments, 2)
+
+		val linkContextValues = articles.flatMap { article =>
+			article.linkswithcontext.map(link => (link.copy(context = Map()), link.context.map(dfData.idf)))
+		}
+		val expectedTfidf = TextTestData.linkContextsTfidf()
+		linkContextValues shouldBe expectedTfidf
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	they should "compute the tf-Idf values for the linkswithcontext and trialiases contexts" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings
+		CosineContextComparator.parseConfig()
+
+		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val articles = TextTestData.articlesWithLinkAndAliasContexts()
+		val numDocuments = articles.size
+		val dfData = DFData(numDocuments, 2)
+
+		val linkContextValues = articles.flatMap { article =>
+			article.featureEntryLinks().map(link => (link.copy(context = Map()), link.context.map(dfData.idf)))
+		}
+		val expectedTfidf = TextTestData.linkContextsTfidfWithTrieAliases()
+		linkContextValues shouldBe expectedTfidf
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	"Inverse document frequencies" should "contain as many tokens as document frequencies" in {
+		val documentFrequencies = TextTestData.documentFrequenciesTestSet()
+		val numDocuments = 4
+		val inverseDocumentFrequencies = documentFrequencies
+			.map(df => (df.word, DFData.calculateIdf(df.count, numDocuments)))
+		inverseDocumentFrequencies.size shouldEqual documentFrequencies.size
+	}
+
+	they should "be exactly these inverse document frequencies" in {
+		val documentFrequencies = TextTestData.documentFrequenciesTestSet()
+		val numDocuments = 4
+		val inverseDocumentFrequencies = documentFrequencies
+			.map(df => (df.word, DFData.calculateIdf(df.count, numDocuments)))
+		inverseDocumentFrequencies shouldEqual TextTestData.inverseDocumentFrequenciesSet()
+	}
+
+	they should "be read and calculated from a file" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+		CosineContextComparator.parseConfig()
+
+		val testDocFreqFunction = TextTestData.docfreqStream("smalldocfreq") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val idfMap = DFData.inverseDocumentFrequencies(4)
+		val expectedIdfs = TextTestData.inverseDocumentFrequenciesSet().toMap
+		idfMap shouldEqual expectedIdfs
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	"Idf map" should "be accessed" in {
+		val idfMap = TestData.idfMap()
+		val dfData = DFData(10, 0.1337, idfMap)
+		idfMap.foreach { case (term, idf) =>
+			idf shouldEqual dfData(term)
+		}
+		val noIdfTerms = List("abc", "def", "asd")
+		noIdfTerms.foreach { term =>
+			dfData(term) shouldEqual dfData.defaultIdf
+		}
+	}
+}

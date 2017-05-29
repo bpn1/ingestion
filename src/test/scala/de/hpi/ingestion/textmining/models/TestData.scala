@@ -4,22 +4,13 @@ import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 
 object TestData {
-	def protoFeatureEntries(): List[(ProtoFeatureEntry, String, Double)] = {
-		List(
-			(ProtoFeatureEntry("a", Link("a", "b"), Map(), 0.1, 0.2), "b", 0.8),
-			(ProtoFeatureEntry("c", Link("c", "a"), Map(), 0.4, 0.0), "d", 0.7),
-			(ProtoFeatureEntry("e", Link("e", "f"), Map(), 0.7, 1.0), "f", 0.1),
-			(ProtoFeatureEntry("g", Link("g", "a"), Map(), 0.8, 0.2), "h", 0.3),
-			(ProtoFeatureEntry("i", Link("i", "a"), Map(), 0.9, 0.4), "j", 0.7))
-	}
-
 	def featureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true, null),
-			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false, null),
-			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true, null),
-			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false, null),
-			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false, null))
+			FeatureEntry("a", "b", 0.1, 0.2, 0.8, correct = true),
+			FeatureEntry("c", "d", 0.4, 0.0, 0.7),
+			FeatureEntry("e", "f", 0.7, 1.0, 0.1, correct = true),
+			FeatureEntry("g", "h", 0.8, 0.2, 0.3),
+			FeatureEntry("i", "j", 0.9, 0.4, 0.7))
 	}
 
 	def labeledPoints(): List[LabeledPoint] = {
@@ -164,6 +155,14 @@ object TestData {
 		List(
 			Link("Berlin", "Berlin", Option(1)),
 			Link("Berlin", "Berlin", Option(2))
+		)
+	}
+
+	def idfMap(): Map[String, Double] = {
+		Map(
+			"term 1" -> 0.123,
+			"term 2" -> 0.345,
+			"term 3" -> 0.876
 		)
 	}
 }
