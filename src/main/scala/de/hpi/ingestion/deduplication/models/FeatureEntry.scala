@@ -20,7 +20,7 @@ case class FeatureEntry(
 	staging: Subject,
 	scores: Map[String, List[Double]] = Map(),
 	correct: Boolean = false
-){
+) {
 	/**
 	  * Returns a labeled Point
 	  * @return Labeled Point containing a label and the features

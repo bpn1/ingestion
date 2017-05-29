@@ -457,6 +457,34 @@ object TestData {
 	def requiredSettings: List[String] = {
 		List("keyspaceSubjectTable", "subjectTable", "keyspaceStagingTable", "stagingTable", "keyspaceStatsTable", "statsTable")
 	}
+
+	def featureEntries: List[FeatureEntry] = {
+		List(
+			FeatureEntry(null, null, null, Map("a" -> List(0.2, 0.4, 0.1)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.1, 0.3, 0.2)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.3, 0.5, 0.15)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.4, 0.3, 0.1)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.345, 0.6, 0.3)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.6, 0.7, 0.5)), true),
+			FeatureEntry(null, null, null, Map("a" -> List(0.124, 0.4, 0.3)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.78, 0.9, 0.5)), true),
+			FeatureEntry(null, null, null, Map("a" -> List(0.9, 0.7, 0.6)), true),
+			FeatureEntry(null, null, null, Map("a" -> List(0.85, 0.6, 0.3)), true))
+	}
+
+	def dbpediaEntries: List[Subject] = {
+		List(
+			Subject(id = idList.head, name = Option("Audi")),
+			Subject(id = idList(2), name = Option("Volkswagen")),
+			Subject(id = idList(4), name = Option("Porsche")))
+	}
+
+	def wikidataEntries: List[Subject] = {
+		List(
+			Subject(id = idList(1), name = Option("Audi AG")),
+			Subject(id = idList(3), name = Option("Volkswagen AG")),
+			Subject(id = idList(5), name = Option("Porsche AG")))
+	}
 }
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods
