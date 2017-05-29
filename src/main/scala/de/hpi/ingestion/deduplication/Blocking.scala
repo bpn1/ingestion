@@ -18,11 +18,10 @@ import org.apache.spark.rdd.RDD
   */
 object Blocking extends SparkJob {
 	appName = "Blocking"
-	configFile = "deduplication.xml"
+	configFile = "evaluation_deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
-		ListBlockingScheme("geo_country_scheme", "geo_country"),
-		ListBlockingScheme("geo_coords_scheme", "geo_coords"),
-		SimpleBlockingScheme("simple_scheme"))
+		SimpleBlockingScheme("simple_scheme")
+	)
 	// $COVERAGE-OFF$
 	/**
 	  * Loads the Subjects, staged Subjects and the GoldStandard from the Cassandra.
@@ -60,14 +59,14 @@ object Blocking extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val subjectInput = input.fromAnyRDD[Subject]()
 		val subjects = subjectInput.head
 		val staging = subjectInput(1)
 		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().last
 		val comment = args.headOption.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
-		val filterUndefined = this.settings.getOrElse("filterUndefined", "false") == "true"
+		val filterUndefined = settings(false).getOrElse("filterUndefined", "false") == "true"
 		val blockEvaluation = List(evaluationBlocking(
 			subjects,
 			staging,
