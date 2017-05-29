@@ -63,4 +63,12 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		scheme.tag shouldEqual name
 		scheme.isInstanceOf[GeoCoordsBlockingScheme] shouldBe true
 	}
+
+	"RandomBlockingScheme" should "generate random keys from the UUIDs" in {
+		val subjects = TestData.testSubjects
+		val blockingScheme = new RandomBlockingScheme
+		val keys = subjects.map(blockingScheme.generateKey)
+		val expected = TestData.randomBlockingScheme
+		keys.toSet shouldEqual expected.toSet
+	}
 }
