@@ -68,12 +68,14 @@ object Blocking extends SparkJob {
 		val comment = args.headOption.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
 		val filterUndefined = this.settings.getOrElse("filterUndefined", "false") == "true"
+		val filterSmall = this.settings.getOrElse("filterSmall", "false") == "true"
 		val blockEvaluation = List(evaluationBlocking(
 			subjects,
 			staging,
 			goldenBroadcast.value,
 			this.blockingSchemes,
 			filterUndefined,
+			filterSmall,
 			comment
 		))
 		blockEvaluation.toAnyRDD()
@@ -167,6 +169,7 @@ object Blocking extends SparkJob {
 		goldStandard: Set[(UUID, UUID)],
 		blockingSchemes: List[BlockingScheme],
 		filterUndefined: Boolean = true,
+		filterSmall: Boolean = true,
 		comment: String
 	): RDD[BlockEvaluation] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, subject => subject.id))
@@ -174,7 +177,7 @@ object Blocking extends SparkJob {
 		val jobid = UUIDs.timeBased()
 		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
 			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
-		}.filter { case ((key, tag), (subjectList, stagingList)) => (subjectList.size * stagingList.size) < 500000 }
+		}.filter { case ((key, tag), (subjectList, stagingList)) => (subjectList.size * stagingList.size) < 250000 }
 		val duplicates = blocks.map(createDuplicates(_, goldStandard))
 
 		var accuracy = duplicates
@@ -204,8 +207,8 @@ object Blocking extends SparkJob {
 			.reduceByKey(_ ++ _)
 			.union(statsSum)
 			.map { case (tag, blockStats) =>
-				val filteredStats = blockStats.filter(stat => (stat.numsubjects * stat.numstaging) > 10000)
-					// don't write tiny blocks
+				val filteredStats = blockStats.filter(stat =>
+					!filterSmall || (stat.numsubjects * stat.numstaging) > 10000) // don't write tiny blocks
 				val tagAccuracy = accuracy.getOrElse(tag, 0.0)
 				val blockComment = Option(s"$comment; accuracy: $tagAccuracy")
 				BlockEvaluation(jobid, tag, filteredStats, blockComment)

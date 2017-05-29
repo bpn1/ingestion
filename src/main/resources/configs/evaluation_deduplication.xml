@@ -14,6 +14,7 @@
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
         <statsTable>blockingstats</statsTable>
         <filterUndefined>false</filterUndefined>
+        <filterSmall>true</filterSmall>
         <confidence>0.7</confidence>
     </settings>
     <simMeasurements>

@@ -60,6 +60,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			goldStandard,
 			blockingSchemes,
 			false,
+			false,
 			comment
 		).map(_.copy(jobid = null))
 		val expected = TestData.blockEvaluationWithComment(sc)
@@ -80,6 +81,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			goldStandard,
 			blockingSchemes,
 			true,
+			false,
 			comment
 		).map(_.copy(jobid = null))
 		val expected = TestData.filteredBlockEvaluation(sc)
@@ -98,6 +100,8 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val evaluationBlocks = Blocking.run(input, sc).fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))
 		val expected = TestData.blockEvaluation(sc)
+		val printListe = evaluationBlocks.collect.toList
+		val printExp = expected.collect.toList
 		assertRDDEquals(evaluationBlocks, expected)
 	}
 
@@ -110,7 +114,9 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val goldStandardRDD = sc.parallelize(goldStandard.toList)
 		val input = List(subjectRDD, stagingRDD).toAnyRDD() ::: List(goldStandardRDD).toAnyRDD()
 		Blocking.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = Blocking.run(input, sc, Array("Test comment")).fromAnyRDD[BlockEvaluation]().head
+		val evaluationBlocks = Blocking
+			.run(input, sc, Array("Test comment"))
+			.fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))
 		val expected = TestData.blockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)

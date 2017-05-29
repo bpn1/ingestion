@@ -10,6 +10,7 @@
         <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
+        <filterSmall>true</filterSmall>
         <confidence>0.7</confidence>
     </settings>
     <simMeasurements>
