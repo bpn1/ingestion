@@ -105,7 +105,7 @@ object TestData {
 		))
 	}
 
-	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", datasources = List("dataSources"), sc)
+	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", List("dataSources"), sc, false)
 
 	def testEntity: DBpediaEntity = DBpediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",

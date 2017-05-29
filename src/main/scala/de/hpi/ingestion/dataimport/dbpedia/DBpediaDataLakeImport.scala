@@ -19,7 +19,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 	"wikidumps",
 	"dbpedia"
 ){
-	appName = s"DataLakeImportDBpedia_v1.0_${System.currentTimeMillis()}"
+	appName = s"DBpediaDataLakeImport_v1.0"
 
 	// $COVERAGE-OFF$
 	/**

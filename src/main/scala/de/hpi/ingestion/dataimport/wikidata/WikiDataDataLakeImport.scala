@@ -18,7 +18,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 	"wikidumps",
 	"wikidata"
 ){
-	appName = s"WikiDataDataLakeImport_v1.0_${System.currentTimeMillis()}"
+	appName = s"WikiDataDataLakeImport_v1.0"
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {

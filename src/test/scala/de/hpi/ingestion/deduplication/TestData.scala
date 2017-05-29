@@ -176,7 +176,7 @@ object TestData {
 
 	def emptySubject: Subject = Subject()
 
-	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
+	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false)
 
 	def parsedConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
 		Map(

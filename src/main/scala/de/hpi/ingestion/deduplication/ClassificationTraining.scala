@@ -13,7 +13,7 @@ import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
   * Job for training the similarity measure classifier
   */
 object ClassificationTraining extends SparkJob {
-	appName = s"Similarity Measure Classifier Training"
+	appName = "Similarity Measure Classifier Training"
 	configFile = "classification.xml"
 
 	// $COVERAGE-OFF$
