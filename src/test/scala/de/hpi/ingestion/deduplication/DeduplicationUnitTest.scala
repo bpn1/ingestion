@@ -38,7 +38,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		Deduplication.scoreConfigSettings shouldBe empty
 
 		Deduplication.configFile = "test.xml"
-		val expected = TestData.parsedConfig
+		val expected = TestData.testConfig()
 		Deduplication.parseConfig()
 		Deduplication.scoreConfigSettings shouldEqual expected
 		Deduplication.settings should not be empty
@@ -54,7 +54,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val originalName = Deduplication.configFile
 
 		Deduplication.configFile = "test.xml"
-		val expected = TestData.parsedConfig
+		val expected = TestData.testConfig()
 		Deduplication.assertConditions(Array[String]())
 		Deduplication.scoreConfigSettings shouldEqual expected
 		Deduplication.settings should not be empty
@@ -68,7 +68,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val originalSettings = Deduplication.settings
 		val originalConfig = Deduplication.scoreConfigSettings
 
-		Deduplication.scoreConfigSettings = TestData.parsedConfig
+		Deduplication.scoreConfigSettings = TestData.testConfig()
 		Deduplication.settings = Map("confidence" -> "0.35")
 		val subjects = TestData.testSubjects
 		val duplicates = Deduplication.findDuplicates(TestData.subjectBlocks(subjects, sc), sc).collect.toSet
@@ -96,7 +96,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val originalSettings = Deduplication.settings
 		val originalConfig = Deduplication.scoreConfigSettings
 
-		Deduplication.scoreConfigSettings = TestData.parsedConfig
+		Deduplication.scoreConfigSettings = TestData.testConfig()
 		Deduplication.settings = Map("stagingTable" -> "subject_wikidata", "confidence" -> "0.35")
 		val subjects = TestData.subjects
 		val stagings = TestData.stagings
