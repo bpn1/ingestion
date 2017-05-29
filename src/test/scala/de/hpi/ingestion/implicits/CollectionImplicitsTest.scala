@@ -14,6 +14,17 @@ class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkCon
 		crossProduct shouldEqual expected
 	}
 
+	"Asym Square" should "return this cross product" in {
+		val (list1, list2) = TestData.crossableLists
+		val square1 = list1.asymSquare(true)
+		val expectedSquare1 = TestData.asymSquareWithReflexive
+		square1.toSet shouldEqual expectedSquare1
+
+		val square2 = list2.asymSquare()
+		val expectedSquare2 = TestData.asymSquare
+		square2.toSet shouldEqual expectedSquare2
+	}
+
 	"Printable set difference" should "return a diff string" in {
 		val (list1, list2) = TestData.diffLists
 		val diff = list1.printableSetDifference(list2)
