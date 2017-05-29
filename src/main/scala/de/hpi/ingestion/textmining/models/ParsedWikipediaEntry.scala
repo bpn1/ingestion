@@ -60,6 +60,7 @@ case class ParsedWikipediaEntry(
 
 	/**
 	  * Filters and parsed Extended Links to Links
+	  *
 	  * @return List of parsed Links
 	  */
 	def extendedlinks(noTextLinks: Boolean = true, countThresh: Int = 1, normalizedThresh: Double = 0.1): List[Link] = {
@@ -68,9 +69,9 @@ case class ParsedWikipediaEntry(
 			.collect {
 				case (t, Some(page)) => (t, page)
 			}.map { case (exLink, page) =>
-				Link(exLink.alias, page, exLink.offset)
-			}
-		if (noTextLinks) {
+			Link(exLink.alias, page, exLink.offset)
+		}
+		if(noTextLinks) {
 			filteredLinks = filterCollidingLinks(filteredLinks, textlinks)
 		}
 		filteredLinks
@@ -78,43 +79,56 @@ case class ParsedWikipediaEntry(
 
 	/**
 	  * Filter List of Links by overlapping offsets of items in another List in O(nlogn)
-	  * @param listA List that will be filtered
-	  * @param listB List that is used to filter ListA
+	  *
+	  * @param extendedLinks List that will be filtered
+	  * @param textLinks     List that is used to filter ListA
 	  * @return filtered List of links in ListA without collisions of Links in ListB
 	  */
-	def filterCollidingLinks(listA: List[Link], listB: List[Link]): List[Link] = {
-		val orderedListA = listA.filter(_.offset.exists(_ >= 0)).sortBy(_.offset)
-		val orderedListB = listB.filter(_.offset.exists(_ >= 0)).sortBy(_.offset)
+	def filterCollidingLinks(extendedLinks: List[Link], textLinks: List[Link]): List[Link] = {
+		val orderedExtendedLinks = extendedLinks.filter(_.offset.exists(_ >= 0)).sortBy(_.offset)
+		val orderedTextLinks = textLinks.filter(_.offset.exists(_ >= 0)).sortBy(_.offset)
 		var resultList = new ListBuffer[Link]()
 		var (i, j) = (0, 0)
-		while (j < orderedListB.length && i < orderedListA.length) {
-			val startA = orderedListA(i).offset.get
-			val endA = startA + orderedListA(i).alias.length - 1
-			var startB = orderedListB(j).offset.get
-			var endB = startB + orderedListB(j).alias.length - 1
-			while(endB < startA && j < orderedListB.length - 1) {
+		while(j < orderedTextLinks.length && i < orderedExtendedLinks.length) {
+			val startEL = orderedExtendedLinks(i).offset.get
+			val endEL = startEL + orderedExtendedLinks(i).alias.length - 1
+			var startTL = orderedTextLinks(j).offset.get
+			var endTL = startTL + orderedTextLinks(j).alias.length - 1
+			// find the next text link that might be colliding
+			while(endTL < startEL && j < orderedTextLinks.length - 1) {
 				j += 1
-				startB = orderedListB(j).offset.get
-				endB = startB + orderedListB(j).alias.length - 1
+				startTL = orderedTextLinks(j).offset.get
+				endTL = startTL + orderedTextLinks(j).alias.length - 1
 			}
-			if (!checkIfColliding(startA, endA, startB, endB)) {
-				resultList += orderedListA(i)
+			if(!checkIfColliding(startEL, endEL, startTL, endTL)) {
+				resultList += orderedExtendedLinks(i)
 			}
 			i += 1
 		}
-		while (i < orderedListA.length) {
-			resultList += orderedListA(i)
+		// if there are no text links but extended links left
+		// add the remaining extended links because they cannot collide with anything
+		while(i < orderedExtendedLinks.length) {
+			resultList += orderedExtendedLinks(i)
 			i += 1
 		}
 		resultList.toList
 	}
 
-	def checkIfColliding(startA: Int, endA: Int, startB: Int, endB: Int): Boolean = {
-		// startB---startA----endB or
-		(startB <= startA && startA <= endB) ||
-			// startB---endA----endB or
-			(startB <= endA && endA <= endB) ||
-			// startA---startB---endB---EndA
-			(startA <= startB && endB <= endA)
+	/**
+	  * checks if two links are colliding by checking their start and end offsets
+	  *
+	  * @param startEL start offset of extended link
+	  * @param endEL   end offset of extended link
+	  * @param startTL start offset of text link
+	  * @param endTL   end offset of text link
+	  * @return false if they are colliding if not false
+	  */
+	def checkIfColliding(startEL: Int, endEL: Int, startTL: Int, endTL: Int): Boolean = {
+		// startTL---startEL----endTL or
+		(startTL <= startEL && startEL <= endTL) ||
+			// startTL---endEL----endTL or
+			(startTL <= endEL && endEL <= endTL) ||
+			// startEL---startTL---endTL---EndEL
+			(startEL <= startTL && endTL <= endEL)
 	}
 }
