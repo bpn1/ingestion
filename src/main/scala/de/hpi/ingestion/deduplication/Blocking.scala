@@ -66,7 +66,7 @@ object Blocking extends SparkJob {
 		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().last
 		val comment = args.headOption.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
-		val filterUndefined = this.settings.getOrElse("filterUndefined", "false") == "true"
+		val filterUndefined = settings(false).getOrElse("filterUndefined", "false") == "true"
 		val blockEvaluation = List(evaluationBlocking(
 			subjects,
 			staging,

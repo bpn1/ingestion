@@ -11,7 +11,7 @@ import scala.io.Source
 class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Alias matches" should "be found" in {
-		val oldSettings = AliasTrieSearch.settings
+		val oldSettings = AliasTrieSearch.settings(false)
 		AliasTrieSearch.parseConfig()
 
 		val tokenizer = IngestionTokenizer()
@@ -39,7 +39,7 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 
 	"Wikipedia entries" should "be enriched with found aliases" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = AliasTrieSearch.settings
+		val oldSettings = AliasTrieSearch.settings(false)
 		AliasTrieSearch.parseConfig()
 
 		val testTrieStreamFunction = TestData.fullTrieStream _
@@ -55,7 +55,7 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 	}
 
 	"Trie aliases" should "be extracted" in {
-		val oldSettings = AliasTrieSearch.settings
+		val oldSettings = AliasTrieSearch.settings(false)
 		AliasTrieSearch.parseConfig()
 
 		val tokenizer = IngestionTokenizer()
@@ -70,7 +70,7 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 	}
 
 	"Alias contexts" should "be extracted" in {
-		val oldSettings = AliasTrieSearch.settings
+		val oldSettings = AliasTrieSearch.settings(false)
 		AliasTrieSearch.parseConfig()
 
 		val tokenizer = IngestionTokenizer()

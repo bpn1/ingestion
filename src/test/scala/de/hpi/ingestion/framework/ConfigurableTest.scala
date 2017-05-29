@@ -7,9 +7,19 @@ class ConfigurableTest extends FlatSpec with Matchers {
 
 	"Config" should "be parsed" in {
 		val configurable = new MockConfigurable
-		configurable.settings shouldBe empty
-		configurable.scoreConfigSettings shouldBe empty
 		configurable.parseConfig()
+		configurable.settings should not be empty
+		configurable.settings shouldEqual TestData.parsedSettings
+		configurable.scoreConfigSettings should not be empty
+		configurable.scoreConfigSettings shouldEqual TestData.parsedScoreConfig
+	}
+
+	they should "be parsed when the respective getters are called and configFile is set" in {
+		val configurable = new MockConfigurable
+		configurable.configFile = ""
+		configurable.settings shouldBe empty
+
+		configurable.configFile = "test.xml"
 		configurable.settings should not be empty
 		configurable.settings shouldEqual TestData.parsedSettings
 		configurable.scoreConfigSettings should not be empty
