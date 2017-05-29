@@ -54,7 +54,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val version = Version(appName, dataSources, sc)
 		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val strategies = parseCategoryConfig(this.categoryConfigFile)

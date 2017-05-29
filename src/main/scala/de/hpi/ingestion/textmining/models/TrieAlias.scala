@@ -9,4 +9,9 @@ package de.hpi.ingestion.textmining.models
 case class TrieAlias(
 	alias: String,
 	offset: Option[Int] = None,
-	context: Map[String, Int] = Map())
+	context: Map[String, Int] = Map()
+) {
+	def toLink(): Link = {
+		Link(alias, null, offset, context)
+	}
+}
