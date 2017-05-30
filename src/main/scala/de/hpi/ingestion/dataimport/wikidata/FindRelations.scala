@@ -18,7 +18,7 @@ import de.hpi.ingestion.framework.SparkJob
   * and replaces the Wikidata Ids with their names.
   */
 object FindRelations extends SparkJob {
-	appName = s"FindRelations_v1.1_${System.currentTimeMillis()}"
+	appName = s"FindRelations_v1.1"
 	val datasources = List("wikidata_20161117")
 	val keyspace = "datalake"
 	val tablename = "subject_wikidata"
@@ -124,7 +124,7 @@ object FindRelations extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val subjects = input.fromAnyRDD[Subject]().head
 		val nameResolveMap = resolvableNamesMap(subjects)
-		val version = Version(appName, datasources, sc)
+		val version = Version(appName, datasources, sc, true)
 		val subjectsWithRelations = subjects.map(findRelations(_, nameResolveMap, version))
 		List(subjectsWithRelations).toAnyRDD()
 	}

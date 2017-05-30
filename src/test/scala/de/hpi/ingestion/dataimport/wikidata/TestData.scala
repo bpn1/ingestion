@@ -69,7 +69,7 @@ object TestData {
 			Subject(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), name = Option("Entry 2"), properties = Map(FindRelations.wikiDataIdKey -> List("Q2"), "test" -> List("Q3"))),
 			Subject(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), name = Option("Entry 3"), properties = Map(FindRelations.wikiDataIdKey -> List("Q3"), "test" -> List("Q4"))),
 			Subject(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), name = Option("Entry 4"), properties = Map(FindRelations.wikiDataIdKey -> List("Q4"))),
-			Subject(UUID.fromString("7bfd2ffe-154b-486a-b30d-581d785940c6"), name = Option("Entry 5"), properties = Map(FindRelations.wikiDataIdKey -> List[String](), "test" -> List("Q1"))),
+			Subject(UUID.fromString("7bfd2ffe-154b-486a-b30d-581d785940c6"), name = Option("Entry 5"), properties = Map(FindRelations.wikiDataIdKey -> Nil, "test" -> List("Q1"))),
 			Subject(UUID.fromString("bbd8f942-1663-4fea-9e70-3cf27896bc57"), name = Option("Entry 6"), properties = Map("test" -> List("Q5"))))
 	}
 
@@ -85,7 +85,7 @@ object TestData {
 			Subject(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), name = Option("Entry 2"), properties = Map(FindRelations.wikiDataIdKey -> List("Q2"), "test" -> List("Q3", "Entry 3")), relations = Map(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d") -> Map("type" -> "test"))),
 			Subject(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), name = Option("Entry 3"), properties = Map(FindRelations.wikiDataIdKey -> List("Q3"), "test" -> List("Q4", "Entry 4")), relations = Map(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("type" -> "test"))),
 			Subject(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), name = Option("Entry 4"), properties = Map(FindRelations.wikiDataIdKey -> List("Q4"))),
-			Subject(UUID.fromString("7bfd2ffe-154b-486a-b30d-581d785940c6"), name = Option("Entry 5"), properties = Map(FindRelations.wikiDataIdKey -> List[String](), "test" -> List("Q1", "Entry 1")), relations = Map(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58") -> Map("type" -> "test"))),
+			Subject(UUID.fromString("7bfd2ffe-154b-486a-b30d-581d785940c6"), name = Option("Entry 5"), properties = Map(FindRelations.wikiDataIdKey -> Nil, "test" -> List("Q1", "Entry 1")), relations = Map(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58") -> Map("type" -> "test"))),
 			Subject(UUID.fromString("bbd8f942-1663-4fea-9e70-3cf27896bc57"), name = Option("Entry 6"), properties = Map("test" -> List("Q5"))))
 	}
 
@@ -268,7 +268,7 @@ object TestData {
 			List())
 	}
 
-	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", datasources = List("dataSources"), sc)
+	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", List("dataSources"), sc, false)
 
 	def testEntity(): WikiDataEntity = {
 		WikiDataEntity(
@@ -324,7 +324,7 @@ object TestData {
 	def unnormalizedSectors: List[String] = List("Automobilindustrie", "Q126793", "Einzelhandel")
 	def normalizedSectors: List[String] = List("Automobilindustrie", "Einzelhandel")
 	def unnormalizedCoordinates: List[String] = List("-1;1", "55;48.88", "0.133;-1", "xxx;-1.0")
-	def normalizedCoordinates: List[String] = List("-1", "1", "55", "48.88", "0.133", "-1")
+	def normalizedCoordinates: List[String] = List("-1;1", "55;48.88", "0.133;-1")
 	def unnormalizedCountries: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
 	def normalizedCountries: List[String] = List("Russland", "Igrinski rajon")
 	def unnormalizedEmployees: List[String] = List("+500;1", "+1337;1", "WRONG")
