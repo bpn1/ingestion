@@ -20,5 +20,6 @@
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
         <articleFETable>articlefeatureentries</articleFETable>
+        <articleFile>wikipedia/wikipedia_texts</articleFile>
     </settings>
 </config>
