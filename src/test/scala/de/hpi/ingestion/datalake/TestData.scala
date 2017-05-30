@@ -48,7 +48,7 @@ object TestData {
 	}
 
 	def version(sc: SparkContext): Version = {
-		Version("SomeTestApp", Nil, sc)
+		Version("SomeTestApp", Nil, sc, false)
 	}
 
 }
