@@ -14,6 +14,7 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 object CosineContextComparator extends SplitSparkJob {
 	appName = "Cosine Context Comparator"
 	configFile = "textmining.xml"
+	sparkOptions("spark.driver.maxResultSize") = "0"
 
 	// $COVERAGE-OFF$
 	/**
