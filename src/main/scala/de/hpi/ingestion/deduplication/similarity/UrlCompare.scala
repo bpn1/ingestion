@@ -2,18 +2,21 @@ package de.hpi.ingestion.deduplication.similarity
 
 import java.net.URL
 
+
 /**
   * Computes the similarity of two Hostnames from two given URLs
   */
 object UrlCompare extends SimilarityMeasure[String] {
 
 
-	cleanUrlString(s: String) : String = {
-		new URL(s).getHost or ""
+	def cleanUrlString(s: String) : String = {
+		val test = new URL(s).getHost.replaceFirst("www.","")
+		println(test)
+		test
 	}
 
 	/**
-	  * Calculates the similariity score for two hostnames extracted from given URLs
+	  * Calculates the similariity score for two hostnames extracted from given URLs based on JaroWinkler
 	  * @param s some URL
 	  * @param t another URL
 	  * @param u no specific use in here
@@ -21,7 +24,7 @@ object UrlCompare extends SimilarityMeasure[String] {
 	  * 0.0 as default value if one of the input strings is empty
 	  */
 	override def compare(s: String, t: String, u: Int = 1) : Double = {
-		JaroWinklerMetric.compare(
+		JaroWinkler.compare(
 			cleanUrlString(s),
 			cleanUrlString(t)
 		)
