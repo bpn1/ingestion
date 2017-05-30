@@ -178,16 +178,9 @@ object TestData {
 
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false)
 
-	def parsedConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
-		Map(
-			"name" -> List(
-				ScoreConfig(similarityMeasure = MongeElkan, weight = 0.8),
-				ScoreConfig(similarityMeasure = JaroWinkler, weight = 0.7)))
-	}
-
 	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = {
 		List(
-			(testSubjects.head, testSubjects(1), 0.7117948717948718),
+			(testSubjects.head, testSubjects(1), 0.9784615384615384),
 			(testSubjects.head, testSubjects(4), 0.5761904761904763),
 			(testSubjects(1), testSubjects(4), 0.5654212454212454),
 			(testSubjects(2), testSubjects(3), 0.9446913580246914))
@@ -198,7 +191,7 @@ object TestData {
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((stagings.head.id, stagingTable, 0.7117948717948718))),
+				List((stagings.head.id, stagingTable, 0.9784615384615384))),
 			DuplicateCandidates(
 				subjects(1).id,
 				List((stagings(1).id, stagingTable, 0.9446913580246914))))
@@ -209,7 +202,7 @@ object TestData {
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((subjects(1).id, stagingTable, 0.7117948717948718), (subjects(4).id, stagingTable, 0.5761904761904763))),
+				List((subjects(1).id, stagingTable, 0.9784615384615384), (subjects(4).id, stagingTable, 0.5761904761904763))),
 			DuplicateCandidates(
 				subjects(1).id,
 				List((subjects(4).id, stagingTable, 0.5654212454212454))),
