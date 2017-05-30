@@ -60,6 +60,7 @@ case class ParsedWikipediaEntry(
 
 	/**
 	  * Filters the linkswithcontext links and returns only the textlinks with their contexts.
+	  *
 	  * @return textlinks and their contexts
 	  */
 	def textlinkContexts(): List[Link] = {
@@ -69,6 +70,7 @@ case class ParsedWikipediaEntry(
 
 	/**
 	  * Filters the linkswithcontext links and returns only the extendedlinks with their contexts.
+	  *
 	  * @return extendedlinks and their contexts
 	  */
 	def extendedlinkContexts(): List[Link] = {
@@ -77,9 +79,14 @@ case class ParsedWikipediaEntry(
 	}
 
 	/**
-	  * Filters and parsed Extended Links to Links
+	  * Filters and parses Extended Links to Links
 	  *
-	  * @return List of parsed Links
+	  * @param noTextLinks defines if you do not want extended links that are colliding with text links, default is true
+	  * @param countThresh defines the threshold of occurrences of alias it has to pass
+	  *                    if there are colliding extended links
+	  * @param normalizedThresh defines the threshold of normalized occurrences of alias it has to pass
+	  *                         if there are colliding extended links
+	  * @return List of (filtered) Links
 	  */
 	def extendedlinks(noTextLinks: Boolean = true, countThresh: Int = 1, normalizedThresh: Double = 0.1): List[Link] = {
 		var filteredLinks = rawextendedlinks
