@@ -331,7 +331,12 @@ object TestData {
 		"id_wikidata" -> List("id"),
 		"id_dbpedia" -> List("wikiname"),
 		"id_wikipedia" -> List("wikiname"),
-		"id_viaf" -> List("VIAF ID")
+		"id_viaf" -> List("VIAF ID"),
+		"gen_sectors" -> List("industry"),
+		"geo_coords" -> List("coordinate location"),
+		"geo_city" -> List("headquarters location"),
+		"geo_country" -> List("country"),
+		"gen_employees" -> List("employees")
 	)
 
 	def strategies: Map[String, List[String]] = Map(

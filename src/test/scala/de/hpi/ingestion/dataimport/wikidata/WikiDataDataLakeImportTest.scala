@@ -6,9 +6,9 @@ import org.scalatest.{FlatSpec, Matchers}
 class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with Matchers {
 	"filterEntities" should "filter entities without an instance type" in {
 		val entities = TestData.unfilteredEntities
-		val filtered = entities.filter(WikiDataDataLakeImport.filterEntities)
+		val filteredEntities = entities.filter(WikiDataDataLakeImport.filterEntities)
 		val expected = TestData.filteredEntities
-		entities shouldEqual expected
+		filteredEntities shouldEqual expected
 	}
 
 	"normalizeAttribute" should "the values of a given attribute" in {
@@ -21,7 +21,7 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		)
 		val strategies = TestData.strategies
 		val normalizedAttributes = attributes.map { case (attribute, values) =>
-			WikiDataDataLakeImport.normalizeAttribute(attribute, values, strategies)
+			attribute -> WikiDataDataLakeImport.normalizeAttribute(attribute, values, strategies)
 		}
 		val expected = Map(
 			"gen_sectors" -> TestData.mappedSectors,
