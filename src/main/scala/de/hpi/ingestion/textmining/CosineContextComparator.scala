@@ -103,7 +103,7 @@ object CosineContextComparator extends SplitSparkJob {
 	def transformLinkContextTfs(articles: RDD[ParsedWikipediaEntry]): RDD[(Link, Bag[String, Int])] = {
 		articles
 			.flatMap { entry =>
-				(entry.linkswithcontext ++ entry.triealiases.map(_.toLink())).map{link =>
+				(entry.linkswithcontext ++ entry.triealiases.map(_.toLink())).map { link =>
 					link.article = Option(entry.title)
 					link
 				}
@@ -141,19 +141,20 @@ object CosineContextComparator extends SplitSparkJob {
 	}
 
 	/**
-	  * Computes probability that alias is a link and that it refers to a specific page for all aliases.
+	  * Computes scores for alias being a link and referring to a specific page for all aliases.
 	  *
 	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
 	  * @return aliases with probability features
 	  */
-	def computeAliasProbabilities(aliases: RDD[Alias]): RDD[(String, List[(String, Double, Double)])] = {
+	def computeAliasPageScores(aliases: RDD[Alias]): RDD[(String, List[(String, Double, Double)])] = {
 		aliases
 			.filter(alias => alias.linkoccurrences.isDefined && alias.totaloccurrences.isDefined)
 			.flatMap { alias =>
-				val totalProb = alias.linkoccurrences.get.toDouble / alias.totaloccurrences.get.toDouble
+				val linkScore = alias.linkoccurrences.get.toDouble / alias.totaloccurrences.get.toDouble
 				val numPages = alias.pages.values.sum.toDouble
 				val pageProb = alias.pages.mapValues(_.toDouble / numPages)
-				alias.pages.keySet.map(page => (alias.alias, List((page, totalProb, pageProb(page)))))
+				// Although linkScore is the same in each list entry, it is stored multiple times for easier processing.
+				alias.pages.keySet.map(page => (alias.alias, List((page, linkScore, pageProb(page)))))
 			}.reduceByKey(_ ++ _)
 	}
 
@@ -295,15 +296,15 @@ object CosineContextComparator extends SplitSparkJob {
 		aliasPageProbabilities: Map[String, List[(String, Double, Double)]],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
-//		val aliasPageProbabilitiesWithSOF = addSecondOrderFeaturesToLinkAndPageScores(aliasPageProbabilities)
+		//		val aliasPageProbabilitiesWithSOF = addSecondOrderFeaturesToLinkAndPageScores(aliasPageProbabilities)
 
 		val joinableLinks = linkContexts
 			.flatMap { case (link, idfMap) =>
 				aliasPageProbabilities.getOrElse(link.alias, Nil)
-					.map { case (page, extendedLinkScore, extendedPageScore) =>
+					.map { case (page, linkScore, pageScore) =>
 						// Note: The page in the link is the actual target for the alias occurrence,
 						// the joined page is just a possible target for the alias.
-						(link.alias, List((link, idfMap, page, extendedLinkScore, extendedPageScore)))
+						(link.alias, List((link, idfMap, page, linkScore, pageScore)))
 					}
 			}.reduceByKey(_ ++ _)
 			.flatMap { case (alias, joinedLinks) =>
@@ -428,7 +429,7 @@ object CosineContextComparator extends SplitSparkJob {
 
 		val contextTfs = transformLinkContextTfs(linkArticles)
 		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf, settingsBroadcast.value)
-		val aliasPageProbabilities = computeAliasProbabilities(aliases)
+		val aliasPageProbabilities = computeAliasPageScores(aliases)
 			.collect
 			.toMap
 		val featureEntries = compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)

@@ -198,18 +198,18 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
-	"Alias probabilities" should "not be empty" in {
+	"Link and page scores" should "not be empty" in {
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
 		val pages = CosineContextComparator
-			.computeAliasProbabilities(aliases)
+			.computeAliasPageScores(aliases)
 			.collect
 		pages should not be empty
 	}
 
-	they should "be exactly these probabilites" in {
+	they should "be exactly these scores" in {
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
 		val pages = CosineContextComparator
-			.computeAliasProbabilities(aliases)
+			.computeAliasPageScores(aliases)
 			.collect
 			.toMap
 		pages shouldEqual TestData.aliasPageScoresMap()
@@ -369,9 +369,17 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		deltaTops shouldEqual TestData.deltaSuccessorValuesList()
 	}
 
-	"Second order features for alias page scores" should "be computed correctly" in {
-		// todo
-	}
+//	"Second order features for alias page scores" should "be computed correctly" in {
+//		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
+//		val aliasPageProbabilities = TestData.alternativeAliasPageScoresMap()
+//		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
+//		val featureEntries = CosineContextComparator
+//			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+//			.collect
+//			.map(_.copy(id = null))
+//			.toSet
+//		featureEntries shouldEqual TestData.featureEntriesSet()
+//	}
 
 	"Input split" should "split input into 10 parts" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)

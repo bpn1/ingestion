@@ -529,15 +529,15 @@ object TestData {
 			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Option(1), Option(2)),
 			Alias("Hessen", Map("Hessen" -> 1), Option(1), Option(2)),
 			Alias("1377", Map("1377" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), Option(1), Option(2)),
+			// contains negative example
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 4, "Audi" -> 1), Option(5), Option(10)),
 			Alias("historisches Jahr", Map("1377" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Audi" -> 1), Option(1), Option(2)), // negative example
 			Alias("historisches Jahr", Map("1377" -> 1)) // incomplete table entry
 		)
 	}
 
 	def aliasesWithExistingPagesSet(): Set[Alias] = {
-		// these pages do not fit to the aliases but are required for the tests
+		// These pages do not fit to the aliases but are required for the tests.
 		Set(
 			Alias("Audi", Map("Audi Test mit Link" -> 2), Option(2), Option(3)),
 			Alias("Brachttal", Map("Audi Test ohne Link" -> 2), Option(2), Option(2)),
@@ -772,13 +772,16 @@ object TestData {
 			"Main-Kinzig-Kreis" -> List(("Main-Kinzig-Kreis", 0.5, 1.0)),
 			"Hessen" -> List(("Hessen", 0.5, 1.0)),
 			"1377" -> List(("1377", 1.0, 1.0)),
-			"Büdinger Wald" -> List(("Büdinger Wald", 0.5, 1.0), ("Audi", 0.5, 1.0)),
+			"Büdinger Wald" -> List(("Büdinger Wald", 0.5, 0.8), ("Audi", 0.5, 0.2)),
 			"historisches Jahr" -> List(("1377", 1.0, 1.0))
 		)
 	}
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
 		val mfPage_1 = MultiFeature(1.0, 1, 0.0, 0.0)
+		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, 0.0, 0.6)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6, 0.0)
+
 		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, 0.08622243532359375)
 		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 2, 0.08622243532359375, 0.0)
 		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, 0.0)
@@ -794,8 +797,8 @@ object TestData {
 			FeatureEntry("Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0695, true, null),
 			FeatureEntry("Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0610, true, null),
 			FeatureEntry("Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0, true, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, mfPage_1, mfCosBüdingerWald_1, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, mfPage_1, mfCosBüdingerWald_0, false, null),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, mfPageBüdingerWald_08, mfCosBüdingerWald_1, true, null),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, mfPageBüdingerWald_02, mfCosBüdingerWald_0, false, null),
 			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, mfPage_1, mfCos_0661, true, null),
 			FeatureEntry("Hessen", "Hessen", 0.5, mfPage_1, mfCos_0453, true, null),
 			FeatureEntry("1377", "1377", 1.0, mfPage_1, mfCos_0828, true, null),
@@ -805,6 +808,9 @@ object TestData {
 
 	def featureEntriesWithAliasesSet(): Set[FeatureEntry] = {
 		val mfPage_1 = MultiFeature(1.0, 1, 0.0, 0.0)
+		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, 0.0, 0.6)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6, 0.0)
+
 		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, 0.0)
 		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 1, 0.0, 0.0)
 		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, 0.0)
@@ -820,8 +826,8 @@ object TestData {
 			FeatureEntry("Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0695, true, null),
 			FeatureEntry("Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0610, true, null),
 			FeatureEntry("Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0, false, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, mfPage_1, mfCosBüdingerWald_1, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, mfPage_1, mfCosBüdingerWald_0, false, null),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, mfPageBüdingerWald_08, mfCosBüdingerWald_1, true, null),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, mfPageBüdingerWald_02, mfCosBüdingerWald_0, false, null),
 			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, mfPage_1, mfCos_0661, false, null),
 			FeatureEntry("Hessen", "Hessen", 0.5, mfPage_1, mfCos_0453, true, null),
 			FeatureEntry("1377", "1377", 1.0, mfPage_1, mfCos_0828, false, null),
