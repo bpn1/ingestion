@@ -12,7 +12,7 @@ package de.hpi.ingestion.textmining.models
 case class ProtoFeatureEntry(
 	link: Link,
 	linkContext: Map[String, Double],
-	linkScore: MultiFeature,
+	linkScore: Double,
 	pageScore: MultiFeature
 ) {
 	/**

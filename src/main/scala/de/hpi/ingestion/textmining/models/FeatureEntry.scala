@@ -18,7 +18,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
 case class FeatureEntry(
 	alias: String,
 	entity: String,
-	link_score: MultiFeature,
+	link_score: Double,
 	entity_score: MultiFeature,
 	cosine_sim: MultiFeature,
 	correct: Boolean = false,
@@ -30,8 +30,15 @@ case class FeatureEntry(
 	  * @return Labeled Point containing the features and the label
 	  */
 	def labeledPoint(): LabeledPoint = {
+		if(entity_score.delta_successor == 0.0) {
+			entity_score.delta_successor = Double.NaN
+		}
+		if(cosine_sim.delta_successor == 0.0) {
+			cosine_sim.delta_successor = Double.NaN
+		}
+
 		val features = new DenseVector(Array(
-			link_score.value, link_score.rank, link_score.delta_top, link_score.delta_successor,
+			link_score,
 			entity_score.value, entity_score.rank, entity_score.delta_top, entity_score.delta_successor,
 			cosine_sim.value, cosine_sim.rank, cosine_sim.delta_top, cosine_sim.delta_successor))
 		val label = if(correct) 1.0 else 0.0

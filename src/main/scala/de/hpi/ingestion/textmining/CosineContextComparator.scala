@@ -102,8 +102,12 @@ object CosineContextComparator extends SplitSparkJob {
 	  */
 	def transformLinkContextTfs(articles: RDD[ParsedWikipediaEntry]): RDD[(Link, Bag[String, Int])] = {
 		articles
-			.flatMap(entry => entry.linkswithcontext ++ entry.triealiases.map(_.toLink()))
-			.map(link => (link, Bag.extract(link.context)))
+			.flatMap { entry =>
+				(entry.linkswithcontext ++ entry.triealiases.map(_.toLink())).map{link =>
+					link.article = Option(entry.title)
+					link
+				}
+			}.map(link => (link, Bag.extract(link.context)))
 	}
 
 	/**
@@ -172,7 +176,7 @@ object CosineContextComparator extends SplitSparkJob {
 			}
 			.toMap
 
-		values.map(ranksMap)
+		values.map(ranksMap.getOrElse(_, -1))
 	}
 
 	/**
@@ -202,7 +206,7 @@ object CosineContextComparator extends SplitSparkJob {
 			deltaSuccessorMap(sortedValues(i)) = deltaSuccessor
 		}
 		deltaSuccessorMap(sortedValues.last) = 0.0
-		values.map(deltaSuccessorMap)
+		values.map(deltaSuccessorMap.getOrElse(_, -1.0))
 	}
 
 	/**
@@ -259,14 +263,14 @@ object CosineContextComparator extends SplitSparkJob {
 	/**
 	  * Enriches cosine similarities of given FeatureEntries with their respecive second order feature values.
 	  *
-	  * @param featureEntries FeatureEntries with precalculated cosine similarities
+	  * @param featureEntries FeatureEntries with precalculated cosine similarities #todo
 	  * @return FeatureEntries with cosine similarities and their second order feature values
 	  */
-	def addSecondOrderFeaturesToCosineSimilarities(featureEntries: RDD[FeatureEntry]): RDD[FeatureEntry] = {
+	def addSecondOrderFeaturesToCosineSimilarities(featureEntries: RDD[(Link, FeatureEntry)]): RDD[FeatureEntry] = {
 		featureEntries
-			.map(featureEntry => (featureEntry.alias, List(featureEntry)))
+			.map { case (link, featureEntry) => ((link.article, link.offset), List(featureEntry)) }
 			.reduceByKey(_ ++ _)
-			.flatMap { case (alias, entries) =>
+			.flatMap { case (linkPosition, entries) =>
 				val cosineSimilarities = entries.map(_.cosine_sim.value)
 				entries
 					.zip(generateMultiFeatures(cosineSimilarities))
@@ -291,11 +295,11 @@ object CosineContextComparator extends SplitSparkJob {
 		aliasPageProbabilities: Map[String, List[(String, Double, Double)]],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
-		val aliasPageProbabilitiesWithSOF = addSecondOrderFeaturesToLinkAndPageScores(aliasPageProbabilities)
+//		val aliasPageProbabilitiesWithSOF = addSecondOrderFeaturesToLinkAndPageScores(aliasPageProbabilities)
 
 		val joinableLinks = linkContexts
 			.flatMap { case (link, idfMap) =>
-				aliasPageProbabilitiesWithSOF.getOrElse(link.alias, Nil)
+				aliasPageProbabilities.getOrElse(link.alias, Nil)
 					.map { case (page, extendedLinkScore, extendedPageScore) =>
 						// Note: The page in the link is the actual target for the alias occurrence,
 						// the joined page is just a possible target for the alias.
@@ -304,23 +308,23 @@ object CosineContextComparator extends SplitSparkJob {
 			}.reduceByKey(_ ++ _)
 			.flatMap { case (alias, joinedLinks) =>
 				joinedLinks.map { case (link, linkContext, page, linkScore, pageScore) =>
-					(page, List(ProtoFeatureEntry(link, linkContext, linkScore, pageScore)))
+					(page, List(ProtoFeatureEntry(link, linkContext, linkScore, MultiFeature(pageScore, 1, 0.0, 0.0))))
 				}
 			}.reduceByKey(_ ++ _)
 
 		val weights = (0 until 10).map(t => 1.0).toArray
 		val linkSegements = joinableLinks.randomSplit(weights)
-		val featureEntries = linkSegements.map { rdd =>
+		val featureEntriesWithLinks = linkSegements.map { rdd =>
 			rdd
 				.join(articleContexts)
 				.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
 					protoFeatureEntries.map { protoFeatureEntry =>
 						val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
-						protoFeatureEntry.toFeatureEntry(page, MultiFeature(cosineSim))
+						(protoFeatureEntry.link, protoFeatureEntry.toFeatureEntry(page, MultiFeature(cosineSim)))
 					}
 				}
 		}.reduce(_.union(_))
-		addSecondOrderFeaturesToCosineSimilarities(featureEntries)
+		addSecondOrderFeaturesToCosineSimilarities(featureEntriesWithLinks)
 	}
 
 	/**
@@ -409,6 +413,7 @@ object CosineContextComparator extends SplitSparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
+		//.sample(false, 0.1)
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
 		val linkArticles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
 
