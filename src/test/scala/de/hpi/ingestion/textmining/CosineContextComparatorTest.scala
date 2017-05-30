@@ -224,20 +224,20 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-		val aliasPageProbabilities = TestData.aliasPageScoresMap()
+		val aliasPageScores = TestData.aliasPageScoresMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
-			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
 			.collect
 		featureEntries should not be empty
 	}
 
 	they should "be exactly these feature entries" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-		val aliasPageProbabilities = TestData.aliasPageScoresMap()
+		val aliasPageScores = TestData.aliasPageScoresMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
-			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
 			.collect
 			.map(_.copy(id = null))
 			.toSet
@@ -246,10 +246,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	they should "be calculated for trie aliases as well" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkAndAliasContextsTfidfList())
-		val aliasPageProbabilities = TestData.aliasPageScoresMap()
+		val aliasPageScores = TestData.aliasPageScoresMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
-			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
 			.collect
 			.map(_.copy(id = null))
 			.toSet
@@ -343,12 +343,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.toSet
 		val expectedLinks = TestData.transformedLinkContexts()
 		transformedLinks shouldEqual expectedLinks
-	}
-
-	"Alias page scores with second order features" should "not be empty" in {
-		val aliasPageScores = TestData.aliasPageScoresMap()
-		val aliasPageScoresWithSOF = CosineContextComparator.addSecondOrderFeaturesToLinkAndPageScores(aliasPageScores)
-		aliasPageScoresWithSOF should not be empty
 	}
 
 	"Rank" should "be computed correctly" in {
