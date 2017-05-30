@@ -369,18 +369,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		deltaTops shouldEqual TestData.deltaSuccessorValuesList()
 	}
 
-//	"Second order features for alias page scores" should "be computed correctly" in {
-//		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-//		val aliasPageProbabilities = TestData.alternativeAliasPageScoresMap()
-//		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
-//		val featureEntries = CosineContextComparator
-//			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
-//			.collect
-//			.map(_.copy(id = null))
-//			.toSet
-//		featureEntries shouldEqual TestData.featureEntriesSet()
-//	}
-
 	"Input split" should "split input into 10 parts" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)

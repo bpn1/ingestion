@@ -262,20 +262,25 @@ object CosineContextComparator extends SplitSparkJob {
 	}
 
 	/**
-	  * Enriches cosine similarities of given FeatureEntries with their respecive second order feature values.
+	  * Enriches cosine similarities of given FeatureEntries with their respective second order feature values. #todo
 	  *
 	  * @param featureEntries FeatureEntries with precalculated cosine similarities #todo
 	  * @return FeatureEntries with cosine similarities and their second order feature values
 	  */
-	def addSecondOrderFeaturesToCosineSimilarities(featureEntries: RDD[(Link, FeatureEntry)]): RDD[FeatureEntry] = {
+	def addSecondOrderFeatures(featureEntries: RDD[(Link, FeatureEntry)]): RDD[FeatureEntry] = {
 		featureEntries
 			.map { case (link, featureEntry) => ((link.article, link.offset), List(featureEntry)) }
 			.reduceByKey(_ ++ _)
 			.flatMap { case (linkPosition, entries) =>
+				val pageScores = entries.map(_.entity_score.value)
 				val cosineSimilarities = entries.map(_.cosine_sim.value)
 				entries
+					.zip(generateMultiFeatures(pageScores))
 					.zip(generateMultiFeatures(cosineSimilarities))
-					.map { case (featureEntry, extendedCosineSim) =>
+					.map { case ((featureEntry, extendedPageScore), extendedCosineSim) =>
+						featureEntry.entity_score.rank = extendedPageScore.rank
+						featureEntry.entity_score.delta_top = extendedPageScore.delta_top
+						featureEntry.entity_score.delta_successor = extendedPageScore.delta_successor
 						featureEntry.cosine_sim.rank = extendedCosineSim.rank
 						featureEntry.cosine_sim.delta_top = extendedCosineSim.delta_top
 						featureEntry.cosine_sim.delta_successor = extendedCosineSim.delta_successor
@@ -325,7 +330,7 @@ object CosineContextComparator extends SplitSparkJob {
 					}
 				}
 		}.reduce(_.union(_))
-		addSecondOrderFeaturesToCosineSimilarities(featureEntriesWithLinks)
+		addSecondOrderFeatures(featureEntriesWithLinks)
 	}
 
 	/**

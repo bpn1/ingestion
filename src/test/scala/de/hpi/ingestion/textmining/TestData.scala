@@ -779,8 +779,8 @@ object TestData {
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
 		val mfPage_1 = MultiFeature(1.0, 1, 0.0, 0.0)
-		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, 0.0, 0.6)
-		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6, 0.0)
+		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, 0.0, 0.6000000000000001)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6000000000000001, 0.0)
 
 		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, 0.08622243532359375)
 		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 2, 0.08622243532359375, 0.0)
@@ -808,8 +808,8 @@ object TestData {
 
 	def featureEntriesWithAliasesSet(): Set[FeatureEntry] = {
 		val mfPage_1 = MultiFeature(1.0, 1, 0.0, 0.0)
-		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, 0.0, 0.6)
-		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6, 0.0)
+		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, 0.0, 0.6000000000000001)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6000000000000001, 0.0)
 
 		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, 0.0)
 		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 1, 0.0, 0.0)
