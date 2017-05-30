@@ -515,9 +515,9 @@ object TestData {
 	))
 
 	def labeledFeatures(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
-		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1)), correct = true),
-		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3)), correct = true),
-		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5)))
+		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1), name = Option("Audi AG")), correct = true),
+		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3), name = Option("Volkswagen AG")), correct = true),
+		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5), name = Option("Porsche AG")))
 	))
 
 	def requiredSettings: List[String] = {
@@ -540,7 +540,7 @@ object TestData {
 
 	def dbpediaEntries: List[Subject] = {
 		List(
-			Subject(id = idList.head, name = Option("Audi")),
+			Subject(id = idList.head, name = Option("Audi ")),
 			Subject(id = idList(2), name = Option("Volkswagen")),
 			Subject(id = idList(4), name = Option("Porsche")))
 	}
