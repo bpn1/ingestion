@@ -2,14 +2,11 @@ package de.hpi.ingestion.datalake
 
 import java.net.URL
 
-import de.hpi.ingestion.dataimport.NormalizationStrategy
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 
-import scala.collection.mutable
-
 /**
-  * Trait for imports into the Datalake
-  * @tparam T
+  * Trait for imports into the Datalake.
+  * @tparam T Entity type that will be translated into Subjects.
   */
 trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	val outputKeyspace = "datalake"

@@ -33,6 +33,21 @@ CREATE TABLE wikidumps.parsedwikipedia (
     triealiases frozen<list<frozen<triealias>>>
 );
 
+CREATE TABLE wikidumps.parsedwikipedia_backup (
+    title text PRIMARY KEY,
+    categorylinks frozen<list<frozen<link>>>,
+    context map<text, int>,
+    disambiguationlinks frozen<list<frozen<link>>>,
+    extendedlinks frozen<list<frozen<link>>>,
+    foundaliases list<text>,
+    linkswithcontext frozen<list<frozen<link>>>,
+    listlinks list<frozen<link>>,
+    templatelinks list<frozen<link>>,
+    text text,
+    textlinks list<frozen<link>>,
+    triealiases frozen<list<frozen<triealias>>>
+);
+
 CREATE TABLE wikidumps.wikipedia (
     title text PRIMARY KEY,
     text text

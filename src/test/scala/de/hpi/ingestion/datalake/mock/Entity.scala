@@ -20,10 +20,10 @@ case class Entity(
 			field.setAccessible(true)
 			attribute match {
 				case "root_value" => List(this.root_value)
-				case _ => List[String]()
+				case _ => Nil
 			}
 		} else {
-			data.getOrElse(attribute, List[String]())
+			data.getOrElse(attribute, Nil)
 		}
 	}
 }

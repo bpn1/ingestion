@@ -176,18 +176,11 @@ object TestData {
 
 	def emptySubject: Subject = Subject()
 
-	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
-
-	def parsedConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
-		Map(
-			"name" -> List(
-				ScoreConfig(similarityMeasure = MongeElkan, weight = 0.8),
-				ScoreConfig(similarityMeasure = JaroWinkler, weight = 0.7)))
-	}
+	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false)
 
 	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = {
 		List(
-			(testSubjects.head, testSubjects(1), 0.7117948717948718),
+			(testSubjects.head, testSubjects(1), 0.9784615384615384),
 			(testSubjects.head, testSubjects(4), 0.5761904761904763),
 			(testSubjects(1), testSubjects(4), 0.5654212454212454),
 			(testSubjects(2), testSubjects(3), 0.9446913580246914))
@@ -198,7 +191,7 @@ object TestData {
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((stagings.head.id, stagingTable, 0.7117948717948718))),
+				List((stagings.head.id, stagingTable, 0.9784615384615384))),
 			DuplicateCandidates(
 				subjects(1).id,
 				List((stagings(1).id, stagingTable, 0.9446913580246914))))
@@ -209,7 +202,7 @@ object TestData {
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((subjects(1).id, stagingTable, 0.7117948717948718), (subjects(4).id, stagingTable, 0.5761904761904763))),
+				List((subjects(1).id, stagingTable, 0.9784615384615384), (subjects(4).id, stagingTable, 0.5761904761904763))),
 			DuplicateCandidates(
 				subjects(1).id,
 				List((subjects(4).id, stagingTable, 0.5654212454212454))),
@@ -458,6 +451,7 @@ object TestData {
 		List("keyspaceSubjectTable", "subjectTable", "keyspaceStagingTable", "stagingTable", "keyspaceStatsTable", "statsTable")
 	}
 
+
 	def distinctDuplicateCandidates(subjects: List[Subject], sc: SparkContext): RDD[(Subject, Subject, Double)] = {
 		sc.parallelize(List(
 			(subjects.head, subjects(1), 0.0),
@@ -465,6 +459,34 @@ object TestData {
 			(subjects.head, subjects(3), 0.0),
 			(subjects(2), subjects(1), 0.0)
 		))
+	}
+
+	def featureEntries: List[FeatureEntry] = {
+		List(
+			FeatureEntry(null, null, null, Map("a" -> List(0.2, 0.4, 0.1)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.1, 0.3, 0.2)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.3, 0.5, 0.15)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.4, 0.3, 0.1)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.345, 0.6, 0.3)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.6, 0.7, 0.5)), true),
+			FeatureEntry(null, null, null, Map("a" -> List(0.124, 0.4, 0.3)), false),
+			FeatureEntry(null, null, null, Map("a" -> List(0.78, 0.9, 0.5)), true),
+			FeatureEntry(null, null, null, Map("a" -> List(0.9, 0.7, 0.6)), true),
+			FeatureEntry(null, null, null, Map("a" -> List(0.85, 0.6, 0.3)), true))
+	}
+
+	def dbpediaEntries: List[Subject] = {
+		List(
+			Subject(id = idList.head, name = Option("Audi")),
+			Subject(id = idList(2), name = Option("Volkswagen")),
+			Subject(id = idList(4), name = Option("Porsche")))
+	}
+
+	def wikidataEntries: List[Subject] = {
+		List(
+			Subject(id = idList(1), name = Option("Audi AG")),
+			Subject(id = idList(3), name = Option("Volkswagen AG")),
+			Subject(id = idList(5), name = Option("Porsche AG")))
 	}
 }
 // scalastyle:on line.size.limit

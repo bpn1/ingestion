@@ -4,7 +4,6 @@ import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 
 object TestData {
-
 	def protoFeatureEntries(): List[(ProtoFeatureEntry, String, Double)] = {
 		List(
 			(ProtoFeatureEntry("a", Link("a", "b"), Map(), 0.1, 0.2), "b", 0.8),
@@ -44,6 +43,29 @@ object TestData {
 		)
 	}
 
+	def textLinksWithContext(): List[Link] = {
+		List(
+			Link("Hochhaus", "Hochhaus", Option(113), Map("test 1" -> 1)),
+			Link("Berliner", "Berlin", Option(190), Map("test 3" -> 3)))
+	}
+
+	def extendedLinksWithContext(): List[Link] = {
+		List(
+			Link("Postbank", "Postbank", Option(126), Map("test 2" -> 2)),
+			Link("Kreuzberg", "Berlin-Kreuzberg", Option(208), Map("test 4" -> 4)))
+	}
+
+	def parsedEntryWithFilteredLinks(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Origineller Titel",
+			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
+			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
+			categorylinks = List(Link("Dora", "Dora")),
+			listlinks = List(Link("Fund", "Fund")),
+			disambiguationlinks = List(Link("Esel", "Esel"))
+		)
+	}
+
 	def allLinksListFromEntryList(): List[Link] = {
 		List(
 			Link("Apfel", "Apfel", Option(0)),
@@ -56,15 +78,39 @@ object TestData {
 		)
 	}
 
-	def parsedEntryWithFilteredLinks(): ParsedWikipediaEntry = {
+	def parsedEntryWithContext(): ParsedWikipediaEntry = {
 		ParsedWikipediaEntry(
-			"Origineller Titel",
-			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
-			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
-			categorylinks = List(Link("Dora", "Dora")),
-			listlinks = List(Link("Fund", "Fund")),
-			disambiguationlinks = List(Link("Esel", "Esel"))
+			"Test Article",
+			textlinks = List(
+				Link("Hochhaus", "Hochhaus", Option(113)),
+				Link("Berliner", "Berlin", Option(190))),
+			rawextendedlinks = List(
+				ExtendedLink("Postbank", Map("Postbank" -> 10), Option(126)),
+				ExtendedLink("Kreuzberg", Map("Berlin-Kreuzberg" -> 10), Option(208))),
+			linkswithcontext = List(
+				Link("Hochhaus", "Hochhaus", Option(113), Map("test 1" -> 1)),
+				Link("Postbank", "Postbank", Option(126), Map("test 2" -> 2)),
+				Link("Berliner", "Berlin", Option(190), Map("test 3" -> 3)),
+				Link("Kreuzberg", "Berlin-Kreuzberg", Option(208), Map("test 4" -> 4)))
 		)
+	}
+
+	def trieAliases(): List[TrieAlias] = {
+		List(
+			TrieAlias("alias 1", Option(1), Map("a" -> 1, "b" -> 2)),
+			TrieAlias("alias 2", Option(7), Map("c" -> 3, "d" -> 4)),
+			TrieAlias("alias 3", Option(4)),
+			TrieAlias("alias 4", None, Map("e" -> 5)),
+			TrieAlias("alias 5", None))
+	}
+
+	def trieAliasLinks(): List[Link] = {
+		List(
+			Link("alias 1", null, Option(1), Map("a" -> 1, "b" -> 2)),
+			Link("alias 2", null, Option(7), Map("c" -> 3, "d" -> 4)),
+			Link("alias 3", null, Option(4)),
+			Link("alias 4", null, None, Map("e" -> 5)),
+			Link("alias 5", null, None))
 	}
 
 	def edgeCaseExtendedLinks(): List[ExtendedLink] = {

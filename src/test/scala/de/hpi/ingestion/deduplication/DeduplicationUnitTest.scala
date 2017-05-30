@@ -31,14 +31,12 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	"Config parsing" should "generate a configuration from a given path" in {
-		val originalSettings = Deduplication.settings
-		val originalConfig = Deduplication.scoreConfigSettings
+		val originalSettings = Deduplication.settings(false)
+		val originalConfig = Deduplication.scoreConfigSettings(false)
 		val originalName = Deduplication.configFile
-		Deduplication.settings shouldBe empty
-		Deduplication.scoreConfigSettings shouldBe empty
 
 		Deduplication.configFile = "test.xml"
-		val expected = TestData.parsedConfig
+		val expected = TestData.testConfig()
 		Deduplication.parseConfig()
 		Deduplication.scoreConfigSettings shouldEqual expected
 		Deduplication.settings should not be empty
@@ -49,12 +47,12 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	it should "be read before run is executed" in {
-		val originalSettings = Deduplication.settings
-		val originalConfig = Deduplication.scoreConfigSettings
+		val originalSettings = Deduplication.settings(false)
+		val originalConfig = Deduplication.scoreConfigSettings(false)
 		val originalName = Deduplication.configFile
 
 		Deduplication.configFile = "test.xml"
-		val expected = TestData.parsedConfig
+		val expected = TestData.testConfig()
 		Deduplication.assertConditions(Array[String]())
 		Deduplication.scoreConfigSettings shouldEqual expected
 		Deduplication.settings should not be empty
@@ -65,10 +63,10 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	"Duplicates" should "be found, filtered and returned with their score" in {
-		val originalSettings = Deduplication.settings
-		val originalConfig = Deduplication.scoreConfigSettings
+		val originalSettings = Deduplication.settings(false)
+		val originalConfig = Deduplication.scoreConfigSettings(false)
 
-		Deduplication.scoreConfigSettings = TestData.parsedConfig
+		Deduplication.scoreConfigSettings = TestData.testConfig()
 		Deduplication.settings = Map("confidence" -> "0.35")
 		val subjects = TestData.testSubjects
 		val duplicates = Deduplication.findDuplicates(TestData.subjectBlocks(subjects, sc), sc).collect.toSet
@@ -80,7 +78,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	they should "be grouped into Duplicate Candidates" in {
-		val originalSettings = Deduplication.settings
+		val originalSettings = Deduplication.settings(false)
 
 		val subjects = TestData.testSubjects
 		val duplicates = sc.parallelize(TestData.testDuplicates(subjects))
@@ -112,10 +110,10 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 	}
 
 	"Deduplication" should "find duplicates and create duplicate candidates" in {
-		val originalSettings = Deduplication.settings
-		val originalConfig = Deduplication.scoreConfigSettings
+		val originalSettings = Deduplication.settings(false)
+		val originalConfig = Deduplication.scoreConfigSettings(false)
 
-		Deduplication.scoreConfigSettings = TestData.parsedConfig
+		Deduplication.scoreConfigSettings = TestData.testConfig()
 		Deduplication.settings = Map("stagingTable" -> "subject_wikidata", "confidence" -> "0.35")
 		val subjects = TestData.subjects
 		val stagings = TestData.stagings
