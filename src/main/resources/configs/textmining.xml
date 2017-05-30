@@ -19,5 +19,6 @@
         <contextSize>20</contextSize>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
+        <articleFETable>articlefeatureentries</articleFETable>
     </settings>
 </config>

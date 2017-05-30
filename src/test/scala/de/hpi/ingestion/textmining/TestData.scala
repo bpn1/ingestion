@@ -2160,9 +2160,63 @@ object TestData {
 				text = Option("waldrech Büdinger Wald"),
 				textlinks = List(Link("Büdinger Wald", "Büdinger Wald", Option(9)))),
 			ParsedWikipediaEntry(
-				"Article 6",
+				"Article 9",
 				text = Option("jahr historisches Jahr"),
 				textlinks = List(Link("historisches Jahr", "1377", Option(18))))
+		)
+	}
+
+	def cosSimAliases(): Set[Alias] = {
+		// these pages do not fit to the aliases but are required for the tests
+		Set(
+			Alias("Audi", Map("Audi" -> 2), Option(2), Option(3)),
+			Alias("Brachttal", Map("Brachttal" -> 2), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Option(1), Option(2)),
+			Alias("Hessen", Map("Hessen" -> 1), Option(1), Option(2)),
+			Alias("1377", Map("1377" -> 1), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("1377" -> 1), Option(1), Option(1))
+		)
+	}
+
+	def articleFeatureEntriesWithAliases(): List[ArticleFeatureEntry] = {
+		List(
+			ArticleFeatureEntry(
+				"Article 1",
+				List(FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.701323347600063, correct = true))
+			),
+			ArticleFeatureEntry(
+				"Article 2",
+				List(FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.5803253864364242, correct = true))
+			),
+			ArticleFeatureEntry(
+				"Article 3",
+				List(FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107054318584233, correct = true))
+			),
+			ArticleFeatureEntry(
+				"Article 4",
+				List(FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0))
+			),
+			ArticleFeatureEntry(
+				"Article 5",
+				List(FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611047535660278))
+			),
+			ArticleFeatureEntry(
+				"Article 6",
+				List(FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.537802301286109, correct = true))
+			),
+			ArticleFeatureEntry(
+				"Article 7",
+				List(FeatureEntry("1377", "1377", 1.0, 1.0, 0.8283323365465772))
+			),
+			ArticleFeatureEntry(
+				"Article 8",
+				List(FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, correct = true))
+			),
+			ArticleFeatureEntry(
+				"Article 9",
+				List(FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.8283323365465772, correct = true))
+			)
 		)
 	}
 }

@@ -3,7 +3,7 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.{Alias, DFData, FeatureEntry, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.{CleanCoreNLPTokenizer, IngestionTokenizer}
 import org.apache.spark.rdd.RDD
 
@@ -121,69 +121,75 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
-//	"Extracted feature entries from links with missing pages" should "be empty" in {
-//		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-//		val oldSettings = CosineContextComparator.settings(false)
-//		CosineContextComparator.parseConfig()
-//
-//		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-//		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-//		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
-//		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
-//		val featureEntries = CosineContextComparator
-//			.run(input, sc)
-//			.fromAnyRDD[FeatureEntry]()
-//			.head
-//			.collect
-//		featureEntries shouldBe empty
-//
-//		CosineContextComparator.settings = oldSettings
-//		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
-//	}
-//
-//	"Extracted feature entries from links with existing pages" should "not be empty" in {
-//		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-//		val oldSettings = CosineContextComparator.settings(false)
-//		CosineContextComparator.parseConfig()
-//
-//		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-//		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-//		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-//		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
-//		val featureEntries = CosineContextComparator
-//			.run(input, sc)
-//			.fromAnyRDD[FeatureEntry]()
-//			.head
-//			.collect
-//		featureEntries should not be empty
-//
-//		CosineContextComparator.settings = oldSettings
-//		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
-//	}
-//
-//	they should "be the same amount as links" in {
-//		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-//		val oldSettings = CosineContextComparator.settings(false)
-//		CosineContextComparator.parseConfig()
-//
-//		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-//		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-//		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-//		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
-//		val featureEntries = CosineContextComparator
-//			.run(input, sc)
-//			.fromAnyRDD[FeatureEntry]()
-//			.head
-//			.collect
-//		val linkCount = articles.flatMap(_.allLinks()).count
-//		featureEntries.length shouldBe linkCount
-//
-//		CosineContextComparator.settings = oldSettings
-//		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
-//	}
+	"Extracted feature entries from links with missing pages" should "be empty" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+
+		val testDocFreqFunction = TestData.docfreqStream("docfreq_cosinesim") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val aliases = sc.parallelize(List[Alias]())
+		val articles = sc.parallelize(TestData.cosSimArticlesWithAliases())
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
+		val featureEntries = CosineContextComparator
+			.run(input, sc)
+			.fromAnyRDD[ArticleFeatureEntry]()
+			.head
+			.flatMap(_.featureentries)
+			.collect
+		featureEntries shouldBe empty
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	"Extracted feature entries from links with existing pages" should "not be empty" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+
+		val testDocFreqFunction = TestData.docfreqStream("docfreq_cosinesim") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val articles = sc.parallelize(TestData.cosSimArticlesWithAliases())
+		val aliases = sc.parallelize(TestData.cosSimAliases().toList)
+		val articleTexts = sc.parallelize(TestData.cosSimArticleTexts()
+			.map { case (title, text) => ParsedWikipediaEntry(title, Option(text))}
+			.toList)
+		val input = List(articleTexts).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
+		val featureEntries = CosineContextComparator
+			.run(input, sc, Array("CoreNLPTokenizer", "false", "false"))
+			.fromAnyRDD[ArticleFeatureEntry]()
+			.head
+			.collect
+		featureEntries should not be empty
+		featureEntries.flatMap(_.featureentries) should not be empty
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	they should "be exactly these article feature entries" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldSettings = CosineContextComparator.settings(false)
+
+		val testDocFreqFunction = TestData.docfreqStream("docfreq_cosinesim") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val articles = sc.parallelize(TestData.cosSimArticlesWithAliases())
+		val aliases = sc.parallelize(TestData.cosSimAliases().toList)
+		val articleTexts = sc.parallelize(TestData.cosSimArticleTexts()
+			.map { case (title, text) => ParsedWikipediaEntry(title, Option(text))}
+			.toList)
+		val input = List(articleTexts).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
+		val featureEntries = CosineContextComparator
+			.run(input, sc, Array("CoreNLPTokenizer", "false", "false"))
+			.fromAnyRDD[ArticleFeatureEntry]()
+			.head
+			.collect
+			.toList
+		val expectedEntries = TestData.articleFeatureEntriesWithAliases()
+		featureEntries shouldEqual expectedEntries
+
+		CosineContextComparator.settings = oldSettings
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
 
 	"Input split" should "split input into 10 parts" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)

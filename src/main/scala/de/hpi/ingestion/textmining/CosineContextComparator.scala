@@ -39,9 +39,9 @@ object CosineContextComparator extends SplitSparkJob {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[FeatureEntry]()
+			.fromAnyRDD[ArticleFeatureEntry]()
 			.head
-			.saveToCassandra(settings("keyspace"), settings("featureTable"))
+			.saveToCassandra(settings("keyspace"), settings("articleFETable"))
 	}
 	// $COVERAGE-ON$
 
