@@ -230,41 +230,10 @@ object CosineContextComparator extends SplitSparkJob {
 	}
 
 	/**
-	  * Enriches link scores and page scores with their respective second order feature values.
+	  * Enriches page scoes and cosine similarities of given FeatureEntries with their respective second order feature
+	  * values.
 	  *
-	  * @param linkAndPageScores original link scores and page scores
-	  * @return original link scores and page scores and their second order feature values
-	  */
-	def addSecondOrderFeaturesToLinkAndPageScores(
-		linkAndPageScores: Map[String, List[(String, Double, Double)]]
-	): Map[String, List[(String, MultiFeature, MultiFeature)]] = {
-		val linkScoresByAlias = linkAndPageScores.flatMap { case (alias, scores) =>
-			scores.map { case (page, linkScore, pageScore) => (alias, linkScore) }
-		}.toList
-			.sortBy(-_._2)
-		val linkScores = linkScoresByAlias
-			.map(_._2)
-		val extendedLinkScoresByAlias = linkScoresByAlias
-			.zip(generateMultiFeatures(linkScores))
-			.map { case ((alias, linkScore), extendedLinkScore) => alias -> extendedLinkScore }
-			.toMap
-
-		linkAndPageScores.map { case (alias, scores) =>
-			val extendedLinkScore = extendedLinkScoresByAlias(alias)
-			val pageScores = scores.map(_._3)
-			val extendedScores = scores
-				.zip(generateMultiFeatures(pageScores))
-				.map { case ((page, linkScore, pageScore), extendedPageScore) =>
-					(page, extendedLinkScore, extendedPageScore)
-				}
-			alias -> extendedScores
-		}
-	}
-
-	/**
-	  * Enriches cosine similarities of given FeatureEntries with their respective second order feature values. #todo
-	  *
-	  * @param featureEntries FeatureEntries with precalculated cosine similarities #todo
+	  * @param featureEntries FeatureEntries with precalculated page scores and cosine similarities
 	  * @return FeatureEntries with cosine similarities and their second order feature values
 	  */
 	def addSecondOrderFeatures(featureEntries: RDD[(Link, FeatureEntry)]): RDD[FeatureEntry] = {
