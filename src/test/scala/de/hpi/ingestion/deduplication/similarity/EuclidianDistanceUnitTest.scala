@@ -13,11 +13,6 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 			subjects(5).properties("geo_coords").head.toList(1).toDouble
 		)
 
-		println(subjects(4).properties("geo_coords").head.toList(0).toDouble)
-		println(subjects(4).properties("geo_coords").head.toList(1).toDouble)
-		println(subjects(5).properties("geo_coords").head.toList(0).toDouble)
-		println(subjects(5).properties("geo_coords").head.toList(1).toDouble)
-
 		val expected = 101.2406771798861
 
 		distance shouldEqual expected
@@ -49,16 +44,18 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 	"compare" should "compute correct score for two given points" in {
 		val subjects = TestData.testSubjects
 		val geoPoints = List(
-			subjects.head.properties("geo_coords").take(2).mkString(","),
-			subjects(2).properties("geo_coords").take(2).mkString(","),
-			subjects(3).properties("geo_coords").take(2).mkString(",")
+			subjects.head.properties("geo_coords").mkString(","),
+			subjects(2).properties("geo_coords").mkString(","),
+			subjects(3).properties("geo_coords").mkString(",")
 		)
+
+		println(subjects(3).properties("geo_coords").mkString(","))
 		val scores = List(
 			EuclidianDistance.compare(geoPoints.head, geoPoints.head),
 			EuclidianDistance.compare(geoPoints.head, geoPoints(1)),
 			EuclidianDistance.compare(geoPoints.head, geoPoints(2))
 		)
-		val expectedScores = List(1.0, 0.5, 0.0)
+		val expectedScores = List(1.0, 1.0, 0.0)
 		(scores, expectedScores).zipped.foreach { case (score, expected) =>
 			score shouldEqual expected
 		}
