@@ -56,9 +56,9 @@ object CompareStrategy extends Serializable {
 				 | "geo_city"
 				 | "geo_postal"
 				 | "geo_country"
-				 | "geo_coords"
 				 | "gen_employees" => singleStringCompare
-			case _ => defaultCompare
+			case "geo_coords"
+				 |_ => defaultCompare
 		}
 	}
 }
