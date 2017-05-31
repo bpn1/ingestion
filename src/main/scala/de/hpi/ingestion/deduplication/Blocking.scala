@@ -96,11 +96,29 @@ object Blocking extends SparkJob {
 	}
 
 	/**
-	  * Calculates the relative amount of duplicates we could find in our comparisons.
+	  * Calculates the relative amount of duplicates we could find in our comparisonsfor all blocking schemes.
 	  * Uses the goldstandard to know, how many duplicates we should be able to find.
 	  * @param duplicates duplicates from our input that fit the goldstandard
 	  * @param goldStandard tuples of duplicateIDs we want to find
-	  * @return a double, representative for the relative amount of duplicates
+	  * @return a double, representative for the relative amount of total duplicates
+	  */
+	def calculateTotalPairwiseCompleteness(
+		duplicates: RDD[(Traversable[(UUID, UUID)], (String, Set[BlockStats]))],
+		goldStandard: Set[(UUID, UUID)]
+	): Double = {
+		duplicates
+			.flatMap { case (duplicateIDs, (tag, block)) => duplicateIDs }
+			.distinct
+			.count()
+			.toDouble / goldStandard.size.toDouble
+	}
+
+	/**
+	  * Calculates the relative amount of duplicates we could find in our comparisons for each blocking scheme.
+	  * Uses the goldstandard to know, how many duplicates we should be able to find.
+	  * @param duplicates duplicates from our input that fit the goldstandard
+	  * @param goldStandard tuples of duplicateIDs we want to find
+	  * @return a double for each blocking scheme-tag, representative for the relative amount of duplicates
 	  */
 	def calculatePairwiseCompleteness(
 		duplicates: RDD[(Traversable[(UUID, UUID)], (String, Set[BlockStats]))],
@@ -109,12 +127,12 @@ object Blocking extends SparkJob {
 		duplicates.flatMap { case (duplicateIDs, (tag, block)) =>
 			duplicateIDs.map((tag, _))
 		}.distinct
-			.map { case (tag, duplicate) => (tag, 1) }
-			.reduceByKey(_ + _)
-			.collect
-			.toMap
-			.mapValues(_.toDouble / goldStandard.size.toDouble)
-			.map(identity)
+		.map { case (tag, duplicate) => (tag, 1) }
+		.reduceByKey(_ + _)
+		.collect
+		.toMap
+		.mapValues(_.toDouble / goldStandard.size.toDouble)
+		.map(identity)
 	}
 
 	/**
@@ -187,8 +205,10 @@ object Blocking extends SparkJob {
 	  * the amount of data shuffled across the network for better performance.
 	  * @param subjects RDD containing the Subjects
 	  * @param stagingSubjects RDD containing the staged Subjects
+	  * @param goldStandard tuples of duplicateIDs we want to find
 	  * @param blockingSchemes blocking schemes used to generate keys
 	  * @param filterUndefined whether or not the undefined blocks will be filtered (defaults to true)
+	  * @param filterSmall whether or not very small blocks will be filtered (defaults to true)
 	  * @param comment additional comment added to the data entries
 	  * @return RDD of Block Evaluations containing the Block sizes
 	  */
@@ -210,13 +230,10 @@ object Blocking extends SparkJob {
 		}.filter { case ((key, tag), (subject, staging)) => (subject.size * staging.size) < maxBlockSize }
 		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))
 		var pairwiseCompleteness = calculatePairwiseCompleteness(duplicates, goldStandard)
-		val totalPairwiseCompleteness = duplicates
-			.flatMap { case (duplicateIDs, (tag, block)) => duplicateIDs }
-			.distinct
-			.count()
-			.toDouble / goldStandard.size.toDouble
+		val totalPairwiseCompleteness = calculateTotalPairwiseCompleteness(duplicates, goldStandard)
 		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
 		pairwiseCompleteness ++= Map(sumTag -> totalPairwiseCompleteness)
+
 		val statsSum = duplicates
 			.values
 			.map { case (tag, blockStats) => (sumTag, blockStats) }
