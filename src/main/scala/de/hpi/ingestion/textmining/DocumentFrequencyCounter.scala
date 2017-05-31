@@ -1,23 +1,22 @@
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models.{DocumentFrequency, ParsedWikipediaEntry}
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 /**
   * Counts document frequencies over all articles.
   */
 object DocumentFrequencyCounter extends SparkJob {
 	appName = "Document Frequency Counter"
-	val keyspace = "wikidumps"
-	val inputArticlesTablename = "parsedwikipedia"
-	val outputDocumentFrequenciesTablename = "wikipediadocfreq"
+	configFile = "textmining.xml"
 	val removeStopwords = true
 	val stem = true
-	val leastSignificantDocumentFrequency = 5
+	var leastSignificantDocumentFrequency = 5
 
 	// $COVERAGE-OFF$
 	/**
@@ -27,7 +26,7 @@ object DocumentFrequencyCounter extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, inputArticlesTablename)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		List(articles).toAnyRDD()
 	}
 
@@ -41,7 +40,7 @@ object DocumentFrequencyCounter extends SparkJob {
 		output
 			.fromAnyRDD[DocumentFrequency]()
 			.head
-			.saveToCassandra(keyspace, outputDocumentFrequenciesTablename)
+			.saveToCassandra(settings("keyspace"), settings("dfTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -84,7 +83,7 @@ object DocumentFrequencyCounter extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
 		val documentFrequencies = countDocumentFrequencies(articles)
 		val filteredDFs = filterDocumentFrequencies(documentFrequencies, leastSignificantDocumentFrequency)

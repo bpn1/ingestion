@@ -1,90 +1,108 @@
 package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, ScoreConfig}
-import de.hpi.ingestion.deduplication.similarity._
+import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 import org.scalatest.{FlatSpec, Matchers}
-
-import scala.collection.mutable
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
-	"compare" should "calculate a score regarding the configuration" in {
-		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.testConfig()
-		val subjects = TestData.testSubjects
-		val score = deduplication.compare(subjects.head, subjects(1))
-		val expected = TestData.testSubjectScore(subjects.head, subjects(1))
-
+	"Compare" should "calculate a score regarding the configuration" in {
+		val subject :: staging :: tail = TestData.testSubjects
+		val simMeasures = TestData.testConfig()
+		val score = Deduplication.compare(subject, staging, simMeasures)
+		val expected = TestData.testConfigScore(subject, staging)
 		score shouldEqual expected
 	}
 
-	it should "just return the weighted score if the configuration contains only one element" in {
-		val deduplication = TestData.defaultDeduplication
-		val config = mutable.Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]()
-		config("name") = List(ScoreConfig(MongeElkan, 0.5))
-		deduplication.config = config
-		val subjects = TestData.testSubjects
-		val score = deduplication.compare(subjects.head, subjects(1))
-		val expected = MongeElkan.compare(subjects.head.name.get, subjects(1).name.get)
-
+	it should "calculate the correct score for a complex configuration" in {
+		val subject :: staging :: tail = TestData.testSubjects
+		val simMeasures = TestData.complexTestConfig
+		val score = Deduplication.compare(subject, staging, simMeasures)
+		val expected = TestData.complexTestConfigScore(subject, staging)
 		score shouldEqual expected
 	}
 
-	"parseConfig" should "generate a configuration from a given path" in {
-		val deduplication = TestData.defaultDeduplication
-		deduplication.parseConfig()
-		val expected = TestData.parsedConfig
-
-		deduplication.config shouldEqual expected
+	it should "just return the score if the configuration contains only one element" in {
+		val subject :: staging :: tail = TestData.testSubjects
+		val simMeasures = TestData.simpleTestConfig
+		val score = Deduplication.compare(subject, staging, simMeasures)
+		val expected = TestData.simpleTestConfigScore(subject, staging)
+		score shouldEqual expected
 	}
 
-	"blocking" should "partition subjects regarding the value of the given key" in {
-		val deduplication = TestData.defaultDeduplication
+	"Config parsing" should "generate a configuration from a given path" in {
+		val originalSettings = Deduplication.settings(false)
+		val originalConfig = Deduplication.scoreConfigSettings(false)
+		val originalName = Deduplication.configFile
+
+		Deduplication.configFile = "test.xml"
+		val expected = TestData.testConfig()
+		Deduplication.parseConfig()
+		Deduplication.scoreConfigSettings shouldEqual expected
+		Deduplication.settings should not be empty
+
+		Deduplication.scoreConfigSettings = originalConfig
+		Deduplication.settings = originalSettings
+		Deduplication.configFile = originalName
+	}
+
+	it should "be read before run is executed" in {
+		val originalSettings = Deduplication.settings(false)
+		val originalConfig = Deduplication.scoreConfigSettings(false)
+		val originalName = Deduplication.configFile
+
+		Deduplication.configFile = "test.xml"
+		val expected = TestData.testConfig()
+		Deduplication.assertConditions(Array[String]())
+		Deduplication.scoreConfigSettings shouldEqual expected
+		Deduplication.settings should not be empty
+
+		Deduplication.scoreConfigSettings = originalConfig
+		Deduplication.settings = originalSettings
+		Deduplication.configFile = originalName
+	}
+
+	"Duplicates" should "be found, filtered and returned with their score" in {
+		val originalSettings = Deduplication.settings(false)
+		val originalConfig = Deduplication.scoreConfigSettings(false)
+
+		Deduplication.scoreConfigSettings = TestData.testConfig()
+		Deduplication.settings = Map("confidence" -> "0.35")
 		val subjects = TestData.testSubjects
-		val subjectsRDD = sc.parallelize(subjects)
-		val blockingSchemes = List(TestData.cityBlockingScheme, new SimpleBlockingScheme)
-		val blocks = deduplication.blocking(subjectsRDD, blockingSchemes)
-		val expectedBlocks = TestData.blocks(sc, subjects)
-
-		(blocks, expectedBlocks).zipped.foreach { case (block, expectedBlock) =>
-			assertRDDEquals(expectedBlock, block)
-		}
-	}
-
-	"createDuplicateCandidates" should "build an RDD containing all candidates for deduplication for each subject" in {
-		val testSubjects = TestData.testSubjects
-		val deduplication = new Deduplication(0.35, "TestDeduplication", List("testSource"))
-		deduplication.settings("stagingTable")= "subject_wikidata"
-		val testSubject1 = testSubjects.head
-		val testSubject2 = testSubjects(3)
-		val testSubjectPair = List((testSubject1, testSubject2, 0.5))
-		val testDuplicateCandidates = deduplication.createDuplicateCandidates(sc.parallelize(testSubjectPair))
-		val expectedCandidate = DuplicateCandidates(testSubject1.id, List((testSubject2, "subject_wikidata", 0.5)))
-		val expected = sc.parallelize(List(expectedCandidate))
-		assertRDDEquals(testDuplicateCandidates, expected)
-	}
-
-	"findDuplicates" should "return a list of tuple of duplicates with their score" in {
-		val deduplication = TestData.defaultDeduplication
-		deduplication.config = TestData.parsedConfig
-		val subjects = TestData.testSubjects
-		val duplicates = deduplication.findDuplicates(subjects)
-		val expected = TestData.testDuplicates(subjects)
-
+		val duplicates = Deduplication.findDuplicates(TestData.subjectBlocks(subjects, sc), sc).collect.toSet
+		val expected = TestData.testDuplicates(subjects).toSet
 		duplicates shouldEqual expected
+
+		Deduplication.scoreConfigSettings = originalConfig
+		Deduplication.settings = originalSettings
 	}
 
-	"evaluateBlocks" should "evaluate each block" in {
-		val deduplication = TestData.defaultDeduplication
+	they should "be grouped into Duplicate Candidates" in {
+		val originalSettings = Deduplication.settings(false)
 		val subjects = TestData.testSubjects
-		val blocks = TestData.blocks(sc, subjects)
-		val blockingSchemes = List(TestData.cityBlockingScheme, new SimpleBlockingScheme)
-		val evaluationList = deduplication.evaluateBlocks(blocks, "Test comment", blockingSchemes)
-		val evaluationData = evaluationList
-			.map(blockingData => (blockingData._2, blockingData._3))
-			.collect
-			.toSet
-		val expected = TestData.evaluationTestData.toSet
-		evaluationData shouldEqual expected
+		val duplicates = sc.parallelize(TestData.testDuplicates(subjects))
+		Deduplication.settings = Map("stagingTable" -> "subject_wikidata")
+		val duplicateCandidates = Deduplication.createDuplicateCandidates(duplicates)
+		val expectedCandidates = sc.parallelize(TestData.duplicateCandidates(subjects))
+		assertRDDEquals(duplicateCandidates, expectedCandidates)
+
+		Deduplication.settings = originalSettings
+	}
+
+	"Deduplication" should "find duplicates and create duplicate candidates" in {
+		val originalSettings = Deduplication.settings(false)
+		val originalConfig = Deduplication.scoreConfigSettings(false)
+
+		Deduplication.scoreConfigSettings = TestData.testConfig()
+		Deduplication.settings = Map("stagingTable" -> "subject_wikidata", "confidence" -> "0.35")
+		val subjects = TestData.subjects
+		val stagings = TestData.stagings
+		val input = List(sc.parallelize(subjects), sc.parallelize(stagings)).toAnyRDD()
+		val duplicateCandidates = Deduplication.run(input, sc).fromAnyRDD[DuplicateCandidates]().head
+		val expectedCandidates = sc.parallelize(TestData.trueDuplicateCandidates(subjects, stagings))
+		assertRDDEquals(duplicateCandidates, expectedCandidates)
+
+		Deduplication.scoreConfigSettings = originalConfig
+		Deduplication.settings = originalSettings
 	}
 }

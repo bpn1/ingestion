@@ -8,7 +8,7 @@ import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
-import org.jsoup.nodes.{Document, Element, TextNode}
+import org.jsoup.nodes.{Comment, Document, Element, TextNode}
 import java.net.URLDecoder
 
 import scala.collection.mutable.ListBuffer
@@ -24,9 +24,7 @@ import scala.io.Source
   */
 object TextParser extends SparkJob {
 	appName = "Text Parser"
-	val keyspace = "wikidumps"
-	val tablename = "wikipedia"
-	val outputTablename = "parsedwikipedia"
+	configFile = "textmining.xml"
 	val namespaceFile = "dewiki_namespaces"
 	val categoryNamespace = "Kategorie:"
 	val parsableRedirect = "WEITERLEITUNG"
@@ -42,7 +40,7 @@ object TextParser extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikipedia = sc.cassandraTable[WikipediaEntry](keyspace, tablename)
+		val wikipedia = sc.cassandraTable[WikipediaEntry](settings("keyspace"), settings("rawWikiTable"))
 		List(wikipedia).toAnyRDD()
 	}
 
@@ -57,9 +55,8 @@ object TextParser extends SparkJob {
 		output
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-			.saveToCassandra(keyspace, outputTablename)
+			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
@@ -189,9 +186,7 @@ object TextParser extends SparkJob {
 			cleanedUrl = URLDecoder.decode(cleanedUrl, "UTF-8")
 				.replaceAll("_", " ")
 		} catch {
-			case e: java.lang.IllegalArgumentException =>
-				println(s"IllegalArgumentException for: $cleanedUrl")
-				cleanedUrl = url
+			case e: java.lang.IllegalArgumentException => cleanedUrl = url
 		}
 		cleanedUrl.replaceAll("\\A/", "")
 	}
@@ -245,7 +240,7 @@ object TextParser extends SparkJob {
 		if(children.head.isInstanceOf[TextNode]) {
 			startIndex = 1
 			var firstChildText = children(0).asInstanceOf[TextNode].text
-			while(firstChildText.charAt(0) != body.text.charAt(0)) {
+			while(firstChildText.charAt(0) != body.text.headOption.getOrElse("")) {
 				firstChildText = firstChildText.substring(1)
 				if(firstChildText.length == 0) {
 					return ("", linksList.toList)
@@ -264,7 +259,8 @@ object TextParser extends SparkJob {
 					offset += t.text.length
 				case t: TextNode =>
 					offset += t.text.length
-				case _ =>
+				case t: Comment =>
+					// ignore HTML comments
 			}
 		}
 		val cleanedLinks = cleanMetapageLinks(linksList.toList)
@@ -318,8 +314,6 @@ object TextParser extends SparkJob {
 			}
 			escaped = character == '\\'
 		}
-
-		println("[Textparser WARN]	Template has no end!")
 		templateText
 	}
 
@@ -355,22 +349,16 @@ object TextParser extends SparkJob {
 	  * @param linkMatch regex match containing link
 	  * @return link constructed from regex
 	  */
-	def constructLinkFromRegexMatch(linkMatch: Regex.Match): Link = {
-		val page = linkMatch.group(1)
-		if(page.startsWith("Datei:")) {
-			return null
-		}
-		var alias = ""
-		if(linkMatch.groupCount > 2) {
-			alias = linkMatch.group(2)
-		}
-		if(alias != null) {
-			alias = alias.stripPrefix("|")
-		}
-		if(alias == null || alias.isEmpty) {
-			alias = page
-		}
-		Link(alias, page)
+	def constructLinkFromRegexMatch(linkMatch: Regex.Match): Option[Link] = {
+		Option(linkMatch.group(1))
+			.filter(!_.startsWith("Datei:"))
+			.map { page =>
+				val alias = Option(linkMatch.group(2))
+					.map(_.stripPrefix("|"))
+					.filter(_.nonEmpty)
+					.getOrElse(page)
+				Link(alias, page)
+			}
 	}
 
 	/**
@@ -388,9 +376,7 @@ object TextParser extends SparkJob {
 			.matchData
 			.foreach { linkMatch =>
 				val link = constructLinkFromRegexMatch(linkMatch)
-				if(link != null) {
-					linkList += link
-				}
+				link.foreach(link => linkList += link)
 			}
 		linkList.toList
 	}
@@ -424,7 +410,7 @@ object TextParser extends SparkJob {
 		val redirectRegex = "(?i)(weiterleitung|redirect)\\s?:?\\s?"
 		val replaceString = parsableRedirect + " "
 		var cleanedText = entry.getText().replaceAll(redirectRegex, replaceString)
-		cleanedText = cleanedText.replace("\u00a0", " ")
+		cleanedText = cleanedText.replaceAll("(\u00a0|&nbsp;)", " ")
 		entry.setText(cleanedText)
 		entry
 	}
@@ -507,14 +493,14 @@ object TextParser extends SparkJob {
 
 	/**
 	  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links. Also removes all metapages
-	  * except {@categoryNamespace } pages.
+	  * except {@categoryNamespace} pages.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val rawArticles = input.fromAnyRDD[WikipediaEntry]().head
 		val parsedArticles = rawArticles
 			.filter(!isMetaPage(_))

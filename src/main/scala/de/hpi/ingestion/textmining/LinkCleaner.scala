@@ -12,8 +12,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
   */
 object LinkCleaner extends SparkJob {
 	appName = "Link Cleaner"
-	val keyspace = "wikidumps"
-	val tablename = "parsedwikipedia"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -23,7 +22,7 @@ object LinkCleaner extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](keyspace, tablename)
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		List(articles).toAnyRDD()
 	}
 
@@ -37,7 +36,7 @@ object LinkCleaner extends SparkJob {
 		output
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-			.saveToCassandra(keyspace, tablename)
+			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -88,7 +87,7 @@ object LinkCleaner extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
 		val existingPages = articles.map(_.title)
 		val validPages = groupValidPages(articles, existingPages)

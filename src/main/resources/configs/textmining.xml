@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <keyspace>wikidumps</keyspace>
+        <wikidataTable>wikidata</wikidataTable>
+        <rawWikiTable>wikipedia</rawWikiTable>
+        <parsedWikiTable>parsedwikipedia</parsedWikiTable>
+        <linkTable>wikipedialinks</linkTable>
+        <pageTable>wikipediapages</pageTable>
+        <dfTable>wikipediadocfreq</dfTable>
+        <cooccurrenceTable>wikipediacooccurrences</cooccurrenceTable>
+        <redirectTable>redirects</redirectTable>
+        <simMeasureStatsTable>sim_measure_stats</simMeasureStatsTable>
+        <featureTable>featureentries</featureTable>
+        <trieFile>wikipedia/trie_full.bin</trieFile>
+        <dfFile>wikipedia/wikipedia_docfreq</dfFile>
+        <sentenceTable>wikipediasentences</sentenceTable>
+        <cooccurrenceTable>wikipediacooccurrences</cooccurrenceTable>
+        <contextSize>20</contextSize>
+        <spiegelFile>spiegel.json</spiegelFile>
+        <spiegelTable>spiegel</spiegelTable>
+    </settings>
+</config>

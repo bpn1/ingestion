@@ -12,17 +12,40 @@ CREATE TYPE wikidumps.link (
     context map<text, int>
 );
 
+CREATE TYPE wikidumps.entitylink (
+    alias text,
+    entity text,
+    offset int
+);
+
 CREATE TABLE wikidumps.parsedwikipedia (
     title text PRIMARY KEY,
-    textlinks frozen<list<frozen<link>>>,
-    templatelinks frozen<list<frozen<link>>>,
     categorylinks frozen<list<frozen<link>>>,
-    disambiguationlinks frozen<list<frozen<link>>>,
-    listlinks frozen<list<frozen<link>>>,
-    linkswithcontext frozen<list<frozen<link>>>,
-    foundaliases list<text>,
-    text text,
     context map<text, int>,
+    disambiguationlinks frozen<list<frozen<link>>>,
+    foundaliases list<text>,
+    linkswithcontext frozen<list<frozen<link>>>,
+    listlinks list<frozen<link>>,
+    rawextendedlinks frozen<list<frozen<extendedlink>>>,
+    templatelinks list<frozen<link>>,
+    text text,
+    textlinks list<frozen<link>>,
+    triealiases frozen<list<frozen<triealias>>>
+);
+
+CREATE TABLE wikidumps.parsedwikipedia_backup (
+    title text PRIMARY KEY,
+    categorylinks frozen<list<frozen<link>>>,
+    context map<text, int>,
+    disambiguationlinks frozen<list<frozen<link>>>,
+    extendedlinks frozen<list<frozen<link>>>,
+    foundaliases list<text>,
+    linkswithcontext frozen<list<frozen<link>>>,
+    listlinks list<frozen<link>>,
+    templatelinks list<frozen<link>>,
+    text text,
+    textlinks list<frozen<link>>,
+    triealiases frozen<list<frozen<triealias>>>
 );
 
 CREATE TABLE wikidumps.wikipedia (
@@ -52,6 +75,60 @@ CREATE TABLE wikidumps.wikipediatfidf (
     tokens map<text, double>
 );
 
+CREATE TABLE wikidumps.wikipediasentences (
+   articletitle text,
+   articleoffset int,
+   text text,
+   entities frozen<list<frozen<entitylink>>>,
+   PRIMARY KEY (articletitle, articleoffset)
+);
+
+CREATE TABLE wikidumps.featureentries (
+    id uuid PRIMARY KEY,
+    alias text,
+    correct boolean,
+    cosine_sim double,
+    entity text,
+    prob_entity double,
+    prob_link double
+);
+
+CREATE TYPE wikidumps.precisionrecalldatatuple (
+    threshold double,
+    precision double,
+    recall double,
+    fscore double
+);
+
+CREATE TABLE wikidumps.sim_measure_stats (
+    id timeuuid PRIMARY KEY,
+    comment text,
+    data list<frozen<precisionrecalldatatuple>>
+);
+
+CREATE TYPE wikidumps.triealias (
+	alias text,
+	offset int,
+	context map<text, int>
+);
+
+CREATE TABLE wikidumps.wikipediacooccurrences (
+      entityList frozen<list<text>> PRIMARY KEY,
+      count int
+  );
+
+CREATE TABLE wikidumps.spiegel (
+    id text PRIMARY KEY,
+    title text,
+    text text,
+    url text
+);
+
+CREATE TABLE wikidumps.redirects (
+	alias text PRIMARY KEY,
+	page text
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,
@@ -74,6 +151,12 @@ CREATE TABLE wikidumps.dbpedia (
     label text,
     wikipageid text,
     wikidataid text
+);
+
+CREATE TYPE wikidumps.extendedlink (
+    alias text,
+    page map<text, int>,
+    offset int
 );
 
 -- Datalake
@@ -116,6 +199,34 @@ CREATE TABLE datalake.subject (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
+CREATE TABLE datalake.subject_dbpedia (
+    id uuid PRIMARY KEY,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+CREATE TABLE datalake.subject_wikidata (
+    id uuid PRIMARY KEY,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
 CREATE TABLE datalake.version (
     version timeuuid PRIMARY KEY,
     datasources list<text>,
@@ -135,10 +246,19 @@ CREATE TABLE datalake.object (
     properties_history map<text, frozen<list<frozen<version>>>>
 );
 
+CREATE TYPE datalake.blockstats (
+    key text,
+    numsubjects int,
+    numstaging int,
+    precision double
+);
+
 CREATE TABLE datalake.blockingstats (
-    id uuid PRIMARY KEY,
+    jobid timeuuid,
+    schemetag text,
     comment text,
-    data map<text, int>
+    data frozen<set<frozen<blockstats>>>,
+    PRIMARY KEY (jobid, schemetag)
 );
 
 CREATE TABLE datalake.duplicatecandidates (
@@ -147,7 +267,7 @@ CREATE TABLE datalake.duplicatecandidates (
 );
 
 CREATE TABLE datalake.sim_measure_stats (
-    id uuid PRIMARY KEY,
+    id timeuuid PRIMARY KEY,
     comment text,
     data text
 );
@@ -239,4 +359,17 @@ CREATE TABLE evaluation.version (
 CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
     subject_id uuid PRIMARY KEY,
     candidates list<frozen<tuple<subject, text, double>>>
+);
+
+CREATE TABLE evaluation.dbpedia_wikidata_deduplication_only_uuid (
+    subject_id uuid PRIMARY KEY,
+    candidates list<frozen<tuple<uuid, text, double>>>
+);
+
+CREATE TABLE evaluation.featureentries (
+	id uuid PRIMARY KEY,
+	subject frozen<subject>,
+	staging frozen<subject>,
+	score map<text, frozen<list<double>>>,
+	correct boolean
 );

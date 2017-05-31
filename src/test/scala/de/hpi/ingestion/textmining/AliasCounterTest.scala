@@ -27,7 +27,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 			.countAliases(articles)
 			.collect
 			.foreach(aliasCounter =>
-				aliasCounter.totaloccurrences should be > 0)
+				aliasCounter.totaloccurrences.get should be > 0)
 	}
 
 	they should "have consistent counts" in {
@@ -36,9 +36,9 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 			.countAliases(articles)
 			.collect
 			.foreach { aliasCounter =>
-				aliasCounter.linkoccurrences should be <= aliasCounter.totaloccurrences
-				aliasCounter.linkoccurrences should be >= 0
-				aliasCounter.totaloccurrences should be >= 0
+				aliasCounter.linkoccurrences.get should be <= aliasCounter.totaloccurrences.get
+				aliasCounter.linkoccurrences.get should be >= 0
+				aliasCounter.totaloccurrences.get should be >= 0
 			}
 	}
 
@@ -63,9 +63,9 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 			.flatMap(AliasCounter.extractAliasList)
 			.collect
 			.foreach { alias =>
-				alias.linkoccurrences should be <= 1
-				alias.linkoccurrences should be >= 0
-				alias.totaloccurrences shouldBe 1
+				alias.linkoccurrences.get should be <= 1
+				alias.linkoccurrences.get should be >= 0
+				alias.totaloccurrences.get shouldBe 1
 			}
 	}
 
@@ -85,17 +85,10 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
 	}
 
-	"Probability that word is link" should "be calculated correctly" in {
-		val linkProbabilities = TestData.countedAliasesTestRDD(sc)
-			.map(countedAlias =>
-				(countedAlias.alias, AliasCounter.probabilityIsLink(countedAlias)))
-		assertRDDEquals(linkProbabilities, TestData.linkProbabilitiesTestRDD(sc))
-	}
-
 	"Alias counts" should "be exactly these tuples" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
 		val mergedLinks = AliasCounter.run(List(articles).toAnyRDD(), sc)
-			.fromAnyRDD[(String, Int, Int)]()
+			.fromAnyRDD[(String, Option[Int], Option[Int])]()
 			.head
 			.collect
 			.toSet
@@ -104,13 +97,13 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 
 	"Counted number of link occurrences" should "equal number of page references" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val expectedOccurences = TestData.linksSet()
+		val expectedOccurrences = TestData.linksSet()
 			.map(link => (link.alias, link.pages.foldLeft(0)(_ + _._2)))
 			.toMap
 		AliasCounter.run(List(articles).toAnyRDD(), sc)
-			.fromAnyRDD[(String, Int, Int)]()
+			.fromAnyRDD[(String, Option[Int], Option[Int])]()
 			.head
 			.collect
-			.foreach(link => link._2 should be <= expectedOccurences.getOrElse(link._1, 0))
+			.foreach(link => link._2.get should be <= expectedOccurrences.getOrElse(link._1, 0))
 	}
 }

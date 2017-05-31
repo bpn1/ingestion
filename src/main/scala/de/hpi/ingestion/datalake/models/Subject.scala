@@ -7,17 +7,16 @@ import scala.io.Source
 case class Subject(
 	var id: UUID = UUID.randomUUID(),
 	var name: Option[String] = None,
-	var aliases: List[String] = List[String](),
+	var aliases: List[String] = Nil,
 	var category: Option[String] = None,
-	var properties: Map[String, List[String]] = Map[String, List[String]](),
-	var relations: Map[UUID, Map[String, String]]  = Map[UUID, Map[String, String]](),
+	var properties: Map[String, List[String]] = Map(),
+	var relations: Map[UUID, Map[String, String]]  = Map(),
 
-	var name_history: List[Version] = List[Version](),
-	var aliases_history: List[Version] = List[Version](),
-	var category_history: List[Version] = List[Version](),
-	var properties_history: Map[String, List[Version]] = Map[String, List[Version]](),
-	var relations_history:
-		Map[UUID, Map[String, List[Version]]] = Map[UUID, Map[String, List[Version]]]()
+	var name_history: List[Version] = Nil,
+	var aliases_history: List[Version] = Nil,
+	var category_history: List[Version] = Nil,
+	var properties_history: Map[String, List[Version]] = Map(),
+	var relations_history: Map[UUID, Map[String, List[Version]]] = Map()
 ) extends DLImportEntity {
 	/**
 	  * Compares the subject using its uuid
@@ -45,10 +44,9 @@ case class Subject(
 			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {
-				case "name" | "category" => {
+				case "name" | "category" =>
 					val value = field.get(this).asInstanceOf[Option[String]]
 					value.map(List(_)).getOrElse(Nil)
-				}
 				case "aliases" => field.get(this).asInstanceOf[List[String]]
 				case _ => Nil
 			}

@@ -95,10 +95,10 @@ class Bag[A, B <% BagCounter[B] : ClassTag](
 			case None => this
 			case Some(x) =>
 				val newCount = (x - times).round()
-				if(newCount.lessThanZero()) {
-					new Bag(this.counts - elem)
-				} else {
+				if(newCount.greaterThanZero()) {
 					new Bag(this.counts + (elem -> newCount))
+				} else {
+					new Bag(this.counts - elem)
 				}
 		}
 	}
@@ -168,37 +168,43 @@ class Bag[A, B <% BagCounter[B] : ClassTag](
 }
 
 object Bag {
-	def empty[A, B: ClassTag]
-	(implicit bToBagCounter: B => BagCounter[B])
-	: Bag[A, B] = {
+	def empty[A, B: ClassTag](implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag[A, B]
 	}
 
-	def apply[A, B: ClassTag]
-	(elem: A, elems: A*)
-		(implicit bToBagCounter: B => BagCounter[B])
-	: Bag[A, B] = {
+	def apply[A, B: ClassTag](elem: A, elems: A*)(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag[A, B] + elem ++ elems
 	}
 
-	def apply[A, B: ClassTag]
-	(elems: Seq[A])
-		(implicit bToBagCounter: B => BagCounter[B])
-	: Bag[A, B] = {
+	def apply[A, B: ClassTag](elems: Seq[A])(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag[A, B] ++ elems
 	}
 
-	def apply[A, B: ClassTag]
-	(elem: (A, B), elems: (A, B)*)
-		(implicit bToBagCounter: B => BagCounter[B])
-	: Bag[A, B] = {
+	def apply[A, B: ClassTag](elem: (A, B), elems: (A, B)*)(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag((elem +: elems).toMap)
 	}
 
-	def apply[A, B: ClassTag]
-	(elems: Map[A, B])
-		(implicit bToBagCounter: B => BagCounter[B])
-	: Bag[A, B] = {
+	def apply[A, B: ClassTag](elems: Map[A, B])(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
 		new Bag(elems)
 	}
+
+	// $COVERAGE-OFF$
+	/**
+	  * This methods calls the respective apply method and is excluded from the test coverage because the implicit
+	  * method call can not be tested and is marked as untested by Scoverage.
+	  * @param tokens List of tokens to be counted
+	  */
+	def extract(tokens: List[String]): Bag[String, Int] = {
+		this.apply(tokens)
+	}
+
+	/**
+	  * * This methods calls the respective apply method and is excluded from the test coverage because the implicit
+	  * method call can not be tested and is marked as untested by Scoverage.
+	  * @param context Map of tokens and their count to be transformed into a Bag
+	  */
+	def extract(context: Map[String, Int]): Bag[String, Int] = {
+		this.apply(context)
+	}
+	// $COVERAGE-ON$
 }
