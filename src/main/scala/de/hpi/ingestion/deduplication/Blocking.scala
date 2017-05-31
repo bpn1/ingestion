@@ -96,9 +96,31 @@ object Blocking extends SparkJob {
 	}
 
 	/**
+	  * Calculates the relative amount of duplicates we could find in our comparisons.
+	  * Uses the goldstandard to know, how many duplicates we should be able to find.
+	  * @param duplicates duplicates from our input that fit the goldstandard
+	  * @param goldStandard tuples of duplicateIDs we want to find
+	  * @return a double, representative for the relative amount of duplicates
+	  */
+	def calculatePairwiseCompleteness(
+		duplicates: RDD[(Traversable[(UUID, UUID)], (String, Set[BlockStats]))],
+		goldStandard: Set[(UUID, UUID)]
+	): Map[String, Double] = {
+		duplicates.flatMap { case (duplicateIDs, (tag, block)) =>
+			duplicateIDs.map((tag, _))
+		}.distinct
+			.map { case (tag, duplicate) => (tag, 1) }
+			.reduceByKey(_ + _)
+			.collect
+			.toMap
+			.mapValues(_.toDouble / goldStandard.size.toDouble)
+			.map(identity)
+	}
+
+	/**
 	  * Uses the goldstandard to find all relevant duplicate-pairs to be possibly found in deduplication.
 	  * @param block blocked subjects
-	  * @param goldStandard tuples of duplicates we want to find
+	  * @param goldStandard tuples of duplicateIDs we want to find
 	  * @return duplicates from the goldstandard found in the input block
 	  */
 	def createDuplicateStats(
@@ -187,23 +209,14 @@ object Blocking extends SparkJob {
 			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
 		}.filter { case ((key, tag), (subject, staging)) => (subject.size * staging.size) < maxBlockSize }
 		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))
-		var accuracy = duplicates
-			.flatMap { case (duplicates, (tag, block)) =>
-				duplicates.map((tag, _))
-			}.distinct
-			.map { case (tag, duplicate) => (tag, 1) }
-			.reduceByKey(_ + _)
-			.collect
-			.toMap
-			.mapValues(_.toDouble / goldStandard.size.toDouble)
-			.map(identity)
-		val totalAccuracy = duplicates
-			.flatMap { case (duplicates, (tag, block)) => duplicates }
+		var pairwiseCompleteness = calculatePairwiseCompleteness(duplicates, goldStandard)
+		val totalPairwiseCompleteness = duplicates
+			.flatMap { case (duplicateIDs, (tag, block)) => duplicateIDs }
 			.distinct
 			.count()
 			.toDouble / goldStandard.size.toDouble
 		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
-		accuracy ++= Map(sumTag -> totalAccuracy)
+		pairwiseCompleteness ++= Map(sumTag -> totalPairwiseCompleteness)
 		val statsSum = duplicates
 			.values
 			.map { case (tag, blockStats) => (sumTag, blockStats) }
@@ -216,8 +229,8 @@ object Blocking extends SparkJob {
 			.map { case (tag, blockStats) =>
 				val filteredStats = blockStats.filter(stat =>
 					!filterSmall || (stat.numsubjects * stat.numstaging) > 10000) // don't write tiny blocks
-				val tagAccuracy = accuracy.getOrElse(tag, 0.0)
-				val blockComment = Option(s"$comment; accuracy: $tagAccuracy")
+				val tagAccuracy = pairwiseCompleteness.getOrElse(tag, 0.0)
+				val blockComment = Option(s"$comment; pairwise completeness: $tagAccuracy")
 				BlockEvaluation(jobid, tag, filteredStats, blockComment)
 			}
 	}
