@@ -188,7 +188,7 @@ object Blocking extends SparkJob {
 	): RDD[(String, Block)] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes)
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
-		val maxBlockSize = settings(false).getOrElse("maxBlockSize", "500000").toInt
+		val maxBlockSize = settings("maxBlockSize").toInt
 		subjectBlocks
 			.cogroup(stagingBlocks)
 			.map { case ((key, tag), (subjectList, stagingList)) =>
@@ -223,12 +223,20 @@ object Blocking extends SparkJob {
 	): RDD[BlockEvaluation] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
-		val maxBlockSize = settings(false).getOrElse("maxBlockSize", "500000").toInt
+		val maxBlockSize = settings("maxBlockSize").toInt
 		val jobid = UUIDs.timeBased()
-		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
-			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
+		val blocks = subjectBlocks
+			.cogroup(stagingBlocks)
+			.filter { case ((key, tag), (subjectList, stagingList)) =>
+				!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
 		}.filter { case ((key, tag), (subject, staging)) => (subject.size * staging.size) < maxBlockSize }
+		val totalComparisons = blocks
+			.map { case ((key, tag), (subject, staging)) =>
+				subject.size * staging.size
+			}.reduce(_ + _)
+		val blockCount = blocks.count
 		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))
+
 		var pairwiseCompleteness = calculatePairwiseCompleteness(duplicates, goldStandard)
 		val totalPairwiseCompleteness = calculateTotalPairwiseCompleteness(duplicates, goldStandard)
 		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
@@ -244,12 +252,12 @@ object Blocking extends SparkJob {
 			.reduceByKey(_ ++ _)
 			.union(statsSum)
 			.map { case (tag, blockStats) =>
-				val minBlockSize = settings(false).getOrElse("minBlockSize", "10000").toInt
+				val minBlockSize = settings("minBlockSize").toInt
 				val filteredStats = blockStats.filter(stat =>
 					!filterSmall || (stat.numsubjects * stat.numstaging) > minBlockSize) // don't write tiny blocks
-				val tagAccuracy = pairwiseCompleteness.getOrElse(tag, 0.0)
-				val blockComment = Option(s"$comment; pairwise completeness: $tagAccuracy")
-				BlockEvaluation(jobid, tag, filteredStats, blockComment)
+				val tagCompleteness = pairwiseCompleteness.getOrElse(tag, 0.0)
+				val blockComment = Option(s"$comment")
+				BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, blockCount, totalComparisons)
 			}
 	}
 }
