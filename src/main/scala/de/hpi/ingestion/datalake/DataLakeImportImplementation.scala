@@ -1,14 +1,18 @@
 package de.hpi.ingestion.datalake
 
-import org.apache.spark.SparkContext
-import com.datastax.spark.connector._
 import java.net.URL
+import scala.io.Source
+import scala.xml.XML
+import scala.collection.JavaConversions._
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import com.datastax.spark.connector._
+import com.github.powerlibraries.io.In
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import scala.io.Source
-import scala.xml.XML
+import de.hpi.companies.algo.classifier.AClassifier
+import de.hpi.companies.algo.Tag
 
 /**
   * An abstract DataLakeImportImplementation to import new sources to the staging table.
@@ -29,6 +33,8 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	inputTable: String
 ) extends DataLakeImport[T] with SparkJob {
 	configFile = "datalake_import.xml"
+	val fileStream = getClass.getResource("/bin/StanfordCRFClassifier-Tag.bin").openStream()
+	val classifier = In.stream(fileStream).readObject[AClassifier[Tag]]()
 
 	// $COVERAGE-OFF$
 	/**
@@ -67,9 +73,9 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 			.toAnyRDD()
 	}
 
-	override protected def filterEntities(entity: T): Boolean = true
+	override def filterEntities(entity: T): Boolean = true
 
-	protected def parseNormalizationConfig(url: URL): Map[String, List[String]] = {
+	override def parseNormalizationConfig(url: URL): Map[String, List[String]] = {
 		val xml = XML.loadString(Source
 			.fromURL(url)
 			.getLines()
@@ -82,13 +88,12 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 		}.toMap
 	}
 
-	protected def parseNormalizationConfig(path: String): Map[String, List[String]] = {
+	override def parseNormalizationConfig(path: String): Map[String, List[String]] = {
 		val url = getClass.getResource(s"/$path")
 		this.parseNormalizationConfig(url)
 	}
 
-	protected def parseCategoryConfig(path: String): Map[String, List[String]] = {
-		val url = this.getClass.getResource(s"/$path")
+	override def parseCategoryConfig(url: URL): Map[String, List[String]] = {
 		val xml = XML.loadString(Source
 			.fromURL(url)
 			.getLines()
@@ -101,7 +106,12 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 		}.toMap
 	}
 
-	protected def normalizeProperties(
+	override def parseCategoryConfig(path: String): Map[String, List[String]] = {
+		val url = getClass.getResource(s"/$path")
+		this.parseNormalizationConfig(url)
+	}
+
+	override def normalizeProperties(
 		entity: T,
 		mapping: Map[String, List[String]],
 		strategies: Map[String, List[String]]
@@ -112,5 +122,14 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 				val normalizedValues = this.normalizeAttribute(normalized, values, strategies)
 				(normalized, normalizedValues)
 			}.filter(_._2.nonEmpty)
+	}
+
+	override def extractLegalForm(name: String): List[String] = {
+		val tags = List(Tag.LEGAL_FORM)
+		classifier
+			.getTags(name)
+			.filter(pair => tags.contains(pair.getValue))
+			.map(_.getKey.getRawForm)
+			.toList
 	}
 }
