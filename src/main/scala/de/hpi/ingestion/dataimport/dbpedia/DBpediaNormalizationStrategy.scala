@@ -1,6 +1,8 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.implicits.RegexImplicits._
+import com.neovisionaries.i18n.CountryCode
+import scala.collection.JavaConversions._
 
 /**
   * Strategies for the normalization of DBPedia entities
@@ -27,8 +29,14 @@ object DBpediaNormalizationStrategy extends Serializable {
 	  */
 	def normalizeCountry(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" => List(country)
-			case r"""([A-Za-zÄäÖöÜüß\-]{3,})${country}@de \.""" => List(country)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" =>
+				CountryCode.findByName(country).map(_.getAlpha2)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{2})${country}""" =>
+				List(CountryCode.getByCodeIgnoreCase(country).getAlpha2)
+			case r"""([A-Za-zÄäÖöÜüß\-]{3,})${country}@de \.""" =>
+				CountryCode.findByName(country).map(_.getAlpha2)
+			case r"""([A-Za-zÄäÖöÜüß\-]{2})${country}@de \.""" =>
+				List(CountryCode.getByCodeIgnoreCase(country).getAlpha2)
 			case _ => None
 		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
