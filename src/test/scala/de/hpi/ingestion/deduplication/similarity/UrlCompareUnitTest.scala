@@ -3,7 +3,7 @@ package de.hpi.ingestion.deduplication.similarity
 import org.scalatest.{FlatSpec, Matchers}
 
 class UrlCompareUnitTest extends FlatSpec with Matchers {
-	"cleanUrlString" should "return the host name of a given URL" in {
+	"cleanUrlString" should "return the host name of a given url" in {
 		val computed = UrlCompare.cleanUrlString("http://some.neckermann.berlin/some/stuff")
 		val expected = "some.neckermann.berlin"
 		computed shouldEqual expected
@@ -15,8 +15,6 @@ class UrlCompareUnitTest extends FlatSpec with Matchers {
 
 		val expected1 = JaroWinkler.compare("hpi.de","hpi.de")
 		val expected2 = JaroWinkler.compare("augenbluten.de","downtown.veitimwinkel.de")
-
-		println(computed1 + " " + expected1)
 
 		computed1 shouldEqual expected1
 		computed2 shouldEqual expected2
