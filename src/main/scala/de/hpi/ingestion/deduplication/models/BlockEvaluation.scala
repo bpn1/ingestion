@@ -18,5 +18,5 @@ case class BlockEvaluation(
 	comment: Option[String] = None,
 	pairwiseCompleteness: Double,
 	blockCount: Long,
-	comparisonCount: Int
+	comparisonCount: Long
 )

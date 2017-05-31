@@ -230,9 +230,10 @@ object Blocking extends SparkJob {
 			.filter { case ((key, tag), (subjectList, stagingList)) =>
 				!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
 		}.filter { case ((key, tag), (subject, staging)) => (subject.size * staging.size) < maxBlockSize }
+
 		val totalComparisons = blocks
 			.map { case ((key, tag), (subject, staging)) =>
-				subject.size * staging.size
+				subject.size.toLong * staging.size.toLong
 			}.reduce(_ + _)
 		val blockCount = blocks.count
 		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))

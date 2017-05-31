@@ -369,118 +369,94 @@ object TestData {
 
 	def blockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
 		sc.parallelize(List(
-			BlockEvaluation(
-				null,
-				"sum GeoBlocking, SimpleBlocking",
-				Set(
-					BlockStats("Hamburg",1,1,0.0),
-					BlockStats("undefined",2,0,0.0),
-					BlockStats("Berlin",2,1,0.5),
-					BlockStats("New York",0,2,0.0),
-					BlockStats("Audi ",1,1,1.0),
-					BlockStats("Volks",1,1,1.0),
-					BlockStats("Porsc",1,0,0.0),
-					BlockStats("Ferra",1,0,0.0)
-				),
-				Some("Blocking; pairwise completeness: 1.0")
-			),
-			BlockEvaluation(
-				null,
-				"GeoBlocking",
-				Set(
-					BlockStats("New York",0,2,0.0),
-					BlockStats("Hamburg",1,1,0.0),
-					BlockStats("Berlin",2,1,0.5),
-					BlockStats("undefined",2,0,0.0)
-				),
-				Some("Blocking; pairwise completeness: 0.5")
-			),
-			BlockEvaluation(
-				null,
-				"SimpleBlocking",
-				Set(
-					BlockStats("Audi ",1,1,1.0),
-					BlockStats("Ferra",1,0,0.0),
-					BlockStats("Porsc",1,0,0.0),
-					BlockStats("Volks",1,1,1.0)
-				),
-				Some("Blocking; pairwise completeness: 1.0"))))
+			BlockEvaluation(null, "sum GeoBlocking, SimpleBlocking", Set(
+								BlockStats("Hamburg",1,1,0.0),
+								BlockStats("undefined",2,0,0.0),
+								BlockStats("Berlin",2,1,0.5),
+								BlockStats("New York",0,2,0.0),
+								BlockStats("Audi ",1,1,1.0),
+								BlockStats("Volks",1,1,1.0),
+								BlockStats("Porsc",1,0,0.0),
+								BlockStats("Ferra",1,0,0.0)
+							), Some("Blocking"), 1.0, 8, 5),
+			BlockEvaluation(null, "GeoBlocking", Set(
+								BlockStats("New York",0,2,0.0),
+								BlockStats("Hamburg",1,1,0.0),
+								BlockStats("Berlin",2,1,0.5),
+								BlockStats("undefined",2,0,0.0)
+							), Some("Blocking"), 0.5, 8, 5),
+			BlockEvaluation(null, "SimpleBlocking", Set(
+								BlockStats("Audi ",1,1,1.0),
+								BlockStats("Ferra",1,0,0.0),
+								BlockStats("Porsc",1,0,0.0),
+								BlockStats("Volks",1,1,1.0)
+							), Some("Blocking"), 1.0, 8, 5)))
 	}
 
 	def filteredBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
 		sc.parallelize(List(
-			BlockEvaluation(
-				null,
-				"sum GeoBlocking, SimpleBlocking",
-				Set(
-					BlockStats("Hamburg",1,1,0.0),
-					BlockStats("Berlin",2,1,0.5),
-					BlockStats("New York",0,2,0.0),
-					BlockStats("Audi ",1,1,1.0),
-					BlockStats("Volks",1,1,1.0),
-					BlockStats("Porsc",1,0,0.0),
-					BlockStats("Ferra",1,0,0.0)
-				),
-				Some("Blocking; pairwise completeness: 1.0")
-			),
-			BlockEvaluation(
-				null,
-				"GeoBlocking",
-				Set(
-					BlockStats("New York",0,2,0.0),
-					BlockStats("Hamburg",1,1,0.0),
-					BlockStats("Berlin",2,1,0.5)
-				),
-				Some("Blocking; pairwise completeness: 0.5")),
-			BlockEvaluation(
-				null,
-				"SimpleBlocking",
-				Set(
-					BlockStats("Audi ",1,1,1.0),
-					BlockStats("Ferra",1,0,0.0),
-					BlockStats("Porsc",1,0,0.0),
-					BlockStats("Volks",1,1,1.0)
-				),
-				Some("Blocking; pairwise completeness: 1.0"))))
+			BlockEvaluation(null, "sum GeoBlocking, SimpleBlocking", Set(
+								BlockStats("Hamburg",1,1,0.0),
+								BlockStats("Berlin",2,1,0.5),
+								BlockStats("New York",0,2,0.0),
+								BlockStats("Audi ",1,1,1.0),
+								BlockStats("Volks",1,1,1.0),
+								BlockStats("Porsc",1,0,0.0),
+								BlockStats("Ferra",1,0,0.0)
+							), Some("Blocking"), 1.0, 7, 5),
+			BlockEvaluation(null, "GeoBlocking", Set(
+								BlockStats("New York",0,2,0.0),
+								BlockStats("Hamburg",1,1,0.0),
+								BlockStats("Berlin",2,1,0.5)
+							), Some("Blocking"), 0.5, 7, 5),
+			BlockEvaluation(null, "SimpleBlocking", Set(
+								BlockStats("Audi ",1,1,1.0),
+								BlockStats("Ferra",1,0,0.0),
+								BlockStats("Porsc",1,0,0.0),
+								BlockStats("Volks",1,1,1.0)
+							), Some("Blocking"), 1.0, 7, 5)))
 	}
 
 	def blockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
 		sc.parallelize(List(
-			BlockEvaluation(
-				null,
-				"sum GeoBlocking, SimpleBlocking",
-				Set(
-					BlockStats("Hamburg", 1, 1, 0.0),
-					BlockStats("undefined", 2, 0, 0.0),
-					BlockStats("Berlin", 2, 1, 0.5),
-					BlockStats("New York", 0, 2, 0.0),
-					BlockStats("Audi ", 1, 1, 1.0),
-					BlockStats("Volks", 1, 1, 1.0),
-					BlockStats("Porsc", 1, 0, 0.0),
-					BlockStats("Ferra", 1, 0, 0.0)
-				),
-				Some("Test comment; pairwise completeness: 1.0")),
-			BlockEvaluation(
-				null,
-				"GeoBlocking",
-				Set(
-					BlockStats("New York", 0, 2, 0.0),
-					BlockStats("Hamburg", 1, 1, 0.0),
-					BlockStats("Berlin", 2, 1, 0.5),
-					BlockStats("undefined", 2, 0, 0.0)
-				),
-				Some("Test comment; pairwise completeness: 0.5")
-			),
-			BlockEvaluation(
-				null,
-				"SimpleBlocking",
-				Set(
-					BlockStats("Audi ", 1, 1, 1.0),
-					BlockStats("Ferra", 1, 0, 0.0),
-					BlockStats("Porsc", 1, 0, 0.0),
-					BlockStats("Volks", 1, 1, 1.0)
-				),
-				Some("Test comment; pairwise completeness: 1.0"))))
+			BlockEvaluation(null, "sum GeoBlocking, SimpleBlocking", Set(
+								BlockStats("Hamburg", 1, 1, 0.0),
+								BlockStats("undefined", 2, 0, 0.0),
+								BlockStats("Berlin", 2, 1, 0.5),
+								BlockStats("New York", 0, 2, 0.0),
+								BlockStats("Audi ", 1, 1, 1.0),
+								BlockStats("Volks", 1, 1, 1.0),
+								BlockStats("Porsc", 1, 0, 0.0),
+								BlockStats("Ferra", 1, 0, 0.0)
+							), Some("Test comment"), 1.0, 8, 5),
+			BlockEvaluation(null, "GeoBlocking", Set(
+								BlockStats("New York", 0, 2, 0.0),
+								BlockStats("Hamburg", 1, 1, 0.0),
+								BlockStats("Berlin", 2, 1, 0.5),
+								BlockStats("undefined", 2, 0, 0.0)
+							), Some("Test comment"), 0.5, 8, 5),
+			BlockEvaluation(null, "SimpleBlocking", Set(
+								BlockStats("Audi ", 1, 1, 1.0),
+								BlockStats("Ferra", 1, 0, 0.0),
+								BlockStats("Porsc", 1, 0, 0.0),
+								BlockStats("Volks", 1, 1, 1.0)
+							), Some("Test comment"), 1.0, 8, 5)))
+	}
+
+	def emptyBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
+		sc.parallelize(List(
+			BlockEvaluation(null,"sum GeoBlocking, SimpleBlocking",Set(),Some("Blocking"),1.0,8,5),
+			BlockEvaluation(null,"GeoBlocking",Set(),Some("Blocking"),0.5,8,5),
+			BlockEvaluation(null,"SimpleBlocking",Set(),Some("Blocking"),1.0,8,5)
+		))
+	}
+
+	def emptyBlockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
+		sc.parallelize(List(
+			BlockEvaluation(null,"sum GeoBlocking, SimpleBlocking",Set(),Some("Test comment"),1.0,8,5),
+			BlockEvaluation(null,"GeoBlocking",Set(),Some("Test comment"),0.5,8,5),
+			BlockEvaluation(null,"SimpleBlocking",Set(),Some("Test comment"),1.0,8,5)
+		))
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Audy "), List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
