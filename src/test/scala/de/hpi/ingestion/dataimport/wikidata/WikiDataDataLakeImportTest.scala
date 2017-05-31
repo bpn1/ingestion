@@ -37,8 +37,9 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
+		val classifier = WikiDataDataLakeImport.classifier
 		val translatedSubjects = TestData.wikidataEntities.map { entity =>
-			(entity, WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies))
+			entity -> WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		}
 		translatedSubjects should not be empty
 		translatedSubjects.foreach { case (entity, subject) =>
@@ -53,7 +54,8 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies)
+		val classifier = WikiDataDataLakeImport.classifier
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("id_wikidata") shouldEqual List("Q21110253")
 		subject.properties("id_wikipedia") shouldEqual List("testwikiname")
 		subject.properties("id_dbpedia") shouldEqual List("testwikiname")
@@ -71,7 +73,18 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies)
+		val classifier = WikiDataDataLakeImport.classifier
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("testProperty") shouldEqual List("test")
+	}
+
+	it should "extract the legal form" in {
+		val entity = TestData.testEntity
+		val version = TestData.version(sc)
+		val mapping = TestData.mapping
+		val strategies = TestData.strategies
+		val classifier = WikiDataDataLakeImport.classifier
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		subject.properties("gen_legal_form") shouldEqual List("AG")
 	}
 }

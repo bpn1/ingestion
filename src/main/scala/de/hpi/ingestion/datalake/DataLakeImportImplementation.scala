@@ -1,6 +1,7 @@
 package de.hpi.ingestion.datalake
 
 import java.net.URL
+
 import scala.io.Source
 import scala.xml.XML
 import scala.collection.JavaConversions._
@@ -33,8 +34,6 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	inputTable: String
 ) extends DataLakeImport[T] with SparkJob {
 	configFile = "datalake_import.xml"
-	val fileStream = getClass.getResource("/bin/StanfordCRFClassifier-Tag.bin").openStream()
-	val classifier = In.stream(fileStream).readObject[AClassifier[Tag]]()
 
 	// $COVERAGE-OFF$
 	/**
@@ -64,12 +63,13 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 		val version = Version(appName, dataSources, sc, true)
 		val mapping = parseNormalizationConfig(this.normalizationFile)
 		val strategies = parseCategoryConfig(this.categoryConfigFile)
+		val classifier = this.classifier
 		input
 			.fromAnyRDD[T]()
 			.map(rdd =>
 				rdd
 					.filter(filterEntities)
-					.map((entity: T) => translateToSubject(entity, version, mapping, strategies)))
+					.map((entity: T) => translateToSubject(entity, version, mapping, strategies, classifier)))
 			.toAnyRDD()
 	}
 
@@ -108,7 +108,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 
 	override def parseCategoryConfig(path: String): Map[String, List[String]] = {
 		val url = getClass.getResource(s"/$path")
-		this.parseNormalizationConfig(url)
+		this.parseCategoryConfig(url)
 	}
 
 	override def normalizeProperties(
@@ -124,12 +124,17 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 			}.filter(_._2.nonEmpty)
 	}
 
-	override def extractLegalForm(name: String): List[String] = {
+	override def extractLegalForm(name: String)(implicit aClassifier: AClassifier[Tag]): List[String] = {
 		val tags = List(Tag.LEGAL_FORM)
-		classifier
+		aClassifier
 			.getTags(name)
 			.filter(pair => tags.contains(pair.getValue))
 			.map(_.getKey.getRawForm)
 			.toList
+	}
+
+	override def classifier: AClassifier[Tag] = {
+		val fileStream = getClass.getResource("/bin/StanfordCRFClassifier-Tag.bin").openStream()
+		In.stream(fileStream).readObject[AClassifier[Tag]]()
 	}
 }

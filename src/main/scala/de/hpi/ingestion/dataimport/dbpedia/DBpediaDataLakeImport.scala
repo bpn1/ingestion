@@ -6,7 +6,10 @@ import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.companies.algo.Tag
+import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.implicits.CollectionImplicits._
+
 import scala.collection.mutable
 
 /**
@@ -51,8 +54,10 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		entity: DBpediaEntity,
 		version: Version,
 		mapping: Map[String, List[String]],
-		strategies: Map[String, List[String]]
+		strategies: Map[String, List[String]],
+		classifier: AClassifier[Tag]
 	): Subject = {
+		implicit val aClassifier = classifier
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
@@ -60,8 +65,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
-		val properties = mutable.Map[String, List[String]]()
-		properties ++= (entity.data ++ normalizedProperties)
+		val properties = mutable.Map[String, List[String]]((entity.data ++ normalizedProperties).toSeq: _*)
 
 		if (normalizedProperties.contains("geo_coords_lat") && normalizedProperties.contains("geo_coords_long")) {
 			properties("geo_coords") = normalizedProperties("geo_coords_lat")

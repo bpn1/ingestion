@@ -4,13 +4,49 @@ import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
 
 class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkContext {
+	"filterEntities" should "filter entities without an instance type" in {
+		val entities = TestData.unfilteredEntities
+		val filteredEntities = entities.filter(DBpediaDataLakeImport.filterEntities)
+		val expected = TestData.filteredEntities
+		filteredEntities shouldEqual expected
+	}
+
+	"normalizeAttribute" should "the values of a given attribute" in {
+		val attributes = Map(
+			"gen_sectors" -> TestData.unnormalizedSectors,
+			"geo_coords" -> TestData.unnormalizedCoordinates,
+			"geo_country" -> TestData.unnormalizedCountries,
+			"geo_city" -> TestData.unnormalizedCities,
+			"gen_employees" -> TestData.unnormalizedEmployees
+		)
+		val strategies = TestData.strategies
+		val normalizedAttributes = attributes.map { case (attribute, values) =>
+			attribute -> DBpediaDataLakeImport.normalizeAttribute(attribute, values, strategies)
+		}
+		val expected = Map(
+			"gen_sectors" -> TestData.mappedSectors,
+			"geo_coords" -> TestData.normalizedCoordinates,
+			"geo_country" -> TestData.normalizedCountries,
+			"geo_city" -> TestData.normalizedCities,
+			"gen_employees" -> TestData.normalizedEmployees
+		)
+		normalizedAttributes shouldEqual expected
+	}
+
 	"translateToSubject" should "map the entity label on subject name" in {
-		val entity = TestData.testEntity
+		val entities = TestData.dbpediaEntities
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies)
-		subject.name shouldEqual entity.label
+		val classifier = DBpediaDataLakeImport.classifier
+		val translatedSubjects = entities.map { entity =>
+			entity -> DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		}
+		translatedSubjects should not be empty
+		translatedSubjects.foreach { case (entity, subject) =>
+			subject.name shouldEqual entity.label
+			subject.category shouldEqual entity.instancetype
+		}
 	}
 
 	it should "normalize the data attributes" in {
@@ -18,7 +54,8 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies)
+		val classifier = DBpediaDataLakeImport.classifier
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("id_wikidata") shouldEqual List("Q123")
 		subject.properties("id_wikipedia") shouldEqual List("List von Autoren")
 		subject.properties("id_dbpedia") shouldEqual List("List von Autoren")
@@ -33,7 +70,8 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies)
+		val classifier = DBpediaDataLakeImport.classifier
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("testProperty") shouldEqual List("test")
 	}
 
@@ -42,7 +80,18 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies)
+		val classifier = DBpediaDataLakeImport.classifier
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("geo_coords") shouldEqual List("52", "100")
+	}
+
+	it should "extract the legal form" in {
+		val entity = TestData.testEntity
+		val version = TestData.version(sc)
+		val mapping = TestData.mapping
+		val strategies = TestData.strategies
+		val classifier = DBpediaDataLakeImport.classifier
+		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		subject.properties("gen_legal_form") shouldEqual List("GmbH")
 	}
 }

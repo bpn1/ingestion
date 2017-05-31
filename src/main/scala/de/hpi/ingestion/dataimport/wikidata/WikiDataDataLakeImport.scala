@@ -1,12 +1,15 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import com.datastax.spark.connector._
+import de.hpi.companies.algo.Tag
+import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+
 import scala.collection.mutable
 
 /**
@@ -45,8 +48,10 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		entity: WikiDataEntity,
 		version: Version,
 		mapping: Map[String, List[String]],
-		strategies: Map[String, List[String]]
+		strategies: Map[String, List[String]],
+		classifier: AClassifier[Tag]
 	): Subject = {
+		implicit val aClassifier = classifier
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
@@ -55,8 +60,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		if(entity.aliases.nonEmpty) sm.addAliases(entity.aliases)
 
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
-		val properties = mutable.Map[String, List[String]]()
-		properties ++= (entity.data ++ normalizedProperties)
+		val properties = mutable.Map[String, List[String]]((entity.data ++ normalizedProperties).toSeq: _*)
 
 		val legalForm = entity.label.map(extractLegalForm).getOrElse(Nil)
 		if (legalForm.nonEmpty) properties("gen_legal_form") = legalForm

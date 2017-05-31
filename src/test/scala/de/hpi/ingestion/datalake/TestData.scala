@@ -67,12 +67,12 @@ object TestData {
 	)
 
 	def input(sc: SparkContext): List[RDD[Any]] = List(sc.parallelize(testEntities))
-	def output(sc: SparkContext): RDD[Subject] = sc.parallelize(List(
+	def output: List[Subject] = List(
 		Subject(name = Option("entity1")),
 		Subject(name = Option("entity2")),
 		Subject(name = Option("entity3")),
 		Subject(name = Option("entity4")),
 		Subject(name = Option("entity5"))
-	))
+	)
 }
 // scalastyle:on line.size.limit

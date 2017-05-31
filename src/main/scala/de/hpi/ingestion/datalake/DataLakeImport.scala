@@ -2,6 +2,8 @@ package de.hpi.ingestion.datalake
 
 import java.net.URL
 
+import de.hpi.companies.algo.Tag
+import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 
 /**
@@ -32,7 +34,8 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 		entity: T,
 		version: Version,
 		mapping: Map[String, List[String]],
-		strategies: Map[String, List[String]]
+		strategies: Map[String, List[String]],
+		classifier: AClassifier[Tag]
 	): Subject
 
 	/**
@@ -96,5 +99,11 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param name Name of the entity
 	  * @return List of legal form occurrences in the name
 	  */
-	def extractLegalForm(name: String): List[String]
+	def extractLegalForm(name: String)(implicit aClassifier: AClassifier[Tag]): List[String]
+
+	/**
+	  * Getter for the company split classifier
+	  * @return The classifier
+	  */
+	def classifier: AClassifier[Tag]
 }

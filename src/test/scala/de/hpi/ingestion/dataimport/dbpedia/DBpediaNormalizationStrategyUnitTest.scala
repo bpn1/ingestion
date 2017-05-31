@@ -6,7 +6,7 @@ class DBpediaNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 	"apply" should "decide, which strategy should be used regarding the input attribute" in {
 		val inputs = List(
 			TestData.unnormalizedEmployees,
-			TestData.unnormalizedCoords,
+			TestData.unnormalizedCoordinates,
 			TestData.unnormalizedCountries,
 			TestData.unnormalizedCities,
 			TestData.unnormalizedSectors,
@@ -32,9 +32,9 @@ class DBpediaNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 	}
 
 	"normalizeCoords" should "kick out redundant information or integers" in {
-		val coordinates = TestData.unnormalizedCoords
+		val coordinates = TestData.unnormalizedCoordinates
 		val result = DBpediaNormalizationStrategy.normalizeCoords(coordinates)
-		val expected = TestData.normalizedCoords
+		val expected = TestData.normalizedCoordinates
 		result shouldEqual expected
 	}
 
