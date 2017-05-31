@@ -148,6 +148,7 @@ object Blocking extends SparkJob {
 	): RDD[(String, Block)] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes)
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
+		val maxBlockSize = settings(false).getOrElse("maxBlockSize", "500000").toInt
 		subjectBlocks
 			.cogroup(stagingBlocks)
 			.map { case ((key, tag), (subjectList, stagingList)) =>
@@ -155,7 +156,7 @@ object Blocking extends SparkJob {
 			}.filter { case (tag, block) =>
 				!(blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(block.key) && filterUndefined)
 			}.filter { case (tag, block) =>
-				(block.staging.size * block.subjects.size) < 500000 // filter huge blocks
+				(block.staging.size * block.subjects.size) < maxBlockSize // filter huge blocks
 			}
 	}
 
@@ -180,12 +181,12 @@ object Blocking extends SparkJob {
 	): RDD[BlockEvaluation] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
+		val maxBlockSize = settings(false).getOrElse("maxBlockSize", "500000").toInt
 		val jobid = UUIDs.timeBased()
 		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
 			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
-		}.filter { case ((key, tag), (subjectList, stagingList)) => (subjectList.size * stagingList.size) < 250000 }
+		}.filter { case ((key, tag), (subject, staging)) => (subject.size * staging.size) < maxBlockSize }
 		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))
-
 		var accuracy = duplicates
 			.flatMap { case (duplicates, (tag, block)) =>
 				duplicates.map((tag, _))
