@@ -69,6 +69,9 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 				.flatMap(x => List(x._1, x._2))
 		}
 
+		val legalForm = entity.label.map(extractLegalForm).getOrElse(Nil)
+		if (legalForm.nonEmpty) properties("gen_legal_form") = legalForm
+
 		sm.addProperties(properties.toMap)
 		subject
 	}
