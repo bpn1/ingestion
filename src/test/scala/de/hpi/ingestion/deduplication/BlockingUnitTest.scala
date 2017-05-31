@@ -63,6 +63,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			false,
 			comment
 		).map(_.copy(jobid = null))
+//println(evaluationBlocks.collect.toList.map(eva => (eva.pairwiseCompleteness, eva.blockCount, eva.comparisonCount)))
 		val expected = TestData.blockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}

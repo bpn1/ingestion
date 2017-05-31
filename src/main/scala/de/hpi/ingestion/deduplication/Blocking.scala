@@ -124,15 +124,16 @@ object Blocking extends SparkJob {
 		duplicates: RDD[(Traversable[(UUID, UUID)], (String, Set[BlockStats]))],
 		goldStandard: Set[(UUID, UUID)]
 	): Map[String, Double] = {
-		duplicates.flatMap { case (duplicateIDs, (tag, block)) =>
+		duplicates
+			.flatMap { case (duplicateIDs, (tag, block)) =>
 			duplicateIDs.map((tag, _))
-		}.distinct
-		.map { case (tag, duplicate) => (tag, 1) }
-		.reduceByKey(_ + _)
-		.collect
-		.toMap
-		.mapValues(_.toDouble / goldStandard.size.toDouble)
-		.map(identity)
+			}.distinct
+			.map { case (tag, duplicate) => (tag, 1) }
+			.reduceByKey(_ + _)
+			.collect
+			.toMap
+			.mapValues(_.toDouble / goldStandard.size.toDouble)
+			.map(identity)
 	}
 
 	/**
@@ -199,7 +200,7 @@ object Blocking extends SparkJob {
 				(block.staging.size * block.subjects.size) < maxBlockSize // filter huge blocks
 			}
 	}
-
+	// scalastyle:off method.length
 	/**
 	  * Blocks the input Subjects using the provided blocking schemes and evaluates the blocks. This method reduces
 	  * the amount of data shuffled across the network for better performance.
@@ -231,23 +232,25 @@ object Blocking extends SparkJob {
 				!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
 		}.filter { case ((key, tag), (subject, staging)) => (subject.size * staging.size) < maxBlockSize }
 
-		val totalComparisons = blocks
+		val blockComparisons = blocks
 			.map { case ((key, tag), (subject, staging)) =>
-				subject.size.toLong * staging.size.toLong
-			}.reduce(_ + _)
-		val blockCount = blocks.count
+				(tag, subject.size.toLong * staging.size.toLong) }.reduceByKey(_ + _).collect.toMap
+		val totalComparisons = blockComparisons.map{ case (_, comparisons) => comparisons }.sum
+		val blockCount = blocks.map{ case ((key, tag), subjects) => (tag, 1) }.reduceByKey(_ + _).collect.toMap
+		val totalBlockCount = blockCount.values.sum
 		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))
 
 		var pairwiseCompleteness = calculatePairwiseCompleteness(duplicates, goldStandard)
 		val totalPairwiseCompleteness = calculateTotalPairwiseCompleteness(duplicates, goldStandard)
 		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
 		pairwiseCompleteness ++= Map(sumTag -> totalPairwiseCompleteness)
-
+		val allComparisons = blockComparisons ++ Map(sumTag -> totalComparisons)
+		val allBlockCounts = blockCount ++ Map(sumTag -> totalBlockCount)
+		// ToDo: totalPairwiseCompleteness in PairwiseCompleteness berechnen und dort anhängen (comparisons auch)
 		val statsSum = duplicates
 			.values
 			.map { case (tag, blockStats) => (sumTag, blockStats) }
 			.reduceByKey(_ ++ _)
-
 		duplicates
 			.values
 			.reduceByKey(_ ++ _)
@@ -257,8 +260,10 @@ object Blocking extends SparkJob {
 				val filteredStats = blockStats.filter(stat =>
 					!filterSmall || (stat.numsubjects * stat.numstaging) > minBlockSize) // don't write tiny blocks
 				val tagCompleteness = pairwiseCompleteness.getOrElse(tag, 0.0)
+				val tagComparisons: Long = allComparisons.getOrElse(tag, 0)
+				val tagBlockCount = allBlockCounts.getOrElse(tag, 0)
 				val blockComment = Option(s"$comment")
-				BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, blockCount, totalComparisons)
+				BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, tagBlockCount, tagComparisons)
 			}
 	}
 }
