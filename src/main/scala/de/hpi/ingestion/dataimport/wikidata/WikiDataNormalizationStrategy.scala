@@ -23,7 +23,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 	  * @param values country list
 	  * @return normalized countries
 	  */
-	def normalizeCountry(values: List[String]): List[String] = {
+	def normalizeLocation(values: List[String]): List[String] = {
 		values.flatMap {
 			case r"""([A-Za-zÄäÖöÜüß\-_ ]*)$country""" => List(country)
 			case _ => None
@@ -72,7 +72,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 		attribute match {
 			case "gen_sectors" => this.normalizeSector
 			case "geo_coords" => this.normalizeCoords
-			case "geo_country" => this.normalizeCountry
+			case "geo_country" | "geo_city" => this.normalizeLocation
 			case "gen_employees" => this.normalizeEmployees
 			case _ => this.normalizeDefault
 		}

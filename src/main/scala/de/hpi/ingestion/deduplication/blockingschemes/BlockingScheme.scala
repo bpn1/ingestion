@@ -24,9 +24,3 @@ trait BlockingScheme extends Serializable {
 	  */
 	def generateKey(subject: Subject): List[String]
 }
-
-
-
-
-
-
