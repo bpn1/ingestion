@@ -52,7 +52,6 @@
         <attribute>
             <key>geo_country</key>
             <mapping>country</mapping>
-            <mapping>located in the administrative territorial entity</mapping>
         </attribute>
         <attribute>
             <key>geo_coords</key>

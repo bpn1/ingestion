@@ -268,9 +268,23 @@ object TestData {
 			List())
 	}
 
+	def unfilteredEntities: List[WikiDataEntity] = List(
+		WikiDataEntity(id = "Q1", instancetype = Option("type 1")),
+		WikiDataEntity(id = "Q2", instancetype = Option("type 2")),
+		WikiDataEntity(id = "Q3", instancetype = Option("type 3")),
+		WikiDataEntity(id = "Q4", instancetype = Option(null)),
+		WikiDataEntity(id = "Q5")
+	)
+
+	def filteredEntities: List[WikiDataEntity] = List(
+		WikiDataEntity(id = "Q1", instancetype = Option("type 1")),
+		WikiDataEntity(id = "Q2", instancetype = Option("type 2")),
+		WikiDataEntity(id = "Q3", instancetype = Option("type 3"))
+	)
+
 	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", List("dataSources"), sc, false)
 
-	def testEntity(): WikiDataEntity = {
+	def testEntity: WikiDataEntity = {
 		WikiDataEntity(
 			"Q21110253",
 			List("testalias"),
@@ -284,36 +298,45 @@ object TestData {
 				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
 				"subclass of" -> List("Protein", "FAM177 family"),
 				"VIAF ID" -> List("X123"),
+				"industry" -> this.unnormalizedSectors,
+				"coordinate location" -> this.unnormalizedCoordinates,
+				"headquarters location" -> this.unnormalizedLocations,
+				"country" -> this.unnormalizedLocations,
+				"employees" -> this.unnormalizedEmployees,
 				"testProperty" -> List("test")
 			)
 		)
 	}
 
-	def wikidataEntities(): List[WikiDataEntity] = {
-		List(
-			WikiDataEntity(
-				"Q21110253",
-				List("testalias"),
-				Option("human protein (annotated by UniProtKB/Swiss-Prot Q8N128)"),
-				Option("item"),
-				Option("testwikiname"),
-				Option("en_testwikiname"),
-				Option("test_instancetype"),
-				Option("Protein FAM177A1"),
-				Map(
-					"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
-					"subclass of" -> List("Protein", "FAM177 family"),
-					"VIAF ID" -> List("X123"),
-					"testProperty" -> List("test"))),
-			WikiDataEntity("Q123")
-		)
-	}
+	def wikidataEntities: List[WikiDataEntity] = List(
+		WikiDataEntity(
+			"Q21110253",
+			List("testalias"),
+			Option("human protein (annotated by UniProtKB/Swiss-Prot Q8N128)"),
+			Option("item"),
+			Option("testwikiname"),
+			Option("en_testwikiname"),
+			Option("test_instancetype"),
+			Option("Protein FAM177A1"),
+			Map(
+				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
+				"subclass of" -> List("Protein", "FAM177 family"),
+				"VIAF ID" -> List("X123"),
+				"testProperty" -> List("test"))
+		),
+		WikiDataEntity("Q123")
+	)
 
 	def mapping: Map[String, List[String]] = Map(
 		"id_wikidata" -> List("id"),
 		"id_dbpedia" -> List("wikiname"),
 		"id_wikipedia" -> List("wikiname"),
-		"id_viaf" -> List("VIAF ID")
+		"id_viaf" -> List("VIAF ID"),
+		"gen_sectors" -> List("industry"),
+		"geo_coords" -> List("coordinate location"),
+		"geo_city" -> List("headquarters location"),
+		"geo_country" -> List("country"),
+		"gen_employees" -> List("employees")
 	)
 
 	def strategies: Map[String, List[String]] = Map(
@@ -323,10 +346,11 @@ object TestData {
 
 	def unnormalizedSectors: List[String] = List("Automobilindustrie", "Q126793", "Einzelhandel")
 	def normalizedSectors: List[String] = List("Automobilindustrie", "Einzelhandel")
+	def mappedSectors: List[String] = List("29", "45", "47")
 	def unnormalizedCoordinates: List[String] = List("-1;1", "55;48.88", "0.133;-1", "xxx;-1.0")
 	def normalizedCoordinates: List[String] = List("-1;1", "55;48.88", "0.133;-1")
-	def unnormalizedCountries: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
-	def normalizedCountries: List[String] = List("Russland", "Igrinski rajon")
+	def unnormalizedLocations: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
+	def normalizedLocations: List[String] = List("Russland", "Igrinski rajon")
 	def unnormalizedEmployees: List[String] = List("+500;1", "+1337;1", "WRONG")
 	def normalizedEmployees: List[String] = List("500", "1337")
 	// scalastyle:on line.size.limit

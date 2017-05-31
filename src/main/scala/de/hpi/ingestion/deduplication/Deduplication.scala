@@ -9,7 +9,6 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import scala.xml.Node
 
 /**
   * Compares two groups of Subjects by first blocking with multiple Blocking Schemes, then compares all Subjects
