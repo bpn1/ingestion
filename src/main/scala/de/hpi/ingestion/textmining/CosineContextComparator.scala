@@ -373,7 +373,7 @@ object CosineContextComparator extends SplitSparkJob {
 		articleSplit.map { articlePartition =>
 			val leanerArticles = leanArticles.map(_.copy(triealiases = Nil))
 			List(leanerArticles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articlePartition).toAnyRDD()
-		}//.take(1)
+		}
 	}
 
 	/**
