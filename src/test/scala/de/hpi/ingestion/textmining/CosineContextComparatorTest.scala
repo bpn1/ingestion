@@ -3,7 +3,7 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.{Alias, FeatureEntry, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.models.{Alias, Bag, FeatureEntry, ParsedWikipediaEntry}
 import org.apache.spark.rdd.RDD
 
 class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with Matchers {
@@ -254,6 +254,20 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.map(_.copy(id = null))
 			.toSet
 		val expected = TestData.featureEntriesWithAliasesSet()
+		featureEntries shouldEqual expected
+	}
+
+	"Second order features for page score" should "be calculated correctly" in {
+		val contextTfidf = sc.parallelize(TestData.singleAliasLinkList())
+		val aliasPageScores = TestData.singleAliasPageScoresMap()
+		val articleTfidf = sc.parallelize(TestData.emptyArticlesTfidfMap().toList)
+		val featureEntries = CosineContextComparator
+			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
+			.collect
+			.map(_.copy(id = null))
+			.toList
+			.sortBy(featureEntry => (featureEntry.entity, featureEntry.correct))
+		val expected = TestData.featureEntriesForSingleAliasList()
 		featureEntries shouldEqual expected
 	}
 

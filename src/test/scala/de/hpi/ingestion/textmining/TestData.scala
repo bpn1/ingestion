@@ -753,15 +753,15 @@ object TestData {
 		val tf1df2 = 0.544
 		val tf1df3 = 0.368
 		List(
-			(Link("Audi", "Audi", Option(9)), Map("hier" -> tf1df2, "ist" -> tf1df3, "automobilhersteller" -> tf1df1)),
-			(Link("Audi", "Audi", Option(7)), Map("audi" -> tf1df2, "ein" -> tf1df3)),
-			(Link("Brachttal", "Brachttal", Option(55)), Map("ist" -> tf1df3, "ortsteil" -> tf1df1)),
-			(Link("Brachttal", null, Option(13)), Map("tal" -> tf1df1)),
-			(Link("Main-Kinzig-Kreis", null, Option(66)), Map("einwohnerzahl" -> tf1df1, "ein" -> tf1df3, "hessen" -> tf1df2)),
-			(Link("Hessen", "Hessen", Option(87)), Map("main-kinzig-kreis" -> tf1df2)),
-			(Link("1377", null, Option(225)), Map("jahr" -> tf1df2)),
-			(Link("Büdinger Wald", "Büdinger Wald", Option(546)), Map("waldrech" -> tf1df1)),
-			(Link("historisches Jahr", "1377", Option(24)), Map("jahr" -> tf1df2))
+			(Link("Audi", "Audi", Option(9), article = Option("Audi Test mit Link")), Map("hier" -> tf1df2, "ist" -> tf1df3, "automobilhersteller" -> tf1df1)),
+			(Link("Audi", "Audi", Option(7), article = Option("Testartikel")), Map("audi" -> tf1df2, "ein" -> tf1df3)),
+			(Link("Brachttal", "Brachttal", Option(55), article = Option("Streitberg (Brachttal)")), Map("ist" -> tf1df3, "ortsteil" -> tf1df1)),
+			(Link("Brachttal", null, Option(13), article = Option("Testartikel")), Map("tal" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", null, Option(66), article = Option("Streitberg (Brachttal)")), Map("einwohnerzahl" -> tf1df1, "ein" -> tf1df3, "hessen" -> tf1df2)),
+			(Link("Hessen", "Hessen", Option(87), article = Option("Streitberg (Brachttal)")), Map("main-kinzig-kreis" -> tf1df2)),
+			(Link("1377", null, Option(225), article = Option("Streitberg (Brachttal)")), Map("jahr" -> tf1df2)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546), article = Option("Streitberg (Brachttal)")), Map("waldrech" -> tf1df1)),
+			(Link("historisches Jahr", "1377", Option(24), article = Option("Testartikel")), Map("jahr" -> tf1df2))
 		)
 	}
 
@@ -775,6 +775,65 @@ object TestData {
 			"Büdinger Wald" -> List(("Büdinger Wald", 0.5, 0.8), ("Audi", 0.5, 0.2)),
 			"historisches Jahr" -> List(("1377", 1.0, 1.0))
 		)
+	}
+
+	def singleAliasLinkList(): List[(Link, Map[String, Double])] = {
+		List(
+			(Link("BMW", "BMW", Option(0), article = Option("Automobilhersteller")), Map()),
+			(Link("BMW", "BMW (Motorsport)", Option(10), article = Option("Automobilhersteller")), Map()),
+			(Link("BMW", "BMW-Motorrad", Option(20), article = Option("Audi")), Map()),
+			(Link("BMW", "BMW M10", Option(30), article = Option("Audi")), Map())
+		)
+	}
+
+	def singleAliasPageScoresMap(): Map[String, List[(String, Double, Double)]] = {
+		Map(
+			"BMW" -> List(
+				("BMW", 0.51, 0.72),
+				("BMW-Motorrad", 0.51, 0.18),
+				("BMW (Motorsport)", 0.51, 0.058),
+				("BMW M10", 0.51, 0.0004))
+		)
+	}
+
+	def emptyArticlesTfidfMap(): Map[String, Map[String, Double]] = {
+		Map(
+			"BMW" -> Map(),
+			"BMW-Motorrad" -> Map(),
+			"BMW (Motorsport)" -> Map(),
+			"BMW M10" -> Map()
+		)
+	}
+
+	def featureEntriesForSingleAliasList(): List[FeatureEntry] = {
+		val link_score = 0.51
+		val mfPage_072 = MultiFeature(0.72, 1, 0.0, 0.54)
+		val mfPage_018 = MultiFeature(0.18, 2, 0.54, 0.122)
+		val mfPage_0058 = MultiFeature(0.058, 3, 0.6619999999999999, 0.057600000000000005)
+		val mfPage_00004 = MultiFeature(0.0004, 4, 0.7196, 0.0)
+		val mfCos = MultiFeature(-1.0, 1, 0.0, 0.0)
+
+		List(
+			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, true, null),
+			FeatureEntry("BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false, null),
+			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false, null),
+			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, false, null),
+
+			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, false, null),
+			FeatureEntry("BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, true, null),
+			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false, null),
+			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, false, null),
+
+			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, false, null),
+			FeatureEntry("BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false, null),
+			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, true, null),
+			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, false, null),
+
+			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, false, null),
+			FeatureEntry("BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false, null),
+			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false, null),
+			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, true, null)
+		).sortBy(featureEntry => (featureEntry.entity, featureEntry.correct))
 	}
 
 	def featureEntriesSet(): Set[FeatureEntry] = {

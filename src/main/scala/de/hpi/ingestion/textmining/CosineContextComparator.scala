@@ -281,7 +281,7 @@ object CosineContextComparator extends SplitSparkJob {
 			}.reduceByKey(_ ++ _)
 			.flatMap { case (alias, joinedLinks) =>
 				joinedLinks.map { case (link, linkContext, page, linkScore, pageScore) =>
-					(page, List(ProtoFeatureEntry(link, linkContext, linkScore, MultiFeature(pageScore, 1, 0.0, 0.0))))
+					(page, List(ProtoFeatureEntry(link, linkContext, linkScore, MultiFeature(pageScore))))
 				}
 			}.reduceByKey(_ ++ _)
 
@@ -323,7 +323,8 @@ object CosineContextComparator extends SplitSparkJob {
 		val dotProduct = vectorA.keySet.intersect(vectorB.keySet)
 			.map(key => vectorA(key) * vectorB(key))
 			.sum
-		dotProduct / (lengthA * lengthB) // Note: This value may become NaN if
+		val lengthProduct = lengthA * lengthB
+		if (lengthProduct == 0) -1.0 else dotProduct / lengthProduct // Note: This value may become -1.0 if
 		// DocumentFrequencyCounter.leastSignificantDocumentFrequency > number of documents
 	}
 
@@ -372,7 +373,7 @@ object CosineContextComparator extends SplitSparkJob {
 		articleSplit.map { articlePartition =>
 			val leanerArticles = leanArticles.map(_.copy(triealiases = Nil))
 			List(leanerArticles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articlePartition).toAnyRDD()
-		}
+		}//.take(1)
 	}
 
 	/**
