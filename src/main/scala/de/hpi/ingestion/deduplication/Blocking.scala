@@ -227,8 +227,9 @@ object Blocking extends SparkJob {
 			.reduceByKey(_ ++ _)
 			.union(statsSum)
 			.map { case (tag, blockStats) =>
+				val minBlockSize = settings(false).getOrElse("minBlockSize", "10000").toInt
 				val filteredStats = blockStats.filter(stat =>
-					!filterSmall || (stat.numsubjects * stat.numstaging) > 10000) // don't write tiny blocks
+					!filterSmall || (stat.numsubjects * stat.numstaging) > minBlockSize) // don't write tiny blocks
 				val tagAccuracy = pairwiseCompleteness.getOrElse(tag, 0.0)
 				val blockComment = Option(s"$comment; pairwise completeness: $tagAccuracy")
 				BlockEvaluation(jobid, tag, filteredStats, blockComment)

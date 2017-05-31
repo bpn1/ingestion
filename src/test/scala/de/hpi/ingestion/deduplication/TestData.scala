@@ -382,7 +382,7 @@ object TestData {
 					BlockStats("Porsc",1,0,0.0),
 					BlockStats("Ferra",1,0,0.0)
 				),
-				Some("Blocking; accuracy: 1.0")
+				Some("Blocking; pairwise completeness: 1.0")
 			),
 			BlockEvaluation(
 				null,
@@ -393,7 +393,7 @@ object TestData {
 					BlockStats("Berlin",2,1,0.5),
 					BlockStats("undefined",2,0,0.0)
 				),
-				Some("Blocking; accuracy: 0.5")
+				Some("Blocking; pairwise completeness: 0.5")
 			),
 			BlockEvaluation(
 				null,
@@ -404,7 +404,7 @@ object TestData {
 					BlockStats("Porsc",1,0,0.0),
 					BlockStats("Volks",1,1,1.0)
 				),
-				Some("Blocking; accuracy: 1.0"))))
+				Some("Blocking; pairwise completeness: 1.0"))))
 	}
 
 	def filteredBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -421,7 +421,7 @@ object TestData {
 					BlockStats("Porsc",1,0,0.0),
 					BlockStats("Ferra",1,0,0.0)
 				),
-				Some("Blocking; accuracy: 1.0")
+				Some("Blocking; pairwise completeness: 1.0")
 			),
 			BlockEvaluation(
 				null,
@@ -431,7 +431,7 @@ object TestData {
 					BlockStats("Hamburg",1,1,0.0),
 					BlockStats("Berlin",2,1,0.5)
 				),
-				Some("Blocking; accuracy: 0.5")),
+				Some("Blocking; pairwise completeness: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
@@ -441,7 +441,7 @@ object TestData {
 					BlockStats("Porsc",1,0,0.0),
 					BlockStats("Volks",1,1,1.0)
 				),
-				Some("Blocking; accuracy: 1.0"))))
+				Some("Blocking; pairwise completeness: 1.0"))))
 	}
 
 	def blockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -459,7 +459,7 @@ object TestData {
 					BlockStats("Porsc", 1, 0, 0.0),
 					BlockStats("Ferra", 1, 0, 0.0)
 				),
-				Some("Test comment; accuracy: 1.0")),
+				Some("Test comment; pairwise completeness: 1.0")),
 			BlockEvaluation(
 				null,
 				"GeoBlocking",
@@ -469,7 +469,7 @@ object TestData {
 					BlockStats("Berlin", 2, 1, 0.5),
 					BlockStats("undefined", 2, 0, 0.0)
 				),
-				Some("Test comment; accuracy: 0.5")
+				Some("Test comment; pairwise completeness: 0.5")
 			),
 			BlockEvaluation(
 				null,
@@ -480,7 +480,7 @@ object TestData {
 					BlockStats("Porsc", 1, 0, 0.0),
 					BlockStats("Volks", 1, 1, 1.0)
 				),
-				Some("Test comment; accuracy: 1.0"))))
+				Some("Test comment; pairwise completeness: 1.0"))))
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Audy "), List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
