@@ -1791,7 +1791,7 @@ object TestData {
 
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
+			Page("Audi", Map("Audi AG" -> 100, "Audi" -> 100, "Volkswagen AG" -> 2)),
 			Page("VW", Map("Volkswagen AG" -> 10, "VW" -> 10)),
 			Page("Hochhaus", Map("Hochhaus" -> 10, "Gebäude" -> 10)),
 			Page("Postbank", Map("Postbank" -> 10)),
