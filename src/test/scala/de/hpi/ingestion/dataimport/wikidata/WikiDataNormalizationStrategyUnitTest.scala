@@ -18,7 +18,7 @@ class WikiDataNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 	}
 
 	"normalizeLocation" should "filter WikiData Ids" in {
-		val countries = TestData.unnormalizedLocations
+		val locations = TestData.unnormalizedLocations
 		val result = WikiDataNormalizationStrategy.normalizeLocation(countries)
 		val expected = TestData.normalizedLocations
 		result shouldEqual expected
