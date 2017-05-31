@@ -69,7 +69,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		Deduplication.scoreConfigSettings = TestData.testConfig()
 		Deduplication.settings = Map("confidence" -> "0.35")
 		val subjects = TestData.testSubjects
-		val duplicates = Deduplication.findDuplicates(TestData.subjectBlocks(subjects, sc), sc).collect.toSet
+		val duplicates = Deduplication.findDuplicates(TestData.subjectBlocks(sc), sc).collect.toSet
 		val expected = TestData.testDuplicates(subjects).toSet
 		duplicates shouldEqual expected
 

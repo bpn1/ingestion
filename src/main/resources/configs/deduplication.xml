@@ -10,6 +10,7 @@
         <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
+        <maxBlockSize>500000</maxBlockSize>
         <confidence>0.7</confidence>
     </settings>
     <simMeasurements>
@@ -22,15 +23,18 @@
             </feature>
         </attribute>
         <attribute>
-            <key>geo_country</key>
+            <key>gen_employees</key>
             <feature>
-                <similarityMeasure>ExactMatch</similarityMeasure>
+                <similarityMeasure>RoughlyEqualNumbers</similarityMeasure>
                 <weight>0.5</weight>
                 <scale>1</scale>
             </feature>
+        </attribute>
+        <attribute>
+            <key>geo_city</key>
             <feature>
                 <similarityMeasure>Jaccard</similarityMeasure>
-                <weight>1</weight>
+                <weight>0.3</weight>
                 <scale>1</scale>
             </feature>
         </attribute>

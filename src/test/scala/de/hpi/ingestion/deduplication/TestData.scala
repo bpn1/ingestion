@@ -166,7 +166,7 @@ object TestData {
 		Subject(id = UUID.fromString("b275ebc4-a481-4248-b7dd-3b6dd6fb804b"), name = Some("Ferrari"), properties = Map("geo_coords" -> List("53","14"), "gen_sectors" -> List("games", "cars", "music")))
 	)
 
-	def subjectBlocks(testSubjects: List[Subject], sc: SparkContext): RDD[Block] = {
+	def subjectBlocks(sc: SparkContext): RDD[Block] = {
 		sc.parallelize(List(
 			Block(key = "Aud", subjects = List(testSubjects(2)), staging = List(testSubjects(3))),
 			Block(key = "Vol", subjects = testSubjects.take(1), staging = List(testSubjects(1))),
@@ -186,6 +186,22 @@ object TestData {
 			(testSubjects(2), testSubjects(3), 0.9446913580246914))
 	}
 
+	def testDuplicateStats: (Traversable[(UUID, UUID)], (String, Set[BlockStats])) = {
+		(List(
+			(
+				UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"),
+				UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130")
+			), (
+				UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"),
+				UUID.fromString("413c5711-67d0-1151-1077-b000000000b5")
+			)
+		), (
+			"key",
+			Set(BlockStats("tag",4,2,0.25))
+		)
+		)
+	}
+
 	def trueDuplicateCandidates(subjects: List[Subject], stagings: List[Subject]): List[DuplicateCandidates] = {
 		val stagingTable = "subject_wikidata"
 		List(
@@ -194,7 +210,7 @@ object TestData {
 				List((stagings.head.id, stagingTable, 0.9784615384615384))),
 			DuplicateCandidates(
 				subjects(1).id,
-				List((stagings(1).id, stagingTable, 0.9446913580246914))))
+				List((stagings(1).id, stagingTable, 1.0))))
 	}
 
 	def duplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
@@ -265,15 +281,15 @@ object TestData {
 	}
 
 	def subjects: List[Subject] = List(
-		Subject(name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52","11"), "gen_income" -> List("1234"))),
-		Subject(name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52","13"), "gen_income" -> List("33"))),
-		Subject(name = Some("Porsche"), properties = Map("geo_coords" -> List("52","13"), "gen_sectors" -> List("cars", "music", "games"))),
-		Subject(name = Some("Ferrari"), properties = Map("geo_coords" -> List("53","14"), "gen_sectors" -> List("games", "cars", "music")))
+		Subject(id = UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52","11"), "gen_income" -> List("1234"))),
+		Subject(id = UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52","13"), "gen_income" -> List("33"))),
+		Subject(id = UUID.fromString("c9621786-1cce-45bf-968a-3e8d06e16fda"), name = Some("Porsche"), properties = Map("geo_coords" -> List("52","13"), "gen_sectors" -> List("cars", "music", "games"))),
+		Subject(id = UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), name = Some("Ferrari"), properties = Map("geo_coords" -> List("53","14"), "gen_sectors" -> List("games", "cars", "music")))
 	)
 
 	def stagings: List[Subject] = List(
-		Subject(name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "gen_income" -> List("12"))),
-		Subject(name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53","14"), "gen_income" -> List("600")))
+		Subject(id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"), name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "gen_income" -> List("12"))),
+		Subject(id = UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53","14"), "gen_income" -> List("600")))
 	)
 
 	def goldStandard(subjects: List[Subject], stagings: List[Subject]): Set[(UUID, UUID)] = Set(
@@ -288,10 +304,10 @@ object TestData {
 			(("Hamburg", "GeoBlocking"), subjects.head),
 			(("undefined", "GeoBlocking"), subjects(2)),
 			(("undefined", "GeoBlocking"), subjects(3)),
-			(("Vol", "SimpleBlocking"), subjects.head),
-			(("Aud", "SimpleBlocking"), subjects(1)),
-			(("Por", "SimpleBlocking"), subjects(2)),
-			(("Fer", "SimpleBlocking"), subjects(3))
+			(("Volks", "SimpleBlocking"), subjects.head),
+			(("Audi ", "SimpleBlocking"), subjects(1)),
+			(("Porsc", "SimpleBlocking"), subjects(2)),
+			(("Ferra", "SimpleBlocking"), subjects(3))
 		))
 	}
 
@@ -301,8 +317,8 @@ object TestData {
 			(("Hamburg", "GeoBlocking"), staging.last),
 			(("New York", "GeoBlocking"), staging.head),
 			(("New York", "GeoBlocking"), staging.last),
-			(("Vol", "SimpleBlocking"), staging.head),
-			(("Aud", "SimpleBlocking"), staging.last)
+			(("Volks", "SimpleBlocking"), staging.head),
+			(("Audi ", "SimpleBlocking"), staging.last)
 		))
 	}
 
@@ -332,10 +348,10 @@ object TestData {
 			("GeoBlocking", Block(id = null, key = "Hamburg", subjects = subjects.take(1), staging = List(stagings.last))),
 			("GeoBlocking", Block(id = null, key = "New York", staging = stagings)),
 			("GeoBlocking", Block(id = null, key = "undefined", subjects = subjects.slice(2, 4))),
-			("SimpleBlocking", Block(id = null, key = "Vol", subjects = subjects.take(1), staging = stagings.take(1))),
-			("SimpleBlocking", Block(id = null, key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last))),
-			("SimpleBlocking", Block(id = null, key = "Por", subjects = List(subjects(2)))),
-			("SimpleBlocking", Block(id = null, key = "Fer", subjects = List(subjects(3))))
+			("SimpleBlocking", Block(id = null, key = "Volks", subjects = subjects.take(1), staging = stagings.take(1))),
+			("SimpleBlocking", Block(id = null, key = "Audi ", subjects = List(subjects(1)), staging = List(stagings.last))),
+			("SimpleBlocking", Block(id = null, key = "Porsc", subjects = List(subjects(2)))),
+			("SimpleBlocking", Block(id = null, key = "Ferra", subjects = List(subjects(3))))
 		))
 	}
 
@@ -344,10 +360,10 @@ object TestData {
 			("GeoBlocking", Block(id = null, key = "Berlin", subjects = subjects.take(2), staging = stagings.take(1))),
 			("GeoBlocking", Block(id = null, key = "Hamburg", subjects = subjects.take(1), staging = List(stagings.last))),
 			("GeoBlocking", Block(id = null, key = "New York", staging = stagings)),
-			("SimpleBlocking", Block(id = null, key = "Vol", subjects = subjects.take(1), staging = stagings.take(1))),
-			("SimpleBlocking", Block(id = null, key = "Aud", subjects = List(subjects(1)), staging = List(stagings.last))),
-			("SimpleBlocking", Block(id = null, key = "Por", subjects = List(subjects(2)))),
-			("SimpleBlocking", Block(id = null, key = "Fer", subjects = List(subjects(3))))
+			("SimpleBlocking", Block(id = null, key = "Volks", subjects = subjects.take(1), staging = stagings.take(1))),
+			("SimpleBlocking", Block(id = null, key = "Audi ", subjects = List(subjects(1)), staging = List(stagings.last))),
+			("SimpleBlocking", Block(id = null, key = "Porsc", subjects = List(subjects(2)))),
+			("SimpleBlocking", Block(id = null, key = "Ferra", subjects = List(subjects(3))))
 		))
 	}
 
@@ -355,70 +371,120 @@ object TestData {
 		sc.parallelize(List(
 			BlockEvaluation(
 				null,
+				"sum GeoBlocking, SimpleBlocking",
+				Set(
+					BlockStats("Hamburg",1,1,0.0),
+					BlockStats("undefined",2,0,0.0),
+					BlockStats("Berlin",2,1,0.5),
+					BlockStats("New York",0,2,0.0),
+					BlockStats("Audi ",1,1,1.0),
+					BlockStats("Volks",1,1,1.0),
+					BlockStats("Porsc",1,0,0.0),
+					BlockStats("Ferra",1,0,0.0)
+				),
+				Some("Blocking; accuracy: 1.0")
+			),
+			BlockEvaluation(
+				null,
 				"GeoBlocking",
 				Set(
-					BlockStats("Berlin", 2, 1, 0.5),
-					BlockStats("Hamburg", 1, 1),
-					BlockStats("New York", 0, 2),
-					BlockStats("undefined", 2, 0)),
-				Option("Blocking; accuracy: 0.5")),
+					BlockStats("New York",0,2,0.0),
+					BlockStats("Hamburg",1,1,0.0),
+					BlockStats("Berlin",2,1,0.5),
+					BlockStats("undefined",2,0,0.0)
+				),
+				Some("Blocking; accuracy: 0.5")
+			),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1, 1.0),
-					BlockStats("Aud", 1, 1, 1.0),
-					BlockStats("Por", 1, 0),
-					BlockStats("Fer", 1, 0)),
-				Option("Blocking; accuracy: 1.0"))
-		))
+					BlockStats("Audi ",1,1,1.0),
+					BlockStats("Ferra",1,0,0.0),
+					BlockStats("Porsc",1,0,0.0),
+					BlockStats("Volks",1,1,1.0)
+				),
+				Some("Blocking; accuracy: 1.0"))))
 	}
 
 	def filteredBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
 		sc.parallelize(List(
 			BlockEvaluation(
 				null,
+				"sum GeoBlocking, SimpleBlocking",
+				Set(
+					BlockStats("Hamburg",1,1,0.0),
+					BlockStats("Berlin",2,1,0.5),
+					BlockStats("New York",0,2,0.0),
+					BlockStats("Audi ",1,1,1.0),
+					BlockStats("Volks",1,1,1.0),
+					BlockStats("Porsc",1,0,0.0),
+					BlockStats("Ferra",1,0,0.0)
+				),
+				Some("Blocking; accuracy: 1.0")
+			),
+			BlockEvaluation(
+				null,
 				"GeoBlocking",
 				Set(
-					BlockStats("Berlin", 2, 1, 0.5),
-					BlockStats("Hamburg", 1, 1),
-					BlockStats("New York", 0, 2)),
-				Option("Blocking; accuracy: 0.5")),
+					BlockStats("New York",0,2,0.0),
+					BlockStats("Hamburg",1,1,0.0),
+					BlockStats("Berlin",2,1,0.5)
+				),
+				Some("Blocking; accuracy: 0.5")),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1, 1.0),
-					BlockStats("Aud", 1, 1, 1.0),
-					BlockStats("Por", 1, 0),
-					BlockStats("Fer", 1, 0)),
-				Option("Blocking; accuracy: 1.0"))))
+					BlockStats("Audi ",1,1,1.0),
+					BlockStats("Ferra",1,0,0.0),
+					BlockStats("Porsc",1,0,0.0),
+					BlockStats("Volks",1,1,1.0)
+				),
+				Some("Blocking; accuracy: 1.0"))))
 	}
 
 	def blockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
 		sc.parallelize(List(
 			BlockEvaluation(
 				null,
+				"sum GeoBlocking, SimpleBlocking",
+				Set(
+					BlockStats("Hamburg", 1, 1, 0.0),
+					BlockStats("undefined", 2, 0, 0.0),
+					BlockStats("Berlin", 2, 1, 0.5),
+					BlockStats("New York", 0, 2, 0.0),
+					BlockStats("Audi ", 1, 1, 1.0),
+					BlockStats("Volks", 1, 1, 1.0),
+					BlockStats("Porsc", 1, 0, 0.0),
+					BlockStats("Ferra", 1, 0, 0.0)
+				),
+				Some("Test comment; accuracy: 1.0")),
+			BlockEvaluation(
+				null,
 				"GeoBlocking",
 				Set(
+					BlockStats("New York", 0, 2, 0.0),
+					BlockStats("Hamburg", 1, 1, 0.0),
 					BlockStats("Berlin", 2, 1, 0.5),
-					BlockStats("Hamburg", 1, 1),
-					BlockStats("New York", 0, 2),
-					BlockStats("undefined", 2, 0)),
-				Option("Test comment; accuracy: 0.5")),
+					BlockStats("undefined", 2, 0, 0.0)
+				),
+				Some("Test comment; accuracy: 0.5")
+			),
 			BlockEvaluation(
 				null,
 				"SimpleBlocking",
 				Set(
-					BlockStats("Vol", 1, 1, 1.0),
-					BlockStats("Aud", 1, 1, 1.0),
-					BlockStats("Por", 1, 0),
-					BlockStats("Fer", 1, 0)),
-				Option("Test comment; accuracy: 1.0"))
-		))
+					BlockStats("Audi ", 1, 1, 1.0),
+					BlockStats("Ferra", 1, 0, 0.0),
+					BlockStats("Porsc", 1, 0, 0.0),
+					BlockStats("Volks", 1, 1, 1.0)
+				),
+				Some("Test comment; accuracy: 1.0"))))
 	}
 
-	def simpleBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
+	def simpleBlockingScheme: List[List[String]] = List(List("Audy "), List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
+	def lastLettersBlockingScheme: List[List[String]] = List(List("wagen"), List(" GmbH"), List("rrari"), List("rsche"), List("en AG"))
 	def listBlockingScheme: List[List[String]] = List(
 		List("Berlin", "Hamburg", "1234"),
 		List("Berlin", "New York", "12"),
@@ -442,9 +508,9 @@ object TestData {
 	))
 
 	def labeledFeatures(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
-		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1)), correct = true),
-		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3)), correct = true),
-		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5)))
+		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1), name = Option("Audi AG")), correct = true),
+		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3), name = Option("Volkswagen AG")), correct = true),
+		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5), name = Option("Porsche AG")))
 	))
 
 	def requiredSettings: List[String] = {
@@ -467,7 +533,7 @@ object TestData {
 
 	def dbpediaEntries: List[Subject] = {
 		List(
-			Subject(id = idList.head, name = Option("Audi")),
+			Subject(id = idList.head, name = Option("Audi ")),
 			Subject(id = idList(2), name = Option("Volkswagen")),
 			Subject(id = idList(4), name = Option("Porsche")))
 	}

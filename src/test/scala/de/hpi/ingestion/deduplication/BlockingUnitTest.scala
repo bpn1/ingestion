@@ -60,6 +60,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			goldStandard,
 			blockingSchemes,
 			false,
+			false,
 			comment
 		).map(_.copy(jobid = null))
 		val expected = TestData.blockEvaluationWithComment(sc)
@@ -80,6 +81,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			goldStandard,
 			blockingSchemes,
 			true,
+			false,
 			comment
 		).map(_.copy(jobid = null))
 		val expected = TestData.filteredBlockEvaluation(sc)
@@ -110,7 +112,9 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val goldStandardRDD = sc.parallelize(goldStandard.toList)
 		val input = List(subjectRDD, stagingRDD).toAnyRDD() ::: List(goldStandardRDD).toAnyRDD()
 		Blocking.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = Blocking.run(input, sc, Array("Test comment")).fromAnyRDD[BlockEvaluation]().head
+		val evaluationBlocks = Blocking
+			.run(input, sc, Array("Test comment"))
+			.fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))
 		val expected = TestData.blockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
@@ -144,5 +148,16 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		Blocking.settings should not be empty
 
 		Blocking.settings = originalSettings
+	}
+
+	"createDuplicateStats" should "find all actual duplicates in a block" in {
+		val subjects = TestData.subjects
+		val stagings = TestData.stagings
+		val UUIDSubjects = subjects.map(_.id)
+		val UUIDStagings = stagings.map(_.id)
+		val goldStandard = TestData.goldStandard(subjects, stagings)
+		val duplicateStats = Blocking.createDuplicateStats((("tag", "key"),(UUIDSubjects, UUIDStagings)), goldStandard)
+		val expected = TestData.testDuplicateStats
+		duplicateStats shouldEqual expected
 	}
 }
