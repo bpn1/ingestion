@@ -94,7 +94,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val originalSettings = Deduplication.settings
 		val originalConfig = Deduplication.scoreConfigSettings
 
-		Deduplication.scoreConfigSettings = TestData.parsedConfig
+		Deduplication.scoreConfigSettings = TestData.simpleTestConfig
 		Deduplication.settings = Map("confidence" -> "0.0")
 		val subjects = TestData.testSubjects
 		val blocks = List(
