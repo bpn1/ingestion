@@ -78,3 +78,9 @@ unmanagedSourceDirectories in Test += baseDirectory.value / "implisense_files" /
 
 // scoverage settings, since scoverage cannot handle unmanagedSources
 coverageExcludedPackages := "de.hpi.ingestion.dataimport.implisense.*"
+
+// exclude companies.jar from ingestion-assembly.jar
+assemblyExcludedJars in assembly := {
+	val cp = (fullClasspath in assembly).value
+	cp.filter(_.data.getName == "companies.jar")
+}
