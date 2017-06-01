@@ -806,12 +806,34 @@ object TestData {
 		)
 	}
 
+	def singleAliasManyPagesScoresMap(): Map[String, List[(String, Double, Double)]] = {
+		Map(
+			"BMW" -> List(
+				("BMW", 0.51, 0.72),
+				("BMW-Motorrad", 0.51, 0.18),
+				("BMW (Motorsport)", 0.51, 0.058),
+				("BMW (Automarke)", 0.51, 0.038),
+				("Berlins Most Wanted", 0.51, 0.0012),
+				("BMW E36", 0.51, 0.0012),
+				("Liste der BMW-Motorräder", 0.51, 0.0008),
+				("BMW E21", 0.51, 0.0004),
+				("BMW M10", 0.51, 0.0004),
+				("BMW 501/502", 0.51, 0.0004)
+		))
+	}
+
 	def emptyArticlesTfidfMap(): Map[String, Map[String, Double]] = {
 		Map(
 			"BMW" -> Map(),
 			"BMW-Motorrad" -> Map(),
 			"BMW (Motorsport)" -> Map(),
-			"BMW M10" -> Map()
+			"BMW (Automarke)" -> Map(),
+			"Berlins Most Wanted" -> Map(),
+			"BMW E36" -> Map(),
+			"Liste der BMW-Motorräder" -> Map(),
+			"BMW E21" -> Map(),
+			"BMW M10" -> Map(),
+			"BMW 501/502" -> Map()
 		)
 	}
 
@@ -844,6 +866,31 @@ object TestData {
 			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false, null),
 			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, true, null)
 		).sortBy(featureEntry => (featureEntry.entity, featureEntry.correct))
+	}
+
+	def featureEntriesForManyPossibleEntities(): List[FeatureEntry] = {
+		val link_score = 0.51
+		val mfPage_072 = MultiFeature(0.72, 1, 0.0, 0.54)
+		val mfPage_018 = MultiFeature(0.18, 2, 0.54, 0.122)
+		val mfPage_0058 = MultiFeature(0.058, 3, 0.6619999999999999, 0.020000000000000004)
+		val mfPage_0038 = MultiFeature(0.038, 4, 0.6819999999999999, 0.0368)
+		val mfPage_00012 = MultiFeature(0.0012, 5, 0.7188, 3.9999999999999986E-4)
+		val mfPage_00008 = MultiFeature(0.0008, 7, 0.7192, 0.0004)
+		val mfPage_00004 = MultiFeature(0.0004, 8, 0.7196, Double.PositiveInfinity)
+		val mfCos = MultiFeature(-1.0, 1, 0.0, Double.PositiveInfinity)
+
+		List(
+			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, true, null),
+			FeatureEntry("BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false, null),
+			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false, null),
+			FeatureEntry("BMW", "BMW (Automarke)", link_score, mfPage_0038, mfCos, false, null),
+			FeatureEntry("BMW", "Berlins Most Wanted", link_score, mfPage_00012, mfCos, false, null),
+			FeatureEntry("BMW", "BMW E36", link_score, mfPage_00012, mfCos, false, null),
+			FeatureEntry("BMW", "Liste der BMW-Motorräder", link_score, mfPage_00008, mfCos, false, null),
+			FeatureEntry("BMW", "BMW E21", link_score, mfPage_00004, mfCos, false, null),
+			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, false, null),
+			FeatureEntry("BMW", "BMW 501/502", link_score, mfPage_00004, mfCos, false, null)
+		).sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
 	}
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
