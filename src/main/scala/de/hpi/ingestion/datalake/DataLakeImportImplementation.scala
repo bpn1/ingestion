@@ -124,7 +124,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 			}.filter(_._2.nonEmpty)
 	}
 
-	override def extractLegalForm(name: String, aClassifier: AClassifier[Tag]): List[String] = {
+	override def extractLegalForm(name: String, classifier: AClassifier[Tag]): List[String] = {
 		val tags = List(Tag.LEGAL_FORM)
 		aClassifier
 			.getTags(name)

@@ -99,7 +99,7 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param name Name of the entity
 	  * @return List of legal form occurrences in the name
 	  */
-	def extractLegalForm(name: String)(implicit aClassifier: AClassifier[Tag]): List[String]
+	def extractLegalForm(name: String, classifier: AClassifier[Tag]): List[String]
 
 	/**
 	  * Getter for the company split classifier
