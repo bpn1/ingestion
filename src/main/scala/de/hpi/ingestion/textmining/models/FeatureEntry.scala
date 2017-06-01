@@ -7,22 +7,24 @@ import org.apache.spark.mllib.regression.LabeledPoint
 /**
   * Contains the data of a single entry for the classifier.
   *
+  * @param article      article's name from which the feature entry was derived
+  * @param offset       character offset where the alias occurred in the article
   * @param alias        alias found in a text
   * @param entity       possible entity the alias might be pointing to
   * @param link_score   score for the alias being a link
   * @param entity_score score for a link with this alias pointing to the entity
   * @param cosine_sim   cosine similarity of the context of the alias and the entity's article/context
   * @param correct      whether or not this alias actually points to the entity (only known for training)
-  * @param id           unique uuid used as Cassandra primary key
   */
 case class FeatureEntry(
+	article: String,
+	offset: Int,
 	alias: String,
 	entity: String,
 	link_score: Double,
 	entity_score: MultiFeature,
 	cosine_sim: MultiFeature,
-	correct: Boolean = false,
-	id: UUID = UUID.randomUUID()
+	correct: Boolean = false
 ) {
 	/**
 	  * Returns a Labeled Point containing the data of this entries features and if the entry is correct.

@@ -790,8 +790,8 @@ object TestData {
 	def singleAliasLinkList(): List[(Link, Map[String, Double])] = {
 		List(
 			(Link("BMW", "BMW", Option(0), article = Option("Automobilhersteller")), Map()),
-			(Link("BMW", "BMW (Motorsport)", Option(10), article = Option("Automobilhersteller")), Map()),
-			(Link("BMW", "BMW-Motorrad", Option(20), article = Option("Audi")), Map()),
+			(Link("BMW", "BMW-Motorrad", Option(10), article = Option("Automobilhersteller")), Map()),
+			(Link("BMW", "BMW (Motorsport)", Option(20), article = Option("Audi")), Map()),
 			(Link("BMW", "BMW M10", Option(30), article = Option("Audi")), Map())
 		)
 	}
@@ -846,26 +846,23 @@ object TestData {
 		val mfCos = MultiFeature(-1.0, 1, 0.0, Double.PositiveInfinity)
 
 		List(
-			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, true, null),
-			FeatureEntry("BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false, null),
-			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false, null),
-			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, false, null),
-
-			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, false, null),
-			FeatureEntry("BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, true, null),
-			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false, null),
-			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, false, null),
-
-			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, false, null),
-			FeatureEntry("BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false, null),
-			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, true, null),
-			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, false, null),
-
-			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, false, null),
-			FeatureEntry("BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false, null),
-			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false, null),
-			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, true, null)
-		).sortBy(featureEntry => (featureEntry.entity, featureEntry.correct))
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, true),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, true),
+			FeatureEntry("Audi", 20, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, true)
+		).sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
 	}
 
 	def featureEntriesForManyPossibleEntities(): List[FeatureEntry] = {
@@ -880,16 +877,16 @@ object TestData {
 		val mfCos = MultiFeature(-1.0, 1, 0.0, Double.PositiveInfinity)
 
 		List(
-			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, true, null),
-			FeatureEntry("BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false, null),
-			FeatureEntry("BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false, null),
-			FeatureEntry("BMW", "BMW (Automarke)", link_score, mfPage_0038, mfCos, false, null),
-			FeatureEntry("BMW", "Berlins Most Wanted", link_score, mfPage_00012, mfCos, false, null),
-			FeatureEntry("BMW", "BMW E36", link_score, mfPage_00012, mfCos, false, null),
-			FeatureEntry("BMW", "Liste der BMW-Motorräder", link_score, mfPage_00008, mfCos, false, null),
-			FeatureEntry("BMW", "BMW E21", link_score, mfPage_00004, mfCos, false, null),
-			FeatureEntry("BMW", "BMW M10", link_score, mfPage_00004, mfCos, false, null),
-			FeatureEntry("BMW", "BMW 501/502", link_score, mfPage_00004, mfCos, false, null)
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Automarke)", link_score, mfPage_0038, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "Berlins Most Wanted", link_score, mfPage_00012, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW E36", link_score, mfPage_00012, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "Liste der BMW-Motorräder", link_score, mfPage_00008, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW E21", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW 501/502", link_score, mfPage_00004, mfCos, false)
 		).sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
 	}
 
@@ -909,16 +906,16 @@ object TestData {
 		val mfCos_0828 = MultiFeature(0.828283413127963, 1, 0.0, Double.PositiveInfinity)
 
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true, null),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0695, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0610, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0, true, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, mfPageBüdingerWald_08, mfCosBüdingerWald_1, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, mfPageBüdingerWald_02, mfCosBüdingerWald_0, false, null),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, mfPage_1, mfCos_0661, true, null),
-			FeatureEntry("Hessen", "Hessen", 0.5, mfPage_1, mfCos_0453, true, null),
-			FeatureEntry("1377", "1377", 1.0, mfPage_1, mfCos_0828, true, null),
-			FeatureEntry("historisches Jahr", "1377", 1.0, mfPage_1, mfCos_0828, true, null)
+			FeatureEntry("Autohersteller", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true),
+			FeatureEntry("Autohersteller", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0695, true),
+			FeatureEntry("Tal", 55, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0610, true),
+			FeatureEntry("Tal", 13, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0, true),
+			FeatureEntry("Reiseziel", 546, "Büdinger Wald", "Büdinger Wald", 0.5, mfPageBüdingerWald_08, mfCosBüdingerWald_1, true),
+			FeatureEntry("Reiseziel", 546, "Büdinger Wald", "Audi", 0.5, mfPageBüdingerWald_02, mfCosBüdingerWald_0, false),
+			FeatureEntry("Tal", 66, "Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, mfPage_1, mfCos_0661, true),
+			FeatureEntry("Tal", 87, "Hessen", "Hessen", 0.5, mfPage_1, mfCos_0453, true),
+			FeatureEntry("Reiseziel", 225, "1377", "1377", 1.0, mfPage_1, mfCos_0828, true),
+			FeatureEntry("Reiseziel", 24, "historisches Jahr", "1377", 1.0, mfPage_1, mfCos_0828, true)
 		)
 	}
 
@@ -938,16 +935,16 @@ object TestData {
 		val mfCos_0828 = MultiFeature(0.828283413127963, 1, 0.0, Double.PositiveInfinity)
 
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true, null),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0695, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0610, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0, false, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, mfPageBüdingerWald_08, mfCosBüdingerWald_1, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, mfPageBüdingerWald_02, mfCosBüdingerWald_0, false, null),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, mfPage_1, mfCos_0661, false, null),
-			FeatureEntry("Hessen", "Hessen", 0.5, mfPage_1, mfCos_0453, true, null),
-			FeatureEntry("1377", "1377", 1.0, mfPage_1, mfCos_0828, false, null),
-			FeatureEntry("historisches Jahr", "1377", 1.0, mfPage_1, mfCos_0828, true, null)
+			FeatureEntry("Audi Test mit Link", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true),
+			FeatureEntry("Testartikel", 7, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0695, true),
+			FeatureEntry("Streitberg (Brachttal)", 55, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0610, true),
+			FeatureEntry("Testartikel", 13, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0, false),
+			FeatureEntry("Streitberg (Brachttal)", 546, "Büdinger Wald", "Büdinger Wald", 0.5, mfPageBüdingerWald_08, mfCosBüdingerWald_1, true),
+			FeatureEntry("Streitberg (Brachttal)", 546, "Büdinger Wald", "Audi", 0.5, mfPageBüdingerWald_02, mfCosBüdingerWald_0, false),
+			FeatureEntry("Streitberg (Brachttal)", 66, "Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, mfPage_1, mfCos_0661, false),
+			FeatureEntry("Streitberg (Brachttal)", 87, "Hessen", "Hessen", 0.5, mfPage_1, mfCos_0453, true),
+			FeatureEntry("Streitberg (Brachttal)", 225, "1377", "1377", 1.0, mfPage_1, mfCos_0828, false),
+			FeatureEntry("Testartikel", 24, "historisches Jahr", "1377", 1.0, mfPage_1, mfCos_0828, true)
 		)
 	}
 
@@ -2034,11 +2031,11 @@ object TestData {
 
 	def featureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("a", "b", 0.1, MultiFeature(0.2), MultiFeature(0.8), true),
-			FeatureEntry("c", "d", 0.4, MultiFeature(0.0), MultiFeature(0.7), false),
-			FeatureEntry("e", "f", 0.7, MultiFeature(1.0), MultiFeature(0.1), true),
-			FeatureEntry("g", "h", 0.8, MultiFeature(0.2), MultiFeature(0.3), false),
-			FeatureEntry("i", "j", 0.9, MultiFeature(0.4), MultiFeature(0.7), false)
+			FeatureEntry("Audi", 0, "a", "b", 0.1, MultiFeature(0.2), MultiFeature(0.8), true),
+			FeatureEntry("BMW", 10, "c", "d", 0.4, MultiFeature(0.0), MultiFeature(0.7), false),
+			FeatureEntry("Chevrolet", 20, "e", "f", 0.7, MultiFeature(1.0), MultiFeature(0.1), true),
+			FeatureEntry("Dacia", 30, "g", "h", 0.8, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry("Ferrari", 40, "i", "j", 0.9, MultiFeature(0.4), MultiFeature(0.7), false)
 		)
 	}
 
@@ -2153,13 +2150,13 @@ object TestData {
 
 	def classifierFeatureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("alias1", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
-			FeatureEntry("alias2", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
-			FeatureEntry("alias3", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
-			FeatureEntry("alias4", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
-			FeatureEntry("alias5", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
-			FeatureEntry("alias6", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
-			FeatureEntry("alias7", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
+			FeatureEntry("Audi", 0, "alias1", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
+			FeatureEntry("Audi", 0, "alias2", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
+			FeatureEntry("Audi", 0, "alias3", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry("Audi", 0, "alias4", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
+			FeatureEntry("Audi", 0, "alias5", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
+			FeatureEntry("Audi", 0, "alias6", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
+			FeatureEntry("Audi", 0, "alias7", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
 		)
 	}
 

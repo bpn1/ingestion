@@ -3,25 +3,26 @@ package de.hpi.ingestion.textmining.models
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 
-object TestData {
+// scalastyle:off line.size.limit
 
+object TestData {
 	def protoFeatureEntries(): List[(ProtoFeatureEntry, String, MultiFeature)] = {
 		List(
-			(ProtoFeatureEntry(Link("a", "b"), Map(), 0.1, MultiFeature(0.2)), "b", MultiFeature(0.8)),
-			(ProtoFeatureEntry(Link("c", "a"), Map(), 0.4, MultiFeature(0.0)), "d", MultiFeature(0.7)),
-			(ProtoFeatureEntry(Link("e", "f"), Map(), 0.7, MultiFeature(1.0)), "f", MultiFeature(0.1)),
-			(ProtoFeatureEntry(Link("g", "a"), Map(), 0.8, MultiFeature(0.2)), "h", MultiFeature(0.3)),
-			(ProtoFeatureEntry(Link("i", "a"), Map(), 0.9, MultiFeature(0.4)), "j", MultiFeature(0.7))
-			)
+			(ProtoFeatureEntry(Link("a", "b", Option(0), article = Option("Audi")), Map(), 0.1, MultiFeature(0.2)), "b", MultiFeature(0.8)),
+			(ProtoFeatureEntry(Link("c", "a", Option(10), article = Option("BMW")), Map(), 0.4, MultiFeature(0.0)), "d", MultiFeature(0.7)),
+			(ProtoFeatureEntry(Link("e", "f", Option(20), article = Option("Chevrolet")), Map(), 0.7, MultiFeature(1.0)), "f", MultiFeature(0.1)),
+			(ProtoFeatureEntry(Link("g", "a", Option(30), article = Option("Dacia")), Map(), 0.8, MultiFeature(0.2)), "h", MultiFeature(0.3)),
+			(ProtoFeatureEntry(Link("i", "a", Option(40), article = Option("Ferrari")), Map(), 0.9, MultiFeature(0.4)), "j", MultiFeature(0.7))
+		)
 	}
 
 	def featureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("a", "b", 0.1, MultiFeature(0.2), MultiFeature(0.8), true, null),
-			FeatureEntry("c", "d", 0.4, MultiFeature(0.0), MultiFeature(0.7), false, null),
-			FeatureEntry("e", "f", 0.7, MultiFeature(1.0), MultiFeature(0.1), true, null),
-			FeatureEntry("g", "h", 0.8, MultiFeature(0.2), MultiFeature(0.3), false, null),
-			FeatureEntry("i", "j", 0.9, MultiFeature(0.4), MultiFeature(0.7), false, null)
+			FeatureEntry("Audi", 0, "a", "b", 0.1, MultiFeature(0.2), MultiFeature(0.8), true),
+			FeatureEntry("BMW", 10, "c", "d", 0.4, MultiFeature(0.0), MultiFeature(0.7), false),
+			FeatureEntry("Chevrolet", 20, "e", "f", 0.7, MultiFeature(1.0), MultiFeature(0.1), true),
+			FeatureEntry("Dacia", 30, "g", "h", 0.8, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry("Ferrari", 40, "i", "j", 0.9, MultiFeature(0.4), MultiFeature(0.7), false)
 		)
 	}
 
@@ -162,7 +163,7 @@ object TestData {
 		ParsedWikipediaEntry(
 			"Berlin",
 			Option("Berlin ist cool"),
-			textlinks = List (
+			textlinks = List(
 				Link("Berlin", "Berlin", Option(0)),
 				Link("Berlin", "Berlin", Option(15))
 			),
@@ -186,3 +187,5 @@ object TestData {
 		)
 	}
 }
+
+// scalastyle:on line.size.limit

@@ -91,13 +91,15 @@ CREATE TYPE wikidumps.multifeature (
 );
 
 CREATE TABLE wikidumps.featureentries (
-    id uuid PRIMARY KEY,
+    article text,
+    offset int,
     alias text,
     entity text,
     link_score double,
     entity_score multifeature,
     cosine_sim multifeature,
-    correct boolean
+    correct boolean,
+    PRIMARY KEY (article, offset)
 );
 
 CREATE TYPE wikidumps.precisionrecalldatatuple (
