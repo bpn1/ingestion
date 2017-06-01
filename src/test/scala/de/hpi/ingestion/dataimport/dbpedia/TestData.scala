@@ -117,7 +117,7 @@ object TestData {
 			"geo:lat" -> List("52"),
 			"property-de:latitude" -> List("53"),
 			"geo:long" -> List("100"),
-			"dbo:country" -> List("Koblenz@de ."),
+			"dbo:country" -> List("Schweiz@de ."),
 			"property-de:mitarbeiteranzahl" -> List("12^^xsd:integer", "13^^xsd:nonNegativeInteger"),
 			"dbo:industry" -> List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei"),
 			"testProperty" -> List("test")
@@ -131,7 +131,7 @@ object TestData {
 		"id_viaf" -> List("dbo:viafId", "property-de:viaf"),
 		"geo_coords_lat" -> List("geo:lat", "property-de:latitude", "property-de:breitengrad"),
 		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad"),
-		"geo_country" -> List("dbo:country", "property-de:land"),
+		"geo_country" -> List("dbo:country"),
 		"gen_employees" -> List("dbo:numberOfEmployees", "property-de:mitarbeiteranzahl"),
 		"gen_sectors" -> List("dbo:industry")
 	)
