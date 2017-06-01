@@ -31,7 +31,7 @@ object TestData {
 	}
 
 	def importConfigXML: Node = {
-		XML.load(getClass.getResource("/normalization.xml"))
+		XML.load(getClass.getResource("/datalake/normalization.xml"))
 	}
 
 	def normalizationSettings: Map[String, List[String]] = {
@@ -43,6 +43,10 @@ object TestData {
 	}
 
 	def sectorSettings: Map[String, List[String]] = {
-		Map("sectorKey" -> List("mapping1", "mapping2"))
+		Map(
+			"Category 1" -> List("value1.1", "value1.2"),
+			"Category 2" -> List("value2.1"),
+			"Category 3" -> List("value3.1", "value3.2")
+		)
 	}
 }

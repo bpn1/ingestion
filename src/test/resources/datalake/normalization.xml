@@ -20,9 +20,18 @@
     </normalization>
     <categorization>
         <category>
-            <key>sectorKey</key>
-            <mapping>mapping1</mapping>
-            <mapping>mapping2</mapping>
+            <key>Category 1</key>
+            <mapping>value1.1</mapping>
+            <mapping>value1.2</mapping>
+        </category>
+        <category>
+            <key>Category 2</key>
+            <mapping>value2.1</mapping>
+        </category>
+        <category>
+            <key>Category 3</key>
+            <mapping>value3.1</mapping>
+            <mapping>value3.2</mapping>
         </category>
     </categorization>
 </config>

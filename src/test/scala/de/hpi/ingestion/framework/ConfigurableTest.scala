@@ -39,7 +39,7 @@ class ConfigurableTest extends FlatSpec with Matchers {
 		configurable.sectorSettings = Map()
 		configurable.sectorSettings should not be empty
 
-		configurable.importConfigFile = "src/test/resources/normalization.xml"
+		configurable.importConfigFile = "src/test/resources/datalake/normalization.xml"
 		configurable.normalizationSettings = Map()
 		configurable.normalizationSettings should not be empty
 		configurable.normalizationSettings shouldEqual TestData.normalizationSettings

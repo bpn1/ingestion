@@ -1,9 +1,11 @@
 package de.hpi.ingestion.datalake.mock
 
-import de.hpi.ingestion.datalake.DataLakeImportImplementation
-import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import de.hpi.companies.algo.Tag
+import de.hpi.companies.algo.classifier.AClassifier
+import de.hpi.ingestion.datalake.DataLakeImportImplementation
+import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 object MockImport extends DataLakeImportImplementation[Entity](
@@ -12,7 +14,7 @@ object MockImport extends DataLakeImportImplementation[Entity](
 	"inputTable"
 ){
 	appName = "TestImport"
-	importConfigFile = "src/test/resources/normalization.xml"
+	importConfigFile = "src/test/resources/datalake/normalization.xml"
 
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		List(sc.parallelize(Seq(Subject()))).toAnyRDD()
@@ -30,8 +32,9 @@ object MockImport extends DataLakeImportImplementation[Entity](
 		entity: Entity,
 		version: Version,
 		mapping: Map[String, List[String]],
-		strategies: Map[String, List[String]]
-	): Subject = Subject()
+		strategies: Map[String, List[String]],
+		classifier: AClassifier[Tag]
+	): Subject = Subject(name = Option(entity.root_value))
 
 	override def normalizeProperties(
 		entity: Entity,
