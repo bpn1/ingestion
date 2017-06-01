@@ -266,8 +266,8 @@ object Blocking extends SparkJob {
 				val blockComment = Option(s"$comment")
 				val tagCompleteness = pairwiseCompleteness.getOrElse(tag, 0.0)
 				val tagBlockCount = blockCount.getOrElse(tag, 0)
-				val tagComparisons: BigInt = comparisonCount.getOrElse(tag, 0)
-				BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, tagBlockCount, tagComparisons)
+				val tagComparisons: Long = comparisonCount.getOrElse(tag, 0)
+		BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, tagBlockCount, BigInt(tagComparisons))
 			}
 	}
 }

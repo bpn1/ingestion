@@ -63,7 +63,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			false,
 			comment
 		).map(_.copy(jobid = null))
-//println(evaluationBlocks.collect.toList.map(eva => (eva.pairwiseCompleteness, eva.blockCount, eva.comparisonCount)))
+//	println(evaluationBlocks.collect.toList.map(eva => (eva.pairwisecompleteness, eva.blockcount, eva.comparisoncount)))
 		val expected = TestData.blockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -85,6 +85,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			false,
 			comment
 		).map(_.copy(jobid = null))
+//	println(evaluationBlocks.collect.toList.map(eva => (eva.pairwisecompleteness, eva.blockcount, eva.comparisoncount)))
 		val expected = TestData.filteredBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -100,6 +101,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		Blocking.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
 		val evaluationBlocks = Blocking.run(input, sc).fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))
+//	println(evaluationBlocks.collect.toList.map(eva => (eva.pairwisecompleteness, eva.blockcount, eva.comparisoncount)))
 		val expected = TestData.emptyBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -117,6 +119,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			.run(input, sc, Array("Test comment"))
 			.fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))
+//	println(evaluationBlocks.collect.toList.map(eva => (eva.pairwisecompleteness, eva.blockcount, eva.comparisoncount)))
 		val expected = TestData.emptyBlockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
