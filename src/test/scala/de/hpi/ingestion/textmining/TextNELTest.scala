@@ -55,12 +55,12 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			}
 	}
 
-	they should "retain the original text" in {
+	they should "only contain the title and the original text" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 			.map(article => Article(article.title, article.getText()))
 		val links = sc.parallelize(TestData.linksWithArticleAnnotation().toList)
 		val originalTexts = articles
-			.map(_.text)
+			.map(article => article.title + "\n" + article.text)
 			.collect
 			.toSet
 		val texts = TextNEL.generateArticlesWithLinks(articles, links)

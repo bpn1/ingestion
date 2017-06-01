@@ -155,18 +155,23 @@ object TextNEL extends SparkJob {
 	  * @return HTML containing links
 	  */
 	def generateArticleWithLinks(title: String, text: String, links: List[Link]): Article = {
-		var html = ""
+		var html = s"<h1>$title</h1>\n"
 		var processedCharacters = 0
 		links
-			.sortBy(_.offset)
-			.foreach { link =>
+			.groupBy(_.offset)
+			.toList
+			.sortBy(_._1)
+			.foreach { case (offset, links) =>
 				val i = 0
-				html += text.substring(processedCharacters, link.offset.get)
-				processedCharacters = link.offset.get
-				html += "<a href=\"" + link.page + "\" class=\"importance" + i + "\" title=\"" + link.page + "\">"
-				html += text.substring(processedCharacters, processedCharacters + link.alias.length)
-				processedCharacters += link.alias.length
-				html += "<ul style=\"display: none\">" + "<li>some other link</li>" + "</ul></a>"
+				val mainLink = links.head
+				html += text.substring(processedCharacters, offset.get)
+				processedCharacters = offset.get
+				val pages = links.map(_.page).toString()
+				html += "<a href=\"" + mainLink.page + "\" class=\"importance" + i + "\" title=\"" + pages + "\">"
+				html += text.substring(processedCharacters, processedCharacters + mainLink.alias.length)
+				processedCharacters += mainLink.alias.length
+				//html += "<ul style=\"display: none\">" + "<li>some other link</li>" + "</ul></a>"
+				html += "</a>"
 			}
 		html += text.substring(processedCharacters, text.length)
 		Article(title, html)
