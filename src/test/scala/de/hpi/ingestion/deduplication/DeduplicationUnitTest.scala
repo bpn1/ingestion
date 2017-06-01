@@ -1,7 +1,7 @@
 package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.deduplication.models.DuplicateCandidates
+import de.hpi.ingestion.deduplication.models.{Block, DuplicateCandidates}
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -87,6 +87,25 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val expectedCandidates = sc.parallelize(TestData.duplicateCandidates(subjects))
 		assertRDDEquals(duplicateCandidates, expectedCandidates)
 
+		Deduplication.settings = originalSettings
+	}
+
+	they should "not be compared twice" in {
+		val originalSettings = Deduplication.settings
+		val originalConfig = Deduplication.scoreConfigSettings
+
+		Deduplication.scoreConfigSettings = TestData.simpleTestConfig
+		Deduplication.settings = Map("confidence" -> "0.0")
+		val subjects = TestData.testSubjects
+		val blocks = List(
+			Block(key = "Vol", subjects = subjects.take(1), staging = List(subjects(1))),
+			Block(key = "Auto", subjects = List(subjects.head, subjects(2)), staging = List(subjects(1), subjects(3))),
+			Block(key = "Aud", subjects = List(subjects(2)), staging = List(subjects(3))))
+		val duplicateCandidates = Deduplication.findDuplicates(sc.parallelize(blocks), sc).map(_.copy(_3 = 0.0))
+		val expectedCandidates = TestData.distinctDuplicateCandidates(subjects, sc)
+		assertRDDEquals(duplicateCandidates, expectedCandidates)
+
+		Deduplication.scoreConfigSettings = originalConfig
 		Deduplication.settings = originalSettings
 	}
 

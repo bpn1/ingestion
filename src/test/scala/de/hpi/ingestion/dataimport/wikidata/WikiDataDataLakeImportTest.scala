@@ -12,24 +12,12 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 	}
 
 	"normalizeAttribute" should "the values of a given attribute" in {
-		val attributes = Map(
-			"gen_sectors" -> TestData.unnormalizedSectors,
-			"geo_coords" -> TestData.unnormalizedCoordinates,
-			"geo_country" -> TestData.unnormalizedLocations,
-			"geo_city" -> TestData.unnormalizedLocations,
-			"gen_employees" -> TestData.unnormalizedEmployees
-		)
+		val attributes = TestData.unnormalizedAttributes
 		val strategies = TestData.strategies
 		val normalizedAttributes = attributes.map { case (attribute, values) =>
 			attribute -> WikiDataDataLakeImport.normalizeAttribute(attribute, values, strategies)
 		}
-		val expected = Map(
-			"gen_sectors" -> TestData.mappedSectors,
-			"geo_coords" -> TestData.normalizedCoordinates,
-			"geo_country" -> TestData.normalizedLocations,
-			"geo_city" -> TestData.normalizedLocations,
-			"gen_employees" -> TestData.normalizedEmployees
-		)
+		val expected = TestData.normalizedAttributes
 		normalizedAttributes shouldEqual expected
 	}
 
@@ -37,8 +25,9 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
+		val classifier = WikiDataDataLakeImport.classifier
 		val translatedSubjects = TestData.wikidataEntities.map { entity =>
-			(entity, WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies))
+			entity -> WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		}
 		translatedSubjects should not be empty
 		translatedSubjects.foreach { case (entity, subject) =>
@@ -53,7 +42,8 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies)
+		val classifier = WikiDataDataLakeImport.classifier
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("id_wikidata") shouldEqual List("Q21110253")
 		subject.properties("id_wikipedia") shouldEqual List("testwikiname")
 		subject.properties("id_dbpedia") shouldEqual List("testwikiname")
@@ -71,7 +61,18 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies)
+		val classifier = WikiDataDataLakeImport.classifier
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("testProperty") shouldEqual List("test")
+	}
+
+	it should "extract the legal form" in {
+		val entity = TestData.testEntity
+		val version = TestData.version(sc)
+		val mapping = TestData.mapping
+		val strategies = TestData.strategies
+		val classifier = WikiDataDataLakeImport.classifier
+		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		subject.properties("gen_legal_form") shouldEqual List("AG")
 	}
 }

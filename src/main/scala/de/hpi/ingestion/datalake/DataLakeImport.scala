@@ -2,6 +2,8 @@ package de.hpi.ingestion.datalake
 
 import java.net.URL
 
+import de.hpi.companies.algo.Tag
+import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 
 /**
@@ -18,7 +20,7 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param entity the entity to be filtered
 	  * @return Boolean if the entity matches the filter
 	  */
-	protected def filterEntities(entity: T): Boolean
+	def filterEntities(entity: T): Boolean
 
 	/**
 	  * Translates an entity of the datasource into a Subject, which is the schema of the staging table.
@@ -28,11 +30,12 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param mapping Map of the attribute renaming schema for the attribute normalization
 	  * @return a new Subject created from the given object
 	  */
-	protected def translateToSubject(
+	def translateToSubject(
 		entity: T,
 		version: Version,
 		mapping: Map[String, List[String]],
-		strategies: Map[String, List[String]]
+		strategies: Map[String, List[String]],
+		classifier: AClassifier[Tag]
 	): Subject
 
 	/**
@@ -41,7 +44,7 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param url the path to the config file
 	  * @return a Map containing the normalized attributes mapped to the new subject attributes
 	  */
-	protected def parseNormalizationConfig(url: URL): Map[String, List[String]]
+	def parseNormalizationConfig(url: URL): Map[String, List[String]]
 
 	/**
 	  * Parses the normalization config file into a Map.
@@ -49,7 +52,23 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param path the path to the config file
 	  * @return a Map containing the normalized attributes mapped to the new subject attributes
 	  */
-	protected def parseNormalizationConfig(path: String): Map[String, List[String]]
+	def parseNormalizationConfig(path: String): Map[String, List[String]]
+
+	/**
+	  * Parses the category normalization config file into a Map.
+	  *
+	  * @param url the path to the config file
+	  * @return a Map containing the normalized categories
+	  */
+	def parseCategoryConfig(url: URL): Map[String, List[String]]
+
+	/**
+	  * Parses the category normalization config file into a Map.
+	  *
+	  * @param path the path to the config file
+	  * @return a Map containing the normalized categories
+	  */
+	def parseCategoryConfig(path: String): Map[String, List[String]]
 
 	/**
 	  * Normalizes a given entity into a map.
@@ -57,7 +76,7 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param entity the object to be normalized
 	  * @return a Map containing the normalized information of the entity
 	  */
-	protected def normalizeProperties(
+	def normalizeProperties(
 		entity: T,
 		mapping: Map[String, List[String]],
 		strategies: Map[String, List[String]]
@@ -69,14 +88,22 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param values attribute values
 	  * @return normalized attribute values
 	  */
-	protected def normalizeAttribute(
+	def normalizeAttribute(
 		attribute: String,
 		values: List[String],
 		strategies: Map[String, List[String]]
 	): List[String]
-}
 
-import de.hpi.ingestion.datalake.models._
-import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
-import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.dataimport.dbpedia.DBpediaDataLakeImport
+	/**
+	  * Extracts the legal form of a name
+	  * @param name Name of the entity
+	  * @return List of legal form occurrences in the name
+	  */
+	def extractLegalForm(name: String, classifier: AClassifier[Tag]): List[String]
+
+	/**
+	  * Getter for the company split classifier
+	  * @return The classifier
+	  */
+	def classifier: AClassifier[Tag]
+}
