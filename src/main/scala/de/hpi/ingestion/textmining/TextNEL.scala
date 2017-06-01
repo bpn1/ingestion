@@ -14,7 +14,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.model.RandomForestModel
 
 /**
-  * todo
+  * Uses a trained classifier model to perform NER and NEL on Wikipedia articles.
   */
 object TextNEL extends SparkJob {
 	appName = "Text NEL"
@@ -33,13 +33,12 @@ object TextNEL extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		val documentFrequencies = sc.cassandraTable[DocumentFrequency](settings("keyspace"), settings("dfTable"))
 		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
-		List(tfArticles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
+		List(tfArticles).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
 
 	/**
-	  * todo
+	  * Saves found links to named entities to the HDFS.
 	  *
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
@@ -54,9 +53,9 @@ object TextNEL extends SparkJob {
 	}
 
 	/**
-	  * todo
+	  * Loads the random forest classifier model from the HDFS.
 	  *
-	  * @return
+	  * @return random forest classifier model
 	  */
 	def loadModel(sc: SparkContext): RandomForestModel = {
 		RandomForestModel.load(sc, settings("classifierModel"))
@@ -65,12 +64,13 @@ object TextNEL extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * todo
+	  * Uses the trained classifier to find and link named entities.
 	  *
-	  * @param data
-	  * @return
+	  * @param data       link candidates with their respective labeled points
+	  * @param classifier trained random forest classifier model
+	  * @return identified links to named entities
 	  */
-	def findAndLinkNamedEntities(
+	def linkNamedEntities(
 		data: RDD[(Link, LabeledPoint)],
 		classifier: RandomForestModel
 	): RDD[Link] = {
@@ -85,37 +85,13 @@ object TextNEL extends SparkJob {
 			}
 	}
 
-	//	/**
-	//	  * todo
-	//	  *
-	//	  * @param
-	//	  * @return
-	//	  */
-	//	def extractTokenContexts(
-	//		tokens: List[String],
-	//		linkCandidates: List[Link],
-	//		tokenizer: IngestionTokenizer
-	//	): List[Link] = {
-	//		linkCandidates.map { link =>
-	//			val aliasTokens = tokenizer.onlyTokenize(link.alias)
-	//			val aliasIndex = tokens.indexOfSlice(aliasTokens)
-	//			val contextStart = Math.max(aliasIndex - settings("contextSize").toInt, 0)
-	//			val preAliasContext = tokens.slice(contextStart, aliasIndex)
-	//			val contextEnd = Math.min(aliasIndex + settings("contextSize").toInt, tokens.length)
-	//			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
-	//			val context = preAliasContext ++ postAliasContext
-	//			val bag = TermFrequencyCounter.extractBagOfWords(tokenizer.process(context))
-	//			link.copy(context = bag.getCounts())
-	//		}
-	//	}
-
 	/**
-	  * todo
+	  * Finds all known aliases in a text.
 	  *
-	  * @param text
-	  * @param trie
-	  * @param tokenizer
-	  * @param contextTokenizer
+	  * @param text             article text
+	  * @param trie             trie with known aliases
+	  * @param tokenizer        word tokenizer that splits text into raw words
+	  * @param contextTokenizer word tokenizer for context extraction (may filter stopwords and stem)
 	  * @return
 	  */
 	def matchTrieAliases(
@@ -144,29 +120,22 @@ object TextNEL extends SparkJob {
 	}
 
 	/**
-	  * todo
+	  * Finds candidates for links and extracts their term frequencies.
 	  *
-	  * @param articles                   RDD of parsed Wikipedia articles containing the links and their contexts
-	  * @param documentFrequencies        RDD of document frequencies
-	  * @param numDocuments               number of documents that was used to calculate the document frequencies
-	  * @param documentFrequencyThreshold lower threshold for document frequencies
+	  * @param articles RDD of parsed Wikipedia articles containing the links and their contexts
+	  * @param aliases  RDD of all aliases
 	  * @return RDD of tuples containing the link and the tfIdfs of ever term in its context
 	  */
-	def calculateTokenContextsTfidf(
+	def findLinkCandidates(
 		articles: RDD[Article],
-		documentFrequencies: RDD[DocumentFrequency],
-		aliases: RDD[Alias],
-		numDocuments: Long,
-		documentFrequencyThreshold: Int,
-		defaultIdf: Double,
-		sc: SparkContext
-	): RDD[(Link, Map[String, Double])] = {
+		aliases: RDD[Alias]
+	): RDD[(Link, Bag[String, Int])] = {
 		val tokenizer = IngestionTokenizer(false, false)
 		val contextTokenizer = IngestionTokenizer(true, true)
 		val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
 
 		val aliasPages = aliases.flatMap(alias => alias.pages.map(page => (alias.alias, page._1)))
-		val contextTermFrequencies = articles
+		articles
 			.flatMap { article =>
 				val trieAlias = matchTrieAliases(article.text, trie, tokenizer, contextTokenizer)
 				trieAlias.map(trieAlias => (trieAlias.alias, (article.title, trieAlias)))
@@ -175,21 +144,15 @@ object TextNEL extends SparkJob {
 			.map { case (alias, ((title, trieAlias), page)) =>
 				(Link(alias, page, trieAlias.offset, article = Option(title)), Bag(trieAlias.context))
 			}
-
-		calculateTfidf(
-			contextTermFrequencies,
-			numDocuments,
-			defaultIdf)
-			.reduceByKey(_ ++ _)
 	}
 
 	/**
-	  * todo
+	  * Inserts HTML links into an article text where named entities were found.
 	  *
-	  * @param title
-	  * @param text
-	  * @param links
-	  * @return
+	  * @param title title of the article
+	  * @param text  text of the article
+	  * @param links linked named entities found in the article
+	  * @return HTML containing links
 	  */
 	def generateArticleWithLinks(title: String, text: String, links: List[Link]): Article = {
 		var html = ""
@@ -210,10 +173,11 @@ object TextNEL extends SparkJob {
 	}
 
 	/**
-	  * todo
+	  * Inserts HTML links into all article texts where named entities were found.
 	  *
-	  * @param links
-	  * @return
+	  * @param articles all articles
+	  * @param links    all linked named entities found in the articles
+	  * @return all articles with HTML as text
 	  */
 	def generateArticlesWithLinks(articles: RDD[Article], links: RDD[Link]): RDD[Article] = {
 		val groupedLinks = links
@@ -232,12 +196,16 @@ object TextNEL extends SparkJob {
 	}
 
 	/**
-	  * todo
+	  * Uses a trained classifier model to perform NER and NEL on Wikipedia articles.
+	  *
+	  * @param input List of RDDs containing the input data
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
+	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val articlesWithTermFrequencies = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(10000))
-		val documentFrequencies = input(1).asInstanceOf[RDD[DocumentFrequency]]
-		val aliases = input(2).asInstanceOf[RDD[Alias]]
+		val aliases = input(1).asInstanceOf[RDD[Alias]]
 		val numDocuments = articlesWithTermFrequencies.count()
 
 		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
@@ -250,21 +218,14 @@ object TextNEL extends SparkJob {
 		val classifier = modelFunction(sc)
 		val articles = articlesWithTermFrequencies.map(article => Article(article.title, article.getText()))
 
-		val contextTfidf = calculateTokenContextsTfidf(
-			articles,
-			documentFrequencies,
-			aliases,
-			numDocuments,
-			DocumentFrequencyCounter.leastSignificantDocumentFrequency,
-			defaultIdf,
-			sc
-		)
+		val linkCandidatesTfs = findLinkCandidates(articles, aliases)
+		val linkCandidatesTfidf = calculateTfidf(linkCandidatesTfs, numDocuments, defaultIdf)
 
 		val linkFeatureEntries = CosineContextComparator
-			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.compareLinksWithArticles(linkCandidatesTfidf, aliasPageProbabilities, articleTfidf)
 		val data = linkFeatureEntries
 			.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
-		val namedEntities = findAndLinkNamedEntities(data, classifier)
+		val namedEntities = linkNamedEntities(data, classifier)
 		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)
 
 		List(namedEntities).toAnyRDD() ++ List(articlesWithLinks).toAnyRDD()
