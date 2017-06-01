@@ -48,7 +48,7 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 		sparkJob.assertConditions(Array())
 		sparkJob.settings should not be empty
 		sparkJob.scoreConfigSettings should not be empty
-		sparkJob.importConfigFile = "normalization.xml"
+		sparkJob.importConfigFile = "normalization_wikidata.xml"
 		sparkJob.assertConditions(Array())
 		sparkJob.normalizationSettings should not be empty
 		sparkJob.sectorSettings should not be empty
