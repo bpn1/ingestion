@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<categorization>
+    <category>
+        <key>Category 1</key>
+        <mapping>value1.1</mapping>
+        <mapping>value1.2</mapping>
+    </category>
+    <category>
+        <key>Category 2</key>
+        <mapping>value2.1</mapping>
+    </category>
+    <category>
+        <key>Category 3</key>
+        <mapping>value3.1</mapping>
+        <mapping>value3.2</mapping>
+    </category>
+</categorization>
