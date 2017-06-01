@@ -34,14 +34,16 @@ class ConfigurableTest extends FlatSpec with Matchers {
 		configurable.sectorSettings shouldBe empty
 
 		configurable.importConfigFile = "normalization_wikidata.xml"
+		configurable.normalizationSettings = Map()
 		configurable.normalizationSettings should not be empty
+		configurable.sectorSettings = Map()
 		configurable.sectorSettings should not be empty
 
-		configurable.normalizationSettings = Map()
-		configurable.sectorSettings = Map()
 		configurable.importConfigFile = "src/test/resources/normalization.xml"
+		configurable.normalizationSettings = Map()
 		configurable.normalizationSettings should not be empty
 		configurable.normalizationSettings shouldEqual TestData.normalizationSettings
+		configurable.sectorSettings = Map()
 		configurable.sectorSettings should not be empty
 		configurable.sectorSettings shouldEqual TestData.sectorSettings
 	}

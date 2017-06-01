@@ -51,5 +51,23 @@ object TestData {
 		Version("SomeTestApp", Nil, sc, false)
 	}
 
+	def translationEntities: List[Entity] = {
+		List(
+			Entity("e 1", Map("key 1" -> List("value 1", "value 2"))),
+			Entity("e 2", Map("key 2" -> List("value 1"),"key 3" -> List("value 2"))),
+			Entity("e 3", Map("key 1" -> Nil)),
+			Entity("e 4")
+		)
+	}
+
+	def translatedSubjects: List[Subject] = {
+		List(
+			Subject(id = null, name = Option("e 1"), properties = Map("key 1" -> List("value 1", "value 2"))),
+			Subject(id = null, name = Option("e 2"), properties = Map("key 2" -> List("value 1"),"key 3" -> List("value 2"))),
+			Subject(id = null, name = Option("e 3"), properties = Map("key 1" -> Nil)),
+			Subject(id = null, name = Option("e 4"))
+		)
+	}
+
 }
 // scalastyle:on line.size.limit

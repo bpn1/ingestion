@@ -6,7 +6,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-object Import extends DataLakeImportImplementation[Entity](
+object MockImport extends DataLakeImportImplementation[Entity](
 	List("TestSource"),
 	"inputKeySpace",
 	"inputTable"
