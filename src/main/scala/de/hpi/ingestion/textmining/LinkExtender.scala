@@ -163,7 +163,13 @@ object LinkExtender extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val parsedArticles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val pages = input(1).asInstanceOf[RDD[Page]]
-			.map(page => (page.page, page.aliases))
+			.map { page =>
+				val aliases = page.aliases
+				val totalAliasOccurrences = aliases.values.sum
+				val threshold = 0.005
+				(page.page, aliases.filter(_._2.toFloat / totalAliasOccurrences > threshold))
+			}
+			.filter(_._2.nonEmpty)
 			.collect
 			.toMap
 		val pagesBroadcast = sc.broadcast(pages)
