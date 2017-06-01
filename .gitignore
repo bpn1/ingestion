@@ -22,3 +22,5 @@ target/
 # Compiled Python
 *.pyc
 __pycache__
+
+lib/companies.jar

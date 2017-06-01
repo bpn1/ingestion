@@ -58,6 +58,7 @@ case class ParsedWikipediaEntry(
 
 	/**
 	  * Filters the linkswithcontext links and returns only the textlinks with their contexts.
+	  *
 	  * @return textlinks and their contexts
 	  */
 	def textlinkContexts(): List[Link] = {
@@ -67,6 +68,7 @@ case class ParsedWikipediaEntry(
 
 	/**
 	  * Filters the linkswithcontext links and returns only the extendedlinks with their contexts.
+	  *
 	  * @return extendedlinks and their contexts
 	  */
 	def extendedlinkContexts(): List[Link] = {
@@ -76,6 +78,7 @@ case class ParsedWikipediaEntry(
 
 	/**
 	  * Filters and parsed Extended Links to Links
+	  *
 	  * @return List of parsed Links
 	  */
 	def extendedlinks(): List[Link] = {
@@ -84,8 +87,7 @@ case class ParsedWikipediaEntry(
 			.collect {
 				case (t, Some(page)) => (t, page)
 			}.map { case (exLink, page) =>
-				Link(exLink.alias, page, exLink.offset)
-			}
-			.filterNot(textlinks.toSet)
+			Link(exLink.alias, page, exLink.offset)
+		}.filterNot(textlinks.toSet)
 	}
 }

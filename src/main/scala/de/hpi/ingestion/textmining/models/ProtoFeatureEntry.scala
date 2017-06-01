@@ -23,7 +23,7 @@ case class ProtoFeatureEntry(
 	  * @return Feature Entry used to train a classifier
 	  */
 	def toFeatureEntry(page: String, cosineSim: MultiFeature): FeatureEntry = {
-		FeatureEntry(link.article.get, link.offset.get, link.alias, page, linkScore, pageScore, cosineSim,
-			link.page == page)
+		FeatureEntry(link.article.getOrElse("***Unknown article***"), link.offset.getOrElse(-1), link.alias, page,
+			linkScore, pageScore, cosineSim, link.page == page)
 	}
 }

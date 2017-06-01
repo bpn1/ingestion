@@ -12,7 +12,7 @@ object TestData {
 			(ProtoFeatureEntry(Link("c", "a", Option(10), article = Option("BMW")), Map(), 0.4, MultiFeature(0.0)), "d", MultiFeature(0.7)),
 			(ProtoFeatureEntry(Link("e", "f", Option(20), article = Option("Chevrolet")), Map(), 0.7, MultiFeature(1.0)), "f", MultiFeature(0.1)),
 			(ProtoFeatureEntry(Link("g", "a", Option(30), article = Option("Dacia")), Map(), 0.8, MultiFeature(0.2)), "h", MultiFeature(0.3)),
-			(ProtoFeatureEntry(Link("i", "a", Option(40), article = Option("Ferrari")), Map(), 0.9, MultiFeature(0.4)), "j", MultiFeature(0.7))
+			(ProtoFeatureEntry(Link("i", "a", None, article = Option("Ferrari")), Map(), 0.9, MultiFeature(0.4)), "j", MultiFeature(0.7))
 		)
 	}
 
@@ -22,7 +22,7 @@ object TestData {
 			FeatureEntry("BMW", 10, "c", "d", 0.4, MultiFeature(0.0), MultiFeature(0.7), false),
 			FeatureEntry("Chevrolet", 20, "e", "f", 0.7, MultiFeature(1.0), MultiFeature(0.1), true),
 			FeatureEntry("Dacia", 30, "g", "h", 0.8, MultiFeature(0.2), MultiFeature(0.3), false),
-			FeatureEntry("Ferrari", 40, "i", "j", 0.9, MultiFeature(0.4), MultiFeature(0.7), false)
+			FeatureEntry("Ferrari", -1, "i", "j", 0.9, MultiFeature(0.4), MultiFeature(0.7), false)
 		)
 	}
 
