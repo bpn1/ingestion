@@ -206,7 +206,7 @@ object CosineContextComparator extends SplitSparkJob {
 			val deltaSuccessor = sortedValues(i) - sortedValues(i + 1)
 			deltaSuccessorMap(sortedValues(i)) = deltaSuccessor
 		}
-		deltaSuccessorMap(sortedValues.last) = 0.0
+		deltaSuccessorMap(sortedValues.last) = Double.PositiveInfinity
 		values.map(deltaSuccessorMap.getOrElse(_, -1.0))
 	}
 

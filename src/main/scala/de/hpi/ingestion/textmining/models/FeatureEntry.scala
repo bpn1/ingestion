@@ -30,13 +30,6 @@ case class FeatureEntry(
 	  * @return Labeled Point containing the features and the label
 	  */
 	def labeledPoint(): LabeledPoint = {
-		if(entity_score.delta_successor == 0.0) {
-			entity_score.delta_successor = Double.PositiveInfinity
-		}
-		if(cosine_sim.delta_successor == 0.0) {
-			cosine_sim.delta_successor = Double.PositiveInfinity
-		}
-
 		val features = new DenseVector(Array(
 			link_score,
 			entity_score.value, entity_score.rank, entity_score.delta_top, entity_score.delta_successor,

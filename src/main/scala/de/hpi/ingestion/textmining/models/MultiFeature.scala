@@ -7,7 +7,7 @@ package de.hpi.ingestion.textmining.models
   * @param rank            rank of the original value (1 for the highest value)
   * @param delta_top       absolute difference to the highest value (0.0 for the highest value)
   * @param delta_successor absolute difference to the successive (next smaller) value
-  *                        (Double.PositiveInfinity for smallest value or 0.0 for testing)
+  *                        (Double.PositiveInfinity for smallest value)
   */
 case class MultiFeature(
 	value: Double,

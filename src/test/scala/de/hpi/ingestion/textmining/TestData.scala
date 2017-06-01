@@ -31,12 +31,22 @@ object TestData {
 		List(3, 1, 3, 5, 1)
 	}
 
+	def longValuesList(): List[Double] = {
+		List(0.72, 0.038, 0.058, 0.0004, 0.0004, 0.0004, 0.0004, 0.0012, 0.0004,
+			0.0004, 0.0004, 0.0004, 0.0004, 0.0004, 0.17, 0.0004, 0.0012, 0.0008)
+	}
+
+	def longRanksList(): List[Int] = {
+		List(1, 4, 3, 8, 8, 8, 8, 5, 8,
+			8, 8, 8, 8, 8, 2, 8, 5, 7)
+	}
+
 	def deltaTopValuesList(): List[Double] = {
 		List(2.0999999999999996, 0.0, 2.0999999999999996, 4.199999999999999, 0.0)
 	}
 
 	def deltaSuccessorValuesList(): List[Double] = {
-		List(2.1, 2.0999999999999996, 2.1, 0.0, 2.0999999999999996)
+		List(2.1, 2.0999999999999996, 2.1, Double.PositiveInfinity, 2.0999999999999996)
 	}
 
 	def stopwordsSet(): Set[String] = {
@@ -810,8 +820,8 @@ object TestData {
 		val mfPage_072 = MultiFeature(0.72, 1, 0.0, 0.54)
 		val mfPage_018 = MultiFeature(0.18, 2, 0.54, 0.122)
 		val mfPage_0058 = MultiFeature(0.058, 3, 0.6619999999999999, 0.057600000000000005)
-		val mfPage_00004 = MultiFeature(0.0004, 4, 0.7196, 0.0)
-		val mfCos = MultiFeature(-1.0, 1, 0.0, 0.0)
+		val mfPage_00004 = MultiFeature(0.0004, 4, 0.7196, Double.PositiveInfinity)
+		val mfCos = MultiFeature(-1.0, 1, 0.0, Double.PositiveInfinity)
 
 		List(
 			FeatureEntry("BMW", "BMW", link_score, mfPage_072, mfCos, true, null),
@@ -837,19 +847,19 @@ object TestData {
 	}
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
-		val mfPage_1 = MultiFeature(1.0, 1, 0.0, 0.0)
+		val mfPage_1 = MultiFeature(1.0, 1, 0.0, Double.PositiveInfinity)
 		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, 0.0, 0.6000000000000001)
-		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6000000000000001, 0.0)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6000000000000001, Double.PositiveInfinity)
 
 		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, 0.08622243532359375)
-		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 2, 0.08622243532359375, 0.0)
-		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, 0.0)
-		val mfCosBrachttal_0 = MultiFeature(0.0, 1, 0.0, 0.0)
+		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 2, 0.08622243532359375, Double.PositiveInfinity)
+		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, Double.PositiveInfinity)
+		val mfCosBrachttal_0 = MultiFeature(0.0, 1, 0.0, Double.PositiveInfinity)
 		val mfCosBüdingerWald_1 = MultiFeature(1.0, 1, 0.0, 1.0)
-		val mfCosBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, 0.0)
-		val mfCos_0661 = MultiFeature(0.6611213869640233, 1, 0.0, 0.0)
-		val mfCos_0453 = MultiFeature(0.4531255411026077, 1, 0.0, 0.0)
-		val mfCos_0828 = MultiFeature(0.828283413127963, 1, 0.0, 0.0)
+		val mfCosBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, Double.PositiveInfinity)
+		val mfCos_0661 = MultiFeature(0.6611213869640233, 1, 0.0, Double.PositiveInfinity)
+		val mfCos_0453 = MultiFeature(0.4531255411026077, 1, 0.0, Double.PositiveInfinity)
+		val mfCos_0828 = MultiFeature(0.828283413127963, 1, 0.0, Double.PositiveInfinity)
 
 		Set(
 			FeatureEntry("Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true, null),
@@ -866,19 +876,19 @@ object TestData {
 	}
 
 	def featureEntriesWithAliasesSet(): Set[FeatureEntry] = {
-		val mfPage_1 = MultiFeature(1.0, 1, 0.0, 0.0)
+		val mfPage_1 = MultiFeature(1.0, 1, 0.0, Double.PositiveInfinity)
 		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, 0.0, 0.6000000000000001)
-		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6000000000000001, 0.0)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6000000000000001, Double.PositiveInfinity)
 
-		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, 0.0)
-		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 1, 0.0, 0.0)
-		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, 0.0)
-		val mfCosBrachttal_0 = MultiFeature(0.0, 1, 0.0, 0.0)
+		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, Double.PositiveInfinity)
+		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 1, 0.0, Double.PositiveInfinity)
+		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, Double.PositiveInfinity)
+		val mfCosBrachttal_0 = MultiFeature(0.0, 1, 0.0, Double.PositiveInfinity)
 		val mfCosBüdingerWald_1 = MultiFeature(1.0, 1, 0.0, 1.0)
-		val mfCosBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, 0.0)
-		val mfCos_0661 = MultiFeature(0.6611213869640233, 1, 0.0, 0.0)
-		val mfCos_0453 = MultiFeature(0.4531255411026077, 1, 0.0, 0.0)
-		val mfCos_0828 = MultiFeature(0.828283413127963, 1, 0.0, 0.0)
+		val mfCosBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, Double.PositiveInfinity)
+		val mfCos_0661 = MultiFeature(0.6611213869640233, 1, 0.0, Double.PositiveInfinity)
+		val mfCos_0453 = MultiFeature(0.4531255411026077, 1, 0.0, Double.PositiveInfinity)
+		val mfCos_0828 = MultiFeature(0.828283413127963, 1, 0.0, Double.PositiveInfinity)
 
 		Set(
 			FeatureEntry("Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true, null),
