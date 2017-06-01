@@ -126,7 +126,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 
 	override def extractLegalForm(name: String, classifier: AClassifier[Tag]): List[String] = {
 		val tags = List(Tag.LEGAL_FORM)
-		aClassifier
+		classifier
 			.getTags(name)
 			.filter(pair => tags.contains(pair.getValue))
 			.map(_.getKey.getRawForm)
