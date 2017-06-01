@@ -11,4 +11,8 @@ case class TrieAlias(
 	alias: String,
 	offset: Option[Int] = None,
 	context: Map[String, Int] = Map()
-)
+) {
+	def toLink(): Link = {
+		Link(alias, null, offset, context)
+	}
+}

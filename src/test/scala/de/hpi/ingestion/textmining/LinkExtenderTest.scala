@@ -89,6 +89,6 @@ class LinkExtenderTest extends FlatSpec with Matchers with SharedSparkContext {
 			.collect
 			.toSet
 			.head
-		extendedEntry.extendedlinks shouldEqual TestData.bigLinkExtenderExtendedParsedEntry().head.extendedlinks
+		extendedEntry.rawextendedlinks shouldEqual TestData.bigLinkExtenderExtendedParsedEntry().head.rawextendedlinks
 	}
 }

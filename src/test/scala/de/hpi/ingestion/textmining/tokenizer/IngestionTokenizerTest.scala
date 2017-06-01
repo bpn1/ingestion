@@ -13,7 +13,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 		tokens shouldEqual expectedTokens
 	}
 
-	it should "keep stopwords" in {
+	it should "keep stopwordsSet" in {
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, false, true)
 		val tokens = TestData.testSentences()
 			.map(tokenizer.process)
@@ -46,7 +46,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 		tokens shouldEqual expectedTokens
 	}
 
-	they should "keep stopwords" in {
+	they should "keep stopwordsSet" in {
 		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, false, true)
 		val tokens = TestData.tokenizedTestSentences()
 			.map(tokenizer.process)
@@ -169,7 +169,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 			}
 	}
 
-	they should "not contain stopwords" in {
+	they should "not contain stopwordsSet" in {
 		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, true, false)
 		val tokens = TestData.testSentences()
 			.map(tokenizer.processWithOffsets)

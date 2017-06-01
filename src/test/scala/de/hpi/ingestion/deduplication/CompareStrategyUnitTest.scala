@@ -51,19 +51,6 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 		}
 	}
 
-	"coordinatesCompare" should "compare the input lists as coordinate values" in {
-		val coordinates = List(List("1.5", "1", "10", "10"), List("1.1", "1", "10", "10"))
-		val attribute = "geo_coords"
-		val feature = ScoreConfig[String, SimilarityMeasure[String]](EuclidianDistance, 1)
-		val score = CompareStrategy.coordinatesCompare(
-			coordinates.head,
-			coordinates.last,
-			feature
-		)
-		val expected = 0.75
-		score shouldEqual expected
-	}
-
 	"defaultCompare" should "compare each element from a list with each element from another" in {
 		val config = TestData.testConfig("gen_sectors")
 		val subjects = TestData.testSubjects
@@ -87,7 +74,6 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 		val inputValues = TestData.testCompareInput
 		val strategies = List(
 			CompareStrategy.apply("geo_city"),
-			CompareStrategy.apply("geo_coords"),
 			CompareStrategy.apply("gen_income")
 		)
 		val output = strategies.map(_.tupled(inputValues))

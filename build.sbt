@@ -39,9 +39,9 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 
 // scala compiler flags for warnings
 // also sets source path for correct scala doc source links
-scalacOptions in ThisBuild ++= (baseDirectory.map {
-	bd => Seq("-deprecation", "-feature", "-sourcepath", bd.getAbsolutePath, "-unchecked")
-}).value
+scalacOptions in ThisBuild ++= baseDirectory.map { bd =>
+	Seq("-deprecation", "-feature", "-sourcepath", bd.getAbsolutePath, "-unchecked")
+}.value
 
 // testing settings
 logBuffered in Test := false
@@ -78,3 +78,9 @@ unmanagedSourceDirectories in Test += baseDirectory.value / "implisense_files" /
 
 // scoverage settings, since scoverage cannot handle unmanagedSources
 coverageExcludedPackages := "de.hpi.ingestion.dataimport.implisense.*"
+
+// exclude companies.jar from ingestion-assembly.jar
+assemblyExcludedJars in assembly := {
+	val cp = (fullClasspath in assembly).value
+	cp.filter(_.data.getName == "companies.jar")
+}

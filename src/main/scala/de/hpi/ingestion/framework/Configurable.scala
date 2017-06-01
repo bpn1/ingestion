@@ -51,7 +51,6 @@ trait Configurable {
 	  *
 	  * @param newSettings new settings
 	  */
-
 	def settings_=(newSettings: Map[String, String]): Unit = _settings = newSettings
 
 	/**
