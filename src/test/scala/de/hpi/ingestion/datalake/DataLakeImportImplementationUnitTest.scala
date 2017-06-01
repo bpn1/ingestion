@@ -35,10 +35,10 @@ class DataLakeImportImplementationUnitTest extends FlatSpec with Matchers with S
 	}
 
 	"extractLegalForm" should "extract the legal form from a given name" in {
-		implicit val aClassifier = Import.classifier
+		val classifier = Import.classifier
 		val companyNames = TestData.companyNames
 		companyNames.foreach { case (name, expected) =>
-			val legalForms = Import.extractLegalForm(name)
+			val legalForms = Import.extractLegalForm(name, classifier)
 			legalForms shouldEqual expected
 		}
 	}

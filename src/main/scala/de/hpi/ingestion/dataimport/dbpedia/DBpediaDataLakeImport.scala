@@ -57,7 +57,6 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		strategies: Map[String, List[String]],
 		classifier: AClassifier[Tag]
 	): Subject = {
-		implicit val aClassifier = classifier
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
@@ -73,7 +72,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 				.flatMap(x => List(x._1, x._2))
 		}
 
-		val legalForm = entity.label.map(extractLegalForm).getOrElse(Nil)
+		val legalForm = entity.label.map(extractLegalForm(_, classifier)).getOrElse(Nil)
 		if (legalForm.nonEmpty) properties("gen_legal_form") = legalForm
 
 		sm.addProperties(properties.toMap)
