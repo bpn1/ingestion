@@ -20,7 +20,8 @@ object Blocking extends SparkJob {
 	appName = "Blocking"
 	configFile = "evaluation_deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
-		SimpleBlockingScheme("simple_scheme")
+		SimpleBlockingScheme("simple_scheme"),
+		LastLettersBlockingScheme("lastLetters_scheme")
 	)
 	// $COVERAGE-OFF$
 	/**
@@ -67,12 +68,14 @@ object Blocking extends SparkJob {
 		val comment = args.headOption.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
 		val filterUndefined = settings(false).getOrElse("filterUndefined", "false") == "true"
+		val filterSmall = settings(false).getOrElse("filterSmall", "false") == "true"
 		val blockEvaluation = List(evaluationBlocking(
 			subjects,
 			staging,
 			goldenBroadcast.value,
 			this.blockingSchemes,
 			filterUndefined,
+			filterSmall,
 			comment
 		))
 		blockEvaluation.toAnyRDD()
@@ -90,6 +93,24 @@ object Blocking extends SparkJob {
 	  */
 	def setBlockingSchemes(schemes: List[BlockingScheme]): Unit = {
 		blockingSchemes = if(schemes.nonEmpty) schemes else List(new SimpleBlockingScheme)
+	}
+
+	/**
+	  * Uses the goldstandard to find all relevant duplicate-pairs to be possibly found in deduplication.
+	  * @param block blocked subjects
+	  * @param goldStandard tuples of duplicates we want to find
+	  * @return duplicates from the goldstandard found in the input block
+	  */
+	def createDuplicateStats(
+		block: ((String, String), (Traversable[UUID], Traversable[UUID])),
+		goldStandard: Set[(UUID, UUID)]
+	): (Traversable[(UUID, UUID)], (String, Set[BlockStats])) = {
+		val ((key, tag), (subjectList, stagingList)) = block
+		val cross = subjectList.cross(stagingList)
+		val duplicates = cross.filter(goldStandard)
+		val precision = if (cross.nonEmpty) duplicates.size.toDouble / cross.size.toDouble else 0.0
+		val blockStats = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
+		(duplicates, (tag, blockStats))
 	}
 
 	/**
@@ -127,12 +148,15 @@ object Blocking extends SparkJob {
 	): RDD[(String, Block)] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes)
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
+		val maxBlockSize = settings(false).getOrElse("maxBlockSize", "500000").toInt
 		subjectBlocks
 			.cogroup(stagingBlocks)
 			.map { case ((key, tag), (subjectList, stagingList)) =>
 				(tag, Block(key = key, subjects = subjectList.toList, staging = stagingList.toList))
 			}.filter { case (tag, block) =>
 				!(blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(block.key) && filterUndefined)
+			}.filter { case (tag, block) =>
+				(block.staging.size * block.subjects.size) < maxBlockSize // filter huge blocks
 			}
 	}
 
@@ -152,39 +176,49 @@ object Blocking extends SparkJob {
 		goldStandard: Set[(UUID, UUID)],
 		blockingSchemes: List[BlockingScheme],
 		filterUndefined: Boolean = true,
+		filterSmall: Boolean = true,
 		comment: String
 	): RDD[BlockEvaluation] = {
 		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
+		val maxBlockSize = settings(false).getOrElse("maxBlockSize", "500000").toInt
 		val jobid = UUIDs.timeBased()
 		val blocks = subjectBlocks.cogroup(stagingBlocks).filter { case ((key, tag), (subjectList, stagingList)) =>
 			!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
-		}
-		val duplicates = blocks.map { case ((key, tag), (subjectList, stagingList)) =>
-			val cross = subjectList.cross(stagingList)
-			val duplicates = cross.filter(goldStandard)
-			val precision = if (cross.nonEmpty) duplicates.size.toDouble / cross.size.toDouble else 0.0
-			val blockStats = Set(BlockStats(key, subjectList.size, stagingList.size, precision))
-			(duplicates, (tag, blockStats))
-		}
-		val accuracy = duplicates
-			.map { case (duplicates, (tag, block)) =>
-				(tag, duplicates)
+		}.filter { case ((key, tag), (subject, staging)) => (subject.size * staging.size) < maxBlockSize }
+		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))
+		var accuracy = duplicates
+			.flatMap { case (duplicates, (tag, block)) =>
+				duplicates.map((tag, _))
 			}.distinct
-			.map { case (tag, duplicates) => (tag, duplicates.size) }
+			.map { case (tag, duplicate) => (tag, 1) }
 			.reduceByKey(_ + _)
 			.collect
 			.toMap
 			.mapValues(_.toDouble / goldStandard.size.toDouble)
 			.map(identity)
+		val totalAccuracy = duplicates
+			.flatMap { case (duplicates, (tag, block)) => duplicates }
+			.distinct
+			.count()
+			.toDouble / goldStandard.size.toDouble
+		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
+		accuracy ++= Map(sumTag -> totalAccuracy)
+		val statsSum = duplicates
+			.values
+			.map { case (tag, blockStats) => (sumTag, blockStats) }
+			.reduceByKey(_ ++ _)
 
 		duplicates
 			.values
 			.reduceByKey(_ ++ _)
+			.union(statsSum)
 			.map { case (tag, blockStats) =>
+				val filteredStats = blockStats.filter(stat =>
+					!filterSmall || (stat.numsubjects * stat.numstaging) > 10000) // don't write tiny blocks
 				val tagAccuracy = accuracy.getOrElse(tag, 0.0)
 				val blockComment = Option(s"$comment; accuracy: $tagAccuracy")
-				BlockEvaluation(jobid, tag, blockStats, blockComment)
+				BlockEvaluation(jobid, tag, filteredStats, blockComment)
 			}
 	}
 }
