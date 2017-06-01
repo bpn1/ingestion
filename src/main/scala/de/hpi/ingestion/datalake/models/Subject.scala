@@ -1,6 +1,9 @@
 package de.hpi.ingestion.datalake.models
 
 import java.util.UUID
+
+import de.hpi.ingestion.datalake.SubjectManager
+
 import scala.collection.mutable
 import scala.io.Source
 
@@ -62,6 +65,17 @@ case class Subject(
 	  */
 	def normalizedProperties(): Map[String, List[String]] = {
 		properties.filterKeys(Subject.normalizedPropertyKeys)
+	}
+
+	/**
+	  * Returns the score of the slave relation to this Subjects master node if it has one.
+	  * @return score of the master node relation
+	  */
+	def masterScore(): Option[Double] = {
+		master
+			.map(relations)
+			.map(_(SubjectManager.slaveKey))
+			.map(_.toDouble)
 	}
 }
 

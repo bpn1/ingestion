@@ -284,6 +284,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 object SubjectManager {
 
 	val slaveKey = "slave"
+	val masterKey = "master"
 
 	/**
 	  * Adds symmetric relations between two subjects.
@@ -296,7 +297,6 @@ object SubjectManager {
 	def addSymRelation(subject1: Subject, subject2: Subject, relations: Map[String,String], version: Version): Unit = {
 		val subjectManager1 = new SubjectManager(subject1, version)
 		val subjectManager2 = new SubjectManager(subject2, version)
-
 		subjectManager1.addRelations(Map(subject2.id -> relations))
 		subjectManager2.addRelations(Map(subject1.id -> relations))
 	}
@@ -319,4 +319,11 @@ object SubjectManager {
 	  * @return Map containing the data of the default slave master relation
 	  */
 	def slaveRelation(score: Double): Map[String, String] = Map(slaveKey -> score.toString)
+
+	/**
+	  * Returns default relation Subject have to their slave nodes.
+	  * @param score score of the master relation
+	  * @return Map containing the data of the default master slave relation
+	  */
+	def masterRelation(score: Double): Map[String, String] = Map(masterKey -> score.toString)
 }
