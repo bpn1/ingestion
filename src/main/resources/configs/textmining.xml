@@ -21,5 +21,6 @@
 		<linkedArticlesTable>linkedarticles</linkedArticlesTable>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
+        <numberArticlePartitions>10</numberArticlePartitions>
     </settings>
 </config>

@@ -1,14 +1,13 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SplitSparkJob
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, extractAliasContext, hdfsFileStream}
-import de.hpi.ingestion.textmining.CosineContextComparator.{calculateDefaultDf, calculateIdf, calculateTfidf,
-transformArticleTfs, computeAliasProbabilities}
+import de.hpi.ingestion.textmining.CosineContextComparator._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.model.RandomForestModel
@@ -16,7 +15,7 @@ import org.apache.spark.mllib.tree.model.RandomForestModel
 /**
   * Uses a trained classifier model to perform NER and NEL on Wikipedia articles.
   */
-object TextNEL extends SparkJob {
+object TextNEL extends SplitSparkJob {
 	appName = "Text NEL"
 	configFile = "textmining.xml"
 
@@ -220,6 +219,19 @@ object TextNEL extends SparkJob {
 	}
 
 	/**
+	  * Splits the input articles into 10 partitions which will be processed sequentially. Also removes any not needed
+	  * data from the Parsed Wikipedia Entries.
+	  *
+	  * @param input List of RDDs containing the input data
+	  * @param args  arguments of the program
+	  * @return Collection of input RDD Lists to be processed sequentially.
+	  */
+	override def splitInput(input: List[RDD[Any]], args: Array[String] = Array()): Traversable[List[RDD[Any]]] = {
+		val List(leanerArticles, aliases, articlePartition) = CosineContextComparator.splitInput(input, args)
+		List(articlePartition, aliases)
+	}
+
+	/**
 	  * Uses a trained classifier model to perform NER and NEL on Wikipedia articles.
 	  *
 	  * @param input List of RDDs containing the input data
@@ -228,7 +240,7 @@ object TextNEL extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articlesWithTermFrequencies = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(10000))
+		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
 		val numDocuments = articlesWithTermFrequencies.count()
 
@@ -238,6 +250,8 @@ object TextNEL extends SparkJob {
 		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf)
 
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
+			.collect
+			.toMap
 
 		val classifier = modelFunction(sc)
 		val articles = articlesWithTermFrequencies.map(article => Article(article.title, article.getText()))
@@ -247,8 +261,7 @@ object TextNEL extends SparkJob {
 
 		val linkFeatureEntries = CosineContextComparator
 			.compareLinksWithArticles(linkCandidatesTfidf, aliasPageProbabilities, articleTfidf)
-		val data = linkFeatureEntries
-			.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
+		val data = linkFeatureEntries.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
 		val namedEntities = linkNamedEntities(data, classifier)
 		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)
 

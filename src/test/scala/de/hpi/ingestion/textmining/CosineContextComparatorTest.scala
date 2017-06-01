@@ -238,7 +238,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
-			.map(_._2.copy(id = null))
 			.collect
 			.toSet
 		featureEntries shouldEqual TestData.featureEntriesSet()
@@ -251,7 +250,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
 			.collect
-			.map(_.copy(id = null))
 			.toSet
 		val expected = TestData.featureEntriesWithAliasesSet()
 		featureEntries shouldEqual expected
