@@ -48,14 +48,13 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 			subjects(2).properties("geo_coords").mkString(";"),
 			subjects(3).properties("geo_coords").mkString(";")
 		)
-
-		println(subjects(3).properties("geo_coords").mkString(","))
+		
 		val scores = List(
 			EuclidianDistance.compare(geoPoints.head, geoPoints.head),
 			EuclidianDistance.compare(geoPoints.head, geoPoints(1)),
 			EuclidianDistance.compare(geoPoints.head, geoPoints(2))
 		)
-		val expectedScores = List(1.0, 1.0, 0.0)
+		val expectedScores = List(1.0, 0.5, 0.0)
 		(scores, expectedScores).zipped.foreach { case (score, expected) =>
 			score shouldEqual expected
 		}
