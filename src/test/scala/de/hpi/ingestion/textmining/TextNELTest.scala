@@ -65,12 +65,11 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			.toSet
 		val texts = TextNEL.generateArticlesWithLinks(articles, links)
 			.map { article =>
-				// Escape newlines with an improbable string. Otherwise Jsoup will replace them with spaces.
+				// Escape newlines with an improbable string. Otherwise jsoup will replace them with spaces.
 				val escapedNewlines = Jsoup.parse(article.text.replaceAll("\n", "#EscapedNewline")).body.text
 				escapedNewlines.replaceAll("#EscapedNewline", "\n")
-			}
-			.collect
+			}.collect
 			.toSet
-		originalTexts shouldEqual texts
+		texts shouldEqual originalTexts
 	}
 }

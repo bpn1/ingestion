@@ -147,6 +147,22 @@ object TextNEL extends SparkJob {
 	}
 
 	/**
+	  * Replaces special characters with proper HTML encoding.
+	  *
+	  * @param text original text with special characters
+	  * @return text with HTML encoded characters
+	  */
+	def replaceSpecialCharacters(text: String): String = {
+		val htmlEncodingMap = Map("ä" -> "&auml;", "ö" -> "&ouml;", "ü" -> "&uuml;", "Ä" -> "&Auml;", "Ö" -> "&Ouml;",
+			"Ü" -> "&Uuml;")
+		var encodedText = text
+		htmlEncodingMap.foreach { case (specialCharacter, encoding) =>
+			encodedText = encodedText.replaceAll(specialCharacter, encoding)
+		}
+		encodedText
+	}
+
+	/**
 	  * Inserts HTML links into an article text where named entities were found.
 	  *
 	  * @param title title of the article
@@ -161,19 +177,22 @@ object TextNEL extends SparkJob {
 			.groupBy(_.offset)
 			.toList
 			.sortBy(_._1)
-			.foreach { case (offset, links) =>
-				val i = 0
-				val mainLink = links.head
+			.foreach { case (offset, groupedLinks) =>
+				val mainLink = groupedLinks.head
 				html += text.substring(processedCharacters, offset.get)
 				processedCharacters = offset.get
-				val pages = links.map(_.page).toString()
-				html += "<a href=\"" + mainLink.page + "\" class=\"importance" + i + "\" title=\"" + pages + "\">"
+				val pages = groupedLinks
+					.map(_.page)
+					.reduce(_ + "&#13;" + _)
+				val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
+				html += "<a href=\"" + wikipediaPage + "\" class=\"importance " + 0 + "\" title=\"" + pages + "\">"
 				html += text.substring(processedCharacters, processedCharacters + mainLink.alias.length)
 				processedCharacters += mainLink.alias.length
 				//html += "<ul style=\"display: none\">" + "<li>some other link</li>" + "</ul></a>"
 				html += "</a>"
 			}
 		html += text.substring(processedCharacters, text.length)
+		html = replaceSpecialCharacters(html)
 		Article(title, html)
 	}
 
