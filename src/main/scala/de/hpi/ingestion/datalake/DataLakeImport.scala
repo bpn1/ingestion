@@ -41,7 +41,7 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param url the path to the config file
 	  * @return a Map containing the normalized attributes mapped to the new subject attributes
 	  */
-	protected def parseNormalizationConfig(url: URL): Map[String, List[String]]
+//	protected def parseNormalizationConfig(url: URL): Map[String, List[String]]
 
 	/**
 	  * Parses the normalization config file into a Map.
@@ -49,7 +49,7 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param path the path to the config file
 	  * @return a Map containing the normalized attributes mapped to the new subject attributes
 	  */
-	protected def parseNormalizationConfig(path: String): Map[String, List[String]]
+//	protected def parseNormalizationConfig(path: String): Map[String, List[String]]
 
 	/**
 	  * Normalizes a given entity into a map.

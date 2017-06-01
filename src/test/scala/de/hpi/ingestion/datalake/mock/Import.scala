@@ -8,12 +8,11 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 
 object Import extends DataLakeImportImplementation[Entity](
 	List("TestSource"),
-	"normalization.xml",
-	"categorization.xml",
 	"inputKeySpace",
 	"inputTable"
 ){
 	appName = "TestImport"
+	importConfigFile = "src/test/resources/normalization.xml"
 
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		List(sc.parallelize(Seq(Subject()))).toAnyRDD()
@@ -33,11 +32,6 @@ object Import extends DataLakeImportImplementation[Entity](
 		mapping: Map[String, List[String]],
 		strategies: Map[String, List[String]]
 	): Subject = Subject()
-
-	override def parseNormalizationConfig(path: String): Map[String, List[String]] = {
-		val url = getClass.getResource(s"/$path")
-		super.parseNormalizationConfig(url)
-	}
 
 	override def normalizeProperties(
 		entity: Entity,

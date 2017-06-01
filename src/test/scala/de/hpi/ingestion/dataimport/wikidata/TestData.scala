@@ -94,15 +94,11 @@ object TestData {
 	}
 
 	def translatedSubjects(): List[Subject] = {
-		List(Subject(
-			name = Option("Protein FAM177A1"),
-			aliases = List("testalias"),
-			category = Option("test_instancetype"),
-			properties = Map(
-				"wikipedia_name" -> List("testwikiname"),
-				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
-				"subclass of" -> List("Protein", "FAM177 family"),
-				"wikidata_id" -> List("Q21110253"))))
+		List(Subject(name = Option("Protein FAM177A1"), aliases = List("testalias"), category = Option("test_instancetype"), properties = Map(
+						"wikipedia_name" -> List("testwikiname"),
+						"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
+						"subclass of" -> List("Protein", "FAM177 family"),
+						"wikidata_id" -> List("Q21110253"))))
 	}
 
 	def classWikidataEntities(): List[WikiDataEntity] = {

@@ -51,9 +51,8 @@ trait SparkJob extends Configurable {
 		args
 			.headOption
 			.foreach(file => configFile = file)
-		if(configFile.nonEmpty) {
-			parseConfig()
-		}
+		if(configFile.nonEmpty) parseConfig()
+		if(importConfigFile.nonEmpty) parseImportConfig()
 		true
 	}
 

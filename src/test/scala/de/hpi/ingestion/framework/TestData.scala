@@ -26,7 +26,23 @@ object TestData {
 		XML.load(getClass.getResource("/test.xml"))
 	}
 
-	def configWithouSettingsXML: Node = {
+	def configWithoutSettingsXML: Node = {
 		XML.load(getClass.getResource("/test2.xml"))
+	}
+
+	def importConfigXML: Node = {
+		XML.load(getClass.getResource("/normalization.xml"))
+	}
+
+	def normalizationSettings: Map[String, List[String]] = {
+		Map(
+			"rootKey" -> List("root_value"),
+			"nestedKey1" -> List("nested_value:1.1", "nested_value:1.2", "nested_value:1.3"),
+			"nestedKey2" -> List("nested_value:2.1")
+		)
+	}
+
+	def sectorSettings: Map[String, List[String]] = {
+		Map("sectorKey" -> List("mapping1", "mapping2"))
 	}
 }

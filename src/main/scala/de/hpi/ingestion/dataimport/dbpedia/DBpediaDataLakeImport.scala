@@ -14,12 +14,11 @@ import scala.collection.mutable
   */
 object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity](
 	List("dbpedia"),
-	"normalization_dbpedia.xml",
-	"categorization_dbpedia.xml",
 	"wikidumps",
 	"dbpedia"
 ){
-	appName = s"DBpediaDataLakeImport_v1.0"
+	appName = "DBpediaDataLakeImport_v1.0"
+	importConfigFile = "normalization_dbpedia.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -44,7 +43,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		strategies: Map[String, List[String]]
 	): List[String] = {
 		val normalized = DBpediaNormalizationStrategy(attribute)(values)
-		if (attribute == "gen_sectors") normalized.flatMap(x => strategies.getOrElse(x, List(x))) else normalized
+		if(attribute == "gen_sectors") normalized.flatMap(x => strategies.getOrElse(x, List(x))) else normalized
 	}
 
 	override def translateToSubject(
