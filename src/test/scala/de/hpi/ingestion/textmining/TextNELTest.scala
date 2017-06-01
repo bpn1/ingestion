@@ -4,7 +4,9 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.textmining.models._
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.apache.spark.rdd.RDD
 import org.jsoup.Jsoup
+
 import scala.util.matching.Regex
 
 class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
@@ -71,5 +73,16 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			}.collect
 			.toSet
 		texts shouldEqual originalTexts
+	}
+
+	"Input split" should "split input into 10 parts" in {
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val splitInput = TextNEL.splitInput(input).toList
+		splitInput should have length 10
+		splitInput.foreach { case inputPartition =>
+			inputPartition should have length 2
+		}
 	}
 }

@@ -227,8 +227,8 @@ object TextNEL extends SplitSparkJob {
 	  * @return Collection of input RDD Lists to be processed sequentially.
 	  */
 	override def splitInput(input: List[RDD[Any]], args: Array[String] = Array()): Traversable[List[RDD[Any]]] = {
-		val List(leanerArticles, aliases, articlePartition) = CosineContextComparator.splitInput(input, args)
-		List(articlePartition, aliases)
+		val partitions = CosineContextComparator.splitInput(input, args)
+		partitions.map { case List(leanerArticles, aliases, articlePartition) => List(articlePartition, aliases) }
 	}
 
 	/**
