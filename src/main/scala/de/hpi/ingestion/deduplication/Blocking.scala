@@ -135,7 +135,7 @@ object Blocking extends SparkJob {
 		blockCount ++ Map(sumTag -> totalBlockCount)
 	}
 
-	def calculateComparisonCount(
+	def calculateCompareCount(
 		blocks: RDD[((String, String), (Iterable[UUID], Iterable[UUID]))],
 		sumTag: String
 	): Map[String, BigInt] = {
@@ -144,9 +144,12 @@ object Blocking extends SparkJob {
 			.reduceByKey(_ + _)
 			.collect
 			.toMap
-		val sumComparisons = blockComparisons.map{ case (_, comparisons) => comparisons }.sum
+		val sumComparisons = blocks
+			.flatMap { case ((key, tag), (subject, staging)) => subject.cross(staging) }
+			.distinct
+			.count
 
-		blockComparisons ++ Map(sumTag -> sumComparisons)
+		blockComparisons ++ Map(sumTag -> BigInt(sumComparisons))
 	}
 
 	/**
@@ -249,7 +252,7 @@ object Blocking extends SparkJob {
 		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
 		val pairwiseCompleteness = calculatePairwiseCompleteness(duplicates, goldStandard, sumTag)
 		val blockCount = calculateBlockCount(blocks, sumTag)
-		val comparisonCount = calculateComparisonCount(blocks, sumTag)
+		val comparisonCount = calculateCompareCount(blocks, sumTag)
 
 		val statsSum = duplicates
 			.values

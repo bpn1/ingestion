@@ -7,7 +7,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
-
+/*
 	"Blocking" should "partition subjects regarding the value of the given key" in {
 		val subjects = TestData.subjects
 		val subjectRDD = sc.parallelize(subjects)
@@ -152,6 +152,33 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		Blocking.settings should not be empty
 
 		Blocking.settings = originalSettings
+	}
+
+	"calculatePairwiseCompleteness" should "calculate all pairwise completenesses (PCs) as well as the total PC" in {
+		val subjects = TestData.subjects
+		val stagings = TestData.stagings
+		val duplicates = TestData.testDuplicateStatsRDD(sc)
+		val goldStandard = TestData.goldStandard(subjects, stagings)
+		val sumTag = "sum"
+		val pairwiseCompleteness = Blocking.calculatePairwiseCompleteness(duplicates, goldStandard, sumTag)
+		val expected = TestData.expectedPairwiseCompleteness
+		pairwiseCompleteness shouldEqual expected
+	}
+
+	"calculateBlockCount" should "count all blocks for all blocking schemes as well as the total blocks" in {
+		val blocks = TestData.blocks(sc)
+		val sumTag = "sum"
+		val blockCount = Blocking.calculateBlockCount(blocks, sumTag)
+		val expected = TestData.expectedBlockCount
+		blockCount shouldEqual expected
+	}
+*/
+	"calculateCompareCount" should "count all compares in each blocking scheme as well as the total compares" in {
+		val blocks = TestData.blocks(sc)
+		val sumTag = "sum"
+		val compareCount = Blocking.calculateCompareCount(blocks, sumTag)
+		val expected = TestData.expectedCompareCount
+		compareCount shouldEqual expected
 	}
 
 	"createDuplicateStats" should "find all actual duplicates in a block" in {
