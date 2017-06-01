@@ -138,9 +138,9 @@ object Blocking extends SparkJob {
 	def calculateComparisonCount(
 		blocks: RDD[((String, String), (Iterable[UUID], Iterable[UUID]))],
 		sumTag: String
-	): Map[String, Long] = {
+	): Map[String, BigInt] = {
 		val blockComparisons = blocks
-			.map { case ((key, tag), (subject, staging)) => tag -> (subject.size.toLong * staging.size.toLong) }
+			.map { case ((key, tag), (subject, staging)) => tag -> (BigInt(subject.size) * BigInt(staging.size)) }
 			.reduceByKey(_ + _)
 			.collect
 			.toMap
@@ -213,7 +213,7 @@ object Blocking extends SparkJob {
 				(block.staging.size * block.subjects.size) < maxBlockSize // filter huge blocks
 			}
 	}
-	// scalastyle:off method.length
+
 	/**
 	  * Blocks the input Subjects using the provided blocking schemes and evaluates the blocks. This method reduces
 	  * the amount of data shuffled across the network for better performance.
@@ -266,8 +266,8 @@ object Blocking extends SparkJob {
 				val blockComment = Option(s"$comment")
 				val tagCompleteness = pairwiseCompleteness.getOrElse(tag, 0.0)
 				val tagBlockCount = blockCount.getOrElse(tag, 0)
-				val tagComparisons: Long = comparisonCount.getOrElse(tag, 0)
-		BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, tagBlockCount, BigInt(tagComparisons))
+				val tagComparisons: BigInt = comparisonCount.getOrElse(tag, 0)
+				BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, tagBlockCount, tagComparisons)
 			}
 	}
 }
