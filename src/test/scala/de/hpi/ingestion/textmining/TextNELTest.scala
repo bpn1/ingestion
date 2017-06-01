@@ -18,9 +18,8 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		TextNEL.trieStreamFunction = testTrieStreamFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-		val documentFrequencies = sc.parallelize(TestData.filteredStemmedDocumentFrequenciesSet().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(documentFrequencies).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
 
 		TextNEL.modelFunction = TestData.loadRandomForestModel _
 		val namedEntities = TextNEL
