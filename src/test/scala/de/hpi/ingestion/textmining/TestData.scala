@@ -32,8 +32,8 @@ object TestData {
 	}
 
 	def longValuesList(): List[Double] = {
-		List(0.72, 0.038, 0.058, 0.0004, 0.0004, 0.0004, 0.0004, 0.0012, 0.0004,
-			0.0004, 0.0004, 0.0004, 0.0004, 0.0004, 0.17, 0.0004, 0.0012, 0.0008)
+		List(0.72, 0.038415841584158415, 0.05821782178217822, 0.0004, 0.0004, 0.0004, 0.0004, 0.001188118811881188, 0.0004,
+			0.0004, 0.0004, 0.0004, 0.0004, 0.0004, 0.17504950495049504, 0.0004, 0.001188118811881188, 7.920792079207921E-4)
 	}
 
 	def longRanksList(): List[Int] = {
@@ -539,7 +539,7 @@ object TestData {
 			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Option(1), Option(2)),
 			Alias("Hessen", Map("Hessen" -> 1), Option(1), Option(2)),
 			Alias("1377", Map("1377" -> 1), Option(1), Option(1)),
-			// contains negative example
+			// negative example
 			Alias("Büdinger Wald", Map("Büdinger Wald" -> 4, "Audi" -> 1), Option(5), Option(10)),
 			Alias("historisches Jahr", Map("1377" -> 1), Option(1), Option(1)),
 			Alias("historisches Jahr", Map("1377" -> 1)) // incomplete table entry
@@ -799,27 +799,58 @@ object TestData {
 	def singleAliasPageScoresMap(): Map[String, List[(String, Double, Double)]] = {
 		Map(
 			"BMW" -> List(
-				("BMW", 0.51, 0.72),
-				("BMW-Motorrad", 0.51, 0.18),
-				("BMW (Motorsport)", 0.51, 0.058),
-				("BMW M10", 0.51, 0.0004))
+				("BMW", 0.5962219598583235, 0.7239603960396039),
+				("BMW-Motorrad", 0.5962219598583235, 0.17504950495049504),
+				("BMW (Motorsport)", 0.5962219598583235, 0.05821782178217822),
+				("BMW M10", 0.5962219598583235, 3.9603960396039607E-4))
 		)
 	}
 
 	def singleAliasManyPagesScoresMap(): Map[String, List[(String, Double, Double)]] = {
 		Map(
 			"BMW" -> List(
-				("BMW", 0.51, 0.72),
-				("BMW-Motorrad", 0.51, 0.18),
-				("BMW (Motorsport)", 0.51, 0.058),
-				("BMW (Automarke)", 0.51, 0.038),
-				("Berlins Most Wanted", 0.51, 0.0012),
-				("BMW E36", 0.51, 0.0012),
-				("Liste der BMW-Motorräder", 0.51, 0.0008),
-				("BMW E21", 0.51, 0.0004),
-				("BMW M10", 0.51, 0.0004),
-				("BMW 501/502", 0.51, 0.0004)
-		))
+				("BMW", 0.5962219598583235, 0.7239603960396039),
+				("BMW-Motorrad", 0.5962219598583235, 0.17504950495049504),
+				("BMW (Motorsport)", 0.5962219598583235, 0.05821782178217822),
+				("BMW (Automarke)", 0.5962219598583235, 0.038415841584158415),
+				("Berlins Most Wanted", 0.5962219598583235, 0.001188118811881188),
+				("BMW E36", 0.5962219598583235, 0.001188118811881188),
+				("Liste der BMW-Motorräder", 0.5962219598583235, 7.920792079207921E-4),
+				("BMW E21", 0.5962219598583235, 3.9603960396039607E-4),
+				("BMW M10", 0.5962219598583235, 3.9603960396039607E-4),
+				("BMW 501/502", 0.5962219598583235, 3.9603960396039607E-4)
+			))
+	}
+
+	def aliasWithManyPages(): Alias = {
+		Alias("BMW", Map(
+			"BMW" -> 1828,
+			"BMW-Motorrad" -> 442,
+			"BMW (Motorsport)" -> 147,
+			"BMW (Automarke)" -> 97,
+			"Berlins Most Wanted" -> 3,
+			"BMW E36" -> 3,
+			"Liste der BMW-Motorräder" -> 2,
+			"BMW E21" -> 1,
+			"BMW M10" -> 1,
+			"BMW 501/502" -> 1
+		), Option(2525), Option(4235))
+	}
+
+	def articlesForSingleAlias(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Automobilhersteller", linkswithcontext = List(Link("BMW", "BMW", Option(0), Map()))),
+			ParsedWikipediaEntry("BMW"),
+			ParsedWikipediaEntry("BMW-Motorrad"),
+			ParsedWikipediaEntry("BMW (Motorsport)"),
+			ParsedWikipediaEntry("BMW (Automarke)"),
+			ParsedWikipediaEntry("Berlins Most Wanted"),
+			ParsedWikipediaEntry("BMW E36"),
+			ParsedWikipediaEntry("Liste der BMW-Motorräder"),
+			ParsedWikipediaEntry("BMW E21"),
+			ParsedWikipediaEntry("BMW M10"),
+			ParsedWikipediaEntry("BMW 501/502")
+		)
 	}
 
 	def emptyArticlesTfidfMap(): Map[String, Map[String, Double]] = {
@@ -838,11 +869,11 @@ object TestData {
 	}
 
 	def featureEntriesForSingleAliasList(): List[FeatureEntry] = {
-		val link_score = 0.51
-		val mfPage_072 = MultiFeature(0.72, 1, 0.0, 0.54)
-		val mfPage_018 = MultiFeature(0.18, 2, 0.54, 0.122)
-		val mfPage_0058 = MultiFeature(0.058, 3, 0.6619999999999999, 0.057600000000000005)
-		val mfPage_00004 = MultiFeature(0.0004, 4, 0.7196, Double.PositiveInfinity)
+		val link_score = 0.5962219598583235
+		val mfPage_072 = MultiFeature(0.7239603960396039, 1, 0.0, 0.548910891089109)
+		val mfPage_018 = MultiFeature(0.17504950495049504, 2, 0.548910891089109, 0.11683168316831682)
+		val mfPage_0058 = MultiFeature(0.05821782178217822, 3, 0.6657425742574257, 0.057821782178217825)
+		val mfPage_00004 = MultiFeature(3.9603960396039607E-4, 4, 0.7235643564356435, Double.PositiveInfinity)
 		val mfCos = MultiFeature(-1.0, 1, 0.0, Double.PositiveInfinity)
 
 		List(
@@ -866,14 +897,14 @@ object TestData {
 	}
 
 	def featureEntriesForManyPossibleEntities(): List[FeatureEntry] = {
-		val link_score = 0.51
-		val mfPage_072 = MultiFeature(0.72, 1, 0.0, 0.54)
-		val mfPage_018 = MultiFeature(0.18, 2, 0.54, 0.122)
-		val mfPage_0058 = MultiFeature(0.058, 3, 0.6619999999999999, 0.020000000000000004)
-		val mfPage_0038 = MultiFeature(0.038, 4, 0.6819999999999999, 0.0368)
-		val mfPage_00012 = MultiFeature(0.0012, 5, 0.7188, 3.9999999999999986E-4)
-		val mfPage_00008 = MultiFeature(0.0008, 7, 0.7192, 0.0004)
-		val mfPage_00004 = MultiFeature(0.0004, 8, 0.7196, Double.PositiveInfinity)
+		val link_score = 0.5962219598583235
+		val mfPage_072 = MultiFeature(0.7239603960396039, 1, 0.0, 0.548910891089109)
+		val mfPage_018 = MultiFeature(0.17504950495049504, 2, 0.548910891089109, 0.11683168316831682)
+		val mfPage_0058 = MultiFeature(0.05821782178217822, 3, 0.6657425742574257, 0.019801980198019806)
+		val mfPage_0038 = MultiFeature(0.038415841584158415, 4, 0.6855445544554455, 0.037227722772277226)
+		val mfPage_00012 = MultiFeature(0.001188118811881188, 5, 0.7227722772277227, 3.9603960396039596E-4)
+		val mfPage_00008 = MultiFeature(7.920792079207921E-4, 7, 0.7231683168316831, 3.9603960396039607E-4)
+		val mfPage_00004 = MultiFeature(3.9603960396039607E-4, 8, 0.7235643564356435, Double.PositiveInfinity)
 		val mfCos = MultiFeature(-1.0, 1, 0.0, Double.PositiveInfinity)
 
 		List(

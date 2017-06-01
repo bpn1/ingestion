@@ -152,9 +152,9 @@ object CosineContextComparator extends SplitSparkJob {
 			.flatMap { alias =>
 				val linkScore = alias.linkoccurrences.get.toDouble / alias.totaloccurrences.get.toDouble
 				val numPages = alias.pages.values.sum.toDouble
-				val pageProb = alias.pages.mapValues(_.toDouble / numPages)
+				val pageScores = alias.pages.mapValues(_.toDouble / numPages)
 				// Although linkScore is the same in each list entry, it is stored multiple times for easier processing.
-				alias.pages.keySet.map(page => (alias.alias, List((page, linkScore, pageProb(page)))))
+				alias.pages.keySet.map(page => (alias.alias, List((page, linkScore, pageScores(page)))))
 			}.reduceByKey(_ ++ _)
 	}
 
