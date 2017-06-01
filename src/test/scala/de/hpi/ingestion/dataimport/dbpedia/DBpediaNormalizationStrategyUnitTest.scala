@@ -1,8 +1,6 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import org.scalatest.{FlatSpec, Matchers}
-import com.neovisionaries.i18n.CountryCode
-import scala.collection.JavaConversions._
 
 class DBpediaNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 	"apply" should "decide, which strategy should be used regarding the input attribute" in {
@@ -44,7 +42,6 @@ class DBpediaNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 		val countries = TestData.unnormalizedCountries
 		val result = DBpediaNormalizationStrategy.normalizeCountry(countries)
 		val expected = TestData.normalizedCountries
-		CountryCode.findByName("Italy").map(_.getAlpha2).foreach(println)
 		result shouldEqual expected
 	}
 

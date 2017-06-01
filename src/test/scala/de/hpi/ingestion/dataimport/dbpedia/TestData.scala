@@ -146,7 +146,7 @@ object TestData {
 	def unnormalizedCoords: List[String] = List("48.34822^^xsd:float;10.905282^^xsd:float","48348220^^xsd:integer;10905282^^xsd:integer", "48.34822^^xsd:double;10.905282^^xsd:double")
 	def normalizedCoords: List[String] = List("48.34822;10.905282")
 	def unnormalizedCountries: List[String] = List("dbpedia-de:Japanisches_Kaiser-reich", "LI@de .", "Deutschland@de .", "dbpedia-de:Datei:Flag_of_Bavaria_(striped).svg", "15^^xsd:integer")
-	def normalizedCountries: List[String] = List("Japanisches Kaiser reich", "Deutschland")
+	def normalizedCountries: List[String] = List("LI", "DE")
 	def unnormalizedCities: List[String] = List("Frankfurt a.M.@de .", "Frankfurt/Main@de .", "London", "dbpedia-de:Berlin-Tegel")
 	def normalizedCities: List[String] = List("Frankfurt a.M.", "Frankfurt/Main", "London", "Berlin Tegel")
 	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Unknown")
