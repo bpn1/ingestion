@@ -70,7 +70,7 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		val strategies = TestData.strategies
 		val classifier = DBpediaDataLakeImport.classifier
 		val subject = DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
-		subject.properties("geo_coords") shouldEqual List("52", "100")
+		subject.properties("geo_coords") shouldEqual List("52;100")
 	}
 
 	it should "extract the legal form" in {

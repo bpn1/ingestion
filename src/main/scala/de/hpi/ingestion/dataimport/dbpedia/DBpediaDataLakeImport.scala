@@ -69,7 +69,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		if (normalizedProperties.contains("geo_coords_lat") && normalizedProperties.contains("geo_coords_long")) {
 			properties("geo_coords") = normalizedProperties("geo_coords_lat")
 				.zip(normalizedProperties("geo_coords_long"))
-				.flatMap(x => List(x._1, x._2))
+				.map { case (lat, long) => s"$lat;$long" }
 		}
 
 		val legalForm = entity.label.map(extractLegalForm(_, classifier)).getOrElse(Nil)
