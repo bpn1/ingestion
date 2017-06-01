@@ -17,6 +17,6 @@ case class BlockEvaluation(
 	data: Set[BlockStats] = Set[BlockStats](),
 	comment: Option[String] = None,
 	pairwiseCompleteness: Double,
-	blockCount: Long,
-	comparisonCount: Long
+	blockCount: Int,
+	comparisonCount: BigInt
 )

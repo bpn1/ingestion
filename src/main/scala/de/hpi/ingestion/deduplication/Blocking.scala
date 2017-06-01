@@ -262,11 +262,11 @@ object Blocking extends SparkJob {
 			.map { case (tag, blockStats) =>
 				val minBlockSize = settings("minBlockSize").toInt
 				val filteredStats = blockStats.filter(stat =>
-					!filterSmall || (stat.numsubjects * stat.numstaging) > minBlockSize) // don't write tiny blocks
-				val tagCompleteness = pairwiseCompleteness.getOrElse(tag, 0.0)
-				val tagComparisons: Long = comparisonCount.getOrElse(tag, 0)
-				val tagBlockCount = blockCount.getOrElse(tag, 0)
+				!filterSmall || (stat.numsubjects * stat.numstaging) > minBlockSize) // don't write tiny blocks
 				val blockComment = Option(s"$comment")
+				val tagCompleteness = pairwiseCompleteness.getOrElse(tag, 0.0)
+				val tagBlockCount = blockCount.getOrElse(tag, 0)
+				val tagComparisons: BigInt = comparisonCount.getOrElse(tag, 0)
 				BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, tagBlockCount, tagComparisons)
 			}
 	}
