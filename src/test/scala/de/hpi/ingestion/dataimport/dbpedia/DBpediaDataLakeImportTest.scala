@@ -11,25 +11,13 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		filteredEntities shouldEqual expected
 	}
 
-	"normalizeAttribute" should "the values of a given attribute" in {
-		val attributes = Map(
-			"gen_sectors" -> TestData.unnormalizedSectors,
-			"geo_coords" -> TestData.unnormalizedCoordinates,
-			"geo_country" -> TestData.unnormalizedCountries,
-			"geo_city" -> TestData.unnormalizedCities,
-			"gen_employees" -> TestData.unnormalizedEmployees
-		)
+	"normalizeAttribute" should "normalize the values of a given attribute" in {
+		val attributes = TestData.unnormalizedAttributes
 		val strategies = TestData.strategies
 		val normalizedAttributes = attributes.map { case (attribute, values) =>
 			attribute -> DBpediaDataLakeImport.normalizeAttribute(attribute, values, strategies)
 		}
-		val expected = Map(
-			"gen_sectors" -> TestData.mappedSectors,
-			"geo_coords" -> TestData.normalizedCoordinates,
-			"geo_country" -> TestData.normalizedCountries,
-			"geo_city" -> TestData.normalizedCities,
-			"gen_employees" -> TestData.normalizedEmployees
-		)
+		val expected = TestData.normalizedAttributes
 		normalizedAttributes shouldEqual expected
 	}
 

@@ -189,6 +189,21 @@ object TestData {
 	def mappedSectors: List[String] = List("29", "45", "11")
 	def unnormalizedDefaults: List[String] = List("very^^xsd:nonNegativeInteger", "generic@de .", "dbpedia-de:values", "even", "dash-containing^^xsd:float", "123^^xsd:integer", "b4ckf1sh")
 	def normalizedDefaults: List[String] = List("very", "generic", "values", "even", "dash containing", "123", "b4ckf1sh")
+
+	def unnormalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.unnormalizedSectors,
+		"geo_coords" -> this.unnormalizedCoordinates,
+		"geo_country" -> this.unnormalizedCountries,
+		"geo_city" -> this.unnormalizedCities,
+		"gen_employees" -> this.unnormalizedEmployees
+	)
+	def normalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.mappedSectors,
+		"geo_coords" -> this.normalizedCoordinates,
+		"geo_country" -> this.normalizedCountries,
+		"geo_city" -> this.normalizedCities,
+		"gen_employees" -> this.normalizedEmployees
+	)
 }
 
 // scalastyle:on line.size.limit

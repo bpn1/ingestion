@@ -12,24 +12,12 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 	}
 
 	"normalizeAttribute" should "the values of a given attribute" in {
-		val attributes = Map(
-			"gen_sectors" -> TestData.unnormalizedSectors,
-			"geo_coords" -> TestData.unnormalizedCoordinates,
-			"geo_country" -> TestData.unnormalizedLocations,
-			"geo_city" -> TestData.unnormalizedLocations,
-			"gen_employees" -> TestData.unnormalizedEmployees
-		)
+		val attributes = TestData.unnormalizedAttributes
 		val strategies = TestData.strategies
 		val normalizedAttributes = attributes.map { case (attribute, values) =>
 			attribute -> WikiDataDataLakeImport.normalizeAttribute(attribute, values, strategies)
 		}
-		val expected = Map(
-			"gen_sectors" -> TestData.mappedSectors,
-			"geo_coords" -> TestData.normalizedCoordinates,
-			"geo_country" -> TestData.normalizedLocations,
-			"geo_city" -> TestData.normalizedLocations,
-			"gen_employees" -> TestData.normalizedEmployees
-		)
+		val expected = TestData.normalizedAttributes
 		normalizedAttributes shouldEqual expected
 	}
 
