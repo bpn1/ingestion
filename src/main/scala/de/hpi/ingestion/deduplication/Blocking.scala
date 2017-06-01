@@ -94,7 +94,7 @@ object Blocking extends SparkJob {
 	def setBlockingSchemes(schemes: List[BlockingScheme]): Unit = {
 		blockingSchemes = if(schemes.nonEmpty) schemes else List(new SimpleBlockingScheme)
 	}
-	
+
 	/**
 	  * Calculates the relative amount of duplicates we could find in our comparisons for each blocking scheme.
 	  * Uses the goldstandard to know, how many duplicates we should be able to find.
