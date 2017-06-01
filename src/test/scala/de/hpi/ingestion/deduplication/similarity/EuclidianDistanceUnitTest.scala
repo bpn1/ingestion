@@ -7,18 +7,19 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 	"computeDistance" should "compute the distnace between two points in terms of kilometers" in {
 		val subjects = TestData.testSubjects
 		val distance = EuclidianDistance.computeDistance(
-			subjects(4).properties("geo_coords").head.toDouble,
-			subjects(4).properties("geo_coords")(1).toDouble,
-			subjects(5).properties("geo_coords").head.toDouble,
-			subjects(5).properties("geo_coords")(1).toDouble
+			subjects(4).properties("geo_coords").head.toList(0).toDouble,
+			subjects(4).properties("geo_coords").head.toList(1).toDouble,
+			subjects(5).properties("geo_coords").head.toList(0).toDouble,
+			subjects(5).properties("geo_coords").head.toList(1).toDouble
 		)
-		val expected = 111.70485139435159
+
+		val expected = 101.2406771798861
 
 		distance shouldEqual expected
 	}
 
 	"turnDistanceIntoScore" should "compute the right score for given distances and scale factors" in {
-		val distances = List(0.0,1.0,5.1,21.0,312.0)
+		val distances = List(0.0, 1.0, 5.1, 21.0, 312.0)
 		val testScale1 = 1
 		val testScale2 = 2
 		val scores = distances.map { value =>
@@ -43,10 +44,11 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 	"compare" should "compute correct score for two given points" in {
 		val subjects = TestData.testSubjects
 		val geoPoints = List(
-			subjects.head.properties("geo_coords").take(2).mkString(","),
-			subjects(2).properties("geo_coords").take(2).mkString(","),
-			subjects(3).properties("geo_coords").take(2).mkString(",")
+			subjects.head.properties("geo_coords").mkString(";"),
+			subjects(2).properties("geo_coords").mkString(";"),
+			subjects(3).properties("geo_coords").mkString(";")
 		)
+
 		val scores = List(
 			EuclidianDistance.compare(geoPoints.head, geoPoints.head),
 			EuclidianDistance.compare(geoPoints.head, geoPoints(1)),

@@ -8,7 +8,7 @@ import de.hpi.ingestion.datalake.models.Subject
 class GeoCoordsBlockingScheme extends BlockingScheme {
 	tag = "GeoCoordsBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
-		val key = subject.get("geo_coords").grouped(2).map(_.mkString(",")).toList
+		val key = subject.get("geo_coords").grouped(2).map(_.mkString(";")).toList
 		if (key.nonEmpty) key else List(undefinedValue)
 	}
 }
