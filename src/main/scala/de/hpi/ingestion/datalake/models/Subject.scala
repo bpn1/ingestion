@@ -10,13 +10,15 @@ case class Subject(
 	var aliases: List[String] = Nil,
 	var category: Option[String] = None,
 	var properties: Map[String, List[String]] = Map(),
-	var relations: Map[UUID, Map[String, String]]  = Map(),
+	var relations: Map[UUID, Map[String, String]] = Map(),
+	var master: Option[UUID] = None,
 
 	var name_history: List[Version] = Nil,
 	var aliases_history: List[Version] = Nil,
 	var category_history: List[Version] = Nil,
 	var properties_history: Map[String, List[Version]] = Map(),
-	var relations_history: Map[UUID, Map[String, List[Version]]] = Map()
+	var relations_history: Map[UUID, Map[String, List[Version]]] = Map(),
+	var master_history: List[Version] = Nil
 ) extends DLImportEntity {
 	/**
 	  * Compares the subject using its uuid
@@ -44,10 +46,9 @@ case class Subject(
 			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {
-				case "name" | "category" =>
-					val value = field.get(this).asInstanceOf[Option[String]]
-					value.map(List(_)).getOrElse(Nil)
+				case "name" | "category" => field.get(this).asInstanceOf[Option[String]].toList
 				case "aliases" => field.get(this).asInstanceOf[List[String]]
+				case "master" => field.get(this).asInstanceOf[Option[UUID]].map(_.toString).toList
 				case _ => Nil
 			}
 		} else {
@@ -55,31 +56,21 @@ case class Subject(
 		}
 	}
 
-	def toProperties(prefix: String): Map[String, List[String]] = {
-		val mappedProperties = mutable.Map[String, List[String]]()
-
-		this.name.foreach(name => mappedProperties(s"$prefix.name") = List(name))
-		this.category.foreach(category => mappedProperties(s"$prefix.category") = List(category))
-		if (this.aliases.nonEmpty) mappedProperties(s"$prefix.aliases") = this.aliases
-
-		val prefixedProperties = this.properties.map { case (key, value) => s"$prefix.$key" -> value }
-
-		mappedProperties ++= prefixedProperties
-		mappedProperties.toMap
-	}
-
-	def normalizedProperties: Map[String, List[String]] = {
-		(for {
-			key <- Subject.normalizedPropertyKeys
-			value = this.properties.getOrElse(key, Nil)
-			if value.nonEmpty
-		} yield key -> value).toMap
+	/**
+	  * Returns only the normalized properties of this Subject.
+	  * @return subset of the properties Map containing only the normalized properties
+	  */
+	def normalizedProperties(): Map[String, List[String]] = {
+		properties.filterKeys(Subject.normalizedPropertyKeys)
 	}
 }
 
+/**
+  * Companion-Object to the Subject case class containing the keys for all normalized properties.
+  */
 object Subject {
 	val normalizedPropertyKeys = Source
 		.fromURL(this.getClass.getResource("/normalized_properties.txt"))
 		.getLines
-		.toList
+		.toSet
 }
