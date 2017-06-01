@@ -9,9 +9,8 @@ import org.apache.spark.SparkContext
 import scala.io.Source
 
 // scalastyle:off number.of.methods
+// scalastyle:off line.size.limit
 object TestData {
-	// scalastyle:off line.size.limit
-
 	val wikidataEntriesPath = "/wikidata/wikidata_entries.json"
 	val testEntriesPath = "/wikidata/test_entities.json"
 	val claimDataPath = "/wikidata/claim_data.json"
@@ -293,7 +292,7 @@ object TestData {
 			Option("testwikiname"),
 			Option("en_testwikiname"),
 			Option("test_instancetype"),
-			Option("Protein FAM177A1"),
+			Option("Protein AG"),
 			Map(
 				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
 				"subclass of" -> List("Protein", "FAM177 family"),
@@ -353,6 +352,21 @@ object TestData {
 	def normalizedLocations: List[String] = List("Russland", "Igrinski rajon")
 	def unnormalizedEmployees: List[String] = List("+500;1", "+1337;1", "WRONG")
 	def normalizedEmployees: List[String] = List("500", "1337")
-	// scalastyle:on line.size.limit
+
+	def unnormalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.unnormalizedSectors,
+		"geo_coords" -> this.unnormalizedCoordinates,
+		"geo_country" -> this.unnormalizedLocations,
+		"geo_city" -> this.unnormalizedLocations,
+		"gen_employees" -> this.unnormalizedEmployees
+	)
+	def normalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.mappedSectors,
+		"geo_coords" -> this.normalizedCoordinates,
+		"geo_country" -> this.normalizedLocations,
+		"geo_city" -> this.normalizedLocations,
+		"gen_employees" -> this.normalizedEmployees
+	)
 }
+// scalastyle:on line.size.limit
 // scalastyle:on number.of.methods
