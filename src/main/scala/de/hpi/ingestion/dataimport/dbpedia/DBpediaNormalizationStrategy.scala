@@ -28,14 +28,10 @@ object DBpediaNormalizationStrategy extends Serializable {
 	  */
 	def normalizeCountry(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" =>
-				CountryISO3166Mapping.mapping.get(country)
-			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{2})${country}""" =>
-				List(country)
-			case r"""([A-Za-zÄäÖöÜüß\-]{3,})${country}@de \.""" =>
-				CountryISO3166Mapping.mapping.get(country)
-			case r"""([A-Za-zÄäÖöÜüß\-]{2})${country}@de \.""" =>
-				List(country)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" => CountryISO3166Mapping.mapping.get(country)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{2})${country}""" => List(country)
+			case r"""([A-Za-zÄäÖöÜüß\-]{3,})${country}@de \.""" => CountryISO3166Mapping.mapping.get(country)
+			case r"""([A-Za-zÄäÖöÜüß\-]{2})${country}@de \.""" => List(country)
 			case _ => None
 		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}

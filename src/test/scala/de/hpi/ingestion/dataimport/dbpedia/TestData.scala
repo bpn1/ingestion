@@ -8,9 +8,9 @@ import org.apache.spark.rdd.RDD
 import scala.io.Source
 import scala.xml.XML
 
-object TestData {
-	// scalastyle:off line.size.limit
+// scalastyle:off line.size.limit
 
+object TestData {
 	def prefixesList: List[(String,String)] = {
 		val prefixFile = Source.fromURL(getClass.getResource("/prefixes.txt"))
 		val prefixes = prefixFile.getLines.toList
@@ -153,5 +153,23 @@ object TestData {
 	def normalizedSectors: List[String] = List("Kraftfahrzeughersteller", "Brauerei")
 	def unnormalizedDefaults: List[String] = List("very^^xsd:nonNegativeInteger", "generic@de .", "dbpedia-de:values", "even", "dash-containing^^xsd:float", "123^^xsd:integer", "b4ckf1sh")
 	def normalizedDefaults: List[String] = List("very", "generic", "values", "even", "dash containing", "123", "b4ckf1sh")
-	// scalastyle:on line.size.limit
+
+	def applyInput: List[List[String]] = List(
+		this.unnormalizedCoords,
+		this.unnormalizedCities,
+		this.unnormalizedCountries,
+		this.unnormalizedSectors,
+		this.unnormalizedEmployees,
+		List("default")
+	)
+	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "default")
+	def applyStrategies: List[(List[String] => List[String])] = List(
+		DBpediaNormalizationStrategy.normalizeCoords,
+		DBpediaNormalizationStrategy.normalizeCity,
+		DBpediaNormalizationStrategy.normalizeCountry,
+		DBpediaNormalizationStrategy.normalizeSector,
+		DBpediaNormalizationStrategy.normalizeEmployees,
+		identity
+	)
 }
+// scalastyle:on line.size.limit

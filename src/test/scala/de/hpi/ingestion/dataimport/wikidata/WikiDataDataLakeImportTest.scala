@@ -14,9 +14,9 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 	"normalizeAttribute" should "the values of a given attribute" in {
 		val attributes = Map(
 			"gen_sectors" -> TestData.unnormalizedSectors,
-			"geo_coords" -> TestData.unnormalizedCoordinates,
-			"geo_country" -> TestData.unnormalizedLocations,
-			"geo_city" -> TestData.unnormalizedLocations,
+			"geo_coords" -> TestData.unnormalizedCoords,
+			"geo_country" -> TestData.unnormalizedCountries,
+			"geo_city" -> TestData.unnormalizedCities,
 			"gen_employees" -> TestData.unnormalizedEmployees
 		)
 		val strategies = TestData.strategies
@@ -25,9 +25,9 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		}
 		val expected = Map(
 			"gen_sectors" -> TestData.mappedSectors,
-			"geo_coords" -> TestData.normalizedCoordinates,
-			"geo_country" -> TestData.normalizedLocations,
-			"geo_city" -> TestData.normalizedLocations,
+			"geo_coords" -> TestData.normalizedCoords,
+			"geo_country" -> TestData.normalizedCountries,
+			"geo_city" -> TestData.normalizedCities,
 			"gen_employees" -> TestData.normalizedEmployees
 		)
 		normalizedAttributes shouldEqual expected
@@ -59,9 +59,9 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		subject.properties("id_dbpedia") shouldEqual List("testwikiname")
 		subject.properties("id_viaf") shouldEqual List("X123")
 		subject.properties("gen_sectors") shouldEqual TestData.mappedSectors
-		subject.properties("geo_coords") shouldEqual TestData.normalizedCoordinates
-		subject.properties("geo_country") shouldEqual TestData.normalizedLocations
-		subject.properties("geo_city") shouldEqual TestData.normalizedLocations
+		subject.properties("geo_coords") shouldEqual TestData.normalizedCoords
+		subject.properties("geo_country") shouldEqual TestData.normalizedCountries
+		subject.properties("geo_city") shouldEqual TestData.normalizedCities
 		subject.properties("gen_employees") shouldEqual TestData.normalizedEmployees
 		subject.properties shouldNot contain key "id_lccn"
 	}
