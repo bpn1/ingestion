@@ -290,7 +290,7 @@ object TestData {
 			Option("testwikiname"),
 			Option("en_testwikiname"),
 			Option("test_instancetype"),
-			Option("Protein FAM177A1"),
+			Option("Protein AG"),
 			Map(
 				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
 				"subclass of" -> List("Protein", "FAM177 family"),
@@ -369,6 +369,20 @@ object TestData {
 		WikiDataNormalizationStrategy.normalizeSector,
 		WikiDataNormalizationStrategy.normalizeEmployees,
 		identity
+	)
+	def unnormalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.unnormalizedSectors,
+		"geo_coords" -> this.unnormalizedCoords,
+		"geo_country" -> this.unnormalizedCountries,
+		"geo_city" -> this.unnormalizedCities,
+		"gen_employees" -> this.unnormalizedEmployees
+	)
+	def normalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.mappedSectors,
+		"geo_coords" -> this.normalizedCoords,
+		"geo_country" -> this.normalizedCountries,
+		"geo_city" -> this.normalizedCities,
+		"gen_employees" -> this.normalizedEmployees
 	)
 }
 // scalastyle:on line.size.limit

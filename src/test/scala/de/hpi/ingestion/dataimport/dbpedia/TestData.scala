@@ -1,13 +1,13 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
-import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
-import de.hpi.ingestion.datalake.models.Version
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
-
 import scala.io.Source
 import scala.xml.XML
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
+import de.hpi.ingestion.datalake.models.Version
 
+// scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
 
 object TestData {
@@ -105,11 +105,25 @@ object TestData {
 		))
 	}
 
+	def unfilteredEntities: List[DBpediaEntity] = List(
+		DBpediaEntity(dbpedianame = "D1", instancetype = Option("type 1")),
+		DBpediaEntity(dbpedianame = "D2", instancetype = Option("type 2")),
+		DBpediaEntity(dbpedianame = "D3", instancetype = Option("type 3")),
+		DBpediaEntity(dbpedianame = "D4", instancetype = Option(null)),
+		DBpediaEntity(dbpedianame = "D5")
+	)
+
+	def filteredEntities: List[DBpediaEntity] = List(
+		DBpediaEntity(dbpedianame = "D1", instancetype = Option("type 1")),
+		DBpediaEntity(dbpedianame = "D2", instancetype = Option("type 2")),
+		DBpediaEntity(dbpedianame = "D3", instancetype = Option("type 3"))
+	)
+
 	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", List("dataSources"), sc, false)
 
 	def testEntity: DBpediaEntity = DBpediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
-		label = Option("Liste von Autoren"),
+		label = Option("Liste von Autoren GmbH"),
 		data = Map(
 			"wikidata_id" -> List("Q123"),
 			"dbo:viafId" -> List("X123"),
@@ -122,6 +136,26 @@ object TestData {
 			"dbo:industry" -> List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei"),
 			"testProperty" -> List("test")
 		)
+	)
+
+	def dbpediaEntities: List[DBpediaEntity] = List(
+		DBpediaEntity(
+			dbpedianame = "dbpedia-de:List_von_Autoren",
+			label = Option("Liste von Autoren GmbH"),
+			data = Map(
+				"wikidata_id" -> List("Q123"),
+				"dbo:viafId" -> List("X123"),
+				"property-de:viaf" -> List("Y123"),
+				"geo:lat" -> List("52"),
+				"property-de:latitude" -> List("53"),
+				"geo:long" -> List("100"),
+				"dbo:country" -> List("Koblenz@de ."),
+				"property-de:mitarbeiteranzahl" -> List("12^^xsd:integer", "13^^xsd:nonNegativeInteger"),
+				"dbo:industry" -> List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei"),
+				"testProperty" -> List("test")
+			)
+		),
+		DBpediaEntity(dbpedianame = "dbpedia-de:Liste_von_Wurst")
 	)
 
 	def mapping: Map[String, List[String]] = Map(
@@ -151,6 +185,7 @@ object TestData {
 	def normalizedCities: List[String] = List("Frankfurt a.M.", "Frankfurt/Main", "London", "Berlin Tegel")
 	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Unknown")
 	def normalizedSectors: List[String] = List("Kraftfahrzeughersteller", "Brauerei")
+	def mappedSectors: List[String] = List("29", "45", "11")
 	def unnormalizedDefaults: List[String] = List("very^^xsd:nonNegativeInteger", "generic@de .", "dbpedia-de:values", "even", "dash-containing^^xsd:float", "123^^xsd:integer", "b4ckf1sh")
 	def normalizedDefaults: List[String] = List("very", "generic", "values", "even", "dash containing", "123", "b4ckf1sh")
 
@@ -171,5 +206,20 @@ object TestData {
 		DBpediaNormalizationStrategy.normalizeEmployees,
 		identity
 	)
+	def unnormalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.unnormalizedSectors,
+		"geo_coords" -> this.unnormalizedCoords,
+		"geo_country" -> this.unnormalizedCountries,
+		"geo_city" -> this.unnormalizedCities,
+		"gen_employees" -> this.unnormalizedEmployees
+	)
+	def normalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.mappedSectors,
+		"geo_coords" -> this.normalizedCoords,
+		"geo_country" -> this.normalizedCountries,
+		"geo_city" -> this.normalizedCities,
+		"gen_employees" -> this.normalizedEmployees
+	)
 }
 // scalastyle:on line.size.limit
+// scalastyle:on number.of.methods
