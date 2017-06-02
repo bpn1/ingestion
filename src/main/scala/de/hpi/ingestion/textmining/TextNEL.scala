@@ -252,13 +252,13 @@ object TextNEL extends SplitSparkJob {
 		val articles = articlesWithTermFrequencies.map(article => Article(article.title, article.getText()))
 		val linkCandidatesTfs = findLinkCandidates(articles, aliases)
 		val linkCandidatesTfidf = calculateTfidf(linkCandidatesTfs, numDocuments, defaultIdf)
-		val aliasPageProbabilities = computeAliasProbabilities(aliases)
+		val aliasPageScores = computeAliasPageScores(aliases)
 			.collect
 			.toMap
 
 		val classifier = modelFunction(sc)
 		val linkFeatureEntries = CosineContextComparator
-			.compareLinksWithArticles(linkCandidatesTfidf, aliasPageProbabilities, articleTfidf)
+			.compareLinksWithArticles(linkCandidatesTfidf, aliasPageScores, articleTfidf)
 		val data = linkFeatureEntries.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
 		val namedEntities = linkNamedEntities(data, classifier)
 		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)

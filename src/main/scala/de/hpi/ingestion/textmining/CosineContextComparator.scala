@@ -142,7 +142,7 @@ object CosineContextComparator extends SplitSparkJob {
 	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
 	  * @return aliases with probability features
 	  */
-	def computeAliasProbabilities(aliases: RDD[Alias]): RDD[(String, List[(String, Double, Double)])] = {
+	def computeAliasPageScores(aliases: RDD[Alias]): RDD[(String, List[(String, Double, Double)])] = {
 		aliases
 			.filter(alias => alias.linkoccurrences.isDefined && alias.totaloccurrences.isDefined)
 			.flatMap { alias =>
@@ -287,7 +287,7 @@ object CosineContextComparator extends SplitSparkJob {
 
 		val contextTfs = transformLinkContextTfs(linkArticles)
 		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf, settingsBroadcast.value)
-		val aliasPageProbabilities = computeAliasProbabilities(aliases)
+		val aliasPageProbabilities = computeAliasPageScores(aliases)
 			.collect
 			.toMap
 		val featureEntries = compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
