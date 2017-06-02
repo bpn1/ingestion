@@ -96,6 +96,45 @@ object Blocking extends SparkJob {
 	}
 
 	/**
+	  * Counts the number of blocks for each blocking scheme and in total.
+	  * @param blocks blocked subjects
+	  * @param sumTag tag to be set for the total block count
+	  * @return blocktags (information on the blocking scheme) with the associated blockcounts
+	  */
+	def calculateBlockCount(
+	blocks: RDD[((String, String), (Iterable[UUID], Iterable[UUID]))],
+	sumTag: String
+	): Map[String, Int] = {
+		val blockCount = blocks.map{ case ((key, tag), subjects) => (tag, 1) }.reduceByKey(_ + _).collect.toMap
+		val totalBlockCount = blockCount.values.sum
+
+		blockCount ++ Map(sumTag -> totalBlockCount)
+	}
+
+	/**
+	  * Counts the number of comparisons for each blocking scheme and in total.
+	  * @param blocks blocked subjects
+	  * @param sumTag tag to be set for the total block count
+	  * @return blocktags (information on the blocking scheme) with the associated comparison count
+	  */
+	def calculateCompareCount(
+	blocks: RDD[((String, String), (Iterable[UUID], Iterable[UUID]))],
+	sumTag: String
+	): Map[String, BigInt] = {
+		val blockComparisons = blocks
+			.map { case ((key, tag), (subject, staging)) => tag -> (BigInt(subject.size) * BigInt(staging.size)) }
+			.reduceByKey(_ + _)
+			.collect
+			.toMap
+		val sumComparisons = blocks
+			.flatMap { case ((key, tag), (subject, staging)) => subject.cross(staging) }
+			.distinct
+			.count
+
+		blockComparisons ++ Map(sumTag -> BigInt(sumComparisons))
+	}
+
+	/**
 	  * Calculates the relative amount of duplicates we could find in our comparisons for each blocking scheme.
 	  * Uses the goldstandard to know, how many duplicates we should be able to find.
 	  * @param duplicates duplicates from our input that fit the goldstandard
@@ -127,53 +166,14 @@ object Blocking extends SparkJob {
 	}
 
 	/**
-	  * Counts the number of blocks for each blocking scheme and in total.
-	  * @param blocks blocked subjects
-	  * @param sumTag tag to be set for the total block count
-	  * @return blocktags (information on the blocking scheme) with the associated blockcounts
-	  */
-	def calculateBlockCount(
-		blocks: RDD[((String, String), (Iterable[UUID], Iterable[UUID]))],
-		sumTag: String
-	): Map[String, Int] = {
-		val blockCount = blocks.map{ case ((key, tag), subjects) => (tag, 1) }.reduceByKey(_ + _).collect.toMap
-		val totalBlockCount = blockCount.values.sum
-
-		blockCount ++ Map(sumTag -> totalBlockCount)
-	}
-
-	/**
-	  * Counts the number of comparisons for each blocking scheme and in total.
-	  * @param blocks blocked subjects
-	  * @param sumTag tag to be set for the total block count
-	  * @return blocktags (information on the blocking scheme) with the associated comparison count
-	  */
-	def calculateCompareCount(
-		blocks: RDD[((String, String), (Iterable[UUID], Iterable[UUID]))],
-		sumTag: String
-	): Map[String, BigInt] = {
-		val blockComparisons = blocks
-			.map { case ((key, tag), (subject, staging)) => tag -> (BigInt(subject.size) * BigInt(staging.size)) }
-			.reduceByKey(_ + _)
-			.collect
-			.toMap
-		val sumComparisons = blocks
-			.flatMap { case ((key, tag), (subject, staging)) => subject.cross(staging) }
-			.distinct
-			.count
-
-		blockComparisons ++ Map(sumTag -> BigInt(sumComparisons))
-	}
-
-	/**
 	  * Uses the goldstandard to find all relevant duplicate-pairs to be possibly found in deduplication.
 	  * @param block blocked subjects
 	  * @param goldStandard tuples of duplicateIDs we want to find
 	  * @return duplicates from the goldstandard found in the input block
 	  */
 	def createDuplicateStats(
-		block: ((String, String), (Traversable[UUID], Traversable[UUID])),
-		goldStandard: Set[(UUID, UUID)]
+	block: ((String, String), (Traversable[UUID], Traversable[UUID])),
+	goldStandard: Set[(UUID, UUID)]
 	): (Traversable[(UUID, UUID)], (String, Set[BlockStats])) = {
 		val ((key, tag), (subjectList, stagingList)) = block
 		val cross = subjectList.cross(stagingList)

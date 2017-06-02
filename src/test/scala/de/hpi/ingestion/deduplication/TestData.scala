@@ -454,7 +454,7 @@ object TestData {
 							), Some("Blocking"), 1.0, 4, 2)))
 	}
 
-	def filteredBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
+	def filteredUndefinedBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
 		sc.parallelize(List(
 			BlockEvaluation(null, "sum GeoBlocking, SimpleBlocking", Set(
 								BlockStats("Hamburg",1,1,0.0),
@@ -476,6 +476,13 @@ object TestData {
 								BlockStats("Porsc",1,0,0.0),
 								BlockStats("Volks",1,1,1.0)
 							), Some("Blocking"), 1.0, 4, 2)))
+	}
+
+	def filteredSmallBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
+		sc.parallelize(List(
+			BlockEvaluation(null,"sum SimpleBlocking",Set(BlockStats("Haush",101,101,0.0)),Some("Blocking"),0.0,2,10251),
+			BlockEvaluation(null,"SimpleBlocking",Set(BlockStats("Haush",101,101,0.0)),Some("Blocking"),0.0,2,10251))
+		)
 	}
 
 	def blockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
