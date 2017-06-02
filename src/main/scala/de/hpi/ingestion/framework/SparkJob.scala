@@ -17,7 +17,7 @@ trait SparkJob extends Configurable {
 	val cassandraSaveQueries = ListBuffer[String]()
 
 	/**
-	  * Loads a four-tuple of RDD-Options used in the job.
+	  * Loads a number of input RDDs used in the job.
 	  * @param sc Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.

@@ -1,11 +1,7 @@
 package de.hpi.ingestion.framework
 
-import java.net.URL
-
 import de.hpi.ingestion.deduplication.models.ScoreConfig
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
-
-import scala.io.Source
 import scala.xml.{Node, XML}
 
 /**

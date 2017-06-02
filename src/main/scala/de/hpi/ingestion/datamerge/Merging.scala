@@ -1,5 +1,7 @@
 package de.hpi.ingestion.datamerge
 
+import java.util.UUID
+
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -44,26 +46,55 @@ object Merging extends SparkJob {
 		List(subject, staged)
 	}
 
-	def mergeIntoMaster(master: Subject, duplicates: List[Subject], version: Version): List[Subject] = {
-		val masterSM = new SubjectManager(master, version)
-		duplicates.foreach { duplicate =>
-			duplicate.masterScore().foreach { score =>
-				masterSM.addRelations(Map(duplicate.id -> SubjectManager.masterRelation(score)))
-			}
-		}
-		val normalizedProps = Subject.normalizedPropertyKeys.flatMap { prop =>
+	def mergeProperties(master: Subject, duplicates: List[Subject]): Map[String, List[String]] = {
+		Subject.normalizedPropertyKeys.flatMap { prop =>
 			val propValues = sourcePriority.flatMap { dataSource =>
 				duplicates.flatMap { duplicate =>
 					duplicate.properties_history
 						.get(prop)
 						.map(_.last)
 				}.filter(_.datasources.contains(dataSource))
-				.map(_.value)
+					.map(_.value)
 			}.headOption
 			propValues.map((prop, _))
 		}.toMap
-		masterSM.addProperties(normalizedProps)
-		// TODO add slave relations
+	}
+
+	def masterRelations(master: Subject, duplicates: List[Subject]): Map[UUID, Map[String, String]] = {
+		duplicates.flatMap { duplicate =>
+			duplicate.masterScore()
+				.map(SubjectManager.masterRelation)
+				.map((duplicate.id, _))
+		}.toMap
+	}
+
+	def mergeRelations(master: Subject, duplicates: List[Subject]): Map[UUID, Map[String, String]] = {
+		duplicates
+			.flatMap(_.relations.keySet)
+			.filter(_ != master.id)
+			.map { relationSub =>
+				val relation = sourcePriority.map { dataSource =>
+					duplicates.flatMap { duplicate =>
+						duplicate.relations_history
+							.getOrElse(relationSub, Map())
+							.filter(_._2.last.datasources.contains(dataSource))
+							.mapValues(_.last.value.headOption)
+							.collect { case (prop, Some(value)) => (prop, value) }
+					}.toMap
+				}.fold(Map()) { (cumulativeMap, dataSourceMap) =>
+					cumulativeMap ++ (dataSourceMap -- cumulativeMap.keySet)
+				}
+				(relationSub, relation)
+			}.toMap
+	}
+
+	def mergeIntoMaster(master: Subject, duplicates: List[Subject], version: Version): List[Subject] = {
+		val masterSM = new SubjectManager(master, version)
+		masterSM.clearRelations()
+		masterSM.addRelations(masterRelations(master, duplicates))
+		masterSM.addRelations(mergeRelations(master, duplicates))
+		masterSM.clearProperties()
+		masterSM.addProperties(mergeProperties(master, duplicates))
 		master +: duplicates
 	}
 
