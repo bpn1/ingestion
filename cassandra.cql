@@ -99,7 +99,7 @@ CREATE TABLE wikidumps.featureentries (
     entity_score multifeature,
     cosine_sim multifeature,
     correct boolean,
-    PRIMARY KEY (article, offset)
+    PRIMARY KEY (article, offset, entity)
 );
 
 CREATE TYPE wikidumps.precisionrecalldatatuple (
