@@ -464,7 +464,7 @@ object TestData {
 								BlockStats("Volks",1,1,1.0),
 								BlockStats("Porsc",1,0,0.0),
 								BlockStats("Ferra",1,0,0.0)
-							), Some("Blocking"), 1.0, 7, 5),
+							), Some("Blocking"), 1.0, 7, 4),
 			BlockEvaluation(null, "GeoBlocking", Set(
 								BlockStats("New York",0,2,0.0),
 								BlockStats("Hamburg",1,1,0.0),
@@ -489,7 +489,7 @@ object TestData {
 								BlockStats("Volks", 1, 1, 1.0),
 								BlockStats("Porsc", 1, 0, 0.0),
 								BlockStats("Ferra", 1, 0, 0.0)
-							), Some("Test comment"), 1.0, 8, 5),
+							), Some("Test comment"), 1.0, 8, 4),
 			BlockEvaluation(null, "GeoBlocking", Set(
 								BlockStats("New York", 0, 2, 0.0),
 								BlockStats("Hamburg", 1, 1, 0.0),
@@ -506,7 +506,7 @@ object TestData {
 
 	def emptyBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
 		sc.parallelize(List(
-			BlockEvaluation(null,"sum GeoBlocking, SimpleBlocking",Set(),Some("Blocking"),1.0,8,5),
+			BlockEvaluation(null,"sum GeoBlocking, SimpleBlocking",Set(),Some("Blocking"),1.0,8,4),
 			BlockEvaluation(null,"GeoBlocking",Set(),Some("Blocking"),0.5,4,3),
 			BlockEvaluation(null,"SimpleBlocking",Set(),Some("Blocking"),1.0,4,2)
 		))
@@ -514,7 +514,7 @@ object TestData {
 
 	def emptyBlockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
 		sc.parallelize(List(
-			BlockEvaluation(null,"sum GeoBlocking, SimpleBlocking",Set(),Some("Test comment"),1.0,8,5),
+			BlockEvaluation(null,"sum GeoBlocking, SimpleBlocking",Set(),Some("Test comment"),1.0,8,4),
 			BlockEvaluation(null,"GeoBlocking",Set(),Some("Test comment"),0.5,4,3),
 			BlockEvaluation(null,"SimpleBlocking",Set(),Some("Test comment"),1.0,4,2)
 		))

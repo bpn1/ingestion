@@ -100,6 +100,7 @@ object Blocking extends SparkJob {
 	  * Uses the goldstandard to know, how many duplicates we should be able to find.
 	  * @param duplicates duplicates from our input that fit the goldstandard
 	  * @param goldStandard tuples of duplicateIDs we want to find
+	  * @param sumTag tag to be set for the total block count
 	  * @return a double for each blocking scheme-tag, representative for the relative amount of duplicates
 	  */
 	def calculatePairwiseCompleteness(
@@ -125,6 +126,12 @@ object Blocking extends SparkJob {
 		pairwiseCompleteness ++ Map(sumTag -> sumPairwiseCompleteness)
 	}
 
+	/**
+	  * Counts the number of blocks for each blocking scheme and in total.
+	  * @param blocks blocked subjects
+	  * @param sumTag tag to be set for the total block count
+	  * @return blocktags (information on the blocking scheme) with the associated blockcounts
+	  */
 	def calculateBlockCount(
 		blocks: RDD[((String, String), (Iterable[UUID], Iterable[UUID]))],
 		sumTag: String
@@ -135,6 +142,12 @@ object Blocking extends SparkJob {
 		blockCount ++ Map(sumTag -> totalBlockCount)
 	}
 
+	/**
+	  * Counts the number of comparisons for each blocking scheme and in total.
+	  * @param blocks blocked subjects
+	  * @param sumTag tag to be set for the total block count
+	  * @return blocktags (information on the blocking scheme) with the associated comparison count
+	  */
 	def calculateCompareCount(
 		blocks: RDD[((String, String), (Iterable[UUID], Iterable[UUID]))],
 		sumTag: String

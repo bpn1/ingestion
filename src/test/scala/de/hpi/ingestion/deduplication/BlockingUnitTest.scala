@@ -7,7 +7,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
-/*
+
 	"Blocking" should "partition subjects regarding the value of the given key" in {
 		val subjects = TestData.subjects
 		val subjectRDD = sc.parallelize(subjects)
@@ -63,7 +63,6 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			false,
 			comment
 		).map(_.copy(jobid = null))
-//	println(evaluationBlocks.collect.toList.map(eva => (eva.pairwisecompleteness, eva.blockcount, eva.comparisoncount)))
 		val expected = TestData.blockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -85,7 +84,6 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			false,
 			comment
 		).map(_.copy(jobid = null))
-//	println(evaluationBlocks.collect.toList.map(eva => (eva.pairwisecompleteness, eva.blockcount, eva.comparisoncount)))
 		val expected = TestData.filteredBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -101,7 +99,6 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		Blocking.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
 		val evaluationBlocks = Blocking.run(input, sc).fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))
-//	println(evaluationBlocks.collect.toList.map(eva => (eva.pairwisecompleteness, eva.blockcount, eva.comparisoncount)))
 		val expected = TestData.emptyBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -119,7 +116,6 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 			.run(input, sc, Array("Test comment"))
 			.fromAnyRDD[BlockEvaluation]().head
 			.map(_.copy(jobid = null))
-//	println(evaluationBlocks.collect.toList.map(eva => (eva.pairwisecompleteness, eva.blockcount, eva.comparisoncount)))
 		val expected = TestData.emptyBlockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -172,7 +168,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val expected = TestData.expectedBlockCount
 		blockCount shouldEqual expected
 	}
-*/
+
 	"calculateCompareCount" should "count all compares in each blocking scheme as well as the total compares" in {
 		val blocks = TestData.blocks(sc)
 		val sumTag = "sum"
