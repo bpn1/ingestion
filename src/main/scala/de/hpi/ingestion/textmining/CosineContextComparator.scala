@@ -173,7 +173,7 @@ object CosineContextComparator extends SplitSparkJob {
 					}
 			}.reduceByKey(_ ++ _)
 
-		val weights = (0 until settings("numberArticlePartitions").toInt).map(t => 1.0).toArray
+		val weights = Array.fill[Double](settings("numberArticlePartitions").toInt)(1.0)
 		val linkSegements = joinableLinks.randomSplit(weights)
 		linkSegements.map { rdd =>
 			rdd

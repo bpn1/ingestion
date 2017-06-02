@@ -138,8 +138,7 @@ object TextNEL extends SplitSparkJob {
 			.flatMap { article =>
 				val trieAlias = matchTrieAliases(article.text, trie, tokenizer, contextTokenizer)
 				trieAlias.map(trieAlias => (trieAlias.alias, (article.title, trieAlias)))
-			}
-			.join(aliasPages)
+			}.join(aliasPages)
 			.map { case (alias, ((title, trieAlias), page)) =>
 				(Link(alias, page, trieAlias.offset, article = Option(title)), Bag(trieAlias.context))
 			}
@@ -182,7 +181,7 @@ object TextNEL extends SplitSparkJob {
 				processedCharacters = offset.get
 				val pages = groupedLinks
 					.map(_.page)
-					.reduce(_ + "&#13;" + _)
+					.reduce(_ + "&#13;" + _) // If a browser does not support "&#13;", use "\n" instead.
 				val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
 				html += "<a href=\"" + wikipediaPage + "\" class=\"importance " + 0 + "\" title=\"" + pages + "\">"
 				html += text.substring(processedCharacters, processedCharacters + mainLink.alias.length)
@@ -242,29 +241,27 @@ object TextNEL extends SplitSparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
-		val numDocuments = articlesWithTermFrequencies.count()
 
+		val numDocuments = articlesWithTermFrequencies.count()
 		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 		val defaultIdf = calculateIdf(defaultDf, numDocuments)
+
 		val articleTfs = transformArticleTfs(articlesWithTermFrequencies)
 		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf)
 
+		val articles = articlesWithTermFrequencies.map(article => Article(article.title, article.getText()))
+		val linkCandidatesTfs = findLinkCandidates(articles, aliases)
+		val linkCandidatesTfidf = calculateTfidf(linkCandidatesTfs, numDocuments, defaultIdf)
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
 			.collect
 			.toMap
 
 		val classifier = modelFunction(sc)
-		val articles = articlesWithTermFrequencies.map(article => Article(article.title, article.getText()))
-
-		val linkCandidatesTfs = findLinkCandidates(articles, aliases)
-		val linkCandidatesTfidf = calculateTfidf(linkCandidatesTfs, numDocuments, defaultIdf)
-
 		val linkFeatureEntries = CosineContextComparator
 			.compareLinksWithArticles(linkCandidatesTfidf, aliasPageProbabilities, articleTfidf)
 		val data = linkFeatureEntries.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
 		val namedEntities = linkNamedEntities(data, classifier)
 		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)
-
 		List(namedEntities).toAnyRDD() ++ List(articlesWithLinks).toAnyRDD()
 	}
 }
