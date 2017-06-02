@@ -55,7 +55,7 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 			.collect
 			.toList
 
-		val expectedEntries = TestData.parsedEntriesWithResolvedRedirects().toList
+		val expectedEntries = TestData.parsedEntriesWithResolvedRedirectsSet().toList
 		val expectedRedirects = TestData.redirectMap().map(Redirect.tupled).toList
 		resolvedEntries shouldEqual expectedEntries
 		redirects shouldEqual expectedRedirects
@@ -70,9 +70,9 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 		).fromAnyRDD[ParsedWikipediaEntry]()
 			.head
 			.collect
-			.toList
+			.toSet
 
-		val expectedEntries = TestData.parsedEntriesWithResolvedRedirects()
+		val expectedEntries = TestData.parsedEntriesWithResolvedRedirectsSet()
 		resolvedEntries shouldEqual expectedEntries
 	}
 

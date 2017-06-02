@@ -129,8 +129,8 @@ object TestData {
 		)
 	}
 
-	def allAliasesList(): List[String] = {
-		List(
+	def allAliasesSet(): Set[String] = {
+		Set(
 			"Audi",
 			"Brachttal",
 			"Main-Kinzig-Kreis",
@@ -140,7 +140,7 @@ object TestData {
 			"Backfisch",
 			"Streitberg",
 			"historisches Jahr"
-		).sortBy(identity)
+		)
 	}
 
 	def parsedWikipediaWithTextsSet(): Set[ParsedWikipediaEntry] = {
@@ -466,8 +466,8 @@ object TestData {
 		)
 	}
 
-	def countedAliasesList(): List[Alias] = {
-		List(
+	def countedAliasesSet(): Set[Alias] = {
+		Set(
 			Alias("Audi", Map(), Option(2), Option(3)),
 			Alias("Brachttal", Map(), Option(2), Option(2)),
 			Alias("Main-Kinzig-Kreis", Map(), Option(1), Option(2)),
@@ -1501,7 +1501,7 @@ object TestData {
 		)
 	}
 
-	def parsedEntriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
+	def parsedEntriesWithResolvedRedirectsSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "test page"))),
 			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "test page 2"), Link("alias 3", "Europäische Union"))),
