@@ -23,29 +23,6 @@ object CompareStrategy extends Serializable {
 	}
 
 	/**
-	  * This method compares two lists of coordinate strings with the appearance ("lat1", "long1", "lat2", "long2"...)
-	  * and does so by calculating the average of the maximum scores for each coordinate-pairs.
-	  * @param leftValues Coordinates to be compared with rightValue.
-	  * @param rightValues Coordinates to be compared with leftValue.
-	  * @return The average score of all part-scores.
-	  */
-	def coordinatesCompare(
-		leftValues: List[String],
-		rightValues: List[String],
-		scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]
-	): Double = {
-		val left = leftValues.grouped(2).toList.map(_.mkString(","))
-		val right = rightValues.grouped(2).toList.map(_.mkString(","))
-		val scoreSum = left
-			.map { leftValue =>
-				right
-					.map(rightValue => scoreConfig.compare(leftValue, rightValue))
-					.max
-			}.sum
-		scoreSum / left.size
-	}
-
-	/**
 	  * This method compares two string-lists by default.
 	  * @param leftValues List of strings to be compared with rightValues.
 	  * @param rightValues List of strings to be compared with leftValues.
@@ -80,8 +57,8 @@ object CompareStrategy extends Serializable {
 				 | "geo_postal"
 				 | "geo_country"
 				 | "gen_employees" => singleStringCompare
-			case "geo_coords" => coordinatesCompare
-			case _ => defaultCompare
+			case "geo_coords"
+				 | _ => defaultCompare
 		}
 	}
 }
