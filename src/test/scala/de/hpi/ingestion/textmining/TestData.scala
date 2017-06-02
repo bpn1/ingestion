@@ -1190,24 +1190,6 @@ object TestData {
 		)
 	}
 
-	def probabilityReferences(): Map[String, Double] = {
-		Map(
-			"Ingolstadt" -> 0.0,
-			"Bayern" -> 1.0,
-			"Automobilhersteller" -> 0.0,
-			"Zerfall" -> 0.0
-		)
-	}
-
-	def allPagesTestList(): List[String] = {
-		List(
-			"Automobilhersteller",
-			"Ingolstadt",
-			"Bayern",
-			"Zerfall (Album)"
-		)
-	}
-
 	def smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
 		List(
 			ParsedWikipediaEntry(
