@@ -285,10 +285,7 @@ object CosineContextComparator extends SplitSparkJob {
 				}
 			}.reduceByKey(_ ++ _)
 
-		val weights = (0 until 10).map(t => 1.0).toArray
-		val linkSegements = joinableLinks.randomSplit(weights)
-		val featureEntriesWithLinks = linkSegements.map { rdd =>
-			rdd
+		val featureEntriesWithLinks = joinableLinks
 				.join(articleContexts)
 				.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
 					protoFeatureEntries.map { protoFeatureEntry =>
@@ -296,7 +293,6 @@ object CosineContextComparator extends SplitSparkJob {
 						(protoFeatureEntry.link, protoFeatureEntry.toFeatureEntry(page, MultiFeature(cosineSim)))
 					}
 				}
-		}.reduce(_.union(_))
 		addSecondOrderFeatures(featureEntriesWithLinks)
 	}
 
