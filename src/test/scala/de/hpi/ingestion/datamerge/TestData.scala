@@ -308,8 +308,8 @@ object TestData {
 			),
 			Subject(
 				id = subjectIds(1),
-				properties = Map("geo_city" -> List("val 1", "val 2")),
-				properties_history = Map("geo_city" -> List(version("wikidata", "val 1", "val 2")))
+				properties = Map("geo_city" -> List("val 1")),
+				properties_history = Map("geo_city" -> List(version("wikidata", "val 1")))
 			),
 			Subject(
 				id = subjectIds(2),
@@ -318,8 +318,8 @@ object TestData {
 			),
 			Subject(
 				id = subjectIds(3),
-				properties = Map("geo_city" -> List("val 1")),
-				properties_history = Map("geo_city" -> List(version("wikidata", "val 1")))
+				properties = Map("geo_city" -> List("val 1", "val 2")),
+				properties_history = Map("geo_city" -> List(version("wikidata", "val 1", "val 2")))
 			),
 			Subject(
 				id = subjectIds(4),

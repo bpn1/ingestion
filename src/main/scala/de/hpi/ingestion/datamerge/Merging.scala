@@ -48,17 +48,19 @@ object Merging extends SparkJob {
 
 	def mergeProperties(duplicates: List[Subject]): Map[String, List[String]] = {
 		Subject.normalizedPropertyKeys.flatMap { prop =>
-			val propValues = sourcePriority.flatMap { dataSource =>
+			val propValues = sourcePriority.map { dataSource =>
 				duplicates.flatMap { duplicate =>
 					duplicate.properties_history
 						.get(prop)
 						.map(_.last)
-						.filter(_.value.nonEmpty)
 				}.filter(_.datasources.contains(dataSource))
 				.map(_.value)
-			}.headOption
+				.fold(List.empty[String])(_ ++ _)
+				.distinct
+			}.find(_.nonEmpty)
 			propValues.map((prop, _))
-		}.toMap
+		}.filter(_._2.nonEmpty)
+		.toMap
 	}
 
 	/**
@@ -75,7 +77,6 @@ object Merging extends SparkJob {
 	}
 
 	def mergeRelations(master: Subject, duplicates: List[Subject]): Map[UUID, Map[String, String]] = {
-//		println(s"merging relations:\n${duplicates.map(_.relations.mkString("\n")).mkString("\n")}")
 		val rel = duplicates
 			.flatMap(_.relations.keySet)
 			.filter(_ != master.id)
@@ -93,7 +94,6 @@ object Merging extends SparkJob {
 				}
 				(relationSub, relation)
 			}.toMap
-//		println(s"result:\n${rel.mkString("\n")}")
 		rel
 	}
 
@@ -120,7 +120,6 @@ object Merging extends SparkJob {
 	}
 
 	def mergeIntoMaster(master: Subject, duplicates: List[Subject], version: Version): List[Subject] = {
-//		println(s"\n${duplicates.map(t => t.id + "\t" + t.name).mkString("\n")}")
 		val masterSM = new SubjectManager(master, version)
 		mergeSimpleAttributes(masterSM, duplicates)
 		masterSM.clearRelations()
