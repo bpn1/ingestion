@@ -69,8 +69,9 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param validity validity of the aliases
 	  */
 	def setAliases(value: List[String], validity: Map[String, String] = Map()): Unit = {
-		if(subject.aliases != value) {
-			subject.aliases = value
+		val newAliases = value.distinct
+		if(subject.aliases != newAliases) {
+			subject.aliases = newAliases
 			subject.aliases_history :+= makeVersion(subject.aliases, validity)
 		}
 	}
@@ -108,9 +109,9 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  */
 	def setMaster(value: Option[UUID], score: Double = 0.0, validity: Map[String, String] = Map()): Unit = {
 		val higherScore = subject.master
-			.map(subject.relations)
-			.map(_(SubjectManager.slaveKey).toDouble)
-			.exists(_ < score)
+			.flatMap(subject.relations.get)
+			.flatMap(_.get(SubjectManager.slaveKey))
+			.exists(_.toDouble < score)
 		subject.master
 			.filter(!value.contains(_))
 			.foreach(masterId => removeRelations(Map(masterId -> List(SubjectManager.slaveKey))))

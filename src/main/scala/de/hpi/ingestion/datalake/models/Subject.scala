@@ -1,10 +1,7 @@
 package de.hpi.ingestion.datalake.models
 
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.SubjectManager
-
-import scala.collection.mutable
 import scala.io.Source
 
 case class Subject(
@@ -73,8 +70,8 @@ case class Subject(
 	  */
 	def masterScore(): Option[Double] = {
 		master
-			.map(relations)
-			.map(_(SubjectManager.slaveKey))
+			.flatMap(relations.get)
+			.flatMap(_.get(SubjectManager.slaveKey))
 			.map(_.toDouble)
 	}
 }

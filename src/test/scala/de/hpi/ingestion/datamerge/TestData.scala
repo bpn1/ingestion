@@ -2,105 +2,577 @@ package de.hpi.ingestion.datamerge
 
 import java.util.UUID
 
+import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
+// scalastyle:off
 object TestData {
-	// scalastyle:off line.size.limit
+	val masterId = UUID.randomUUID()
 	val subjectIds = List.fill(10)(UUID.randomUUID())
-//	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc)
-	def subjects: List[Subject] = List(
-		Subject(id = subjectIds.head, name = Some("Audi"), properties = Map("geo_city" -> List("München"))),
-		Subject(id = subjectIds(1), name = Some("Mercedes"), properties = Map("geo_postal" -> List("10666"))),
-		Subject(id = subjectIds(2), name = Some("BMW")),
-		Subject(id = subjectIds(3), name = Some("Audi"), properties = Map("geo_city" -> List("Berlin"), "type" -> List("Auto"))),
-		Subject(id = subjectIds(4), name = Some("Audi AG"), properties = Map("geo_postal" -> List("10888"))),
-		Subject(id = subjectIds(5), name = Some("Mercedes Benz"), properties = Map("geo_coords" -> List("1", "1"))),
-		Subject(id = subjectIds(6), name = Some("Mercedes B."), properties = Map("geo_coords" -> List("1", "2", "3", "4"))),
-		Subject(id = subjectIds(7), name = Some("Volkswagen"))
-	)
-	def masterNode: Subject = subjects.head
-//	def duplicates: DuplicateCandidates = DuplicateCandidates(
-//		subjects.head.id,
-//		candidates = List(subjects(3), subjects(4)).map((_, "source", 0.6))
-//	)
-	def expectedProperties: Map[String, List[String]] = Map(
-		"geo_city" -> List("München", "Berlin"),
-		"geo_postal" -> List("10888")
-	)
-	def expectedRelations: Map[UUID, Map[String, String]] = Map(
-		subjectIds(3) -> Map("type" -> "isDuplicate", "confidence" -> "0.6"),
-		subjectIds(4) -> Map("type" -> "isDuplicate", "confidence" -> "0.6")
-	)
-	def subjectRDD(sc: SparkContext): RDD[Subject] = sc.parallelize(List(
-		subjects.head, subjects(1), subjects(2)
-	))
-	def stagingRDD(sc: SparkContext): RDD[Subject] = sc.parallelize(List(
-		subjects(3), subjects(4), subjects(5), subjects(6), subjects(7)
-	))
-//	def duplicateCandidatesRDD(sc: SparkContext): RDD[DuplicateCandidates] = sc.parallelize(List(
-//		DuplicateCandidates(
-//			subjects.head.id,
-//			List(
-//				(subjects(3), "source", 0.6),
-//				(subjects(4), "source", 0.6)
-//			)
-//		),
-//		DuplicateCandidates(
-//			subjects(1).id,
-//			List(
-//				(subjects(5), "source", 0.6),
-//				(subjects(6), "source", 0.6)
-//			)
-//		)
-//	))
-//	def inputRDD(sc: SparkContext): List[RDD[Any]] = {
-//		List(subjectRDD(sc), stagingRDD(sc)).toAnyRDD() ::: List(duplicateCandidatesRDD(sc)).toAnyRDD()
-//	}
-//	def outputRDD(sc: SparkContext): List[RDD[Any]] = {
-//		val relation = Map("type" -> "Duplicate", "confidence" -> "0.5")
-//		List(sc.parallelize(List(
-//			Subject(
-//				id = subjectIds.head,
-//				name = Some("Audi"),
-//				properties = Map("geo_city" -> List("München", "Berlin"), "geo_postal" -> List("10888")),
-//				relations = Map(subjectIds(3) -> relation, subjectIds(4) -> relation)
-//			),
-//			Subject(
-//				id = subjectIds(1),
-//				name = Some("Mercedes"),
-//				properties = Map("geo_postal" -> List("10666"), "geo_coords" -> List("1", "1", "1", "2", "3", "4")),
-//				relations = Map(subjectIds(5) -> relation, subjectIds(6) -> relation)
-//			),
-//			Subject(
-//				id = subjectIds(3),
-//				name = Some("Audi"),
-//				properties = Map("geo_city" -> List("Berlin"), "type" -> List("Auto")),
-//				relations = Map(subjectIds.head -> relation)
-//			),
-//			Subject(
-//				id = subjectIds(4),
-//				name = Some("Audi AG"),
-//				properties = Map("geo_postal" -> List("10888")),
-//				relations = Map(subjectIds.head -> relation)
-//			),
-//			Subject(
-//				id = subjectIds(5),
-//				name = Some("Mercedes Benz"),
-//				properties = Map("geo_coords" -> List("1", "1")),
-//				relations = Map(subjectIds(1) -> relation)
-//			),
-//			Subject(
-//				id = subjectIds(6),
-//				name = Some("Mercedes B."),
-//				properties = Map("geo_coords" -> List("1", "2", "3", "4")),
-//				relations = Map(subjectIds(1) -> relation)
-//			),
-//			subjects.last
-//		))).toAnyRDD()
-//	}
-	// scalastyle:on line.size.limit
+
+	def version(source: String, value: String*): Version = {
+		Version(program = "MergeTest", datasources = List(source).filter(_.nonEmpty), value = value.toList)
+	}
+
+	def master(): Subject = Subject(masterId)
+
+	def masterSM(sub: Subject): SubjectManager = new SubjectManager(sub, version(""))
+
+	def masterRelations(): Map[UUID, Map[String, String]] = {
+		subjectIds.zipWithIndex.map { case (id, index) =>
+			(id, Map("master" -> s"0.$index"))
+		}.toMap
+	}
+
+	def mergedName(): Option[String] = Option("Name Human")
+	def mergedCategory(): Option[String] = Option("Category 1")
+	def mergedAliases(): List[String] = {
+		List(
+			"Name 1", "Name 9", "Name 2", "Name 5", "Name 6",
+			"Alias 1", "Alias 2", "Alias Human", "Alias 6", "Alias 9"
+		)
+	}
+
+	def mergedProperties(): Map[String, List[String]] = {
+		Map(
+			"gen_urls" -> List("val 3"),
+			"geo_city" -> List("val 1", "val 2")
+		)
+	}
+
+	def mergedRelations(): Map[UUID, Map[String, String]] = {
+		Map(
+			subjectIds(1) -> Map("type 1" -> "score"),
+			subjectIds(2) -> Map("type 2" -> "score 2"),
+			subjectIds(3) -> Map("type 3" -> "score 3", "type 4" -> "score 4")
+		)
+	}
+
+	def mergedRelationsWithMaster(): Map[UUID, Map[String, String]] = {
+		Map(
+			subjectIds.head -> Map("master" -> "0.0"),
+			subjectIds(1) -> Map("type 1" -> "score", "master" -> "0.1"),
+			subjectIds(2) -> Map("type 2" -> "score 2", "master" -> "0.2"),
+			subjectIds(3) -> Map("type 3" -> "score 3", "type 4" -> "score 4", "master" -> "0.3"),
+			subjectIds(4) -> Map("master" -> "0.4"),
+			subjectIds(5) -> Map("master" -> "0.5"),
+			subjectIds(6) -> Map("master" -> "0.6"),
+			subjectIds(7) -> Map("master" -> "0.7"),
+			subjectIds(8) -> Map("master" -> "0.8"),
+			subjectIds(9) -> Map("master" -> "0.9")
+		)
+	}
+
+	def mergedMaster(): Subject = {
+		Subject(
+			id = masterId,
+			name = mergedName(),
+			category = mergedCategory(),
+			aliases = mergedAliases(),
+			properties = mergedProperties(),
+			relations = mergedRelationsWithMaster()
+		)
+	}
+
+	def duplicates(): List[Subject] = {
+		List(
+			Subject(
+				id = subjectIds.head,
+				master = Option(masterId),
+				name = Option("Name 1"),
+				name_history = List(version("implisense", "Name 1")),
+				category = Option("Category 1"),
+				category_history = List(version("implisense", "Category 1")),
+				aliases = List("Alias 1", "Alias 2"),
+				aliases_history = List(version("implisense", "Alias 1", "Alias 2")),
+				relations = Map(masterId -> Map("slave" -> "0.0"), subjectIds(1) -> Map("type 1" -> "score")),
+				relations_history = Map(
+					subjectIds(1) -> Map("type 1" -> List(version("implisense", "score"))),
+					masterId -> Map("slave" -> List(version("merging", "0.0")))),
+				properties = Map("gen_urls" -> List("val 1", "val 2")),
+				properties_history = Map("gen_urls" -> List(version("implisense", "val 1", "val 2")))
+			),
+			Subject(
+				id = subjectIds(1),
+				master = Option(masterId),
+				name = Option("Name 2"),
+				name_history = List(version("wikidata", "Name 2")),
+				category = Option("Category 2"),
+				category_history = List(version("dbpedia", "Category 2")),
+				relations = Map(
+					subjectIds(2) -> Map("type 2" -> "score 2"),
+					masterId -> Map("slave" -> "0.1")),
+				relations_history = Map(
+					subjectIds(2) -> Map(
+						"type 2" -> List(version("wikidata", "score 2")),
+						"type 1" -> List(version("implisense", "score 2"), version("human"))),
+					masterId -> Map("slave" -> List(version("merging", "0.1")))),
+				properties = Map("geo_city" -> List("val 1", "val 2")),
+				properties_history = Map("geo_city" -> List(version("wikidata", "val 1", "val 2")))
+			),
+			Subject(
+				id = subjectIds(2),
+				master = Option(masterId),
+				name = Option("Name Human"),
+				name_history = List(version("human", "Name Human")),
+				category = Option("Category 3"),
+				category_history = List(version("error", "Category 3")),
+				aliases = List("Alias Human"),
+				aliases_history = List(version("human", "Alias Human")),
+				relations = Map(
+					subjectIds(3) -> Map("type 3" -> "score 3"),
+					masterId -> Map("slave" -> "0.2")),
+				relations_history = Map(
+					subjectIds(3) -> Map("type 3" -> List(version("dbpedia", "score 3"))),
+					masterId -> Map("slave" -> List(version("merging", "0.2")))),
+				properties = Map("gen_urls" -> List("val 3")),
+				properties_history = Map("gen_urls" -> List(version("human", "val 3")))
+			),
+			Subject(
+				id = subjectIds(3),
+				master = Option(masterId),
+				category = None,
+				category_history = List(version("implisense", "Category 4"), version("human")),
+				aliases = List("Alias 6"),
+				aliases_history = List(version("dbpedia", "Alias 6")),
+				relations = Map(
+					subjectIds(3) -> Map("type 3" -> "score 33"),
+					masterId -> Map("slave" -> "0.3")),
+				relations_history = Map(
+					subjectIds(3) -> Map("type 3" -> List(version("wikidata", "score 33"))),
+					masterId -> Map("slave" -> List(version("merging", "0.3")))),
+				properties = Map("geo_city" -> List("val 1")),
+				properties_history = Map("geo_city" -> List(version("wikidata", "val 1")))
+			),
+			Subject(
+				id = subjectIds(4),
+				master = Option(masterId),
+				name = Option("Name 5"),
+				name_history = List(version("wikidata", "Name 5")),
+				relations = Map(
+					subjectIds(3) -> Map("type 4" -> "score 4"),
+					masterId -> Map("slave" -> "0.4")),
+				relations_history = Map(
+					subjectIds(3) -> Map("type 4" -> List(version("wikidata", "score 4"))),
+					masterId -> Map("slave" -> List(version("merging", "0.4")))),
+				properties = Map("geo_county" -> List("val 5")),
+				properties_history = Map("geo_county" -> List(version("error", "val 5")))
+			),
+			Subject(
+				id = subjectIds(5),
+				master = Option(masterId),
+				name = Option("Name 6"),
+				name_history = List(version("wikidata", "Name 6")),
+				relations = Map(masterId -> Map("slave" -> "0.5")),
+				relations_history = Map(masterId -> Map("slave" -> List(version("merging", "0.5")))),
+				properties = Map(),
+				properties_history = Map("gen_urls" -> List(version("implisense", "val 3"), version("human")))
+			),
+			Subject(
+				id = subjectIds(6),
+				master = Option(masterId),
+				name = Option("Name 7"),
+				name_history = List(version("syntax error", "Name 7")),
+				relations = Map(masterId -> Map("slave" -> "0.6")),
+				properties = Map("prop 1" -> List("val x")),
+				properties_history = Map("prop 1" -> List(version("wikidata", "val x")))
+			),
+			Subject(
+				id = subjectIds(7),
+				master = Option(masterId),
+				relations = Map(masterId -> Map("slave" -> "0.7"))
+			),
+			Subject(
+				id = subjectIds(8),
+				master = Option(masterId),
+				name = None,
+				name_history = List(version("implisense", "Name 8"), version("human")),
+				relations = Map(masterId -> Map("slave" -> "0.8"))
+			),
+			Subject(
+				id = subjectIds(9),
+				master = Option(masterId),
+				name = Option("Name 9"),
+				name_history = List(version("implisense", "Name 9")),
+				aliases = List("Alias 9"),
+				aliases_history = List(version("implisense", "Alias 9")),
+				relations = Map(masterId -> Map("slave" -> "0.9"))
+			)
+		)
+	}
+
+	def duplicatesWithoutMaster(): List[Subject] = {
+		List(
+			Subject(
+				id = subjectIds.head,
+				name = Option("Name 1"),
+				name_history = List(version("implisense", "Name 1")),
+				category = Option("Category 1"),
+				category_history = List(version("implisense", "Category 1")),
+				aliases = List("Alias 1", "Alias 2"),
+				aliases_history = List(version("implisense", "Alias 1", "Alias 2")),
+				relations = Map(subjectIds(1) -> Map("type 1" -> "score")),
+				relations_history = Map(subjectIds(1) -> Map("type 1" -> List(version("implisense", "score")))),
+				properties = Map("gen_urls" -> List("val 1", "val 2")),
+				properties_history = Map("gen_urls" -> List(version("implisense", "val 1", "val 2")))
+			),
+			Subject(
+				id = subjectIds(1),
+				name = Option("Name 2"),
+				name_history = List(version("wikidata", "Name 2")),
+				category = Option("Category 2"),
+				category_history = List(version("dbpedia", "Category 2")),
+				relations = Map(
+					subjectIds(2) -> Map("type 2" -> "score 2")),
+				relations_history = Map(subjectIds(2) -> Map(
+						"type 2" -> List(version("wikidata", "score 2")),
+						"type 1" -> List(version("implisense", "score 2"), version("human")))),
+				properties = Map("geo_city" -> List("val 1", "val 2")),
+				properties_history = Map("geo_city" -> List(version("wikidata", "val 1", "val 2")))
+			),
+			Subject(
+				id = subjectIds(2),
+				name = Option("Name Human"),
+				name_history = List(version("human", "Name Human")),
+				category = Option("Category 3"),
+				category_history = List(version("error", "Category 3")),
+				aliases = List("Alias Human"),
+				aliases_history = List(version("human", "Alias Human")),
+				relations = Map(subjectIds(3) -> Map("type 3" -> "score 3")),
+				relations_history = Map(subjectIds(3) -> Map("type 3" -> List(version("dbpedia", "score 3")))),
+				properties = Map("gen_urls" -> List("val 3")),
+				properties_history = Map("gen_urls" -> List(version("human", "val 3")))
+			),
+			Subject(
+				id = subjectIds(3),
+				category = None,
+				category_history = List(version("implisense", "Category 4"), version("human")),
+				aliases = List("Alias 6"),
+				aliases_history = List(version("dbpedia", "Alias 6")),
+				relations = Map(subjectIds(3) -> Map("type 3" -> "score 33")),
+				relations_history = Map(subjectIds(3) -> Map("type 3" -> List(version("wikidata", "score 33")))),
+				properties = Map("geo_city" -> List("val 1")),
+				properties_history = Map("geo_city" -> List(version("wikidata", "val 1")))
+			),
+			Subject(
+				id = subjectIds(4),
+				name = Option("Name 5"),
+				name_history = List(version("wikidata", "Name 5")),
+				relations = Map(subjectIds(3) -> Map("type 4" -> "score 4")),
+				relations_history = Map(subjectIds(3) -> Map("type 4" -> List(version("wikidata", "score 4")))),
+				properties = Map("geo_county" -> List("val 5")),
+				properties_history = Map("geo_county" -> List(version("error", "val 5")))
+			),
+			Subject(
+				id = subjectIds(5),
+				name = Option("Name 6"),
+				name_history = List(version("wikidata", "Name 6")),
+				properties = Map(),
+				properties_history = Map("gen_urls" -> List(version("implisense", "val 3"), version("human")))
+			),
+			Subject(
+				id = subjectIds(6),
+				name = Option("Name 7"),
+				name_history = List(version("syntax error", "Name 7")),
+				properties = Map("prop 1" -> List("val x")),
+				properties_history = Map("prop 1" -> List(version("wikidata", "val x")))
+			),
+			Subject(
+				id = subjectIds(7)
+			),
+			Subject(
+				id = subjectIds(8),
+				name = None,
+				name_history = List(version("implisense", "Name 8"), version("human"))
+			),
+			Subject(
+				id = subjectIds(9),
+				name = Option("Name 9"),
+				name_history = List(version("implisense", "Name 9")),
+				aliases = List("Alias 9"),
+				aliases_history = List(version("implisense", "Alias 9"))
+			)
+		)
+	}
+
+	def propertyDuplicates(): List[Subject] = {
+		List(
+			Subject(
+				id = subjectIds.head,
+				properties = Map("gen_urls" -> List("val 1", "val 2")),
+				properties_history = Map("gen_urls" -> List(version("implisense", "val 1", "val 2")))
+			),
+			Subject(
+				id = subjectIds(1),
+				properties = Map("geo_city" -> List("val 1", "val 2")),
+				properties_history = Map("geo_city" -> List(version("wikidata", "val 1", "val 2")))
+			),
+			Subject(
+				id = subjectIds(2),
+				properties = Map("gen_urls" -> List("val 3")),
+				properties_history = Map("gen_urls" -> List(version("human", "val 3")))
+			),
+			Subject(
+				id = subjectIds(3),
+				properties = Map("geo_city" -> List("val 1")),
+				properties_history = Map("geo_city" -> List(version("wikidata", "val 1")))
+			),
+			Subject(
+				id = subjectIds(4),
+				properties = Map("geo_county" -> List("val 5")),
+				properties_history = Map("geo_county" -> List(version("error", "val 5")))
+			),
+			Subject(
+				id = subjectIds(5),
+				properties = Map(),
+				properties_history = Map("gen_urls" -> List(version("implisense", "val 3"), version("human")))
+			),
+			Subject(
+				id = subjectIds(6),
+				properties = Map("prop 1" -> List("val x")),
+				properties_history = Map("prop 1" -> List(version("wikidata", "val x")))
+			),
+			Subject(
+				id = subjectIds(7),
+				properties = Map(),
+				properties_history = Map()
+			),
+			Subject(
+				id = subjectIds(8),
+				properties = Map(),
+				properties_history = Map()
+			),
+			Subject(
+				id = subjectIds(9),
+				properties = Map(),
+				properties_history = Map()
+			)
+		)
+	}
+
+	def relationDuplicates(): List[Subject] = {
+		List(
+			Subject(
+				id = subjectIds.head,
+				relations = Map(subjectIds(1) -> Map("type 1" -> "score")),
+				relations_history = Map(subjectIds(1) -> Map("type 1" -> List(version("implisense", "score"))))
+			),
+			Subject(
+				id = subjectIds(1),
+				relations = Map(subjectIds(2) -> Map("type 2" -> "score 2")),
+				relations_history = Map(subjectIds(2) -> Map(
+					"type 2" -> List(version("wikidata", "score 2")),
+					"type 1" -> List(version("implisense", "score 2"), version("human"))
+				))
+			),
+			Subject(
+				id = subjectIds(2),
+				relations = Map(subjectIds(3) -> Map("type 3" -> "score 3")),
+				relations_history = Map(subjectIds(3) -> Map("type 3" -> List(version("dbpedia", "score 3"))))
+			),
+			Subject(
+				id = subjectIds(3),
+				relations = Map(subjectIds(3) -> Map("type 3" -> "score 33")),
+				relations_history = Map(subjectIds(3) -> Map("type 3" -> List(version("wikidata", "score 33"))))
+			),
+			Subject(
+				id = subjectIds(4),
+				relations = Map(subjectIds(3) -> Map("type 4" -> "score 4")),
+				relations_history = Map(subjectIds(3) -> Map("type 4" -> List(version("wikidata", "score 4"))))
+			),
+			Subject(
+				id = subjectIds(5),
+				relations = Map(masterId -> Map("slave" -> "0.5")),
+				relations_history = Map(masterId -> Map("slave" -> List(version("merging", "0.5"))))
+			),
+			Subject(
+				id = subjectIds(6),
+				relations = Map(),
+				relations_history = Map()
+			),
+			Subject(
+				id = subjectIds(7),
+				relations = Map(),
+				relations_history = Map()
+			),
+			Subject(
+				id = subjectIds(8),
+				relations = Map(),
+				relations_history = Map()
+			),
+			Subject(
+				id = subjectIds(9),
+				relations = Map(),
+				relations_history = Map()
+			)
+		)
+	}
+
+	def simpleAttributeDuplicates(): List[Subject] = {
+		List(
+			Subject(
+				id = subjectIds.head,
+				master = Option(masterId),
+				name = Option("Name 1"),
+				name_history = List(version("implisense", "Name 1")),
+				category = Option("Category 1"),
+				category_history = List(version("implisense", "Category 1")),
+				aliases = List("Alias 1", "Alias 2"),
+				aliases_history = List(version("implisense", "Alias 1", "Alias 2")),
+				relations = Map(masterId -> Map("slave" -> "0.0"))
+			),
+			Subject(
+				id = subjectIds(1),
+				master = Option(masterId),
+				name = Option("Name 2"),
+				name_history = List(version("wikidata", "Name 2")),
+				category = Option("Category 2"),
+				category_history = List(version("dbpedia", "Category 2")),
+				relations = Map(masterId -> Map("slave" -> "0.1"))
+			),
+			Subject(
+				id = subjectIds(2),
+				master = Option(masterId),
+				name = Option("Name Human"),
+				name_history = List(version("human", "Name Human")),
+				category = Option("Category 3"),
+				category_history = List(version("error", "Category 3")),
+				aliases = List("Alias Human"),
+				aliases_history = List(version("human", "Alias Human")),
+				relations = Map(masterId -> Map("slave" -> "0.2"))
+			),
+			Subject(
+				id = subjectIds(3),
+				master = Option(masterId),
+				category = None,
+				category_history = List(version("implisense", "Category 4"), version("human")),
+				aliases = List("Alias 6"),
+				aliases_history = List(version("dbpedia", "Alias 6")),
+				relations = Map(masterId -> Map("slave" -> "0.3"))
+			),
+			Subject(
+				id = subjectIds(4),
+				master = Option(masterId),
+				name = Option("Name 5"),
+				name_history = List(version("wikidata", "Name 5")),
+				relations = Map(masterId -> Map("slave" -> "0.4"))
+			),
+			Subject(
+				id = subjectIds(5),
+				master = Option(masterId),
+				name = Option("Name 6"),
+				name_history = List(version("wikidata", "Name 6")),
+				relations = Map(masterId -> Map("slave" -> "0.5"))
+			),
+			Subject(
+				id = subjectIds(6),
+				master = Option(masterId),
+				name = Option("Name 7"),
+				name_history = List(version("syntax error", "Name 7")),
+				relations = Map(masterId -> Map("slave" -> "0.6"))
+			),
+			Subject(
+				id = subjectIds(7),
+				master = Option(masterId),
+				relations = Map(masterId -> Map("slave" -> "0.7"))
+			),
+			Subject(
+				id = subjectIds(8),
+				master = Option(masterId),
+				name = None,
+				name_history = List(version("implisense", "Name 8"), version("human")),
+				relations = Map(masterId -> Map("slave" -> "0.8"))
+			),
+			Subject(
+				id = subjectIds(9),
+				master = Option(masterId),
+				name = Option("Name 9"),
+				name_history = List(version("implisense", "Name 9")),
+				aliases = List("Alias 9"),
+				aliases_history = List(version("implisense", "Alias 9")),
+				relations = Map(masterId -> Map("slave" -> "0.9"))
+			)
+		)
+	}
+
+	def simpleAttributeDuplicatesWithoutMaster(): List[(Subject, Double)] = {
+		List(
+			(Subject(
+				id = subjectIds.head,
+				name = Option("Name 1"),
+				name_history = List(version("implisense", "Name 1")),
+				category = Option("Category 1"),
+				category_history = List(version("implisense", "Category 1")),
+				aliases = List("Alias 1", "Alias 2"),
+				aliases_history = List(version("implisense", "Alias 1", "Alias 2"))
+			), 0.0),
+			(Subject(
+				id = subjectIds(1),
+				name = Option("Name 2"),
+				name_history = List(version("wikidata", "Name 2")),
+				category = Option("Category 2"),
+				category_history = List(version("dbpedia", "Category 2"))
+			), 0.1),
+			(Subject(
+				id = subjectIds(2),
+				name = Option("Name Human"),
+				name_history = List(version("human", "Name Human")),
+				category = Option("Category 3"),
+				category_history = List(version("error", "Category 3")),
+				aliases = List("Alias Human"),
+				aliases_history = List(version("human", "Alias Human"))
+			), 0.2),
+			(Subject(
+				id = subjectIds(3),
+				category = None,
+				category_history = List(version("implisense", "Category 4"), version("human")),
+				aliases = List("Alias 6"),
+				aliases_history = List(version("dbpedia", "Alias 6"))
+			), 0.3),
+			(Subject(
+				id = subjectIds(4),
+				name = Option("Name 5"),
+				name_history = List(version("wikidata", "Name 5"))
+			), 0.4),
+			(Subject(
+				id = subjectIds(5),
+				name = Option("Name 6"),
+				name_history = List(version("wikidata", "Name 6"))
+			), 0.5),
+			(Subject(
+				id = subjectIds(6),
+				name = Option("Name 7"),
+				name_history = List(version("syntax error", "Name 7"))
+			), 0.6),
+			(Subject(
+				id = subjectIds(7)
+			), 0.7),
+			(Subject(
+				id = subjectIds(8),
+				name = None,
+				name_history = List(version("implisense", "Name 8"), version("human"))
+			), 0.8),
+			(Subject(
+				id = subjectIds(9),
+				name = Option("Name 9"),
+				name_history = List(version("implisense", "Name 9")),
+				aliases = List("Alias 9"),
+				aliases_history = List(version("implisense", "Alias 9"))
+			), 0.9)
+		)
+	}
+
+	def duplicateCandidates(): List[DuplicateCandidates] = {
+		List(
+			DuplicateCandidates(
+				masterId,
+				subjectIds.zipWithIndex.map { case (id, index) => (id, "test", s"0.$index".toDouble)}
+			)
+		)
+	}
 }
+// scalastyle:on
