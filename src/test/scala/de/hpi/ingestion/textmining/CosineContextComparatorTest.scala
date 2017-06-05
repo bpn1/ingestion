@@ -3,7 +3,7 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.{Alias, Bag, FeatureEntry, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.models.{FeatureEntry, ParsedWikipediaEntry}
 import org.apache.spark.rdd.RDD
 
 class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with Matchers {
@@ -404,30 +404,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.toSet
 		val expectedLinks = TestData.transformedLinkContexts()
 		transformedLinks shouldEqual expectedLinks
-	}
-
-	"Rank" should "be computed correctly" in {
-		val values = TestData.valuesList()
-		val ranks = CosineContextComparator.computeRanks(values)
-		ranks shouldEqual TestData.ranksList()
-	}
-
-	it should "be computed correctly for a longer example" in {
-		val values = TestData.longValuesList()
-		val ranks = CosineContextComparator.computeRanks(values)
-		ranks shouldEqual TestData.longRanksList()
-	}
-
-	"Difference to highest value (delta top)" should "be computed correctly" in {
-		val values = TestData.valuesList()
-		val deltaTops = CosineContextComparator.computeDeltaTopValues(values)
-		deltaTops shouldEqual TestData.deltaTopValuesList()
-	}
-
-	"Difference to next value (delta successor)" should "be computed correctly" in {
-		val values = TestData.valuesList()
-		val deltaTops = CosineContextComparator.computeDeltaSuccessorValues(values)
-		deltaTops shouldEqual TestData.deltaSuccessorValuesList()
 	}
 
 	"Input split" should "split input into 10 parts" in {

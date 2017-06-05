@@ -1,15 +1,13 @@
 package de.hpi.ingestion.textmining
 
-import java.io.{BufferedReader, InputStreamReader}
-
 import de.hpi.ingestion.textmining.models._
-import org.apache.spark.SparkContext
-import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SplitSparkJob
-import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
-
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import com.datastax.spark.connector._
 import scala.collection.mutable
+import java.io.{BufferedReader, InputStreamReader}
 
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
@@ -20,8 +18,7 @@ object CosineContextComparator extends SplitSparkJob {
 
 	// $COVERAGE-OFF$
 	/**
-	  * Loads Parsed Wikipedia entries with their term frequencies and loads the document frequencies from the
-	  * Cassandra.
+	  * Loads Parsed Wikipedia entries with their term frequencies and the document frequencies from the Cassandra.
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
@@ -158,106 +155,6 @@ object CosineContextComparator extends SplitSparkJob {
 			}.reduceByKey(_ ++ _)
 	}
 
-	/**
-	  * Computes the rank for each given value.
-	  *
-	  * @param values values
-	  * @return ranks for the values (starting with 1 for highest value)
-	  */
-	def computeRanks(values: List[Double]): List[Int] = {
-		var rank = 1
-		val ranksMap = values
-			.countElements()
-			.toSeq
-			.sortBy(-_._1)
-			.map { case (value, count) =>
-				val rankedValue = (value, rank)
-				rank += count
-				rankedValue
-			}
-			.toMap
-
-		values.map(ranksMap.getOrElse(_, -1))
-	}
-
-	/**
-	  * Computes the (absolute) difference to the highest value for each given value.
-	  *
-	  * @param values values
-	  * @return differences to the highest value
-	  */
-	def computeDeltaTopValues(values: List[Double]): List[Double] = {
-		val maxValue = values.max
-		values.map(value => maxValue - value)
-	}
-
-	/**
-	  * Computes the (absolute) difference to the successive value for each given value.
-	  *
-	  * @param values values
-	  * @return differences to the successive value
-	  */
-	def computeDeltaSuccessorValues(values: List[Double]): List[Double] = {
-		val sortedValues = values
-			.distinct
-			.sortBy(-_)
-		val deltaSuccessorMap = mutable.Map[Double, Double]()
-		for(i <- 0 until sortedValues.length - 1) {
-			val deltaSuccessor = sortedValues(i) - sortedValues(i + 1)
-			deltaSuccessorMap(sortedValues(i)) = deltaSuccessor
-		}
-		deltaSuccessorMap(sortedValues.last) = Double.PositiveInfinity
-		values.map(deltaSuccessorMap.getOrElse(_, -1.0))
-	}
-
-	/**
-	  * Enriches original feature values with their respective second order feature values.
-	  *
-	  * @param values original feature values
-	  * @return original feature values and their second order feature values
-	  */
-	def generateMultiFeatures(values: List[Double]): List[MultiFeature] = {
-		val ranks = computeRanks(values)
-		val deltaTopValues = computeDeltaTopValues(values)
-		val deltaSuccessorValues = computeDeltaSuccessorValues(values)
-		values
-			.zip(ranks)
-			.zip(deltaTopValues)
-			.zip(deltaSuccessorValues)
-			.map { case (((value, rank), deltaTop), deltaSuccessor) =>
-				MultiFeature(value, rank, deltaTop, deltaSuccessor)
-			}
-	}
-
-	/**
-	  * Enriches page scoes and cosine similarities of given FeatureEntries with their respective second order feature
-	  * values.
-	  *
-	  * @param featureEntries FeatureEntries with precalculated page scores and cosine similarities
-	  * @return FeatureEntries with cosine similarities and their second order feature values
-	  */
-	def addSecondOrderFeatures(featureEntries: RDD[(Link, FeatureEntry)]): RDD[FeatureEntry] = {
-		featureEntries
-			.map { case (link, featureEntry) => ((link.article, link.offset), List(featureEntry)) }
-			.reduceByKey(_ ++ _)
-			.flatMap { case (linkPosition, entries) =>
-				val pageScores = entries.map(_.entity_score.value)
-				val cosineSimilarities = entries.map(_.cosine_sim.value)
-				entries
-					.zip(generateMultiFeatures(pageScores))
-					.zip(generateMultiFeatures(cosineSimilarities))
-					.map { case ((featureEntry, extendedPageScore), extendedCosineSim) =>
-						featureEntry.entity_score.rank = extendedPageScore.rank
-						featureEntry.entity_score.delta_top = extendedPageScore.delta_top
-						featureEntry.entity_score.delta_successor = extendedPageScore.delta_successor
-						featureEntry.cosine_sim.rank = extendedCosineSim.rank
-						featureEntry.cosine_sim.delta_top = extendedCosineSim.delta_top
-						featureEntry.cosine_sim.delta_successor = extendedCosineSim.delta_successor
-						featureEntry
-					}
-			}
-	}
-
 	/** Adds the cosine similarity feature value to the link and page score feature values.
 	  *
 	  * @param linkContexts    links with their contexts
@@ -270,7 +167,7 @@ object CosineContextComparator extends SplitSparkJob {
 		aliasPageScores: Map[String, List[(String, Double, Double)]],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
-		val joinableLinks = linkContexts
+		linkContexts
 			.flatMap { case (link, idfMap) =>
 				aliasPageScores.getOrElse(link.alias, Nil)
 					.map { case (page, linkScore, pageScore) =>
@@ -283,17 +180,14 @@ object CosineContextComparator extends SplitSparkJob {
 				joinedLinks.map { case (link, linkContext, page, linkScore, pageScore) =>
 					(page, List(ProtoFeatureEntry(link, linkContext, linkScore, MultiFeature(pageScore))))
 				}
-			}.reduceByKey(_ ++ _)
-
-		val featureEntriesWithLinks = joinableLinks
-				.join(articleContexts)
-				.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
-					protoFeatureEntries.map { protoFeatureEntry =>
-						val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
-						(protoFeatureEntry.link, protoFeatureEntry.toFeatureEntry(page, MultiFeature(cosineSim)))
-					}
+			}
+			.join(articleContexts)
+			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
+				protoFeatureEntries.map { protoFeatureEntry =>
+					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
+					protoFeatureEntry.toFeatureEntry(page, MultiFeature(cosineSim))
 				}
-		addSecondOrderFeatures(featureEntriesWithLinks)
+			}
 	}
 
 	/**
@@ -320,7 +214,7 @@ object CosineContextComparator extends SplitSparkJob {
 			.map(key => vectorA(key) * vectorB(key))
 			.sum
 		val lengthProduct = lengthA * lengthB
-		if (lengthProduct == 0) -1.0 else dotProduct / lengthProduct // Note: This value may become -1.0 if
+		if(lengthProduct == 0) -1.0 else dotProduct / lengthProduct // Note: This value may become -1.0 if
 		// DocumentFrequencyCounter.leastSignificantDocumentFrequency > number of documents
 	}
 
@@ -373,7 +267,7 @@ object CosineContextComparator extends SplitSparkJob {
 	}
 
 	/**
-	  * Calculates the Cosine Similarities for every alias and creates feature entries containing the other two
+	  * Calculates cosine similarities for every alias and creates feature entries containing the link and page scores
 	  * features as well.
 	  *
 	  * @param input List of RDDs containing the input data
