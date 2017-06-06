@@ -518,6 +518,16 @@ object TestData {
 		List("keyspaceSubjectTable", "subjectTable", "keyspaceStagingTable", "stagingTable", "keyspaceStatsTable", "statsTable")
 	}
 
+
+	def distinctDuplicateCandidates(subjects: List[Subject], sc: SparkContext): RDD[(Subject, Subject, Double)] = {
+		sc.parallelize(List(
+			(subjects.head, subjects(1), 0.0),
+			(subjects(2), subjects(3), 0.0),
+			(subjects.head, subjects(3), 0.0),
+			(subjects(2), subjects(1), 0.0)
+		))
+	}
+
 	def featureEntries: List[FeatureEntry] = {
 		List(
 			FeatureEntry(null, null, null, Map("a" -> List(0.2, 0.4, 0.1)), false),
