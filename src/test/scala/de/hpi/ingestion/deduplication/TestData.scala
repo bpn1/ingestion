@@ -215,7 +215,7 @@ object TestData {
 				subjects(1).id,
 				subjects(1).name,
 				stagingTable,
-				List(Candidate(stagings(1).id, stagings(1).name, 0.9446913580246914))
+				List(Candidate(stagings(1).id, stagings(1).name, 1.0))
 			)
 		)
 	}
