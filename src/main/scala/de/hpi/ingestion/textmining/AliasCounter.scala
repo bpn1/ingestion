@@ -80,7 +80,8 @@ object AliasCounter extends SparkJob {
 			alias1.alias,
 			alias1.pages ++ alias2.pages,
 			Option(alias1.linkoccurrences.get + alias2.linkoccurrences.get),
-			Option(alias1.totaloccurrences.get + alias2.totaloccurrences.get))
+			Option(alias1.totaloccurrences.get + alias2.totaloccurrences.get)
+		)
 	}
 
 	/**

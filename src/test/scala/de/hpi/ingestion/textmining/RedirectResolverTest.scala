@@ -6,18 +6,18 @@ import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd.RDD
 
-class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
+class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matchers {
 	"All redirects in an entry" should "be resolved" in {
-		val dict = TestData.testRedirectDict()
-		val links = TestData.testLinksWithRedirects()
+		val dict = TestData.smallRedirectMap()
+		val links = TestData.linksWithRedirectsSet()
 		val entry = ParsedWikipediaEntry("Test Entry 1", textlinks = links.toList)
 		val resolvedLinks = RedirectResolver.resolveRedirects(entry, dict).textlinks.toSet
-		val expectedLinks = TestData.testLinksWithResolvedRedirects()
+		val expectedLinks = TestData.linksWithResolvedRedirectsSet()
 		resolvedLinks shouldBe expectedLinks
 	}
 
 	"Transitive redirects" should "be resolved" in {
-		val redirectMap = TestData.redirectMap()
+		val redirectMap = TestData.transitiveRedirectMap()
 		val cleanedMap = RedirectResolver.resolveTransitiveRedirects(redirectMap)
 		val expectedMap = TestData.cleanedRedirectMap()
 		cleanedMap shouldEqual expectedMap
@@ -34,40 +34,46 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 	"Redirect dictionary" should "be built" in {
 		val redirectEntries = sc.parallelize(TestData.parsedRedirectEntries().toList)
 		val redirectDict = RedirectResolver.buildRedirectDict(redirectEntries)
-		val expectedDict = TestData.redirectDict()
+		val expectedDict = TestData.redirectMap()
 		redirectDict shouldEqual expectedDict
 	}
 
 	"Redirect resolver" should "resolve all redirects with self found redirects" in {
 		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
 		val emptyRedirectsMap = sc.parallelize(Map[String, String]().toList)
+
 		val output = RedirectResolver.run(
 			List(unresolvedEntries).toAnyRDD() ++ List(emptyRedirectsMap).toAnyRDD(),
 			sc
 		)
 		val resolvedEntries = output.head
 			.asInstanceOf[RDD[ParsedWikipediaEntry]]
-		val redirects = output(1).asInstanceOf[RDD[Redirect]]
+			.collect
+			.toList
+		val redirects = output(1)
+			.asInstanceOf[RDD[Redirect]]
+			.collect
+			.toList
 
-		val expectedEntries = sc.parallelize(TestData.parsedEntriesWithResolvedRedirects().toList)
-		val expectedRedirects = sc.parallelize(
-			TestData.redirectDict().map(Redirect.tupled).toList
-		)
-		assertRDDEquals(resolvedEntries, expectedEntries)
-		assertRDDEquals(redirects, expectedRedirects)
+		val expectedEntries = TestData.parsedEntriesWithResolvedRedirectsSet().toList
+		val expectedRedirects = TestData.redirectMap().map(Redirect.tupled).toList
+		resolvedEntries shouldEqual expectedEntries
+		redirects shouldEqual expectedRedirects
 	}
 
 	"Redirect resolver" should "resolve all redirects with given redirects" in {
 		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
-		val redirectsMap = sc.parallelize(TestData.redirectDict().toList.map(Redirect.tupled))
+		val redirectsMap = sc.parallelize(TestData.redirectMap().toList.map(Redirect.tupled))
 		val resolvedEntries = RedirectResolver.run(
 			List(unresolvedEntries).toAnyRDD() ++ List(redirectsMap).toAnyRDD(),
 			sc
-		)
-			.fromAnyRDD[ParsedWikipediaEntry]()
+		).fromAnyRDD[ParsedWikipediaEntry]()
 			.head
-		val expectedEntries = sc.parallelize(TestData.parsedEntriesWithResolvedRedirects().toList)
-		assertRDDEquals(resolvedEntries, expectedEntries)
+			.collect
+			.toSet
+
+		val expectedEntries = TestData.parsedEntriesWithResolvedRedirectsSet()
+		resolvedEntries shouldEqual expectedEntries
 	}
 
 }

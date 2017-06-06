@@ -6,8 +6,8 @@ import org.scalatest.{FlatSpec, Matchers}
 class AccessibleGermanStemmerTest extends FlatSpec with Matchers {
 	"German stemmer" should "stem German words" in {
 		val stemmer = new AccessibleGermanStemmer
-		val stemmedWords = TestData.unstemmedGermanWordsTestList()
+		val stemmedWords = TestData.unstemmedGermanWordsList()
 		    .map(stemmer.stem)
-		stemmedWords shouldEqual TestData.stemmedGermanWordsTestList
+		stemmedWords shouldEqual TestData.stemmedGermanWordsList
 	}
 }
