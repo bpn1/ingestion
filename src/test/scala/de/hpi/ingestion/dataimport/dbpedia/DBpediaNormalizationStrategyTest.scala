@@ -2,39 +2,11 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import org.scalatest.{FlatSpec, Matchers}
 
-class DBpediaNormalizationStrategyUnitTest extends FlatSpec with Matchers {
-	"apply" should "decide, which strategy should be used regarding the input attribute" in {
-		val inputs = List(
-			TestData.unnormalizedEmployees,
-			TestData.unnormalizedCoordinates,
-			TestData.unnormalizedCountries,
-			TestData.unnormalizedCities,
-			TestData.unnormalizedSectors,
-			List("default")
-		)
-		val attributes = List("gen_employees", "geo_coords", "geo_country", "geo_city", "gen_sectors", "default")
-		val results = attributes.map(DBpediaNormalizationStrategy(_))
-		val strategies: List[(List[String] => List[String])] = List(
-			DBpediaNormalizationStrategy.normalizeEmployees,
-			DBpediaNormalizationStrategy.normalizeCoords,
-			DBpediaNormalizationStrategy.normalizeCountry,
-			DBpediaNormalizationStrategy.normalizeCity,
-			DBpediaNormalizationStrategy.normalizeSector,
-			DBpediaNormalizationStrategy.normalizeDefault
-		)
-		(results, strategies, inputs).zipped
-			.map { case (result, expected, input) =>
-				(result(input), expected(input))
-			}
-			.foreach { case (result, expected) =>
-				result shouldEqual expected
-			}
-	}
-
+class DBpediaNormalizationStrategyTest extends FlatSpec with Matchers {
 	"normalizeCoords" should "kick out redundant information or integers" in {
-		val coordinates = TestData.unnormalizedCoordinates
+		val coordinates = TestData.unnormalizedCoords
 		val result = DBpediaNormalizationStrategy.normalizeCoords(coordinates)
-		val expected = TestData.normalizedCoordinates
+		val expected = TestData.normalizedCoords
 		result shouldEqual expected
 	}
 
@@ -71,5 +43,19 @@ class DBpediaNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 		val result = DBpediaNormalizationStrategy.normalizeDefault(defaultValues)
 		val expected = TestData.normalizedDefaults
 		result shouldEqual expected
+	}
+
+	"apply" should "decide, which strategy should be used regarding the input attribute" in {
+		val inputs = TestData.applyInput
+		val attributes = TestData.applyAttributes
+		val results = attributes.map(DBpediaNormalizationStrategy.apply)
+		val strategies = TestData.applyStrategies
+		(results, strategies, inputs).zipped
+			.map { case (result, expected, input) =>
+				(result(input), expected(input))
+			}
+			.foreach { case (result, expected) =>
+				result shouldEqual expected
+			}
 	}
 }

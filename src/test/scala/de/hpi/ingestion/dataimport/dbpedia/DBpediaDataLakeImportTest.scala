@@ -48,7 +48,7 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		subject.properties("id_wikipedia") shouldEqual List("List von Autoren")
 		subject.properties("id_dbpedia") shouldEqual List("List von Autoren")
 		subject.properties("id_viaf") shouldEqual List("X123", "Y123")
-		subject.properties("geo_country") shouldEqual List("Koblenz")
+		subject.properties("geo_country") shouldEqual List("CH")
 		subject.properties("gen_employees") shouldEqual List("12", "13")
 		subject.properties shouldNot contain key "id_lccn"
 	}
