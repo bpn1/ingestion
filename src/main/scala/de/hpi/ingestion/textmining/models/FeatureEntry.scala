@@ -1,6 +1,5 @@
 package de.hpi.ingestion.textmining.models
 
-import java.util.UUID
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 

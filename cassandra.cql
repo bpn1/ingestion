@@ -102,6 +102,18 @@ CREATE TABLE wikidumps.featureentries (
     PRIMARY KEY (article, offset, alias, entity)
 );
 
+CREATE TABLE wikidumps.featureentrieswithsof (
+    article text,
+    offset int,
+    alias text,
+    entity text,
+    link_score double,
+    entity_score multifeature,
+    cosine_sim multifeature,
+    correct boolean,
+    PRIMARY KEY (article, offset, alias, entity)
+);
+
 CREATE TYPE wikidumps.precisionrecalldatatuple (
     threshold double,
     precision double,
