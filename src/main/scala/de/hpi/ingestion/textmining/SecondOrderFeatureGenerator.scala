@@ -69,18 +69,18 @@ object SecondOrderFeatureGenerator extends SparkJob {
 	  * Computes the (absolute) difference to the highest value for each given value.
 	  *
 	  * @param values values
-	  * @return differences to the highest value
+	  * @return differences to the highest value (Double.PositiveInfinity for the highest value)
 	  */
 	def computeDeltaTopValues(values: List[Double]): List[Double] = {
 		val maxValue = values.max
-		values.map(value => maxValue - value)
+		values.map(value => if(value == maxValue) Double.PositiveInfinity else maxValue - value)
 	}
 
 	/**
 	  * Computes the (absolute) difference to the successive value for each given value.
 	  *
 	  * @param values values
-	  * @return differences to the successive value
+	  * @return differences to the successive value (Double.PositiveInfinity for the smallest value)
 	  */
 	def computeDeltaSuccessorValues(values: List[Double]): List[Double] = {
 		val sortedValues = values

@@ -5,14 +5,13 @@ package de.hpi.ingestion.textmining.models
   *
   * @param value           original value for the feature
   * @param rank            rank of the original value (1 for the highest value)
-  * @param delta_top       absolute difference to the highest value (0.0 for the highest value)
+  * @param delta_top       absolute difference to the highest value (Double.PositiveInfinity for the highest value)
   * @param delta_successor absolute difference to the successive (next smaller) value
-  *                        (Double.PositiveInfinity for smallest value)
+  *                        (Double.PositiveInfinity for the smallest value)
   */
 case class MultiFeature(
 	value: Double,
 	var rank: Int = 1,
-	var delta_top: Double = 0.0,
-	var delta_successor: Double = Double.PositiveInfinity // NaN and negative values cannot be used to train the
-	// Naive Bayes model
+	var delta_top: Double = Double.PositiveInfinity,		// NaN and negative values cannot be used to train the
+	var delta_successor: Double = Double.PositiveInfinity	// Naive Bayes model
 )
