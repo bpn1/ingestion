@@ -71,7 +71,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	"Articles with link context" should "contain exactly these link contexts" in {
 		val oldSettings = TermFrequencyCounter.settings(false)
 		TermFrequencyCounter.parseConfig()
-    
+
 		val expectedLinks = TestData.linksWithContextsSet()
 		val enrichedLinks = TestData.parsedWikipediaWithTextsSet()
 			.map(TermFrequencyCounter.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
