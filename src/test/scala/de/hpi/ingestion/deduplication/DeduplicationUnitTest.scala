@@ -1,7 +1,7 @@
 package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.deduplication.models.{Block, DuplicateCandidates}
+import de.hpi.ingestion.deduplication.models.{Block, Duplicates}
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -118,7 +118,7 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 		val subjects = TestData.subjects
 		val stagings = TestData.stagings
 		val input = List(sc.parallelize(subjects), sc.parallelize(stagings)).toAnyRDD()
-		val duplicateCandidates = Deduplication.run(input, sc).fromAnyRDD[DuplicateCandidates]().head
+		val duplicateCandidates = Deduplication.run(input, sc).fromAnyRDD[Duplicates]().head
 		val expectedCandidates = sc.parallelize(TestData.trueDuplicateCandidates(subjects, stagings))
 		assertRDDEquals(duplicateCandidates, expectedCandidates)
 

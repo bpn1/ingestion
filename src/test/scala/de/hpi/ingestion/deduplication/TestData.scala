@@ -52,12 +52,12 @@ object TestData {
 		))
 	}
 
-	def trainingCandidates(sc: SparkContext): RDD[DuplicateCandidates] = {
+	def trainingCandidates(sc: SparkContext): RDD[Duplicates] = {
 		sc.parallelize(Seq(
-			DuplicateCandidates(idList.head, List((idList(1), "test", 0.7))),
-			DuplicateCandidates(idList(2), List((idList(3), "test", 0.8))),
-			DuplicateCandidates(idList(4), List((idList(7), "test", 0.5))),
-			DuplicateCandidates(idList(6), List((idList(5), "test", 0.6)))
+			Duplicates(idList.head, Option("test0"), "Source", List(Candidate(idList(1), Option("test1"), 0.7))),
+			Duplicates(idList(2), Option("test2"), "Source", List(Candidate(idList(3), Option("test3"), 0.8))),
+			Duplicates(idList(4), Option("test4"), "Source", List(Candidate(idList(7), Option("test7"), 0.5))),
+			Duplicates(idList(6), Option("test6"), "Source", List(Candidate(idList(5), Option("test5"), 0.6)))
 		))
 	}
 
@@ -202,29 +202,48 @@ object TestData {
 		)
 	}
 
-	def trueDuplicateCandidates(subjects: List[Subject], stagings: List[Subject]): List[DuplicateCandidates] = {
+	def trueDuplicateCandidates(subjects: List[Subject], stagings: List[Subject]): List[Duplicates] = {
 		val stagingTable = "subject_wikidata"
 		List(
-			DuplicateCandidates(
+			Duplicates(
 				subjects.head.id,
-				List((stagings.head.id, stagingTable, 0.9784615384615384))),
-			DuplicateCandidates(
+				subjects.head.name,
+				stagingTable,
+				List(Candidate(stagings.head.id, stagings.head.name, 0.9784615384615384))
+			),
+			Duplicates(
 				subjects(1).id,
-				List((stagings(1).id, stagingTable, 1.0))))
+				subjects(1).name,
+				stagingTable,
+				List(Candidate(stagings(1).id, stagings(1).name, 0.9446913580246914))
+			)
+		)
 	}
 
-	def duplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
+	def duplicateCandidates(subjects: List[Subject]): List[Duplicates] = {
 		val stagingTable = "subject_wikidata"
 		List(
-			DuplicateCandidates(
+			Duplicates(
 				subjects.head.id,
-				List((subjects(1).id, stagingTable, 0.9784615384615384), (subjects(4).id, stagingTable, 0.5761904761904763))),
-			DuplicateCandidates(
+				subjects.head.name,
+				stagingTable,
+				List(
+					Candidate(subjects(1).id, subjects(1).name, 0.9784615384615384),
+					Candidate(subjects(4).id, subjects(4).name, 0.5761904761904763)
+				)),
+			Duplicates(
 				subjects(1).id,
-				List((subjects(4).id, stagingTable, 0.5654212454212454))),
-			DuplicateCandidates(
+				subjects(1).name,
+				stagingTable,
+				List(Candidate(subjects(4).id, subjects(4).name, 0.5654212454212454))
+			),
+			Duplicates(
 				subjects(2).id,
-				List((subjects(3).id, stagingTable, 0.9446913580246914))))
+				subjects(2).name,
+				stagingTable,
+				List(Candidate(subjects(3).id, subjects(3).name, 0.9446913580246914))
+			)
+		)
 	}
 
 	def testConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
