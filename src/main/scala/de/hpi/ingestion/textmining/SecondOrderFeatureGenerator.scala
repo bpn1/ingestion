@@ -125,7 +125,7 @@ object SecondOrderFeatureGenerator extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val featureEntries = input.head.asInstanceOf[RDD[FeatureEntry]]
-		featureEntries
+		val featureEntriesWithSecondOrderFeatures = featureEntries
 			.map(featureEntry => ((featureEntry.article, featureEntry.offset), List(featureEntry)))
 			.reduceByKey(_ ++ _)
 			.flatMap { case (linkPosition, entries) =>
@@ -144,6 +144,6 @@ object SecondOrderFeatureGenerator extends SparkJob {
 						featureEntry
 					}
 			}
-		List(featureEntries).toAnyRDD()
+		List(featureEntriesWithSecondOrderFeatures).toAnyRDD()
 	}
 }
