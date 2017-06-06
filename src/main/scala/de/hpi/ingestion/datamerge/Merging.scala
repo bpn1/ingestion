@@ -216,15 +216,17 @@ object Merging extends SparkJob {
 				val (candidateOpt, subjectOpt) = candidateTupleOption.unzip.map(_.headOption, _.headOption)
 				addToMasterNode(subjectOpt.getOrElse(Subject()), staged, candidateOpt, version)
 			}.distinct
-			.map(sub => (sub.master.getOrElse(sub.id), List(sub)))
-			.reduceByKey(_ ++ _)
-			.leftOuterJoin(subjects.map(sub => Tuple2(sub.id, sub)))
-			// TODO add old duplicates from subject table
-			.map { case (masterId, (duplicates, masterOption)) =>
-				val master = masterOption
+			.map(sub => (sub.master.getOrElse(sub.id), sub))
+			.cogroup(subjects.map(sub => Tuple2(sub.master.getOrElse(sub.id), sub)))
+			.map { case (masterId, (duplicates, existingMasterAndDuplicates)) =>
+				val master = existingMasterAndDuplicates
+					.find(_.id == masterId)
 					.orElse(duplicates.find(_.id == masterId))
 					.get
-				(master, duplicates.filter(_.id != masterId))
+				val mergedDuplicates = (duplicates ++ existingMasterAndDuplicates)
+					.filter(_.id != masterId)
+					.toList
+				(master, mergedDuplicates)
 			}.flatMap { case (master, dupes) => mergeIntoMaster(master, dupes, version)}
 		List(mergedSubjects).toAnyRDD()
 	}

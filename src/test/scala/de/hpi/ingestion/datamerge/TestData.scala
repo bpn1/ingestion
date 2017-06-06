@@ -836,6 +836,27 @@ object TestData {
 					subjectIds(2) -> Map("duplicate" -> "0.2"),
 					subjectIds(3) -> Map("duplicate" -> "0.3"),
 					subjectIds(4) -> Map("duplicate" -> "0.4"))
+			),
+			Subject(
+				id = subjectIds(7),
+				master = Option(masterId),
+				relations = Map(masterId -> Map("slave" -> "1.0"))
+			),
+			Subject(
+				id = subjectIds(8),
+				master = Option(secondMasterIds.head),
+				name = None,
+				name_history = List(version("implisense", "Name 8"), version("human")),
+				relations = Map(secondMasterIds.head -> Map("slave" -> "1.0"))
+			),
+			Subject(
+				id = subjectIds(9),
+				master = Option(secondMasterIds(1)),
+				name = Option("Name 9"),
+				name_history = List(version("implisense", "Name 9")),
+				aliases = List("Alias 9"),
+				aliases_history = List(version("implisense", "Alias 9")),
+				relations = Map(secondMasterIds(1) -> Map("slave" -> "1.0"))
 			)
 		)
 	}
@@ -858,6 +879,16 @@ object TestData {
 			Subject(
 				id = newUUIDs(1),
 				relations = Map(subjectIds(6) -> Map("master" -> "1.0"))
+			),
+			Subject(
+				id = secondMasterIds.head,
+				relations = Map(subjectIds(8) -> Map("master" -> "1.0"))
+			),
+			Subject(
+				id = secondMasterIds(1),
+				name = Option("Name 9"),
+				aliases = List("Alias 9"),
+				relations = Map(subjectIds(9) -> Map("master" -> "1.0"))
 			)
 		)
 	}
