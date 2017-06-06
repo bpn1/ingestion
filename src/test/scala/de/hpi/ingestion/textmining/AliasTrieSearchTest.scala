@@ -16,7 +16,7 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 
 		val tokenizer = IngestionTokenizer()
 		val contextTokenizer = IngestionTokenizer(true, true)
-		val trie = TestData.testDataTrie(tokenizer)
+		val trie = TestData.dataTrie(tokenizer)
 		val entry = TestData.parsedEntry()
 		val resultEntry = AliasTrieSearch.matchEntry(entry, trie, tokenizer, contextTokenizer)
 		resultEntry.foundaliases should not be empty
@@ -60,7 +60,7 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 
 		val tokenizer = IngestionTokenizer()
 		val contextTokenizer = IngestionTokenizer(true, true)
-		val trie = TestData.testDataTrie(tokenizer)
+		val trie = TestData.dataTrie(tokenizer)
 		val entries = TestData.parsedEntriesWithLessText()
 		val trieAliases = entries.map(AliasTrieSearch.matchEntry(_, trie, tokenizer, contextTokenizer).triealiases)
 		val expected = TestData.foundTrieAliases()
