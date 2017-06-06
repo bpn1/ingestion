@@ -33,8 +33,8 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 
 	"Wikipedia articles with contexts" should "be exactly these wikipedia articles" in {
 		val expectedArticles = TestData.articlesWithContextSet()
-		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 			.filter(article => expectedArticles.exists(_.title == article.title))
 			.map(TermFrequencyCounter.extractArticleContext(_, tokenizer))
 			.collect
