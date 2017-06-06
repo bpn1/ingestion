@@ -6,7 +6,7 @@ import de.hpi.ingestion.datalake.models.Subject
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-class DataLakeImportImplementationUnitTest extends FlatSpec with Matchers with SharedSparkContext {
+class DataLakeImportImplementationTest extends FlatSpec with Matchers with SharedSparkContext {
 	"parseNormalizationConfig" should "generate a normalization mapping from a given path" in {
 		val mapping = Import.parseNormalizationConfig(Import.normalizationFile)
 		val expected = TestData.normalizationMapping

@@ -60,7 +60,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
-		entity.label.foreach(label => sm.setName(label.replaceAll("@de .$", "")))
+		entity.label.foreach(label => sm.setName(label.replaceAll("""@de \.$""", "")))
 		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
 
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
@@ -72,7 +72,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 				.map { case (lat, long) => s"$lat;$long" }
 		}
 
-		val legalForm = entity.label.map(extractLegalForm(_, classifier)).getOrElse(Nil)
+		val legalForm = subject.name.map(extractLegalForm(_, classifier)).getOrElse(Nil)
 		if (legalForm.nonEmpty) properties("gen_legal_form") = legalForm
 
 		sm.addProperties(properties.toMap)

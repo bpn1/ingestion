@@ -15,6 +15,8 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.companies.algo.Tag
 
+import scala.collection.JavaConverters._
+
 /**
   * An abstract DataLakeImportImplementation to import new sources to the staging table.
   *
@@ -126,11 +128,16 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 
 	override def extractLegalForm(name: String, classifier: AClassifier[Tag]): List[String] = {
 		val tags = List(Tag.LEGAL_FORM)
-		classifier
-			.getTags(name)
-			.filter(pair => tags.contains(pair.getValue))
-			.map(_.getKey.getRawForm)
-			.toList
+		try {
+			classifier
+				.getTags(name)
+				.filter(pair => tags.contains(pair.getValue))
+				.map(_.getKey.getRawForm)
+				.toList
+		} catch {
+			case ex: java.lang.StringIndexOutOfBoundsException => Nil
+			case ex: java.lang.ArrayIndexOutOfBoundsException => Nil
+		}
 	}
 
 	override def classifier: AClassifier[Tag] = {

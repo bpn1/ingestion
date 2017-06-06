@@ -1,7 +1,7 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
-import de.hpi.ingestion.datalake.models.Version
+import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -124,7 +124,7 @@ object TestData {
 
 	def testEntity: DBpediaEntity = DBpediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
-		label = Option("Liste von Autoren GmbH"),
+		label = Option("Liste von Autoren GmbH@de ."),
 		data = Map(
 			"wikidata_id" -> List("Q123"),
 			"dbo:viafId" -> List("X123"),
@@ -142,7 +142,8 @@ object TestData {
 	def dbpediaEntities: List[DBpediaEntity] = List(
 		DBpediaEntity(
 			dbpedianame = "dbpedia-de:List_von_Autoren",
-			label = Option("Liste von Autoren GmbH"),
+			label = Option("Liste von Autoren GmbH@de ."),
+			instancetype = Option("type 1"),
 			data = Map(
 				"wikidata_id" -> List("Q123"),
 				"dbo:viafId" -> List("X123"),
@@ -157,6 +158,11 @@ object TestData {
 			)
 		),
 		DBpediaEntity(dbpedianame = "dbpedia-de:Liste_von_Wurst")
+	)
+
+	def translatedSubjects: List[Subject] = List(
+		Subject(name = Option("Liste von Autoren GmbH"), category = Option("type 1")),
+		Subject()
 	)
 
 	def mapping: Map[String, List[String]] = Map(
