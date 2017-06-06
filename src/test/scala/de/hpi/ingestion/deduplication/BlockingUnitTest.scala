@@ -190,7 +190,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		val duplicates = TestData.testDuplicateStatsRDD(sc)
 		val goldStandard = TestData.goldStandard(subjects, stagings)
 		val sumTag = "sum"
-		val pairwiseCompleteness = Blocking.calculatePairwiseCompleteness(duplicates, goldStandard, sumTag)
+		val pairwiseCompleteness = Blocking.calculatePairsCompleteness(duplicates, goldStandard, sumTag)
 		val expected = TestData.expectedPairwiseCompleteness
 		pairwiseCompleteness shouldEqual expected
 	}
