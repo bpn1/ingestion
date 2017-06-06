@@ -17,7 +17,6 @@ import scala.xml.XML
   */
 object DBpediaImport extends SparkJob {
 	appName = "DBpediaImport_v1.0"
-	val dataSources = List("dbpedia_20161203")
 	val keyspace = "wikidumps"
 	val tablename = "dbpedia"
 

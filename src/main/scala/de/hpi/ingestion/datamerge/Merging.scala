@@ -10,6 +10,7 @@ import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.DuplicateCandidates
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits.TupleImplicits._
 
 /**
   * Merging-Job for merging duplicates into the subject table
@@ -24,6 +25,12 @@ object Merging extends SparkJob {
 	val sourcePriority = List("human", "implisense", "dbpedia", "wikidata")
 
 	// $COVERAGE-OFF$
+	/**
+	  * Loads the Subjects, the staged Subjects and the Duplicate Candidates from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the data processed in the job.
+	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val subjects = sc.cassandraTable(keyspace, subjectsTable)
 		val stagings = sc.cassandraTable(keyspace, stagingsTable)
@@ -31,6 +38,12 @@ object Merging extends SparkJob {
 		List(subjects, stagings).toAnyRDD() ::: List(duplicates).toAnyRDD()
 	}
 
+	/**
+	  * Saves the merged Subjects to the Cassandra.
+	  * @param output List of RDDs containing the output of the job
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args arguments of the program
+	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
 			.fromAnyRDD[Subject]()
@@ -39,13 +52,47 @@ object Merging extends SparkJob {
 	}
 	// $COVERAGE-ON$
 
-	def addToMasterNode(subject: Subject, staged: Subject, score: Double, version: Version): List[Subject] = {
-		val masterId = subject.master.getOrElse(subject.id)
+	/**
+	  * Sets the master node for the staged subject and adds symmetrical duplicate relation between the Subject and the
+	  * staged Subject if the Subject is not a master node.
+	  * @param subject existing Subject
+	  * @param staged duplicate Subject
+	  * @param duplicateCandidates Duplicate Candidates object containing the Subject and the staged Subject
+	  * @param version Version used for versioning
+	  * @return List of the Subject and the staged Subject
+	  */
+	def addToMasterNode(
+		subject: Subject,
+		staged: Subject,
+		duplicateCandidates: Option[DuplicateCandidates],
+		version: Version
+	): List[Subject] = {
+		val score = duplicateCandidates
+			.flatMap(_.candidates.find(_._1 == staged.id))
+			.map(_._3)
+			.getOrElse(1.0)
 		val stagedSm = new SubjectManager(staged, version)
-		stagedSm.setMaster(masterId, score)
+		val subjectSm = new SubjectManager(subject, version)
+		subject.master match {
+			case Some(masterId) =>
+				duplicateCandidates.foreach { dupCandidate =>
+					dupCandidate.candidates.foreach { case (duplicate, source, dupeScore) =>
+						subjectSm.addRelations(Map(duplicate -> Map("duplicate" -> s"$dupeScore")))
+					}
+				}
+				stagedSm.addRelations(Map(subject.id -> Map("duplicate" -> s"$score")))
+				stagedSm.setMaster(masterId, score)
+			case None => stagedSm.setMaster(subject.id, score)
+		}
 		List(subject, staged)
 	}
 
+	/**
+	  * Merges the properties of the duplicates and uses the non empty properties of the best data source defined by
+	  * {@sourcePriority}.
+	  * @param duplicates List of duplicate Subjects
+	  * @return Map containing the properties and the values
+	  */
 	def mergeProperties(duplicates: List[Subject]): Map[String, List[String]] = {
 		Subject.normalizedPropertyKeys.flatMap { prop =>
 			val propValues = sourcePriority.map { dataSource =>
@@ -76,6 +123,13 @@ object Merging extends SparkJob {
 		}.toMap
 	}
 
+	/**
+	  * Merges the relations of the duplicates and uses the non empty relation property of the best data source defined
+	  * by {@sourcePriority}.
+	  * @param master master node of the duplicates
+	  * @param duplicates List of duplicate Subject
+	  * @return Map containing the relations and their properties
+	  */
 	def mergeRelations(master: Subject, duplicates: List[Subject]): Map[UUID, Map[String, String]] = {
 		val rel = duplicates
 			.flatMap(_.relations.keySet)
@@ -119,6 +173,13 @@ object Merging extends SparkJob {
 		masterSM.setCategory(category)
 	}
 
+	/**
+	  * Creates the data of the master node by merging the data of the duplicates.
+	  * @param master master node
+	  * @param duplicates List of duplicate Subjects used to generate the data
+	  * @param version Version used for versioning
+	  * @return List of duplicate Subjects and master node containing the merged data
+	  */
 	def mergeIntoMaster(master: Subject, duplicates: List[Subject], version: Version): List[Subject] = {
 		val masterSM = new SubjectManager(master, version)
 		mergeSimpleAttributes(masterSM, duplicates)
@@ -130,6 +191,13 @@ object Merging extends SparkJob {
 		master +: duplicates
 	}
 
+	/**
+	  * Merges the staged Subjects into the current Subjects using the Duplicate Candidates.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(subjects, stagings) = input.take(2).fromAnyRDD[Subject]()
 		val duplicateCandidates = input(2).asInstanceOf[RDD[DuplicateCandidates]]
@@ -137,29 +205,26 @@ object Merging extends SparkJob {
 
 		val mergedSubjects = duplicateCandidates
 			.map(candidate => (candidate.subject_id, candidate))
+			// TODO merge multiple duplicate candidates with the same subject
 			.join(subjects.map(sub => Tuple2(sub.id, sub)))
 			.values
 			.flatMap { case (candidate, sub) =>
 				candidate.candidates.map(tuple => (tuple._1, (candidate, sub)))
 			}.rightOuterJoin(stagings.map(sub => Tuple2(sub.id, sub)))
 			.values
-			.flatMap {
-				case (Some((candidate, sub)), staged) =>
-					val score = candidate.candidates.find(_._1 == staged.id).get._3
-					addToMasterNode(sub, staged, score, version)
-				case (None, staged) => addToMasterNode(Subject(), staged, 1.0, version)
+			.flatMap { case (candidateTupleOption, staged) =>
+				val (candidateOpt, subjectOpt) = candidateTupleOption.unzip.map(_.headOption, _.headOption)
+				addToMasterNode(subjectOpt.getOrElse(Subject()), staged, candidateOpt, version)
 			}.distinct
-			.map(sub => sub.master match {
-				case Some(id) => (id, List(sub))
-				case None => (sub.id, Nil)
-			}).reduceByKey(_ ++ _)
+			.map(sub => (sub.master.getOrElse(sub.id), List(sub)))
+			.reduceByKey(_ ++ _)
 			.leftOuterJoin(subjects.map(sub => Tuple2(sub.id, sub)))
-			.map {
-				case (masterId, (duplicates, Some(master))) =>
-					(master, duplicates)
-				case (masterId, (duplicates, None)) =>
-					val master = duplicates.find(_.id == masterId).get
-					(master, duplicates.filter(_.id != masterId))
+			// TODO add old duplicates from subject table
+			.map { case (masterId, (duplicates, masterOption)) =>
+				val master = masterOption
+					.orElse(duplicates.find(_.id == masterId))
+					.get
+				(master, duplicates.filter(_.id != masterId))
 			}.flatMap { case (master, dupes) => mergeIntoMaster(master, dupes, version)}
 		List(mergedSubjects).toAnyRDD()
 	}

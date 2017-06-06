@@ -16,7 +16,7 @@ import scala.collection.mutable
   * This job translates Wikidata entities into Subjects and writes them into a staging table.
   */
 object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntity](
-	List("wikidata_20161117"),
+	List("wikidata_20161117", "wikidata"),
 	"wikidumps",
 	"wikidata"
 ){

@@ -300,6 +300,8 @@ object SubjectManager {
 		val subjectManager2 = new SubjectManager(subject2, version)
 		subjectManager1.addRelations(Map(subject2.id -> relations))
 		subjectManager2.addRelations(Map(subject1.id -> relations))
+		println("sub1 rel " + subject1.relations)
+		println("sub2 rel " + subject2.relations)
 	}
 
 	/**
