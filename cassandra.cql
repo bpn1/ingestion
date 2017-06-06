@@ -370,7 +370,7 @@ CREATE TABLE evaluation.version (
     timestamp timestamp
 );
 
-CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
+CREATE TABLE evaluation.dbpedia_wikidata_duplicates (
     subject_id uuid PRIMARY KEY,
     subject_name text,
     datasources text,

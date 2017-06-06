@@ -6,7 +6,7 @@
         <keyspaceStagingTable>datalake</keyspaceStagingTable>
         <stagingTable>subject_temp</stagingTable>
         <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
-        <duplicatesTable>duplicate_candidates</duplicatesTable>
+        <duplicatesTable>duplicates</duplicatesTable>
         <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
