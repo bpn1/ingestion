@@ -25,11 +25,6 @@ import scala.io.{BufferedSource, Source}
 // scalastyle:off file.size.limit
 
 object TestData {
-	def stopwordsSet(): Set[String] = {
-		Source.fromURL(getClass.getResource("/textmining/german_stopwords_without_umlauts.txt"))
-			.getLines()
-			.toSet
-	}
 
 	def testSentences(): List[String] = {
 		List(
@@ -157,7 +152,7 @@ object TestData {
 				List(),
 				List(),
 				List("Audi")),
-			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr spaeter taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
 					Link("Brachttal", "Brachttal", Option(55)),
 					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
@@ -255,7 +250,7 @@ object TestData {
 				List("Audi"),
 				linkswithcontext = List()
 			),
-			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr spaeter taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
 					Link("Brachttal", "Brachttal", Option(55)),
 					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
@@ -305,7 +300,7 @@ object TestData {
 				linkswithcontext = List(),
 				context = Map("audi" -> 1, "verlink" -> 1)
 			),
-			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr spaeter taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
 					Link("Brachttal", "Brachttal", Option(55)),
 					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
@@ -1198,7 +1193,7 @@ object TestData {
 	def parsedEntry(): ParsedWikipediaEntry = {
 		ParsedWikipediaEntry(
 			"Schwarzer Humor",
-			Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod. Hier hat sich jemand einen makabren Scherz erlaubt. Als schwarzer Humor wird Humor bezeichnet, der Verbrechen, Krankheit, Tod und ähnliche Themen, für die gewöhnlich eine Abhandlung in ernster Form erwartet wird, in satirischer oder bewusst verharmlosender Weise verwendet. Oft bezieht er sich auf Zeitthemen. Schwarzer Humor bedient sich häufig paradoxer Stilfiguren. Nicht selten löst er Kontroversen aus darüber, ob man sich über die genannten Dinge lustig machen dürfe und wo die Grenzen des guten Geschmacks lägen; besonders ist dies der Fall, wenn religiöse und sexuelle Themen und tragische Ereignisse zum Gegenstand genommen werden. In der darstellenden Kunst nennt man auf schwarzen Humor setzende Werke schwarze Komödien. Der Begriff wurde durch den Surrealisten Andre Breton erstmals 1940 in seiner Schrift Anthologie de l’humour noir näher umrissen, wird jedoch seit den 1960er Jahren zum Teil deutlich anders verstanden, indem Kennzeichen der Desillusion und des Nihilismus hinzutraten. In dem Vorwort seines Werkes nennt Breton unter anderem Quellen von Freud und Hegel, die seiner Meinung nach in die Begriffsentwicklung eingeflossen sind. Ursprünge des ‚schwarzen Humors‘ sah Breton in seiner Anthologie bei einigen Werken des irischen Satirikers Jonathan Swift wie Directions to Servants, A Modest Proposal, A Meditation on a Broom-Stick und einige seiner Aphorismen. In den öffentlichen Gebrauch kam der Begriff erst in den 1960er Jahren insbesondere im angloamerikanischen Raum (‚black humour‘) durch die Rezeption von Schriftstellern wie Nathanael West, Vladimir Nabokov und Joseph Heller. So gilt Catch-22 (1961) als ein bekanntes Beispiel dieser Stilart, in dem die Absurdität des Militarismus im Zweiten Weltkrieg satirisch überspitzt wurde. Weitere Beispiele sind Kurt Vonnegut, Slaughterhouse Five (1969), Thomas Pynchon, V. (1963) und Gravity's Rainbow (1973), sowie im Film Stanley Kubrick’s Dr. Strangelove (1964) und im Absurden Theater insbesondere bei Eugene Ionesco zu finden. Der Begriff black comedy (dtsch. „schwarze Komödie“), der in der englischen Sprache schon für einige Stücke Shakespeares angewandt wurde, weist nach dem Lexikon der Filmbegriffe der Christian-Albrechts-Universitaet zu Kiel als Komoedientyp durch „manchmal sarkastischen, absurden und morbiden ‚schwarzen‘ Humor“ aus, der sich sowohl auf „ernste oder tabuisierte Themen wie Krankheit, Behinderung, Tod, Krieg, Verbrechen“ wie auch auf „für sakrosankt gehaltene Dinge“ richten kann und dabei „auch vor politischen Unkorrektheiten, derben Späßen, sexuellen und skatologischen Anzüglichkeiten nicht zurückschreckt.“ Dabei stehe „hinter der Fassade zynischer Grenzüberschreitungen“ häufig ein „aufrichtiges Anliegen, falsche Hierarchien, Konventionen und Verlogenheiten innerhalb einer Gesellschaft mit den Mitteln filmischer Satire zu entlarven.“ Als filmische Beispiele werden angeführt: Robert Altmans M*A*S*H (USA 1970), Mike Nichols’ Catch-22 (USA 1970), nach Joseph Heller) sowie in der Postmoderne Quentin Tarantinos Pulp Fiction (USA 1994) und Lars von Triers Idioterne (Dänemark 1998). Der Essayist Francois Bondy schrieb 1971 in Die Zeit: „Der schwarze Humor ist nicht zu verwechseln mit dem ‚kranken Humor‘, der aus den Staaten kam, mit seinen ‚sick jokes‘“ und nannte als Beispiel den Witz: „Mama, ich mag meinen kleinen Bruder nicht. – Schweig, iß, was man dir vorsetzt“. Witz und Humor seien jedoch nicht dasselbe und letzteres „eine originale Geschichte in einer besonderen Tonart“. Humor im Sinne von einer – wie der Duden definiert – „vorgetäuschten Heiterkeit mit der jemand einer unangenehmen oder verzweifelten Lage, in der er sich befindet, zu begegnen“ versucht, nennt man auch Galgenhumor."""),
+			Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod. Hier hat sich jemand einen makabren Scherz erlaubt. Als schwarzer Humor wird Humor bezeichnet, der Verbrechen, Krankheit, Tod und ähnliche Themen, für die gewöhnlich eine Abhandlung in ernster Form erwartet wird, in satirischer oder bewusst verharmlosender Weise verwendet. Oft bezieht er sich auf Zeitthemen. Schwarzer Humor bedient sich häufig paradoxer Stilfiguren. Nicht selten löst er Kontroversen aus darüber, ob man sich über die genannten Dinge lustig machen dürfe und wo die Grenzen des guten Geschmacks lägen; besonders ist dies der Fall, wenn religiöse und sexuelle Themen und tragische Ereignisse zum Gegenstand genommen werden. In der darstellenden Kunst nennt man auf schwarzen Humor setzende Werke schwarze Komödien. Der Begriff wurde durch den Surrealisten André Breton erstmals 1940 in seiner Schrift Anthologie de l’humour noir näher umrissen, wird jedoch seit den 1960er Jahren zum Teil deutlich anders verstanden, indem Kennzeichen der Desillusion und des Nihilismus hinzutraten. In dem Vorwort seines Werkes nennt Breton unter anderem Quellen von Freud und Hegel, die seiner Meinung nach in die Begriffsentwicklung eingeflossen sind. Ursprünge des ‚schwarzen Humors‘ sah Breton in seiner Anthologie bei einigen Werken des irischen Satirikers Jonathan Swift wie Directions to Servants, A Modest Proposal, A Meditation on a Broom-Stick und einige seiner Aphorismen. In den öffentlichen Gebrauch kam der Begriff erst in den 1960er Jahren insbesondere im angloamerikanischen Raum (‚black humour‘) durch die Rezeption von Schriftstellern wie Nathanael West, Vladimir Nabokov und Joseph Heller. So gilt Catch-22 (1961) als ein bekanntes Beispiel dieser Stilart, in dem die Absurdität des Militarismus im Zweiten Weltkrieg satirisch überspitzt wurde. Weitere Beispiele sind Kurt Vonnegut, Slaughterhouse Five (1969), Thomas Pynchon, V. (1963) und Gravity’s Rainbow (1973), sowie im Film Stanley Kubrick’s Dr. Strangelove (1964) und im Absurden Theater insbesondere bei Eugène Ionesco zu finden. Der Begriff black comedy (dtsch. „schwarze Komödie“), der in der englischen Sprache schon für einige Stücke Shakespeares angewandt wurde, weist nach dem Lexikon der Filmbegriffe der Christian-Albrechts-Universität zu Kiel als Komödientyp durch „manchmal sarkastischen, absurden und morbiden ‚schwarzen‘ Humor“ aus, der sich sowohl auf „ernste oder tabuisierte Themen wie Krankheit, Behinderung, Tod, Krieg, Verbrechen“ wie auch auf „für sakrosankt gehaltene Dinge“ richten kann und dabei „auch vor politischen Unkorrektheiten, derben Späßen, sexuellen und skatologischen Anzüglichkeiten nicht zurückschreckt.“ Dabei stehe „hinter der Fassade zynischer Grenzüberschreitungen“ häufig ein „aufrichtiges Anliegen, falsche Hierarchien, Konventionen und Verlogenheiten innerhalb einer Gesellschaft mit den Mitteln filmischer Satire zu entlarven.“ Als filmische Beispiele werden angeführt: Robert Altmans M*A*S*H (USA 1970), Mike Nichols’ Catch-22 (USA 1970), nach Joseph Heller) sowie in der Postmoderne Quentin Tarantinos Pulp Fiction (USA 1994) und Lars von Triers Idioterne (Dänemark 1998). Der Essayist François Bondy schrieb 1971 in Die Zeit: „Der schwarze Humor ist nicht zu verwechseln mit dem ‚kranken Humor‘, der aus den Staaten kam, mit seinen ‚sick jokes‘“ und nannte als Beispiel den Witz: „Mama, ich mag meinen kleinen Bruder nicht. – Schweig, iß, was man dir vorsetzt“. Witz und Humor seien jedoch nicht dasselbe und letzteres „eine originale Geschichte in einer besonderen Tonart“. Humor im Sinne von einer – wie der Duden definiert – „vorgetäuschten Heiterkeit mit der jemand einer unangenehmen oder verzweifelten Lage, in der er sich befindet, zu begegnen“ versucht, nennt man auch Galgenhumor."""),
 			List(
 				Link("Hickelkasten", "Hickelkasten", Option(0)),
 				Link("Humor", "Humor", Option(182)),
@@ -1208,7 +1203,7 @@ object TestData {
 				Link("Kontroversen", "Kontroverse", Option(495)),
 				Link("guten Geschmacks", "Geschmack (Kultur)", Option(601)),
 				Link("Surrealisten", "Surrealismus", Option(865)),
-				Link("Andre Breton", "Andre Breton", Option(878)),
+				Link("André Breton", "André Breton", Option(878)),
 				Link("Desillusion", "Desillusion", Option(1061)),
 				Link("Nihilismus", "Nihilismus", Option(1081)),
 				Link("Freud", "Sigmund Freud", Option(1173)),
@@ -1227,14 +1222,14 @@ object TestData {
 				Link("Slaughterhouse Five", "Schlachthof 5 oder Der Kinderkreuzzug", Option(1908)),
 				Link("Thomas Pynchon", "Thomas Pynchon", Option(1936)),
 				Link("V.", "V.", Option(1952)),
-				Link("Gravity's Rainbow", "Die Enden der Parabel", Option(1966)),
+				Link("Gravity’s Rainbow", "Die Enden der Parabel", Option(1966)),
 				Link("Stanley Kubrick", "Stanley Kubrick", Option(2006)),
 				Link("Dr. Strangelove", "Dr. Seltsam oder: Wie ich lernte, die Bombe zu lieben", Option(2024)),
 				Link("Absurden Theater", "Absurdes Theater", Option(2054)),
-				Link("Eugene Ionesco", "Eugene Ionesco", Option(2088)),
+				Link("Eugène Ionesco", "Eugène Ionesco", Option(2088)),
 				Link("Shakespeares", "Shakespeare", Option(2222)),
-				Link("Christian-Albrechts-Universitaet zu Kiel", "Christian-Albrechts-Universitaet zu Kiel", Option(2296)),
-				Link("Komoedientyp", "Komödie", Option(2340)),
+				Link("Christian-Albrechts-Universität zu Kiel", "Christian-Albrechts-Universität zu Kiel", Option(2296)),
+				Link("Komödientyp", "Komödie", Option(2340)),
 				Link("sarkastischen", "Sarkasmus", Option(2368)),
 				Link("absurden", "Absurdität", Option(2383)),
 				Link("morbiden", "Morbidität", Option(2396)),
@@ -1254,7 +1249,7 @@ object TestData {
 				Link("Pulp Fiction", "Pulp Fiction", Option(3130)),
 				Link("Lars von Triers", "Lars von Trier", Option(3158)),
 				Link("Idioterne", "Idioten", Option(3174)),
-				Link("Francois Bondy", "Francois Bondy", Option(3214)),
+				Link("François Bondy", "François Bondy", Option(3214)),
 				Link("Die Zeit", "Die Zeit", Option(3245)),
 				Link("Witz", "Witz", Option(3491)),
 				Link("Duden", "Duden", Option(3639)),
@@ -1294,7 +1289,7 @@ object TestData {
 			"Kontroversen",
 			"guten Geschmacks",
 			"Surrealisten",
-			"Andre Breton",
+			"André Breton",
 			"Desillusion",
 			"Nihilismus",
 			"Freud",
@@ -1313,14 +1308,14 @@ object TestData {
 			"Slaughterhouse Five",
 			"Thomas Pynchon",
 			"V.",
-			"Gravity's Rainbow",
+			"Gravity’s Rainbow",
 			"Stanley Kubrick",
 			"Dr. Strangelove",
 			"Absurden Theater",
-			"Eugene Ionesco",
+			"Eugène Ionesco",
 			"Shakespeares",
-			"Christian-Albrechts-Universitaet zu Kiel",
-			"Komoedientyp",
+			"Christian-Albrechts-Universität zu Kiel",
+			"Komödientyp",
 			"sarkastischen",
 			"absurden",
 			"morbiden",
@@ -1333,13 +1328,14 @@ object TestData {
 			"Robert Altmans",
 			"M*A*S*H",
 			"Mike Nichols",
+			"Catch-22",
 			"Joseph Heller",
 			"Postmoderne",
 			"Quentin Tarantinos",
 			"Pulp Fiction",
 			"Lars von Triers",
 			"Idioterne",
-			"Francois Bondy",
+			"François Bondy",
 			"Die Zeit",
 			"Witz",
 			"Duden",

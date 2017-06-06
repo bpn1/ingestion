@@ -17,7 +17,11 @@ case class IngestionTokenizer(
 	removeStopwords: Boolean = false,
 	stem: Boolean = false
 ) extends Serializable {
-	var stopwords = Source.fromURL(getClass.getResource("/german_stopwords.txt")).getLines().toSet
+	val stopwordsPath = "german_stopwords.txt"
+	val stopwords = Source.fromURL(getClass.getResource(s"/$stopwordsPath"))
+		.getLines()
+		.toSet
+
 	/**
 	  * Tokenizes a text, removes stop words and stems the tokens.
 	  *
@@ -125,22 +129,6 @@ object IngestionTokenizer {
 		}
 		val filter = args.length < 2 || Try(args(1).toBoolean).getOrElse(false)
 		val stem = args.length < 3 || Try(args(2).toBoolean).getOrElse(false)
-		val ingTokenizer = new IngestionTokenizer(tokenizer, filter, stem)
-		if(args.length >= 4) {
-			// How to convert a String to a List: https://stackoverflow.com/a/20083463
-			ingTokenizer.stopwords = args(3).split(",").map(_.trim).toSet
-		}
-		ingTokenizer
-	}
-
-	def apply(
-		tokenizer: Tokenizer,
-		removeStopwords: Boolean,
-		stem: Boolean,
-		stopwords: Set[String]
-	): IngestionTokenizer = {
-		val tokenizerWithCustomStopwords = new IngestionTokenizer(tokenizer, removeStopwords, stem)
-		tokenizerWithCustomStopwords.stopwords = stopwords
-		tokenizerWithCustomStopwords
+		new IngestionTokenizer(tokenizer, filter, stem)
 	}
 }
