@@ -4,6 +4,7 @@ import java.util.Locale
 
 /**
   * Map of countries to their ISO 3166 alpha-2 form
+  * https://www.iso.org/glossary-for-iso-3166.html
   */
 object CountryISO3166Mapping {
 	val mapping: Map[String, String] = this.initMap
