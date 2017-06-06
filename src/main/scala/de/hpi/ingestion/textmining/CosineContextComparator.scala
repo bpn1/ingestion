@@ -123,18 +123,17 @@ object CosineContextComparator extends SplitSparkJob {
 		defaultIdf: Double,
 		settings: Map[String, String] = this.settings
 	): RDD[(T, Map[String, Double])] = {
-		termFrequencies
-			.mapPartitions({ partition =>
-				val idfMap = inverseDocumentFrequencies(numDocuments, settings)
-				partition.map { case (identifier, bagOfWords) =>
-					val idfs = bagOfWords.getCounts().map { case (token, tf) =>
-						val idf = idfMap.getOrElse(token, defaultIdf)
-						val tfidf = tf * idf
-						(token, tfidf)
-					}
-					(identifier, idfs)
+		termFrequencies.mapPartitions({ partition =>
+			val idfMap = inverseDocumentFrequencies(numDocuments, settings)
+			partition.map { case (identifier, bagOfWords) =>
+				val idfs = bagOfWords.getCounts().map { case (token, tf) =>
+					val idf = idfMap.getOrElse(token, defaultIdf)
+					val tfidf = tf * idf
+					(token, tfidf)
 				}
-			}, true)
+				(identifier, idfs)
+			}
+		}, true)
 	}
 
 	/**
@@ -180,8 +179,7 @@ object CosineContextComparator extends SplitSparkJob {
 				joinedLinks.map { case (link, linkContext, page, linkScore, pageScore) =>
 					(page, List(ProtoFeatureEntry(link, linkContext, linkScore, MultiFeature(pageScore))))
 				}
-			}
-			.join(articleContexts)
+			}.join(articleContexts)
 			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
 				protoFeatureEntries.map { protoFeatureEntry =>
 					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
