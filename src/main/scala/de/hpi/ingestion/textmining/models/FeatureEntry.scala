@@ -13,7 +13,6 @@ import org.apache.spark.mllib.regression.LabeledPoint
   * @param prob_entity probability that the alias points to the entity given it is a link
   * @param cosine_sim  cosine similarity of the context of the alias and the entities article/context
   * @param correct     whether or not this alias actually points to the entity
-  * @param id          unique uuid used as Cassandra primary key
   */
 case class FeatureEntry(
 	alias: String,
@@ -21,8 +20,7 @@ case class FeatureEntry(
 	prob_link: Double,
 	prob_entity: Double,
 	cosine_sim: Double,
-	correct: Boolean = false,
-	id: UUID = UUID.randomUUID()
+	correct: Boolean = false
 ) {
 	/**
 	  * Returns a Labeled Point containing the data of this entries features and if the entry is correct.

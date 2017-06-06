@@ -197,14 +197,5 @@ object Bag {
 	def extract(tokens: List[String]): Bag[String, Int] = {
 		this.apply(tokens)
 	}
-
-	/**
-	  * * This methods calls the respective apply method and is excluded from the test coverage because the implicit
-	  * method call can not be tested and is marked as untested by Scoverage.
-	  * @param context Map of tokens and their count to be transformed into a Bag
-	  */
-	def extract(context: Map[String, Int]): Bag[String, Int] = {
-		this.apply(context)
-	}
 	// $COVERAGE-ON$
 }

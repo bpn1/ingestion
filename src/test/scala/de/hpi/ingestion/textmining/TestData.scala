@@ -760,31 +760,31 @@ object TestData {
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, true, null),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, true, null),
-			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
-			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
-			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.5803253864364242, correct = true),
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.701323347600063, correct = true),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107054318584233, correct = true),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, correct = true),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611047535660278, correct = true),
+			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.537802301286109, correct = true),
+			FeatureEntry("1377", "1377", 1.0, 1.0, 0.8283323365465772, correct = true),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, correct = true),
+			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.8283323365465772, correct = true),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0)
 		)
 	}
 
 	def featureEntriesWithAliasesSet(): Set[FeatureEntry] = {
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, false, null),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, false, null),
-			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
-			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, false, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
-			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.5803253864364242, correct = true),
+			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.701323347600063, correct = true),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107054318584233, correct = true),
+			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0),
+			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611047535660278),
+			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.537802301286109, correct = true),
+			FeatureEntry("1377", "1377", 1.0, 1.0, 0.8283323365465772),
+			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, correct = true),
+			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.8283323365465772, correct = true),
+			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0)
 		)
 	}
 
@@ -1970,13 +1970,13 @@ object TestData {
 
 	def classifierFeatureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
-			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, true),
-			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3, false),
-			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2, false),
-			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
-			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
-			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
+			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1),
+			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, correct = true),
+			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3),
+			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2),
+			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, correct = true),
+			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3),
+			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, correct = true))
 	}
 
 	def extendedClassifierFeatureEntries(n: Int): List[FeatureEntry] = {
@@ -2055,6 +2055,169 @@ object TestData {
 			"\"e 1\",7,\"e 3\",CO_OCCURRENCE",
 			"\"e\\\" 2\",5,\"e 3\",CO_OCCURRENCE",
 			"\"e 1\",2,\"d 2\",CO_OCCURRENCE")
+	}
+
+	def dfData(): DFData = {
+		val numDocuments = 7
+		val idfMap = Map("hier" -> 2, "ist" -> 3, "automobilhersteller" -> 1, "audi" -> 1, "ein" -> 3)
+			.mapValues(DFData.calculateIdf(_, numDocuments))
+		DFData(numDocuments, 0.0, idfMap)
+	}
+
+	def cosSimLink(): Link = {
+		Link("Audi", "Audi", Option(9), Map("hier" -> 1, "ist" -> 1, "automobilhersteller" -> 1))
+	}
+
+	def cosSimArticle(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry("Audi", context = Map("audi" -> 1, "ist" -> 1, "ein" -> 1, "automobilhersteller" -> 1))
+	}
+
+	def cosSimArticleTexts(): Map[String, String] = {
+		Map(
+			"Audi" -> "audi ist ein automobilhersteller",
+			"historisches Jahr" -> "jahr",
+			"Büdinger Wald" -> "waldrech",
+			"Brachttal" -> "brachttal ist irgendein ortsteil",
+			"Main-Kinzig-Kreis" -> "der main-kinzig-kreis ein einwohnerzahl",
+			"Hessen" -> "hessen ist der main-kinzig-kreis",
+			"1377" -> "ein jahr"
+		)
+	}
+
+	def cosSimArticles(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Article 1",
+				text = Option("hier ist automobilhersteller Audi"),
+				textlinks = List(Link("Audi", "Audi", Option(29)))),
+			ParsedWikipediaEntry(
+				"Article 2",
+				text = Option("audi ein Audi"),
+				textlinks = List(Link("Audi", "Audi", Option(9)))),
+			ParsedWikipediaEntry(
+				"Article 3",
+				text = Option("ist ortsteil Brachttal"),
+				textlinks = List(Link("Brachttal", "Brachttal", Option(13)))),
+			ParsedWikipediaEntry(
+				"Article 4",
+				text = Option("tal Brachttal"),
+				textlinks = List(Link("Brachttal", "Brachttal", Option(4)))),
+			ParsedWikipediaEntry(
+				"Article 5",
+				text = Option("einwohnerzahl ein hessen Main-Kinzig-Kreis"),
+				textlinks = List(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(25)))),
+			ParsedWikipediaEntry(
+				"Article 6",
+				text = Option("main-kinzig-kreis Hessen"),
+				textlinks = List(Link("Hessen", "Hessen", Option(18)))),
+			ParsedWikipediaEntry(
+				"Article 7",
+				text = Option("jahr 1377"),
+				textlinks = List(Link("1377", "1377", Option(5)))),
+			ParsedWikipediaEntry(
+				"Article 8",
+				text = Option("waldrech Büdinger Wald"),
+				textlinks = List(Link("Büdinger Wald", "Büdinger Wald", Option(9)))),
+			ParsedWikipediaEntry(
+				"Article 6",
+				text = Option("jahr historisches Jahr"),
+				textlinks = List(Link("historisches Jahr", "1377", Option(18))))
+		)
+	}
+
+	def cosSimArticlesWithAliases(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Article 1",
+				text = Option("hier ist automobilhersteller Audi"),
+				textlinks = List(Link("Audi", "Audi", Option(29)))),
+			ParsedWikipediaEntry(
+				"Article 2",
+				text = Option("audi ein Audi"),
+				textlinks = List(Link("Audi", "Audi", Option(9)))),
+			ParsedWikipediaEntry(
+				"Article 3",
+				text = Option("ist ortsteil Brachttal"),
+				textlinks = List(Link("Brachttal", "Brachttal", Option(13)))),
+			ParsedWikipediaEntry(
+				"Article 4",
+				text = Option("tal Brachttal"),
+				triealiases = List(TrieAlias("Brachttal", Option(4)))),
+			ParsedWikipediaEntry(
+				"Article 5",
+				text = Option("einwohnerzahl ein hessen Main-Kinzig-Kreis"),
+				triealiases = List(TrieAlias("Main-Kinzig-Kreis", Option(25)))),
+			ParsedWikipediaEntry(
+				"Article 6",
+				text = Option("main-kinzig-kreis Hessen"),
+				textlinks = List(Link("Hessen", "Hessen", Option(18)))),
+			ParsedWikipediaEntry(
+				"Article 7",
+				text = Option("jahr 1377"),
+				triealiases = List(TrieAlias("1377", Option(5)))),
+			ParsedWikipediaEntry(
+				"Article 8",
+				text = Option("waldrech Büdinger Wald"),
+				textlinks = List(Link("Büdinger Wald", "Büdinger Wald", Option(9)))),
+			ParsedWikipediaEntry(
+				"Article 9",
+				text = Option("jahr historisches Jahr"),
+				textlinks = List(Link("historisches Jahr", "1377", Option(18))))
+		)
+	}
+
+	def cosSimAliases(): Set[Alias] = {
+		// these pages do not fit to the aliases but are required for the tests
+		Set(
+			Alias("Audi", Map("Audi" -> 2), Option(2), Option(3)),
+			Alias("Brachttal", Map("Brachttal" -> 2), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Option(1), Option(2)),
+			Alias("Hessen", Map("Hessen" -> 1), Option(1), Option(2)),
+			Alias("1377", Map("1377" -> 1), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("1377" -> 1), Option(1), Option(1))
+		)
+	}
+
+	def articleFeatureEntriesWithAliases(): List[ArticleFeatureEntry] = {
+		List(
+			ArticleFeatureEntry(
+				"Article 1",
+				List(FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.701323347600063, correct = true))
+			),
+			ArticleFeatureEntry(
+				"Article 2",
+				List(FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.5803253864364242, correct = true))
+			),
+			ArticleFeatureEntry(
+				"Article 3",
+				List(FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107054318584233, correct = true))
+			),
+			ArticleFeatureEntry(
+				"Article 4",
+				List(FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0))
+			),
+			ArticleFeatureEntry(
+				"Article 5",
+				List(FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611047535660278))
+			),
+			ArticleFeatureEntry(
+				"Article 6",
+				List(FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.537802301286109, correct = true))
+			),
+			ArticleFeatureEntry(
+				"Article 7",
+				List(FeatureEntry("1377", "1377", 1.0, 1.0, 0.8283323365465772))
+			),
+			ArticleFeatureEntry(
+				"Article 8",
+				List(FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, correct = true))
+			),
+			ArticleFeatureEntry(
+				"Article 9",
+				List(FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.8283323365465772, correct = true))
+			)
+		)
 	}
 }
 

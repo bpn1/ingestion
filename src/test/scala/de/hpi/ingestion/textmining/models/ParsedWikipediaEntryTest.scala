@@ -29,13 +29,18 @@ class ParsedWikipediaEntryTest extends FlatSpec with SharedSparkContext with Mat
 		extendedlinks shouldEqual expected
 	}
 
-	"Filtered Extended Links" should "be exactly these Links" in {
+	"Filtered extendedlinks" should "be exactly these Links" in {
 		val entry = TestData.extendedLinksParsedWikipediaEntry()
 		entry.extendedlinks() shouldEqual TestData.edgeCaseExtendedLinksToLinks()
 	}
 
-	"Filtered Extended Links" should "not contain any textlinks" in {
+	they should "not contain any textlinks" in {
 		val entry = TestData.extendedLinksParsedWikipediaEntry()
 		entry.extendedlinks() should not contain TestData.extendedLinksParsedWikipediaEntry().textlinks
+	}
+
+	"Feature entry links" should "be returned" in {
+		val entry = TestData.entryWithFeatureEntryLinks()
+		entry.featureEntryLinks() shouldEqual TestData.featureEntryLinks()
 	}
 }

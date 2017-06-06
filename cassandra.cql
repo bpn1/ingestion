@@ -93,6 +93,20 @@ CREATE TABLE wikidumps.featureentries (
     prob_link double
 );
 
+CREATE TYPE wikidumps.featureentry (
+    alias text,
+    correct boolean,
+    cosine_sim double,
+    entity text,
+    prob_entity double,
+    prob_link double
+);
+
+CREATE TABLE wikidumps.articlefeatureentries (
+    article text PRIMARY KEY,
+    featureentries list<frozen<featureentry>>
+);
+
 CREATE TYPE wikidumps.precisionrecalldatatuple (
     threshold double,
     precision double,

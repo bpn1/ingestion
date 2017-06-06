@@ -79,4 +79,11 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		val expected = TestData.randomBlockingScheme
 		keys.toSet shouldEqual expected.toSet
 	}
+
+	it should "be created with the proper tag" in {
+		val name = "Test Random Scheme"
+		val scheme = RandomBlockingScheme(name)
+		scheme.tag shouldEqual name
+		scheme.isInstanceOf[RandomBlockingScheme] shouldBe true
+	}
 }
