@@ -40,7 +40,6 @@ object CompanyLinkFilter extends SparkJob {
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.head
 			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
-		LinkAnalysis.main(Array(LinkAnalysis.reduceFlag))
 	}
 	// $COVERAGE-ON$
 
