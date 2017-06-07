@@ -1,6 +1,7 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
+
 import com.datastax.driver.core.utils.UUIDs
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
@@ -11,6 +12,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.scalacheck.Prop.True
 
 /**
   * Blocks two groups of Subjects with multiple Blocking Schemes and evaluates the resulting blocks by counting their
@@ -105,10 +107,16 @@ object Blocking extends SparkJob {
 		blocks: RDD[((String, String), (Iterable[UUID], Iterable[UUID]))],
 		sumTag: String
 	): Map[String, Int] = {
-		val blockCount = blocks.map{ case ((key, tag), subjects) => (tag, 1) }.reduceByKey(_ + _).collect.toMap
-		val totalBlockCount = blockCount.values.sum
+		val blockCount = blocks
+			.map{ case ((key, tag), subjects) => (tag, 1) }
+			.reduceByKey(_ + _)
+			.collect
+			.toMap
+		val totalBlockCount = blockCount
+			.values
+			.sum
 
-		blockCount ++ Map(sumTag -> totalBlockCount)
+		blockCount + (sumTag -> totalBlockCount)
 	}
 
 	/**
@@ -131,7 +139,7 @@ object Blocking extends SparkJob {
 			.distinct
 			.count
 
-		blockComparisons ++ Map(sumTag -> BigInt(sumComparisons))
+		blockComparisons + (sumTag -> BigInt(sumComparisons))
 	}
 
 	/**
@@ -147,22 +155,22 @@ object Blocking extends SparkJob {
 		goldStandard: Set[(UUID, UUID)],
 		sumTag: String
 	): Map[String, Double] = {
+		val goldStandardSize = goldStandard.size.toDouble
 		val pairsCompleteness = duplicates
 			.flatMap { case (duplicateIDs, (tag, block)) => duplicateIDs.map((tag, _)) }
 			.distinct
 			.map { case (tag, duplicate) => (tag, 1) }
 			.reduceByKey(_ + _)
+			.mapValues(_.toDouble / goldStandardSize)
 			.collect
 			.toMap
-			.mapValues(_.toDouble / goldStandard.size.toDouble)
-			.map(identity)
 		val sumPairsCompleteness = duplicates
 			.flatMap { case (duplicateIDs, (tag, block)) => duplicateIDs }
 			.distinct
 			.count()
 			.toDouble / goldStandard.size.toDouble
 
-		pairsCompleteness ++ Map(sumTag -> sumPairsCompleteness)
+		pairsCompleteness + (sumTag -> sumPairsCompleteness)
 	}
 
 	/**
@@ -255,12 +263,15 @@ object Blocking extends SparkJob {
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val maxBlockSize = settings("maxBlockSize").toInt
 		val jobid = UUIDs.timeBased()
+		val toBeKept = (block: ((String, String), (Iterable[UUID], Iterable[UUID]))) => {
+			val ((key, tag), (subject, staging)) = block
+			!filterUndefined ||
+				!blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key) ||
+				(subject.size * staging.size) < maxBlockSize
+		}
 		val blocks = subjectBlocks
 			.cogroup(stagingBlocks)
-			.filter { case ((key, tag), (subjectList, stagingList)) =>
-				!filterUndefined || !blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
-		}.filter { case ((key, tag), (subject, staging)) => (subject.size * staging.size) < maxBlockSize }
-
+			.filter(toBeKept)
 		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))
 		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
 		val pairsCompleteness = calculatePairsCompleteness(duplicates, goldStandard, sumTag)
@@ -277,8 +288,7 @@ object Blocking extends SparkJob {
 			.union(statsSum)
 			.map { case (tag, blockStats) =>
 				val minBlockSize = settings("minBlockSize").toInt
-				val filteredStats = blockStats.filter(stat =>
-				!filterSmall || (stat.numsubjects * stat.numstaging) > minBlockSize) // don't write tiny blocks
+				val filteredStats = blockStats.filterNot(filterSmall && _.isTinyBlock(minBlockSize))
 				val blockComment = Option(s"$comment")
 				val tagCompleteness = pairsCompleteness.getOrElse(tag, 0.0)
 				val tagBlockCount = blockCount.getOrElse(tag, 0)
