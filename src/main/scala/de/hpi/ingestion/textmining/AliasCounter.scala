@@ -57,13 +57,13 @@ object AliasCounter extends SparkJob {
 
 		val links = linkSet
 			.toList
-			.map((alias: String) => Alias(alias, Map(), linkoccurrences = Option(1), totaloccurrences = Option(1)))
+			.map(Alias(_, Map(), linkoccurrences = Option(1), totaloccurrences = Option(1)))
 
 		val aliases = entry.foundaliases
 			.toSet
 			.filterNot(linkSet)
 			.toList
-			.map((alias: String) => Alias(alias, Map(), linkoccurrences = Option(0), totaloccurrences = Option(1)))
+			.map(Alias(_, Map(), linkoccurrences = Option(0), totaloccurrences = Option(1)))
 
 		links ++ aliases
 	}

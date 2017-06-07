@@ -2,7 +2,6 @@ package de.hpi.ingestion.textmining
 
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
-import com.datastax.spark.connector.cql.CassandraConnector
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._

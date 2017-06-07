@@ -764,6 +764,14 @@ object TestData {
 		)
 	}
 
+	def deadAliasContextsTfidfList(): List[(Link, Map[String, Double])] = {
+		List(
+			(Link("dead alias 1", "1377", Option(24)), Map("jahr" -> 0.1)),
+			(Link("dead alias 2", "1377", Option(24)), Map("jahr" -> 0.2)),
+			(Link("dead alias 3", "1377", Option(24)), Map("jahr" -> 0.3))
+		)
+	}
+
 	def shortLinkAndAliasContextsTfidfList(): List[(Link, Map[String, Double])] = {
 		// considered to be retrieved from 7 documents
 		val tf1df1 = 0.845
