@@ -24,6 +24,7 @@ class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with M
 			.head
 			.collect
 			.toList
-		sentences shouldEqual TestData.sentenceList() ++ TestData.alternativeSentenceList()
+		val expectedSentences = TestData.sentenceList() ++ TestData.alternativeSentenceList()
+		sentences shouldEqual expectedSentences
 	}
 }

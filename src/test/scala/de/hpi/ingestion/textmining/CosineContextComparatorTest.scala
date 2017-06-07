@@ -233,7 +233,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "be exactly these feature entries" in {
-		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
+		val contextTfidf = sc.parallelize(
+			TestData.shortLinkContextsTfidfList() ++ TestData.deadAliasContextsTfidfList())
 		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
@@ -245,7 +246,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "be calculated for trie aliases as well" in {
-		val contextTfidf = sc.parallelize(TestData.shortLinkAndAliasContextsTfidfList())
+		val contextTfidf = sc.parallelize(
+			TestData.shortLinkAndAliasContextsTfidfList() ++ TestData.deadAliasContextsTfidfList())
 		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
