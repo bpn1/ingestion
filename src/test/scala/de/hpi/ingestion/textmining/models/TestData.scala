@@ -160,8 +160,78 @@ object TestData {
 		)
 	}
 
+	def parsedWikipediaEntryWithLinkCollisions(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Berlin",
+			Option("Berlin ist cool"),
+			textlinks = List(
+				Link("Berlin", "Berlin", Option(0)),
+				Link("Berlin", "Berlin", Option(10)),
+				Link("Berlin", "Berlin", Option(20)),
+				Link("Berlin", "Berlin", Option(30)),
+				Link("Berlin", "Berlin", Option(40)),
+				Link("Berlin", "Backfisch", Option(50)),
+				Link("Berlin", "Berlin", Option(60)),
+				Link("Berlin", "Berlin", Option(90)),
+				Link("Berlin", "Berlin", Option(100)),
+				Link("Berlin", "Berlin", Option(120)),
+				Link("Berlin", "Berlin", Option(130)),
+				Link("Berlin", "Berlin", Option(140)),
+				Link("Berlin", "Berlin", Option(160)),
+				Link("Berlin", "Berlin", Option(160))
+			),
+			rawextendedlinks = List(
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(0)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(11)),
+				ExtendedLink("Berliner", Map("Berlin" -> 5), Option(18)),
+				ExtendedLink("Berlin", Map("Berlin" -> 5), Option(30)),
+				ExtendedLink("Berliner", Map("Berlin" -> 5), Option(41)),
+				ExtendedLink("Backfische", Map("Backfisch" -> 5), Option(49)),
+				ExtendedLink("Berliner", Map("Berlin" -> 5), Option(60)),
+				ExtendedLink("Berlin", Map("Berlin" -> 5), Option(70)),
+				ExtendedLink("Berlin", Map("Berlin" -> 5), Option(80)),
+				ExtendedLink("B", Map("Berlin" -> 5), Option(90)),
+				ExtendedLink("E", Map("Berlin" -> 5), Option(91)),
+				ExtendedLink("R", Map("Berlin" -> 5), Option(92)),
+				ExtendedLink("L", Map("Berlin" -> 5), Option(93)),
+				ExtendedLink("I", Map("Berlin" -> 5), Option(94)),
+				ExtendedLink("N", Map("Berlin" -> 5), Option(95)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(98)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(125)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(139)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(163)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(180)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(200))
+			)
+		)
+	}
+
+	def linksWithoutCollisions(): List[Link] = {
+		List(
+			Link("Berlin", "Berlin", Option(0)),
+			Link("Berlin", "Berlin", Option(10)),
+			Link("Berlin", "Berlin", Option(20)),
+			Link("Berlin", "Berlin", Option(30)),
+			Link("Berlin", "Berlin", Option(40)),
+			Link("Berlin", "Backfisch", Option(50)),
+			Link("Berlin", "Berlin", Option(60)),
+			Link("Berlin", "Berlin", Option(90)),
+			Link("Berlin", "Berlin", Option(100)),
+			Link("Berlin", "Berlin", Option(120)),
+			Link("Berlin", "Berlin", Option(130)),
+			Link("Berlin", "Berlin", Option(140)),
+			Link("Berlin", "Berlin", Option(160)),
+			Link("Berlin", "Berlin", Option(160)),
+			Link("Berlin", "Berlin", Option(70)),
+			Link("Berlin", "Berlin", Option(80)),
+			Link("BER", "Berlin", Option(180)),
+			Link("BER", "Berlin", Option(200))
+		)
+	}
+
 	def edgeCaseExtendedLinksToLinks(): List[Link] = {
 		List(
+			Link("Berlin", "Berlin", Option(0)),
 			Link("Berlin", "Berlin", Option(1)),
 			Link("Berlin", "Berlin", Option(2))
 		)
