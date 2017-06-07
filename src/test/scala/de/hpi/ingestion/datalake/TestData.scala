@@ -1,7 +1,6 @@
 package de.hpi.ingestion.datalake
 
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.mock.Entity
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
