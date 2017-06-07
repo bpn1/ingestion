@@ -5,7 +5,7 @@ import scala.reflect.runtime.universe._
 
 case class Entity(
 	root_value: String,
-	data: Map[String, List[String]] = Map[String, List[String]]()
+	data: Map[String, List[String]] = Map()
 ) extends DLImportEntity {
 	def fieldNames(): List[String] = {
 		def classAccessors[T: TypeTag]: List[MethodSymbol] = typeOf[T].members.collect {

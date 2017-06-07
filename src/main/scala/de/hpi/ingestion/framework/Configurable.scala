@@ -2,7 +2,6 @@ package de.hpi.ingestion.framework
 
 import de.hpi.ingestion.deduplication.models.ScoreConfig
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
-import scala.io.Source
 import scala.xml.{Node, XML}
 
 /**
@@ -10,8 +9,11 @@ import scala.xml.{Node, XML}
   */
 trait Configurable {
 	var configFile: String = ""
+	var importConfigFile: String = ""
 	private var _settings: Map[String, String] = Map()
 	private var _scoreConfigSettings: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = Map()
+	private var _normalizationSettings: Map[String, List[String]] = Map()
+	private var _sectorSettings: Map[String, List[String]] = Map()
 
 	/**
 	  * Reads the configuration from an xml file.
@@ -22,6 +24,16 @@ trait Configurable {
 		val xml = XML.load(getClass.getResource(s"/configs/$configFile"))
 		_settings ++= parseSettings(xml)
 		_scoreConfigSettings ++= parseSimilarityMeasures(xml)
+	}
+
+	def parseImportConfig(): Unit = {
+		val importXml = if(importConfigFile.contains("/")) {
+			XML.loadFile(importConfigFile)
+		} else {
+			XML.load(getClass.getResource(s"/configs/$importConfigFile"))
+		}
+		_normalizationSettings = parseNormalizationConfig(importXml)
+		_sectorSettings = parseSectorConfig(importXml)
 	}
 
 	/**
@@ -87,6 +99,64 @@ trait Configurable {
 	}
 
 	/**
+	  * Getter for _normalizationSettings. Sets _normalizationSettings if not yet done.
+	  *
+	  * @param loadIfEmpty load configuration if not yet done (true by default)
+	  * @return _normalizationSettings
+	  */
+	def normalizationSettings(loadIfEmpty: Boolean = true): Map[String, List[String]] = {
+		if(_normalizationSettings.isEmpty && !importConfigFile.isEmpty && loadIfEmpty) {
+			parseImportConfig()
+		}
+		_normalizationSettings
+	}
+
+	/**
+	  * Getter for _normalizationSettings. Sets _normalizationSettings if not yet done.
+	  *
+	  * @return _normalizationSettings
+	  */
+	def normalizationSettings: Map[String, List[String]] = {
+		normalizationSettings()
+	}
+
+	/**
+	  * Setter for _normalizationSettings.
+	  *
+	  * @param newSettings new settings
+	  */
+	def normalizationSettings_=(newSettings: Map[String, List[String]]): Unit = _normalizationSettings = newSettings
+
+	/**
+	  * Getter for _sectorSettings. Sets _sectorSettings if not yet done.
+	  *
+	  * @param loadIfEmpty load configuration if not yet done (true by default)
+	  * @return _sectorSettings
+	  */
+	def sectorSettings(loadIfEmpty: Boolean = true): Map[String, List[String]] = {
+		if(_sectorSettings.isEmpty && !importConfigFile.isEmpty && loadIfEmpty) {
+			parseImportConfig()
+		}
+		_sectorSettings
+	}
+
+	/**
+	  * Getter for _sectorSettings. Sets _sectorSettings if not yet done.
+	  *
+	  * @return _sectorSettings
+	  */
+	def sectorSettings: Map[String, List[String]] = {
+		sectorSettings()
+	}
+
+	/**
+	  * Setter for _sectorSettings.
+	  *
+	  * @param newSettings new settings
+	  */
+	def sectorSettings_=(newSettings: Map[String, List[String]]): Unit = _sectorSettings = newSettings
+
+	/**
 	  * Parses the settings in the settings tag with xml tags as keys.
 	  *
 	  * @param node the XML node containing the settings tag as child.
@@ -121,6 +191,32 @@ trait Configurable {
 					scale)
 			}
 			(key, scoreConfigs.toList)
+		}.toMap
+	}
+
+	/**
+	  * Parses the normalization config in the normalization tag in the {@importConfigFile}.
+	  * @param node the XML node containing the normalization tag as child.
+	  * @return Map containing normalized attribute names with the corresponding source attributes
+	  */
+	def parseNormalizationConfig(node: Node): Map[String, List[String]] = {
+		(node \ "normalization" \ "attributeMapping" \ "attribute").map { attribute =>
+			val key = (attribute \ "key").text
+			val values = (attribute \ "mapping").map(_.text).toList
+			(key, values)
+		}.toMap
+	}
+
+	/**
+	  * Parses the sector config in the categorization tag in the {@importConfigFile}.
+	  * @param node the XML node containing the categorization tag as child.
+	  * @return Map containing sector names with the corresponding normalized sector names
+	  */
+	def parseSectorConfig(node: Node): Map[String, List[String]] = {
+		(node \ "categorization" \ "category").map { attribute =>
+			val key = (attribute \ "key").text
+			val values = (attribute \ "mapping").map(_.text).toList
+			(key, values)
 		}.toMap
 	}
 }

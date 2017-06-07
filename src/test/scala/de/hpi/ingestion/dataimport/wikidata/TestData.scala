@@ -62,7 +62,7 @@ object TestData {
 	}
 
 	def unresolvedSubjects(): List[Subject] = {
-		List(Subject(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), name = Option("Entry 1"), properties = Map(FindRelations.wikiDataIdKey -> List("Q1"), "test" -> List("Q2"))),
+		List(Subject(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), name = Option("Entry 1"), properties = Map(FindRelations.wikiDataIdKey -> List("Q1"), "test" -> List("Q2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("key 1" -> "value 1"))),
 			Subject(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), name = Option("Entry 2"), properties = Map(FindRelations.wikiDataIdKey -> List("Q2"), "test" -> List("Q3"))),
 			Subject(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), name = Option("Entry 3"), properties = Map(FindRelations.wikiDataIdKey -> List("Q3"), "test" -> List("Q4"))),
 			Subject(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), name = Option("Entry 4"), properties = Map(FindRelations.wikiDataIdKey -> List("Q4"))),
@@ -78,7 +78,7 @@ object TestData {
 	}
 
 	def resolvedSubjects(): List[Subject] = {
-		List(Subject(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), name = Option("Entry 1"), properties = Map(FindRelations.wikiDataIdKey -> List("Q1"), "test" -> List("Q2", "Entry 2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("type" -> "test"))),
+		List(Subject(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), name = Option("Entry 1"), properties = Map(FindRelations.wikiDataIdKey -> List("Q1"), "test" -> List("Q2", "Entry 2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("type" -> "test", "key 1" -> "value 1"))),
 			Subject(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), name = Option("Entry 2"), properties = Map(FindRelations.wikiDataIdKey -> List("Q2"), "test" -> List("Q3", "Entry 3")), relations = Map(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d") -> Map("type" -> "test"))),
 			Subject(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), name = Option("Entry 3"), properties = Map(FindRelations.wikiDataIdKey -> List("Q3"), "test" -> List("Q4", "Entry 4")), relations = Map(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("type" -> "test"))),
 			Subject(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), name = Option("Entry 4"), properties = Map(FindRelations.wikiDataIdKey -> List("Q4"))),
@@ -91,15 +91,11 @@ object TestData {
 	}
 
 	def translatedSubjects(): List[Subject] = {
-		List(Subject(
-			name = Option("Protein FAM177A1"),
-			aliases = List("testalias"),
-			category = Option("test_instancetype"),
-			properties = Map(
-				"wikipedia_name" -> List("testwikiname"),
-				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
-				"subclass of" -> List("Protein", "FAM177 family"),
-				"wikidata_id" -> List("Q21110253"))))
+		List(Subject(name = Option("Protein FAM177A1"), aliases = List("testalias"), category = Option("test_instancetype"), properties = Map(
+						"wikipedia_name" -> List("testwikiname"),
+						"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
+						"subclass of" -> List("Protein", "FAM177 family"),
+						"wikidata_id" -> List("Q21110253"))))
 	}
 
 	def classWikidataEntities(): List[WikiDataEntity] = {

@@ -79,7 +79,6 @@ class DeduplicationUnitTest extends FlatSpec with SharedSparkContext with RDDCom
 
 	they should "be grouped into Duplicate Candidates" in {
 		val originalSettings = Deduplication.settings(false)
-
 		val subjects = TestData.testSubjects
 		val duplicates = sc.parallelize(TestData.testDuplicates(subjects))
 		Deduplication.settings = Map("stagingTable" -> "subject_wikidata")

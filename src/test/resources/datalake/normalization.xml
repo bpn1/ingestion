@@ -1,19 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<normalization>
-    <attributeMapping>
-        <attribute>
-            <key>rootKey</key>
-            <mapping>root_value</mapping>
-        </attribute>
-        <attribute>
-            <key>nestedKey1</key>
-            <mapping>nested_value:1.1</mapping>
-            <mapping>nested_value:1.2</mapping>
-            <mapping>nested_value:1.3</mapping>
-        </attribute>
-        <attribute>
-            <key>nestedKey2</key>
-            <mapping>nested_value:2.1</mapping>
-        </attribute>
-    </attributeMapping>
-</normalization>
+<config>
+    <normalization>
+        <attributeMapping>
+            <attribute>
+                <key>rootKey</key>
+                <mapping>root_value</mapping>
+            </attribute>
+            <attribute>
+                <key>nestedKey1</key>
+                <mapping>nested_value:1.1</mapping>
+                <mapping>nested_value:1.2</mapping>
+                <mapping>nested_value:1.3</mapping>
+            </attribute>
+            <attribute>
+                <key>nestedKey2</key>
+                <mapping>nested_value:2.1</mapping>
+            </attribute>
+        </attributeMapping>
+    </normalization>
+    <categorization>
+        <category>
+            <key>Category 1</key>
+            <mapping>value1.1</mapping>
+            <mapping>value1.2</mapping>
+        </category>
+        <category>
+            <key>Category 2</key>
+            <mapping>value2.1</mapping>
+        </category>
+        <category>
+            <key>Category 3</key>
+            <mapping>value3.1</mapping>
+            <mapping>value3.2</mapping>
+        </category>
+    </categorization>
+</config>
