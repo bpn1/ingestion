@@ -183,11 +183,11 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 
 	/**
 	  * Removes a given List of properties from the Subject.
-	  * @param props List of properties to remove
+	  * @param value List of properties to remove
 	  * @param validity validity of the properties
 	  */
-	def removeProperties(props: List[String], validity: Map[String, Map[String, String]] = Map()): Unit = {
-		setProperties(subject.properties -- props, validity)
+	def removeProperties(value: List[String], validity: Map[String, Map[String, String]] = Map()): Unit = {
+		setProperties(subject.properties -- value, validity)
 	}
 
 	/**
