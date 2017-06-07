@@ -1,5 +1,6 @@
 package de.hpi.ingestion.datalake
 
+import java.util.UUID
 import de.hpi.ingestion.datalake.mock.Entity
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
@@ -7,6 +8,14 @@ import org.apache.spark.rdd.RDD
 
 // scalastyle:off line.size.limit
 object TestData {
+
+	def masterIds(): List[UUID] = {
+		List(
+			UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"),
+			UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d")
+		)
+	}
+
 	def testEntity: Entity = Entity(
 		"test_key",
 		Map(
@@ -57,6 +66,24 @@ object TestData {
 
 	def version(sc: SparkContext): Version = {
 		Version("SomeTestApp", Nil, sc, false)
+	}
+
+	def translationEntities: List[Entity] = {
+		List(
+			Entity("e 1", Map("key 1" -> List("value 1", "value 2"))),
+			Entity("e 2", Map("key 2" -> List("value 1"),"key 3" -> List("value 2"))),
+			Entity("e 3", Map("key 1" -> Nil)),
+			Entity("e 4")
+		)
+	}
+
+	def translatedSubjects: List[Subject] = {
+		List(
+			Subject(id = null, name = Option("e 1"), properties = Map("key 1" -> List("value 1", "value 2"))),
+			Subject(id = null, name = Option("e 2"), properties = Map("key 2" -> List("value 1"),"key 3" -> List("value 2"))),
+			Subject(id = null, name = Option("e 3"), properties = Map("key 1" -> Nil)),
+			Subject(id = null, name = Option("e 4"))
+		)
 	}
 
 	def companyNames: Map[String, List[String]] = Map(

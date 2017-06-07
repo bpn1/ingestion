@@ -21,7 +21,7 @@ case class ExtendedLink(
 	  * @param normalizedThresh the number the biggest alias count has to be bigger than the others
 	  * @return One page or None
 	  */
-	def filterExtendedLink(countThresh: Int = 1, normalizedThresh: Double = 0.0): Option[String] = {
+	def filterExtendedLink(countThresh: Int, normalizedThresh: Double): Option[String] = {
 		page.size match {
 			case 0 | 1 => page.headOption.map(_._1)
 			case _ =>

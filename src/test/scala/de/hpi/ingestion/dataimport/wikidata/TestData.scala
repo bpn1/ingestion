@@ -1,12 +1,10 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import java.util.UUID
-
+import scala.io.Source
+import org.apache.spark.SparkContext
 import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikiDataEntity}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import org.apache.spark.SparkContext
-
-import scala.io.Source
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -64,7 +62,7 @@ object TestData {
 	}
 
 	def unresolvedSubjects(): List[Subject] = {
-		List(Subject(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), name = Option("Entry 1"), properties = Map(FindRelations.wikiDataIdKey -> List("Q1"), "test" -> List("Q2"))),
+		List(Subject(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), name = Option("Entry 1"), properties = Map(FindRelations.wikiDataIdKey -> List("Q1"), "test" -> List("Q2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("key 1" -> "value 1"))),
 			Subject(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), name = Option("Entry 2"), properties = Map(FindRelations.wikiDataIdKey -> List("Q2"), "test" -> List("Q3"))),
 			Subject(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), name = Option("Entry 3"), properties = Map(FindRelations.wikiDataIdKey -> List("Q3"), "test" -> List("Q4"))),
 			Subject(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), name = Option("Entry 4"), properties = Map(FindRelations.wikiDataIdKey -> List("Q4"))),
@@ -80,7 +78,7 @@ object TestData {
 	}
 
 	def resolvedSubjects(): List[Subject] = {
-		List(Subject(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), name = Option("Entry 1"), properties = Map(FindRelations.wikiDataIdKey -> List("Q1"), "test" -> List("Q2", "Entry 2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("type" -> "test"))),
+		List(Subject(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), name = Option("Entry 1"), properties = Map(FindRelations.wikiDataIdKey -> List("Q1"), "test" -> List("Q2", "Entry 2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("type" -> "test", "key 1" -> "value 1"))),
 			Subject(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), name = Option("Entry 2"), properties = Map(FindRelations.wikiDataIdKey -> List("Q2"), "test" -> List("Q3", "Entry 3")), relations = Map(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d") -> Map("type" -> "test"))),
 			Subject(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), name = Option("Entry 3"), properties = Map(FindRelations.wikiDataIdKey -> List("Q3"), "test" -> List("Q4", "Entry 4")), relations = Map(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("type" -> "test"))),
 			Subject(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), name = Option("Entry 4"), properties = Map(FindRelations.wikiDataIdKey -> List("Q4"))),
@@ -93,15 +91,11 @@ object TestData {
 	}
 
 	def translatedSubjects(): List[Subject] = {
-		List(Subject(
-			name = Option("Protein FAM177A1"),
-			aliases = List("testalias"),
-			category = Option("test_instancetype"),
-			properties = Map(
-				"wikipedia_name" -> List("testwikiname"),
-				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
-				"subclass of" -> List("Protein", "FAM177 family"),
-				"wikidata_id" -> List("Q21110253"))))
+		List(Subject(name = Option("Protein FAM177A1"), aliases = List("testalias"), category = Option("test_instancetype"), properties = Map(
+						"wikipedia_name" -> List("testwikiname"),
+						"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
+						"subclass of" -> List("Protein", "FAM177 family"),
+						"wikidata_id" -> List("Q21110253"))))
 	}
 
 	def classWikidataEntities(): List[WikiDataEntity] = {
@@ -298,9 +292,9 @@ object TestData {
 				"subclass of" -> List("Protein", "FAM177 family"),
 				"VIAF ID" -> List("X123"),
 				"industry" -> this.unnormalizedSectors,
-				"coordinate location" -> this.unnormalizedCoordinates,
-				"headquarters location" -> this.unnormalizedLocations,
-				"country" -> this.unnormalizedLocations,
+				"coordinate location" -> this.unnormalizedCoords,
+				"headquarters location" -> this.unnormalizedCities,
+				"country" -> this.unnormalizedCountries,
 				"employees" -> this.unnormalizedEmployees,
 				"testProperty" -> List("test")
 			)
@@ -346,25 +340,44 @@ object TestData {
 	def unnormalizedSectors: List[String] = List("Automobilindustrie", "Q126793", "Einzelhandel")
 	def normalizedSectors: List[String] = List("Automobilindustrie", "Einzelhandel")
 	def mappedSectors: List[String] = List("29", "45", "47")
-	def unnormalizedCoordinates: List[String] = List("-1;1", "55;48.88", "0.133;-1", "xxx;-1.0")
-	def normalizedCoordinates: List[String] = List("-1;1", "55;48.88", "0.133;-1")
-	def unnormalizedLocations: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
-	def normalizedLocations: List[String] = List("Russland", "Igrinski rajon")
+	def unnormalizedCoords: List[String] = List("-1;1", "55;48.88", "0.133;-1", "xxx;-1.0")
+	def normalizedCoords: List[String] = List("-1;1", "55;48.88", "0.133;-1")
+	def unnormalizedCountries: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
+	def normalizedCountries: List[String] = List("RU")
+	def unnormalizedCities: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
+	def normalizedCities: List[String] = List("Russland", "Igrinski rajon")
 	def unnormalizedEmployees: List[String] = List("+500;1", "+1337;1", "WRONG")
 	def normalizedEmployees: List[String] = List("500", "1337")
 
+	def applyInput: List[List[String]] = List(
+		this.unnormalizedCoords,
+		this.unnormalizedCities,
+		this.unnormalizedCountries,
+		this.unnormalizedSectors,
+		this.unnormalizedEmployees,
+		List("default")
+	)
+	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "default")
+	def applyStrategies: List[(List[String] => List[String])] = List(
+		WikiDataNormalizationStrategy.normalizeCoords,
+		WikiDataNormalizationStrategy.normalizeCity,
+		WikiDataNormalizationStrategy.normalizeCountry,
+		WikiDataNormalizationStrategy.normalizeSector,
+		WikiDataNormalizationStrategy.normalizeEmployees,
+		identity
+	)
 	def unnormalizedAttributes: Map[String, List[String]] = Map(
 		"gen_sectors" -> this.unnormalizedSectors,
-		"geo_coords" -> this.unnormalizedCoordinates,
-		"geo_country" -> this.unnormalizedLocations,
-		"geo_city" -> this.unnormalizedLocations,
+		"geo_coords" -> this.unnormalizedCoords,
+		"geo_country" -> this.unnormalizedCountries,
+		"geo_city" -> this.unnormalizedCities,
 		"gen_employees" -> this.unnormalizedEmployees
 	)
 	def normalizedAttributes: Map[String, List[String]] = Map(
 		"gen_sectors" -> this.mappedSectors,
-		"geo_coords" -> this.normalizedCoordinates,
-		"geo_country" -> this.normalizedLocations,
-		"geo_city" -> this.normalizedLocations,
+		"geo_coords" -> this.normalizedCoords,
+		"geo_country" -> this.normalizedCountries,
+		"geo_city" -> this.normalizedCities,
 		"gen_employees" -> this.normalizedEmployees
 	)
 }
