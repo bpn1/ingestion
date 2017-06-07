@@ -58,7 +58,7 @@ object RelationSentenceParser extends SparkJob {
 	): List[Sentence] = {
 		val text = entry.getText()
 		val sentences = tokenizer.process(text)
-		val links = entry.allLinks().filter(_.offset.getOrElse(-1) >= 0).distinct
+		val links = entry.allLinks().filter(_.offset.exists(_ >= 0))
 		var offset = 0
 		sentences.map { sentence =>
 			offset = text.indexOf(sentence, offset)
