@@ -8,7 +8,7 @@ import org.apache.spark.rdd.RDD
 
 class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Inverse document frequencies" should "contain as many tokens as document frequencies" in {
-		val documentFrequencies = TestData.documentFrequenciesTestSet()
+		val documentFrequencies = TestData.documentFrequenciesSet()
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(CosineContextComparator.calculateIdf(_, numDocuments))
@@ -16,7 +16,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "be exactly these inverse document frequencies" in {
-		val documentFrequencies = TestData.documentFrequenciesTestSet()
+		val documentFrequencies = TestData.documentFrequenciesSet()
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(CosineContextComparator.calculateIdf(_, numDocuments))

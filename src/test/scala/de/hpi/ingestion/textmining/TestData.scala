@@ -7,7 +7,6 @@ import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models.{TrieAlias, _}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
@@ -26,7 +25,7 @@ import scala.io.{BufferedSource, Source}
 
 object TestData {
 
-	def testSentences(): List[String] = {
+	def sentencesList(): List[String] = {
 		List(
 			"This is a test sentence.",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen.",
@@ -44,7 +43,7 @@ object TestData {
 		)
 	}
 
-	def tokenizedTestSentences(): List[List[String]] = {
+	def tokenizedSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
@@ -53,7 +52,7 @@ object TestData {
 		)
 	}
 
-	def tokenizedTestSentencesWithoutSpecialCharacters(): List[List[String]] = {
+	def tokenizedSentencesWithoutSpecialCharacters(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
@@ -125,9 +124,8 @@ object TestData {
 		)
 	}
 
-
-	def allAliasesTestRDD(sc: SparkContext): RDD[String] = {
-		sc.parallelize(List(
+	def allAliasesSet(): Set[String] = {
+		Set(
 			"Audi",
 			"Brachttal",
 			"Main-Kinzig-Kreis",
@@ -136,11 +134,11 @@ object TestData {
 			"Büdinger Wald",
 			"Backfisch",
 			"Streitberg",
-			"historisches Jahr"))
-			.sortBy(identity)
+			"historisches Jahr"
+		)
 	}
 
-	def parsedWikipediaTestSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaWithTextsSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
@@ -172,7 +170,7 @@ object TestData {
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
-	def parsedWikipediaExtendedLinksTestSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaExtendedLinksSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				textlinks = List(Link("Audi", "Audi", Option(9)))
@@ -221,7 +219,7 @@ object TestData {
 				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
-	def linksWithContextsTestSet(): Set[Link] = {
+	def linksWithContextsSet(): Set[Link] = {
 		Set(
 			Link("Audi", "Audi", Option(9), Map("verlink" -> 1)),
 			Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
@@ -427,24 +425,24 @@ object TestData {
 			(Link("historisches Jahr", "1377", Option(24)), Map("audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
-	def termFrequenciesTestSet(): Set[(String, Bag[String, Int])] = {
+	def termFrequenciesSet(): Set[(String, Bag[String, Int])] = {
 		Set(
 			("Audi Test mit Link", Bag("audi" -> 1, "verlink" -> 1)),
 			("Audi Test ohne Link", Bag("audi" -> 1, "verlink" -> 1)),
 			("Testartikel", Bag("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
-	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
-		sc.parallelize(List(
+	def aliasOccurrencesInArticlesList(): List[AliasOccurrencesInArticle] = {
+		List(
 			AliasOccurrencesInArticle(Set("Audi"), Set()),
 			AliasOccurrencesInArticle(Set(), Set("Audi")),
 			AliasOccurrencesInArticle(Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), Set("Streitberg")),
 			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
-		))
+		)
 	}
 
-	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {
-		sc.parallelize(List(
+	def startAliasCounterList(): List[Alias] = {
+		List(
 			Alias("Audi", Map(), Option(1), Option(1)),
 			Alias("Audi", Map(), Option(1), Option(1)),
 			Alias("Audi", Map(), Option(0), Option(1)),
@@ -460,11 +458,11 @@ object TestData {
 			Alias("Backfisch", Map(), Option(0), Option(1)),
 			Alias("Streitberg", Map(), Option(0), Option(1)),
 			Alias("historisches Jahr", Map(), Option(1), Option(1))
-		))
+		)
 	}
 
-	def countedAliasesTestRDD(sc: SparkContext): RDD[Alias] = {
-		sc.parallelize(List(
+	def countedAliasesSet(): Set[Alias] = {
+		Set(
 			Alias("Audi", Map(), Option(2), Option(3)),
 			Alias("Brachttal", Map(), Option(2), Option(2)),
 			Alias("Main-Kinzig-Kreis", Map(), Option(1), Option(2)),
@@ -474,7 +472,7 @@ object TestData {
 			Alias("Backfisch", Map(), Option(0), Option(1)),
 			Alias("Streitberg", Map(), Option(0), Option(1)),
 			Alias("historisches Jahr", Map(), Option(1), Option(1))
-		))
+		)
 	}
 
 	def linksSet(): Set[Alias] = {
@@ -530,17 +528,6 @@ object TestData {
 		)
 	}
 
-	def allPageNamesTestRDD(sc: SparkContext): RDD[String] = {
-		sc.parallelize(List(
-			"Brachttal",
-			"Main-Kinzig-Kreis",
-			"Hessen",
-			"1377",
-			"Büdinger Wald",
-			"Audi"))
-			.sortBy(identity)
-	}
-
 	def allPageNamesOfTestArticleList(): Set[String] = {
 		Set("Audi",
 			"Brachttal",
@@ -558,15 +545,15 @@ object TestData {
 		)
 	}
 
-	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def documentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("backfisch", 1)
 		)
 	}
 
-	def filteredDocumentFrequenciesTestList(): List[DocumentFrequency] = {
-		List(
+	def filteredDocumentFrequenciesSet(): Set[DocumentFrequency] = {
+		Set(
 			DocumentFrequency("audi", 3)
 		)
 	}
@@ -577,14 +564,14 @@ object TestData {
 			DocumentFrequency(".", 4))
 	}
 
-	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def requestedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("backfisch", 2)
 		)
 	}
 
-	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def unstemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("Audi", 3),
 			DocumentFrequency("Backfisch", 1),
@@ -598,7 +585,7 @@ object TestData {
 		)
 	}
 
-	def incorrectStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def incorrectStemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		// This test case is wrong, since there are only 4 documents and "ein" has a document frequency of 6
 		Set(
 			DocumentFrequency("audi", 3),
@@ -610,7 +597,7 @@ object TestData {
 		)
 	}
 
-	def stemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def stemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("audi", 3),
@@ -788,11 +775,11 @@ object TestData {
 		)
 	}
 
-	def unstemmedGermanWordsTestSet(): Set[String] = {
+	def unstemmedGermanWordsSet(): Set[String] = {
 		Set("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "brauchen", "können", "sollte")
 	}
 
-	def wikipediaTestTextLinks(): Map[String, List[Link]] = {
+	def wikipediaTextLinks(): Map[String, List[Link]] = {
 		// extracted text links from article abstracts
 		Map(
 			"Audi" -> List(
@@ -836,7 +823,7 @@ object TestData {
 		)
 	}
 
-	def wikipediaTestTemplateLinks(): Map[String, List[Link]] = {
+	def wikipediaTemplateLinks(): Map[String, List[Link]] = {
 		// extracted template links from Article abstracts
 		Map(
 			"Audi" -> List(
@@ -871,7 +858,7 @@ object TestData {
 				Link("Mary Todd Lincoln", "Mary Todd Lincoln")))
 	}
 
-	def wikipediaTestTemplateArticles(): Set[String] = {
+	def wikipediaTemplateArticles(): Set[String] = {
 		Set("Audi", "Electronic Arts", "Postbank-Hochhaus (Berlin)", "Abraham Lincoln")
 	}
 
@@ -937,11 +924,11 @@ object TestData {
 		)
 	}
 
-	def wikipediaDisambiguationPagesTestSet(): Set[String] = {
+	def wikipediaDisambiguationPagesSet(): Set[String] = {
 		Set("Zerfall", "Fisch", "Zwilling (Begriffsklärung)")
 	}
 
-	def wikipediaTestAbstracts(): Map[String, String] = {
+	def wikipediaAbstracts(): Map[String, String] = {
 		Map(
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
 			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet."""
@@ -959,6 +946,7 @@ object TestData {
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
+
 	def entryWithStandardWhitespaces(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
@@ -1004,15 +992,6 @@ object TestData {
 			"Bayern" -> 1.0,
 			"Automobilhersteller" -> 0.0,
 			"Zerfall" -> 0.0
-		)
-	}
-
-	def allPagesTestList(): List[String] = {
-		List(
-			"Automobilhersteller",
-			"Ingolstadt",
-			"Bayern",
-			"Zerfall (Album)"
 		)
 	}
 
@@ -1128,11 +1107,11 @@ object TestData {
 				)))
 	}
 
-	def germanStopwordsTestSet(): Set[String] = {
+	def germanStopwordsSet(): Set[String] = {
 		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
 	}
 
-	def unstemmedDFTestSet(): Set[ParsedWikipediaEntry] = {
+	def unstemmedDFSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich einer ein Link."),
 				List(
@@ -1165,27 +1144,27 @@ object TestData {
 		)
 	}
 
-	def stemmedDFTestSet(): Set[DocumentFrequency] = {
+	def stemmedDFSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 4),
 			DocumentFrequency("backfisch", 3)
 		)
 	}
 
-	def germanDFStopwordsTestSet(): Set[DocumentFrequency] = {
+	def germanDFStopwordsSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 3)
 		)
 	}
 
-	def unstemmedGermanWordsTestList(): List[String] = {
+	def unstemmedGermanWordsList(): List[String] = {
 		List("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "Streitberg", "Braunschweig",
 			"Deutschland", "Baum", "brauchen", "suchen", "könnte")
 		// problem words: eine -> eine, hatte -> hatt
 	}
 
-	def stemmedGermanWordsTestList(): List[String] = {
+	def stemmedGermanWordsList(): List[String] = {
 		List("es", "kein", "kein", "kein", "ist", "kein", "kein", "streitberg", "braunschweig",
 			"deutschla", "baum", "brauch", "such", "konn")
 	}
@@ -1342,7 +1321,7 @@ object TestData {
 			"Galgenhumor")
 	}
 
-	def testNamespacePages(): List[WikipediaEntry] = {
+	def namespacePagesList(): List[WikipediaEntry] = {
 		List(
 			WikipediaEntry("lol"),
 			WikipediaEntry("Audi"),
@@ -1384,10 +1363,11 @@ object TestData {
 			WikipediaEntry("Gadget-Definition Diskussion:Testpage"),
 			WikipediaEntry("Thema:Testpage"),
 			WikipediaEntry("Spezial:Testpage"),
-			WikipediaEntry("Medium:Testpage"))
+			WikipediaEntry("Medium:Testpage")
+		)
 	}
 
-	def testCleanedNamespacePages(): List[WikipediaEntry] = {
+	def cleanedNamespacePagesList(): List[WikipediaEntry] = {
 		List(
 			WikipediaEntry("lol"),
 			WikipediaEntry("Audi"),
@@ -1395,23 +1375,25 @@ object TestData {
 			WikipediaEntry("Postbank-Hochhaus (Berlin)"),
 			WikipediaEntry("Postbank-Hochhaus Berlin"),
 			WikipediaEntry("Abraham Lincoln"),
-			WikipediaEntry("Kategorie:Testpage"))
+			WikipediaEntry("Kategorie:Testpage")
+		)
 	}
 
-	def testNamespaceLinks(): List[Link] = {
+	def namespaceLinksList(): List[Link] = {
 		List(
 			Link("August Horch", "August Horch", Option(0)),
 			Link("August Horch", "Benutzer:August Horch", Option(0)),
 			Link("August Horch", "Thema:August Horch", Option(0)),
 			Link("August Horch", "HD:August Horch", Option(0)),
-			Link("August Horch", "Kategorie:August Horch", Option(0)))
+			Link("August Horch", "Kategorie:August Horch", Option(0))
+		)
 	}
 
-	def testListLinkPage(): String = {
+	def htmlListLinkPage(): String = {
 		Source.fromURL(getClass.getResource("/textmining/test_data.html")).getLines().mkString("\n")
 	}
 
-	def testExtractedListLinks(): List[Link] = {
+	def extractedListLinksList(): List[Link] = {
 		List(
 			Link("Zwillinge", "Zwillinge"),
 			Link("Kristallzwilling", "Kristallzwilling"),
@@ -1433,16 +1415,18 @@ object TestData {
 			Link("Twins - Zwillinge", "Twins - Zwillinge"),
 			Link("Zwillingswendeltreppe", "Zwillingswendeltreppe"),
 			Link("Der Zwilling", "Der Zwilling"),
-			Link("Die Zwillinge", "Die Zwillinge"))
+			Link("Die Zwillinge", "Die Zwillinge")
+		)
 	}
 
-	def testCleanedNamespaceLinks(): List[Link] = {
+	def cleanedNamespaceLinksList(): List[Link] = {
 		List(
 			Link("August Horch", "August Horch", Option(0)),
-			Link("August Horch", "Kategorie:August Horch", Option(0)))
+			Link("August Horch", "Kategorie:August Horch", Option(0))
+		)
 	}
 
-	def testCategoryLinks(): List[Link] = {
+	def categoryLinksList(): List[Link] = {
 		List(
 			Link("Ingolstadt", "Ingolstadt", Option(55)),
 			Link("Bayern", "Bayern", Option(69)),
@@ -1455,10 +1439,11 @@ object TestData {
 			Link("Lateinische", "Latein", Option(599)),
 			Link("Imperativ", "Imperativ (Modus)", Option(636)),
 			Link("Kategorie:Zwickau", "Zwickau", Option(829)),
-			Link("Zschopauer", "Zschopau", Option(868)))
+			Link("Zschopauer", "Zschopau", Option(868))
+		)
 	}
 
-	def testCleanedCategoryLinks(): List[Link] = {
+	def cleanedCategoryLinksList(): List[Link] = {
 		List(
 			Link("Ingolstadt", "Ingolstadt", Option(55)),
 			Link("Bayern", "Bayern", Option(69)),
@@ -1467,30 +1452,28 @@ object TestData {
 			Link("August Horch", "August Horch", Option(316)),
 			Link("Lateinische", "Latein", Option(599)),
 			Link("Imperativ", "Imperativ (Modus)", Option(636)),
-			Link("Zschopauer", "Zschopau", Option(868)))
+			Link("Zschopauer", "Zschopau", Option(868))
+		)
 	}
 
-	def testExtractedCategoryLinks(): List[Link] = {
+	def extractedCategoryLinksList(): List[Link] = {
 		List(
 			Link("Automobilhersteller", "Automobilhersteller"),
 			Link("Wortspiel", "Wortspiel"),
 			Link("Namensrechte", "Marke (Recht)"),
-			Link("Zwickau", "Zwickau"))
+			Link("Zwickau", "Zwickau")
+		)
 	}
 
-	def testRedirectDict(): Map[String, String] = {
-		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
-	}
-
-	def testLinksWithRedirects(): Set[Link] = {
+	def linksWithRedirectsSet(): Set[Link] = {
 		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus Berlin", Option(10)))
 	}
 
-	def testLinksWithResolvedRedirects(): Set[Link] = {
+	def linksWithResolvedRedirectsSet(): Set[Link] = {
 		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus (Berlin)", Option(10)))
 	}
 
-	def testEntriesWithBadRedirects(): List[WikipediaEntry] = {
+	def entriesWithBadRedirectsList(): List[WikipediaEntry] = {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
 
@@ -1514,7 +1497,7 @@ object TestData {
 		)
 	}
 
-	def parsedEntriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
+	def parsedEntriesWithResolvedRedirectsSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "test page"))),
 			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "test page 2"), Link("alias 3", "Europäische Union"))),
@@ -1529,31 +1512,39 @@ object TestData {
 		Set(
 			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
 			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
-			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT")))
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
 	}
 
-	def redirectDict(): Map[String, String] = {
-		Map(
-			"Test Redirect Entry 1" -> "test page",
-			"Test Redirect Entry 2" -> "test page 2",
-			"EU" -> "Europäische Union")
+	def smallRedirectMap(): Map[String, String] = {
+		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
 	}
 
 	def redirectMap(): Map[String, String] = {
+		Map(
+			"Test Redirect Entry 1" -> "test page",
+			"Test Redirect Entry 2" -> "test page 2",
+			"EU" -> "Europäische Union"
+		)
+	}
+
+	def transitiveRedirectMap(): Map[String, String] = {
 		Map(
 			"Site 1" -> "Site 3",
 			"Site 3" -> "Site 6",
 			"Site 4" -> "Site 5",
 			"Site 5" -> "Site 4",
 			"Site 7" -> "Site 7",
-			"EU" -> "Europäische Union")
+			"EU" -> "Europäische Union"
+		)
 	}
 
 	def cleanedRedirectMap(): Map[String, String] = {
 		Map(
 			"Site 1" -> "Site 6",
 			"Site 3" -> "Site 6",
-			"EU" -> "Europäische Union")
+			"EU" -> "Europäische Union"
+		)
 	}
 
 	def entriesWithRedirects(): Set[ParsedWikipediaEntry] = {
@@ -1565,7 +1556,8 @@ object TestData {
 				categorylinks = List(Link("Alias 4", "Site 4")),
 				templatelinks = List(Link("Alias 5", "Site 5"))),
 			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
-			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "EU"))))
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "EU")))
+		)
 	}
 
 	def entriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
@@ -1577,7 +1569,8 @@ object TestData {
 				categorylinks = List(Link("Alias 4", "Site 4")),
 				templatelinks = List(Link("Alias 5", "Site 5"))),
 			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
-			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union"))))
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union")))
+		)
 	}
 
 	def aliasFileStream(): BufferedSource = {
@@ -1594,7 +1587,7 @@ object TestData {
 		trie
 	}
 
-	def testDataTrie(tokenizer: IngestionTokenizer): TrieNode = {
+	def dataTrie(tokenizer: IngestionTokenizer): TrieNode = {
 		val trie = new TrieNode()
 		val aliasList = Source.fromURL(getClass.getResource("/textmining/triealiases")).getLines()
 		for(alias <- aliasList) {
@@ -1759,8 +1752,8 @@ object TestData {
 
 	def alternativeSentenceList(): List[Sentence] = {
 		List(
-			Sentence("Audi",0,"Audi ist Audi AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Audi AG","Audi",Some(9)))),
-			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))
+			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9)))),
+			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))))
 		)
 	}
 
@@ -1774,8 +1767,8 @@ object TestData {
 
 	def sentencesWithCooccurrences(): List[Sentence] = {
 		List(
-			Sentence("Audi",0,"Audi ist Volkswagen.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Volkswagen","Volkswagen AG",Some(1)))),
-			Sentence("Audi",18,"Audi ist Volkswagen AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Volkswagen AG","Volkswagen AG",Some(1))))
+			Sentence("Audi", 0, "Audi ist Volkswagen.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Volkswagen", "Volkswagen AG", Some(1)))),
+			Sentence("Audi", 18, "Audi ist Volkswagen AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Volkswagen AG", "Volkswagen AG", Some(1))))
 		)
 	}
 
@@ -1998,7 +1991,7 @@ object TestData {
 	}
 
 	def predictionStatistics(): PrecisionRecallDataTuple = {
-		PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0)
+		PrecisionRecallDataTuple(1.0, 5.0 / 7.0, 5.0 / 6.0, 25.0 / 34.0)
 	}
 
 	def statisticTuples(): List[PrecisionRecallDataTuple] = {
@@ -2024,7 +2017,7 @@ object TestData {
 		new RandomForestModel(Algo.Classification, Array(dtmodel))
 	}
 
-	def testCrossValidationMethod(
+	def crossValidationMethod(
 		data: RDD[LabeledPoint],
 		numFolds: Int = 3,
 		numTrees: Int = 5,

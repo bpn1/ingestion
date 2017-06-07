@@ -1,37 +1,36 @@
 package de.hpi.ingestion.textmining
 
 import org.scalatest.{FlatSpec, Matchers}
-import com.holdenkarau.spark.testing.{SharedSparkContext, RDDComparisons}
+import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkContext with Matchers {
+class AliasCounterTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"Counted aliases" should "have the same size as all links" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
-		val allAliases = TestData.allAliasesTestRDD(sc)
-		val countedAliases = AliasCounter
-			.countAliases(articles)
-		countedAliases.count shouldBe allAliases.count
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+		val countedAliases = AliasCounter.countAliases(articles)
+		countedAliases.count shouldBe TestData.allAliasesSet().size
 	}
 
 	they should "have the same aliases as all links" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val countedAliases = AliasCounter
 				.countAliases(articles)
 				.map(_.alias)
-		assertRDDEquals(countedAliases, TestData.allAliasesTestRDD(sc))
+				.collect
+				.toSet
+		countedAliases shouldEqual TestData.allAliasesSet()
 	}
 
 	they should "have counted any occurrence" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		AliasCounter
 			.countAliases(articles)
 			.collect
-			.foreach(aliasCounter =>
-				aliasCounter.totaloccurrences.get should be > 0)
+			.foreach(aliasCounter => aliasCounter.totaloccurrences.get should be > 0)
 	}
 
 	they should "have consistent counts" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		AliasCounter
 			.countAliases(articles)
 			.collect
@@ -43,23 +42,27 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	}
 
 	they should "be exactly these counted aliases" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val countedAliases = AliasCounter
 			.countAliases(articles)
-		assertRDDEquals(countedAliases, TestData.countedAliasesTestRDD(sc))
+			.collect
+			.toSet
+		countedAliases shouldEqual TestData.countedAliasesSet()
 	}
 
 	"Extracted alias lists" should "contain all links and aliases" in {
-		val aliasListsRDD = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val aliasList = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 			.map(AliasCounter.extractAliasList)
 		    .map(_.map(_.alias).toSet)
-		val testAliasLists = TestData.aliasOccurrencesInArticlesTestRDD(sc)
+			.collect
+			.toList
+		val testAliasLists = TestData.aliasOccurrencesInArticlesList()
 			.map(data => data.links ++ data.noLinks)
-		assertRDDEquals(aliasListsRDD, testAliasLists)
+		aliasList shouldEqual testAliasLists
 	}
 
 	they should "have the alias counter set properly" in {
-		sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 			.flatMap(AliasCounter.extractAliasList)
 			.collect
 			.foreach { alias =>
@@ -70,23 +73,24 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	}
 
 	they should "be exactly the same Alias counters" in {
-		val testAliasCounterData = TestData.startAliasCounterTestRDD(sc)
-		val aliasCounterRDD = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val aliasCounterRDD = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 			.flatMap(AliasCounter.extractAliasList)
-		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
+		val expectedAliasCounterRDD = sc.parallelize(TestData.startAliasCounterList())
+		assertRDDEquals(aliasCounterRDD, expectedAliasCounterRDD)
 	}
 
 	"Alias reduction function" should "properly add link occurrences" in {
-		val testAliasCounterData = TestData.countedAliasesTestRDD(sc)
-		val aliasCounterRDD = TestData.startAliasCounterTestRDD(sc)
+		val aliasCounterSet = sc.parallelize(TestData.startAliasCounterList())
 			.map(alias => (alias.alias, alias))
 			.reduceByKey(AliasCounter.aliasReduction)
 		    .map(_._2)
-		assertRDDEquals(aliasCounterRDD, testAliasCounterData)
+			.collect
+			.toSet
+		aliasCounterSet shouldEqual TestData.countedAliasesSet()
 	}
 
 	"Alias counts" should "be exactly these tuples" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val mergedLinks = AliasCounter.run(List(articles).toAnyRDD(), sc)
 			.fromAnyRDD[(String, Option[Int], Option[Int])]()
 			.head
@@ -96,7 +100,7 @@ class AliasCounterTest extends FlatSpec with RDDComparisons with SharedSparkCont
 	}
 
 	"Counted number of link occurrences" should "equal number of page references" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val expectedOccurrences = TestData.linksSet()
 			.map(link => (link.alias, link.pages.foldLeft(0)(_ + _._2)))
 			.toMap
