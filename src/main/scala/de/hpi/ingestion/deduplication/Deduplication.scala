@@ -4,7 +4,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
-import de.hpi.ingestion.deduplication.similarity._
+import de.hpi.ingestion.deduplication.models.config.AttributeConfig
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
@@ -58,18 +58,19 @@ object Deduplication extends SparkJob {
 	def compare(
 		subject1: Subject,
 		subject2: Subject,
-		scoreConfigMap: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]],
+		attributeConfigs: List[AttributeConfig] = Nil,
 		scale: Int = 1
 	): Double = {
-		val (scores, weights) = scoreConfigMap.flatMap { case (attribute, configs) =>
-			val valueSubject1 = subject1.get(attribute)
-			val valueSubject2 = subject2.get(attribute)
-			configs.collect {
-				case scoreConfig if valueSubject1.nonEmpty && valueSubject2.nonEmpty =>
-					(CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig), scoreConfig.weight)
+		attributeConfigs.flatMap { case AttributeConfig(attribute, weight, configs) =>
+			val subjectValues = subject1.get(attribute)
+			val stagingValues = subject2.get(attribute)
+			if (subjectValues.nonEmpty && stagingValues.nonEmpty) {
+				val score = configs.map(CompareStrategy(attribute)(subjectValues, stagingValues, _)).sum
+				Option(score * weight)
+			} else {
+				None
 			}
-		}.unzip
-		scores.sum / weights.sum
+		}.sum
 	}
 
 	/**

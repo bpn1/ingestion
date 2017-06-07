@@ -1,4 +1,4 @@
-package de.hpi.ingestion.deduplication.models
+package de.hpi.ingestion.deduplication.models.config
 
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
 
@@ -10,11 +10,14 @@ import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
   * @tparam A type of the attribute
   * @tparam B type of the similarity measure
   */
-case class ScoreConfig[A, B <: SimilarityMeasure[A]](
+case class SimilarityMeasureConfig[A, B <: SimilarityMeasure[A]](
 	similarityMeasure: B,
-	weight: Double,
+	weight: Double = 0.0,
 	scale: Int = 1
-) {
+) extends WeightedFeatureConfig{
+	override type T = SimilarityMeasureConfig[A, B]
+	override def updateWeight(weight: Double): SimilarityMeasureConfig[A, B] = this.copy(weight = weight)
+
 	/**
 	  * This method simply compares two strings.
 	  *

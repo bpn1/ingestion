@@ -1,8 +1,8 @@
 package de.hpi.ingestion.framework
 
-import de.hpi.ingestion.deduplication.models.ScoreConfig
+import de.hpi.ingestion.deduplication.models.config.{AttributeConfig, SimilarityMeasureConfig}
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
-import scala.io.Source
+
 import scala.xml.{Node, XML}
 
 /**
@@ -11,7 +11,7 @@ import scala.xml.{Node, XML}
 trait Configurable {
 	var configFile: String = ""
 	private var _settings: Map[String, String] = Map()
-	private var _scoreConfigSettings: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = Map()
+	private var _scoreConfigSettings: List[AttributeConfig] = Nil
 
 	/**
 	  * Reads the configuration from an xml file.
@@ -59,9 +59,7 @@ trait Configurable {
 	  * @param loadIfEmpty load configuration if not yet done (true by default)
 	  * @return _scoreConfigSettings
 	  */
-	def scoreConfigSettings(
-		loadIfEmpty: Boolean = true
-	): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+	def scoreConfigSettings(loadIfEmpty: Boolean = true): List[AttributeConfig] = {
 		if(_scoreConfigSettings.isEmpty && !configFile.isEmpty && loadIfEmpty) {
 			parseConfig()
 		}
@@ -73,7 +71,7 @@ trait Configurable {
 	  *
 	  * @return _scoreConfigSettings
 	  */
-	def scoreConfigSettings: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+	def scoreConfigSettings: List[AttributeConfig] = {
 		scoreConfigSettings()
 	}
 
@@ -82,7 +80,7 @@ trait Configurable {
 	  *
 	  * @param newSettings new score config settings
 	  */
-	def scoreConfigSettings_=(newSettings: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]): Unit  = {
+	def scoreConfigSettings_=(newSettings: List[AttributeConfig]): Unit  = {
 		_scoreConfigSettings = newSettings
 	}
 
@@ -107,20 +105,23 @@ trait Configurable {
 	  * @param node the XML node containing the simMeasurements tag as child.
 	  * @return Map containing attributes with their score configurations
 	  */
-	def parseSimilarityMeasures(node: Node): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
+	def parseSimilarityMeasures(node: Node): List[AttributeConfig] = {
+		val extractWeight: Node => Double = node => if(node.text.nonEmpty) node.text.toDouble else 0.0
 		val attributes = node \ "simMeasurements" \ "attribute"
-		attributes.map { node =>
+		val configs = attributes.map { node =>
 			val key = (node \ "key").text
+			val weight = extractWeight((node \ "weight").head)
 			val scoreConfigs = (node \ "feature").map { feature =>
 				val similarityMeasure = (feature \ "similarityMeasure").text
-				val weight = (feature \ "weight").text.toDouble
+				val weight = extractWeight((feature \ "weight").head)
 				val scale = (feature \ "scale").text.toInt
-				ScoreConfig[String, SimilarityMeasure[String]](
+				SimilarityMeasureConfig[String, SimilarityMeasure[String]](
 					SimilarityMeasure.get[String](similarityMeasure),
 					weight,
 					scale)
-			}
-			(key, scoreConfigs.toList)
-		}.toMap
+			}.toList
+			AttributeConfig(key, weight, scoreConfigs)
+		}.toList
+		AttributeConfig.normalizeWeights(configs)
 	}
 }
