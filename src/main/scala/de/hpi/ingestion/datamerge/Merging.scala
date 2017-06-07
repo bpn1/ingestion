@@ -17,11 +17,7 @@ import de.hpi.ingestion.implicits.TupleImplicits._
   */
 object Merging extends SparkJob {
 	appName = "Merging"
-	val keyspace = "datalake"
-	val subjectsTable = "subject"
-	val stagingsTable = "subject_temp"
-	val duplicatesTable = "duplicatecandidates"
-	val outputTable = "subject"
+	configFile = "merging.xml"
 	val sourcePriority = List("human", "implisense", "dbpedia", "wikidata")
 
 	// $COVERAGE-OFF$
@@ -32,9 +28,9 @@ object Merging extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable(keyspace, subjectsTable)
-		val stagings = sc.cassandraTable(keyspace, stagingsTable)
-		val duplicates = sc.cassandraTable(keyspace, duplicatesTable)
+		val subjects = sc.cassandraTable(settings("keyspaceSubjectTable"), settings("subjectTable"))
+		val stagings = sc.cassandraTable(settings("keyspaceStagingTable"), settings("stagingTable"))
+		val duplicates = sc.cassandraTable(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 		List(subjects, stagings).toAnyRDD() ::: List(duplicates).toAnyRDD()
 	}
 
@@ -48,7 +44,7 @@ object Merging extends SparkJob {
 		output
 			.fromAnyRDD[Subject]()
 			.head
-			.saveToCassandra(keyspace, outputTable)
+			.saveToCassandra(settings("keyspaceSubjectTable"), settings("subjectTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -201,7 +197,7 @@ object Merging extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(subjects, stagings) = input.take(2).fromAnyRDD[Subject]()
 		val duplicateCandidates = input(2).asInstanceOf[RDD[DuplicateCandidates]]
-		val version = Version("Merging", Nil, sc, true)
+		val version = Version("Merging", List("merging"), sc, true)
 
 		val mergedSubjects = duplicateCandidates
 			.map(candidate => (candidate.subject_id, candidate))
