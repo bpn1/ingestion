@@ -20,13 +20,13 @@ class SubjectTest extends FlatSpec with Matchers {
 		val name = "name"
 		val aliasList = List("alias")
 		val uuid = UUID.randomUUID()
-		val sub1 = Subject(name = Option(name), aliases = aliasList, master = Option(uuid))
-		sub1.get("name") shouldEqual List(name)
-		sub1.get("category") shouldBe empty
-		sub1.get("aliases") shouldEqual aliasList
-		sub1.get("id") shouldBe empty
-		sub1.get("properties") shouldBe empty
-		sub1.get("master") shouldEqual List(uuid.toString)
+		val subject = Subject(name = Option(name), aliases = aliasList, master = Option(uuid))
+		subject.get("name") shouldEqual List(name)
+		subject.get("category") shouldBe empty
+		subject.get("aliases") shouldEqual aliasList
+		subject.get("id") shouldBe empty
+		subject.get("properties") shouldBe empty
+		subject.get("master") shouldEqual List(uuid.toString)
 	}
 
 	"Normalized properties" should "be returned" in {

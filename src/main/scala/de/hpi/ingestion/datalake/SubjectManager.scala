@@ -107,13 +107,13 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param score score of the relation
 	  * @param validity Map containing the data about the validity
 	  */
-	def setMaster(value: Option[UUID], score: Double = 0.0, validity: Map[String, String] = Map()): Unit = {
+	def setMaster(value: Option[UUID], score: Double = 1.0, validity: Map[String, String] = Map()): Unit = {
 		val higherScore = subject.master
 			.flatMap(subject.relations.get)
 			.flatMap(_.get(SubjectManager.slaveKey))
 			.exists(_.toDouble < score)
 		subject.master
-			.filter(!value.contains(_))
+			.filterNot(value.contains)
 			.foreach(masterId => removeRelations(Map(masterId -> List(SubjectManager.slaveKey))))
 		value
 			.filter(!subject.master.contains(_) || higherScore)
@@ -283,7 +283,6 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
   * Companion-object for the SubjectManager class.
   */
 object SubjectManager {
-
 	val slaveKey = "slave"
 	val masterKey = "master"
 
@@ -300,8 +299,6 @@ object SubjectManager {
 		val subjectManager2 = new SubjectManager(subject2, version)
 		subjectManager1.addRelations(Map(subject2.id -> relations))
 		subjectManager2.addRelations(Map(subject1.id -> relations))
-		println("sub1 rel " + subject1.relations)
-		println("sub2 rel " + subject2.relations)
 	}
 
 	/**

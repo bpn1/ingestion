@@ -91,7 +91,6 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 			.filter(pair => tags.contains(pair.getValue))
 			.map(_.getKey.getRawForm)
 			.toList
-
 	}
 
 	override def classifier: AClassifier[Tag] = {

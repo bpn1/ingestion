@@ -1,7 +1,5 @@
 package de.hpi.ingestion.datalake
 
-import java.util.UUID
-
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.datalake.models._
 import org.scalatest.{FlatSpec, Matchers}
@@ -97,8 +95,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	"Master node" should "be set" in {
 		val subject = Subject()
 		val version = Version.apply("SM Test", Nil, sc, false)
-		val masterId = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130")
-		val masterId2 = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d")
+		val List(masterId, masterId2) = TestData.masterIds()
 		val sm = new SubjectManager(subject, version)
 		sm.setMaster(masterId, 0.5)
 		subject.master should contain (masterId)
@@ -174,8 +171,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	"Relations" should "be added and removed" in {
 		val subject = Subject()
 		val version = Version.apply("SM Test", Nil, sc, false)
-		val sub1 = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130")
-		val sub2 = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d")
+		val List(sub1, sub2) = TestData.masterIds()
 		val sm = new SubjectManager(subject, version)
 		sm.addRelations(Map(sub1 -> Map("key 1" -> "value 1", "key 2" -> "value 2")))
 		subject.relations(sub1) shouldEqual Map("key 1" -> "value 1", "key 2" -> "value 2")

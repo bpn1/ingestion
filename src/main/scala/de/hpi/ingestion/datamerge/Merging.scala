@@ -77,10 +77,10 @@ object Merging extends SparkJob {
 			case Some(masterId) =>
 				duplicateCandidates.foreach { dupCandidate =>
 					dupCandidate.candidates.foreach { case (duplicate, source, dupeScore) =>
-						subjectSm.addRelations(Map(duplicate -> Map("duplicate" -> s"$dupeScore")))
+						subjectSm.addRelations(Map(duplicate -> Map("duplicate" -> dupeScore.toString)))
 					}
 				}
-				stagedSm.addRelations(Map(subject.id -> Map("duplicate" -> s"$score")))
+				stagedSm.addRelations(Map(subject.id -> Map("duplicate" -> score.toString)))
 				stagedSm.setMaster(masterId, score)
 			case None => stagedSm.setMaster(subject.id, score)
 		}
