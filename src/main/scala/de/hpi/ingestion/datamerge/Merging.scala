@@ -205,7 +205,7 @@ object Merging extends SparkJob {
 
 		val mergedSubjects = duplicateCandidates
 			.map(candidate => (candidate.subject_id, candidate))
-			// TODO merge multiple duplicate candidates with the same subject
+			// TODO merge multiple duplicate candidates with the same subject #430
 			.join(subjects.map(sub => Tuple2(sub.id, sub)))
 			.values
 			.flatMap { case (candidate, sub) =>
