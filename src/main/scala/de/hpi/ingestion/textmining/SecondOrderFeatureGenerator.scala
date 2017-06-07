@@ -40,7 +40,7 @@ object SecondOrderFeatureGenerator extends SparkJob {
 		output
 			.fromAnyRDD[FeatureEntry]()
 			.head
-			.saveToCassandra(settings("keyspace"), settings("featureWithSOFTable"))
+			.saveToCassandra(settings("keyspace"), settings("secondOrderFeatureTable"))
 	}
 
 	/**
