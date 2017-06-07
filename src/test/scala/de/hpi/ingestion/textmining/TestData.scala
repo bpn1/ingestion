@@ -7,7 +7,6 @@ import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models.{TrieAlias, _}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
@@ -25,13 +24,8 @@ import scala.io.{BufferedSource, Source}
 // scalastyle:off file.size.limit
 
 object TestData {
-	def stopwordsSet(): Set[String] = {
-		Source.fromURL(getClass.getResource("/textmining/german_stopwords_without_umlauts.txt"))
-			.getLines()
-			.toSet
-	}
 
-	def testSentences(): List[String] = {
+	def sentencesList(): List[String] = {
 		List(
 			"This is a test sentence.",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen.",
@@ -49,7 +43,7 @@ object TestData {
 		)
 	}
 
-	def tokenizedTestSentences(): List[List[String]] = {
+	def tokenizedSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
@@ -58,7 +52,7 @@ object TestData {
 		)
 	}
 
-	def tokenizedTestSentencesWithoutSpecialCharacters(): List[List[String]] = {
+	def tokenizedSentencesWithoutSpecialCharacters(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
@@ -130,9 +124,8 @@ object TestData {
 		)
 	}
 
-
-	def allAliasesTestRDD(sc: SparkContext): RDD[String] = {
-		sc.parallelize(List(
+	def allAliasesSet(): Set[String] = {
+		Set(
 			"Audi",
 			"Brachttal",
 			"Main-Kinzig-Kreis",
@@ -141,11 +134,11 @@ object TestData {
 			"Büdinger Wald",
 			"Backfisch",
 			"Streitberg",
-			"historisches Jahr"))
-			.sortBy(identity)
+			"historisches Jahr"
+		)
 	}
 
-	def parsedWikipediaTestSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaWithTextsSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				List(
@@ -157,7 +150,7 @@ object TestData {
 				List(),
 				List(),
 				List("Audi")),
-			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr spaeter taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
 					Link("Brachttal", "Brachttal", Option(55)),
 					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
@@ -177,7 +170,7 @@ object TestData {
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
 	}
 
-	def parsedWikipediaExtendedLinksTestSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaExtendedLinksSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
 				textlinks = List(Link("Audi", "Audi", Option(9)))
@@ -226,7 +219,7 @@ object TestData {
 				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
-	def linksWithContextsTestSet(): Set[Link] = {
+	def linksWithContextsSet(): Set[Link] = {
 		Set(
 			Link("Audi", "Audi", Option(9), Map("verlink" -> 1)),
 			Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
@@ -255,7 +248,7 @@ object TestData {
 				List("Audi"),
 				linkswithcontext = List()
 			),
-			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr spaeter taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
 					Link("Brachttal", "Brachttal", Option(55)),
 					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
@@ -305,7 +298,7 @@ object TestData {
 				linkswithcontext = List(),
 				context = Map("audi" -> 1, "verlink" -> 1)
 			),
-			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr spaeter taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
 					Link("Brachttal", "Brachttal", Option(55)),
 					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
@@ -432,24 +425,24 @@ object TestData {
 			(Link("historisches Jahr", "1377", Option(24)), Map("audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
-	def termFrequenciesTestSet(): Set[(String, Bag[String, Int])] = {
+	def termFrequenciesSet(): Set[(String, Bag[String, Int])] = {
 		Set(
 			("Audi Test mit Link", Bag("audi" -> 1, "verlink" -> 1)),
 			("Audi Test ohne Link", Bag("audi" -> 1, "verlink" -> 1)),
 			("Testartikel", Bag("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
-	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
-		sc.parallelize(List(
+	def aliasOccurrencesInArticlesList(): List[AliasOccurrencesInArticle] = {
+		List(
 			AliasOccurrencesInArticle(Set("Audi"), Set()),
 			AliasOccurrencesInArticle(Set(), Set("Audi")),
 			AliasOccurrencesInArticle(Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), Set("Streitberg")),
 			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
-		))
+		)
 	}
 
-	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {
-		sc.parallelize(List(
+	def startAliasCounterList(): List[Alias] = {
+		List(
 			Alias("Audi", Map(), Option(1), Option(1)),
 			Alias("Audi", Map(), Option(1), Option(1)),
 			Alias("Audi", Map(), Option(0), Option(1)),
@@ -465,11 +458,11 @@ object TestData {
 			Alias("Backfisch", Map(), Option(0), Option(1)),
 			Alias("Streitberg", Map(), Option(0), Option(1)),
 			Alias("historisches Jahr", Map(), Option(1), Option(1))
-		))
+		)
 	}
 
-	def countedAliasesTestRDD(sc: SparkContext): RDD[Alias] = {
-		sc.parallelize(List(
+	def countedAliasesSet(): Set[Alias] = {
+		Set(
 			Alias("Audi", Map(), Option(2), Option(3)),
 			Alias("Brachttal", Map(), Option(2), Option(2)),
 			Alias("Main-Kinzig-Kreis", Map(), Option(1), Option(2)),
@@ -479,7 +472,7 @@ object TestData {
 			Alias("Backfisch", Map(), Option(0), Option(1)),
 			Alias("Streitberg", Map(), Option(0), Option(1)),
 			Alias("historisches Jahr", Map(), Option(1), Option(1))
-		))
+		)
 	}
 
 	def linksSet(): Set[Alias] = {
@@ -535,17 +528,6 @@ object TestData {
 		)
 	}
 
-	def allPageNamesTestRDD(sc: SparkContext): RDD[String] = {
-		sc.parallelize(List(
-			"Brachttal",
-			"Main-Kinzig-Kreis",
-			"Hessen",
-			"1377",
-			"Büdinger Wald",
-			"Audi"))
-			.sortBy(identity)
-	}
-
 	def allPageNamesOfTestArticleList(): Set[String] = {
 		Set("Audi",
 			"Brachttal",
@@ -563,15 +545,15 @@ object TestData {
 		)
 	}
 
-	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def documentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("backfisch", 1)
 		)
 	}
 
-	def filteredDocumentFrequenciesTestList(): List[DocumentFrequency] = {
-		List(
+	def filteredDocumentFrequenciesSet(): Set[DocumentFrequency] = {
+		Set(
 			DocumentFrequency("audi", 3)
 		)
 	}
@@ -582,14 +564,14 @@ object TestData {
 			DocumentFrequency(".", 4))
 	}
 
-	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def requestedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("backfisch", 2)
 		)
 	}
 
-	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def unstemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("Audi", 3),
 			DocumentFrequency("Backfisch", 1),
@@ -603,7 +585,7 @@ object TestData {
 		)
 	}
 
-	def incorrectStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def incorrectStemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		// This test case is wrong, since there are only 4 documents and "ein" has a document frequency of 6
 		Set(
 			DocumentFrequency("audi", 3),
@@ -615,7 +597,7 @@ object TestData {
 		)
 	}
 
-	def stemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def stemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("audi", 3),
@@ -793,11 +775,11 @@ object TestData {
 		)
 	}
 
-	def unstemmedGermanWordsTestSet(): Set[String] = {
+	def unstemmedGermanWordsSet(): Set[String] = {
 		Set("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "brauchen", "können", "sollte")
 	}
 
-	def wikipediaTestTextLinks(): Map[String, List[Link]] = {
+	def wikipediaTextLinks(): Map[String, List[Link]] = {
 		// extracted text links from article abstracts
 		Map(
 			"Audi" -> List(
@@ -841,7 +823,7 @@ object TestData {
 		)
 	}
 
-	def wikipediaTestTemplateLinks(): Map[String, List[Link]] = {
+	def wikipediaTemplateLinks(): Map[String, List[Link]] = {
 		// extracted template links from Article abstracts
 		Map(
 			"Audi" -> List(
@@ -876,7 +858,7 @@ object TestData {
 				Link("Mary Todd Lincoln", "Mary Todd Lincoln")))
 	}
 
-	def wikipediaTestTemplateArticles(): Set[String] = {
+	def wikipediaTemplateArticles(): Set[String] = {
 		Set("Audi", "Electronic Arts", "Postbank-Hochhaus (Berlin)", "Abraham Lincoln")
 	}
 
@@ -942,11 +924,11 @@ object TestData {
 		)
 	}
 
-	def wikipediaDisambiguationPagesTestSet(): Set[String] = {
+	def wikipediaDisambiguationPagesSet(): Set[String] = {
 		Set("Zerfall", "Fisch", "Zwilling (Begriffsklärung)")
 	}
 
-	def wikipediaTestAbstracts(): Map[String, String] = {
+	def wikipediaAbstracts(): Map[String, String] = {
 		Map(
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
 			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet."""
@@ -964,6 +946,7 @@ object TestData {
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
+
 	def entryWithStandardWhitespaces(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
@@ -1009,15 +992,6 @@ object TestData {
 			"Bayern" -> 1.0,
 			"Automobilhersteller" -> 0.0,
 			"Zerfall" -> 0.0
-		)
-	}
-
-	def allPagesTestList(): List[String] = {
-		List(
-			"Automobilhersteller",
-			"Ingolstadt",
-			"Bayern",
-			"Zerfall (Album)"
 		)
 	}
 
@@ -1133,11 +1107,11 @@ object TestData {
 				)))
 	}
 
-	def germanStopwordsTestSet(): Set[String] = {
+	def germanStopwordsSet(): Set[String] = {
 		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
 	}
 
-	def unstemmedDFTestSet(): Set[ParsedWikipediaEntry] = {
+	def unstemmedDFSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich einer ein Link."),
 				List(
@@ -1170,27 +1144,27 @@ object TestData {
 		)
 	}
 
-	def stemmedDFTestSet(): Set[DocumentFrequency] = {
+	def stemmedDFSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 4),
 			DocumentFrequency("backfisch", 3)
 		)
 	}
 
-	def germanDFStopwordsTestSet(): Set[DocumentFrequency] = {
+	def germanDFStopwordsSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 3)
 		)
 	}
 
-	def unstemmedGermanWordsTestList(): List[String] = {
+	def unstemmedGermanWordsList(): List[String] = {
 		List("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "Streitberg", "Braunschweig",
 			"Deutschland", "Baum", "brauchen", "suchen", "könnte")
 		// problem words: eine -> eine, hatte -> hatt
 	}
 
-	def stemmedGermanWordsTestList(): List[String] = {
+	def stemmedGermanWordsList(): List[String] = {
 		List("es", "kein", "kein", "kein", "ist", "kein", "kein", "streitberg", "braunschweig",
 			"deutschla", "baum", "brauch", "such", "konn")
 	}
@@ -1198,7 +1172,7 @@ object TestData {
 	def parsedEntry(): ParsedWikipediaEntry = {
 		ParsedWikipediaEntry(
 			"Schwarzer Humor",
-			Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod. Hier hat sich jemand einen makabren Scherz erlaubt. Als schwarzer Humor wird Humor bezeichnet, der Verbrechen, Krankheit, Tod und ähnliche Themen, für die gewöhnlich eine Abhandlung in ernster Form erwartet wird, in satirischer oder bewusst verharmlosender Weise verwendet. Oft bezieht er sich auf Zeitthemen. Schwarzer Humor bedient sich häufig paradoxer Stilfiguren. Nicht selten löst er Kontroversen aus darüber, ob man sich über die genannten Dinge lustig machen dürfe und wo die Grenzen des guten Geschmacks lägen; besonders ist dies der Fall, wenn religiöse und sexuelle Themen und tragische Ereignisse zum Gegenstand genommen werden. In der darstellenden Kunst nennt man auf schwarzen Humor setzende Werke schwarze Komödien. Der Begriff wurde durch den Surrealisten Andre Breton erstmals 1940 in seiner Schrift Anthologie de l’humour noir näher umrissen, wird jedoch seit den 1960er Jahren zum Teil deutlich anders verstanden, indem Kennzeichen der Desillusion und des Nihilismus hinzutraten. In dem Vorwort seines Werkes nennt Breton unter anderem Quellen von Freud und Hegel, die seiner Meinung nach in die Begriffsentwicklung eingeflossen sind. Ursprünge des ‚schwarzen Humors‘ sah Breton in seiner Anthologie bei einigen Werken des irischen Satirikers Jonathan Swift wie Directions to Servants, A Modest Proposal, A Meditation on a Broom-Stick und einige seiner Aphorismen. In den öffentlichen Gebrauch kam der Begriff erst in den 1960er Jahren insbesondere im angloamerikanischen Raum (‚black humour‘) durch die Rezeption von Schriftstellern wie Nathanael West, Vladimir Nabokov und Joseph Heller. So gilt Catch-22 (1961) als ein bekanntes Beispiel dieser Stilart, in dem die Absurdität des Militarismus im Zweiten Weltkrieg satirisch überspitzt wurde. Weitere Beispiele sind Kurt Vonnegut, Slaughterhouse Five (1969), Thomas Pynchon, V. (1963) und Gravity's Rainbow (1973), sowie im Film Stanley Kubrick’s Dr. Strangelove (1964) und im Absurden Theater insbesondere bei Eugene Ionesco zu finden. Der Begriff black comedy (dtsch. „schwarze Komödie“), der in der englischen Sprache schon für einige Stücke Shakespeares angewandt wurde, weist nach dem Lexikon der Filmbegriffe der Christian-Albrechts-Universitaet zu Kiel als Komoedientyp durch „manchmal sarkastischen, absurden und morbiden ‚schwarzen‘ Humor“ aus, der sich sowohl auf „ernste oder tabuisierte Themen wie Krankheit, Behinderung, Tod, Krieg, Verbrechen“ wie auch auf „für sakrosankt gehaltene Dinge“ richten kann und dabei „auch vor politischen Unkorrektheiten, derben Späßen, sexuellen und skatologischen Anzüglichkeiten nicht zurückschreckt.“ Dabei stehe „hinter der Fassade zynischer Grenzüberschreitungen“ häufig ein „aufrichtiges Anliegen, falsche Hierarchien, Konventionen und Verlogenheiten innerhalb einer Gesellschaft mit den Mitteln filmischer Satire zu entlarven.“ Als filmische Beispiele werden angeführt: Robert Altmans M*A*S*H (USA 1970), Mike Nichols’ Catch-22 (USA 1970), nach Joseph Heller) sowie in der Postmoderne Quentin Tarantinos Pulp Fiction (USA 1994) und Lars von Triers Idioterne (Dänemark 1998). Der Essayist Francois Bondy schrieb 1971 in Die Zeit: „Der schwarze Humor ist nicht zu verwechseln mit dem ‚kranken Humor‘, der aus den Staaten kam, mit seinen ‚sick jokes‘“ und nannte als Beispiel den Witz: „Mama, ich mag meinen kleinen Bruder nicht. – Schweig, iß, was man dir vorsetzt“. Witz und Humor seien jedoch nicht dasselbe und letzteres „eine originale Geschichte in einer besonderen Tonart“. Humor im Sinne von einer – wie der Duden definiert – „vorgetäuschten Heiterkeit mit der jemand einer unangenehmen oder verzweifelten Lage, in der er sich befindet, zu begegnen“ versucht, nennt man auch Galgenhumor."""),
+			Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod. Hier hat sich jemand einen makabren Scherz erlaubt. Als schwarzer Humor wird Humor bezeichnet, der Verbrechen, Krankheit, Tod und ähnliche Themen, für die gewöhnlich eine Abhandlung in ernster Form erwartet wird, in satirischer oder bewusst verharmlosender Weise verwendet. Oft bezieht er sich auf Zeitthemen. Schwarzer Humor bedient sich häufig paradoxer Stilfiguren. Nicht selten löst er Kontroversen aus darüber, ob man sich über die genannten Dinge lustig machen dürfe und wo die Grenzen des guten Geschmacks lägen; besonders ist dies der Fall, wenn religiöse und sexuelle Themen und tragische Ereignisse zum Gegenstand genommen werden. In der darstellenden Kunst nennt man auf schwarzen Humor setzende Werke schwarze Komödien. Der Begriff wurde durch den Surrealisten André Breton erstmals 1940 in seiner Schrift Anthologie de l’humour noir näher umrissen, wird jedoch seit den 1960er Jahren zum Teil deutlich anders verstanden, indem Kennzeichen der Desillusion und des Nihilismus hinzutraten. In dem Vorwort seines Werkes nennt Breton unter anderem Quellen von Freud und Hegel, die seiner Meinung nach in die Begriffsentwicklung eingeflossen sind. Ursprünge des ‚schwarzen Humors‘ sah Breton in seiner Anthologie bei einigen Werken des irischen Satirikers Jonathan Swift wie Directions to Servants, A Modest Proposal, A Meditation on a Broom-Stick und einige seiner Aphorismen. In den öffentlichen Gebrauch kam der Begriff erst in den 1960er Jahren insbesondere im angloamerikanischen Raum (‚black humour‘) durch die Rezeption von Schriftstellern wie Nathanael West, Vladimir Nabokov und Joseph Heller. So gilt Catch-22 (1961) als ein bekanntes Beispiel dieser Stilart, in dem die Absurdität des Militarismus im Zweiten Weltkrieg satirisch überspitzt wurde. Weitere Beispiele sind Kurt Vonnegut, Slaughterhouse Five (1969), Thomas Pynchon, V. (1963) und Gravity’s Rainbow (1973), sowie im Film Stanley Kubrick’s Dr. Strangelove (1964) und im Absurden Theater insbesondere bei Eugène Ionesco zu finden. Der Begriff black comedy (dtsch. „schwarze Komödie“), der in der englischen Sprache schon für einige Stücke Shakespeares angewandt wurde, weist nach dem Lexikon der Filmbegriffe der Christian-Albrechts-Universität zu Kiel als Komödientyp durch „manchmal sarkastischen, absurden und morbiden ‚schwarzen‘ Humor“ aus, der sich sowohl auf „ernste oder tabuisierte Themen wie Krankheit, Behinderung, Tod, Krieg, Verbrechen“ wie auch auf „für sakrosankt gehaltene Dinge“ richten kann und dabei „auch vor politischen Unkorrektheiten, derben Späßen, sexuellen und skatologischen Anzüglichkeiten nicht zurückschreckt.“ Dabei stehe „hinter der Fassade zynischer Grenzüberschreitungen“ häufig ein „aufrichtiges Anliegen, falsche Hierarchien, Konventionen und Verlogenheiten innerhalb einer Gesellschaft mit den Mitteln filmischer Satire zu entlarven.“ Als filmische Beispiele werden angeführt: Robert Altmans M*A*S*H (USA 1970), Mike Nichols’ Catch-22 (USA 1970), nach Joseph Heller) sowie in der Postmoderne Quentin Tarantinos Pulp Fiction (USA 1994) und Lars von Triers Idioterne (Dänemark 1998). Der Essayist François Bondy schrieb 1971 in Die Zeit: „Der schwarze Humor ist nicht zu verwechseln mit dem ‚kranken Humor‘, der aus den Staaten kam, mit seinen ‚sick jokes‘“ und nannte als Beispiel den Witz: „Mama, ich mag meinen kleinen Bruder nicht. – Schweig, iß, was man dir vorsetzt“. Witz und Humor seien jedoch nicht dasselbe und letzteres „eine originale Geschichte in einer besonderen Tonart“. Humor im Sinne von einer – wie der Duden definiert – „vorgetäuschten Heiterkeit mit der jemand einer unangenehmen oder verzweifelten Lage, in der er sich befindet, zu begegnen“ versucht, nennt man auch Galgenhumor."""),
 			List(
 				Link("Hickelkasten", "Hickelkasten", Option(0)),
 				Link("Humor", "Humor", Option(182)),
@@ -1208,7 +1182,7 @@ object TestData {
 				Link("Kontroversen", "Kontroverse", Option(495)),
 				Link("guten Geschmacks", "Geschmack (Kultur)", Option(601)),
 				Link("Surrealisten", "Surrealismus", Option(865)),
-				Link("Andre Breton", "Andre Breton", Option(878)),
+				Link("André Breton", "André Breton", Option(878)),
 				Link("Desillusion", "Desillusion", Option(1061)),
 				Link("Nihilismus", "Nihilismus", Option(1081)),
 				Link("Freud", "Sigmund Freud", Option(1173)),
@@ -1227,14 +1201,14 @@ object TestData {
 				Link("Slaughterhouse Five", "Schlachthof 5 oder Der Kinderkreuzzug", Option(1908)),
 				Link("Thomas Pynchon", "Thomas Pynchon", Option(1936)),
 				Link("V.", "V.", Option(1952)),
-				Link("Gravity's Rainbow", "Die Enden der Parabel", Option(1966)),
+				Link("Gravity’s Rainbow", "Die Enden der Parabel", Option(1966)),
 				Link("Stanley Kubrick", "Stanley Kubrick", Option(2006)),
 				Link("Dr. Strangelove", "Dr. Seltsam oder: Wie ich lernte, die Bombe zu lieben", Option(2024)),
 				Link("Absurden Theater", "Absurdes Theater", Option(2054)),
-				Link("Eugene Ionesco", "Eugene Ionesco", Option(2088)),
+				Link("Eugène Ionesco", "Eugène Ionesco", Option(2088)),
 				Link("Shakespeares", "Shakespeare", Option(2222)),
-				Link("Christian-Albrechts-Universitaet zu Kiel", "Christian-Albrechts-Universitaet zu Kiel", Option(2296)),
-				Link("Komoedientyp", "Komödie", Option(2340)),
+				Link("Christian-Albrechts-Universität zu Kiel", "Christian-Albrechts-Universität zu Kiel", Option(2296)),
+				Link("Komödientyp", "Komödie", Option(2340)),
 				Link("sarkastischen", "Sarkasmus", Option(2368)),
 				Link("absurden", "Absurdität", Option(2383)),
 				Link("morbiden", "Morbidität", Option(2396)),
@@ -1254,7 +1228,7 @@ object TestData {
 				Link("Pulp Fiction", "Pulp Fiction", Option(3130)),
 				Link("Lars von Triers", "Lars von Trier", Option(3158)),
 				Link("Idioterne", "Idioten", Option(3174)),
-				Link("Francois Bondy", "Francois Bondy", Option(3214)),
+				Link("François Bondy", "François Bondy", Option(3214)),
 				Link("Die Zeit", "Die Zeit", Option(3245)),
 				Link("Witz", "Witz", Option(3491)),
 				Link("Duden", "Duden", Option(3639)),
@@ -1294,7 +1268,7 @@ object TestData {
 			"Kontroversen",
 			"guten Geschmacks",
 			"Surrealisten",
-			"Andre Breton",
+			"André Breton",
 			"Desillusion",
 			"Nihilismus",
 			"Freud",
@@ -1313,14 +1287,14 @@ object TestData {
 			"Slaughterhouse Five",
 			"Thomas Pynchon",
 			"V.",
-			"Gravity's Rainbow",
+			"Gravity’s Rainbow",
 			"Stanley Kubrick",
 			"Dr. Strangelove",
 			"Absurden Theater",
-			"Eugene Ionesco",
+			"Eugène Ionesco",
 			"Shakespeares",
-			"Christian-Albrechts-Universitaet zu Kiel",
-			"Komoedientyp",
+			"Christian-Albrechts-Universität zu Kiel",
+			"Komödientyp",
 			"sarkastischen",
 			"absurden",
 			"morbiden",
@@ -1333,20 +1307,21 @@ object TestData {
 			"Robert Altmans",
 			"M*A*S*H",
 			"Mike Nichols",
+			"Catch-22",
 			"Joseph Heller",
 			"Postmoderne",
 			"Quentin Tarantinos",
 			"Pulp Fiction",
 			"Lars von Triers",
 			"Idioterne",
-			"Francois Bondy",
+			"François Bondy",
 			"Die Zeit",
 			"Witz",
 			"Duden",
 			"Galgenhumor")
 	}
 
-	def testNamespacePages(): List[WikipediaEntry] = {
+	def namespacePagesList(): List[WikipediaEntry] = {
 		List(
 			WikipediaEntry("lol"),
 			WikipediaEntry("Audi"),
@@ -1388,10 +1363,11 @@ object TestData {
 			WikipediaEntry("Gadget-Definition Diskussion:Testpage"),
 			WikipediaEntry("Thema:Testpage"),
 			WikipediaEntry("Spezial:Testpage"),
-			WikipediaEntry("Medium:Testpage"))
+			WikipediaEntry("Medium:Testpage")
+		)
 	}
 
-	def testCleanedNamespacePages(): List[WikipediaEntry] = {
+	def cleanedNamespacePagesList(): List[WikipediaEntry] = {
 		List(
 			WikipediaEntry("lol"),
 			WikipediaEntry("Audi"),
@@ -1399,23 +1375,25 @@ object TestData {
 			WikipediaEntry("Postbank-Hochhaus (Berlin)"),
 			WikipediaEntry("Postbank-Hochhaus Berlin"),
 			WikipediaEntry("Abraham Lincoln"),
-			WikipediaEntry("Kategorie:Testpage"))
+			WikipediaEntry("Kategorie:Testpage")
+		)
 	}
 
-	def testNamespaceLinks(): List[Link] = {
+	def namespaceLinksList(): List[Link] = {
 		List(
 			Link("August Horch", "August Horch", Option(0)),
 			Link("August Horch", "Benutzer:August Horch", Option(0)),
 			Link("August Horch", "Thema:August Horch", Option(0)),
 			Link("August Horch", "HD:August Horch", Option(0)),
-			Link("August Horch", "Kategorie:August Horch", Option(0)))
+			Link("August Horch", "Kategorie:August Horch", Option(0))
+		)
 	}
 
-	def testListLinkPage(): String = {
+	def htmlListLinkPage(): String = {
 		Source.fromURL(getClass.getResource("/textmining/test_data.html")).getLines().mkString("\n")
 	}
 
-	def testExtractedListLinks(): List[Link] = {
+	def extractedListLinksList(): List[Link] = {
 		List(
 			Link("Zwillinge", "Zwillinge"),
 			Link("Kristallzwilling", "Kristallzwilling"),
@@ -1437,16 +1415,18 @@ object TestData {
 			Link("Twins - Zwillinge", "Twins - Zwillinge"),
 			Link("Zwillingswendeltreppe", "Zwillingswendeltreppe"),
 			Link("Der Zwilling", "Der Zwilling"),
-			Link("Die Zwillinge", "Die Zwillinge"))
+			Link("Die Zwillinge", "Die Zwillinge")
+		)
 	}
 
-	def testCleanedNamespaceLinks(): List[Link] = {
+	def cleanedNamespaceLinksList(): List[Link] = {
 		List(
 			Link("August Horch", "August Horch", Option(0)),
-			Link("August Horch", "Kategorie:August Horch", Option(0)))
+			Link("August Horch", "Kategorie:August Horch", Option(0))
+		)
 	}
 
-	def testCategoryLinks(): List[Link] = {
+	def categoryLinksList(): List[Link] = {
 		List(
 			Link("Ingolstadt", "Ingolstadt", Option(55)),
 			Link("Bayern", "Bayern", Option(69)),
@@ -1459,10 +1439,11 @@ object TestData {
 			Link("Lateinische", "Latein", Option(599)),
 			Link("Imperativ", "Imperativ (Modus)", Option(636)),
 			Link("Kategorie:Zwickau", "Zwickau", Option(829)),
-			Link("Zschopauer", "Zschopau", Option(868)))
+			Link("Zschopauer", "Zschopau", Option(868))
+		)
 	}
 
-	def testCleanedCategoryLinks(): List[Link] = {
+	def cleanedCategoryLinksList(): List[Link] = {
 		List(
 			Link("Ingolstadt", "Ingolstadt", Option(55)),
 			Link("Bayern", "Bayern", Option(69)),
@@ -1471,30 +1452,28 @@ object TestData {
 			Link("August Horch", "August Horch", Option(316)),
 			Link("Lateinische", "Latein", Option(599)),
 			Link("Imperativ", "Imperativ (Modus)", Option(636)),
-			Link("Zschopauer", "Zschopau", Option(868)))
+			Link("Zschopauer", "Zschopau", Option(868))
+		)
 	}
 
-	def testExtractedCategoryLinks(): List[Link] = {
+	def extractedCategoryLinksList(): List[Link] = {
 		List(
 			Link("Automobilhersteller", "Automobilhersteller"),
 			Link("Wortspiel", "Wortspiel"),
 			Link("Namensrechte", "Marke (Recht)"),
-			Link("Zwickau", "Zwickau"))
+			Link("Zwickau", "Zwickau")
+		)
 	}
 
-	def testRedirectDict(): Map[String, String] = {
-		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
-	}
-
-	def testLinksWithRedirects(): Set[Link] = {
+	def linksWithRedirectsSet(): Set[Link] = {
 		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus Berlin", Option(10)))
 	}
 
-	def testLinksWithResolvedRedirects(): Set[Link] = {
+	def linksWithResolvedRedirectsSet(): Set[Link] = {
 		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus (Berlin)", Option(10)))
 	}
 
-	def testEntriesWithBadRedirects(): List[WikipediaEntry] = {
+	def entriesWithBadRedirectsList(): List[WikipediaEntry] = {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
 
@@ -1518,7 +1497,7 @@ object TestData {
 		)
 	}
 
-	def parsedEntriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
+	def parsedEntriesWithResolvedRedirectsSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "test page"))),
 			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "test page 2"), Link("alias 3", "Europäische Union"))),
@@ -1533,31 +1512,39 @@ object TestData {
 		Set(
 			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
 			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
-			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT")))
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
 	}
 
-	def redirectDict(): Map[String, String] = {
-		Map(
-			"Test Redirect Entry 1" -> "test page",
-			"Test Redirect Entry 2" -> "test page 2",
-			"EU" -> "Europäische Union")
+	def smallRedirectMap(): Map[String, String] = {
+		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
 	}
 
 	def redirectMap(): Map[String, String] = {
+		Map(
+			"Test Redirect Entry 1" -> "test page",
+			"Test Redirect Entry 2" -> "test page 2",
+			"EU" -> "Europäische Union"
+		)
+	}
+
+	def transitiveRedirectMap(): Map[String, String] = {
 		Map(
 			"Site 1" -> "Site 3",
 			"Site 3" -> "Site 6",
 			"Site 4" -> "Site 5",
 			"Site 5" -> "Site 4",
 			"Site 7" -> "Site 7",
-			"EU" -> "Europäische Union")
+			"EU" -> "Europäische Union"
+		)
 	}
 
 	def cleanedRedirectMap(): Map[String, String] = {
 		Map(
 			"Site 1" -> "Site 6",
 			"Site 3" -> "Site 6",
-			"EU" -> "Europäische Union")
+			"EU" -> "Europäische Union"
+		)
 	}
 
 	def entriesWithRedirects(): Set[ParsedWikipediaEntry] = {
@@ -1569,7 +1556,8 @@ object TestData {
 				categorylinks = List(Link("Alias 4", "Site 4")),
 				templatelinks = List(Link("Alias 5", "Site 5"))),
 			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
-			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "EU"))))
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "EU")))
+		)
 	}
 
 	def entriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
@@ -1581,7 +1569,8 @@ object TestData {
 				categorylinks = List(Link("Alias 4", "Site 4")),
 				templatelinks = List(Link("Alias 5", "Site 5"))),
 			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
-			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union"))))
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union")))
+		)
 	}
 
 	def aliasFileStream(): BufferedSource = {
@@ -1598,7 +1587,7 @@ object TestData {
 		trie
 	}
 
-	def testDataTrie(tokenizer: IngestionTokenizer): TrieNode = {
+	def dataTrie(tokenizer: IngestionTokenizer): TrieNode = {
 		val trie = new TrieNode()
 		val aliasList = Source.fromURL(getClass.getResource("/textmining/triealiases")).getLines()
 		for(alias <- aliasList) {
@@ -1763,8 +1752,8 @@ object TestData {
 
 	def alternativeSentenceList(): List[Sentence] = {
 		List(
-			Sentence("Audi",0,"Audi ist Audi AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Audi AG","Audi",Some(9)))),
-			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))
+			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9)))),
+			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))))
 		)
 	}
 
@@ -1778,8 +1767,8 @@ object TestData {
 
 	def sentencesWithCooccurrences(): List[Sentence] = {
 		List(
-			Sentence("Audi",0,"Audi ist Volkswagen.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Volkswagen","Volkswagen AG",Some(1)))),
-			Sentence("Audi",18,"Audi ist Volkswagen AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Volkswagen AG","Volkswagen AG",Some(1))))
+			Sentence("Audi", 0, "Audi ist Volkswagen.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Volkswagen", "Volkswagen AG", Some(1)))),
+			Sentence("Audi", 18, "Audi ist Volkswagen AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Volkswagen AG", "Volkswagen AG", Some(1))))
 		)
 	}
 
@@ -2002,7 +1991,7 @@ object TestData {
 	}
 
 	def predictionStatistics(): PrecisionRecallDataTuple = {
-		PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0)
+		PrecisionRecallDataTuple(1.0, 5.0 / 7.0, 5.0 / 6.0, 25.0 / 34.0)
 	}
 
 	def statisticTuples(): List[PrecisionRecallDataTuple] = {
@@ -2028,7 +2017,7 @@ object TestData {
 		new RandomForestModel(Algo.Classification, Array(dtmodel))
 	}
 
-	def testCrossValidationMethod(
+	def crossValidationMethod(
 		data: RDD[LabeledPoint],
 		numFolds: Int = 3,
 		numTrees: Int = 5,

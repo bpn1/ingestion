@@ -1,12 +1,11 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
-import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
-import de.hpi.ingestion.datalake.models.Version
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
-
 import scala.io.Source
 import scala.xml.XML
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
+import de.hpi.ingestion.datalake.models.Version
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -132,7 +131,7 @@ object TestData {
 			"geo:lat" -> List("52"),
 			"property-de:latitude" -> List("53"),
 			"geo:long" -> List("100"),
-			"dbo:country" -> List("Koblenz@de ."),
+			"dbo:country" -> List("Schweiz@de ."),
 			"property-de:mitarbeiteranzahl" -> List("12^^xsd:integer", "13^^xsd:nonNegativeInteger"),
 			"dbo:industry" -> List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei"),
 			"testProperty" -> List("test")
@@ -166,7 +165,7 @@ object TestData {
 		"id_viaf" -> List("dbo:viafId", "property-de:viaf"),
 		"geo_coords_lat" -> List("geo:lat", "property-de:latitude", "property-de:breitengrad"),
 		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad"),
-		"geo_country" -> List("dbo:country", "property-de:land"),
+		"geo_country" -> List("dbo:country"),
 		"gen_employees" -> List("dbo:numberOfEmployees", "property-de:mitarbeiteranzahl"),
 		"gen_sectors" -> List("dbo:industry")
 	)
@@ -178,10 +177,10 @@ object TestData {
 
 	def unnormalizedEmployees: List[String] = List("27000^^xsd:integer", "27000^^xsd:nonNegativeInteger", "10^^xsd:nonNegativeInteger", "über 1000@de .", "1 Million")
 	def normalizedEmployees: List[String] = List("27000", "10", "1000")
-	def unnormalizedCoordinates: List[String] = List("48.34822^^xsd:float;10.905282^^xsd:float","48348220^^xsd:integer;10905282^^xsd:integer", "48.34822^^xsd:double;10.905282^^xsd:double")
-	def normalizedCoordinates: List[String] = List("48.34822;10.905282")
+	def unnormalizedCoords: List[String] = List("48.34822^^xsd:float;10.905282^^xsd:float","48348220^^xsd:integer;10905282^^xsd:integer", "48.34822^^xsd:double;10.905282^^xsd:double")
+	def normalizedCoords: List[String] = List("48.34822;10.905282")
 	def unnormalizedCountries: List[String] = List("dbpedia-de:Japanisches_Kaiser-reich", "LI@de .", "Deutschland@de .", "dbpedia-de:Datei:Flag_of_Bavaria_(striped).svg", "15^^xsd:integer")
-	def normalizedCountries: List[String] = List("Japanisches Kaiser reich", "Deutschland")
+	def normalizedCountries: List[String] = List("LI", "DE")
 	def unnormalizedCities: List[String] = List("Frankfurt a.M.@de .", "Frankfurt/Main@de .", "London", "dbpedia-de:Berlin-Tegel")
 	def normalizedCities: List[String] = List("Frankfurt a.M.", "Frankfurt/Main", "London", "Berlin Tegel")
 	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Unknown")
@@ -190,21 +189,37 @@ object TestData {
 	def unnormalizedDefaults: List[String] = List("very^^xsd:nonNegativeInteger", "generic@de .", "dbpedia-de:values", "even", "dash-containing^^xsd:float", "123^^xsd:integer", "b4ckf1sh")
 	def normalizedDefaults: List[String] = List("very", "generic", "values", "even", "dash containing", "123", "b4ckf1sh")
 
+	def applyInput: List[List[String]] = List(
+		this.unnormalizedCoords,
+		this.unnormalizedCities,
+		this.unnormalizedCountries,
+		this.unnormalizedSectors,
+		this.unnormalizedEmployees,
+		List("default")
+	)
+	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "default")
+	def applyStrategies: List[(List[String] => List[String])] = List(
+		DBpediaNormalizationStrategy.normalizeCoords,
+		DBpediaNormalizationStrategy.normalizeCity,
+		DBpediaNormalizationStrategy.normalizeCountry,
+		DBpediaNormalizationStrategy.normalizeSector,
+		DBpediaNormalizationStrategy.normalizeEmployees,
+		identity
+	)
 	def unnormalizedAttributes: Map[String, List[String]] = Map(
 		"gen_sectors" -> this.unnormalizedSectors,
-		"geo_coords" -> this.unnormalizedCoordinates,
+		"geo_coords" -> this.unnormalizedCoords,
 		"geo_country" -> this.unnormalizedCountries,
 		"geo_city" -> this.unnormalizedCities,
 		"gen_employees" -> this.unnormalizedEmployees
 	)
 	def normalizedAttributes: Map[String, List[String]] = Map(
 		"gen_sectors" -> this.mappedSectors,
-		"geo_coords" -> this.normalizedCoordinates,
+		"geo_coords" -> this.normalizedCoords,
 		"geo_country" -> this.normalizedCountries,
 		"geo_city" -> this.normalizedCities,
 		"gen_employees" -> this.normalizedEmployees
 	)
 }
-
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods
