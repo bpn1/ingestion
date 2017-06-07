@@ -2246,6 +2246,46 @@ object TestData {
 			"\"e\\\" 2\",5,\"e 3\",CO_OCCURRENCE",
 			"\"e 1\",2,\"d 2\",CO_OCCURRENCE")
 	}
+
+	def aliasCounterArticles(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Article 1",
+				textlinks = List(
+					Link("Alias 1", "Page 1", Option(0)),
+					Link("Alias 1", "Page 1", Option(1)),
+					Link("Alias 2", "Page 2", Option(2))
+				),
+				foundaliases = List("Alias 1", "Alias 1", "Alias 2", "Alias 3", "Alias 1")
+			),
+			ParsedWikipediaEntry(
+				"Article 2",
+				textlinks = List(
+					Link("Alias 3", "Page 3", Option(0)),
+					Link("Alias 4", "Page 4", Option(1)),
+					Link("Alias 5", "Page 5", Option(2))
+				),
+				foundaliases = List("Alias 1", "Alias 1", "Alias 2", "Alias 3", "Alias 1", "Alias 3", "Alias 4", "Alias 5")
+			),
+			ParsedWikipediaEntry(
+				"Article 3",
+				textlinks = List(
+					Link("Alias 1", "Page 1", Option(0))
+				),
+				foundaliases = List("Alias 1", "Alias 1", "Alias 2", "Alias 2")
+			)
+		)
+	}
+
+	def multipleAliasCounts(): Set[(String, Option[Int], Option[Int])] = {
+		Set(
+			("Alias 1", Option(3), Option(8)),
+			("Alias 2", Option(1), Option(4)),
+			("Alias 3", Option(1), Option(3)),
+			("Alias 4", Option(1), Option(1)),
+			("Alias 5", Option(1), Option(1))
+		)
+	}
 }
 
 // scalastyle:on method.length
