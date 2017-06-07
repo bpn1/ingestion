@@ -74,7 +74,7 @@ object TermFrequencyCounter extends SparkJob {
 	def extractLinkContexts(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): ParsedWikipediaEntry = {
 		val contextSize = settings("contextSize").toInt
 		val tokens = tokenizer.onlyTokenize(entry.getText())
-		val contextLinks = (entry.textlinks ++ entry.extendedlinks).map { link =>
+		val contextLinks = (entry.textlinks ++ entry.extendedlinks()).map { link =>
 			val aliasTokens = tokenizer.onlyTokenize(link.alias)
 			val aliasIndex = tokens.indexOfSlice(aliasTokens)
 			val contextStart = Math.max(aliasIndex - contextSize, 0)
