@@ -28,9 +28,11 @@ object Merging extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable(settings("keyspaceSubjectTable"), settings("subjectTable"))
-		val stagings = sc.cassandraTable(settings("keyspaceStagingTable"), settings("stagingTable"))
-		val duplicates = sc.cassandraTable(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
+		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
+		val stagings = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
+		val duplicates = sc.cassandraTable[DuplicateCandidates](
+			settings("keyspaceDuplicatesTable"),
+			settings("duplicatesTable"))
 		List(subjects, stagings).toAnyRDD() ::: List(duplicates).toAnyRDD()
 	}
 
