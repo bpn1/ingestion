@@ -1442,7 +1442,7 @@ object TestData {
 
 	def foundTrieAliases(): List[List[TrieAlias]] = {
 		List(
-			List(TrieAlias("Hickelkasten", Option(0), Map("``" -> 1, "." -> 1, "barcelona" -> 1, "tod" -> 1, "," -> 1, "„" -> 1, "sprung" -> 2, "spanie" -> 1, "himmel" -> 1, ":" -> 1))),
+			List(TrieAlias("Hickelkasten", Option(0))),
 			Nil,
 			Nil)
 	}
@@ -1801,7 +1801,7 @@ object TestData {
 	}
 
 	def cleanedFoundAliases(): List[String] = {
-		List("Alias 1", "Alias 2", "Alias 3")
+		List("Alias 1", "Alias 2", "Alias 1", "Alias 3")
 	}
 
 	def binaryTrieStream(): ByteArrayInputStream = {

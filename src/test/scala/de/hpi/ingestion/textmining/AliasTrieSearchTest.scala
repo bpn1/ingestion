@@ -24,7 +24,7 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 		AliasTrieSearch.settings = oldSettings
 	}
 
-	they should "be cleaned from duplicates and empty strings" in {
+	they should "be cleaned of empty strings" in {
 		val cleanedAliaes = AliasTrieSearch.cleanFoundAliases(TestData.uncleanedFoundAliases())
 		val expectedAliases = TestData.cleanedFoundAliases()
 		cleanedAliaes shouldEqual expectedAliases
@@ -65,21 +65,6 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 		val trieAliases = entries.map(AliasTrieSearch.matchEntry(_, trie, tokenizer, contextTokenizer).triealiases)
 		val expected = TestData.foundTrieAliases()
 		trieAliases shouldEqual expected
-
-		AliasTrieSearch.settings = oldSettings
-	}
-
-	"Alias contexts" should "be extracted" in {
-		val oldSettings = AliasTrieSearch.settings(false)
-		AliasTrieSearch.parseConfig()
-
-		val tokenizer = IngestionTokenizer()
-		val contextTokenizer = IngestionTokenizer(true, true)
-		val text = tokenizer.processWithOffsets(TestData.parsedEntriesWithLessText().head.getText())
-		val trieAlias = TestData.foundTrieAliases().head.head
-		val alias = tokenizer.processWithOffsets(trieAlias.alias)
-		val context = AliasTrieSearch.extractAliasContext(alias, text, 0, contextTokenizer).getCounts()
-		context shouldEqual trieAlias.context
 
 		AliasTrieSearch.settings = oldSettings
 	}
