@@ -8,10 +8,10 @@ object DBpediaDumpURLs {
 	val latestDumpURL = "http://wiki.dbpedia.org/Downloads"
 
 	def main(args: Array[String]) {
-		if(args.size < 1) {
+		if(args.isEmpty) {
 			println("Usage: DBpediaDumpURLs path/to/dbpedia.html")
 			println(s"Download latest overview from $latestDumpURL")
-			System.exit(1)
+			return
 		}
 		val html = Source.fromFile(args(0)).getLines.mkString("\n")
 		val doc = Jsoup.parse(html)
