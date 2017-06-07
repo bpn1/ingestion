@@ -191,6 +191,8 @@ CREATE TABLE datalake.subject (
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
+    master uuid,
+    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
