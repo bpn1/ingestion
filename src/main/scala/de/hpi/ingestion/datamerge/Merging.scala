@@ -137,7 +137,7 @@ object Merging extends SparkJob {
 					duplicates.flatMap { duplicate =>
 						duplicate.relations_history
 							.getOrElse(relationSub, Map())
-							.filter(_._2.last.datasources.contains(dataSource))
+							.filter(_._2.lastOption.exists(_.datasources.contains(dataSource)))
 							.mapValues(_.last.value.headOption)
 							.collect { case (prop, Some(value)) => (prop, value) }
 					}.toMap
@@ -201,9 +201,9 @@ object Merging extends SparkJob {
 		val duplicateCandidates = input(2).asInstanceOf[RDD[DuplicateCandidates]]
 		val version = Version("Merging", List("merging"), sc, true)
 
+		// TODO merge multiple duplicate candidates with the same subject #430
 		val mergedSubjects = duplicateCandidates
 			.map(candidate => (candidate.subject_id, candidate))
-			// TODO merge multiple duplicate candidates with the same subject #430
 			.join(subjects.map(sub => Tuple2(sub.id, sub)))
 			.values
 			.flatMap { case (candidate, sub) =>

@@ -5,8 +5,8 @@
         <subjectTable>subject_temp</subjectTable>
         <keyspaceStagingTable>datalake</keyspaceStagingTable>
         <stagingTable>subject</stagingTable>
-        <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
-        <duplicatesTable>duplicatecandidates</duplicatesTable>
+        <keyspaceDuplicatesTable>evaluation</keyspaceDuplicatesTable>
+        <duplicatesTable>dbpedia_wikidata_deduplication_only_uuid</duplicatesTable>
         <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
     </settings>
