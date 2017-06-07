@@ -52,7 +52,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	it should "parse and return all text properly" in {
-		val abstracts = TestData.wikipediaTestAbstracts()
+		val abstracts = TestData.wikipediaAbstracts()
 		TestData.wikipediaEntries()
 			.map { entry =>
 				val html = TextParser.wikipediaToHtml(entry.getText())
@@ -78,7 +78,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	they should "be exactly these links" in {
-		val textLinks = TestData.wikipediaTestTextLinks()
+		val textLinks = TestData.wikipediaTextLinks()
 		TestData.wikipediaEntries()
 			.map(TextParser.parseWikipediaEntry)
 			.filter(entry => textLinks.contains(entry.title))
@@ -107,13 +107,13 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"List links" should "be extracted" in {
-		val testLinks = TextParser.extractListLinks(TestData.testListLinkPage())
-		val expectedLinks = TestData.testExtractedListLinks()
+		val testLinks = TextParser.extractListLinks(TestData.htmlListLinkPage())
+		val expectedLinks = TestData.extractedListLinksList()
 		testLinks shouldBe expectedLinks
 	}
 
 	"All redirects" should "contain #WEITERLEITUNG link" in {
-		val entries = TestData.testEntriesWithBadRedirects()
+		val entries = TestData.entriesWithBadRedirectsList()
 		entries.map(entry => TextParser.cleanRedirectsAndWhitespaces(entry))
 			.map(entry => entry.getText should startWith(s"#${TextParser.parsableRedirect}"))
 	}
@@ -123,12 +123,12 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.filter(TextParser.isDisambiguationPage)
 			.map(_.title)
 			.toSet
-		disambiguationPages shouldEqual TestData.wikipediaDisambiguationPagesTestSet
+		disambiguationPages shouldEqual TestData.wikipediaDisambiguationPagesSet
 	}
 
 	"Wikipedia disambiguation links" should "be found" in {
 		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
-			.filter(entry => TestData.wikipediaDisambiguationPagesTestSet().contains(entry.title))
+			.filter(entry => TestData.wikipediaDisambiguationPagesSet().contains(entry.title))
 		TextParser
 			.run(List(wikipedia).toAnyRDD(), sc)
 			.fromAnyRDD[ParsedWikipediaEntry]()
@@ -142,7 +142,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	they should "direct from the page name itself (without '" +
 		TextParser.disambiguationTitleSuffix + "') to another page" in {
 		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
-			.filter(entry => TestData.wikipediaDisambiguationPagesTestSet().contains(entry.title))
+			.filter(entry => TestData.wikipediaDisambiguationPagesSet().contains(entry.title))
 		TextParser
 			.run(List(wikipedia).toAnyRDD(), sc)
 			.fromAnyRDD[ParsedWikipediaEntry]()
@@ -158,7 +158,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Template links" should "not be empty" in {
-		val templateArticlesTest = TestData.wikipediaTestTemplateArticles()
+		val templateArticlesTest = TestData.wikipediaTemplateArticles()
 		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
 			.filter(entry => templateArticlesTest.contains(entry.title))
 		TextParser
@@ -181,7 +181,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	they should "be exactly these links" in {
 		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
-		val templateLinks = TestData.wikipediaTestTemplateLinks()
+		val templateLinks = TestData.wikipediaTemplateLinks()
 		TextParser
 			.run(List(wikipedia).toAnyRDD(), sc)
 			.fromAnyRDD[ParsedWikipediaEntry]()
@@ -192,32 +192,32 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Bad namespace pages" should "be filtered" in {
-		val testPages = TestData.testNamespacePages()
+		val testPages = TestData.namespacePagesList()
 			.filterNot(TextParser.isMetaPage)
-		val expectedPages = TestData.testCleanedNamespacePages()
+		val expectedPages = TestData.cleanedNamespacePagesList()
 		testPages shouldEqual expectedPages
 
 	}
 
 	"Bad namespace links" should "be filtered" in {
 		val testLinks = TextParser
-			.cleanMetapageLinks(TestData.testNamespaceLinks())
-		val expectedLinks = TestData.testCleanedNamespaceLinks()
+			.cleanMetapageLinks(TestData.namespaceLinksList())
+		val expectedLinks = TestData.cleanedNamespaceLinksList()
 		testLinks shouldEqual expectedLinks
 	}
 
 	"Category links" should "be extracted" in {
-		val testLinks = TestData.testCategoryLinks()
+		val testLinks = TestData.categoryLinksList()
 		val testEntry = ParsedWikipediaEntry(title = "test", textlinks = testLinks)
 		val result = TextParser.extractCategoryLinks(testEntry)
-		val expectedLinks = TestData.testCleanedCategoryLinks()
-		val expectedCategoryLinks = TestData.testExtractedCategoryLinks()
+		val expectedLinks = TestData.cleanedCategoryLinksList()
+		val expectedCategoryLinks = TestData.extractedCategoryLinksList()
 		result.textlinks shouldEqual expectedLinks
 		result.categorylinks shouldEqual expectedCategoryLinks
 	}
 
 	they should "have cleaned aliases and pages" in {
-		val testLinks = TestData.testCategoryLinks()
+		val testLinks = TestData.categoryLinksList()
 		val testEntry = ParsedWikipediaEntry(title = "test", textlinks = testLinks)
 		TextParser
 			.extractCategoryLinks(testEntry)
@@ -229,7 +229,7 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	they should "have their offset set to the default value" in {
-		val testLinks = TestData.testCategoryLinks()
+		val testLinks = TestData.categoryLinksList()
 		val testEntry = ParsedWikipediaEntry(title = "test", textlinks = testLinks)
 		val defaultOffset = Link("", "").offset
 		TextParser

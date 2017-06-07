@@ -1,17 +1,14 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import java.util.UUID
-
+import scala.io.Source
+import org.apache.spark.SparkContext
 import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikiDataEntity}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import org.apache.spark.SparkContext
-
-import scala.io.Source
 
 // scalastyle:off number.of.methods
+// scalastyle:off line.size.limit
 object TestData {
-	// scalastyle:off line.size.limit
-
 	val wikidataEntriesPath = "/wikidata/wikidata_entries.json"
 	val testEntriesPath = "/wikidata/test_entities.json"
 	val claimDataPath = "/wikidata/claim_data.json"
@@ -293,15 +290,15 @@ object TestData {
 			Option("testwikiname"),
 			Option("en_testwikiname"),
 			Option("test_instancetype"),
-			Option("Protein FAM177A1"),
+			Option("Protein AG"),
 			Map(
 				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
 				"subclass of" -> List("Protein", "FAM177 family"),
 				"VIAF ID" -> List("X123"),
 				"industry" -> this.unnormalizedSectors,
-				"coordinate location" -> this.unnormalizedCoordinates,
-				"headquarters location" -> this.unnormalizedLocations,
-				"country" -> this.unnormalizedLocations,
+				"coordinate location" -> this.unnormalizedCoords,
+				"headquarters location" -> this.unnormalizedCities,
+				"country" -> this.unnormalizedCountries,
 				"employees" -> this.unnormalizedEmployees,
 				"testProperty" -> List("test")
 			)
@@ -347,12 +344,46 @@ object TestData {
 	def unnormalizedSectors: List[String] = List("Automobilindustrie", "Q126793", "Einzelhandel")
 	def normalizedSectors: List[String] = List("Automobilindustrie", "Einzelhandel")
 	def mappedSectors: List[String] = List("29", "45", "47")
-	def unnormalizedCoordinates: List[String] = List("-1;1", "55;48.88", "0.133;-1", "xxx;-1.0")
-	def normalizedCoordinates: List[String] = List("-1;1", "55;48.88", "0.133;-1")
-	def unnormalizedLocations: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
-	def normalizedLocations: List[String] = List("Russland", "Igrinski rajon")
+	def unnormalizedCoords: List[String] = List("-1;1", "55;48.88", "0.133;-1", "xxx;-1.0")
+	def normalizedCoords: List[String] = List("-1;1", "55;48.88", "0.133;-1")
+	def unnormalizedCountries: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
+	def normalizedCountries: List[String] = List("RU")
+	def unnormalizedCities: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
+	def normalizedCities: List[String] = List("Russland", "Igrinski rajon")
 	def unnormalizedEmployees: List[String] = List("+500;1", "+1337;1", "WRONG")
 	def normalizedEmployees: List[String] = List("500", "1337")
-	// scalastyle:on line.size.limit
+
+	def applyInput: List[List[String]] = List(
+		this.unnormalizedCoords,
+		this.unnormalizedCities,
+		this.unnormalizedCountries,
+		this.unnormalizedSectors,
+		this.unnormalizedEmployees,
+		List("default")
+	)
+	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "default")
+	def applyStrategies: List[(List[String] => List[String])] = List(
+		WikiDataNormalizationStrategy.normalizeCoords,
+		WikiDataNormalizationStrategy.normalizeCity,
+		WikiDataNormalizationStrategy.normalizeCountry,
+		WikiDataNormalizationStrategy.normalizeSector,
+		WikiDataNormalizationStrategy.normalizeEmployees,
+		identity
+	)
+	def unnormalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.unnormalizedSectors,
+		"geo_coords" -> this.unnormalizedCoords,
+		"geo_country" -> this.unnormalizedCountries,
+		"geo_city" -> this.unnormalizedCities,
+		"gen_employees" -> this.unnormalizedEmployees
+	)
+	def normalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.mappedSectors,
+		"geo_coords" -> this.normalizedCoords,
+		"geo_country" -> this.normalizedCountries,
+		"geo_city" -> this.normalizedCities,
+		"gen_employees" -> this.normalizedEmployees
+	)
 }
+// scalastyle:on line.size.limit
 // scalastyle:on number.of.methods
