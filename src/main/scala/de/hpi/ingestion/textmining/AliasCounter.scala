@@ -81,7 +81,8 @@ object AliasCounter extends SparkJob {
 			alias1.pages ++ alias2.pages,
 			alias1.pagesreduced ++ alias2.pagesreduced,
 			Option(alias1.linkoccurrences.get + alias2.linkoccurrences.get),
-			Option(alias1.totaloccurrences.get + alias2.totaloccurrences.get))
+			Option(alias1.totaloccurrences.get + alias2.totaloccurrences.get)
+		)
 	}
 
 	/**
@@ -106,7 +107,7 @@ object AliasCounter extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
 		val countTuples = countAliases(articles)
 			.filter(_.alias.length <= maximumAliasLength)
