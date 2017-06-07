@@ -1018,9 +1018,27 @@ object TestData {
 		)
 	}
 
+	def reducedGroupedAliasesSet(): Set[Alias] = {
+		Set(
+			Alias("Bayern", Map("Bayern" -> 1)),
+			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
+			Alias("Radioaktiver Zerfall", Map("Radioaktivität" -> 1)),
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Radioaktivität" -> 1))
+		)
+	}
+
 	def groupedPagesSet(): Set[Page] = {
 		Set(
 			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
+			Page("Bayern", Map("Bayern" -> 1)),
+			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
+			Page("Radioaktivität", Map("Zerfall" -> 1, "Radioaktiver Zerfall" -> 1))
+		)
+	}
+
+	def reducedGroupedPagesSet(): Set[Page] = {
+		Set(
 			Page("Bayern", Map("Bayern" -> 1)),
 			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
 			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
@@ -1078,6 +1096,33 @@ object TestData {
 			Link("Zerfall", "Zerfall (Album)", Option(4711)),
 			Link("Zerfall", "Radioaktivität", Option(4711)),
 			Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711))
+		)
+	}
+
+	def linkAnalysisArticles(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Ingolstadt",
+				textlinks = List(
+					Link("Ingolstadt", "Ingolstadt", Option(55)),
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)))
+			),
+			ParsedWikipediaEntry(
+				"Bayern",
+				textlinksreduced = List(
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)))
+			),
+			ParsedWikipediaEntry("Automobilhersteller"),
+			ParsedWikipediaEntry("Zerfall (Album)"),
+			ParsedWikipediaEntry("Radioaktivität")
 		)
 	}
 
