@@ -1,6 +1,6 @@
 package de.hpi.ingestion.deduplication
 
-import de.hpi.ingestion.deduplication.models.ScoreConfig
+import de.hpi.ingestion.deduplication.models.config.SimilarityMeasureConfig
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
 
 /**
@@ -17,7 +17,7 @@ object CompareStrategy extends Serializable {
 	def singleStringCompare(
 		leftValue: List[String],
 		rightValue: List[String],
-		scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]
+		scoreConfig: SimilarityMeasureConfig[String, SimilarityMeasure[String]]
 	): Double = {
 		scoreConfig.compare(leftValue.head, rightValue.head)
 	}
@@ -31,7 +31,7 @@ object CompareStrategy extends Serializable {
 	def defaultCompare(
 		leftValues: List[String],
 		rightValues: List[String],
-		scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]
+		scoreConfig: SimilarityMeasureConfig[String, SimilarityMeasure[String]]
 	): Double = {
 		val scoreSum = leftValues
 			.map { leftValue =>
@@ -49,7 +49,7 @@ object CompareStrategy extends Serializable {
 	  */
 	def apply(
 		attribute: String
-	): (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) => Double = {
+	): (List[String], List[String], SimilarityMeasureConfig[String, SimilarityMeasure[String]]) => Double = {
 		attribute match {
 			case "name"
 				 | "category"
