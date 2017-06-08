@@ -60,7 +60,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
 		val properties = mutable.Map[String, List[String]]((entity.data ++ normalizedProperties).toSeq: _*)
 
-		val legalForm = entity.label.map(extractLegalForm(_, classifier)).getOrElse(Nil)
+		val legalForm = subject.name.map(extractLegalForm(_, classifier)).getOrElse(Nil)
 		if (legalForm.nonEmpty) properties("gen_legal_form") = legalForm
 
 		sm.addProperties(properties.toMap)
