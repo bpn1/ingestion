@@ -1,9 +1,8 @@
 package de.hpi.ingestion.deduplication
 
-import de.hpi.ingestion.deduplication.models.config.AttributeConfig
-import org.scalatest.{FlatSpec, Matchers}
-
 import scala.math.BigDecimal
+import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.deduplication.models.config.AttributeConfig
 
 class CompareStrategyTest extends FlatSpec with Matchers {
 	"compare" should "return the score of the similarity of two strings" in {

@@ -17,6 +17,9 @@ case class AttributeConfig(
 	override def updateWeight(weight: Double): AttributeConfig = this.copy(weight = weight)
 }
 
+/**
+  * Companion Object for AttributeConfig case class
+  */
 object AttributeConfig {
 	def normalizeWeights(configs: List[AttributeConfig]): List[AttributeConfig] = {
 		WeightedFeatureConfig
