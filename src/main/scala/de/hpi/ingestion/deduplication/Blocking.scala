@@ -263,15 +263,13 @@ object Blocking extends SparkJob {
 		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
 		val maxBlockSize = settings("maxBlockSize").toInt
 		val jobid = UUIDs.timeBased()
-		val toBeKept = (block: ((String, String), (Iterable[UUID], Iterable[UUID]))) => {
-			val ((key, tag), (subject, staging)) = block
-			!filterUndefined ||
-				!blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key) ||
-				(subject.size * staging.size) < maxBlockSize
-		}
 		val blocks = subjectBlocks
 			.cogroup(stagingBlocks)
-			.filter(toBeKept)
+			.filter{ case ((key, tag), (subject, staging)) =>
+				val isUndefined = blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
+				val isHuge = (subject.size * staging.size) > maxBlockSize
+				!(isHuge || filterUndefined && isUndefined)
+			}
 		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))
 		val sumTag = s"sum ${blockingSchemes.map(_.tag).mkString(", ")}"
 		val pairsCompleteness = calculatePairsCompleteness(duplicates, goldStandard, sumTag)
@@ -288,7 +286,7 @@ object Blocking extends SparkJob {
 			.union(statsSum)
 			.map { case (tag, blockStats) =>
 				val minBlockSize = settings("minBlockSize").toInt
-				val filteredStats = blockStats.filterNot(filterSmall && _.isTinyBlock(minBlockSize))
+				val filteredStats = blockStats.filter(!filterSmall || !_.isTiny(minBlockSize))
 				val blockComment = Option(s"$comment")
 				val tagCompleteness = pairsCompleteness.getOrElse(tag, 0.0)
 				val tagBlockCount = blockCount.getOrElse(tag, 0)

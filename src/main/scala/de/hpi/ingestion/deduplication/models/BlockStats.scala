@@ -18,7 +18,7 @@ case class BlockStats(
 	  * @param minBlockSize The threshold
 	  * @return whether the block is very small or not
 	  */
-	def isTinyBlock(minBlockSize: Int): Boolean = {
-		(this.numsubjects * this.numstaging) > minBlockSize
+	def isTiny(minBlockSize: Int): Boolean = {
+		(this.numsubjects * this.numstaging) < minBlockSize
 	}
 }

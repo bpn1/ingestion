@@ -1,9 +1,6 @@
 package de.hpi.ingestion.deduplication
 
-import java.util.UUID
-
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.deduplication.blockingschemes.SimpleBlockingScheme
 import de.hpi.ingestion.deduplication.models.BlockEvaluation
 import org.scalatest.{FlatSpec, Matchers}
@@ -92,20 +89,7 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 	}
 
 	it should "filter small, but not filter medium blocks" in {
-		val subjectRDD = sc.parallelize(
-			List.fill(101)(
-				Subject(id = UUID.randomUUID, name = Option("Haushund"))
-			) ++ List.fill(5)(
-				Subject(id = UUID.randomUUID, name = Option("Nicht Haushund"))
-			)
-		)
-		val stagingRDD = sc.parallelize(
-			List.fill(101)(
-				Subject(id = UUID.randomUUID, name = Option("Haushund"))
-			) ++ List.fill(10)(
-				Subject(id = UUID.randomUUID, name = Option("Nicht Haushund"))
-			)
-		)
+		val (subjectRDD, stagingRDD) = TestData.blockEvaluationTestSubjects(sc)
 		val goldStandard = TestData.goldStandard(TestData.subjects, TestData.stagings)
 		val comment = "Blocking"
 		val blockingSchemes = List(SimpleBlockingScheme("SimpleBlocking"))

@@ -342,7 +342,6 @@ object TestData {
 	}
 
 	def subjects: List[Subject] = List(
-
 		Subject(id = UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52;11"), "gen_income" -> List("1234"))),
 		Subject(id = UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52;13"), "gen_income" -> List("33"))),
 		Subject(id = UUID.fromString("c9621786-1cce-45bf-968a-3e8d06e16fda"), name = Some("Porsche"), properties = Map("geo_coords" -> List("52;13"), "gen_sectors" -> List("cars", "music", "games"))),
@@ -477,6 +476,24 @@ object TestData {
 								BlockStats("Porsc",1,0,0.0),
 								BlockStats("Volks",1,1,1.0)
 							), Some("Blocking"), 1.0, 4, 2)))
+	}
+
+	def blockEvaluationTestSubjects(sc: SparkContext): (RDD[Subject], RDD[Subject]) = {
+		val subjectRDD = sc.parallelize(
+			List.fill(101)(
+				Subject(id = UUID.randomUUID, name = Option("Haushund"))
+			) ++ List.fill(5)(
+				Subject(id = UUID.randomUUID, name = Option("Nicht Haushund"))
+			)
+		)
+		val stagingRDD = sc.parallelize(
+			List.fill(101)(
+				Subject(id = UUID.randomUUID, name = Option("Haushund"))
+			) ++ List.fill(10)(
+				Subject(id = UUID.randomUUID, name = Option("Nicht Haushund"))
+			)
+		)
+		(subjectRDD, stagingRDD)
 	}
 
 	def filteredSmallBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
