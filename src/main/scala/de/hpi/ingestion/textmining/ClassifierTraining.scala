@@ -142,15 +142,16 @@ object ClassifierTraining extends SparkJob {
 			val training = folds.slice(0, index) ++ folds.slice(index + 1, folds.length)
 			(test, training)
 		}
-		segments.map { case (test, trainingList) =>
-			val training = trainingList.reduce(_.union(_))
-			val model = trainRandomForest(training, numTrees, maxDepth, maxBins)
-			val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
-				val prediction = model.predict(features)
-				(prediction, label)
-			}
-			(calculateStatistics(predictionAndLabels), model)
-		}.toList
+		segments
+			.map { case (test, trainingList) =>
+				val training = trainingList.reduce(_.union(_))
+				val model = trainRandomForest(training, numTrees, maxDepth, maxBins)
+				val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
+					val prediction = model.predict(features)
+					(prediction, label)
+				}
+				(calculateStatistics(predictionAndLabels), model)
+			}.toList
 			.unzip
 	}
 
