@@ -1,7 +1,6 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
 import com.datastax.driver.core.utils.UUIDs
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
@@ -12,7 +11,6 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.scalacheck.Prop.True
 
 /**
   * Blocks two groups of Subjects with multiple Blocking Schemes and evaluates the resulting blocks by counting their
