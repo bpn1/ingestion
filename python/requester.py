@@ -4,24 +4,26 @@ import urllib.parse
 import queue
 import time
 import pause
-#from cassandra.cluster import Cluster
+import sys
+from cassandra.cluster import Cluster
+from cassandra.auth import PlainTextAuthProvider
 
-
-# cluster = Cluster()
 geocoder = Geocoder(
 	access_token='pk.eyJ1IjoicmFkc2NoZWl0IiwiYSI6ImNqMXRoMnZ2aDAwMW0zM3FyMm9oMzJ0MTEifQ.xdZLGZA5FNwi97t2UC4ogw')
 
 
 class MapboxSubject:
 	def __init__(
-			self,
-			identifier=uuid.uuid4(),
-			name = "",
-			request_string = "",
-			coordinates = ""
+		self,
+		identifier=uuid.uuid4(),
+		name = "",
+		place_name ="",
+		request_string = "",
+		coordinates = ""
 	):
 		self.uuid = identifier
 		self.name = name
+		self.place_name = place_name
 		self.request_string = request_string
 		self.coordinates = coordinates
 
@@ -29,7 +31,8 @@ class MapboxSubject:
 		self.request_string = request
 
 	def add_geocode(self, coordinates):
-		self.coordinates = [coordinates]
+		self.coordinates = coordinates
+		print(self.coordinates)
 
 
 def is_not_blank(some_string):
@@ -39,12 +42,12 @@ def is_not_blank(some_string):
 
 
 def generate_request(
-		name = "",
-		address_line_1 = "",
-		address_line_2 = "",
-		postal_code = "",
-		city = "",
-		country = "de"
+	name = "",
+	address_line_1 = "",
+	address_line_2 = "",
+	postal_code = "",
+	city = "",
+	country = "de"
 ):
 	request_line = (name + " ") if is_not_blank(name) else ""
 	request_line += (address_line_1 + " ") if is_not_blank(address_line_1) else ""
@@ -69,18 +72,20 @@ def process_api_response(response):
 		else:
 			name = ""
 
-		if 'place_name' in response.json()['features'][0]:
-			place_name = response.json()['features'][0]['place_name']
-		else:
-			place_name = ""
+		place_name = response.json()['features'][0]['place_name'] or ""
 
 		return {
 			"coordinates": coordinates,
 			"name": name,
 			"place_name": place_name,
 		}
+	except OSError as err:
+		print("OS error: {0}".format(err))
+	except ValueError:
+		print("Value Error")
 	except:
-		return None
+		print("Unexpected error:", sys.exc_info()[0])
+		raise
 
 
 def fire_single_request_to_obtain_coordinates(request_string):
@@ -158,6 +163,11 @@ def execute_geocoding(wait_list_geocoding):
 
 
 def main():
+
+	auth_provider = PlainTextAuthProvider(username='bp2016n1', password='') 
+	cluster = Cluster(['172.16.64.61'], auth_provider=auth_provider)
+	session = cluster.connect('datalake')
+
 	wait_list_geocoding = queue.Queue()
 	subjects = generate_subjects_from_ortschaften()
 	fill_up_wait_list_geocoding(wait_list_geocoding, subjects)
@@ -167,11 +177,24 @@ def main():
 		request = generate_request(subject.name)
 		response = fire_single_request_to_obtain_coordinates(request)
 
-		if response is not None:
-			print (response)
-			subject.add_geocode(response['coordinates'])
-		print (subject.name + " ".join(str(i) for i in subject.coordinates))
-
+		if response:
+			try:
+				#print (response)
+				subject.add_geocode(repr(response['coordinates']))
+				session.execute(
+					"""
+					INSERT INTO geocodes (id, geo_coords, name, place_name)
+					VALUES (%s, %s, %s, %s)
+					""",
+					(subject.uuid, subject.coordinates, subject.name, subject.place_name)
+					)
+			except OSError as err:
+				print("OS error: {0}".format(err))
+			except ValueError:
+				print("Value Error")
+			except:
+				print("Unexpected error:", sys.exc_info()[0])
+				raise
 
 if __name__ == '__main__':
 	main()
