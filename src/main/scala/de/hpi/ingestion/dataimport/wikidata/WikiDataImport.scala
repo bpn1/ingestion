@@ -196,7 +196,7 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 		val jsonFile = input.fromAnyRDD[String]().head
 		val wikiData = jsonFile
 			.map(cleanJSON)
-		    .collect { case line: String if line.nonEmpty => Json.parse(line) }
+			.collect { case line: String if line.nonEmpty => Json.parse(line) }
 			.map(fillEntityValues)
 		val properties = buildPropertyMap(wikiData)
 		val propertyBroadcast = sc.broadcast(properties)
