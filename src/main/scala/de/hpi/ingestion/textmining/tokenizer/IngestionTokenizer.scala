@@ -21,7 +21,6 @@ case class IngestionTokenizer(
 	val stopwords = Source.fromURL(getClass.getResource(s"/$stopwordsPath"))
 		.getLines()
 		.toSet
-
 	/**
 	  * Tokenizes a text, removes stop words and stems the tokens.
 	  *

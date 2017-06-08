@@ -127,7 +127,7 @@ class DFDataTest extends FlatSpec with Matchers with SharedSparkContext {
 	}
 
 	"Inverse document frequencies" should "contain as many tokens as document frequencies" in {
-		val documentFrequencies = TextTestData.documentFrequenciesTestSet()
+		val documentFrequencies = TextTestData.documentFrequenciesSet()
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(df => (df.word, DFData.calculateIdf(df.count, numDocuments)))
@@ -135,7 +135,7 @@ class DFDataTest extends FlatSpec with Matchers with SharedSparkContext {
 	}
 
 	they should "be exactly these inverse document frequencies" in {
-		val documentFrequencies = TextTestData.documentFrequenciesTestSet()
+		val documentFrequencies = TextTestData.documentFrequenciesSet()
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(df => (df.word, DFData.calculateIdf(df.count, numDocuments)))

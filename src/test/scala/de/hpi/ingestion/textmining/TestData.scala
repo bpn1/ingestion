@@ -7,7 +7,6 @@ import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models.{TrieAlias, _}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
@@ -26,7 +25,7 @@ import scala.io.{BufferedSource, Source}
 
 object TestData {
 
-	def testSentences(): List[String] = {
+	def sentencesList(): List[String] = {
 		List(
 			"This is a test sentence.",
 			"Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen.",
@@ -44,7 +43,7 @@ object TestData {
 		)
 	}
 
-	def tokenizedTestSentences(): List[List[String]] = {
+	def tokenizedSentences(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
@@ -53,7 +52,7 @@ object TestData {
 		)
 	}
 
-	def tokenizedTestSentencesWithoutSpecialCharacters(): List[List[String]] = {
+	def tokenizedSentencesWithoutSpecialCharacters(): List[List[String]] = {
 		List(
 			List("This", "is", "a", "test", "sentence"),
 			List("Streitberg", "ist", "einer", "von", "sechs", "Ortsteilen", "der", "Gemeinde", "Brachttal", "Main-Kinzig-Kreis", "in", "Hessen"),
@@ -125,9 +124,8 @@ object TestData {
 		)
 	}
 
-
-	def allAliasesTestRDD(sc: SparkContext): RDD[String] = {
-		sc.parallelize(List(
+	def allAliasesSet(): Set[String] = {
+		Set(
 			"Audi",
 			"Brachttal",
 			"Main-Kinzig-Kreis",
@@ -136,49 +134,68 @@ object TestData {
 			"Büdinger Wald",
 			"Backfisch",
 			"Streitberg",
-			"historisches Jahr"))
-			.sortBy(identity)
+			"historisches Jahr"
+		)
 	}
 
-	def parsedWikipediaTestSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaWithTextsSet(): Set[ParsedWikipediaEntry] = {
 		Set(
-			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
-				List(
-					Link("Audi", "Audi", Option(9))
-				),
+			ParsedWikipediaEntry(
+				"Audi Test mit Link",
+				Option("Hier ist Audi verlinkt."),
+				List(Link("Audi", "Audi", Option(9))),
+				List(),
+				List("Audi"),
+				textlinksreduced = List(Link("Audi", "Audi", Option(9)))),
+			ParsedWikipediaEntry(
+				"Audi Test ohne Link",
+				Option("Hier ist Audi nicht verlinkt."),
+				List(),
 				List(),
 				List("Audi")),
-			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
-				List(),
-				List(),
-				List("Audi")),
-			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+			ParsedWikipediaEntry(
+				"Streitberg (Brachttal)",
+				Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				List(
 					Link("Brachttal", "Brachttal", Option(55)),
 					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
 					Link("Hessen", "Hessen", Option(87)),
 					Link("1377", "1377", Option(225)),
-					Link("Büdinger Wald", "Büdinger Wald", Option(546))
-				),
+					Link("Büdinger Wald", "Büdinger Wald", Option(546))),
 				List(),
-				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald")),
-			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
+				List("Streitberg", "Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"),
+				textlinksreduced = List(
+					Link("Brachttal", "Brachttal", Option(55)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
+					Link("Hessen", "Hessen", Option(87)),
+					Link("1377", "1377", Option(225)),
+					Link("Büdinger Wald", "Büdinger Wald", Option(546)))),
+			ParsedWikipediaEntry(
+				"Testartikel",
+				Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
 					Link("Audi", "Audi", Option(7)),
 					Link("Brachttal", "Brachttal", Option(13)),
-					Link("historisches Jahr", "1377", Option(24))
-				),
+					Link("historisches Jahr", "1377", Option(24))),
 				List(),
-				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch")))
+				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
+				textlinksreduced = List(
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24)))))
 	}
 
-	def parsedWikipediaExtendedLinksTestSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaExtendedLinksSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
-				textlinks = List(Link("Audi", "Audi", Option(9)))
+				textlinks = List(Link("Audi", "Audi", Option(9))),
+				textlinksreduced = List(Link("Audi", "Audi", Option(9)))
 			),
 			ParsedWikipediaEntry("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
 				textlinks = List(
+					Link("Brachttal", "Brachttal", Option(55)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66))),
+				textlinksreduced = List(
 					Link("Brachttal", "Brachttal", Option(55)),
 					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66))),
 				rawextendedlinks = List(
@@ -188,6 +205,9 @@ object TestData {
 			),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				textlinks = List(
+					Link("Audi", "Audi", Option(7)),
+					Link("historisches Jahr", "1377", Option(24))),
+				textlinksreduced = List(
 					Link("Audi", "Audi", Option(7)),
 					Link("historisches Jahr", "1377", Option(24))),
 				rawextendedlinks = List(
@@ -202,7 +222,8 @@ object TestData {
 				),
 				List(),
 				List("Audi"),
-				context = Map("audi" -> 1, "verlink" -> 1)
+				context = Map("audi" -> 1, "verlink" -> 1),
+				textlinksreduced = List(Link("Audi", "Audi", Option(9)))
 			),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
@@ -218,10 +239,14 @@ object TestData {
 				),
 				List(),
 				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
-				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
+				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1),
+				textlinksreduced = List(
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24)))))
 	}
 
-	def linksWithContextsTestSet(): Set[Link] = {
+	def linksWithContextsSet(): Set[Link] = {
 		Set(
 			Link("Audi", "Audi", Option(9), Map("verlink" -> 1)),
 			Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
@@ -242,7 +267,8 @@ object TestData {
 				),
 				List(),
 				List("Audi"),
-				linkswithcontext = List(Link("Audi", "Audi", Option(9), Map("verlink" -> 1)))
+				linkswithcontext = List(Link("Audi", "Audi", Option(9), Map("verlink" -> 1))),
+				textlinksreduced = List(Link("Audi", "Audi", Option(9)))
 			),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
@@ -265,7 +291,13 @@ object TestData {
 					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
 					Link("Hessen", "Hessen", Option(87), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
 					Link("1377", "1377", Option(225), Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
-					Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)))
+					Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1))),
+				textlinksreduced = List(
+					Link("Brachttal", "Brachttal", Option(55)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
+					Link("Hessen", "Hessen", Option(87)),
+					Link("1377", "1377", Option(225)),
+					Link("Büdinger Wald", "Büdinger Wald", Option(546)))
 			),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
@@ -278,7 +310,11 @@ object TestData {
 				linkswithcontext = List(
 					Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
 					Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
-					Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
+					Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1))),
+				textlinksreduced = List(
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24)))
 			))
 	}
 
@@ -291,7 +327,8 @@ object TestData {
 				List(),
 				List("Audi"),
 				linkswithcontext = List(Link("Audi", "Audi", Option(9), Map("verlink" -> 1))),
-				context = Map("audi" -> 1, "verlink" -> 1)
+				context = Map("audi" -> 1, "verlink" -> 1),
+				textlinksreduced = List(Link("Audi", "Audi", Option(9)))
 			),
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
 				List(),
@@ -316,7 +353,13 @@ object TestData {
 					Link("Hessen", "Hessen", Option(87), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
 					Link("1377", "1377", Option(225), Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
 					Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1))),
-				context = Map("1554" -> 1, "waldrech" -> 1, "einwohnerzahl" -> 1, "streidtburgk" -> 1, "19" -> 1, "brachttal" -> 1, "ort" -> 1, "jahrhu" -> 1, "nachweislich" -> 1, "-lrb-" -> 3, "huterech" -> 1, "eingeburg" -> 1, "steytberg" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "-" -> 1, "stridberg" -> 1, "kleinst" -> 1, "-rrb-" -> 3, "stamm" -> 1, "hess" -> 1, "holx" -> 1, "buding" -> 1, "tauch" -> 1, "stripurgk" -> 1, "1500" -> 1, "gemei" -> 1, "1377" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "1528" -> 1, "namensvaria" -> 1, "ortsnam" -> 1, "streitberg" -> 2, "mittelal" -> 1, "red" -> 1)
+				context = Map("1554" -> 1, "waldrech" -> 1, "einwohnerzahl" -> 1, "streidtburgk" -> 1, "19" -> 1, "brachttal" -> 1, "ort" -> 1, "jahrhu" -> 1, "nachweislich" -> 1, "-lrb-" -> 3, "huterech" -> 1, "eingeburg" -> 1, "steytberg" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "-" -> 1, "stridberg" -> 1, "kleinst" -> 1, "-rrb-" -> 3, "stamm" -> 1, "hess" -> 1, "holx" -> 1, "buding" -> 1, "tauch" -> 1, "stripurgk" -> 1, "1500" -> 1, "gemei" -> 1, "1377" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "1528" -> 1, "namensvaria" -> 1, "ortsnam" -> 1, "streitberg" -> 2, "mittelal" -> 1, "red" -> 1),
+				textlinksreduced = List(
+					Link("Brachttal", "Brachttal", Option(55)),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)),
+					Link("Hessen", "Hessen", Option(87)),
+					Link("1377", "1377", Option(225)),
+					Link("Büdinger Wald", "Büdinger Wald", Option(546)))
 			),
 			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
 				List(
@@ -330,7 +373,11 @@ object TestData {
 					Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
 					Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
 					Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1))),
-				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)
+				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1),
+				textlinksreduced = List(
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24)))
 			))
 	}
 
@@ -427,54 +474,54 @@ object TestData {
 			(Link("historisches Jahr", "1377", Option(24)), Map("audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
-	def termFrequenciesTestSet(): Set[(String, Bag[String, Int])] = {
+	def termFrequenciesSet(): Set[(String, Bag[String, Int])] = {
 		Set(
 			("Audi Test mit Link", Bag("audi" -> 1, "verlink" -> 1)),
 			("Audi Test ohne Link", Bag("audi" -> 1, "verlink" -> 1)),
 			("Testartikel", Bag("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 	}
 
-	def aliasOccurrencesInArticlesTestRDD(sc: SparkContext): RDD[AliasOccurrencesInArticle] = {
-		sc.parallelize(List(
+	def aliasOccurrencesInArticlesList(): List[AliasOccurrencesInArticle] = {
+		List(
 			AliasOccurrencesInArticle(Set("Audi"), Set()),
 			AliasOccurrencesInArticle(Set(), Set("Audi")),
 			AliasOccurrencesInArticle(Set("Brachttal", "Main-Kinzig-Kreis", "Hessen", "1377", "Büdinger Wald"), Set("Streitberg")),
 			AliasOccurrencesInArticle(Set("Audi", "Brachttal", "historisches Jahr"), Set("Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"))
-		))
+		)
 	}
 
-	def startAliasCounterTestRDD(sc: SparkContext): RDD[Alias] = {
-		sc.parallelize(List(
-			Alias("Audi", Map(), Option(1), Option(1)),
-			Alias("Audi", Map(), Option(1), Option(1)),
-			Alias("Audi", Map(), Option(0), Option(1)),
-			Alias("Brachttal", Map(), Option(1), Option(1)),
-			Alias("Brachttal", Map(), Option(1), Option(1)),
-			Alias("Main-Kinzig-Kreis", Map(), Option(1), Option(1)),
-			Alias("Main-Kinzig-Kreis", Map(), Option(0), Option(1)),
-			Alias("Hessen", Map(), Option(1), Option(1)),
-			Alias("Hessen", Map(), Option(0), Option(1)),
-			Alias("1377", Map(), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map(), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map(), Option(0), Option(1)),
-			Alias("Backfisch", Map(), Option(0), Option(1)),
-			Alias("Streitberg", Map(), Option(0), Option(1)),
-			Alias("historisches Jahr", Map(), Option(1), Option(1))
-		))
+	def startAliasCounterList(): List[Alias] = {
+		List(
+			Alias("Audi", Map(), Map(), Option(1), Option(1)),
+			Alias("Audi", Map(), Map(), Option(1), Option(1)),
+			Alias("Audi", Map(), Map(), Option(0), Option(1)),
+			Alias("Brachttal", Map(), Map(), Option(1), Option(1)),
+			Alias("Brachttal", Map(), Map(), Option(1), Option(1)),
+			Alias("Main-Kinzig-Kreis", Map(), Map(), Option(1), Option(1)),
+			Alias("Main-Kinzig-Kreis", Map(), Map(), Option(0), Option(1)),
+			Alias("Hessen", Map(), Map(), Option(1), Option(1)),
+			Alias("Hessen", Map(), Map(), Option(0), Option(1)),
+			Alias("1377", Map(), Map(), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map(), Map(), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map(), Map(), Option(0), Option(1)),
+			Alias("Backfisch", Map(), Map(), Option(0), Option(1)),
+			Alias("Streitberg", Map(), Map(), Option(0), Option(1)),
+			Alias("historisches Jahr", Map(), Map(), Option(1), Option(1))
+		)
 	}
 
-	def countedAliasesTestRDD(sc: SparkContext): RDD[Alias] = {
-		sc.parallelize(List(
-			Alias("Audi", Map(), Option(2), Option(3)),
-			Alias("Brachttal", Map(), Option(2), Option(2)),
-			Alias("Main-Kinzig-Kreis", Map(), Option(1), Option(2)),
-			Alias("Hessen", Map(), Option(1), Option(2)),
-			Alias("1377", Map(), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map(), Option(1), Option(2)),
-			Alias("Backfisch", Map(), Option(0), Option(1)),
-			Alias("Streitberg", Map(), Option(0), Option(1)),
-			Alias("historisches Jahr", Map(), Option(1), Option(1))
-		))
+	def countedAliasesSet(): Set[Alias] = {
+		Set(
+			Alias("Audi", Map(), Map(), Option(2), Option(3)),
+			Alias("Brachttal", Map(), Map(), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map(), Map(), Option(1), Option(2)),
+			Alias("Hessen", Map(), Map(), Option(1), Option(2)),
+			Alias("1377", Map(), Map(), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map(), Map(), Option(1), Option(2)),
+			Alias("Backfisch", Map(), Map(), Option(0), Option(1)),
+			Alias("Streitberg", Map(), Map(), Option(0), Option(1)),
+			Alias("historisches Jahr", Map(), Map(), Option(1), Option(1))
+		)
 	}
 
 	def linksSet(): Set[Alias] = {
@@ -505,14 +552,14 @@ object TestData {
 
 	def finalAliasesSet(): Set[Alias] = {
 		Set(
-			Alias("Audi", Map("Audi" -> 2), Option(2), Option(3)),
-			Alias("Brachttal", Map("Brachttal" -> 2), Option(2), Option(2)),
-			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Option(1), Option(2)),
-			Alias("Hessen", Map("Hessen" -> 1), Option(1), Option(2)),
-			Alias("1377", Map("1377" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), Option(1), Option(2)),
-			Alias("historisches Jahr", Map("1377" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Audi" -> 1), Option(1), Option(2)), // negative example
+			Alias("Audi", Map("Audi" -> 2), linkoccurrences = Option(2), totaloccurrences = Option(3)),
+			Alias("Brachttal", Map("Brachttal" -> 2), linkoccurrences = Option(2), totaloccurrences = Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)),
+			Alias("Hessen", Map("Hessen" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)),
+			Alias("1377", Map("1377" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(1)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)),
+			Alias("historisches Jahr", Map("1377" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(1)),
+			Alias("Büdinger Wald", Map("Audi" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)), // negative example
 			Alias("historisches Jahr", Map("1377" -> 1)) // incomplete table entry
 		)
 	}
@@ -520,25 +567,14 @@ object TestData {
 	def aliasesWithExistingPagesSet(): Set[Alias] = {
 		// these pages do not fit to the aliases but are required for the tests
 		Set(
-			Alias("Audi", Map("Audi Test mit Link" -> 2), Option(2), Option(3)),
-			Alias("Brachttal", Map("Audi Test ohne Link" -> 2), Option(2), Option(2)),
-			Alias("Main-Kinzig-Kreis", Map("Streitberg (Brachttal)" -> 1), Option(1), Option(2)),
-			Alias("Hessen", Map("Streitberg (Brachttal)" -> 1), Option(1), Option(2)),
-			Alias("1377", Map("Testartikel" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Testartikel" -> 1), Option(1), Option(2)),
-			Alias("historisches Jahr", Map("Testartikel" -> 1), Option(1), Option(1))
+			Alias("Audi", Map("Audi Test mit Link" -> 2), linkoccurrences = Option(2), totaloccurrences = Option(3)),
+			Alias("Brachttal", Map("Audi Test ohne Link" -> 2), linkoccurrences = Option(2), totaloccurrences = Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Streitberg (Brachttal)" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)),
+			Alias("Hessen", Map("Streitberg (Brachttal)" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)),
+			Alias("1377", Map("Testartikel" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(1)),
+			Alias("Büdinger Wald", Map("Testartikel" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)),
+			Alias("historisches Jahr", Map("Testartikel" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(1))
 		)
-	}
-
-	def allPageNamesTestRDD(sc: SparkContext): RDD[String] = {
-		sc.parallelize(List(
-			"Brachttal",
-			"Main-Kinzig-Kreis",
-			"Hessen",
-			"1377",
-			"Büdinger Wald",
-			"Audi"))
-			.sortBy(identity)
 	}
 
 	def allPageNamesOfTestArticleList(): Set[String] = {
@@ -558,15 +594,15 @@ object TestData {
 		)
 	}
 
-	def documentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def documentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("backfisch", 1)
 		)
 	}
 
-	def filteredDocumentFrequenciesTestList(): List[DocumentFrequency] = {
-		List(
+	def filteredDocumentFrequenciesSet(): Set[DocumentFrequency] = {
+		Set(
 			DocumentFrequency("audi", 3)
 		)
 	}
@@ -577,14 +613,14 @@ object TestData {
 			DocumentFrequency(".", 4))
 	}
 
-	def requestedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def requestedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 3),
 			DocumentFrequency("backfisch", 2)
 		)
 	}
 
-	def unstemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def unstemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("Audi", 3),
 			DocumentFrequency("Backfisch", 1),
@@ -598,7 +634,7 @@ object TestData {
 		)
 	}
 
-	def incorrectStemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def incorrectStemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		// This test case is wrong, since there are only 4 documents and "ein" has a document frequency of 6
 		Set(
 			DocumentFrequency("audi", 3),
@@ -610,7 +646,7 @@ object TestData {
 		)
 	}
 
-	def stemmedDocumentFrequenciesTestSet(): Set[DocumentFrequency] = {
+	def stemmedDocumentFrequenciesSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("audi", 3),
@@ -728,6 +764,14 @@ object TestData {
 		)
 	}
 
+	def deadAliasContextsTfidfList(): List[(Link, Map[String, Double])] = {
+		List(
+			(Link("dead alias 1", "1377", Option(24)), Map("jahr" -> 0.1)),
+			(Link("dead alias 2", "1377", Option(24)), Map("jahr" -> 0.2)),
+			(Link("dead alias 3", "1377", Option(24)), Map("jahr" -> 0.3))
+		)
+	}
+
 	def shortLinkAndAliasContextsTfidfList(): List[(Link, Map[String, Double])] = {
 		// considered to be retrieved from 7 documents
 		val tf1df1 = 0.845
@@ -788,11 +832,11 @@ object TestData {
 		)
 	}
 
-	def unstemmedGermanWordsTestSet(): Set[String] = {
+	def unstemmedGermanWordsSet(): Set[String] = {
 		Set("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "brauchen", "können", "sollte")
 	}
 
-	def wikipediaTestTextLinks(): Map[String, List[Link]] = {
+	def wikipediaTextLinks(): Map[String, List[Link]] = {
 		// extracted text links from article abstracts
 		Map(
 			"Audi" -> List(
@@ -836,7 +880,7 @@ object TestData {
 		)
 	}
 
-	def wikipediaTestTemplateLinks(): Map[String, List[Link]] = {
+	def wikipediaTemplateLinks(): Map[String, List[Link]] = {
 		// extracted template links from Article abstracts
 		Map(
 			"Audi" -> List(
@@ -871,7 +915,7 @@ object TestData {
 				Link("Mary Todd Lincoln", "Mary Todd Lincoln")))
 	}
 
-	def wikipediaTestTemplateArticles(): Set[String] = {
+	def wikipediaTemplateArticles(): Set[String] = {
 		Set("Audi", "Electronic Arts", "Postbank-Hochhaus (Berlin)", "Abraham Lincoln")
 	}
 
@@ -937,11 +981,11 @@ object TestData {
 		)
 	}
 
-	def wikipediaDisambiguationPagesTestSet(): Set[String] = {
+	def wikipediaDisambiguationPagesSet(): Set[String] = {
 		Set("Zerfall", "Fisch", "Zwilling (Begriffsklärung)")
 	}
 
-	def wikipediaTestAbstracts(): Map[String, String] = {
+	def wikipediaAbstracts(): Map[String, String] = {
 		Map(
 			"Audi" -> """Die Audi AG (, Eigenschreibweise: AUDI AG) mit Sitz in Ingolstadt in Bayern ist ein deutscher Automobilhersteller, der dem Volkswagen-Konzern angehört. Der Markenname ist ein Wortspiel zur Umgehung der Namensrechte des ehemaligen Kraftfahrzeugherstellers A. Horch & Cie. Motorwagenwerke Zwickau.""",
 			"Electronic Arts" -> """Electronic Arts (EA) ist ein börsennotierter, weltweit operierender Hersteller und Publisher von Computer- und Videospielen. Das Unternehmen wurde vor allem für seine Sportspiele (Madden NFL, FIFA) bekannt, publiziert aber auch zahlreiche andere Titel in weiteren Themengebieten. Ab Mitte der 1990er, bis zu der im Jahr 2008 erfolgten Fusion von Vivendi Games und Activision zu Activision Blizzard, war das Unternehmen nach Umsatz Marktführer im Bereich Computerspiele. Bei einem Jahresumsatz von etwa drei Milliarden Dollar hat das Unternehmen 2007 einen Marktanteil von etwa 25 Prozent auf dem nordamerikanischen und europäischen Markt. Die Aktien des Unternehmens sind im Nasdaq Composite und im S&P 500 gelistet."""
@@ -959,6 +1003,7 @@ object TestData {
 	def entryWithAlternativeWhitespace(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2.\u00a0Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
+
 	def entryWithStandardWhitespaces(): WikipediaEntry = {
 		WikipediaEntry("Fehler 2. Art", Option("Der Fehler 2. Art, auch als β-Fehler (Beta-Fehler) oder Falsch-negativ-Entscheidung bezeichnet, ist ein Fachbegriff der Statistik."))
 	}
@@ -973,9 +1018,27 @@ object TestData {
 		)
 	}
 
+	def reducedGroupedAliasesSet(): Set[Alias] = {
+		Set(
+			Alias("Bayern", Map("Bayern" -> 1)),
+			Alias("Automobilhersteller", Map("Automobilhersteller" -> 1)),
+			Alias("Radioaktiver Zerfall", Map("Radioaktivität" -> 1)),
+			Alias("Zerfall", Map("Zerfall (Album)" -> 1, "Radioaktivität" -> 1))
+		)
+	}
+
 	def groupedPagesSet(): Set[Page] = {
 		Set(
 			Page("Ingolstadt", Map("Ingolstadt" -> 1)),
+			Page("Bayern", Map("Bayern" -> 1)),
+			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
+			Page("Radioaktivität", Map("Zerfall" -> 1, "Radioaktiver Zerfall" -> 1))
+		)
+	}
+
+	def reducedGroupedPagesSet(): Set[Page] = {
+		Set(
 			Page("Bayern", Map("Bayern" -> 1)),
 			Page("Automobilhersteller", Map("Automobilhersteller" -> 1)),
 			Page("Zerfall (Album)", Map("Zerfall" -> 1)),
@@ -1007,15 +1070,6 @@ object TestData {
 		)
 	}
 
-	def allPagesTestList(): List[String] = {
-		List(
-			"Automobilhersteller",
-			"Ingolstadt",
-			"Bayern",
-			"Zerfall (Album)"
-		)
-	}
-
 	def smallerParsedWikipediaList(): List[ParsedWikipediaEntry] = {
 		List(
 			ParsedWikipediaEntry(
@@ -1042,6 +1096,33 @@ object TestData {
 			Link("Zerfall", "Zerfall (Album)", Option(4711)),
 			Link("Zerfall", "Radioaktivität", Option(4711)),
 			Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711))
+		)
+	}
+
+	def linkAnalysisArticles(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Ingolstadt",
+				textlinks = List(
+					Link("Ingolstadt", "Ingolstadt", Option(55)),
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)))
+			),
+			ParsedWikipediaEntry(
+				"Bayern",
+				textlinksreduced = List(
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)))
+			),
+			ParsedWikipediaEntry("Automobilhersteller"),
+			ParsedWikipediaEntry("Zerfall (Album)"),
+			ParsedWikipediaEntry("Radioaktivität")
 		)
 	}
 
@@ -1100,6 +1181,33 @@ object TestData {
 		)
 	}
 
+	def closedParsedWikipediaSetWithReducedLinks(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry(
+				"Audi",
+				Option("dummy text"),
+				textlinksreduced = List(
+					Link("Ingolstadt", "Ingolstadt", Option(55)),
+					Link("Bayern", "Bayern", Option(69)),
+					Link("Automobilhersteller", "Automobilhersteller", Option(94)),
+					Link("Zerfall", "Zerfall (Album)", Option(4711)),
+					Link("Zerfall", "Radioaktivität", Option(4711)),
+					Link("Radioaktiver Zerfall", "Radioaktivität", Option(4711)),
+					Link("Zerfall", "Zerfall (Soziologie)", Option(4711)), // dead link
+					Link("", "page name with empty alias", Option(4711)),
+					Link("alias with empty page name", "", Option(4711))
+				)),
+			ParsedWikipediaEntry("Ingolstadt", Option("lorem")),
+			ParsedWikipediaEntry("Bayern", Option("lorem")),
+			ParsedWikipediaEntry("Automobilhersteller", Option("lorem")),
+			ParsedWikipediaEntry("Zerfall (Album)", Option("lorem")),
+			ParsedWikipediaEntry("Radioaktivität", Option("lorem")),
+			ParsedWikipediaEntry("Volvo", Option("lorem")),
+			ParsedWikipediaEntry("Opel", Option("ipsum")),
+			ParsedWikipediaEntry("Deutsche Bahn", Option("hat Verspätung"))
+		)
+	}
+
 	def cleanedParsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry(
@@ -1128,11 +1236,11 @@ object TestData {
 				)))
 	}
 
-	def germanStopwordsTestSet(): Set[String] = {
+	def germanStopwordsSet(): Set[String] = {
 		Set("der", "die", "das", "und", "als", "ist", "an", "am", "im", "dem", "des")
 	}
 
-	def unstemmedDFTestSet(): Set[ParsedWikipediaEntry] = {
+	def unstemmedDFSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Audi Backfisch ist und zugleich einer ein Link."),
 				List(
@@ -1165,27 +1273,27 @@ object TestData {
 		)
 	}
 
-	def stemmedDFTestSet(): Set[DocumentFrequency] = {
+	def stemmedDFSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("audi", 4),
 			DocumentFrequency("backfisch", 3)
 		)
 	}
 
-	def germanDFStopwordsTestSet(): Set[DocumentFrequency] = {
+	def germanDFStopwordsSet(): Set[DocumentFrequency] = {
 		Set(
 			DocumentFrequency("ist", 3),
 			DocumentFrequency("und", 3)
 		)
 	}
 
-	def unstemmedGermanWordsTestList(): List[String] = {
+	def unstemmedGermanWordsList(): List[String] = {
 		List("Es", "Keine", "Kein", "Keiner", "Ist", "keine", "keiner", "Streitberg", "Braunschweig",
 			"Deutschland", "Baum", "brauchen", "suchen", "könnte")
 		// problem words: eine -> eine, hatte -> hatt
 	}
 
-	def stemmedGermanWordsTestList(): List[String] = {
+	def stemmedGermanWordsList(): List[String] = {
 		List("es", "kein", "kein", "kein", "ist", "kein", "kein", "streitberg", "braunschweig",
 			"deutschla", "baum", "brauch", "such", "konn")
 	}
@@ -1194,7 +1302,7 @@ object TestData {
 		ParsedWikipediaEntry(
 			"Schwarzer Humor",
 			Option("""Hickelkasten in Barcelona, Spanien: Der Sprung in den „Himmel“ ist in diesem Fall ein Sprung in den Tod. Hier hat sich jemand einen makabren Scherz erlaubt. Als schwarzer Humor wird Humor bezeichnet, der Verbrechen, Krankheit, Tod und ähnliche Themen, für die gewöhnlich eine Abhandlung in ernster Form erwartet wird, in satirischer oder bewusst verharmlosender Weise verwendet. Oft bezieht er sich auf Zeitthemen. Schwarzer Humor bedient sich häufig paradoxer Stilfiguren. Nicht selten löst er Kontroversen aus darüber, ob man sich über die genannten Dinge lustig machen dürfe und wo die Grenzen des guten Geschmacks lägen; besonders ist dies der Fall, wenn religiöse und sexuelle Themen und tragische Ereignisse zum Gegenstand genommen werden. In der darstellenden Kunst nennt man auf schwarzen Humor setzende Werke schwarze Komödien. Der Begriff wurde durch den Surrealisten André Breton erstmals 1940 in seiner Schrift Anthologie de l’humour noir näher umrissen, wird jedoch seit den 1960er Jahren zum Teil deutlich anders verstanden, indem Kennzeichen der Desillusion und des Nihilismus hinzutraten. In dem Vorwort seines Werkes nennt Breton unter anderem Quellen von Freud und Hegel, die seiner Meinung nach in die Begriffsentwicklung eingeflossen sind. Ursprünge des ‚schwarzen Humors‘ sah Breton in seiner Anthologie bei einigen Werken des irischen Satirikers Jonathan Swift wie Directions to Servants, A Modest Proposal, A Meditation on a Broom-Stick und einige seiner Aphorismen. In den öffentlichen Gebrauch kam der Begriff erst in den 1960er Jahren insbesondere im angloamerikanischen Raum (‚black humour‘) durch die Rezeption von Schriftstellern wie Nathanael West, Vladimir Nabokov und Joseph Heller. So gilt Catch-22 (1961) als ein bekanntes Beispiel dieser Stilart, in dem die Absurdität des Militarismus im Zweiten Weltkrieg satirisch überspitzt wurde. Weitere Beispiele sind Kurt Vonnegut, Slaughterhouse Five (1969), Thomas Pynchon, V. (1963) und Gravity’s Rainbow (1973), sowie im Film Stanley Kubrick’s Dr. Strangelove (1964) und im Absurden Theater insbesondere bei Eugène Ionesco zu finden. Der Begriff black comedy (dtsch. „schwarze Komödie“), der in der englischen Sprache schon für einige Stücke Shakespeares angewandt wurde, weist nach dem Lexikon der Filmbegriffe der Christian-Albrechts-Universität zu Kiel als Komödientyp durch „manchmal sarkastischen, absurden und morbiden ‚schwarzen‘ Humor“ aus, der sich sowohl auf „ernste oder tabuisierte Themen wie Krankheit, Behinderung, Tod, Krieg, Verbrechen“ wie auch auf „für sakrosankt gehaltene Dinge“ richten kann und dabei „auch vor politischen Unkorrektheiten, derben Späßen, sexuellen und skatologischen Anzüglichkeiten nicht zurückschreckt.“ Dabei stehe „hinter der Fassade zynischer Grenzüberschreitungen“ häufig ein „aufrichtiges Anliegen, falsche Hierarchien, Konventionen und Verlogenheiten innerhalb einer Gesellschaft mit den Mitteln filmischer Satire zu entlarven.“ Als filmische Beispiele werden angeführt: Robert Altmans M*A*S*H (USA 1970), Mike Nichols’ Catch-22 (USA 1970), nach Joseph Heller) sowie in der Postmoderne Quentin Tarantinos Pulp Fiction (USA 1994) und Lars von Triers Idioterne (Dänemark 1998). Der Essayist François Bondy schrieb 1971 in Die Zeit: „Der schwarze Humor ist nicht zu verwechseln mit dem ‚kranken Humor‘, der aus den Staaten kam, mit seinen ‚sick jokes‘“ und nannte als Beispiel den Witz: „Mama, ich mag meinen kleinen Bruder nicht. – Schweig, iß, was man dir vorsetzt“. Witz und Humor seien jedoch nicht dasselbe und letzteres „eine originale Geschichte in einer besonderen Tonart“. Humor im Sinne von einer – wie der Duden definiert – „vorgetäuschten Heiterkeit mit der jemand einer unangenehmen oder verzweifelten Lage, in der er sich befindet, zu begegnen“ versucht, nennt man auch Galgenhumor."""),
-			List(
+			textlinks = List(
 				Link("Hickelkasten", "Hickelkasten", Option(0)),
 				Link("Humor", "Humor", Option(182)),
 				Link("satirischer", "Satire", Option(321)),
@@ -1253,8 +1361,68 @@ object TestData {
 				Link("Die Zeit", "Die Zeit", Option(3245)),
 				Link("Witz", "Witz", Option(3491)),
 				Link("Duden", "Duden", Option(3639)),
-				Link("Galgenhumor", "Galgenhumor", Option(3806))
-			))
+				Link("Galgenhumor", "Galgenhumor", Option(3806))),
+			textlinksreduced = List(
+				Link("Hickelkasten", "Hickelkasten", Option(0)),
+				Link("Humor", "Humor", Option(182)),
+				Link("satirischer", "Satire", Option(321)),
+				Link("paradoxer", "Paradoxon", Option(451)),
+				Link("Stilfiguren", "Rhetorische Figur", Option(461)),
+				Link("Kontroversen", "Kontroverse", Option(495)),
+				Link("guten Geschmacks", "Geschmack (Kultur)", Option(601)),
+				Link("Surrealisten", "Surrealismus", Option(865)),
+				Link("André Breton", "André Breton", Option(878)),
+				Link("Desillusion", "Desillusion", Option(1061)),
+				Link("Nihilismus", "Nihilismus", Option(1081)),
+				Link("Freud", "Sigmund Freud", Option(1173)),
+				Link("Hegel", "Georg Wilhelm Friedrich Hegel", Option(1183)),
+				Link("Anthologie", "Anthologie", Option(1314)),
+				Link("Jonathan Swift", "Jonathan Swift", Option(1368)),
+				Link("Directions to Servants", "Directions to Servants", Option(1387)),
+				Link("A Modest Proposal", "A Modest Proposal", Option(1411)),
+				Link("A Meditation on a Broom-Stick", "A Meditation on a Broom-Stick", Option(1430)),
+				Link("Aphorismen", "Aphorismus", Option(1478)),
+				Link("Nathanael West", "Nathanael West", Option(1663)),
+				Link("Vladimir Nabokov", "Vladimir Nabokov", Option(1679)),
+				Link("Joseph Heller", "Joseph Heller", Option(1700)),
+				Link("Catch-22", "Catch-22", Option(1723)),
+				Link("Kurt Vonnegut", "Kurt Vonnegut", Option(1893)),
+				Link("Slaughterhouse Five", "Schlachthof 5 oder Der Kinderkreuzzug", Option(1908)),
+				Link("Thomas Pynchon", "Thomas Pynchon", Option(1936)),
+				Link("V.", "V.", Option(1952)),
+				Link("Gravity’s Rainbow", "Die Enden der Parabel", Option(1966)),
+				Link("Stanley Kubrick", "Stanley Kubrick", Option(2006)),
+				Link("Dr. Strangelove", "Dr. Seltsam oder: Wie ich lernte, die Bombe zu lieben", Option(2024)),
+				Link("Absurden Theater", "Absurdes Theater", Option(2054)),
+				Link("Eugène Ionesco", "Eugène Ionesco", Option(2088)),
+				Link("Shakespeares", "Shakespeare", Option(2222)),
+				Link("Christian-Albrechts-Universität zu Kiel", "Christian-Albrechts-Universität zu Kiel", Option(2296)),
+				Link("Komödientyp", "Komödie", Option(2340)),
+				Link("sarkastischen", "Sarkasmus", Option(2368)),
+				Link("absurden", "Absurdität", Option(2383)),
+				Link("morbiden", "Morbidität", Option(2396)),
+				Link("tabuisierte", "Tabuisierung", Option(2462)),
+				Link("sakrosankt", "Sakrosankt", Option(2551)),
+				Link("politischen Unkorrektheiten", "Politische Korrektheit", Option(2612)),
+				Link("sexuellen und skatologischen", "Vulgärsprache", Option(2656)),
+				Link("zynischer", "Zynismus", Option(2756)),
+				Link("Satire", "Satire", Option(2933)),
+				Link("Robert Altmans", "Robert Altman", Option(2997)),
+				Link("M*A*S*H", "MASH (Film)", Option(3012)),
+				Link("Mike Nichols", "Mike Nichols", Option(3032)),
+				Link("Catch-22", "Catch-22 – Der böse Trick", Option(3046)),
+				Link("Joseph Heller", "Joseph Heller", Option(3071)),
+				Link("Postmoderne", "Postmoderne", Option(3099)),
+				Link("Quentin Tarantinos", "Quentin Tarantino", Option(3111)),
+				Link("Pulp Fiction", "Pulp Fiction", Option(3130)),
+				Link("Lars von Triers", "Lars von Trier", Option(3158)),
+				Link("Idioterne", "Idioten", Option(3174)),
+				Link("François Bondy", "François Bondy", Option(3214)),
+				Link("Die Zeit", "Die Zeit", Option(3245)),
+				Link("Witz", "Witz", Option(3491)),
+				Link("Duden", "Duden", Option(3639)),
+				Link("Galgenhumor", "Galgenhumor", Option(3806)))
+		)
 	}
 
 	def parsedEntriesWithLessText(): List[ParsedWikipediaEntry] = {
@@ -1274,7 +1442,7 @@ object TestData {
 
 	def foundTrieAliases(): List[List[TrieAlias]] = {
 		List(
-			List(TrieAlias("Hickelkasten", Option(0), Map("``" -> 1, "." -> 1, "barcelona" -> 1, "tod" -> 1, "," -> 1, "„" -> 1, "sprung" -> 2, "spanie" -> 1, "himmel" -> 1, ":" -> 1))),
+			List(TrieAlias("Hickelkasten", Option(0))),
 			Nil,
 			Nil)
 	}
@@ -1342,7 +1510,7 @@ object TestData {
 			"Galgenhumor")
 	}
 
-	def testNamespacePages(): List[WikipediaEntry] = {
+	def namespacePagesList(): List[WikipediaEntry] = {
 		List(
 			WikipediaEntry("lol"),
 			WikipediaEntry("Audi"),
@@ -1384,10 +1552,11 @@ object TestData {
 			WikipediaEntry("Gadget-Definition Diskussion:Testpage"),
 			WikipediaEntry("Thema:Testpage"),
 			WikipediaEntry("Spezial:Testpage"),
-			WikipediaEntry("Medium:Testpage"))
+			WikipediaEntry("Medium:Testpage")
+		)
 	}
 
-	def testCleanedNamespacePages(): List[WikipediaEntry] = {
+	def cleanedNamespacePagesList(): List[WikipediaEntry] = {
 		List(
 			WikipediaEntry("lol"),
 			WikipediaEntry("Audi"),
@@ -1395,23 +1564,25 @@ object TestData {
 			WikipediaEntry("Postbank-Hochhaus (Berlin)"),
 			WikipediaEntry("Postbank-Hochhaus Berlin"),
 			WikipediaEntry("Abraham Lincoln"),
-			WikipediaEntry("Kategorie:Testpage"))
+			WikipediaEntry("Kategorie:Testpage")
+		)
 	}
 
-	def testNamespaceLinks(): List[Link] = {
+	def namespaceLinksList(): List[Link] = {
 		List(
 			Link("August Horch", "August Horch", Option(0)),
 			Link("August Horch", "Benutzer:August Horch", Option(0)),
 			Link("August Horch", "Thema:August Horch", Option(0)),
 			Link("August Horch", "HD:August Horch", Option(0)),
-			Link("August Horch", "Kategorie:August Horch", Option(0)))
+			Link("August Horch", "Kategorie:August Horch", Option(0))
+		)
 	}
 
-	def testListLinkPage(): String = {
+	def htmlListLinkPage(): String = {
 		Source.fromURL(getClass.getResource("/textmining/test_data.html")).getLines().mkString("\n")
 	}
 
-	def testExtractedListLinks(): List[Link] = {
+	def extractedListLinksList(): List[Link] = {
 		List(
 			Link("Zwillinge", "Zwillinge"),
 			Link("Kristallzwilling", "Kristallzwilling"),
@@ -1433,16 +1604,18 @@ object TestData {
 			Link("Twins - Zwillinge", "Twins - Zwillinge"),
 			Link("Zwillingswendeltreppe", "Zwillingswendeltreppe"),
 			Link("Der Zwilling", "Der Zwilling"),
-			Link("Die Zwillinge", "Die Zwillinge"))
+			Link("Die Zwillinge", "Die Zwillinge")
+		)
 	}
 
-	def testCleanedNamespaceLinks(): List[Link] = {
+	def cleanedNamespaceLinksList(): List[Link] = {
 		List(
 			Link("August Horch", "August Horch", Option(0)),
-			Link("August Horch", "Kategorie:August Horch", Option(0)))
+			Link("August Horch", "Kategorie:August Horch", Option(0))
+		)
 	}
 
-	def testCategoryLinks(): List[Link] = {
+	def categoryLinksList(): List[Link] = {
 		List(
 			Link("Ingolstadt", "Ingolstadt", Option(55)),
 			Link("Bayern", "Bayern", Option(69)),
@@ -1455,10 +1628,11 @@ object TestData {
 			Link("Lateinische", "Latein", Option(599)),
 			Link("Imperativ", "Imperativ (Modus)", Option(636)),
 			Link("Kategorie:Zwickau", "Zwickau", Option(829)),
-			Link("Zschopauer", "Zschopau", Option(868)))
+			Link("Zschopauer", "Zschopau", Option(868))
+		)
 	}
 
-	def testCleanedCategoryLinks(): List[Link] = {
+	def cleanedCategoryLinksList(): List[Link] = {
 		List(
 			Link("Ingolstadt", "Ingolstadt", Option(55)),
 			Link("Bayern", "Bayern", Option(69)),
@@ -1467,30 +1641,28 @@ object TestData {
 			Link("August Horch", "August Horch", Option(316)),
 			Link("Lateinische", "Latein", Option(599)),
 			Link("Imperativ", "Imperativ (Modus)", Option(636)),
-			Link("Zschopauer", "Zschopau", Option(868)))
+			Link("Zschopauer", "Zschopau", Option(868))
+		)
 	}
 
-	def testExtractedCategoryLinks(): List[Link] = {
+	def extractedCategoryLinksList(): List[Link] = {
 		List(
 			Link("Automobilhersteller", "Automobilhersteller"),
 			Link("Wortspiel", "Wortspiel"),
 			Link("Namensrechte", "Marke (Recht)"),
-			Link("Zwickau", "Zwickau"))
+			Link("Zwickau", "Zwickau")
+		)
 	}
 
-	def testRedirectDict(): Map[String, String] = {
-		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
-	}
-
-	def testLinksWithRedirects(): Set[Link] = {
+	def linksWithRedirectsSet(): Set[Link] = {
 		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus Berlin", Option(10)))
 	}
 
-	def testLinksWithResolvedRedirects(): Set[Link] = {
+	def linksWithResolvedRedirectsSet(): Set[Link] = {
 		Set(Link("Postbank Hochhaus in Berlin", "Postbank-Hochhaus (Berlin)", Option(10)))
 	}
 
-	def testEntriesWithBadRedirects(): List[WikipediaEntry] = {
+	def entriesWithBadRedirectsList(): List[WikipediaEntry] = {
 		List(WikipediaEntry("Postbank-Hochhaus Berlin", Option("""#redirect [[Postbank-Hochhaus (Berlin)]]""")))
 	}
 
@@ -1514,7 +1686,7 @@ object TestData {
 		)
 	}
 
-	def parsedEntriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
+	def parsedEntriesWithResolvedRedirectsSet(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Test Entry 1", Option("This is a test page"), textlinks = List(Link("alias 1", "test page"))),
 			ParsedWikipediaEntry("Test Entry 2", Option("This is another test page"), textlinks = List(Link("alias 2", "test page 2"), Link("alias 3", "Europäische Union"))),
@@ -1529,31 +1701,39 @@ object TestData {
 		Set(
 			ParsedWikipediaEntry("Test Redirect Entry 1", Option("REDIRECT test page"), textlinks = List(Link("Test Redirect Entry 1", "test page"))),
 			ParsedWikipediaEntry("Test Redirect Entry 2", Option("REDIRECTtest page 2"), textlinks = List(Link("Test Redirect Entry 2", "test page 2"))),
-			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT")))
+			ParsedWikipediaEntry("EU", Option("REDIRECT Europäische Union"), textlinks = List(Link("EU", "Europäische Union")), foundaliases = List("REDIRECT"))
+		)
 	}
 
-	def redirectDict(): Map[String, String] = {
-		Map(
-			"Test Redirect Entry 1" -> "test page",
-			"Test Redirect Entry 2" -> "test page 2",
-			"EU" -> "Europäische Union")
+	def smallRedirectMap(): Map[String, String] = {
+		Map("Postbank-Hochhaus Berlin" -> "Postbank-Hochhaus (Berlin)")
 	}
 
 	def redirectMap(): Map[String, String] = {
+		Map(
+			"Test Redirect Entry 1" -> "test page",
+			"Test Redirect Entry 2" -> "test page 2",
+			"EU" -> "Europäische Union"
+		)
+	}
+
+	def transitiveRedirectMap(): Map[String, String] = {
 		Map(
 			"Site 1" -> "Site 3",
 			"Site 3" -> "Site 6",
 			"Site 4" -> "Site 5",
 			"Site 5" -> "Site 4",
 			"Site 7" -> "Site 7",
-			"EU" -> "Europäische Union")
+			"EU" -> "Europäische Union"
+		)
 	}
 
 	def cleanedRedirectMap(): Map[String, String] = {
 		Map(
 			"Site 1" -> "Site 6",
 			"Site 3" -> "Site 6",
-			"EU" -> "Europäische Union")
+			"EU" -> "Europäische Union"
+		)
 	}
 
 	def entriesWithRedirects(): Set[ParsedWikipediaEntry] = {
@@ -1565,7 +1745,8 @@ object TestData {
 				categorylinks = List(Link("Alias 4", "Site 4")),
 				templatelinks = List(Link("Alias 5", "Site 5"))),
 			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
-			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "EU"))))
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "EU")))
+		)
 	}
 
 	def entriesWithResolvedRedirects(): Set[ParsedWikipediaEntry] = {
@@ -1577,7 +1758,8 @@ object TestData {
 				categorylinks = List(Link("Alias 4", "Site 4")),
 				templatelinks = List(Link("Alias 5", "Site 5"))),
 			ParsedWikipediaEntry("Test Entry 2", textlinks = List(Link("Alias 6", "Site 2"))),
-			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union"))))
+			ParsedWikipediaEntry("Rapunzel Naturkost", listlinks = List(Link("EU", "Europäische Union")))
+		)
 	}
 
 	def aliasFileStream(): BufferedSource = {
@@ -1594,7 +1776,7 @@ object TestData {
 		trie
 	}
 
-	def testDataTrie(tokenizer: IngestionTokenizer): TrieNode = {
+	def dataTrie(tokenizer: IngestionTokenizer): TrieNode = {
 		val trie = new TrieNode()
 		val aliasList = Source.fromURL(getClass.getResource("/textmining/triealiases")).getLines()
 		for(alias <- aliasList) {
@@ -1619,7 +1801,7 @@ object TestData {
 	}
 
 	def cleanedFoundAliases(): List[String] = {
-		List("Alias 1", "Alias 2", "Alias 3")
+		List("Alias 1", "Alias 2", "Alias 1", "Alias 3")
 	}
 
 	def binaryTrieStream(): ByteArrayInputStream = {
@@ -1631,10 +1813,10 @@ object TestData {
 
 	def linkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
-			Page("Bayern", Map("Bayern" -> 10)),
-			Page("VW", Map("Volkswagen AG" -> 10, "VW" -> 10)),
-			Page("Zerfall (Album)", Map("Zerfall" -> 10))
+			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10), Map("Audi AG" -> 10, "Audi" -> 10)),
+			Page("Bayern", Map("Bayern" -> 10), Map("Bayern" -> 10)),
+			Page("VW", Map("Volkswagen AG" -> 10, "VW" -> 10), Map("Volkswagen AG" -> 10, "VW" -> 10)),
+			Page("Zerfall (Album)", Map("Zerfall" -> 10), Map("Zerfall" -> 10))
 		)
 	}
 
@@ -1648,10 +1830,10 @@ object TestData {
 	}
 
 	def linkExtenderParsedEntry(): ParsedWikipediaEntry = {
-		ParsedWikipediaEntry("Audi", Option("Audi ist Audi AG. VW ist Volkswagen AG"),
-			List(
-				Link("VW", "VW", Option(18))
-			)
+		ParsedWikipediaEntry(
+			"Audi",
+			Option("Audi ist Audi AG. VW ist Volkswagen AG"),
+			textlinksreduced = List(Link("VW", "VW", Option(18)))
 		)
 	}
 
@@ -1677,7 +1859,7 @@ object TestData {
 			ParsedWikipediaEntry(
 				"Audi",
 				Option("Audi ist Audi AG. VW ist Volkswagen AG"),
-				List(Link("VW", "VW", Option(18), Map())),
+				textlinksreduced = List(Link("VW", "VW", Option(18), Map())),
 				rawextendedlinks = List(
 					ExtendedLink("Audi", Map("Audi" -> 10), Option(0)),
 					ExtendedLink("Audi AG", Map("Audi" -> 10), Option(9)),
@@ -1701,7 +1883,7 @@ object TestData {
 		ParsedWikipediaEntry(
 			"Postbank-Hochhaus (Berlin)",
 			Option("Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg. Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig. Aufgrund der Deutschen Teilung wurde das Postscheckamt in der Dorotheenstraße nur noch von der Deutschen Post der DDR genutzt. Für den Westteil von Berlin gab es damit zunächst kein eigenes Postscheckamt und daher wurde dort 1948 das Postscheckamt West eröffnet. 2014 kaufte die CG-Gruppe das Gebäude von der Postbank, die das Gebäude als Mieter bis Mitte 2016 weiternutzen will. Nach dem Auszug der Postbank soll das Hochhaus saniert und zu einem Wohn-und Hotelkomplex umgebaut werden. Gottfried Gruner Nach den Plänen des Oberpostdirektors Prosper Lemoine wurde das Gebäude des damaligen Postscheckamtes Berlin West von 1965 bis 1971 errichtet. Es hat 23 Geschosse und gehört mit einer Höhe von 89 Metern bis heute zu den höchsten Gebäuden in Berlin. Das Hochhaus besitzt eine Aluminium-Glas-Fassade und wurde im sogenannten „Internationalen Stil“ errichtet. Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. Zu dem Gebäude gehören zwei Anbauten. In dem zweigeschossigen Flachbau waren ein Rechenzentrum und die Schalterhalle untergebracht. In dem sechsgeschossiges Gebäude waren ein Heizwerk und eine Werkstatt untergebracht. Vor dem Hochhaus befindet sich der Große Brunnen von Gottfried Gruner. Er besteht aus 18 Säulen aus Bronze und wurde 1972 in Betrieb genommen. Im Postbank-Hochhaus befinden sich mehrere UKW-Sender, die von Media Broadcast betrieben werden. Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit. Über die Antennenträger auf dem Dach werden u. a. folgende Hörfunkprogramme auf Ultrakurzwelle ausgestrahlt: Was ist das für eins Masashi \"Jumbo\" Ozaki?"),
-			List(
+			textlinksreduced = List(
 				Link("Hochhaus", "Hochhaus", Option(113)),
 				Link("Postbank", "Postbank", Option(126)),
 				Link("Berliner", "Berlin", Option(190)),
@@ -1759,8 +1941,8 @@ object TestData {
 
 	def alternativeSentenceList(): List[Sentence] = {
 		List(
-			Sentence("Audi",0,"Audi ist Audi AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Audi AG","Audi",Some(9)))),
-			Sentence("Audi",18,"VW ist Volkswagen AG",List(EntityLink("VW","VW",Some(0)), EntityLink("Volkswagen AG","VW",Some(7))))
+			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9)))),
+			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))))
 		)
 	}
 
@@ -1774,8 +1956,8 @@ object TestData {
 
 	def sentencesWithCooccurrences(): List[Sentence] = {
 		List(
-			Sentence("Audi",0,"Audi ist Volkswagen.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Volkswagen","Volkswagen AG",Some(1)))),
-			Sentence("Audi",18,"Audi ist Volkswagen AG.",List(EntityLink("Audi","Audi",Some(0)), EntityLink("Volkswagen AG","Volkswagen AG",Some(1))))
+			Sentence("Audi", 0, "Audi ist Volkswagen.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Volkswagen", "Volkswagen AG", Some(1)))),
+			Sentence("Audi", 18, "Audi ist Volkswagen AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Volkswagen AG", "Volkswagen AG", Some(1))))
 		)
 	}
 
@@ -1787,23 +1969,23 @@ object TestData {
 
 	def bigLinkExtenderPagesSet(): Set[Page] = {
 		Set(
-			Page("Audi", Map("Audi AG" -> 10, "Audi" -> 10)),
-			Page("VW", Map("Volkswagen AG" -> 10, "VW" -> 10)),
-			Page("Hochhaus", Map("Hochhaus" -> 10, "Gebäude" -> 10)),
-			Page("Postbank", Map("Postbank" -> 10)),
-			Page("Berlin", Map("Berlin" -> 10, "(" -> 10, "Berliner" -> 10)),
-			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 10)),
-			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 10)),
-			Page("Potsdam", Map("Potsdam" -> 10)),
-			Page("Magdeburg", Map("Magdeburg" -> 10)),
-			Page("Stettin", Map("Stettin" -> 10)),
-			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 10)),
-			Page("New York City", Map("New York." -> 10)),
-			Page("Bronze", Map("Bronze" -> 10)),
-			Page("Media Broadcast", Map("Media Broadcast" -> 10)),
-			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 10, "DFMG" -> 10)),
-			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 10)),
-			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 10))
+			Page("Audi", Map("Audi AG" -> 100, "Audi" -> 100, "Volkswagen AG" -> 2), Map("Audi AG" -> 100, "Audi" -> 100, "Volkswagen AG" -> 2)),
+			Page("VW", Map("Volkswagen AG" -> 10, "VW" -> 10), Map("Volkswagen AG" -> 10, "VW" -> 10)),
+			Page("Hochhaus", Map("Hochhaus" -> 10, "Gebäude" -> 10), Map("Hochhaus" -> 10, "Gebäude" -> 10)),
+			Page("Postbank", Map("Postbank" -> 10), Map("Postbank" -> 10)),
+			Page("Berlin", Map("Berlin" -> 10, "(" -> 10, "Berliner" -> 10), Map("Berlin" -> 10, "(" -> 10, "Berliner" -> 10)),
+			Page("Berlin-Kreuzberg", Map("Kreuzberg" -> 10), Map("Kreuzberg" -> 10)),
+			Page("Frankfurt (Oder)", Map("Frankfurt (Oder)" -> 10), Map("Frankfurt (Oder)" -> 10)),
+			Page("Potsdam", Map("Potsdam" -> 10), Map("Potsdam" -> 10)),
+			Page("Magdeburg", Map("Magdeburg" -> 10), Map("Magdeburg" -> 10)),
+			Page("Stettin", Map("Stettin" -> 10), Map("Stettin" -> 10)),
+			Page("Deutsche Post (DDR)", Map("Deutschen Post der DDR" -> 10), Map("Deutschen Post der DDR" -> 10)),
+			Page("New York City", Map("New York." -> 10), Map("New York." -> 10)),
+			Page("Bronze", Map("Bronze" -> 10), Map("Bronze" -> 10)),
+			Page("Media Broadcast", Map("Media Broadcast" -> 10), Map("Media Broadcast" -> 10)),
+			Page("Deutsche Funkturm", Map("Deutsche Funkturm" -> 10, "DFMG" -> 10), Map("Deutsche Funkturm" -> 10, "DFMG" -> 10)),
+			Page("Deutsche Telekom", Map("Deutschen Telekom AG" -> 10), Map("Deutschen Telekom AG" -> 10)),
+			Page("Masashi \"Jumbo\" Ozaki", Map("Masashi \"Jumbo\" Ozaki" -> 10), Map("Masashi \"Jumbo\" Ozaki" -> 10))
 		)
 	}
 
@@ -1812,7 +1994,7 @@ object TestData {
 			ParsedWikipediaEntry(
 				"Postbank-Hochhaus (Berlin)",
 				Option("Das heutige Postbank-Hochhaus (früher: Postscheckamt Berlin West (Bln W), seit 1985: Postgiroamt Berlin) ist ein Hochhaus der Postbank am Halleschen Ufer 40–60 und der Großbeerenstraße 2 im Berliner Ortsteil Kreuzberg. Das Postscheckamt von Berlin war ab 1909 in einem Neubau in der Dorotheenstraße 29 (heute: 84), der einen Teil der ehemaligen Markthalle IV integrierte, untergebracht und war bis zum Ende des Zweiten Weltkriegs für den Bereich der Städte Berlin, Frankfurt (Oder), Potsdam, Magdeburg und Stettin zuständig. Aufgrund der Deutschen Teilung wurde das Postscheckamt in der Dorotheenstraße nur noch von der Deutschen Post der DDR genutzt. Für den Westteil von Berlin gab es damit zunächst kein eigenes Postscheckamt und daher wurde dort 1948 das Postscheckamt West eröffnet. 2014 kaufte die CG-Gruppe das Gebäude von der Postbank, die das Gebäude als Mieter bis Mitte 2016 weiternutzen will. Nach dem Auszug der Postbank soll das Hochhaus saniert und zu einem Wohn-und Hotelkomplex umgebaut werden. Gottfried Gruner Nach den Plänen des Oberpostdirektors Prosper Lemoine wurde das Gebäude des damaligen Postscheckamtes Berlin West von 1965 bis 1971 errichtet. Es hat 23 Geschosse und gehört mit einer Höhe von 89 Metern bis heute zu den höchsten Gebäuden in Berlin. Das Hochhaus besitzt eine Aluminium-Glas-Fassade und wurde im sogenannten „Internationalen Stil“ errichtet. Die Gestaltung des Gebäudes orientiert sich an Mies van der Rohes Seagram Building in New York. Zu dem Gebäude gehören zwei Anbauten. In dem zweigeschossigen Flachbau waren ein Rechenzentrum und die Schalterhalle untergebracht. In dem sechsgeschossiges Gebäude waren ein Heizwerk und eine Werkstatt untergebracht. Vor dem Hochhaus befindet sich der Große Brunnen von Gottfried Gruner. Er besteht aus 18 Säulen aus Bronze und wurde 1972 in Betrieb genommen. Im Postbank-Hochhaus befinden sich mehrere UKW-Sender, die von Media Broadcast betrieben werden. Die Deutsche Funkturm (DFMG), eine Tochtergesellschaft der Deutschen Telekom AG, stellt dafür Standorte wie das Berliner Postbank-Hochhaus bereit. Über die Antennenträger auf dem Dach werden u. a. folgende Hörfunkprogramme auf Ultrakurzwelle ausgestrahlt:"),
-				List(
+				textlinksreduced = List(
 					Link("Hochhaus", "Hochhaus", Option(113)),
 					Link("Postbank", "Postbank", Option(126)),
 					Link("Berliner", "Berlin", Option(190)),
@@ -1957,14 +2139,22 @@ object TestData {
 		List(
 			ParsedWikipediaEntry(
 				"Title 1",
-				textlinks = List(Link("P1Alias1", "Page 1")),
+				textlinks = List(Link("P1Alias1", "Page 1"), Link("P4Alias3", "Page 4")),
 				templatelinks = List(Link("P2Alias1", "Page 2")),
-				categorylinks = List(Link("P3Alias1", "Page 3"))),
-			ParsedWikipediaEntry("Title 2"),
+				categorylinks = List(Link("P3Alias1", "Page 3")),
+				listlinks = List(Link("P4Alias1", "Page 4")),
+				textlinksreduced = List(Link("P1Alias1", "Page 1")),
+				templatelinksreduced = List(Link("P2Alias1", "Page 2")),
+				categorylinksreduced = List(Link("P3Alias1", "Page 3"))),
+			ParsedWikipediaEntry("Title 2",
+				textlinks = List(Link("P5Alias1", "Page 5")),
+				categorylinks = List(Link("P6Alias1", "Page 6"))),
 			ParsedWikipediaEntry(
 				"Title 3",
 				listlinks = List(Link("P1Alias2", "Page 1")),
-				disambiguationlinks = List(Link("P2Alias2", "Page 2")))
+				disambiguationlinks = List(Link("P2Alias2", "Page 2")),
+				listlinksreduced = List(Link("P1Alias2", "Page 1")),
+				disambiguationlinksreduced = List(Link("P2Alias2", "Page 2")))
 		)
 	}
 
@@ -1998,7 +2188,7 @@ object TestData {
 	}
 
 	def predictionStatistics(): PrecisionRecallDataTuple = {
-		PrecisionRecallDataTuple(1.0, 5.0/7.0, 5.0/6.0, 25.0/34.0)
+		PrecisionRecallDataTuple(1.0, 5.0 / 7.0, 5.0 / 6.0, 25.0 / 34.0)
 	}
 
 	def statisticTuples(): List[PrecisionRecallDataTuple] = {
@@ -2024,7 +2214,7 @@ object TestData {
 		new RandomForestModel(Algo.Classification, Array(dtmodel))
 	}
 
-	def testCrossValidationMethod(
+	def crossValidationMethod(
 		data: RDD[LabeledPoint],
 		numFolds: Int = 3,
 		numTrees: Int = 5,
@@ -2169,13 +2359,13 @@ object TestData {
 	def cosSimAliases(): Set[Alias] = {
 		// these pages do not fit to the aliases but are required for the tests
 		Set(
-			Alias("Audi", Map("Audi" -> 2), Option(2), Option(3)),
-			Alias("Brachttal", Map("Brachttal" -> 2), Option(2), Option(2)),
-			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Option(1), Option(2)),
-			Alias("Hessen", Map("Hessen" -> 1), Option(1), Option(2)),
-			Alias("1377", Map("1377" -> 1), Option(1), Option(1)),
-			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), Option(1), Option(2)),
-			Alias("historisches Jahr", Map("1377" -> 1), Option(1), Option(1))
+			Alias("Audi", Map("Audi" -> 2), Map(), Option(2), Option(3)),
+			Alias("Brachttal", Map("Brachttal" -> 2), Map(), Option(2), Option(2)),
+			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), Map(), Option(1), Option(2)),
+			Alias("Hessen", Map("Hessen" -> 1), Map(), Option(1), Option(2)),
+			Alias("1377", Map("1377" -> 1), Map(), Option(1), Option(1)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), Map(), Option(1), Option(2)),
+			Alias("historisches Jahr", Map("1377" -> 1), Map(), Option(1), Option(1))
 		)
 	}
 
@@ -2217,6 +2407,46 @@ object TestData {
 				"Article 9",
 				List(FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.8283323365465772, correct = true))
 			)
+		)
+	}
+
+	def aliasCounterArticles(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				"Article 1",
+				textlinks = List(
+					Link("Alias 1", "Page 1", Option(0)),
+					Link("Alias 1", "Page 1", Option(1)),
+					Link("Alias 2", "Page 2", Option(2))
+				),
+				foundaliases = List("Alias 1", "Alias 1", "Alias 2", "Alias 3", "Alias 1")
+			),
+			ParsedWikipediaEntry(
+				"Article 2",
+				textlinks = List(
+					Link("Alias 3", "Page 3", Option(0)),
+					Link("Alias 4", "Page 4", Option(1)),
+					Link("Alias 5", "Page 5", Option(2))
+				),
+				foundaliases = List("Alias 1", "Alias 1", "Alias 2", "Alias 3", "Alias 1", "Alias 3", "Alias 4", "Alias 5")
+			),
+			ParsedWikipediaEntry(
+				"Article 3",
+				textlinks = List(
+					Link("Alias 1", "Page 1", Option(0))
+				),
+				foundaliases = List("Alias 1", "Alias 1", "Alias 2", "Alias 2")
+			)
+		)
+	}
+
+	def multipleAliasCounts(): Set[(String, Option[Int], Option[Int])] = {
+		Set(
+			("Alias 1", Option(3), Option(8)),
+			("Alias 2", Option(1), Option(4)),
+			("Alias 3", Option(1), Option(3)),
+			("Alias 4", Option(1), Option(1)),
+			("Alias 5", Option(1), Option(1))
 		)
 	}
 }

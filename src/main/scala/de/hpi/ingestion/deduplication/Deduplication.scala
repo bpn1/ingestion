@@ -9,7 +9,6 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import scala.xml.Node
 
 /**
   * Compares two groups of Subjects by first blocking with multiple Blocking Schemes, then compares all Subjects
@@ -99,6 +98,7 @@ object Deduplication extends SparkJob {
 		val confBroad = sc.broadcast(scoreConfigSettings)
 		blocks
 			.flatMap(_.crossProduct())
+			.distinct
 			.map { case (subject1, subject2) =>
 				(subject1, subject2, compare(subject1, subject2, confBroad.value))
 			}.filter(_._3 >= threshold)

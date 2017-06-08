@@ -8,6 +8,198 @@ import de.hpi.ingestion.textmining.tokenizer.{CleanCoreNLPTokenizer, IngestionTo
 import org.apache.spark.rdd.RDD
 
 class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with Matchers {
+
+//	"Inverse document frequencies" should "contain as many tokens as document frequencies" in {
+//		val documentFrequencies = TestData.documentFrequenciesSet()
+//		val numDocuments = 4
+//		val inverseDocumentFrequencies = documentFrequencies
+//			.map(CosineContextComparator.calculateIdf(_, numDocuments))
+//		inverseDocumentFrequencies.size shouldEqual documentFrequencies.size
+//	}
+//
+//	they should "be exactly these inverse document frequencies" in {
+//		val documentFrequencies = TestData.documentFrequenciesSet()
+//		val numDocuments = 4
+//		val inverseDocumentFrequencies = documentFrequencies
+//			.map(CosineContextComparator.calculateIdf(_, numDocuments))
+//		inverseDocumentFrequencies shouldEqual TestData.inverseDocumentFrequenciesSet()
+//	}
+//
+//	they should "be read and calculated from a file" in {
+//		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+//		val oldSettings = CosineContextComparator.settings(false)
+//		CosineContextComparator.parseConfig()
+//
+//		val testDocFreqFunction = TestData.docfreqStream("smalldocfreq") _
+//		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+//		val numDocuments = 4
+//		val idfMap = CosineContextComparator.inverseDocumentFrequencies(numDocuments.toLong)
+//		val expectedIdfs = TestData.inverseDocumentFrequenciesSet().toMap
+//		idfMap shouldEqual expectedIdfs
+//
+//		CosineContextComparator.settings = oldSettings
+//		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+//	}
+//
+//	"Tf-idf contexts for parsed Wikipedia articles with complete document frequencies" should "not be empty" in {
+//		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+//		val oldSettings = CosineContextComparator.settings(false)
+//		CosineContextComparator.parseConfig()
+//
+//		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+//		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+//		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
+//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+//		val numDocuments = articles.count
+//		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
+//		val contexts = CosineContextComparator
+//			.calculateTfidf(
+//				CosineContextComparator.transformArticleTfs(articles),
+//				numDocuments,
+//				defaultIdf,
+//				CosineContextComparator.settings)
+//			.collect
+//		contexts should not be empty
+//		contexts.foreach(context => context._2 should not be empty)
+//
+//		CosineContextComparator.settings = oldSettings
+//		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+//	}
+//
+//	they should "be exactly these contexts" in {
+//		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+//		val oldSettings = CosineContextComparator.settings(false)
+//		CosineContextComparator.parseConfig()
+//
+//		val testDocFreqFunction = TestData.docfreqStream("docfreq2") _
+//		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+//		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
+//		val articles = sc.parallelize(
+//			TestData.articlesWithCompleteContexts()
+//				.toList
+//				.filter(_.title != "Streitberg (Brachttal)"))
+//		val numDocuments = articles.count
+//		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
+//		val contexts = CosineContextComparator
+//			.calculateTfidf(
+//				CosineContextComparator.transformArticleTfs(articles),
+//				numDocuments,
+//				defaultIdf)
+//			.collect
+//			.toSet
+//		contexts shouldEqual TestData.tfidfContextsSet()
+//
+//		CosineContextComparator.settings = oldSettings
+//		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+//	}
+//
+//	"Tf-idf contexts for parsed Wikipedia articles with missing document frequencies" should
+//		"be exactly these contexts" in {
+//		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+//		val oldSettings = CosineContextComparator.settings(false)
+//		CosineContextComparator.parseConfig()
+//
+//		val testDocFreqFunction = TestData.docfreqStream("docfreq2") _
+//		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+//		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
+//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+//			.filter(_.title != "Streitberg (Brachttal)")
+//		val numDocuments = articles.count
+//		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
+//		val contexts = CosineContextComparator
+//			.calculateTfidf(
+//				CosineContextComparator.transformArticleTfs(articles),
+//				numDocuments,
+//				defaultIdf)
+//			.collect
+//			.toSet
+//		contexts shouldEqual TestData.tfidfContextsSet()
+//
+//		CosineContextComparator.settings = oldSettings
+//		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+//	}
+//
+//	"Tf-Idf of link contexts" should "exist" in {
+//		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+//		val oldSettings = CosineContextComparator.settings(false)
+//		CosineContextComparator.parseConfig()
+//
+//		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+//		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+//		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
+//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+//		val numDocuments = articles.count
+//		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
+//		val linkContextValues = CosineContextComparator
+//			.calculateTfidf(
+//				CosineContextComparator.transformLinkContextTfs(articles),
+//				numDocuments,
+//				defaultIdf)
+//			.collect
+//		linkContextValues should not be empty
+//
+//		CosineContextComparator.settings = oldSettings
+//		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+//	}
+//
+//	they should "be exactly these tf-Idf values (disregarding the contexts)" in {
+//		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+//		val oldSettings = CosineContextComparator.settings(false)
+//		CosineContextComparator.parseConfig()
+//
+//		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+//		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+//		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
+//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+//		val numDocuments = articles.count
+//		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
+//		val linkContextValues = CosineContextComparator
+//			.calculateTfidf(
+//				CosineContextComparator.transformLinkContextTfs(articles),
+//				numDocuments,
+//				defaultIdf)
+//			.map { case (link, tfidfContext) =>
+//				val smallLink = link
+//				smallLink.context = Map() // allows smaller test data
+//				(smallLink, tfidfContext)
+//			}.collect
+//			.toSet
+//		val expectedTfidf = TestData.linkContextsTfidf()
+//		linkContextValues shouldBe expectedTfidf
+//
+//		CosineContextComparator.settings = oldSettings
+//		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+//	}
+//
+//	they should "compute the tf-Idf values for the linkswithcontext and trialiases contexts" in {
+//		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+//		val oldSettings = CosineContextComparator.settings
+//		CosineContextComparator.parseConfig()
+//
+//		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+//		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+//		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
+//		val articles = sc.parallelize(TestData.articlesWithLinkAndAliasContexts().toList)
+//		val numDocuments = articles.count
+//		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
+//		val linkContextValues = CosineContextComparator
+//			.calculateTfidf(
+//				CosineContextComparator.transformLinkContextTfs(articles),
+//				numDocuments,
+//				defaultIdf)
+//			.map { case (link, tfidfContext) =>
+//				val smallLink = link
+//				smallLink.context = Map() // allows smaller test data
+//				(smallLink, tfidfContext)
+//			}.collect
+//			.toSet
+//		val expectedTfidf = TestData.linkContextsTfidfWithTrieAliases()
+//		linkContextValues shouldBe expectedTfidf
+//
+//		CosineContextComparator.settings = oldSettings
+//		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+//	}
+
 	"Alias probabilities" should "not be empty" in {
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
 		val pages = CosineContextComparator
@@ -75,6 +267,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
 		val dfData = DFData(7, 2)
 		val articleTexts = TestData.cosSimArticleTexts()
+
+//		val contextTfidf = sc.parallelize(
+//			TestData.shortLinkContextsTfidfList() ++ TestData.deadAliasContextsTfidfList())
+
 		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
 		val tokenizer = IngestionTokenizer(false, false)
 		val articles = TestData.cosSimArticles()
@@ -102,6 +298,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
 		val dfData = DFData(7, 2)
 		val articleTexts = TestData.cosSimArticleTexts()
+
+//		val contextTfidf = sc.parallelize(
+//			TestData.shortLinkAndAliasContextsTfidfList() ++ TestData.deadAliasContextsTfidfList())
+
 		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
 		val tokenizer = IngestionTokenizer(false, false)
 		val articles = TestData.cosSimArticlesWithAliases()
@@ -224,7 +424,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	"Wikipedia articles with contexts" should "be exactly these wikipedia articles" in {
 		val expectedArticles = TestData.articlesWithContextSet()
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val articles = sc.parallelize(TestData.parsedWikipediaTestSet().toList)
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 			.filter(article => expectedArticles.exists(_.title == article.title))
 			.map(CosineContextComparator.extractArticleContext(_, tokenizer))
 			.collect
@@ -237,10 +437,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		CosineContextComparator.parseConfig()
 
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val linkContexts = TestData.parsedWikipediaTestSet()
+		val linkContexts = TestData.parsedWikipediaWithTextsSet()
 			.map(CosineContextComparator.extractLinkContexts(_, tokenizer))
 			.flatMap(_.linkswithcontext)
-		val expectedContexts = TestData.linksWithContextsTestSet()
+		val expectedContexts = TestData.linksWithContextsSet()
 		linkContexts shouldEqual expectedContexts
 
 		CosineContextComparator.settings = oldSettings
@@ -251,10 +451,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		CosineContextComparator.parseConfig()
 
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val linkContexts = TestData.parsedWikipediaExtendedLinksTestSet()
+		val linkContexts = TestData.parsedWikipediaExtendedLinksSet()
 			.map(CosineContextComparator.extractLinkContexts(_, tokenizer))
 			.flatMap(_.linkswithcontext)
-		val expectedContexts = TestData.linksWithContextsTestSet()
+		val expectedContexts = TestData.linksWithContextsSet()
 		linkContexts shouldEqual expectedContexts
 
 		CosineContextComparator.settings = oldSettings
@@ -279,8 +479,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		CosineContextComparator.parseConfig()
 
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val expectedLinks = TestData.linksWithContextsTestSet()
-		val enrichedLinks = TestData.parsedWikipediaTestSet()
+		val expectedLinks = TestData.linksWithContextsSet()
+		val enrichedLinks = TestData.parsedWikipediaWithTextsSet()
 			.map(CosineContextComparator.extractLinkContexts(_, tokenizer))
 			.flatMap(_.linkswithcontext)
 		enrichedLinks shouldEqual expectedLinks
@@ -293,7 +493,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		CosineContextComparator.parseConfig()
 
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val enrichedLinkArticles = TestData.parsedWikipediaTestSet()
+		val enrichedLinkArticles = TestData.parsedWikipediaWithTextsSet()
 			.map(CosineContextComparator.extractLinkContexts(_, tokenizer))
 		val expectedArticles = TestData.articlesWithLinkContextsSet()
 		enrichedLinkArticles shouldEqual expectedArticles

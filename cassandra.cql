@@ -21,15 +21,20 @@ CREATE TYPE wikidumps.entitylink (
 CREATE TABLE wikidumps.parsedwikipedia (
     title text PRIMARY KEY,
     categorylinks frozen<list<frozen<link>>>,
+    categorylinksreduced frozen<list<frozen<link>>>,
     context map<text, int>,
     disambiguationlinks frozen<list<frozen<link>>>,
+    disambiguationlinksreduced frozen<list<frozen<link>>>,
     foundaliases list<text>,
     linkswithcontext frozen<list<frozen<link>>>,
     listlinks list<frozen<link>>,
+    listlinksreduced list<frozen<link>>,
     rawextendedlinks frozen<list<frozen<extendedlink>>>,
     templatelinks list<frozen<link>>,
+    templatelinksreduced list<frozen<link>>,
     text text,
     textlinks list<frozen<link>>,
+    textlinksreduced list<frozen<link>>,
     triealiases frozen<list<frozen<triealias>>>
 );
 
@@ -56,23 +61,20 @@ CREATE TABLE wikidumps.wikipedia (
 CREATE TABLE wikidumps.wikipedialinks (
     alias text PRIMARY KEY,
     pages map<text, int>,
+    pagesreduced map<text, int>,
     linkoccurrences int,
     totaloccurrences int
 );
 
 CREATE TABLE wikidumps.wikipediapages (
     page text PRIMARY KEY,
-    aliases map<text, int>
+    aliases map<text, int>,
+    aliasesreduced map<text, int>
 );
 
 CREATE TABLE wikidumps.wikipediadocfreq (
     word text PRIMARY KEY,
     count int
-);
-
-CREATE TABLE wikidumps.wikipediatfidf (
-    page text PRIMARY KEY,
-    tokens map<text, double>
 );
 
 CREATE TABLE wikidumps.wikipediasentences (
@@ -191,6 +193,8 @@ CREATE TYPE datalake.subject (
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
+    master uuid,
+    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
@@ -205,6 +209,8 @@ CREATE TABLE datalake.subject (
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
+    master uuid,
+    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
@@ -219,6 +225,8 @@ CREATE TABLE datalake.subject_dbpedia (
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
+    master uuid,
+    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
@@ -233,6 +241,8 @@ CREATE TABLE datalake.subject_wikidata (
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
+    master uuid,
+    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
@@ -315,6 +325,8 @@ CREATE TYPE evaluation.subject (
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
+    master uuid,
+    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
@@ -335,6 +347,8 @@ CREATE TABLE evaluation.subject_dbpedia (
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
+    master uuid,
+    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
@@ -349,6 +363,8 @@ CREATE TABLE evaluation.subject_wikidata (
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
+    master uuid,
+    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,

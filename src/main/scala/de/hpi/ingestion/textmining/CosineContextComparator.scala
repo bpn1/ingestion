@@ -187,7 +187,7 @@ object CosineContextComparator extends SplitSparkJob {
 	def compareLinksWithArticles(
 		articles: RDD[ParsedWikipediaEntry],
 		aliasPageProbabilities: Map[String, List[(String, Double, Double)]],
-//		articleTexts: Map[String, String],
+		articleTexts: Map[String, String],
 		tokenizer: IngestionTokenizer,
 		documentFrequencyData: DFData
 	): RDD[ArticleFeatureEntry] = {
@@ -196,7 +196,7 @@ object CosineContextComparator extends SplitSparkJob {
 			.mapPartitions({ partition =>
 				val idfMap = DFData.inverseDocumentFrequencies(documentFrequencyData.numDocuments)
 				val dfData = documentFrequencyData.copy(idfMap = idfMap)
-				val articleTexts = readArticleTexts()
+//				val articleTexts = readArticleTexts()
 				partition.map { entry =>
 					val featureEntries = entry.featureEntryLinks().flatMap { link =>
 						val pages = aliasPageProbabilities.getOrElse(link.alias, Nil)
@@ -257,16 +257,16 @@ object CosineContextComparator extends SplitSparkJob {
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
 			.collect
 			.toMap
-//		val articleTexts = articlesWithTermFrequencies
-//			.map(entry => (entry.title, entry.getText()))
-//			.collect
-//			.toMap
+		val articleTexts = articlesWithTermFrequencies
+			.map(entry => (entry.title, entry.getText()))
+			.collect
+			.toMap
 
 		val tokenizer = IngestionTokenizer(args)
 		val featureEntries = compareLinksWithArticles(
 			linkArticles,
 			aliasPageProbabilities,
-//			articleTexts,
+			articleTexts,
 			tokenizer,
 			dfData)
 		List(featureEntries).toAnyRDD()
