@@ -3,6 +3,7 @@ package de.hpi.ingestion.dataimport.wikidata
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.datalake.models.Version
 import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class FindRelationsTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Subject relations" should "be found" in {

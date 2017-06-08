@@ -39,8 +39,23 @@ object TestData {
 			templatelinks = List(Link("Charlie", "Charlie C.")),
 			categorylinks = List(Link("Dora", "Dora")),
 			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
-			disambiguationlinks = List(Link("Esel", "Esel"))
-		)
+			disambiguationlinks = List(Link("Esel", "Esel")))
+	}
+
+	def parsedEntryWithDifferentAndReducedLinkTypes(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Origineller Titel",
+			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
+			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
+			templatelinks = List(Link("Charlie", "Charlie C.")),
+			categorylinks = List(Link("Dora", "Dora")),
+			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
+			disambiguationlinks = List(Link("Esel", "Esel")),
+			textlinksreduced = List(Link("Baum", "Baum", Option(4))),
+			templatelinksreduced = Nil,
+			categorylinksreduced = Nil,
+			listlinksreduced = List(Link("Fund", "Fund")),
+			disambiguationlinksreduced = List(Link("Esel", "Esel")))
 	}
 
 	def textLinksWithContext(): List[Link] = {
@@ -74,8 +89,14 @@ object TestData {
 			Link("Dora", "Dora"),
 			Link("Fund", "Fund"),
 			Link("Grieß", "Brei"),
-			Link("Esel", "Esel")
-		)
+			Link("Esel", "Esel"))
+	}
+
+	def allReducedLinks(): List[Link] = {
+		List(
+			Link("Baum", "Baum", Option(4)),
+			Link("Fund", "Fund"),
+			Link("Esel", "Esel"))
 	}
 
 	def parsedEntryWithContext(): ParsedWikipediaEntry = {
@@ -92,6 +113,22 @@ object TestData {
 				Link("Postbank", "Postbank", Option(126), Map("test 2" -> 2)),
 				Link("Berliner", "Berlin", Option(190), Map("test 3" -> 3)),
 				Link("Kreuzberg", "Berlin-Kreuzberg", Option(208), Map("test 4" -> 4)))
+		)
+	}
+
+	def parsedEntryWithReducedLinks(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Origineller Titel",
+			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
+			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
+			templatelinks = List(Link("Charlie", "Charlie C.")),
+			categorylinks = List(Link("Dora", "Dora")),
+			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
+			disambiguationlinks = List(Link("Esel", "Esel")),
+			textlinksreduced = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
+			categorylinksreduced = List(Link("Dora", "Dora")),
+			listlinksreduced = List(Link("Fund", "Fund")),
+			disambiguationlinksreduced = List(Link("Esel", "Esel"))
 		)
 	}
 

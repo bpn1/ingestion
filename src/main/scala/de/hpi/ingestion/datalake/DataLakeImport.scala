@@ -39,38 +39,6 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	): Subject
 
 	/**
-	  * Parses the normalization config file into a Map.
-	  *
-	  * @param url the path to the config file
-	  * @return a Map containing the normalized attributes mapped to the new subject attributes
-	  */
-	def parseNormalizationConfig(url: URL): Map[String, List[String]]
-
-	/**
-	  * Parses the normalization config file into a Map.
-	  *
-	  * @param path the path to the config file
-	  * @return a Map containing the normalized attributes mapped to the new subject attributes
-	  */
-	def parseNormalizationConfig(path: String): Map[String, List[String]]
-
-	/**
-	  * Parses the category normalization config file into a Map.
-	  *
-	  * @param url the path to the config file
-	  * @return a Map containing the normalized categories
-	  */
-	def parseCategoryConfig(url: URL): Map[String, List[String]]
-
-	/**
-	  * Parses the category normalization config file into a Map.
-	  *
-	  * @param path the path to the config file
-	  * @return a Map containing the normalized categories
-	  */
-	def parseCategoryConfig(path: String): Map[String, List[String]]
-
-	/**
 	  * Normalizes a given entity into a map.
 	  *
 	  * @param entity the object to be normalized

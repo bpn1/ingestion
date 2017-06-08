@@ -47,6 +47,11 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 		sparkJob.configFile = "test.xml"
 		sparkJob.assertConditions(Array())
 		sparkJob.settings should not be empty
+		sparkJob.scoreConfigSettings should not be empty
+		sparkJob.importConfigFile = "normalization_wikidata.xml"
+		sparkJob.assertConditions(Array())
+		sparkJob.normalizationSettings should not be empty
+		sparkJob.sectorSettings should not be empty
 	}
 
 	it should "be the file passed as argument" in {

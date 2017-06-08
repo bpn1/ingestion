@@ -9,10 +9,21 @@ class ParsedWikipediaEntryTest extends FlatSpec with SharedSparkContext with Mat
 		entry.allLinks() shouldEqual TestData.allLinksListFromEntryList()
 	}
 
+	"Reduced links" should "be exactly these links" in {
+		val entry = TestData.parsedEntryWithDifferentAndReducedLinkTypes()
+		entry.reducedLinks() shouldEqual TestData.allReducedLinks()
+	}
+
 	"Filtered links" should "be exactly these links" in {
 		val entry = TestData.parsedEntryWithDifferentLinkTypes()
 		entry.filterLinks(link => link.alias == link.page)
 		entry shouldEqual TestData.parsedEntryWithFilteredLinks()
+	}
+
+	they should "be written to the reduced columns" in {
+		val entry = TestData.parsedEntryWithDifferentLinkTypes()
+		entry.reduceLinks(link => link.alias == link.page)
+		entry shouldEqual TestData.parsedEntryWithReducedLinks()
 	}
 
 	"Textlinks with context" should "be exactly these links" in {

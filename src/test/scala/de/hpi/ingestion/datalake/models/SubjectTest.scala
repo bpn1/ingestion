@@ -19,11 +19,30 @@ class SubjectTest extends FlatSpec with Matchers {
 	"Attribute values" should "be returned" in {
 		val name = "name"
 		val aliasList = List("alias")
-		val sub1 = Subject(name = Option(name), aliases = aliasList)
-		sub1.get("name") shouldEqual List(name)
-		sub1.get("category") shouldBe empty
-		sub1.get("aliases") shouldEqual aliasList
-		sub1.get("id") shouldBe empty
-		sub1.get("properties") shouldBe empty
+		val uuid = UUID.randomUUID()
+		val subject = Subject(name = Option(name), aliases = aliasList, master = Option(uuid))
+		subject.get("name") shouldEqual List(name)
+		subject.get("category") shouldBe empty
+		subject.get("aliases") shouldEqual aliasList
+		subject.get("id") shouldBe empty
+		subject.get("properties") shouldBe empty
+		subject.get("master") shouldEqual List(uuid.toString)
+	}
+
+	"Normalized properties" should "be returned" in {
+		val subject = Subject(properties = Map(
+			"key 1" -> List("value 1"),
+			"key 2" -> List("value 2"),
+			"gen_urls" -> List("urls"),
+			"id_implisense" -> List("impli id"),
+			"id_wikidata" -> List("wiki id"),
+			"id_dbpedia" -> List("db id")))
+		val normalizedProps = subject.normalizedProperties()
+		val expectedProps = Map(
+			"gen_urls" -> List("urls"),
+			"id_implisense" -> List("impli id"),
+			"id_wikidata" -> List("wiki id"),
+			"id_dbpedia" -> List("db id"))
+		normalizedProps shouldEqual expectedProps
 	}
 }

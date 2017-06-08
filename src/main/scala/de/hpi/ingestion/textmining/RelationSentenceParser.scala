@@ -41,7 +41,6 @@ object RelationSentenceParser extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("sentenceTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
@@ -58,7 +57,7 @@ object RelationSentenceParser extends SparkJob {
 	): List[Sentence] = {
 		val text = entry.getText()
 		val sentences = tokenizer.process(text)
-		val links = entry.allLinks().filter(_.offset.exists(_ >= 0))
+		val links = entry.reducedLinks().filter(_.offset.exists(_ >= 0)).distinct
 		var offset = 0
 		sentences.map { sentence =>
 			offset = text.indexOf(sentence, offset)
