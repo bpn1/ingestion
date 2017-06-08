@@ -11,18 +11,28 @@
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
         <maxBlockSize>500000</maxBlockSize>
-        <confidence>0.8</confidence>
+        <confidence>0.7</confidence>
     </settings>
     <simMeasurements>
         <attribute>
             <key>name</key>
+            <weight>0.8</weight>
             <feature>
                 <similarityMeasure>JaroWinkler</similarityMeasure>
-                <weight>1</weight>
+                <weight>0.7</weight>
                 <scale>1</scale>
             </feature>
             <feature>
                 <similarityMeasure>MongeElkan</similarityMeasure>
+                <weight>0.3</weight>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
+            <key>gen_urls</key>
+            <weight>0.2</weight>
+            <feature>
+                <similarityMeasure>UrlCompare</similarityMeasure>
                 <weight>1</weight>
                 <scale>1</scale>
             </feature>
