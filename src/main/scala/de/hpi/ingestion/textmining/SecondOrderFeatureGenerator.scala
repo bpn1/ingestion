@@ -54,13 +54,12 @@ object SecondOrderFeatureGenerator extends SparkJob {
 		val ranksMap = values
 			.countElements()
 			.toSeq
-			.sortBy(-_._1)
+			.sortBy(_._1)(Ordering[Double].reverse)
 			.map { case (value, count) =>
 				val rankedValue = (value, rank)
 				rank += count
 				rankedValue
-			}
-			.toMap
+			}.toMap
 
 		values.map(ranksMap.getOrElse(_, -1))
 	}
@@ -85,7 +84,7 @@ object SecondOrderFeatureGenerator extends SparkJob {
 	def computeDeltaSuccessorValues(values: List[Double]): List[Double] = {
 		val sortedValues = values
 			.distinct
-			.sortBy(-_)
+			.sorted(Ordering[Double].reverse)
 		val deltaSuccessorMap = mutable.Map[Double, Double]()
 		for(i <- 0 until sortedValues.length - 1) {
 			val deltaSuccessor = sortedValues(i) - sortedValues(i + 1)

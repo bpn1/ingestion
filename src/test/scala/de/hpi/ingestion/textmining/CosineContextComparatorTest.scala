@@ -266,7 +266,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		featureEntries shouldEqual expected
 	}
 
-	"Second order features for page score" should "be calculated correctly" in {
+	"Feature entries" should "be calculated correctly" in {
 		val contextTfidf = sc.parallelize(TestData.singleAliasLinkList())
 		val aliasPageScores = TestData.singleAliasPageScoresMap()
 		val articleTfidf = sc.parallelize(TestData.emptyArticlesTfidfMap().toList)
@@ -288,7 +288,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.collect
 			.toList
 			.sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
-		val expected = TestData.featureEntriesForManyPossibleEntities()
+		val expected = TestData.featureEntriesForManyPossibleEntitiesList()
 		featureEntries shouldEqual expected
 	}
 
@@ -311,7 +311,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.collect
 			.toList
 			.sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
-		featureEntries shouldEqual TestData.featureEntriesForManyPossibleEntities()
+		featureEntries shouldEqual TestData.featureEntriesForManyPossibleEntitiesList()
 
 		CosineContextComparator.settings = oldSettings
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh

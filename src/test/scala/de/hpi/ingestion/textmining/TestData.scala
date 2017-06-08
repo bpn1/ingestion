@@ -42,7 +42,7 @@ object TestData {
 	}
 
 	def deltaTopValuesList(): List[Double] = {
-		List(2.0999999999999996, 0.0, 2.0999999999999996, 4.199999999999999, 0.0)
+		List(2.0999999999999996, Double.PositiveInfinity, 2.0999999999999996, 4.199999999999999, Double.PositiveInfinity)
 	}
 
 	def deltaSuccessorValuesList(): List[Double] = {
@@ -870,11 +870,11 @@ object TestData {
 
 	def featureEntriesForSingleAliasList(): List[FeatureEntry] = {
 		val link_score = 0.5962219598583235
-		val mfPage_072 = MultiFeature(0.7239603960396039, 1, 0.0, 0.548910891089109)
-		val mfPage_018 = MultiFeature(0.17504950495049504, 2, 0.548910891089109, 0.11683168316831682)
-		val mfPage_0058 = MultiFeature(0.05821782178217822, 3, 0.6657425742574257, 0.057821782178217825)
-		val mfPage_00004 = MultiFeature(3.9603960396039607E-4, 4, 0.7235643564356435, Double.PositiveInfinity)
-		val mfCos = MultiFeature(-1.0, 1, 0.0, Double.PositiveInfinity)
+		val mfPage_072 = MultiFeature(0.7239603960396039)
+		val mfPage_018 = MultiFeature(0.17504950495049504)
+		val mfPage_0058 = MultiFeature(0.05821782178217822)
+		val mfPage_00004 = MultiFeature(3.9603960396039607E-4)
+		val mfCos = MultiFeature(-1.0)
 
 		List(
 			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
@@ -896,16 +896,71 @@ object TestData {
 		).sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
 	}
 
-	def featureEntriesForManyPossibleEntities(): List[FeatureEntry] = {
+	def featureEntriesForSingleAliasWithSOFList(): List[FeatureEntry] = {
+		val default = Double.PositiveInfinity
 		val link_score = 0.5962219598583235
-		val mfPage_072 = MultiFeature(0.7239603960396039, 1, 0.0, 0.548910891089109)
+		val mfPage_072 = MultiFeature(0.7239603960396039, 1, default, 0.548910891089109)
+		val mfPage_018 = MultiFeature(0.17504950495049504, 2, 0.548910891089109, 0.11683168316831682)
+		val mfPage_0058 = MultiFeature(0.05821782178217822, 3, 0.6657425742574257, 0.057821782178217825)
+		val mfPage_00004 = MultiFeature(3.9603960396039607E-4, 4, 0.7235643564356435, default)
+		val mfCos = MultiFeature(-1.0, 1, default, default)
+
+		List(
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, true),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, true),
+			FeatureEntry("Audi", 20, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, true)
+		).sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
+	}
+
+	def featureEntriesForManyPossibleEntitiesList(): List[FeatureEntry] = {
+		val link_score = 0.5962219598583235
+		val mfPage_072 = MultiFeature(0.7239603960396039)
+		val mfPage_018 = MultiFeature(0.17504950495049504)
+		val mfPage_0058 = MultiFeature(0.05821782178217822)
+		val mfPage_0038 = MultiFeature(0.038415841584158415)
+		val mfPage_00012 = MultiFeature(0.001188118811881188)
+		val mfPage_00008 = MultiFeature(7.920792079207921E-4)
+		val mfPage_00004 = MultiFeature(3.9603960396039607E-4)
+		val mfCos = MultiFeature(-1.0)
+
+		List(
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Automarke)", link_score, mfPage_0038, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "Berlins Most Wanted", link_score, mfPage_00012, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW E36", link_score, mfPage_00012, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "Liste der BMW-Motorräder", link_score, mfPage_00008, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW E21", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW 501/502", link_score, mfPage_00004, mfCos, false)
+		).sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
+	}
+
+	def featureEntriesForManyPossibleEntitiesWithSOFList(): List[FeatureEntry] = {
+		val default = Double.PositiveInfinity
+		val link_score = 0.5962219598583235
+		val mfPage_072 = MultiFeature(0.7239603960396039, 1, default, 0.548910891089109)
 		val mfPage_018 = MultiFeature(0.17504950495049504, 2, 0.548910891089109, 0.11683168316831682)
 		val mfPage_0058 = MultiFeature(0.05821782178217822, 3, 0.6657425742574257, 0.019801980198019806)
 		val mfPage_0038 = MultiFeature(0.038415841584158415, 4, 0.6855445544554455, 0.037227722772277226)
 		val mfPage_00012 = MultiFeature(0.001188118811881188, 5, 0.7227722772277227, 3.9603960396039596E-4)
 		val mfPage_00008 = MultiFeature(7.920792079207921E-4, 7, 0.7231683168316831, 3.9603960396039607E-4)
-		val mfPage_00004 = MultiFeature(3.9603960396039607E-4, 8, 0.7235643564356435, Double.PositiveInfinity)
-		val mfCos = MultiFeature(-1.0, 1, 0.0, Double.PositiveInfinity)
+		val mfPage_00004 = MultiFeature(3.9603960396039607E-4, 8, 0.7235643564356435, default)
+		val mfCos = MultiFeature(-1.0, 1, default, default)
 
 		List(
 			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
@@ -922,19 +977,50 @@ object TestData {
 	}
 
 	def featureEntriesSet(): Set[FeatureEntry] = {
-		val mfPage_1 = MultiFeature(1.0, 1, 0.0, Double.PositiveInfinity)
-		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, 0.0, 0.6000000000000001)
-		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6000000000000001, Double.PositiveInfinity)
+		val mfPage_1 = MultiFeature(1.0)
+		val mfPageBüdingerWald_08 = MultiFeature(0.8)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2)
 
-		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, 0.08622243532359375)
-		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 2, 0.08622243532359375, Double.PositiveInfinity)
-		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, Double.PositiveInfinity)
-		val mfCosBrachttal_0 = MultiFeature(0.0, 1, 0.0, Double.PositiveInfinity)
-		val mfCosBüdingerWald_1 = MultiFeature(1.0, 1, 0.0, 1.0)
-		val mfCosBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, Double.PositiveInfinity)
-		val mfCos_0661 = MultiFeature(0.6611213869640233, 1, 0.0, Double.PositiveInfinity)
-		val mfCos_0453 = MultiFeature(0.4531255411026077, 1, 0.0, Double.PositiveInfinity)
-		val mfCos_0828 = MultiFeature(0.828283413127963, 1, 0.0, Double.PositiveInfinity)
+		val mfCosAudi_0695 = MultiFeature(0.6951672143063198)
+		val mfCosAudi_0608 = MultiFeature(0.608944778982726)
+		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525)
+		val mfCosBrachttal_0 = MultiFeature(0.0)
+		val mfCosBüdingerWald_1 = MultiFeature(1.0)
+		val mfCosBüdingerWald_0 = MultiFeature(0.0)
+		val mfCos_0661 = MultiFeature(0.6611213869640233)
+		val mfCos_0453 = MultiFeature(0.4531255411026077)
+		val mfCos_0828 = MultiFeature(0.828283413127963)
+
+		Set(
+			FeatureEntry("Autohersteller", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true),
+			FeatureEntry("Autohersteller", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0695, true),
+			FeatureEntry("Tal", 55, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0610, true),
+			FeatureEntry("Tal", 13, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0, true),
+			FeatureEntry("Reiseziel", 546, "Büdinger Wald", "Büdinger Wald", 0.5, mfPageBüdingerWald_08, mfCosBüdingerWald_1, true),
+			FeatureEntry("Reiseziel", 546, "Büdinger Wald", "Audi", 0.5, mfPageBüdingerWald_02, mfCosBüdingerWald_0, false),
+			FeatureEntry("Tal", 66, "Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, mfPage_1, mfCos_0661, true),
+			FeatureEntry("Tal", 87, "Hessen", "Hessen", 0.5, mfPage_1, mfCos_0453, true),
+			FeatureEntry("Reiseziel", 225, "1377", "1377", 1.0, mfPage_1, mfCos_0828, true),
+			FeatureEntry("Reiseziel", 24, "historisches Jahr", "1377", 1.0, mfPage_1, mfCos_0828, true)
+		)
+	}
+
+	def featureEntriesWitSOFSet(): Set[FeatureEntry] = {
+		val default = Double.PositiveInfinity
+
+		val mfPage_1 = MultiFeature(1.0, 1, default, default)
+		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, default, 0.6000000000000001)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6000000000000001, default)
+
+		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, default, 0.08622243532359375)
+		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 2, 0.08622243532359375, default)
+		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, default, default)
+		val mfCosBrachttal_0 = MultiFeature(0.0, 1, default, default)
+		val mfCosBüdingerWald_1 = MultiFeature(1.0, 1, default, 1.0)
+		val mfCosBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, default)
+		val mfCos_0661 = MultiFeature(0.6611213869640233, 1, default, default)
+		val mfCos_0453 = MultiFeature(0.4531255411026077, 1, default, default)
+		val mfCos_0828 = MultiFeature(0.828283413127963, 1, default, default)
 
 		Set(
 			FeatureEntry("Autohersteller", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true),
@@ -951,19 +1037,19 @@ object TestData {
 	}
 
 	def featureEntriesWithAliasesSet(): Set[FeatureEntry] = {
-		val mfPage_1 = MultiFeature(1.0, 1, 0.0, Double.PositiveInfinity)
-		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, 0.0, 0.6000000000000001)
-		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6000000000000001, Double.PositiveInfinity)
+		val mfPage_1 = MultiFeature(1.0)
+		val mfPageBüdingerWald_08 = MultiFeature(0.8)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2)
 
-		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, 0.0, Double.PositiveInfinity)
-		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 1, 0.0, Double.PositiveInfinity)
-		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, 0.0, Double.PositiveInfinity)
-		val mfCosBrachttal_0 = MultiFeature(0.0, 1, 0.0, Double.PositiveInfinity)
-		val mfCosBüdingerWald_1 = MultiFeature(1.0, 1, 0.0, 1.0)
-		val mfCosBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, Double.PositiveInfinity)
-		val mfCos_0661 = MultiFeature(0.6611213869640233, 1, 0.0, Double.PositiveInfinity)
-		val mfCos_0453 = MultiFeature(0.4531255411026077, 1, 0.0, Double.PositiveInfinity)
-		val mfCos_0828 = MultiFeature(0.828283413127963, 1, 0.0, Double.PositiveInfinity)
+		val mfCosAudi_0695 = MultiFeature(0.6951672143063198)
+		val mfCosAudi_0608 = MultiFeature(0.608944778982726)
+		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525)
+		val mfCosBrachttal_0 = MultiFeature(0.0)
+		val mfCosBüdingerWald_1 = MultiFeature(1.0)
+		val mfCosBüdingerWald_0 = MultiFeature(0.0)
+		val mfCos_0661 = MultiFeature(0.6611213869640233)
+		val mfCos_0453 = MultiFeature(0.4531255411026077)
+		val mfCos_0828 = MultiFeature(0.828283413127963)
 
 		Set(
 			FeatureEntry("Audi Test mit Link", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true),
