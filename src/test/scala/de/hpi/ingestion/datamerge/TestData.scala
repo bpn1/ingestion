@@ -4,13 +4,19 @@ import java.util.UUID
 
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.deduplication.models.DuplicateCandidates
+import de.hpi.ingestion.deduplication.models.{Duplicates, Candidate}
 
 // scalastyle:off
 object TestData {
 	val masterId = UUID.randomUUID()
 	val subjectIds = List.fill(10)(UUID.randomUUID()).sorted
 	val secondMasterIds = List.fill(2)(UUID.randomUUID()).sorted
+
+	val masterName = Option("masterNode")
+	val subjectNames = List.fill(10)("slaveNode").zipWithIndex.map { case (name, index) => Option(s"$name$index")}
+	val secondMasterNames = List(Option("masterNode2.1"), Option("masterNode2.1"))
+
+	val dataSource = "testSource"
 
 	def version(source: String, value: String*): Version = {
 		Version(program = "MergeTest", datasources = List(source).filter(_.nonEmpty), value = value.toList)
@@ -579,20 +585,33 @@ object TestData {
 		)
 	}
 
-	def simpleDuplicateCandidates(): List[DuplicateCandidates] = {
+	def simpleDuplicateCandidates(): List[Duplicates] = {
 		List(
-			DuplicateCandidates(
+			Duplicates(
 				masterId,
-				subjectIds.zipWithIndex.map { case (id, index) => (id, "test", s"0.$index".toDouble)}
+				masterName,
+				dataSource,
+				(subjectIds, subjectNames)
+					.zipped
+					.toList
+					.zipWithIndex
+					.map { case ((id, name), index) => Candidate(id, name, s"0.$index".toDouble) }
 			)
 		)
 	}
 
-	def complexDuplicateCandidates(): List[DuplicateCandidates] = {
+	def complexDuplicateCandidates(): List[Duplicates] = {
 		List(
-			DuplicateCandidates(
+			Duplicates(
 				subjectIds(7),
-				subjectIds.slice(0, 5).zipWithIndex.map { case (id, index) => (id, "test", s"0.$index".toDouble)}
+				subjectNames(7),
+				dataSource,
+				(subjectIds, subjectNames)
+					.zipped
+					.toList
+					.slice(0, 5)
+					.zipWithIndex
+					.map { case ((id, name), index) => Candidate(id, name, s"0.$index".toDouble) }
 			)
 		)
 	}
