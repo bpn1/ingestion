@@ -27,27 +27,28 @@ object TestData {
 	}
 
 	def labeledPoints(): List[LabeledPoint] = {
+		val default = Double.PositiveInfinity
 		List(
 			LabeledPoint(1.0, new DenseVector(Array(
 				0.1,
-				0.2, 1, 0.0, Double.PositiveInfinity,
-				0.8, 1, 0.0, Double.PositiveInfinity))),
+				0.2, 1, default, default,
+				0.8, 1, default, default))),
 			LabeledPoint(0.0, new DenseVector(Array(
 				0.4,
-				0.0, 1, 0.0, Double.PositiveInfinity,
-				0.7, 1, 0.0, Double.PositiveInfinity))),
+				0.0, 1, default, default,
+				0.7, 1, default, default))),
 			LabeledPoint(1.0, new DenseVector(Array(
 				0.7,
-				1.0, 1, 0.0, Double.PositiveInfinity,
-				0.1, 1, 0.0, Double.PositiveInfinity))),
+				1.0, 1, default, default,
+				0.1, 1, default, default))),
 			LabeledPoint(0.0, new DenseVector(Array(
 				0.8,
-				0.2, 1, 0.0, Double.PositiveInfinity,
-				0.3, 1, 0.0, Double.PositiveInfinity))),
+				0.2, 1, default, default,
+				0.3, 1, default, default))),
 			LabeledPoint(0.0, new DenseVector(Array(
 				0.9,
-				0.4, 1, 0.0, Double.PositiveInfinity,
-				0.7, 1, 0.0, Double.PositiveInfinity)))
+				0.4, 1, default, default,
+				0.7, 1, default, default)))
 		)
 	}
 

@@ -61,7 +61,7 @@ object SecondOrderFeatureGenerator extends SparkJob {
 				rankedValue
 			}.toMap
 
-		values.map(ranksMap.getOrElse(_, -1))
+		values.map(ranksMap)
 	}
 
 	/**
@@ -91,7 +91,7 @@ object SecondOrderFeatureGenerator extends SparkJob {
 			deltaSuccessorMap(sortedValues(i)) = deltaSuccessor
 		}
 		deltaSuccessorMap(sortedValues.last) = Double.PositiveInfinity
-		values.map(deltaSuccessorMap.getOrElse(_, -1.0))
+		values.map(deltaSuccessorMap)
 	}
 
 	/**
