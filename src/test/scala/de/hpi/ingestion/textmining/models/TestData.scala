@@ -3,6 +3,8 @@ package de.hpi.ingestion.textmining.models
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 
+// scalastyle:off line.size.limit
+
 object TestData {
 	def protoFeatureEntries(): List[(ProtoFeatureEntry, String, MultiFeature)] = {
 		List(
@@ -293,3 +295,5 @@ object TestData {
 		)
 	}
 }
+
+// scalastyle:on line.size.limit

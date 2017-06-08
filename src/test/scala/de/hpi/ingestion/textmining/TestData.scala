@@ -1,6 +1,5 @@
 package de.hpi.ingestion.textmining
 
-import java.net.URI
 import java.io._
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity

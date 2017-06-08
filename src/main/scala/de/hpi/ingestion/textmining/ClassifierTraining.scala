@@ -213,7 +213,7 @@ object ClassifierTraining extends SparkJob {
 		val modelList = List(sc.parallelize(List(model))).toAnyRDD()
 		statsList ++ modelList
 
-		// Code outcommented due to missing tests
+		//		Code outcommented due to missing tests
 		//		val Array(train, test) = data.randomSplit(Array(0.7, 0.3))
 		//		val model = trainRandomForest(train, 100, 4, 32)
 		//		val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
@@ -221,7 +221,8 @@ object ClassifierTraining extends SparkJob {
 		//			(prediction, label)
 		//		}
 		//		val stats = calculateStatistics(predictionAndLabels)
-		//		val results = SimilarityMeasureStats(data = List(stats), comment = Option("Random Forest Split Validation"))
+		//		val results = SimilarityMeasureStats(data = List(stats),
+		//			comment = Option("Random Forest Split Validation"))
 		//		val modelOption = sc.parallelize(List(Option(model)))
 		//		List(sc.parallelize(List(results))).toAnyRDD() ++ List(modelOption).toAnyRDD()
 	}
