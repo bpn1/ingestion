@@ -6,7 +6,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	"SimpleBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.testSubjects
+		val subjects = TestData.subjects
 		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.simpleBlockingScheme
@@ -21,7 +21,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	}
 
 	"LastLettersBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.testSubjects
+		val subjects = TestData.subjects
 		val blockingScheme = LastLettersBlockingScheme("Test LastLettersBS")
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.lastLettersBlockingScheme
@@ -29,7 +29,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	}
 
 	"ListBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.testSubjects
+		val subjects = TestData.subjects
 		val blockingScheme = ListBlockingScheme("Test ListBS", "geo_city", "gen_income")
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.listBlockingScheme
@@ -37,7 +37,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	}
 
 	"MappedListBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.testSubjects
+		val subjects = TestData.subjects
 		val function: String => String = attribute => attribute.substring(0, Math.min(3, attribute.length))
 		val blockingScheme = MappedListBlockingScheme("Test MapBS", function, "name")
 		val keys = subjects.map(blockingScheme.generateKey)
@@ -46,7 +46,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	}
 
 	it should "behave like ListBlockingScheme if no function is given" in {
-		val subjects = TestData.testSubjects
+		val subjects = TestData.subjects
 		val attribute = "geo_city"
 		val blockingScheme = MappedListBlockingScheme("Test MapBS", identity, attribute)
 		val listBlockingScheme = ListBlockingScheme("Test ListBS", attribute)
@@ -58,7 +58,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	}
 
 	"GeoCoordsBlockingScheme" should "generate proper keys from coordinates" in {
-		val subjects = TestData.testSubjects
+		val subjects = TestData.subjects
 		val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS")
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.geoCoordsBlockingScheme
@@ -73,7 +73,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	}
 
 	"RandomBlockingScheme" should "generate random keys from the UUIDs" in {
-		val subjects = TestData.testSubjects
+		val subjects = TestData.subjects
 		val blockingScheme = new RandomBlockingScheme
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.randomBlockingScheme

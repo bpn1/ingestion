@@ -7,7 +7,8 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.deduplication.blockingschemes.{BlockingScheme, SimpleBlockingScheme}
-import de.hpi.ingestion.deduplication.models.{Block, FeatureEntry, ScoreConfig}
+import de.hpi.ingestion.deduplication.models.config.{AttributeConfig, SimilarityMeasureConfig}
+import de.hpi.ingestion.deduplication.models.{Block, FeatureEntry}
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -78,7 +79,7 @@ object FeatureCalculation extends SparkJob {
 		attribute: String,
 		subjectValues: List[String],
 		stagingValues: List[String],
-		scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]
+		scoreConfig: SimilarityMeasureConfig[String, SimilarityMeasure[String]]
 	): Double = (subjectValues, stagingValues) match {
 		case (xs, ys) if xs.nonEmpty && ys.nonEmpty =>
 			CompareStrategy(attribute)(subjectValues, stagingValues, scoreConfig)
@@ -89,20 +90,20 @@ object FeatureCalculation extends SparkJob {
 	  * Creates a FeatureEntry from two given subjects and a config
 	  * @param subject subject
 	  * @param staging staging
-	  * @param config configuration
+	  * @param attributeConfig configuration
 	  * @return FeatureEntry
 	  */
 	def createFeature(
 		subject: Subject,
 		staging: Subject,
-		config: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]]
+		attributeConfig: List[AttributeConfig]
 	): FeatureEntry = {
-		val scores = config.map { case (attribute, scoreConfigs) =>
+		val scores = attributeConfig.map { case AttributeConfig(attribute, weight, scoreConfigs) =>
 			val subjectValues = subject.get(attribute)
 			val stagingValues = staging.get(attribute)
 			val scores = scoreConfigs.map(this.compare(attribute, subjectValues, stagingValues, _))
-			(attribute, scores)
-		}
+			attribute -> scores
+		}.toMap
 		FeatureEntry(subject = subject, staging = staging, scores = scores)
 	}
 

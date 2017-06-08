@@ -9,6 +9,7 @@
     <simMeasurements>
         <attribute>
             <key>name</key>
+            <weight>1.0</weight>
             <feature>
                 <similarityMeasure>MongeElkan</similarityMeasure>
                 <weight>0.8</weight>

@@ -1,19 +1,11 @@
 package de.hpi.ingestion.deduplication.similarity
 
-import de.hpi.ingestion.deduplication.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 	"computeDistance" should "compute the distnace between two points in terms of kilometers" in {
-		val subjects = TestData.testSubjects
-		val distance = EuclidianDistance.computeDistance(
-			subjects(4).properties("geo_coords").head.toList(0).toDouble,
-			subjects(4).properties("geo_coords").head.toList(1).toDouble,
-			subjects(5).properties("geo_coords").head.toList(0).toDouble,
-			subjects(5).properties("geo_coords").head.toList(1).toDouble
-		)
-
-		val expected = 101.2406771798861
+		val distance = EuclidianDistance.computeDistance(52, 13, 53, 14)
+		val expected = 111.70485139435159
 
 		distance shouldEqual expected
 	}
@@ -42,13 +34,7 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 	}
 
 	"compare" should "compute correct score for two given points" in {
-		val subjects = TestData.testSubjects
-		val geoPoints = List(
-			subjects.head.properties("geo_coords").mkString(";"),
-			subjects(2).properties("geo_coords").mkString(";"),
-			subjects(3).properties("geo_coords").mkString(";")
-		)
-
+		val geoPoints = List("52;11", "52;13", "53;14")
 		val scores = List(
 			EuclidianDistance.compare(geoPoints.head, geoPoints.head),
 			EuclidianDistance.compare(geoPoints.head, geoPoints(1)),

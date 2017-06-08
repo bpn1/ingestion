@@ -3,9 +3,10 @@ package de.hpi.ingestion.deduplication
 import java.util.UUID
 
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.deduplication.models.{BlockEvaluation, FeatureEntry, PrecisionRecallDataTuple, ScoreConfig}
+import de.hpi.ingestion.deduplication.models.{BlockEvaluation, FeatureEntry, PrecisionRecallDataTuple}
 import de.hpi.ingestion.deduplication.blockingschemes.ListBlockingScheme
 import de.hpi.ingestion.deduplication.models._
+import de.hpi.ingestion.deduplication.models.config.{AttributeConfig, SimilarityMeasureConfig}
 import de.hpi.ingestion.deduplication.similarity._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -157,20 +158,11 @@ object TestData {
 		))
 	}
 
-	def testSubjects: List[Subject] = List(
-		Subject(id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"), name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52;11"), "gen_income" -> List("1234"))),
-		Subject(id = UUID.fromString("f3c410f2-5acf-4e09-b7b6-d357285f0354"), name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "gen_income" -> List("12"))),
-		Subject(id = UUID.fromString("392c1b32-4ff2-4d1f-aa9f-e172c9f64754"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52;13"), "gen_income" -> List("33"))),
-		Subject(id = UUID.fromString("15954b5e-56cb-4b54-bf22-e7b654f2f34e"), name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53;14"), "gen_income" -> List("600"))),
-		Subject(id = UUID.fromString("b275ebc4-a481-4248-b7dd-3b6dd6fb804a"), name = Some("Porsche"), properties = Map("geo_coords" -> List("52;13"), "gen_sectors" -> List("cars", "music", "games"))),
-		Subject(id = UUID.fromString("b275ebc4-a481-4248-b7dd-3b6dd6fb804b"), name = Some("Ferrari"), properties = Map("geo_coords" -> List("53;14"), "gen_sectors" -> List("games", "cars", "music")))
-	)
-
 	def subjectBlocks(sc: SparkContext): RDD[Block] = {
-		sc.parallelize(List(
-			Block(key = "Aud", subjects = List(testSubjects(2)), staging = List(testSubjects(3))),
-			Block(key = "Vol", subjects = testSubjects.take(1), staging = List(testSubjects(1))),
-			Block(key = "undefined", subjects = testSubjects.take(2), staging = List(testSubjects(4)))
+		sc.parallelize(Seq(
+			Block(key = "Audi ", subjects = List(subjects(1)), staging = List(stagings(1))),
+			Block(key = "Volks", subjects = subjects.take(1), staging = stagings.take(1)),
+			Block(key = "undefined", subjects = subjects.takeRight(2), staging = Nil)
 		))
 	}
 
@@ -178,12 +170,11 @@ object TestData {
 
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false)
 
-	def testDuplicates(testSubjects: List[Subject]): List[(Subject, Subject, Double)] = {
-		List(
-			(testSubjects.head, testSubjects(1), 0.9784615384615384),
-			(testSubjects.head, testSubjects(4), 0.5761904761904763),
-			(testSubjects(1), testSubjects(4), 0.5654212454212454),
-			(testSubjects(2), testSubjects(3), 0.9446913580246914))
+	def testDuplicates(sc: SparkContext): RDD[(Subject, Subject, Double)] = {
+		sc.parallelize(Seq(
+			(subjects.head, stagings.head, 0.9769230769230769),
+			(subjects(1), stagings(1), 1.0)
+		))
 	}
 
 	def testDuplicateStats: (Traversable[(UUID, UUID)], (String, Set[BlockStats])) = {
@@ -207,10 +198,13 @@ object TestData {
 		List(
 			DuplicateCandidates(
 				subjects.head.id,
-				List((stagings.head.id, stagingTable, 0.9784615384615384))),
+				List((stagings.head.id, stagingTable, 0.9769230769230769))
+			),
 			DuplicateCandidates(
 				subjects(1).id,
-				List((stagings(1).id, stagingTable, 1.0))))
+				List((stagings(1).id, stagingTable, 1.0))
+			)
+		)
 	}
 
 	def duplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
@@ -227,50 +221,50 @@ object TestData {
 				List((subjects(3).id, stagingTable, 0.9446913580246914))))
 	}
 
-	def testConfig(key: String = "name"): Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
-		Map(
-			key -> List(
-				ScoreConfig(MongeElkan, 0.8),
-				ScoreConfig(JaroWinkler, 0.7)))
+	def testConfig(attribute: String = "name"): List[AttributeConfig] = List(
+		AttributeConfig(attribute, 1.0, List(SimilarityMeasureConfig(MongeElkan, 0.5), SimilarityMeasureConfig(JaroWinkler, 0.5)))
+	)
+
+	def simpleTestConfig: List[AttributeConfig] = List(
+		AttributeConfig("name", 1.0, List(SimilarityMeasureConfig(MongeElkan, 1.0)))
+	)
+
+	def complexTestConfig: List[AttributeConfig] = List(
+		AttributeConfig("name", 0.7, List(SimilarityMeasureConfig(MongeElkan, 0.5), SimilarityMeasureConfig(JaroWinkler, 0.5))),
+		AttributeConfig("geo_city", 0.1, List(SimilarityMeasureConfig(Jaccard, 1))),
+		AttributeConfig("geo_coords", 0.1, List(SimilarityMeasureConfig(EuclidianDistance, 1))),
+		AttributeConfig("gen_income", 0.1, List(SimilarityMeasureConfig(RelativeNumbersSimilarity, 1)))
+	)
+
+	def testConfigScore: Double = {
+		(MongeElkan.compare("Volkswagen", "Volkswagen AG") + JaroWinkler.compare("Volkswagen", "Volkswagen AG")) * 0.5
 	}
 
-	def simpleTestConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
-		Map("name" -> List(ScoreConfig(MongeElkan, 0.8)))
+	def simpleTestConfigScore: Double = {
+		MongeElkan.compare("Volkswagen", "Volkswagen AG")
 	}
 
-	def complexTestConfig: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]] = {
-		Map(
-			"name" -> List(ScoreConfig(MongeElkan, 0.8), ScoreConfig(JaroWinkler, 0.7)),
-			"geo_city" -> List(ScoreConfig(Jaccard, 1)),
-			"geo_coords" -> List(ScoreConfig(EuclidianDistance, 1)),
-			"gen_income" -> List(ScoreConfig(RelativeNumbersSimilarity, 1))
-		)
+	def complexTestConfigScore: Double = {
+		val name = (MongeElkan.compare("Volkswagen", "Volkswagen AG") * 0.5 + JaroWinkler.compare("Volkswagen", "Volkswagen AG") * 0.5) * 0.7
+		val city = Jaccard.compare("Berlin", "Berlin") * 0.1
+		val income = RelativeNumbersSimilarity.compare("1234", "12") * 0.1
+		name + city + income
 	}
 
-	def testConfigScore(subject1: Subject, subject2: Subject): Double = List(
-		MongeElkan.compare(subject1.name.get, subject2.name.get) * 0.8,
-		JaroWinkler.compare(subject1.name.get, subject2.name.get) * 0.7
-	).sum / (0.8 + 0.7)
-
-	def simpleTestConfigScore(subject: Subject, staging: Subject): Double = MongeElkan.compare(subject.name.get, staging.name.get)
-
-	def complexTestConfigScore(subject: Subject, staging: Subject): Double = List(
-		MongeElkan.compare(subject.name.get, staging.name.get) * 0.8,
-		JaroWinkler.compare(subject.name.get, staging.name.get) * 0.7,
-		Jaccard.compare("Berlin", "Berlin"),
-		RelativeNumbersSimilarity.compare("1234", "12")
-	).sum / (0.8 + 0.7 + 1 + 1)
-
-	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String], scoreConfig: ScoreConfig[String, SimilarityMeasure[String]]): Double = {
+	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String], scoreConfig: SimilarityMeasureConfig[String, SimilarityMeasure[String]]): Double = {
 		simMeasure.compare(subject1.name.get, subject2.name.get, scoreConfig.scale) * scoreConfig.weight
 	}
 
-	def expectedCompareStrategies: List[(List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) => Double] = List(
+	def expectedCompareStrategies: List[(List[String], List[String], SimilarityMeasureConfig[String, SimilarityMeasure[String]]) => Double] = List(
 			CompareStrategy.singleStringCompare, CompareStrategy.defaultCompare
 	)
 
-	def testCompareInput: (List[String], List[String], ScoreConfig[String, SimilarityMeasure[String]]) = {
-		(List("very", "generic", "values"), List("even", "more", "values"), testConfig().head._2.head)
+	def testCompareInput: (List[String], List[String], SimilarityMeasureConfig[String, SimilarityMeasure[String]]) = {
+		(
+			List("very", "generic", "values"),
+			List("even", "more", "values"),
+			testConfig().head.scoreConfigs.head
+		)
 	}
 
 	def cityBlockingScheme: ListBlockingScheme = {
@@ -281,7 +275,6 @@ object TestData {
 	}
 
 	def subjects: List[Subject] = List(
-
 		Subject(id = UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52;11"), "gen_income" -> List("1234"))),
 		Subject(id = UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52;13"), "gen_income" -> List("33"))),
 		Subject(id = UUID.fromString("c9621786-1cce-45bf-968a-3e8d06e16fda"), name = Some("Porsche"), properties = Map("geo_coords" -> List("52;13"), "gen_sectors" -> List("cars", "music", "games"))),
@@ -297,6 +290,12 @@ object TestData {
 		(subjects.head.id, stagings.head.id),
 		(subjects(1).id, stagings.last.id)
 	)
+
+	def testBlocks(sc: SparkContext): RDD[Block] = sc.parallelize(Seq(
+		Block(key = "Volks", subjects = subjects.take(1), staging = stagings.take(1)),
+		Block(key = "Audi ", subjects = List(subjects(1)), staging = List(stagings(1))),
+		Block(key = "mix", subjects = subjects, staging = stagings.take(1))
+	))
 
 	def flatSubjectBlocks(sc: SparkContext, subjects: List[Subject]): RDD[((String, String), Subject)] = {
 		sc.parallelize(List(
@@ -484,18 +483,11 @@ object TestData {
 				Some("Test comment; accuracy: 1.0"))))
 	}
 
-	def simpleBlockingScheme: List[List[String]] = List(List("Audy "), List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
-	def lastLettersBlockingScheme: List[List[String]] = List(List("wagen"), List(" GmbH"), List("rrari"), List("rsche"), List("en AG"))
-	def listBlockingScheme: List[List[String]] = List(
-		List("Berlin", "Hamburg", "1234"),
-		List("Berlin", "New York", "12"),
-		List("Berlin", "33"),
-		List("New York", "Hamburg", "600"),
-		List("undefined"),
-		List("undefined")
-	)
-	def geoCoordsBlockingScheme: List[List[String]] = List(List("52;11"), List("undefined"), List("52;13"), List("53;14"))
-	def randomBlockingScheme: List[List[String]] = List(List("-534"), List("42"), List("-545"), List("43"), List("400"), List("75"))
+	def simpleBlockingScheme: List[List[String]] = List(List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
+	def lastLettersBlockingScheme: List[List[String]] = List(List(" GmbH"), List("wagen"), List("rrari"), List("rsche"))
+	def listBlockingScheme: List[List[String]] = List(List("Berlin", "Hamburg", "1234"), List("Berlin", "33"), List("undefined"))
+	def geoCoordsBlockingScheme: List[List[String]] = List(List("52;11"), List("52;13"), List("53;14"))
+	def randomBlockingScheme: List[List[String]] = List(List("-235"), List("754"), List("446"), List("-7"))
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
 
 	def features(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
@@ -519,12 +511,13 @@ object TestData {
 	}
 
 
-	def distinctDuplicateCandidates(subjects: List[Subject], sc: SparkContext): RDD[(Subject, Subject, Double)] = {
+	def distinctDuplicateCandidates(sc: SparkContext): RDD[(Subject, Subject, Double)] = {
 		sc.parallelize(List(
-			(subjects.head, subjects(1), 0.0),
-			(subjects(2), subjects(3), 0.0),
-			(subjects.head, subjects(3), 0.0),
-			(subjects(2), subjects(1), 0.0)
+			(subjects.head, stagings.head, 0.0),
+			(subjects(1), stagings(1), 0.0),
+			(subjects(1), stagings.head, 0.0),
+			(subjects(2), stagings.head, 0.0),
+			(subjects(3), stagings.head, 0.0)
 		))
 	}
 

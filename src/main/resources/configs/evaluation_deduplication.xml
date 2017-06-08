@@ -21,22 +21,19 @@
     <simMeasurements>
         <attribute>
             <key>name</key>
+            <weight>0.8</weight>
             <feature>
                 <similarityMeasure>JaroWinkler</similarityMeasure>
-                <weight>1</weight>
+                <weight>1.0</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
         <attribute>
             <key>geo_country</key>
-            <feature>
-                <similarityMeasure>ExactMatch</similarityMeasure>
-                <weight>0.5</weight>
-                <scale>1</scale>
-            </feature>
+            <weight>0.2</weight>
             <feature>
                 <similarityMeasure>Jaccard</similarityMeasure>
-                <weight>1</weight>
+                <weight>1.0</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
