@@ -16,6 +16,7 @@
     <simMeasurements>
         <attribute>
             <key>name</key>
+            <weight>0.6</weight>
             <feature>
                 <similarityMeasure>JaroWinkler</similarityMeasure>
                 <weight>1</weight>
@@ -24,17 +25,19 @@
         </attribute>
         <attribute>
             <key>gen_employees</key>
+            <weight>0.2</weight>
             <feature>
                 <similarityMeasure>RoughlyEqualNumbers</similarityMeasure>
-                <weight>0.5</weight>
+                <weight>1.0</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
         <attribute>
             <key>geo_city</key>
+            <weight>0.2</weight>
             <feature>
                 <similarityMeasure>Jaccard</similarityMeasure>
-                <weight>0.3</weight>
+                <weight>1.0</weight>
                 <scale>1</scale>
             </feature>
         </attribute>

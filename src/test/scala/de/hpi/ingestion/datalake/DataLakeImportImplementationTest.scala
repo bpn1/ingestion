@@ -6,8 +6,7 @@ import de.hpi.ingestion.datalake.models.Subject
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-class DataLakeImportImplementationUnitTest extends FlatSpec with Matchers with SharedSparkContext {
-
+class DataLakeImportImplementationTest extends FlatSpec with Matchers with SharedSparkContext {
 	"normalizeProperties" should "normalize the properties of an entity" in {
 		val entity = TestData.testEntity
 		val mapping = TestData.normalizationMapping

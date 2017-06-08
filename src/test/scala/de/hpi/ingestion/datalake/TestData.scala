@@ -28,7 +28,7 @@ object TestData {
 		Entity("entity2"),
 		Entity("entity3"),
 		Entity("entity4"),
-		Entity("entity5")
+		Entity(root_value = null)
 	)
 
 	def normalizationMapping: Map[String, List[String]] = Map(
@@ -90,7 +90,8 @@ object TestData {
 		"Audisport AG" -> List("AG"),
 		"Audiobuch Verlag oHG" -> List("oHG"),
 		"Audax GmbH" -> List("GmbH"),
-		"Audio Active" -> Nil
+		"Audio Active" -> Nil,
+		"" -> Nil
 	)
 
 	def input(sc: SparkContext): List[RDD[Any]] = List(sc.parallelize(testEntities))
@@ -99,7 +100,7 @@ object TestData {
 		Subject(name = Option("entity2")),
 		Subject(name = Option("entity3")),
 		Subject(name = Option("entity4")),
-		Subject(name = Option("entity5"))
+		Subject(name = None)
 	)
 }
 // scalastyle:on line.size.limit
