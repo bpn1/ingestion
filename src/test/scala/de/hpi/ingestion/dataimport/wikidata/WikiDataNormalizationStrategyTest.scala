@@ -38,6 +38,9 @@ class WikiDataNormalizationStrategyTest extends FlatSpec with Matchers {
 		result shouldEqual expected
 	}
 
+	"normalizeURLs" should "validate urls" in {
+	}
+
 	"apply" should "return the right normalization method based on a given attribute" in {
 		val inputs = TestData.applyInput
 		val attributes = TestData.applyAttributes

@@ -1,7 +1,7 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.implicits.RegexImplicits._
-import de.hpi.ingestion.dataimport.CountryISO3166Mapping
+import de.hpi.ingestion.dataimport.{CountryISO3166Mapping, SharedNormalizations}
 
 /**
   * Strategies for the normalization of DBPedia entities
@@ -71,6 +71,18 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case r"""(.+)${city}@de \.""" => List(city)
 			case other => List(other)
 		}.map(_.replaceAll("(_|-)", " ")).distinct
+	}
+
+	/**
+	  * Normalize urls
+	  * @param values list of urls
+	  * @return valid urls
+	  */
+	def normalizeURLs(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""(.+)${value}@de \.""" => List(value)
+			case other => List(other)
+		}.filter(SharedNormalizations.isValidUrl)
 	}
 
 	/**
