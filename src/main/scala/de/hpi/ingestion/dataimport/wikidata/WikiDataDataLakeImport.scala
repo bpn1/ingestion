@@ -16,13 +16,12 @@ import scala.collection.mutable
   * This job translates Wikidata entities into Subjects and writes them into a staging table.
   */
 object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntity](
-	List("wikidata_20161117"),
-	"normalization_wikidata.xml",
-	"categorization_wikidata.xml",
+	List("wikidata_20161117", "wikidata"),
 	"wikidumps",
 	"wikidata"
 ){
-	appName = s"WikiDataDataLakeImport_v1.0"
+	appName = "WikiDataDataLakeImport_v1.0"
+	importConfigFile = "normalization_wikidata.xml"
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
@@ -61,7 +60,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
 		val properties = mutable.Map[String, List[String]]((entity.data ++ normalizedProperties).toSeq: _*)
 
-		val legalForm = entity.label.map(extractLegalForm(_, classifier)).getOrElse(Nil)
+		val legalForm = subject.name.map(extractLegalForm(_, classifier)).getOrElse(Nil)
 		if (legalForm.nonEmpty) properties("gen_legal_form") = legalForm
 
 		sm.addProperties(properties.toMap)
