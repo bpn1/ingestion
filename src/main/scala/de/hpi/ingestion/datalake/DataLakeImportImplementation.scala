@@ -1,7 +1,6 @@
 package de.hpi.ingestion.datalake
 
 import java.io.{ByteArrayOutputStream, PrintStream}
-
 import scala.collection.JavaConversions._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -12,8 +11,6 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.companies.algo.Tag
-
-import scala.collection.JavaConverters._
 
 /**
   * An abstract DataLakeImportImplementation to import new sources to the staging table.
