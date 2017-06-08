@@ -61,16 +61,14 @@ object Deduplication extends SparkJob {
 		attributeConfigs: List[AttributeConfig] = Nil,
 		scale: Int = 1
 	): Double = {
-		attributeConfigs.flatMap { case AttributeConfig(attribute, weight, configs) =>
-			val subjectValues = subject1.get(attribute)
-			val stagingValues = subject2.get(attribute)
-			if (subjectValues.nonEmpty && stagingValues.nonEmpty) {
-				val score = configs.map(CompareStrategy(attribute)(subjectValues, stagingValues, _)).sum
-				Option(score * weight)
-			} else {
-				None
-			}
-		}.sum
+		val scores = for {
+			AttributeConfig(attribute, weight, configs) <- attributeConfigs
+			subjectValues = subject1.get(attribute)
+			stagingValues = subject2.get(attribute)
+			if subjectValues.nonEmpty && stagingValues.nonEmpty
+			config <- configs
+		} yield CompareStrategy(attribute)(subjectValues, stagingValues, config) * weight
+		scores.sum
 	}
 
 	/**
