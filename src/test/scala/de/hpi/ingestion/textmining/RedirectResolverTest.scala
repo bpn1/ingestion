@@ -41,22 +41,19 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 	"Redirect resolver" should "resolve all redirects with self found redirects" in {
 		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
 		val emptyRedirectsMap = sc.parallelize(Map[String, String]().toList)
-
-		val output = RedirectResolver.run(
-			List(unresolvedEntries).toAnyRDD() ++ List(emptyRedirectsMap).toAnyRDD(),
-			sc
-		)
+		val input = List(unresolvedEntries).toAnyRDD() ++ List(emptyRedirectsMap).toAnyRDD()
+		val output = RedirectResolver.run(input, sc)
 		val resolvedEntries = output.head
 			.asInstanceOf[RDD[ParsedWikipediaEntry]]
 			.collect
-			.toList
+			.toSet
 		val redirects = output(1)
 			.asInstanceOf[RDD[Redirect]]
 			.collect
-			.toList
+			.toSet
 
-		val expectedEntries = TestData.parsedEntriesWithResolvedRedirectsSet().toList
-		val expectedRedirects = TestData.redirectMap().map(Redirect.tupled).toList
+		val expectedEntries = TestData.parsedEntriesWithResolvedRedirectsSet()
+		val expectedRedirects = TestData.redirectMap().map(Redirect.tupled).toSet
 		resolvedEntries shouldEqual expectedEntries
 		redirects shouldEqual expectedRedirects
 	}

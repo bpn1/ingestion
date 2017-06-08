@@ -18,7 +18,7 @@ import de.hpi.ingestion.framework.SparkJob
   * and replaces the Wikidata Ids with their names.
   */
 object FindRelations extends SparkJob {
-	appName = s"FindRelations_v1.1"
+	appName = "FindRelations_v1.1"
 	val datasources = List("wikidata_20161117")
 	val keyspace = "datalake"
 	val tablename = "subject_wikidata"

@@ -16,8 +16,7 @@ import scala.xml.XML
   * Import-Job for importing DBpedia Triples to the dbpedia table.
   */
 object DBpediaImport extends SparkJob {
-	appName = s"DBpediaImport_v1.0"
-	val dataSources = List("dbpedia_20161203")
+	appName = "DBpediaImport_v1.0"
 	val keyspace = "wikidumps"
 	val tablename = "dbpedia"
 

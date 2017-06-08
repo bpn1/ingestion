@@ -26,7 +26,27 @@ object TestData {
 		XML.load(getClass.getResource("/test.xml"))
 	}
 
-	def configWithouSettingsXML: Node = {
+	def configWithoutSettingsXML: Node = {
 		XML.load(getClass.getResource("/test2.xml"))
+	}
+
+	def importConfigXML: Node = {
+		XML.load(getClass.getResource("/datalake/normalization.xml"))
+	}
+
+	def normalizationSettings: Map[String, List[String]] = {
+		Map(
+			"rootKey" -> List("root_value"),
+			"nestedKey1" -> List("nested_value:1.1", "nested_value:1.2", "nested_value:1.3"),
+			"nestedKey2" -> List("nested_value:2.1")
+		)
+	}
+
+	def sectorSettings: Map[String, List[String]] = {
+		Map(
+			"Category 1" -> List("value1.1", "value1.2"),
+			"Category 2" -> List("value2.1"),
+			"Category 3" -> List("value3.1", "value3.2")
+		)
 	}
 }

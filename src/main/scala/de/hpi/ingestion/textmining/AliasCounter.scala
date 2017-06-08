@@ -51,21 +51,12 @@ object AliasCounter extends SparkJob {
 	  * @return list of Aliases each with an occurrence set to 1
 	  */
 	def extractAliasList(entry: ParsedWikipediaEntry): List[Alias] = {
-		val linkSet = entry.allLinks()
-			.map(_.alias)
-			.toSet
-
-		val links = linkSet
-			.toList
-			.map(Alias(_, Map(), Option(1), Option(1)))
-
-		val aliases = entry.foundaliases
-			.toSet
-			.filterNot(linkSet)
-			.toList
-			.map(Alias(_, Map(), Option(0), Option(1)))
-
-		links ++ aliases
+		val links = entry.allLinks().map(_.alias)
+		val linkCount = links.map(Alias(_, linkoccurrences = Option(1), totaloccurrences = Option(1)))
+		val aliasCount = entry.foundaliases
+			.diff(linkCount.map(_.alias))
+			.map(Alias(_, linkoccurrences = Option(0), totaloccurrences = Option(1)))
+		linkCount ++ aliasCount
 	}
 
 	/**
@@ -79,6 +70,7 @@ object AliasCounter extends SparkJob {
 		Alias(
 			alias1.alias,
 			alias1.pages ++ alias2.pages,
+			alias1.pagesreduced ++ alias2.pagesreduced,
 			Option(alias1.linkoccurrences.get + alias2.linkoccurrences.get),
 			Option(alias1.totaloccurrences.get + alias2.totaloccurrences.get)
 		)
