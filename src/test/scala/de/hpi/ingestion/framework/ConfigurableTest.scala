@@ -56,12 +56,12 @@ class ConfigurableTest extends FlatSpec with Matchers {
 	}
 
 	it should "return an empty map if there is no settings node" in {
-		val configurable = new MockConfigurable()
+		val configurable = new MockConfigurable
 		val settings = configurable.parseSettings(TestData.configWithoutSettingsXML)
 		settings shouldBe empty
 	}
 
-	"Sim Measures" should "be parsed" in {
+	"Score Settings" should "be parsed" in {
 		val configurable = new MockConfigurable
 		val config = configurable.parseSimilarityMeasures(TestData.configXML)
 		val expectedConfig = TestData.parsedScoreConfig

@@ -1,25 +1,19 @@
 package de.hpi.ingestion.deduplication
 
-import de.hpi.ingestion.deduplication.models.ScoreConfig
-import de.hpi.ingestion.deduplication.similarity.{EuclidianDistance, SimilarityMeasure}
-import org.scalatest.{FlatSpec, Matchers}
-
 import scala.math.BigDecimal
+import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.deduplication.models.config.AttributeConfig
 
-class CompareStrategyUnitTest extends FlatSpec with Matchers {
+class CompareStrategyTest extends FlatSpec with Matchers {
 	"compare" should "return the score of the similarity of two strings" in {
 		val config = TestData.testConfig()
-		val subjects = TestData.testSubjects
-		val subject1 = subjects.head
-		val subject2 = subjects(1)
-		for {
-			(attribute, scoreConfigs) <- config
-			scoreConfig <- scoreConfigs
-		}{
-			val score = scoreConfig.compare(subject1.get(attribute).head, subject2.get(attribute).head)
+		val subject = TestData.subjects.head
+		val staging = TestData.stagings.head
+		for {AttributeConfig(attribute, weight, scoreConfigs) <- config; scoreConfig <- scoreConfigs}{
+			val score = scoreConfig.compare(subject.get(attribute).head, staging.get(attribute).head)
 			val expected = TestData.testCompareScore(
-				subject1,
-				subject2,
+				subject,
+				staging,
 				scoreConfig.similarityMeasure,
 				scoreConfig
 			)
@@ -29,21 +23,17 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 
 	"simpleStringCompare" should "only compare the first element in a list" in {
 		val config = TestData.testConfig()
-		val subjects = TestData.testSubjects
-		val subject1 = subjects.head
-		val subject2 = subjects(1)
-		for {
-			(attribute, scoreConfigs) <- config
-			scoreConfig <- scoreConfigs
-		}{
+		val subject = TestData.subjects.head
+		val staging = TestData.stagings.head
+		for {AttributeConfig(attribute, weight, scoreConfigs) <- config; scoreConfig <- scoreConfigs}{
 			val score = CompareStrategy.singleStringCompare(
-				subject1.get(attribute),
-				subject2.get(attribute),
+				subject.get(attribute),
+				staging.get(attribute),
 				scoreConfig
 			)
 			val expected = TestData.testCompareScore(
-				subject1,
-				subject2,
+				subject,
+				staging,
 				scoreConfig.similarityMeasure,
 				scoreConfig
 			)
@@ -53,16 +43,12 @@ class CompareStrategyUnitTest extends FlatSpec with Matchers {
 
 	"defaultCompare" should "compare each element from a list with each element from another" in {
 		val config = TestData.testConfig("gen_sectors")
-		val subjects = TestData.testSubjects
-		val subject1 = subjects(4)
-		val subject2 = subjects(5)
-		for {
-			(attribute, scoreConfigs) <- config
-			scoreConfig <- scoreConfigs
-		}{
+		val subject = TestData.subjects(2)
+		val staging = TestData.subjects.last
+		for {AttributeConfig(attribute, weight, scoreConfigs) <- config; scoreConfig <- scoreConfigs}{
 			val score = BigDecimal(CompareStrategy.defaultCompare(
-				subject1.get(attribute),
-				subject2.get(attribute),
+				subject.get(attribute),
+				staging.get(attribute),
 				scoreConfig
 			)).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble
 			val expected = 1.0 * scoreConfig.weight
