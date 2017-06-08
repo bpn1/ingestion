@@ -2,7 +2,7 @@ package de.hpi.ingestion.dataimport.wikidata
 
 import org.scalatest.{FlatSpec, Matchers}
 
-class WikiDataNormalizationStrategyUnitTest extends FlatSpec with Matchers {
+class WikiDataNormalizationStrategyTest extends FlatSpec with Matchers {
 	"normalizeSector" should "extract and map sector" in {
 		val sectors = TestData.unnormalizedSectors
 		val result = WikiDataNormalizationStrategy.normalizeSector(sectors)
@@ -11,16 +11,23 @@ class WikiDataNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 	}
 
 	"normalizeCoords" should "extract lat;long from coordination String" in {
-		val coordinates = TestData.unnormalizedCoordinates
+		val coordinates = TestData.unnormalizedCoords
 		val result = WikiDataNormalizationStrategy.normalizeCoords(coordinates)
-		val expected = TestData.normalizedCoordinates
+		val expected = TestData.normalizedCoords
 		result shouldEqual expected
 	}
 
-	"normalizeLocation" should "filter WikiData Ids" in {
-		val locations = TestData.unnormalizedLocations
-		val result = WikiDataNormalizationStrategy.normalizeLocation(locations)
-		val expected = TestData.normalizedLocations
+	"normalizeCity" should "filter WikiData Ids" in {
+		val cities = TestData.unnormalizedCities
+		val result = WikiDataNormalizationStrategy.normalizeCity(cities)
+		val expected = TestData.normalizedCities
+		result shouldEqual expected
+	}
+
+	"normalizeCountry" should "normalize all possible appearances of country values" in {
+		val countries = TestData.unnormalizedCountries
+		val result = WikiDataNormalizationStrategy.normalizeCountry(countries)
+		val expected = TestData.normalizedCountries
 		result shouldEqual expected
 	}
 
@@ -32,22 +39,10 @@ class WikiDataNormalizationStrategyUnitTest extends FlatSpec with Matchers {
 	}
 
 	"apply" should "return the right normalization method based on a given attribute" in {
-		val inputs = List(
-			TestData.unnormalizedCoordinates,
-			TestData.unnormalizedLocations,
-			TestData.unnormalizedSectors,
-			TestData.unnormalizedEmployees,
-			List("default")
-		)
-		val attributes = List("geo_coords", "geo_country", "gen_sectors", "gen_employees", "default")
-		val results = attributes.map(WikiDataNormalizationStrategy(_))
-		val strategies: List[(List[String] => List[String])] = List(
-			WikiDataNormalizationStrategy.normalizeCoords,
-			WikiDataNormalizationStrategy.normalizeLocation,
-			WikiDataNormalizationStrategy.normalizeSector,
-			WikiDataNormalizationStrategy.normalizeEmployees,
-			identity
-		)
+		val inputs = TestData.applyInput
+		val attributes = TestData.applyAttributes
+		val results = attributes.map(WikiDataNormalizationStrategy.apply)
+		val strategies = TestData.applyStrategies
 		(results, strategies, inputs).zipped
 			.map { case (result, expected, input) =>
 				(result(input), expected(input))

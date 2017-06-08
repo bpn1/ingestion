@@ -1,7 +1,6 @@
 package de.hpi.ingestion.dataimport.wikipedia
 
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
-
 import scala.io.Source
 
 object TestData {
@@ -16,6 +15,7 @@ object TestData {
 			WikipediaEntry("Actinium", Option("Text 2")),
 			WikipediaEntry("Ang Lee", Option("Text 3")),
 			WikipediaEntry("Anschluss (Soziologie)", Option("Text 4")),
-			WikipediaEntry("Anschlussfaehigkeit", Option("Text 5")))
+			WikipediaEntry("Anschlussfähigkeit", Option("Text 5")))
 	}
 }
+

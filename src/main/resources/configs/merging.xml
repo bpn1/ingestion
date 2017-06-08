@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
+        <subjectTable>subject_temp</subjectTable>
+        <keyspaceStagingTable>datalake</keyspaceStagingTable>
+        <stagingTable>subject</stagingTable>
+        <keyspaceDuplicatesTable>evaluation</keyspaceDuplicatesTable>
+        <duplicatesTable>dbpedia_wikidata_deduplication_only_uuid</duplicatesTable>
+        <keyspaceVersionTable>datalake</keyspaceVersionTable>
+        <versionTable>version</versionTable>
+    </settings>
+</config>

@@ -3,8 +3,6 @@ package de.hpi.ingestion.textmining.models
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 
-// scalastyle:off line.size.limit
-
 object TestData {
 	def protoFeatureEntries(): List[(ProtoFeatureEntry, String, MultiFeature)] = {
 		List(
@@ -60,8 +58,23 @@ object TestData {
 			templatelinks = List(Link("Charlie", "Charlie C.")),
 			categorylinks = List(Link("Dora", "Dora")),
 			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
-			disambiguationlinks = List(Link("Esel", "Esel"))
-		)
+			disambiguationlinks = List(Link("Esel", "Esel")))
+	}
+
+	def parsedEntryWithDifferentAndReducedLinkTypes(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Origineller Titel",
+			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
+			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
+			templatelinks = List(Link("Charlie", "Charlie C.")),
+			categorylinks = List(Link("Dora", "Dora")),
+			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
+			disambiguationlinks = List(Link("Esel", "Esel")),
+			textlinksreduced = List(Link("Baum", "Baum", Option(4))),
+			templatelinksreduced = Nil,
+			categorylinksreduced = Nil,
+			listlinksreduced = List(Link("Fund", "Fund")),
+			disambiguationlinksreduced = List(Link("Esel", "Esel")))
 	}
 
 	def textLinksWithContext(): List[Link] = {
@@ -95,8 +108,14 @@ object TestData {
 			Link("Dora", "Dora"),
 			Link("Fund", "Fund"),
 			Link("Grieß", "Brei"),
-			Link("Esel", "Esel")
-		)
+			Link("Esel", "Esel"))
+	}
+
+	def allReducedLinks(): List[Link] = {
+		List(
+			Link("Baum", "Baum", Option(4)),
+			Link("Fund", "Fund"),
+			Link("Esel", "Esel"))
 	}
 
 	def parsedEntryWithContext(): ParsedWikipediaEntry = {
@@ -113,6 +132,22 @@ object TestData {
 				Link("Postbank", "Postbank", Option(126), Map("test 2" -> 2)),
 				Link("Berliner", "Berlin", Option(190), Map("test 3" -> 3)),
 				Link("Kreuzberg", "Berlin-Kreuzberg", Option(208), Map("test 4" -> 4)))
+		)
+	}
+
+	def parsedEntryWithReducedLinks(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Origineller Titel",
+			Option("In diesem Text könnten ganz viele verschiedene Links stehen."),
+			textlinks = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
+			templatelinks = List(Link("Charlie", "Charlie C.")),
+			categorylinks = List(Link("Dora", "Dora")),
+			listlinks = List(Link("Fund", "Fund"), Link("Grieß", "Brei")),
+			disambiguationlinks = List(Link("Esel", "Esel")),
+			textlinksreduced = List(Link("Apfel", "Apfel", Option(0)), Link("Baum", "Baum", Option(4))),
+			categorylinksreduced = List(Link("Dora", "Dora")),
+			listlinksreduced = List(Link("Fund", "Fund")),
+			disambiguationlinksreduced = List(Link("Esel", "Esel"))
 		)
 	}
 
@@ -164,7 +199,7 @@ object TestData {
 		ParsedWikipediaEntry(
 			"Berlin",
 			Option("Berlin ist cool"),
-			textlinks = List(
+			textlinks = List (
 				Link("Berlin", "Berlin", Option(0)),
 				Link("Berlin", "Berlin", Option(15))
 			),
@@ -181,12 +216,80 @@ object TestData {
 		)
 	}
 
+	def parsedWikipediaEntryWithLinkCollisions(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry(
+			"Berlin",
+			Option("Berlin ist cool"),
+			textlinks = List(
+				Link("Berlin", "Berlin", Option(0)),
+				Link("Berlin", "Berlin", Option(10)),
+				Link("Berlin", "Berlin", Option(20)),
+				Link("Berlin", "Berlin", Option(30)),
+				Link("Berlin", "Berlin", Option(40)),
+				Link("Berlin", "Backfisch", Option(50)),
+				Link("Berlin", "Berlin", Option(60)),
+				Link("Berlin", "Berlin", Option(90)),
+				Link("Berlin", "Berlin", Option(100)),
+				Link("Berlin", "Berlin", Option(120)),
+				Link("Berlin", "Berlin", Option(130)),
+				Link("Berlin", "Berlin", Option(140)),
+				Link("Berlin", "Berlin", Option(160)),
+				Link("Berlin", "Berlin", Option(160))
+			),
+			rawextendedlinks = List(
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(0)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(11)),
+				ExtendedLink("Berliner", Map("Berlin" -> 5), Option(18)),
+				ExtendedLink("Berlin", Map("Berlin" -> 5), Option(30)),
+				ExtendedLink("Berliner", Map("Berlin" -> 5), Option(41)),
+				ExtendedLink("Backfische", Map("Backfisch" -> 5), Option(49)),
+				ExtendedLink("Berliner", Map("Berlin" -> 5), Option(60)),
+				ExtendedLink("Berlin", Map("Berlin" -> 5), Option(70)),
+				ExtendedLink("Berlin", Map("Berlin" -> 5), Option(80)),
+				ExtendedLink("B", Map("Berlin" -> 5), Option(90)),
+				ExtendedLink("E", Map("Berlin" -> 5), Option(91)),
+				ExtendedLink("R", Map("Berlin" -> 5), Option(92)),
+				ExtendedLink("L", Map("Berlin" -> 5), Option(93)),
+				ExtendedLink("I", Map("Berlin" -> 5), Option(94)),
+				ExtendedLink("N", Map("Berlin" -> 5), Option(95)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(98)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(125)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(139)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(163)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(180)),
+				ExtendedLink("BER", Map("Berlin" -> 5), Option(200))
+			)
+		)
+	}
+
+	def linksWithoutCollisions(): List[Link] = {
+		List(
+			Link("Berlin", "Berlin", Option(0)),
+			Link("Berlin", "Berlin", Option(10)),
+			Link("Berlin", "Berlin", Option(20)),
+			Link("Berlin", "Berlin", Option(30)),
+			Link("Berlin", "Berlin", Option(40)),
+			Link("Berlin", "Backfisch", Option(50)),
+			Link("Berlin", "Berlin", Option(60)),
+			Link("Berlin", "Berlin", Option(90)),
+			Link("Berlin", "Berlin", Option(100)),
+			Link("Berlin", "Berlin", Option(120)),
+			Link("Berlin", "Berlin", Option(130)),
+			Link("Berlin", "Berlin", Option(140)),
+			Link("Berlin", "Berlin", Option(160)),
+			Link("Berlin", "Berlin", Option(160)),
+			Link("Berlin", "Berlin", Option(70)),
+			Link("Berlin", "Berlin", Option(80)),
+			Link("BER", "Berlin", Option(180)),
+			Link("BER", "Berlin", Option(200))
+		)
+	}
+
 	def edgeCaseExtendedLinksToLinks(): List[Link] = {
 		List(
+			Link("Berlin", "Berlin", Option(0)),
 			Link("Berlin", "Berlin", Option(1)),
 			Link("Berlin", "Berlin", Option(2))
 		)
 	}
 }
-
-// scalastyle:on line.size.limit

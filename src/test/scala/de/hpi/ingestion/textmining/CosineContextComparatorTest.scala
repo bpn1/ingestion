@@ -8,7 +8,7 @@ import org.apache.spark.rdd.RDD
 
 class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Inverse document frequencies" should "contain as many tokens as document frequencies" in {
-		val documentFrequencies = TestData.documentFrequenciesTestSet()
+		val documentFrequencies = TestData.documentFrequenciesSet()
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(CosineContextComparator.calculateIdf(_, numDocuments))
@@ -16,7 +16,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "be exactly these inverse document frequencies" in {
-		val documentFrequencies = TestData.documentFrequenciesTestSet()
+		val documentFrequencies = TestData.documentFrequenciesSet()
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(CosineContextComparator.calculateIdf(_, numDocuments))
@@ -220,7 +220,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.toMap
 			.map(alias => (alias._1, alias._2.toSet))
 
-		pages1 shouldEqual TestData.aliasPageScoresMap()
+		pages1 shouldEqual TestData.aliasPagesScoresMap()
 		val expectedPages = TestData.singleAliasManyPagesScoresMap()
 			.map(alias => (alias._1, alias._2.toSet))
 		pages2 shouldEqual expectedPages
@@ -235,7 +235,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-		val aliasPageScores = TestData.aliasPageScoresMap()
+		val aliasPageScores = TestData.aliasPagesScoresMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
@@ -244,8 +244,9 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "be exactly these feature entries" in {
-		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-		val aliasPageScores = TestData.aliasPageScoresMap()
+		val contextTfidf = sc.parallelize(
+			TestData.shortLinkContextsTfidfList() ++ TestData.deadAliasContextsTfidfList())
+		val aliasPageScores = TestData.aliasPagesScoresMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
@@ -255,8 +256,9 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "be calculated for trie aliases as well" in {
-		val contextTfidf = sc.parallelize(TestData.shortLinkAndAliasContextsTfidfList())
-		val aliasPageScores = TestData.aliasPageScoresMap()
+		val contextTfidf = sc.parallelize(
+			TestData.shortLinkAndAliasContextsTfidfList() ++ TestData.deadAliasContextsTfidfList())
+		val aliasPageScores = TestData.aliasPagesScoresMap()
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
