@@ -161,8 +161,9 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 				smallLink.context = Map() // allows smaller test data
 				(smallLink, tfidfContext)
 			}.collect
-			.toSet
-		val expectedTfidf = TestData.linkContextsTfidf()
+			.toList
+			.sortBy(_._1.alias)
+		val expectedTfidf = TestData.linkContextsTfidfList()
 		linkContextValues shouldBe expectedTfidf
 
 		CosineContextComparator.settings = oldSettings
@@ -251,8 +252,9 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
 			.collect
-			.toSet
-		featureEntries shouldEqual TestData.featureEntriesSet()
+			.toList
+			.sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
+		featureEntries shouldEqual TestData.featureEntriesList()
 	}
 
 	they should "be calculated for trie aliases as well" in {

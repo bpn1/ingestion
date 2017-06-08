@@ -31,7 +31,7 @@ class SecondOrderFeatureGeneratorTest extends FlatSpec with SharedSparkContext w
 	}
 
 	"Feature entries with second order features" should "be exactly these feature entries" in {
-		val featureEntries1 = sc.parallelize(TestData.featureEntriesSet().toList)
+		val featureEntries1 = sc.parallelize(TestData.featureEntriesList())
 		val featureEntries2 = sc.parallelize(TestData.featureEntriesForSingleAliasList())
 		val featureEntries3 = sc.parallelize(TestData.featureEntriesForManyPossibleEntitiesList())
 		val input1 = List(featureEntries1).toAnyRDD()

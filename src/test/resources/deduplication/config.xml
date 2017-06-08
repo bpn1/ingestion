@@ -1,4 +1,3 @@
-
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
     <settings>
@@ -30,4 +29,3 @@
         </attribute>
     </simMeasurements>
 </config>
-:src/test/resources/deduplication/config.xml
