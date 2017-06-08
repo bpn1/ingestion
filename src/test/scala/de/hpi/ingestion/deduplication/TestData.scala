@@ -485,7 +485,7 @@ object TestData {
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Audy "), List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
-	def lastLettersBlockingScheme: List[List[String]] = List(List("wagen"), List(" GmbH"), List("rrari"), List("rsche"), List("en AG"))
+	def lastLettersBlockingScheme: List[List[String]] = List(List("wagen"), List(" GmbH"), List("rrari"), List("rsche"), List("en AG"), List("undefined"))
 	def listBlockingScheme: List[List[String]] = List(
 		List("Berlin", "Hamburg", "1234"),
 		List("Berlin", "New York", "12"),

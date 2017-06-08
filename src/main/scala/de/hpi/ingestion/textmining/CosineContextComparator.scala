@@ -111,20 +111,20 @@ object CosineContextComparator extends SplitSparkJob {
 			}.reduceByKey(_ ++ _)
 	}
 
-	def readArticleTexts(): Map[String, String] = {
-		val articleStream = AliasTrieSearch.trieStreamFunction(CosineContextComparator.settings("articleFile"))
-		val reader = new BufferedReader(new InputStreamReader(articleStream, "UTF-8"))
-		val articleMap = mutable.Map[String, String]()
-		var line = reader.readLine()
-		while(line != null) {
-			if(!line.endsWith("\t")) {
-				val Array(title, text) = line.split("\t", 2)
-				articleMap(title) = text
-				line = reader.readLine()
-			}
-		}
-		articleMap.toMap
-	}
+//	def readArticleTexts(): Map[String, String] = {
+//		val articleStream = AliasTrieSearch.trieStreamFunction(CosineContextComparator.settings("articleFile"))
+//		val reader = new BufferedReader(new InputStreamReader(articleStream, "UTF-8"))
+//		val articleMap = mutable.Map[String, String]()
+//		var line = reader.readLine()
+//		while(line != null) {
+//			if(!line.endsWith("\t")) {
+//				val Array(title, text) = line.split("\t", 2)
+//				articleMap(title) = text
+//				line = reader.readLine()
+//			}
+//		}
+//		articleMap.toMap
+//	}
 
 	/**
 	  * Enriches a Wikipedia article with its context as bag of words (implemented as Map).
