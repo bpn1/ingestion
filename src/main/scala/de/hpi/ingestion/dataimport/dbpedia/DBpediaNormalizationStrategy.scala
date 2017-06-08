@@ -111,6 +111,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case "geo_country" => this.normalizeCountry
 			case "geo_coords" => this.normalizeCoords
 			case "geo_city" => this.normalizeCity
+			case "gen_urls" => this.normalizeURLs
 			case _ => this.normalizeDefault
 		}
 	}
