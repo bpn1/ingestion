@@ -29,7 +29,7 @@ trait JSONParser[T] {
 	def fillEntityValues(json: JsValue): T
 
 	/**
-	  * Removes array syntax from Json for parallel parsing of the JSON objects.
+	  * Removes array syntax from JSON for parallel parsing of the JSON objects.
 	  * @param json JSON String to clean
 	  * @return cleaned JSON String in which each line is either a JSON object or empty
 	  */
