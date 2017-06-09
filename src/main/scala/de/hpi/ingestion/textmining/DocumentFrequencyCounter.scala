@@ -16,7 +16,8 @@ object DocumentFrequencyCounter extends SparkJob {
 	configFile = "textmining.xml"
 	val removeStopwords = true
 	val stem = true
-	var leastSignificantDocumentFrequency = 5
+	var leastSignificantDocumentFrequency = 5	// Note: This value must be smaller or equal as the number of considered
+												// documents.
 
 	// $COVERAGE-OFF$
 	/**

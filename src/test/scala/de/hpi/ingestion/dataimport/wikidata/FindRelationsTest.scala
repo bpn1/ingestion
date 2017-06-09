@@ -1,3 +1,4 @@
+
 package de.hpi.ingestion.dataimport.wikidata
 
 import com.holdenkarau.spark.testing.SharedSparkContext
