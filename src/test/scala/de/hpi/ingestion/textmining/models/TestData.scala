@@ -3,53 +3,32 @@ package de.hpi.ingestion.textmining.models
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 
-// scalastyle:off line.size.limit
-
 object TestData {
-	def protoFeatureEntries(): List[(ProtoFeatureEntry, String, MultiFeature)] = {
+	def protoFeatureEntries(): List[(ProtoFeatureEntry, String, Double)] = {
 		List(
-			(ProtoFeatureEntry(Link("a", "b", Option(0), article = Option("Audi")), Map(), 0.1, MultiFeature(0.2)), "b", MultiFeature(0.8)),
-			(ProtoFeatureEntry(Link("c", "a", Option(10), article = Option("BMW")), Map(), 0.4, MultiFeature(0.0)), "d", MultiFeature(0.7)),
-			(ProtoFeatureEntry(Link("e", "f", Option(20), article = Option("Chevrolet")), Map(), 0.7, MultiFeature(1.0)), "f", MultiFeature(0.1)),
-			(ProtoFeatureEntry(Link("g", "a", Option(30), article = Option("Dacia")), Map(), 0.8, MultiFeature(0.2)), "h", MultiFeature(0.3)),
-			(ProtoFeatureEntry(Link("i", "a", None, article = Option("Ferrari")), Map(), 0.9, MultiFeature(0.4)), "j", MultiFeature(0.7))
-		)
+			(ProtoFeatureEntry("a", Link("a", "b"), Map(), 0.1, 0.2), "b", 0.8),
+			(ProtoFeatureEntry("c", Link("c", "a"), Map(), 0.4, 0.0), "d", 0.7),
+			(ProtoFeatureEntry("e", Link("e", "f"), Map(), 0.7, 1.0), "f", 0.1),
+			(ProtoFeatureEntry("g", Link("g", "a"), Map(), 0.8, 0.2), "h", 0.3),
+			(ProtoFeatureEntry("i", Link("i", "a"), Map(), 0.9, 0.4), "j", 0.7))
 	}
 
 	def featureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("Audi", 0, "a", "b", 0.1, MultiFeature(0.2), MultiFeature(0.8), true),
-			FeatureEntry("BMW", 10, "c", "d", 0.4, MultiFeature(0.0), MultiFeature(0.7), false),
-			FeatureEntry("Chevrolet", 20, "e", "f", 0.7, MultiFeature(1.0), MultiFeature(0.1), true),
-			FeatureEntry("Dacia", 30, "g", "h", 0.8, MultiFeature(0.2), MultiFeature(0.3), false),
-			FeatureEntry("Ferrari", -1, "i", "j", 0.9, MultiFeature(0.4), MultiFeature(0.7), false)
-		)
+			FeatureEntry("a", "b", 0.1, 0.2, 0.8, true, null),
+			FeatureEntry("c", "d", 0.4, 0.0, 0.7, false, null),
+			FeatureEntry("e", "f", 0.7, 1.0, 0.1, true, null),
+			FeatureEntry("g", "h", 0.8, 0.2, 0.3, false, null),
+			FeatureEntry("i", "j", 0.9, 0.4, 0.7, false, null))
 	}
 
 	def labeledPoints(): List[LabeledPoint] = {
-		val default = Double.PositiveInfinity
 		List(
-			LabeledPoint(1.0, new DenseVector(Array(
-				0.1,
-				0.2, 1, default, default,
-				0.8, 1, default, default))),
-			LabeledPoint(0.0, new DenseVector(Array(
-				0.4,
-				0.0, 1, default, default,
-				0.7, 1, default, default))),
-			LabeledPoint(1.0, new DenseVector(Array(
-				0.7,
-				1.0, 1, default, default,
-				0.1, 1, default, default))),
-			LabeledPoint(0.0, new DenseVector(Array(
-				0.8,
-				0.2, 1, default, default,
-				0.3, 1, default, default))),
-			LabeledPoint(0.0, new DenseVector(Array(
-				0.9,
-				0.4, 1, default, default,
-				0.7, 1, default, default)))
-		)
+			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
+			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
+			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
+			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
+			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7))))
 	}
 
 	def parsedEntryWithDifferentLinkTypes(): ParsedWikipediaEntry = {
@@ -295,5 +274,3 @@ object TestData {
 		)
 	}
 }
-
-// scalastyle:on line.size.limit

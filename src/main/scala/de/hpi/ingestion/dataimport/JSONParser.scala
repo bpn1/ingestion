@@ -33,6 +33,7 @@ trait JSONParser[T] {
 	  * @param json JSON String to clean
 	  * @return cleaned JSON String in which each line is either a JSON object or empty
 	  */
+
 	def cleanJSON(json: String): String = {
 		json.replaceAll("^\\[|,$|, $|\\]$", "")
 	}
@@ -109,7 +110,7 @@ trait JSONParser[T] {
 			case _ => throw new IllegalArgumentException(s"Unsupported type: ${jsonObject.getClass}")
 		}
 	}
-	
+
 	/**
 	  * Extracts a String value from a JSON object.
 	  * @param json JSON object containing the data
