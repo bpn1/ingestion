@@ -1,4 +1,3 @@
-
 package de.hpi.ingestion.framework.mock
 
 import de.hpi.ingestion.framework.Configurable

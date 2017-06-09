@@ -1,4 +1,3 @@
-
 package de.hpi.ingestion.framework
 
 import de.hpi.ingestion.deduplication.models.config.{AttributeConfig, SimilarityMeasureConfig}
@@ -55,4 +54,3 @@ object TestData {
 		)
 	}
 }
-
