@@ -6,8 +6,11 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+
 import scala.collection.mutable
 import java.io.{BufferedReader, InputStreamReader}
+
+import org.apache.spark.broadcast.Broadcast
 
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
@@ -163,18 +166,23 @@ object CosineContextComparator extends SplitSparkJob {
 	  */
 	def compareLinksWithArticles(
 		linkContexts: RDD[(Link, Map[String, Double])],
-		aliasPageScores: Map[String, List[(String, Double, Double)]],
+		aliasPageScores: Broadcast[Map[String, List[(String, Double, Double)]]],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
 		linkContexts
-			.flatMap { case (link, tfidfMap) =>
-				aliasPageScores.getOrElse(link.alias, Nil)
-					.map { case (page, linkScore, pageScore) =>
-						// Note: The page in the link is the actual target for the alias occurrence,
-						// the joined page is just a possible target for the alias.
-						(page, List(ProtoFeatureEntry(link, tfidfMap, linkScore, MultiFeature(pageScore))))
-					}
-			}.join(articleContexts)
+			.mapPartitions({ partition =>
+				val localAliases = aliasPageScores.value
+				partition.map { case (link, tfidfMap) =>
+					localAliases.getOrElse(link.alias, Nil)
+						.map { case (page, linkScore, pageScore) =>
+							// Note: The page in the link is the actual target for the alias occurrence,
+							// the joined page is just a possible target for the alias.
+							(page, List(ProtoFeatureEntry(link, tfidfMap, linkScore, MultiFeature(pageScore))))
+						}
+				}
+			}, true)
+			.flatMap(identity)
+	    	.join(articleContexts)
 			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
 				protoFeatureEntries.map { protoFeatureEntry =>
 					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
@@ -287,7 +295,7 @@ object CosineContextComparator extends SplitSparkJob {
 		val aliasPageScores = computeAliasPageScores(aliases)
 			.collect
 			.toMap
-		val featureEntries = compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
+		val featureEntries = compareLinksWithArticles(contextTfidf, sc.broadcast(aliasPageScores), articleTfidf)
 		List(featureEntries).toAnyRDD()
 	}
 }
