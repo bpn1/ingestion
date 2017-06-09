@@ -54,16 +54,6 @@ trait JSONParser[T] {
 	}
 
 	/**
-	  * Extracts a String value from a JSON object.
-	  * @param json JSON object containing the data
-	  * @param path JSON path of the object fields to traverse
-	  * @return String value of the JSON field
-	  */
-	def extractString(json: JsValue, path: List[String]): Option[String] = {
-		getValue(json, path).map(_.as[String])
-	}
-
-	/**
 	  * Extracts a JSON array as List from a JSON object.
 	  * @param json JSON object containing the data
 	  * @param path JSON path of the object fields to traverse
@@ -118,6 +108,16 @@ trait JSONParser[T] {
 			case t: JsString => List((key, t.as[String]))
 			case _ => throw new IllegalArgumentException(s"Unsupported type: ${jsonObject.getClass}")
 		}
+	}
+	
+	/**
+	  * Extracts a String value from a JSON object.
+	  * @param json JSON object containing the data
+	  * @param path JSON path of the object fields to traverse
+	  * @return String value of the JSON field
+	  */
+	def extractString(json: JsValue, path: List[String]): Option[String] = {
+		getValue(json, path).map(_.as[String])
 	}
 
 	/**
