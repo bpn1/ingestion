@@ -1,7 +1,5 @@
 package de.hpi.ingestion.textmining
 
-
-import java.net.URI
 import java.io._
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
@@ -24,6 +22,37 @@ import scala.io.{BufferedSource, Source}
 // scalastyle:off file.size.limit
 
 object TestData {
+	def valuesList(): List[Double] = {
+		List(5.0, 7.1, 5.0, 2.9, 7.1)
+	}
+
+	def ranksList(): List[Int] = {
+		List(3, 1, 3, 5, 1)
+	}
+
+	def longValuesList(): List[Double] = {
+		List(0.72, 0.038415841584158415, 0.05821782178217822, 0.0004, 0.0004, 0.0004, 0.0004, 0.001188118811881188, 0.0004,
+			0.0004, 0.0004, 0.0004, 0.0004, 0.0004, 0.17504950495049504, 0.0004, 0.001188118811881188, 7.920792079207921E-4)
+	}
+
+	def longRanksList(): List[Int] = {
+		List(1, 4, 3, 8, 8, 8, 8, 5, 8,
+			8, 8, 8, 8, 8, 2, 8, 5, 7)
+	}
+
+	def deltaTopValuesList(): List[Double] = {
+		List(2.0999999999999996, Double.PositiveInfinity, 2.0999999999999996, 4.199999999999999, Double.PositiveInfinity)
+	}
+
+	def deltaSuccessorValuesList(): List[Double] = {
+		List(2.1, 2.0999999999999996, 2.1, Double.PositiveInfinity, 2.0999999999999996)
+	}
+
+	def stopwordsSet(): Set[String] = {
+		Source.fromURL(getClass.getResource("/textmining/german_stopwords_without_umlauts.txt"))
+			.getLines()
+			.toSet
+	}
 
 	def sentencesList(): List[String] = {
 		List(
@@ -423,18 +452,19 @@ object TestData {
 
 	def transformedLinkContexts(): Set[(Link, Bag[String, Int])] = {
 		Set(
-			(Link("Audi", "Audi", Option(9), Map("verlink" -> 1)), Bag("verlink" -> 1)),
-			(Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)), Bag("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
-			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
-			(Link("Hessen", "Hessen", Option(87), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
-			(Link("1377", "1377", Option(225), Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)), Bag("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
-			(Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)), Bag("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)),
-			(Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)), Bag("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
-			(Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)), Bag("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
-			(Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)), Bag("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
+			(Link("Audi", "Audi", Option(9), Map("verlink" -> 1), Option("Audi Test mit Link")), Bag("verlink" -> 1)),
+			(Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
+			(Link("Hessen", "Hessen", Option(87), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1)),
+			(Link("1377", "1377", Option(225), Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1), Option("Streitberg (Brachttal)")), Bag("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)),
+			(Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1), Option("Testartikel")), Bag("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			(Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1), Option("Testartikel")), Bag("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			(Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1), Option("Testartikel")), Bag("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1))
+		)
 	}
 
-	def linkContextsTfidf(): Set[(Link, Map[String, Double])] = {
+	def linkContextsTfidfList(): List[(Link, Map[String, Double])] = {
 		// retrieved from 4 documents
 		val tf1df1 = 0.6020599913279624
 		val tf1df2 = 0.3010299956639812
@@ -442,16 +472,17 @@ object TestData {
 		val tf2df1 = 1.2041199826559248
 		val tf2df2 = 0.6020599913279624
 		val tf3df2 = 0.9030899869919435
-		Set(
-			(Link("Audi", "Audi", Option(9)), Map("verlink" -> tf1df2)),
-			(Link("Brachttal", "Brachttal", Option(55)), Map("einwohnerzahl" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
-			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "streitberg" -> tf1df1)),
-			(Link("Hessen", "Hessen", Option(87)), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
-			(Link("1377", "1377", Option(225)), Map("einwohnerzahl" -> tf1df1, "streidtburgk" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf1df1, "bezeichnung" -> tf1df1, "jahr" -> tf3df2, "270" -> tf1df1, "stridberg" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "tauch" -> tf1df1, "1500" -> tf1df1, "namensvaria" -> tf1df1, "red" -> tf1df1)),
-			(Link("Büdinger Wald", "Büdinger Wald", Option(546)), Map("waldrech" -> tf1df1, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "-" -> tf1df1, "-rrb-" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1)),
-			(Link("Audi", "Audi", Option(7)), Map("brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
-			(Link("Brachttal", "Brachttal", Option(13)), Map("audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
-			(Link("historisches Jahr", "1377", Option(24)), Map("audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
+		List(
+			(Link("Audi", "Audi", Option(9), article = Option("Audi Test mit Link")), Map("verlink" -> tf1df2)),
+			(Link("Brachttal", "Brachttal", Option(55), article = Option("Streitberg (Brachttal)")), Map("einwohnerzahl" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), article = Option("Streitberg (Brachttal)")), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "streitberg" -> tf1df1)),
+			(Link("Hessen", "Hessen", Option(87), article = Option("Streitberg (Brachttal)")), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
+			(Link("1377", "1377", Option(225), article = Option("Streitberg (Brachttal)")), Map("einwohnerzahl" -> tf1df1, "streidtburgk" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf1df1, "bezeichnung" -> tf1df1, "jahr" -> tf3df2, "270" -> tf1df1, "stridberg" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "tauch" -> tf1df1, "1500" -> tf1df1, "namensvaria" -> tf1df1, "red" -> tf1df1)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546), article = Option("Streitberg (Brachttal)")), Map("waldrech" -> tf1df1, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "-" -> tf1df1, "-rrb-" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1)),
+			(Link("Audi", "Audi", Option(7), article = Option("Testartikel")), Map("brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
+			(Link("Brachttal", "Brachttal", Option(13), article = Option("Testartikel")), Map("audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
+			(Link("historisches Jahr", "1377", Option(24), article = Option("Testartikel")), Map("audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1))
+		).sortBy(_._1.alias)
 	}
 
 	def linkContextsTfidfWithTrieAliases(): Set[(Link, Map[String, Double])] = {
@@ -463,15 +494,15 @@ object TestData {
 		val tf2df2 = 0.6020599913279624
 		val tf3df2 = 0.9030899869919435
 		Set(
-			(Link("Audi", "Audi", Option(9)), Map("verlink" -> tf1df2)),
-			(Link("Brachttal", "Brachttal", Option(55)), Map("einwohnerzahl" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
-			(Link("Main-Kinzig-Kreis", null, Option(66)), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "streitberg" -> tf1df1)),
-			(Link("Hessen", "Hessen", Option(87)), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
-			(Link("1377", null, Option(225)), Map("einwohnerzahl" -> tf1df1, "streidtburgk" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf1df1, "bezeichnung" -> tf1df1, "jahr" -> tf3df2, "270" -> tf1df1, "stridberg" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "tauch" -> tf1df1, "1500" -> tf1df1, "namensvaria" -> tf1df1, "red" -> tf1df1)),
-			(Link("Büdinger Wald", "Büdinger Wald", Option(546)), Map("waldrech" -> tf1df1, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "-" -> tf1df1, "-rrb-" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1)),
-			(Link("Audi", "Audi", Option(7)), Map("brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
-			(Link("Brachttal", null, Option(13)), Map("audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
-			(Link("historisches Jahr", "1377", Option(24)), Map("audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
+			(Link("Audi", "Audi", Option(9), article = Option("Audi Test mit Link")), Map("verlink" -> tf1df2)),
+			(Link("Brachttal", "Brachttal", Option(55), article = Option("Streitberg (Brachttal)")), Map("einwohnerzahl" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", null, Option(66), article = Option("Streitberg (Brachttal)")), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "hess" -> tf1df2, "gemei" -> tf1df1, "streitberg" -> tf1df1)),
+			(Link("Hessen", "Hessen", Option(87), article = Option("Streitberg (Brachttal)")), Map("einwohnerzahl" -> tf1df1, "brachttal" -> tf1df2, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf2df1, "270" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "gemei" -> tf1df1, "main-kinzig-kreis" -> tf1df2, "streitberg" -> tf1df1)),
+			(Link("1377", null, Option(225), article = Option("Streitberg (Brachttal)")), Map("einwohnerzahl" -> tf1df1, "streidtburgk" -> tf1df1, "nachweislich" -> tf1df1, "erwahnung" -> tf1df1, "ortsteil" -> tf1df1, "bezeichnung" -> tf1df1, "jahr" -> tf3df2, "270" -> tf1df1, "stridberg" -> tf1df1, "kleinst" -> tf1df1, "stamm" -> tf1df1, "tauch" -> tf1df1, "1500" -> tf1df1, "namensvaria" -> tf1df1, "red" -> tf1df1)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546), article = Option("Streitberg (Brachttal)")), Map("waldrech" -> tf1df1, "19" -> tf1df1, "ort" -> tf1df1, "jahrhu" -> tf1df1, "-lrb-" -> tf1df1, "huterech" -> tf1df1, "eingeburg" -> tf1df1, "-" -> tf1df1, "-rrb-" -> tf1df1, "holx" -> tf1df1, "ortsnam" -> tf1df1, "streitberg" -> tf1df1, "mittelal" -> tf1df1)),
+			(Link("Audi", "Audi", Option(7), article = Option("Testartikel")), Map("brachttal" -> tf1df2, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
+			(Link("Brachttal", null, Option(13), article = Option("Testartikel")), Map("audi" -> tf1df3, "historisch" -> tf1df1, "jahr" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)),
+			(Link("historisches Jahr", "1377", Option(24), article = Option("Testartikel")), Map("audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 
 	def termFrequenciesSet(): Set[(String, Bag[String, Int])] = {
@@ -557,15 +588,14 @@ object TestData {
 			Alias("Main-Kinzig-Kreis", Map("Main-Kinzig-Kreis" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)),
 			Alias("Hessen", Map("Hessen" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)),
 			Alias("1377", Map("1377" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(1)),
-			Alias("Büdinger Wald", Map("Büdinger Wald" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)),
+			Alias("Büdinger Wald", Map("Büdinger Wald" -> 4, "Audi" -> 1), linkoccurrences = Option(5), totaloccurrences = Option(10)), // negative example
 			Alias("historisches Jahr", Map("1377" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(1)),
-			Alias("Büdinger Wald", Map("Audi" -> 1), linkoccurrences = Option(1), totaloccurrences = Option(2)), // negative example
 			Alias("historisches Jahr", Map("1377" -> 1)) // incomplete table entry
 		)
 	}
 
 	def aliasesWithExistingPagesSet(): Set[Alias] = {
-		// these pages do not fit to the aliases but are required for the tests
+		// These pages do not fit to the aliases but are required for the tests.
 		Set(
 			Alias("Audi", Map("Audi Test mit Link" -> 2), linkoccurrences = Option(2), totaloccurrences = Option(3)),
 			Alias("Brachttal", Map("Audi Test ohne Link" -> 2), linkoccurrences = Option(2), totaloccurrences = Option(2)),
@@ -752,15 +782,15 @@ object TestData {
 		val tf1df2 = 0.544
 		val tf1df3 = 0.368
 		List(
-			(Link("Audi", "Audi", Option(9)), Map("hier" -> tf1df2, "ist" -> tf1df3, "automobilhersteller" -> tf1df1)),
-			(Link("Audi", "Audi", Option(7)), Map("audi" -> tf1df2, "ein" -> tf1df3)),
-			(Link("Brachttal", "Brachttal", Option(55)), Map("ist" -> tf1df3, "ortsteil" -> tf1df1)),
-			(Link("Brachttal", "Brachttal", Option(13)), Map("tal" -> tf1df1)),
-			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66)), Map("einwohnerzahl" -> tf1df1, "ein" -> tf1df3, "hessen" -> tf1df2)),
-			(Link("Hessen", "Hessen", Option(87)), Map("main-kinzig-kreis" -> tf1df2)),
-			(Link("1377", "1377", Option(225)), Map("jahr" -> tf1df2)),
-			(Link("Büdinger Wald", "Büdinger Wald", Option(546)), Map("waldrech" -> tf1df1)),
-			(Link("historisches Jahr", "1377", Option(24)), Map("jahr" -> tf1df2))
+			(Link("Audi", "Audi", Option(9), article = Option("Autohersteller")), Map("hier" -> tf1df2, "ist" -> tf1df3, "automobilhersteller" -> tf1df1)),
+			(Link("Audi", "Audi", Option(9), article = Option("Autohersteller")), Map("audi" -> tf1df2, "ein" -> tf1df3)),
+			(Link("Brachttal", "Brachttal", Option(55), article = Option("Tal")), Map("ist" -> tf1df3, "ortsteil" -> tf1df1)),
+			(Link("Brachttal", "Brachttal", Option(13), article = Option("Tal")), Map("tal" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), article = Option("Tal")), Map("einwohnerzahl" -> tf1df1, "ein" -> tf1df3, "hessen" -> tf1df2)),
+			(Link("Hessen", "Hessen", Option(87), article = Option("Tal")), Map("main-kinzig-kreis" -> tf1df2)),
+			(Link("1377", "1377", Option(225), article = Option("Reiseziel")), Map("jahr" -> tf1df2)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546), article = Option("Reiseziel")), Map("waldrech" -> tf1df1)),
+			(Link("historisches Jahr", "1377", Option(24), article = Option("Reiseziel")), Map("jahr" -> tf1df2))
 		)
 	}
 
@@ -778,57 +808,315 @@ object TestData {
 		val tf1df2 = 0.544
 		val tf1df3 = 0.368
 		List(
-			(Link("Audi", "Audi", Option(9)), Map("hier" -> tf1df2, "ist" -> tf1df3, "automobilhersteller" -> tf1df1)),
-			(Link("Audi", "Audi", Option(7)), Map("audi" -> tf1df2, "ein" -> tf1df3)),
-			(Link("Brachttal", "Brachttal", Option(55)), Map("ist" -> tf1df3, "ortsteil" -> tf1df1)),
-			(Link("Brachttal", null, Option(13)), Map("tal" -> tf1df1)),
-			(Link("Main-Kinzig-Kreis", null, Option(66)), Map("einwohnerzahl" -> tf1df1, "ein" -> tf1df3, "hessen" -> tf1df2)),
-			(Link("Hessen", "Hessen", Option(87)), Map("main-kinzig-kreis" -> tf1df2)),
-			(Link("1377", null, Option(225)), Map("jahr" -> tf1df2)),
-			(Link("Büdinger Wald", "Büdinger Wald", Option(546)), Map("waldrech" -> tf1df1)),
-			(Link("historisches Jahr", "1377", Option(24)), Map("jahr" -> tf1df2))
+			(Link("Audi", "Audi", Option(9), article = Option("Audi Test mit Link")), Map("hier" -> tf1df2, "ist" -> tf1df3, "automobilhersteller" -> tf1df1)),
+			(Link("Audi", "Audi", Option(7), article = Option("Testartikel")), Map("audi" -> tf1df2, "ein" -> tf1df3)),
+			(Link("Brachttal", "Brachttal", Option(55), article = Option("Streitberg (Brachttal)")), Map("ist" -> tf1df3, "ortsteil" -> tf1df1)),
+			(Link("Brachttal", null, Option(13), article = Option("Testartikel")), Map("tal" -> tf1df1)),
+			(Link("Main-Kinzig-Kreis", null, Option(66), article = Option("Streitberg (Brachttal)")), Map("einwohnerzahl" -> tf1df1, "ein" -> tf1df3, "hessen" -> tf1df2)),
+			(Link("Hessen", "Hessen", Option(87), article = Option("Streitberg (Brachttal)")), Map("main-kinzig-kreis" -> tf1df2)),
+			(Link("1377", null, Option(225), article = Option("Streitberg (Brachttal)")), Map("jahr" -> tf1df2)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546), article = Option("Streitberg (Brachttal)")), Map("waldrech" -> tf1df1)),
+			(Link("historisches Jahr", "1377", Option(24), article = Option("Testartikel")), Map("jahr" -> tf1df2))
 		)
 	}
 
-	def aliasProbabilitiesMap(): Map[String, List[(String, Double, Double)]] = {
+	def aliasPagesScoresMap(): Map[String, List[(String, Double, Double)]] = {
 		Map(
 			"Audi" -> List(("Audi", 0.6666666666666666, 1.0)),
 			"Brachttal" -> List(("Brachttal", 1.0, 1.0)),
 			"Main-Kinzig-Kreis" -> List(("Main-Kinzig-Kreis", 0.5, 1.0)),
 			"Hessen" -> List(("Hessen", 0.5, 1.0)),
 			"1377" -> List(("1377", 1.0, 1.0)),
-			"Büdinger Wald" -> List(("Büdinger Wald", 0.5, 1.0), ("Audi", 0.5, 1.0)),
+			"Büdinger Wald" -> List(("Büdinger Wald", 0.5, 0.8), ("Audi", 0.5, 0.2)),
 			"historisches Jahr" -> List(("1377", 1.0, 1.0))
 		)
 	}
 
-	def featureEntriesSet(): Set[FeatureEntry] = {
+	def singleAliasLinkList(): List[(Link, Map[String, Double])] = {
+		List(
+			(Link("BMW", "BMW", Option(0), article = Option("Automobilhersteller")), Map()),
+			(Link("BMW", "BMW-Motorrad", Option(10), article = Option("Automobilhersteller")), Map()),
+			(Link("BMW", "BMW (Motorsport)", Option(20), article = Option("Audi")), Map()),
+			(Link("BMW", "BMW M10", Option(30), article = Option("Audi")), Map())
+		)
+	}
+
+	def singleAliasPageScoresMap(): Map[String, List[(String, Double, Double)]] = {
+		Map(
+			"BMW" -> List(
+				("BMW", 0.5962219598583235, 0.7239603960396039),
+				("BMW-Motorrad", 0.5962219598583235, 0.17504950495049504),
+				("BMW (Motorsport)", 0.5962219598583235, 0.05821782178217822),
+				("BMW M10", 0.5962219598583235, 3.9603960396039607E-4))
+		)
+	}
+
+	def singleAliasManyPagesScoresMap(): Map[String, List[(String, Double, Double)]] = {
+		Map(
+			"BMW" -> List(
+				("BMW", 0.5962219598583235, 0.7239603960396039),
+				("BMW-Motorrad", 0.5962219598583235, 0.17504950495049504),
+				("BMW (Motorsport)", 0.5962219598583235, 0.05821782178217822),
+				("BMW (Automarke)", 0.5962219598583235, 0.038415841584158415),
+				("Berlins Most Wanted", 0.5962219598583235, 0.001188118811881188),
+				("BMW E36", 0.5962219598583235, 0.001188118811881188),
+				("Liste der BMW-Motorräder", 0.5962219598583235, 7.920792079207921E-4),
+				("BMW E21", 0.5962219598583235, 3.9603960396039607E-4),
+				("BMW M10", 0.5962219598583235, 3.9603960396039607E-4),
+				("BMW 501/502", 0.5962219598583235, 3.9603960396039607E-4)
+			))
+	}
+
+	def aliasWithManyPages(): Alias = {
+		Alias("BMW", Map(
+			"BMW" -> 1828,
+			"BMW-Motorrad" -> 442,
+			"BMW (Motorsport)" -> 147,
+			"BMW (Automarke)" -> 97,
+			"Berlins Most Wanted" -> 3,
+			"BMW E36" -> 3,
+			"Liste der BMW-Motorräder" -> 2,
+			"BMW E21" -> 1,
+			"BMW M10" -> 1,
+			"BMW 501/502" -> 1
+		), linkoccurrences = Option(2525), totaloccurrences = Option(4235))
+	}
+
+	def articlesForSingleAlias(): Set[ParsedWikipediaEntry] = {
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, true, null),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, true, null),
-			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
-			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
-			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
+			ParsedWikipediaEntry("Automobilhersteller", linkswithcontext = List(Link("BMW", "BMW", Option(0), Map()))),
+			ParsedWikipediaEntry("BMW"),
+			ParsedWikipediaEntry("BMW-Motorrad"),
+			ParsedWikipediaEntry("BMW (Motorsport)"),
+			ParsedWikipediaEntry("BMW (Automarke)"),
+			ParsedWikipediaEntry("Berlins Most Wanted"),
+			ParsedWikipediaEntry("BMW E36"),
+			ParsedWikipediaEntry("Liste der BMW-Motorräder"),
+			ParsedWikipediaEntry("BMW E21"),
+			ParsedWikipediaEntry("BMW M10"),
+			ParsedWikipediaEntry("BMW 501/502")
+		)
+	}
+
+	def emptyArticlesTfidfMap(): Map[String, Map[String, Double]] = {
+		Map(
+			"BMW" -> Map(),
+			"BMW-Motorrad" -> Map(),
+			"BMW (Motorsport)" -> Map(),
+			"BMW (Automarke)" -> Map(),
+			"Berlins Most Wanted" -> Map(),
+			"BMW E36" -> Map(),
+			"Liste der BMW-Motorräder" -> Map(),
+			"BMW E21" -> Map(),
+			"BMW M10" -> Map(),
+			"BMW 501/502" -> Map()
+		)
+	}
+
+	def featureEntriesForSingleAliasList(): List[FeatureEntry] = {
+		val link_score = 0.5962219598583235
+		val mfPage_072 = MultiFeature(0.7239603960396039)
+		val mfPage_018 = MultiFeature(0.17504950495049504)
+		val mfPage_0058 = MultiFeature(0.05821782178217822)
+		val mfPage_00004 = MultiFeature(3.9603960396039607E-4)
+		val mfCos = MultiFeature(-1.0)
+
+		List(
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, true),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, true),
+			FeatureEntry("Audi", 20, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, true)
+		).sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
+	}
+
+	def featureEntriesForSingleAliasWithSOFList(): List[FeatureEntry] = {
+		val default = Double.PositiveInfinity
+		val link_score = 0.5962219598583235
+		val mfPage_072 = MultiFeature(0.7239603960396039, 1, default, 0.548910891089109)
+		val mfPage_018 = MultiFeature(0.17504950495049504, 2, 0.548910891089109, 0.11683168316831682)
+		val mfPage_0058 = MultiFeature(0.05821782178217822, 3, 0.6657425742574257, 0.057821782178217825)
+		val mfPage_00004 = MultiFeature(3.9603960396039607E-4, 4, 0.7235643564356435, default)
+		val mfCos = MultiFeature(-1.0, 1, default, default)
+
+		List(
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, true),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 10, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Audi", 20, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, true),
+			FeatureEntry("Audi", 20, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW", link_score, mfPage_072, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Audi", 30, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, true)
+		).sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
+	}
+
+	def featureEntriesForManyPossibleEntitiesList(): List[FeatureEntry] = {
+		val link_score = 0.5962219598583235
+		val mfPage_072 = MultiFeature(0.7239603960396039)
+		val mfPage_018 = MultiFeature(0.17504950495049504)
+		val mfPage_0058 = MultiFeature(0.05821782178217822)
+		val mfPage_0038 = MultiFeature(0.038415841584158415)
+		val mfPage_00012 = MultiFeature(0.001188118811881188)
+		val mfPage_00008 = MultiFeature(7.920792079207921E-4)
+		val mfPage_00004 = MultiFeature(3.9603960396039607E-4)
+		val mfCos = MultiFeature(-1.0)
+
+		List(
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Automarke)", link_score, mfPage_0038, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "Berlins Most Wanted", link_score, mfPage_00012, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW E36", link_score, mfPage_00012, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "Liste der BMW-Motorräder", link_score, mfPage_00008, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW E21", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW 501/502", link_score, mfPage_00004, mfCos, false)
+		).sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
+	}
+
+	def featureEntriesForManyPossibleEntitiesWithSOFList(): List[FeatureEntry] = {
+		val default = Double.PositiveInfinity
+		val link_score = 0.5962219598583235
+		val mfPage_072 = MultiFeature(0.7239603960396039, 1, default, 0.548910891089109)
+		val mfPage_018 = MultiFeature(0.17504950495049504, 2, 0.548910891089109, 0.11683168316831682)
+		val mfPage_0058 = MultiFeature(0.05821782178217822, 3, 0.6657425742574257, 0.019801980198019806)
+		val mfPage_0038 = MultiFeature(0.038415841584158415, 4, 0.6855445544554455, 0.037227722772277226)
+		val mfPage_00012 = MultiFeature(0.001188118811881188, 5, 0.7227722772277227, 3.9603960396039596E-4)
+		val mfPage_00008 = MultiFeature(7.920792079207921E-4, 7, 0.7231683168316831, 3.9603960396039607E-4)
+		val mfPage_00004 = MultiFeature(3.9603960396039607E-4, 8, 0.7235643564356435, default)
+		val mfCos = MultiFeature(-1.0, 1, default, default)
+
+		List(
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW-Motorrad", link_score, mfPage_018, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Motorsport)", link_score, mfPage_0058, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW (Automarke)", link_score, mfPage_0038, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "Berlins Most Wanted", link_score, mfPage_00012, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW E36", link_score, mfPage_00012, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "Liste der BMW-Motorräder", link_score, mfPage_00008, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW E21", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW M10", link_score, mfPage_00004, mfCos, false),
+			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW 501/502", link_score, mfPage_00004, mfCos, false)
+		).sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
+	}
+
+	def featureEntriesList(): List[FeatureEntry] = {
+		val mfPage_1 = MultiFeature(1.0)
+		val mfPageBüdingerWald_08 = MultiFeature(0.8)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2)
+
+		val mfCosAudi_0695 = MultiFeature(0.6951672143063198)
+		val mfCosAudi_0608 = MultiFeature(0.608944778982726)
+		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525)
+		val mfCosBrachttal_0 = MultiFeature(0.0)
+		val mfCosBüdingerWald_1 = MultiFeature(1.0)
+		val mfCosBüdingerWald_0 = MultiFeature(0.0)
+		val mfCos_0661 = MultiFeature(0.6611213869640233)
+		val mfCos_0453 = MultiFeature(0.4531255411026077)
+		val mfCos_0828 = MultiFeature(0.828283413127963)
+
+		List(
+			FeatureEntry("Autohersteller", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true),
+			FeatureEntry("Autohersteller", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0695, true),
+			FeatureEntry("Tal", 55, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0610, true),
+			FeatureEntry("Tal", 13, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0, true),
+			FeatureEntry("Reiseziel", 546, "Büdinger Wald", "Büdinger Wald", 0.5, mfPageBüdingerWald_08, mfCosBüdingerWald_1, true),
+			FeatureEntry("Reiseziel", 546, "Büdinger Wald", "Audi", 0.5, mfPageBüdingerWald_02, mfCosBüdingerWald_0, false),
+			FeatureEntry("Tal", 66, "Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, mfPage_1, mfCos_0661, true),
+			FeatureEntry("Tal", 87, "Hessen", "Hessen", 0.5, mfPage_1, mfCos_0453, true),
+			FeatureEntry("Reiseziel", 225, "1377", "1377", 1.0, mfPage_1, mfCos_0828, true),
+			FeatureEntry("Reiseziel", 24, "historisches Jahr", "1377", 1.0, mfPage_1, mfCos_0828, true)
+		).sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
+	}
+
+	def featureEntriesWitSOFSet(): Set[FeatureEntry] = {
+		val default = Double.PositiveInfinity
+
+		val mfPage_1 = MultiFeature(1.0, 1, default, default)
+		val mfPageBüdingerWald_08 = MultiFeature(0.8, 1, default, 0.6000000000000001)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2, 2, 0.6000000000000001, default)
+
+		val mfCosAudi_0695 = MultiFeature(0.6951672143063198, 1, default, 0.08622243532359375)
+		val mfCosAudi_0608 = MultiFeature(0.608944778982726, 2, 0.08622243532359375, default)
+		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525, 1, default, default)
+		val mfCosBrachttal_0 = MultiFeature(0.0, 1, default, default)
+		val mfCosBüdingerWald_1 = MultiFeature(1.0, 1, default, 1.0)
+		val mfCosBüdingerWald_0 = MultiFeature(0.0, 2, 1.0, default)
+		val mfCos_0661 = MultiFeature(0.6611213869640233, 1, default, default)
+		val mfCos_0453 = MultiFeature(0.4531255411026077, 1, default, default)
+		val mfCos_0828 = MultiFeature(0.828283413127963, 1, default, default)
+
+		Set(
+			FeatureEntry("Autohersteller", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true),
+			FeatureEntry("Autohersteller", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0695, true),
+			FeatureEntry("Tal", 55, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0610, true),
+			FeatureEntry("Tal", 13, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0, true),
+			FeatureEntry("Reiseziel", 546, "Büdinger Wald", "Büdinger Wald", 0.5, mfPageBüdingerWald_08, mfCosBüdingerWald_1, true),
+			FeatureEntry("Reiseziel", 546, "Büdinger Wald", "Audi", 0.5, mfPageBüdingerWald_02, mfCosBüdingerWald_0, false),
+			FeatureEntry("Tal", 66, "Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, mfPage_1, mfCos_0661, true),
+			FeatureEntry("Tal", 87, "Hessen", "Hessen", 0.5, mfPage_1, mfCos_0453, true),
+			FeatureEntry("Reiseziel", 225, "1377", "1377", 1.0, mfPage_1, mfCos_0828, true),
+			FeatureEntry("Reiseziel", 24, "historisches Jahr", "1377", 1.0, mfPage_1, mfCos_0828, true)
 		)
 	}
 
 	def featureEntriesWithAliasesSet(): Set[FeatureEntry] = {
+		val mfPage_1 = MultiFeature(1.0)
+		val mfPageBüdingerWald_08 = MultiFeature(0.8)
+		val mfPageBüdingerWald_02 = MultiFeature(0.2)
+
+		val mfCosAudi_0695 = MultiFeature(0.6951672143063198)
+		val mfCosAudi_0608 = MultiFeature(0.608944778982726)
+		val mfCosBrachttal_0610 = MultiFeature(0.6107163643669525)
+		val mfCosBrachttal_0 = MultiFeature(0.0)
+		val mfCosBüdingerWald_1 = MultiFeature(1.0)
+		val mfCosBüdingerWald_0 = MultiFeature(0.0)
+		val mfCos_0661 = MultiFeature(0.6611213869640233)
+		val mfCos_0453 = MultiFeature(0.4531255411026077)
+		val mfCos_0828 = MultiFeature(0.828283413127963)
+
 		Set(
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.608944778982726, true, null),
-			FeatureEntry("Audi", "Audi", 0.6666666666666666, 1.0, 0.6951672143063198, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.6107163643669525, true, null),
-			FeatureEntry("Brachttal", "Brachttal", 1.0, 1.0, 0.0, false, null),
-			FeatureEntry("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, 1.0, 0.6611213869640233, false, null),
-			FeatureEntry("Hessen", "Hessen", 0.5, 1.0, 0.4531255411026077, true, null),
-			FeatureEntry("1377", "1377", 1.0, 1.0, 0.828283413127963, false, null),
-			FeatureEntry("Büdinger Wald", "Büdinger Wald", 0.5, 1.0, 1.0, true, null),
-			FeatureEntry("historisches Jahr", "1377", 1.0, 1.0, 0.828283413127963, true, null),
-			FeatureEntry("Büdinger Wald", "Audi", 0.5, 1.0, 0.0, false, null)
+			FeatureEntry("Audi Test mit Link", 9, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0608, true),
+			FeatureEntry("Testartikel", 7, "Audi", "Audi", 0.6666666666666666, mfPage_1, mfCosAudi_0695, true),
+			FeatureEntry("Streitberg (Brachttal)", 55, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0610, true),
+			FeatureEntry("Testartikel", 13, "Brachttal", "Brachttal", 1.0, mfPage_1, mfCosBrachttal_0, false),
+			FeatureEntry("Streitberg (Brachttal)", 546, "Büdinger Wald", "Büdinger Wald", 0.5, mfPageBüdingerWald_08, mfCosBüdingerWald_1, true),
+			FeatureEntry("Streitberg (Brachttal)", 546, "Büdinger Wald", "Audi", 0.5, mfPageBüdingerWald_02, mfCosBüdingerWald_0, false),
+			FeatureEntry("Streitberg (Brachttal)", 66, "Main-Kinzig-Kreis", "Main-Kinzig-Kreis", 0.5, mfPage_1, mfCos_0661, false),
+			FeatureEntry("Streitberg (Brachttal)", 87, "Hessen", "Hessen", 0.5, mfPage_1, mfCos_0453, true),
+			FeatureEntry("Streitberg (Brachttal)", 225, "1377", "1377", 1.0, mfPage_1, mfCos_0828, false),
+			FeatureEntry("Testartikel", 24, "historisches Jahr", "1377", 1.0, mfPage_1, mfCos_0828, true)
+		)
+	}
+
+	def labeledPoints(): List[LabeledPoint] = {
+		List(
+			LabeledPoint(1.0, new DenseVector(Array(0.1, 0.2, 0.8))),
+			LabeledPoint(0.0, new DenseVector(Array(0.4, 0.0, 0.7))),
+			LabeledPoint(1.0, new DenseVector(Array(0.7, 1.0, 0.1))),
+			LabeledPoint(0.0, new DenseVector(Array(0.8, 0.2, 0.3))),
+			LabeledPoint(0.0, new DenseVector(Array(0.9, 0.4, 0.7)))
 		)
 	}
 
@@ -1058,15 +1346,6 @@ object TestData {
 	def groupedValidPagesSet(): Set[(String, Set[String])] = {
 		Set(
 			("Audi", Set("Ingolstadt", "Bayern", "Automobilhersteller", "Zerfall (Album)"))
-		)
-	}
-
-	def probabilityReferences(): Map[String, Double] = {
-		Map(
-			"Ingolstadt" -> 0.0,
-			"Bayern" -> 1.0,
-			"Automobilhersteller" -> 0.0,
-			"Zerfall" -> 0.0
 		)
 	}
 
@@ -2160,13 +2439,14 @@ object TestData {
 
 	def classifierFeatureEntries(): List[FeatureEntry] = {
 		List(
-			FeatureEntry("alias1", "page1", 0.01, 0.01, 0.1, false),
-			FeatureEntry("alias2", "page2", 0.3, 0.7, 0.9, true),
-			FeatureEntry("alias3", "page3", 0.1, 0.2, 0.3, false),
-			FeatureEntry("alias4", "page4", 0.2, 0.1, 0.2, false),
-			FeatureEntry("alias5", "page5", 0.05, 0.6, 0.7, true),
-			FeatureEntry("alias6", "page6", 0.03, 0.1, 0.3, false),
-			FeatureEntry("alias7", "page7", 0.2, 0.7, 0.6, true))
+			FeatureEntry("Audi", 0, "alias1", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
+			FeatureEntry("Audi", 0, "alias2", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
+			FeatureEntry("Audi", 0, "alias3", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry("Audi", 0, "alias4", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
+			FeatureEntry("Audi", 0, "alias5", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
+			FeatureEntry("Audi", 0, "alias6", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
+			FeatureEntry("Audi", 0, "alias7", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
+		)
 	}
 
 	def extendedClassifierFeatureEntries(n: Int): List[FeatureEntry] = {

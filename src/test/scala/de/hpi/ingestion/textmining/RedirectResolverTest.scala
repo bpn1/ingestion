@@ -72,5 +72,4 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 		val expectedEntries = TestData.parsedEntriesWithResolvedRedirectsSet()
 		resolvedEntries shouldEqual expectedEntries
 	}
-
 }
