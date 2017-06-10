@@ -38,7 +38,7 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 
 	"Entity values" should "be filled in" in {
 		val testEntities = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
-		    .map(WikiDataImport.fillEntityValues)
+		    .map(WikiDataImport.fillSimpleValues)
 		val expectedEntities = TestData.filledWikidataEntities()
 		testEntities shouldEqual expectedEntities
 	}
@@ -54,8 +54,7 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 
 	"Wikidata entities" should "be parsed" in {
 		val testEntities = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
-		    .map(_.toString)
-		    .map(WikiDataImport.parseEntity)
+		    .map(WikiDataImport.fillEntityValues)
 		val expectedEntities = TestData.parsedWikidataEntities()
 		testEntities shouldEqual expectedEntities
 	}
