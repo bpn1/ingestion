@@ -182,7 +182,7 @@ object AliasTrieSearch extends SparkJob {
 	  * Uses a pre-built Trie to find aliases in the text of articles and writes them into the foundaliases field.
 	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param sc    Spark Context used to, e.g., broadcast variables
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */

@@ -6,7 +6,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, extractAliasContext, hdfsFileStream}
+import de.hpi.ingestion.textmining.AliasTrieSearch._
 import de.hpi.ingestion.textmining.CosineContextComparator._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.mllib.regression.LabeledPoint
@@ -21,7 +21,6 @@ object TextNEL extends SplitSparkJob {
 
 	// $COVERAGE-OFF$
 	var modelFunction = loadModel _
-	var trieStreamFunction = hdfsFileStream _
 
 	/**
 	  * Loads Wikipedia entries from the Cassandra.
@@ -123,25 +122,38 @@ object TextNEL extends SplitSparkJob {
 	  *
 	  * @param articles RDD of parsed Wikipedia articles containing the links and their contexts
 	  * @param aliases  RDD of all aliases
+	  * @param sc       Spark Context used to broadcast variables
 	  * @return RDD of tuples containing the link and the tfIdfs of ever term in its context
 	  */
 	def findLinkCandidates(
 		articles: RDD[Article],
-		aliases: RDD[Alias]
+		aliases: RDD[Alias],
+		sc: SparkContext
 	): RDD[(Link, Bag[String, Int])] = {
 		val tokenizer = IngestionTokenizer(false, false)
 		val contextTokenizer = IngestionTokenizer(true, true)
-		val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
+		val aliasPagesMap = aliases
+			.map(alias => (alias.alias, alias.pages.keys))
+			.collect
+			.toMap
+		val settingsBroadcast = sc.broadcast(AliasTrieSearch.settings)
 
-		val aliasPages = aliases.flatMap(alias => alias.pages.map(page => (alias.alias, page._1)))
-		articles
-			.flatMap { article =>
-				val trieAlias = matchTrieAliases(article.text, trie, tokenizer, contextTokenizer)
-				trieAlias.map(trieAlias => (trieAlias.alias, (article.title, trieAlias)))
-			}.join(aliasPages)
-			.map { case (alias, ((title, trieAlias), page)) =>
-				(Link(alias, page, trieAlias.offset, article = Option(title)), Bag(trieAlias.context))
-			}
+		articles.mapPartitions({ partition =>
+			val localSettings = settingsBroadcast.value
+			val trie = deserializeTrie(AliasTrieSearch.trieStreamFunction(localSettings("trieFile")))
+			partition
+				.flatMap { article =>
+					val trieAliases = matchTrieAliases(article.text, trie, tokenizer, contextTokenizer)
+					trieAliases.flatMap { trieAlias =>
+						aliasPagesMap
+							.getOrElse(trieAlias.alias, Nil)
+							.map { page =>
+								(Link(trieAlias.alias, page, trieAlias.offset, article = Option(article.title)),
+									Bag(trieAlias.context))
+							}
+					}
+				}
+		}, true)
 	}
 
 	/**
@@ -182,7 +194,7 @@ object TextNEL extends SplitSparkJob {
 				val pages = groupedLinks
 					.map(_.page)
 					.reduce(_ + "&#13;" + _) // If a browser does not support "&#13;", use "\n" instead.
-				val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
+			val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
 				html += "<a href=\"" + wikipediaPage + "\" class=\"importance " + 0 + "\" title=\"" + pages + "\">"
 				html += text.substring(processedCharacters, processedCharacters + mainLink.alias.length)
 				processedCharacters += mainLink.alias.length
@@ -250,7 +262,7 @@ object TextNEL extends SplitSparkJob {
 		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf)
 
 		val articles = articlesWithTermFrequencies.map(article => Article(article.title, article.getText()))
-		val linkCandidatesTfs = findLinkCandidates(articles, aliases)
+		val linkCandidatesTfs = findLinkCandidates(articles, aliases, sc)
 		val linkCandidatesTfidf = calculateTfidf(linkCandidatesTfs, numDocuments, defaultIdf)
 		val aliasPageScores = computeAliasPageScores(aliases)
 			.collect

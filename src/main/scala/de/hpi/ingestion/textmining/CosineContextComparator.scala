@@ -8,7 +8,6 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SplitSparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
-
 import scala.collection.mutable
 
 /**
@@ -19,6 +18,8 @@ object CosineContextComparator extends SplitSparkJob {
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
+	var docfreqStreamFunction = AliasTrieSearch.hdfsFileStream _
+
 	/**
 	  * Loads Parsed Wikipedia entries with their term frequencies and loads the document frequencies from the
 	  * Cassandra.
@@ -219,7 +220,7 @@ object CosineContextComparator extends SplitSparkJob {
 		numDocs: Long,
 		settings: Map[String, String] = this.settings
 	): Map[String, Double] = {
-		val docfreqStream = AliasTrieSearch.trieStreamFunction(settings("dfFile"))
+		val docfreqStream = docfreqStreamFunction(settings("dfFile"))
 		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
 		val idfMap = mutable.Map[String, Double]()
 		var line = reader.readLine()

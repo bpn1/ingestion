@@ -11,19 +11,19 @@ import scala.util.matching.Regex
 
 class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Found named entities" should "be empty (due to empty classifier model)" in {
-		val oldTrieStreamFunctionAliasTrieSearch = AliasTrieSearch.trieStreamFunction
-		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-
-		val oldTrieStreamFunctionTextNEL = AliasTrieSearch.trieStreamFunction
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
 		val testTrieStreamFunction = TestData.fullTrieStream _
-		TextNEL.trieStreamFunction = testTrieStreamFunction
+		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
+		val oldDocFreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val testDocFreqStreamFunction = TestData.docfreqStream("docfreq") _
+		CosineContextComparator.docfreqStreamFunction = testDocFreqStreamFunction
+		val oldModelFunction = TextNEL.modelFunction
+		val testModelFunction = TestData.loadRandomForestModel _
+		TextNEL.modelFunction = testModelFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
-
-		TextNEL.modelFunction = TestData.loadRandomForestModel _
 		val namedEntities = TextNEL
 			.run(input, sc)
 			.fromAnyRDD[Link]()
@@ -31,8 +31,9 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			.collect
 		namedEntities shouldBe empty
 
-		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunctionAliasTrieSearch
-		TextNEL.trieStreamFunction = oldTrieStreamFunctionTextNEL
+		TextNEL.modelFunction = oldModelFunction
+		CosineContextComparator.docfreqStreamFunction = oldDocFreqStreamFunction
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	"Articles with links" should "not be empty" in {
