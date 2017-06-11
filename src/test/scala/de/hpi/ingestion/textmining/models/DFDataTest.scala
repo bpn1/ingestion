@@ -1,15 +1,13 @@
 package de.hpi.ingestion.textmining.models
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.textmining.{AliasTrieSearch, CosineContextComparator, TestData => TextTestData}
+import de.hpi.ingestion.textmining.{AliasTrieSearch, TestData => TextTestData}
 import org.scalatest.{FlatSpec, Matchers}
 
 class DFDataTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Tf-idf contexts for parsed Wikipedia articles with complete document frequencies" should "not be empty" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = CosineContextComparator.settings(false)
-		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -21,14 +19,11 @@ class DFDataTest extends FlatSpec with Matchers with SharedSparkContext {
 		contexts should not be empty
 		contexts.foreach(context => context should not be empty)
 
-		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	they should "be exactly these contexts" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = CosineContextComparator.settings(false)
-		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TextTestData.docfreqStream("docfreq2") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -38,17 +33,14 @@ class DFDataTest extends FlatSpec with Matchers with SharedSparkContext {
 		val dfData = DFData(numDocuments, 2)
 
 		val contexts = articles.map(article => (article.title, article.context.map(dfData.idf)))
-		contexts shouldEqual TextTestData.tfidfContextsSet()
+		contexts shouldEqual TestData.tfidfContextsSet()
 
-		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	"Tf-idf contexts for parsed Wikipedia articles with missing document frequencies" should
 		"be exactly these contexts" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = CosineContextComparator.settings(false)
-		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TextTestData.docfreqStream("docfreq2") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -58,16 +50,13 @@ class DFDataTest extends FlatSpec with Matchers with SharedSparkContext {
 		val dfData = DFData(numDocuments, 2)
 
 		val contexts = articles.map(article => (article.title, article.context.map(dfData.idf)))
-		contexts shouldEqual TextTestData.tfidfContextsSet()
+		contexts shouldEqual TestData.tfidfContextsSet()
 
-		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	"Tf-Idf of link contexts" should "exist" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = CosineContextComparator.settings(false)
-		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -80,14 +69,11 @@ class DFDataTest extends FlatSpec with Matchers with SharedSparkContext {
 		}
 		linkContextValues should not be empty
 
-		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	they should "be exactly these tf-Idf values (disregarding the contexts)" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = CosineContextComparator.settings(false)
-		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -101,28 +87,24 @@ class DFDataTest extends FlatSpec with Matchers with SharedSparkContext {
 		val expectedTfidf = TextTestData.linkContextsTfidf()
 		linkContextValues shouldBe expectedTfidf
 
-		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	they should "compute the tf-Idf values for the linkswithcontext and trialiases contexts" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = CosineContextComparator.settings
-		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val articles = TextTestData.articlesWithLinkAndAliasContexts()
+		val articles = TestData.articlesWithLinkAndAliasContexts()
 		val numDocuments = articles.size
 		val dfData = DFData(numDocuments, 2)
 
 		val linkContextValues = articles.flatMap { article =>
 			article.featureEntryLinks().map(link => (link.copy(context = Map()), link.context.map(dfData.idf)))
 		}
-		val expectedTfidf = TextTestData.linkContextsTfidfWithTrieAliases()
+		val expectedTfidf = TestData.linkContextsTfidfWithTrieAliases()
 		linkContextValues shouldBe expectedTfidf
 
-		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
@@ -139,21 +121,18 @@ class DFDataTest extends FlatSpec with Matchers with SharedSparkContext {
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(df => (df.word, DFData.calculateIdf(df.count, numDocuments)))
-		inverseDocumentFrequencies shouldEqual TextTestData.inverseDocumentFrequenciesSet()
+		inverseDocumentFrequencies shouldEqual TestData.inverseDocumentFrequenciesSet()
 	}
 
 	they should "be read and calculated from a file" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = CosineContextComparator.settings(false)
-		CosineContextComparator.parseConfig()
 
 		val testDocFreqFunction = TextTestData.docfreqStream("smalldocfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
 		val idfMap = DFData.inverseDocumentFrequencies(4)
-		val expectedIdfs = TextTestData.inverseDocumentFrequenciesSet().toMap
+		val expectedIdfs = TestData.inverseDocumentFrequenciesSet().toMap
 		idfMap shouldEqual expectedIdfs
 
-		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
