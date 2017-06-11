@@ -66,5 +66,4 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		sm.addProperties(properties.toMap)
 		subject
 	}
-
 }
