@@ -348,6 +348,8 @@ object TestData {
 	def normalizedCities: List[String] = List("Russland", "Igrinski rajon")
 	def unnormalizedEmployees: List[String] = List("+500;1", "+1337;1", "WRONG")
 	def normalizedEmployees: List[String] = List("500", "1337")
+	def unnormalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de", "www.hans", "NotAURL")
+	def normalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de")
 
 	def applyInput: List[List[String]] = List(
 		this.unnormalizedCoords,
@@ -355,15 +357,17 @@ object TestData {
 		this.unnormalizedCountries,
 		this.unnormalizedSectors,
 		this.unnormalizedEmployees,
+		this.unnormalizedURLs,
 		List("default")
 	)
-	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "default")
+	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "gen_urls", "default")
 	def applyStrategies: List[(List[String] => List[String])] = List(
 		WikiDataNormalizationStrategy.normalizeCoords,
 		WikiDataNormalizationStrategy.normalizeCity,
 		WikiDataNormalizationStrategy.normalizeCountry,
 		WikiDataNormalizationStrategy.normalizeSector,
 		WikiDataNormalizationStrategy.normalizeEmployees,
+		WikiDataNormalizationStrategy.normalizeURLs,
 		identity
 	)
 	def unnormalizedAttributes: Map[String, List[String]] = Map(
@@ -371,14 +375,16 @@ object TestData {
 		"geo_coords" -> this.unnormalizedCoords,
 		"geo_country" -> this.unnormalizedCountries,
 		"geo_city" -> this.unnormalizedCities,
-		"gen_employees" -> this.unnormalizedEmployees
+		"gen_employees" -> this.unnormalizedEmployees,
+		"gen_urls" -> this.unnormalizedURLs
 	)
 	def normalizedAttributes: Map[String, List[String]] = Map(
 		"gen_sectors" -> this.mappedSectors,
 		"geo_coords" -> this.normalizedCoords,
 		"geo_country" -> this.normalizedCountries,
 		"geo_city" -> this.normalizedCities,
-		"gen_employees" -> this.normalizedEmployees
+		"gen_employees" -> this.normalizedEmployees,
+		"gen_urls" -> this.normalizedURLs
 	)
 }
 // scalastyle:on line.size.limit
