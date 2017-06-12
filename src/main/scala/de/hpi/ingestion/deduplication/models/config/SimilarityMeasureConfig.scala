@@ -1,3 +1,4 @@
+
 package de.hpi.ingestion.deduplication.models.config
 
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
