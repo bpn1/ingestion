@@ -9,7 +9,6 @@ import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import scala.collection.mutable
 
 /**
   * This job translates Wikidata entities into Subjects and writes them into a staging table.
@@ -21,6 +20,27 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 ){
 	appName = "WikiDataDataLakeImport_v1.0"
 	importConfigFile = "normalization_wikidata.xml"
+	val categoryMap = Map(
+		"economic branch" -> "sector",
+		"operation" -> "business",
+		"exchange" -> "business",
+		"financial institutions" -> "business",
+		"institute" -> "business",
+		"health maintenance organization" -> "business",
+		"non-governmental organization" -> "business",
+		"company" -> "business",
+		"state" -> "business",
+		"environmental organization" -> "business",
+		"association" -> "business",
+		"enterprise" -> "business",
+		"medical organization" -> "business",
+		"lobbying organization" -> "business",
+		"collection agency" -> "business",
+		"media company" -> "business",
+		"chamber of commerce" -> "business",
+		"copyright collective" -> "business",
+		"business enterprise" -> "business"
+	)
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
@@ -52,17 +72,15 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
-		entity.label.foreach(label => sm.setName(label))
-		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
-		if(entity.aliases.nonEmpty) sm.addAliases(entity.aliases)
+		sm.setName(entity.label)
+		sm.setCategory(entity.instancetype.flatMap(categoryMap.get))
+		sm.addAliases(entity.aliases)
 
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
-		val properties = mutable.Map[String, List[String]]((entity.data ++ normalizedProperties).toSeq: _*)
-
+		sm.addProperties(entity.data ++ normalizedProperties)
 		val legalForm = subject.name.map(extractLegalForm(_, classifier)).getOrElse(Nil)
-		if (legalForm.nonEmpty) properties("gen_legal_form") = legalForm
+		if (legalForm.nonEmpty) sm.addProperties(Map("gen_legal_form" -> legalForm))
 
-		sm.addProperties(properties.toMap)
 		subject
 	}
 }

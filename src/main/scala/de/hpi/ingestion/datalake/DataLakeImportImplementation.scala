@@ -92,8 +92,9 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 				.map(_.getKey.getRawForm)
 				.toList
 		} catch {
-			case ex: java.lang.StringIndexOutOfBoundsException => Nil
-			case ex: java.lang.ArrayIndexOutOfBoundsException => Nil
+			case _: Throwable =>
+				println("success\n\n\n\n\n\n")
+				Nil
 		}
 	}
 

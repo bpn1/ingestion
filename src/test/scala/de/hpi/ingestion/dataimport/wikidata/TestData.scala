@@ -309,7 +309,7 @@ object TestData {
 			Option("item"),
 			Option("testwikiname"),
 			Option("en_testwikiname"),
-			Option("test_instancetype"),
+			Option("company"),
 			Option("Protein FAM177A1"),
 			Map(
 				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
