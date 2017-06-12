@@ -1,6 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import java.io.{BufferedReader, InputStreamReader}
+import java.io.{BufferedReader, File, InputStreamReader}
 
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
@@ -11,6 +11,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 import scala.collection.mutable
+import scala.io.Source
 
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
@@ -111,20 +112,15 @@ object CosineContextComparator extends SplitSparkJob {
 			}.reduceByKey(_ ++ _)
 	}
 
-//	def readArticleTexts(): Map[String, String] = {
-//		val articleStream = AliasTrieSearch.trieStreamFunction(CosineContextComparator.settings("articleFile"))
-//		val reader = new BufferedReader(new InputStreamReader(articleStream, "UTF-8"))
-//		val articleMap = mutable.Map[String, String]()
-//		var line = reader.readLine()
-//		while(line != null) {
-//			if(!line.endsWith("\t")) {
-//				val Array(title, text) = line.split("\t", 2)
-//				articleMap(title) = text
-//				line = reader.readLine()
-//			}
-//		}
-//		articleMap.toMap
-//	}
+	def readArticleTexts(): Map[String, String] = {
+		val articles = Source.fromFile(new File("/data/wikipedia/wikipedia_texts"), "UTF-8").getLines
+		val articleMap = mutable.Map[String, String]()
+		for(line <- articles) {
+			val cont = line.split("\t", 2)
+			if(cont.length > 1) articleMap(cont.head) = cont(1)
+		}
+		articleMap.toMap
+	}
 
 	/**
 	  * Enriches a Wikipedia article with its context as bag of words (implemented as Map).
@@ -187,7 +183,7 @@ object CosineContextComparator extends SplitSparkJob {
 	def compareLinksWithArticles(
 		articles: RDD[ParsedWikipediaEntry],
 		aliasPageProbabilities: Map[String, List[(String, Double, Double)]],
-		articleTexts: Map[String, String],
+//		articleTexts: Map[String, String],
 		tokenizer: IngestionTokenizer,
 		documentFrequencyData: DFData
 	): RDD[ArticleFeatureEntry] = {
@@ -196,7 +192,7 @@ object CosineContextComparator extends SplitSparkJob {
 			.mapPartitions({ partition =>
 				val idfMap = DFData.inverseDocumentFrequencies(documentFrequencyData.numDocuments)
 				val dfData = documentFrequencyData.copy(idfMap = idfMap)
-//				val articleTexts = readArticleTexts()
+				val articleTexts = readArticleTexts()
 				partition.map { entry =>
 					val featureEntries = entry.featureEntryLinks().flatMap { link =>
 						val pages = aliasPageProbabilities.getOrElse(link.alias, Nil)
@@ -257,16 +253,16 @@ object CosineContextComparator extends SplitSparkJob {
 		val aliasPageProbabilities = computeAliasProbabilities(aliases)
 			.collect
 			.toMap
-		val articleTexts = articlesWithTermFrequencies
-			.map(entry => (entry.title, entry.getText()))
-			.collect
-			.toMap
+//		val articleTexts = articlesWithTermFrequencies
+//			.map(entry => (entry.title, entry.getText()))
+//			.collect
+//			.toMap
 
 		val tokenizer = IngestionTokenizer(args)
 		val featureEntries = compareLinksWithArticles(
 			linkArticles,
 			aliasPageProbabilities,
-			articleTexts,
+//			articleTexts,
 			tokenizer,
 			dfData)
 		List(featureEntries).toAnyRDD()
