@@ -13,7 +13,7 @@ class CSVExportTest extends FlatSpec with Matchers with SharedSparkContext {
 	}
 
 	"Relations" should "be converted to csv edges" in {
-		val subjectEdges = TestData.exportSubjects.map(CSVExport.edgesToCSV)
+		val subjectEdges = TestData.exportSubjects.flatMap(CSVExport.edgesToCSV)
 		val expectedCSV = TestData.exportedEdgeCSV
 		subjectEdges shouldEqual expectedCSV
 	}
