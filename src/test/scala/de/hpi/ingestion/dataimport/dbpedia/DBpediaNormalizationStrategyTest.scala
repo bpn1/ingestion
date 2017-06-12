@@ -38,6 +38,13 @@ class DBpediaNormalizationStrategyTest extends FlatSpec with Matchers {
 		result shouldEqual expected
 	}
 
+	"normalizeURLs" should "normalize and validate urls" in {
+		val urls = TestData.unnormalizedURLs
+		val result = DBpediaNormalizationStrategy.normalizeURLs(urls)
+		val expected = TestData.normalizedURLs
+		result shouldEqual expected
+	}
+
 	"normalizeDefault" should "check for default patterns and normalize if possible or neccessary" in {
 		val defaultValues = TestData.unnormalizedDefaults
 		val result = DBpediaNormalizationStrategy.normalizeDefault(defaultValues)

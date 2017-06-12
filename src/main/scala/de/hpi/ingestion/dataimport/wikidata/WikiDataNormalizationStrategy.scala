@@ -1,7 +1,7 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import de.hpi.ingestion.implicits.RegexImplicits._
-import de.hpi.ingestion.dataimport.CountryISO3166Mapping
+import de.hpi.ingestion.dataimport.{CountryISO3166Mapping, SharedNormalizations}
 
 /**
   * Strategies for the normalization of WikiData entities
@@ -68,6 +68,15 @@ object WikiDataNormalizationStrategy extends Serializable {
 	}
 
 	/**
+	  * Normalize urls
+	  * @param values list of urls
+	  * @return valid urls
+	  */
+	def normalizeURLs(values: List[String]): List[String] = {
+		values.filter(SharedNormalizations.isValidUrl)
+	}
+
+	/**
 	  * Normalizes all other values by default dashes
 	  * @param values Strings to be normalized
 	  * @return normalized strings
@@ -88,6 +97,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 			case "geo_country" => this.normalizeCountry
 			case "geo_city" => this.normalizeCity
 			case "gen_employees" => this.normalizeEmployees
+			case "gen_urls" => this.normalizeURLs
 			case _ => this.normalizeDefault
 		}
 	}
