@@ -76,7 +76,7 @@ object CSVExport extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val subjects = input.fromAnyRDD[Subject]().head
 		val nodes = subjects.map(nodeToCSV)
 		val edges = subjects
