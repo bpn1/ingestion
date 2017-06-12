@@ -15,4 +15,8 @@ case class BlockEvaluation(
 	jobid: UUID = UUIDs.timeBased(),
 	schemetag: String,
 	data: Set[BlockStats] = Set[BlockStats](),
-	comment: Option[String] = None)
+	comment: Option[String] = None,
+	pairscompleteness: Double,
+	blockcount: Int,
+	comparisoncount: BigInt
+)
