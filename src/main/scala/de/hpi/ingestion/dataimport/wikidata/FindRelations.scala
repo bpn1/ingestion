@@ -2,7 +2,6 @@ package de.hpi.ingestion.dataimport.wikidata
 
 import org.apache.spark.SparkContext
 import java.util.UUID
-
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 import scala.collection.mutable

@@ -2,7 +2,6 @@ package de.hpi.ingestion.dataimport.wikidata
 
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
-
 import scala.util.matching.Regex
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.framework.SparkJob

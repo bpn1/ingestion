@@ -4,7 +4,6 @@ import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import com.databricks.spark.xml.XmlInputFormat
 import org.apache.hadoop.io.{LongWritable, Text}
-
 import scala.xml.XML
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.framework.SparkJob

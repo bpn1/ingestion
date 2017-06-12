@@ -9,7 +9,6 @@ import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
 import scala.collection.mutable
 
 /**

@@ -1,9 +1,7 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import com.datastax.spark.connector._
-
 import de.hpi.ingestion.dataimport.JSONParser
-
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.framework.SparkJob
@@ -163,10 +161,7 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	  * @return Wikidata Entity with translated property ids
 	  */
 	def translatePropertyIDs(entity: WikiDataEntity, properties: Map[String, String]): WikiDataEntity = {
-		entity.data = entity.data.map { case (key, value) =>
-			(properties.getOrElse(key, key), value)
-		}
-		entity
+		entity.copy(data = entity.data.mapKeys(key => properties.getOrElse(key, key)))
 	}
 
 	/**

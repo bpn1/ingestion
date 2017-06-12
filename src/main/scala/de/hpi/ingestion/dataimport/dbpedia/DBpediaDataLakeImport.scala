@@ -9,7 +9,6 @@ import com.datastax.spark.connector._
 import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.implicits.CollectionImplicits._
-
 import scala.collection.mutable
 
 /**
