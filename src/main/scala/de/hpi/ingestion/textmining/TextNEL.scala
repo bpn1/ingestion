@@ -46,8 +46,8 @@ object TextNEL extends SplitSparkJob {
 		val timestamp = System.currentTimeMillis / 1000
 		val namedEntities = output.head.asInstanceOf[RDD[Link]]
 		val articlesWithLinks = output(1).asInstanceOf[RDD[Article]]
-		namedEntities.saveAsTextFile(s"named_entities_$timestamp")
 		articlesWithLinks.saveToCassandra(settings("keyspace"), settings("linkedArticlesTable"))
+		namedEntities.saveAsTextFile(s"named_entities_$timestamp")
 	}
 
 	/**
