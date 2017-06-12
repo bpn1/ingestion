@@ -16,6 +16,7 @@
         <filterUndefined>false</filterUndefined>
         <filterSmall>true</filterSmall>
         <maxBlockSize>500000</maxBlockSize>
+        <minBlockSize>10000</minBlockSize>
         <confidence>0.7</confidence>
     </settings>
     <simMeasurements>

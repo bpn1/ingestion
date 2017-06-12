@@ -287,8 +287,11 @@ CREATE TYPE datalake.blockstats (
 CREATE TABLE datalake.blockingstats (
     jobid timeuuid,
     schemetag text,
+    blockcount int,
     comment text,
+    comparisoncount bigint,
     data frozen<set<frozen<blockstats>>>,
+    pairwisecompleteness double,
     PRIMARY KEY (jobid, schemetag)
 );
 
