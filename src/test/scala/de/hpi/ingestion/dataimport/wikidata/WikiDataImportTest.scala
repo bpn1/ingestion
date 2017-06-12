@@ -9,7 +9,7 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 		// invalid json would cause an exception
 		TestData.rawWikiDataEntries()
 			.map(WikiDataImport.cleanJSON)
-		    .filter(_.nonEmpty)
+			.filter(_.nonEmpty)
 			.map(Json.parse)
 	}
 
@@ -38,7 +38,7 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 
 	"Entity values" should "be filled in" in {
 		val testEntities = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
-		    .map(WikiDataImport.fillSimpleValues)
+			.map(WikiDataImport.fillSimpleValues)
 		val expectedEntities = TestData.filledWikidataEntities()
 		testEntities shouldEqual expectedEntities
 	}
@@ -54,7 +54,7 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 
 	"Wikidata entities" should "be parsed" in {
 		val testEntities = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
-		    .map(WikiDataImport.fillEntityValues)
+			.map(WikiDataImport.fillEntityValues)
 		val expectedEntities = TestData.parsedWikidataEntities()
 		testEntities shouldEqual expectedEntities
 	}
@@ -62,7 +62,7 @@ class WikiDataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 	"Property ids" should "be translated" in {
 		val propertyMap = TestData.propertyMap()
 		val testEntities = TestData.parsedWikidataEntities()
-		    .map(WikiDataImport.translatePropertyIDs(_, propertyMap))
+			.map(WikiDataImport.translatePropertyIDs(_, propertyMap))
 		val expectedEntities = TestData.translatedWikidataEntities()
 		testEntities shouldEqual expectedEntities
 	}
