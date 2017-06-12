@@ -19,11 +19,8 @@ import de.hpi.ingestion.framework.SparkJob
   */
 object FindRelations extends SparkJob {
 	appName = "FindRelations_v1.1"
-	val datasources = List("wikidata_20161117")
-	val keyspace = "datalake"
-	val tablename = "subject_wikidata"
-	val versionTablename = "version"
-	val wikiDataIdKey = "wikidata_id"
+	configFile = "wikidata_import.xml"
+	val datasources = List("wikidata_20161117", "wikidata")
 
 	// $COVERAGE-OFF$
 	/**
@@ -33,7 +30,7 @@ object FindRelations extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
+		val subjects = sc.cassandraTable[Subject](settings("subjectKeyspace"), settings("subjectTable"))
 		List(subjects).toAnyRDD()
 	}
 
@@ -47,7 +44,7 @@ object FindRelations extends SparkJob {
 		output
 			.fromAnyRDD[Subject]()
 			.head
-			.saveToCassandra(keyspace, tablename)
+			.saveToCassandra(settings("subjectKeyspace"), settings("subjectTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -71,7 +68,7 @@ object FindRelations extends SparkJob {
 		val propertyMap = mutable.Map() ++ subject.properties
 
 		subject.properties
-			.filter(_._1 != wikiDataIdKey)
+			.filter(_._1 != settings("wikidataIdKey"))
 		    .foreach { case (key, list) =>
 				val updatedList = mutable.ListBuffer[String]()
 
@@ -104,11 +101,10 @@ object FindRelations extends SparkJob {
 	  */
 	def resolvableNamesMap(subjects: RDD[Subject]): Map[String, (UUID, String)] = {
 		subjects
-			.filter(subject => subject.properties.contains(wikiDataIdKey)
-					&& subject.properties(wikiDataIdKey).nonEmpty)
+			.filter(_.properties.get(settings("wikidataIdKey")).exists(_.nonEmpty))
 			.map { subject =>
-				val wikidataId = subject.properties(wikiDataIdKey).head
-				val name = subject.name.getOrElse(subject.aliases.headOption.getOrElse(wikidataId))
+				val wikidataId = subject.properties(settings("wikidataIdKey")).head
+				val name = subject.name.orElse(subject.aliases.headOption).getOrElse(wikidataId)
 				(wikidataId, (subject.id, name))
 			}.collect
 			.toMap

@@ -15,8 +15,7 @@ import org.apache.spark.rdd.RDD
   */
 object ResolveEntities extends SparkJob {
 	appName = "ResolveEntities"
-	val keyspace = "wikidumps"
-	val tablename = "wikidata"
+	configFile = "wikidata_import.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -26,7 +25,7 @@ object ResolveEntities extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
+		val wikidata = sc.cassandraTable[WikiDataEntity](settings("keyspace"), settings("wikidataTable"))
 		List(wikidata).toAnyRDD()
 	}
 
@@ -40,7 +39,7 @@ object ResolveEntities extends SparkJob {
 		output
 			.fromAnyRDD[(String, Map[String, List[String]])]()
 			.head
-			.saveToCassandra(keyspace, tablename, SomeColumns("id", "data"))
+			.saveToCassandra(settings("keyspace"), settings("wikidataTable"), SomeColumns("id", "data"))
 	}
 	// $COVERAGE-ON$
 

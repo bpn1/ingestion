@@ -15,15 +15,29 @@ import de.hpi.ingestion.framework.SparkJob
   */
 object TagEntities extends SparkJob {
 	appName = "TagEntities"
-	val keyspace = "wikidumps"
-	val tablename = "wikidata"
-	val tagClasses = Map(
-		"Q43229" -> "organization",
-		"Q4830453" -> "business",
-		"Q268592" -> "economic branch")
+	configFile = "wikidata_import.xml"
 	val instanceProperty = "instance of"
 	val subclassProperty = "subclass of"
-	val wikidataPathProperty = "wikidata_path"
+	val tagClasses = Map(
+		"Q268592" -> "economic branch",
+		"Q362482" -> "operation",
+		"Q179076" -> "exchange",
+		"Q650241" -> "financial institutions",
+		"Q1664720" -> "institute",
+		"Q563787" -> "health maintenance organization",
+		"Q79913" -> "non-governmental organization",
+		"Q783794" -> "company",
+		"Q7275" -> "state",
+		"Q1785733" -> "environmental organization",
+		"Q15911314" -> "association",
+		"Q6881511" -> "enterprise",
+		"Q4287745" -> "medical organization",
+		"Q2222986" -> "lobbying organization",
+		"Q672386" -> "collection agency",
+		"Q1331793" -> "media company",
+		"Q1123526" -> "chamber of commerce",
+		"Q1047437" -> "copyright collective"
+	)
 
 	// $COVERAGE-OFF$
 	/**
@@ -33,7 +47,7 @@ object TagEntities extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
+		val wikidata = sc.cassandraTable[WikiDataEntity](settings("keyspace"), settings("wikidataTable"))
 		List(wikidata).toAnyRDD()
 	}
 
@@ -47,7 +61,10 @@ object TagEntities extends SparkJob {
 		output
 			.fromAnyRDD[(String, String, Map[String, List[String]])]()
 			.head
-			.saveToCassandra(keyspace, tablename, SomeColumns("id", "instancetype", "data" append))
+			.saveToCassandra(
+				settings("keyspace"),
+				settings("wikidataTable"),
+				SomeColumns("id", "instancetype", "data" append))
 	}
 	// $COVERAGE-ON$
 
@@ -147,7 +164,7 @@ object TagEntities extends SparkJob {
 			.filter(classes.contains)
 			.head
 		val path = classes(classKey)
-		(entry.id, path.head, Map(wikidataPathProperty -> path))
+		(entry.id, path.head, Map(settings("wikidataPathProperty") -> path))
 	}
 
 	/**
