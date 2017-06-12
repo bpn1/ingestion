@@ -92,9 +92,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 				.map(_.getKey.getRawForm)
 				.toList
 		} catch {
-			case _: Throwable =>
-				println("success\n\n\n\n\n\n")
-				Nil
+			case _: Throwable => Nil
 		}
 	}
 
