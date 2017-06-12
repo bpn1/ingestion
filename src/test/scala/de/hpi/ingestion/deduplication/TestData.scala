@@ -169,10 +169,18 @@ object TestData {
 
 	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false)
 
-	def testDuplicates(sc: SparkContext): RDD[(Subject, Subject, Double)] = {
+	def filteredDuplicates(sc: SparkContext): RDD[(Subject, Subject, Double)] = {
 		sc.parallelize(Seq(
 			(subjects.head, stagings.head, 0.9769230769230769),
 			(subjects(1), stagings(1), 1.0)
+		))
+	}
+
+	def testDuplicates(sc: SparkContext): RDD[(Subject, Subject, Double)] = {
+		sc.parallelize(Seq(
+			(subjects.head, stagings.head, 0.9769230769230769),
+			(subjects(1), stagings(1), 1.0),
+			(subjects(1), stagings.head, 0.5)
 		))
 	}
 
@@ -189,6 +197,20 @@ object TestData {
 			"key",
 			Set(BlockStats("tag",4,2,0.25))
 		)
+		)
+	}
+
+	def createdDuplicateCandidates(subjects: List[Subject], stagings: List[Subject]): List[DuplicateCandidates] = {
+		val stagingTable = "subject_wikidata"
+		List(
+			DuplicateCandidates(
+				subjects.head.id,
+				List((stagings.head.id, stagingTable, 0.9769230769230769))
+			),
+			DuplicateCandidates(
+				subjects(1).id,
+				List((stagings(1).id, stagingTable, 1.0), (stagings.head.id, stagingTable, 0.5))
+			)
 		)
 	}
 
