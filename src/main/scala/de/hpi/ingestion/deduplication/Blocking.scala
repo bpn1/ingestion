@@ -263,7 +263,7 @@ object Blocking extends SparkJob {
 		val jobid = UUIDs.timeBased()
 		val blocks = subjectBlocks
 			.cogroup(stagingBlocks)
-			.filter{ case ((key, tag), (subject, staging)) =>
+			.filter { case ((key, tag), (subject, staging)) =>
 				val isUndefined = blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(key)
 				val isHuge = (subject.size * staging.size) > maxBlockSize
 				!(isHuge || filterUndefined && isUndefined)
