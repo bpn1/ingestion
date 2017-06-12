@@ -193,9 +193,9 @@ object TextNEL extends SplitSparkJob {
 				processedCharacters = offset.get
 				val pages = groupedLinks
 					.map(_.page)
-					.reduce(_ + "&#13;" + _) // If a browser does not support "&#13;", use "\n" instead.
-			val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
-				html += "<a href=\"" + wikipediaPage + "\" class=\"importance " + 0 + "\" title=\"" + pages + "\">"
+					.reduce(_ + "\n" + _)
+				val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
+				html += s"<a href=\"$wikipediaPage\" class=\"importance 0\" title=\"$pages\">"
 				html += text.substring(processedCharacters, processedCharacters + mainLink.alias.length)
 				processedCharacters += mainLink.alias.length
 				//html += "<ul style=\"display: none\">" + "<li>some other link</li>" + "</ul></a>"
