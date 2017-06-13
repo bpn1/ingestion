@@ -234,6 +234,14 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		cosineSimilarity shouldBe 0.608944778982726
 	}
 
+	it should "be 0 if one vector is empty" in {
+		val linkContext = TestData.shortLinkContextsTfidfList().head._2
+		val pageContext = Map[String, Double]()
+		val cosineSimilarity = CosineContextComparator.calculateCosineSimilarity(linkContext, pageContext)
+		cosineSimilarity shouldBe 0.0
+
+	}
+
 	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
 		val aliasPageScores = sc.broadcast(TestData.aliasPagesScoresMap())

@@ -16,43 +16,55 @@ object TestData {
 		)
 	}
 
-	def testEntity: Entity = Entity(
-		"test_key",
-		Map(
-			"nested_value:1.1" -> List("test_value:1.1"),
-			"nested_value:1.2" -> List("test_value:1.2.1", "test_value:1.2.2")
+	def testEntity: Entity = {
+		Entity(
+			"test_key",
+			Map(
+				"nested_value:1.1" -> List("test_value:1.1"),
+				"nested_value:1.2" -> List("test_value:1.2.1", "test_value:1.2.2")
+			)
 		)
-	)
-	def testEntities: List[Entity] = List (
-		Entity("entity1"),
-		Entity("entity2"),
-		Entity("entity3"),
-		Entity("entity4"),
-		Entity(root_value = null)
-	)
+	}
+	def testEntities: List[Entity] = {
+		List (
+			Entity("entity1"),
+			Entity("entity2"),
+			Entity("entity3"),
+			Entity("entity4"),
+			Entity(root_value = null)
+		)
+	}
 
-	def normalizationMapping: Map[String, List[String]] = Map(
-		"rootKey" -> List("root_value"),
-		"nestedKey1" -> List("nested_value:1.1", "nested_value:1.2", "nested_value:1.3"),
-		"nestedKey2" -> List("nested_value:2.1")
-	)
+	def normalizationMapping: Map[String, List[String]] = {
+		Map(
+			"rootKey" -> List("root_value"),
+			"nestedKey1" -> List("nested_value:1.1", "nested_value:1.2", "nested_value:1.3"),
+			"nestedKey2" -> List("nested_value:2.1")
+		)
+	}
 
-	def propertyMapping: Map[String, List[String]] = Map(
-		"rootKey" -> List("test_key"),
-		"nestedKey1" -> List("test_value:1.1", "test_value:1.2.1", "test_value:1.2.2")
-	)
+	def propertyMapping: Map[String, List[String]] = {
+		Map(
+			"rootKey" -> List("test_key"),
+			"nestedKey1" -> List("test_value:1.1", "test_value:1.2.1", "test_value:1.2.2")
+		)
+	}
 
-	def strategyMapping: Map[String, List[String]] = Map(
-		"cars" -> List("45", "29"),
-		"music" -> List("1337"),
-		"games" -> List("1996")
-	)
+	def strategyMapping: Map[String, List[String]] = {
+		Map(
+			"cars" -> List("45", "29"),
+			"music" -> List("1337"),
+			"games" -> List("1996")
+		)
+	}
 
-	def categoryMapping: Map[String, List[String]] = Map(
-		"Category 1" -> List("value1.1", "value1.2"),
-		"Category 2" -> List("value2.1"),
-		"Category 3" -> List("value3.1", "value3.2")
-	)
+	def categoryMapping: Map[String, List[String]] = {
+		Map(
+			"Category 1" -> List("value1.1", "value1.2"),
+			"Category 2" -> List("value2.1"),
+			"Category 3" -> List("value3.1", "value3.2")
+		)
+	}
 
 	def subjects: List[Subject] = {
 		List(
@@ -86,21 +98,69 @@ object TestData {
 		)
 	}
 
-	def companyNames: Map[String, List[String]] = Map(
-		"Audisport AG" -> List("AG"),
-		"Audiobuch Verlag oHG" -> List("oHG"),
-		"Audax GmbH" -> List("GmbH"),
-		"Audio Active" -> Nil,
-		"" -> Nil
-	)
+	def companyNames: Map[String, List[String]] = {
+		Map(
+			"Audisport AG" -> List("AG"),
+			"Audiobuch Verlag oHG" -> List("oHG"),
+			"Audax GmbH" -> List("GmbH"),
+			"Audio Active" -> Nil,
+			"" -> Nil
+		)
+	}
 
-	def input(sc: SparkContext): List[RDD[Any]] = List(sc.parallelize(testEntities))
-	def output: List[Subject] = List(
-		Subject(name = Option("entity1")),
-		Subject(name = Option("entity2")),
-		Subject(name = Option("entity3")),
-		Subject(name = Option("entity4")),
-		Subject(name = None)
-	)
+	def input(sc: SparkContext): List[RDD[Any]] = {
+		List(sc.parallelize(testEntities))
+	}
+
+	def output: List[Subject] = {
+		List(
+			Subject(name = Option("entity1")),
+			Subject(name = Option("entity2")),
+			Subject(name = Option("entity3")),
+			Subject(name = Option("entity4")),
+			Subject(name = None)
+		)
+	}
+
+	def exportSubjects: List[Subject] = {
+		List(
+			Subject(
+				id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"),
+				name = Option("Name 1"),
+				aliases = List("Alias 1", "Alias 1.1\""),
+				category = None,
+				properties = Map(),
+				relations = Map(
+					UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("relation" -> "test 1", "type" -> "test"),
+					UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130") -> Map("type" -> "reflexive")
+				)
+			),
+			Subject(
+				id = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
+				name = Option("Name 2"),
+				aliases = List("Alias 2"),
+				category = Option("Category 2"),
+				properties = Map("test_prop" -> List("value 1", "value 2")),
+				relations = Map(
+					UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130") -> Map("relation" -> "test 2")
+				)
+			)
+		)
+	}
+
+	def exportedNodeCSV: List[String] = {
+		List(
+			"\"4fbc0340-4862-431f-9c28-a508234b8130\",\"Name 1\",\"Alias 1;Alias 1.1\\\"\",\"\"",
+			"\"831f2c54-33d5-43fc-a515-d871946a655d\",\"Name 2\",\"Alias 2\",\"Category 2\""
+		)
+	}
+
+	def exportedEdgeCSV: List[String] = {
+		List(
+			"4fbc0340-4862-431f-9c28-a508234b8130,831f2c54-33d5-43fc-a515-d871946a655d,test",
+			"4fbc0340-4862-431f-9c28-a508234b8130,4fbc0340-4862-431f-9c28-a508234b8130,reflexive",
+			"831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,"
+		)
+	}
 }
 // scalastyle:on line.size.limit

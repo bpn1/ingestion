@@ -176,14 +176,17 @@ trait Configurable {
 	  * @return Map containing attributes with their score configurations
 	  */
 	def parseSimilarityMeasures(node: Node): List[AttributeConfig] = {
-		val extractWeight: Node => Double = node => if(node.text.nonEmpty) node.text.toDouble else 0.0
+		val extractWeight: Option[Node] => Double = node => node
+			.filter(_.text.nonEmpty)
+			.map(_.text.toDouble)
+			.getOrElse(0.0)
 		val attributes = node \ "simMeasurements" \ "attribute"
 		val configs = attributes.map { node =>
 			val key = (node \ "key").text
-			val weight = extractWeight((node \ "weight").head)
+			val weight = extractWeight((node \ "weight").headOption)
 			val scoreConfigs = (node \ "feature").map { feature =>
 				val similarityMeasure = (feature \ "similarityMeasure").text
-				val weight = extractWeight((feature \ "weight").head)
+				val weight = extractWeight((feature \ "weight").headOption)
 				val scale = (feature \ "scale").text.toInt
 				SimilarityMeasureConfig[String, SimilarityMeasure[String]](
 					SimilarityMeasure.get[String](similarityMeasure),

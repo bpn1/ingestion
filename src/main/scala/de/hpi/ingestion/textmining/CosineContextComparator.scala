@@ -6,10 +6,8 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-
 import scala.collection.mutable
 import java.io.{BufferedReader, InputStreamReader}
-
 import org.apache.spark.broadcast.Broadcast
 
 /**
@@ -182,7 +180,7 @@ object CosineContextComparator extends SplitSparkJob {
 				}
 			}, true)
 			.flatMap(identity)
-	    	.join(articleContexts)
+			.join(articleContexts)
 			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
 				protoFeatureEntries.map { protoFeatureEntry =>
 					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
@@ -203,6 +201,8 @@ object CosineContextComparator extends SplitSparkJob {
 
 	/**
 	  * Calculate the cosine similarity between two vectors with possibly different dimensions.
+	  * Note: This value may become 0.0 if
+	  * DocumentFrequencyCounter.leastSignificantDocumentFrequency > number of documents.
 	  *
 	  * @param vectorA vector with dimension keys
 	  * @param vectorB vector with dimension keys
@@ -215,8 +215,7 @@ object CosineContextComparator extends SplitSparkJob {
 			.map(key => vectorA(key) * vectorB(key))
 			.sum
 		val lengthProduct = lengthA * lengthB
-		if(lengthProduct == 0) -1.0 else dotProduct / lengthProduct // Note: This value may become -1.0 if
-		// DocumentFrequencyCounter.leastSignificantDocumentFrequency > number of documents
+		if(lengthProduct == 0) 0.0 else dotProduct / lengthProduct
 	}
 
 	/**

@@ -919,7 +919,7 @@ object TestData {
 		val mfPage_018 = MultiFeature(0.17504950495049504)
 		val mfPage_0058 = MultiFeature(0.05821782178217822)
 		val mfPage_00004 = MultiFeature(3.9603960396039607E-4)
-		val mfCos = MultiFeature(-1.0)
+		val mfCos = MultiFeature(0.0)
 
 		List(
 			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
@@ -948,7 +948,7 @@ object TestData {
 		val mfPage_018 = MultiFeature(0.17504950495049504, 2, 0.548910891089109, 0.11683168316831682)
 		val mfPage_0058 = MultiFeature(0.05821782178217822, 3, 0.6657425742574257, 0.057821782178217825)
 		val mfPage_00004 = MultiFeature(3.9603960396039607E-4, 4, 0.7235643564356435, default)
-		val mfCos = MultiFeature(-1.0, 1, default, default)
+		val mfCos = MultiFeature(0.0, 1, default, default)
 
 		List(
 			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
@@ -979,7 +979,7 @@ object TestData {
 		val mfPage_00012 = MultiFeature(0.001188118811881188)
 		val mfPage_00008 = MultiFeature(7.920792079207921E-4)
 		val mfPage_00004 = MultiFeature(3.9603960396039607E-4)
-		val mfCos = MultiFeature(-1.0)
+		val mfCos = MultiFeature(0.0)
 
 		List(
 			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
@@ -1005,7 +1005,7 @@ object TestData {
 		val mfPage_00012 = MultiFeature(0.001188118811881188, 5, 0.7227722772277227, 3.9603960396039596E-4)
 		val mfPage_00008 = MultiFeature(7.920792079207921E-4, 7, 0.7231683168316831, 3.9603960396039607E-4)
 		val mfPage_00004 = MultiFeature(3.9603960396039607E-4, 8, 0.7235643564356435, default)
-		val mfCos = MultiFeature(-1.0, 1, default, default)
+		val mfCos = MultiFeature(0.0, 1, default, default)
 
 		List(
 			FeatureEntry("Automobilhersteller", 0, "BMW", "BMW", link_score, mfPage_072, mfCos, true),
@@ -1164,7 +1164,7 @@ object TestData {
 				Link("President of the United States", "President of the United States", Option(29))),
 
 			"Leadinstrument" -> List(
-				Link("Leadinstrument", "Lead (Musik)")) // Redirect link
+				Link("Leadinstrument", "Lead (Musik)", Option(9))) // Redirect link
 		)
 	}
 
@@ -1264,7 +1264,7 @@ object TestData {
 			ParsedWikipediaEntry(
 				"Salzachtal",
 				Option("""REDIRECT Salzach#Salzachtal Kategorie:Tal im Land Salzburg Kategorie:Tal in Oberösterreich Kategorie:Tal in Bayern !"""),
-				textlinks = List(Link("Salzachtal", "Salzach#Salzachtal")),
+				textlinks = List(Link("Salzachtal", "Salzach#Salzachtal", Option(9))),
 				categorylinks = List(Link("Tal im Land Salzburg", "Tal im Land Salzburg"), Link("Tal in Oberösterreich", "Tal in Oberösterreich"), Link("Tal in Bayern", "Tal in Bayern"), Link("!", "Salzach")))
 		)
 	}

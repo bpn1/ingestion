@@ -40,7 +40,7 @@ class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDCompari
 		Deduplication.scoreConfigSettings = TestData.testConfig()
 		Deduplication.settings = Map("confidence" -> "0.9")
 		val duplicates = Deduplication.findDuplicates(TestData.subjectBlocks(sc), sc)
-		val expected = TestData.testDuplicates(sc)
+		val expected = TestData.filteredDuplicates(sc)
 		assertRDDEquals(duplicates, expected)
 
 		Deduplication.scoreConfigSettings = originalConfig
@@ -55,7 +55,7 @@ class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDCompari
 		val stagings = TestData.stagings
 		val duplicates = TestData.testDuplicates(sc)
 		val candidates = Deduplication.createDuplicateCandidates(duplicates)
-		val expectedCandidates = sc.parallelize(TestData.trueDuplicateCandidates(subjects, stagings))
+		val expectedCandidates = sc.parallelize(TestData.createdDuplicateCandidates(subjects, stagings))
 		assertRDDEquals(candidates, expectedCandidates)
 
 		Deduplication.settings = originalSettings
@@ -67,8 +67,6 @@ class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDCompari
 
 		Deduplication.scoreConfigSettings = TestData.simpleTestConfig
 		Deduplication.settings = Map("confidence" -> "0.0")
-		val subjects = TestData.subjects
-		val stagings = TestData.stagings
 		val blocks = TestData.testBlocks(sc)
 		val duplicateCandidates = Deduplication.findDuplicates(blocks, sc).map(_.copy(_3 = 0.0))
 		val expectedCandidates = TestData.distinctDuplicateCandidates(sc)

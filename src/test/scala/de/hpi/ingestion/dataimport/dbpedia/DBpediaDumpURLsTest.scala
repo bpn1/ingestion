@@ -1,7 +1,6 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import java.io.ByteArrayOutputStream
-
 import org.scalatest.{FlatSpec, Matchers}
 
 class DBpediaDumpURLsTest extends FlatSpec with Matchers {

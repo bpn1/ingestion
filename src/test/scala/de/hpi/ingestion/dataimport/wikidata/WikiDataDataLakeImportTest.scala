@@ -33,7 +33,10 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		translatedSubjects.foreach { case (entity, subject) =>
 			subject.name shouldEqual entity.label
 			subject.aliases shouldEqual entity.aliases
-			subject.category shouldEqual entity.instancetype
+			entity.instancetype match {
+				case Some(x) => subject.category should contain ("business")
+				case None => subject.category shouldBe empty
+			}
 		}
 	}
 
