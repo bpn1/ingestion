@@ -2,35 +2,51 @@
 <categorization>
     <category>
         <key>Automobilindustrie</key>
-        <mapping>29</mapping>
-        <mapping>45</mapping>
+        <mapping>C</mapping>
+        <mapping>C29</mapping>
+        <mapping>G</mapping>
+        <mapping>G45</mapping>
     </category>
     <category>
         <key>Computerspielindustrie</key>
-        <mapping>58.21</mapping>
+        <mapping>J</mapping>
+        <mapping>J58</mapping>
+        <mapping>J58.21</mapping>
     </category>
     <category>
         <key>Einzelhandel</key>
-        <mapping>47</mapping>
+        <mapping>G</mapping>
+        <mapping>G47</mapping>
     </category>
     <category>
         <key>Schiffbau</key>
-        <mapping>30.1</mapping>
+        <mapping>C</mapping>
+        <mapping>C30</mapping>
+        <mapping>C30.1</mapping>
     </category>
     <category>
         <key>Pharmaindustrie</key>
-        <mapping>46.18.4</mapping>
-        <mapping>46.46</mapping>
-        <mapping>21</mapping>
+        <mapping>C</mapping>
+        <mapping>C46</mapping>
+        <mapping>C46.18</mapping>
+        <mapping>G46.18.4</mapping>
+        <mapping>G46.46</mapping>
+        <mapping>C</mapping>
+        <mapping>C21</mapping>
     </category>
     <category>
         <key>Stahlindustrie</key>
-        <mapping>24</mapping>
-        <mapping>46.72.1</mapping>
+        <mapping>C</mapping>
+        <mapping>C24</mapping>
+        <mapping>G</mapping>
+        <mapping>G46</mapping>
+        <mapping>G46.72</mapping>
+        <mapping>G46.72.1</mapping>
     </category>
     <category>
         <key>Telekommunikation</key>
-        <mapping>61</mapping>
+        <mapping>J</mapping>
+        <mapping>J61</mapping>
     </category>
     <category>
         <key>Gewerbe</key>
@@ -38,135 +54,168 @@
     </category>
     <category>
         <key>Mobilfunkgesellschaft</key>
-        <mapping>61</mapping>
+        <mapping>J</mapping>
+        <mapping>J61</mapping>
     </category>
     <category>
         <key>Luft- und Raumfahrtindustrie</key>
-        <mapping>30.3</mapping>
+        <mapping>C</mapping>
+        <mapping>C30</mapping>
+        <mapping>C30.3</mapping>
     </category>
     <category>
         <key>Telekommunikation</key>
-        <mapping>26.3</mapping>
-        <mapping>46.5</mapping>
-        <mapping>47.4</mapping>
-        <mapping>61</mapping>
+        <mapping>C</mapping>
+        <mapping>C26</mapping>
+        <mapping>C26.3</mapping>
+        <mapping>G</mapping>
+        <mapping>G46</mapping>
+        <mapping>G46.5</mapping>
+        <mapping>G47</mapping>
+        <mapping>G47.4</mapping>
+        <mapping>J</mapping>
+        <mapping>J61</mapping>
     </category>
     <category>
         <key>produzierende Gewerbe</key>
-        <mapping>10</mapping>
-        <mapping>11</mapping>
-        <mapping>12</mapping>
-        <mapping>13</mapping>
-        <mapping>14</mapping>
-        <mapping>15</mapping>
-        <mapping>16</mapping>
-        <mapping>17</mapping>
-        <mapping>18</mapping>
-        <mapping>19</mapping>
-        <mapping>20</mapping>
-        <mapping>21</mapping>
-        <mapping>22</mapping>
-        <mapping>23</mapping>
-        <mapping>24</mapping>
-        <mapping>25</mapping>
-        <mapping>26</mapping>
-        <mapping>27</mapping>
-        <mapping>28</mapping>
-        <mapping>29</mapping>
-        <mapping>30</mapping>
-        <mapping>31</mapping>
-        <mapping>32</mapping>
-        <mapping>33</mapping>
+        <mapping>C</mapping>
+        <mapping>C10</mapping>
+        <mapping>C11</mapping>
+        <mapping>C12</mapping>
+        <mapping>C13</mapping>
+        <mapping>C14</mapping>
+        <mapping>C15</mapping>
+        <mapping>C16</mapping>
+        <mapping>C17</mapping>
+        <mapping>C18</mapping>
+        <mapping>C19</mapping>
+        <mapping>C20</mapping>
+        <mapping>C21</mapping>
+        <mapping>C22</mapping>
+        <mapping>C23</mapping>
+        <mapping>C24</mapping>
+        <mapping>C25</mapping>
+        <mapping>C26</mapping>
+        <mapping>C27</mapping>
+        <mapping>C28</mapping>
+        <mapping>C29</mapping>
+        <mapping>C30</mapping>
+        <mapping>C31</mapping>
+        <mapping>C32</mapping>
+        <mapping>C33</mapping>
     </category>
     <category>
         <key>Finanzdienstleistung</key>
-        <mapping>64</mapping>
+        <mapping>K</mapping>
+        <mapping>K64</mapping>
     </category>
     <category>
         <key>Q4899370, Getränkeindustrie</key>
-        <mapping>11</mapping>
+        <mapping>C</mapping>
+        <mapping>C11</mapping>
     </category>
     <category>
         <key>Bergbau</key>
-        <mapping>05</mapping>
-        <mapping>06</mapping>
-        <mapping>07</mapping>
-        <mapping>08</mapping>
-        <mapping>09</mapping>
+        <mapping>B</mapping>
+        <mapping>B05</mapping>
+        <mapping>B06</mapping>
+        <mapping>B07</mapping>
+        <mapping>B08</mapping>
+        <mapping>B09</mapping>
     </category>
     <category>
         <key>Q540912, Lebensmittelindustrie</key>
-        <mapping>10</mapping>
+        <mapping>C</mapping>
+        <mapping>C10</mapping>
     </category>
     <category>
         <key>Filmproduktion</key>
-        <mapping>59</mapping>
+        <mapping>J</mapping>
+        <mapping>J59</mapping>
     </category>
     <category>
         <key>Q4063722, Aluminiumherstellung</key>
-        <mapping>24.4</mapping>
+        <mapping>C</mapping>
+        <mapping>C24</mapping>
+        <mapping>C24.4</mapping>
     </category>
     <category>
         <key>Energieversorgung</key>
-        <mapping>35</mapping>
+        <mapping>D</mapping>
+        <mapping>D35</mapping>
     </category>
     <category>
         <key>Nachrichten</key>
-        <mapping>63.9</mapping>
-        <mapping>58</mapping>
-        <mapping>59</mapping>
-        <mapping>60</mapping>
-        <mapping>61</mapping>
-        <mapping>63</mapping>
+        <mapping>J</mapping>
+        <mapping>J63.9</mapping>
+        <mapping>J58</mapping>
+        <mapping>J59</mapping>
+        <mapping>J60</mapping>
+        <mapping>J61</mapping>
+        <mapping>J63</mapping>
     </category>
     <category>
         <key>private healthcare</key>
-        <mapping>86.9</mapping>
+        <mapping>Q</mapping>
+        <mapping>Q86</mapping>
+        <mapping>Q86.9</mapping>
     </category>
     <category>
         <key>Bauausführung</key>
-        <mapping>41</mapping>
-        <mapping>42</mapping>
-        <mapping>43</mapping>
+        <mapping>F</mapping>
+        <mapping>F41</mapping>
+        <mapping>F42</mapping>
+        <mapping>F43</mapping>
     </category>
     <category>
         <key>Rüstungsindustrie</key>
-        <mapping>25.4</mapping>
+        <mapping>C</mapping>
+        <mapping>C25</mapping>
+        <mapping>C25.4</mapping>
     </category>
     <category>
         <key>Risikokapital</key>
-        <mapping>64.2</mapping>
+        <mapping>K</mapping>
+        <mapping>K64</mapping>
+        <mapping>K64.2</mapping>
     </category>
     <category>
         <key>Öffentlicher Gesundheitsdienst</key>
-        <mapping>84</mapping>
+        <mapping>O</mapping>
+        <mapping>O84</mapping>
     </category>
     <category>
         <key>Übertragungsnetzbetreiber</key>
-        <mapping>62</mapping>
-        <mapping>61</mapping>
-        <mapping>60</mapping>
+        <mapping>J</mapping>
+        <mapping>J62</mapping>
+        <mapping>J61</mapping>
+        <mapping>J60</mapping>
     </category>
     <category>
         <key>Logistik</key>
-        <mapping>49</mapping>
-        <mapping>49.4</mapping>
-        <mapping>50</mapping>
-        <mapping>51</mapping>
-        <mapping>52</mapping>
+        <mapping>H</mapping>
+        <mapping>H49</mapping>
+        <mapping>H49.4</mapping>
+        <mapping>H50</mapping>
+        <mapping>H51</mapping>
+        <mapping>H52</mapping>
     </category>
     <category>
         <key>Bauwirtschaft</key>
-        <mapping>41</mapping>
-        <mapping>42</mapping>
-        <mapping>43</mapping>
+        <mapping>F</mapping>
+        <mapping>F41</mapping>
+        <mapping>F42</mapping>
+        <mapping>F43</mapping>
     </category>
     <category>
         <key>Q19841312, Lokomotivbau</key>
-        <mapping>30.2</mapping>
+        <mapping>C</mapping>
+        <mapping>C30</mapping>
+        <mapping>C30.2</mapping>
     </category>
     <category>
         <key>Q207652, chemische Industrie</key>
-        <mapping>20</mapping>
+        <mapping>C</mapping>
+        <mapping>C20</mapping>
     </category>
 </categorization>

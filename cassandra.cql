@@ -291,7 +291,7 @@ CREATE TABLE datalake.blockingstats (
     comment text,
     comparisoncount bigint,
     data frozen<set<frozen<blockstats>>>,
-    pairwisecompleteness double,
+    pairscompleteness double,
     PRIMARY KEY (jobid, schemetag)
 );
 
