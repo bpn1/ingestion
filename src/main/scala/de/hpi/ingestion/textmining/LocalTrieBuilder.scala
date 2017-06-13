@@ -1,13 +1,11 @@
 package de.hpi.ingestion.textmining
 
 import java.io.{FileOutputStream, OutputStream}
-
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Output
 import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
 import de.hpi.ingestion.textmining.models.TrieNode
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
-
 import scala.io.{BufferedSource, Source}
 
 /**

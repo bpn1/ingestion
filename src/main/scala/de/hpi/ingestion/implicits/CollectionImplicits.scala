@@ -99,4 +99,20 @@ object CollectionImplicits {
 				.map(identity)
 		}
 	}
+
+	/**
+	  * Adds functions to Maps.
+	  * @param xs the Map itself
+	  * @tparam X the type of the keys
+	  * @tparam Y the type of the values
+	  */
+	implicit class MapFunctions[X, Y](xs: Map[X, Y]) {
+		/**
+		  * Applies a function to all keys of this map. The resulting Map may be smaller if there are collisions.
+		  * @param f function applied to every key
+		  * @tparam Z return type of the function f
+		  * @return Map with the function f applied to each key
+		  */
+		def mapKeys[Z](f: (X) => Z): Map[Z, Y] = xs.map { case (key, value) => (f(key), value) }
+	}
 }

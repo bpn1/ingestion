@@ -2,14 +2,12 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
-
 import scala.util.matching.Regex
 import scala.io.Source
 import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd.RDD
-
 import scala.xml.XML
 
 /**

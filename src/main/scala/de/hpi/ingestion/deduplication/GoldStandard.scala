@@ -1,7 +1,6 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._

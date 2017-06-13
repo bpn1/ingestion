@@ -1,9 +1,7 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import com.datastax.spark.connector._
-
 import de.hpi.ingestion.dataimport.JSONParser
-
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.framework.SparkJob
@@ -15,12 +13,8 @@ import play.api.libs.json._
   * This job parses a Wikidata JSON dump into Wikidata entities and imports them into the Cassandra.
   */
 object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
-	appName = "WikiDataImport"
-	val defaultInputFile = "wikidata.json"
-	val language = "de"
-	val fallbackLanguage = "en"
-	val keyspace = "wikidumps"
-	val tablename = "wikidata"
+	appName = "Wikidata Import"
+	configFile = "wikidata_import.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -30,7 +24,7 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val inputFile = if(args.length > 0) args.head else defaultInputFile
+		val inputFile = args.headOption.getOrElse(settings("inputFile"))
 		List(sc.textFile(inputFile)).toAnyRDD()
 	}
 
@@ -44,7 +38,7 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 		output
 			.fromAnyRDD[WikiDataEntity]()
 			.head
-			.saveToCassandra(keyspace, tablename)
+			.saveToCassandra(settings("keyspace"), settings("wikidataTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -79,18 +73,18 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	}
 
 	/**
-	  * Extracts the label for a WikiDataEntity from a given JSON object. The first choice of the label langauge is
-	  * {@language} if the entity is not a property. The second choice of the language is {@fallbackLanguage}. If both
-	  * of these are not available the first available language is taken.
+	  * Extracts the label for a WikiDataEntity from a given JSON object. The first choice of the label language
+	  * (defined in the config) is used if the entity is not a property. The second choice of the language is defined in
+	  * the config as well. If both of these are not available then the first available language is taken.
 	  * @param json JSON object containing the data
 	  * @param entityType type of the entity for which the labels are extracted
 	  * @return Option of the label (if it exists
 	  */
 	def extractLabels(json: JsValue, entityType: Option[String]): Option[String] = {
 		val labelMap = extractMap(json, List("labels"))
-		labelMap.get(language)
+		labelMap.get(settings("language"))
 			.filter(lang => !entityType.contains("property"))
-			.orElse(labelMap.get(fallbackLanguage))
+			.orElse(labelMap.get(settings("fallbackLanguage")))
 			.orElse(labelMap.values.headOption)
 			.flatMap(extractString(_, List("value")))
 	}
@@ -103,9 +97,9 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	def fillSimpleValues(json: JsValue): WikiDataEntity = {
 		val entity = WikiDataEntity(extractString(json, List("id")).getOrElse(""))
 		entity.entitytype = extractString(json, List("type"))
-		entity.wikiname = extractString(json, List("sitelinks", language + "wiki", "title"))
-		entity.description = extractString(json, List("descriptions", language, "value"))
-			.orElse(extractString(json, List("descriptions", fallbackLanguage, "value")))
+		entity.wikiname = extractString(json, List("sitelinks", settings("language") + "wiki", "title"))
+		entity.description = extractString(json, List("descriptions", settings("language"), "value"))
+			.orElse(extractString(json, List("descriptions", settings("fallbackLanguage"), "value")))
 		entity.label = extractLabels(json, entity.entitytype)
 		entity
 	}
@@ -167,10 +161,7 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	  * @return Wikidata Entity with translated property ids
 	  */
 	def translatePropertyIDs(entity: WikiDataEntity, properties: Map[String, String]): WikiDataEntity = {
-		entity.data = entity.data.map { case (key, value) =>
-			(properties.getOrElse(key, key), value)
-		}
-		entity
+		entity.copy(data = entity.data.mapKeys(key => properties.getOrElse(key, key)))
 	}
 
 	/**

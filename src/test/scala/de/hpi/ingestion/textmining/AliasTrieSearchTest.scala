@@ -5,7 +5,6 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import de.hpi.ingestion.textmining.tokenizer.{IngestionTokenizer, WhitespaceTokenizer}
 import org.scalatest.{FlatSpec, Matchers}
-
 import scala.io.Source
 
 class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext {

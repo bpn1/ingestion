@@ -1,7 +1,6 @@
 package de.hpi.ingestion.deduplication.models
 
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.linalg.DenseVector
