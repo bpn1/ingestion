@@ -19,6 +19,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 	"wikidata"
 ){
 	appName = "WikiDataDataLakeImport_v1.0"
+	configFile = "datalake_import_wikidata.xml"
 	importConfigFile = "normalization_wikidata.xml"
 	val categoryMap = Map(
 		"economic branch" -> "sector",

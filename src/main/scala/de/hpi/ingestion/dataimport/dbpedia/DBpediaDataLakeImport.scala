@@ -20,6 +20,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 	"dbpedia"
 ){
 	appName = "DBpediaDataLakeImport_v1.0"
+	configFile = "datalake_import_dbpedia.xml"
 	importConfigFile = "normalization_dbpedia.xml"
 
 	// $COVERAGE-OFF$
