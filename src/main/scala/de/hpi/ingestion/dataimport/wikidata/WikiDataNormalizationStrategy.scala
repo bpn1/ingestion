@@ -76,6 +76,41 @@ object WikiDataNormalizationStrategy extends Serializable {
 		values.filter(SharedNormalizations.isValidUrl)
 	}
 
+	/***
+	  * Normalize Legal Form
+	  * @param values
+	  * @return
+	  */
+	def normalizeLegalForm(values: List[String]): List[String] = {
+		values.flatMap(value => List(legalFormMapping.getOrElse(value, value)))
+	}
+
+	/**
+	  * Mapping of legal Form
+	  * @return
+	  */
+	def legalFormMapping: Map[String, String] = Map(
+		"Aktiengesellschaft" -> "AG",
+		"Gesellschaft mit beschränkter Haftung" -> "GmbH",
+		"Eingetragene Genossenschaft" -> "EG",
+		"Anstalt des öffentlichen Rechts"-> "AdöR",
+		"Kommanditgesellschaft" -> "KG",
+		"Europäische Gesellschaft" -> "SE",
+		"Offene Handelsgesellschaft" -> "oHG",
+		"Gesellschaft bürgerlichen Rechts" -> "GbR",
+		"eingetragener Verein" -> "e.V.",
+		"gemeinnütziger Verein" -> "e.V.",
+		"Gemeinnützige GmbH" -> "GmbH",
+		"Kommanditgesellschaft auf Aktien" -> "KGaA",
+		"Kommanditgesellschaft auf Aktien (allgemein)" -> "KGaA",
+		"Einpersonen GmbH" -> "GmbH",
+		"Kleine Aktiengesellschaft" -> "AG",
+		"Verein" -> "e.V.",
+		"Gemeinnützige Aktiengesellschaft" -> "AG",
+		"Geschlossene Aktiengesellschaft" -> "AG",
+		"Kommanditaktiengesellschaft" -> "KGaA"
+	)
+
 	/**
 	  * Normalizes all other values by default dashes
 	  * @param values Strings to be normalized
@@ -98,6 +133,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 			case "geo_city" => this.normalizeCity
 			case "gen_employees" => this.normalizeEmployees
 			case "gen_urls" => this.normalizeURLs
+			case "gen_legal_form" => this.normalizeLegalForm
 			case _ => this.normalizeDefault
 		}
 	}
