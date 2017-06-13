@@ -102,7 +102,8 @@ object TextParser extends SparkJob {
 			.map { anchor =>
 				val target = parseUrl(anchor.attr("href"))
 				val source = if(anchor.text.isEmpty) target else anchor.text
-				val redirectLink = Link(title, target)
+				val offset = Option(text.indexOf(source)).filter(_ >= 0)
+				val redirectLink = Link(title, target, offset)
 				val defaultLink = Link(source, target)
 				if(isCategoryLink(defaultLink)) defaultLink else redirectLink
 			}
