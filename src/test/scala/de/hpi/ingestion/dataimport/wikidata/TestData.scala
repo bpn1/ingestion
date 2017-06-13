@@ -354,8 +354,8 @@ object TestData {
 	def normalizedEmployees: List[String] = List("500", "1337")
 	def unnormalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de", "www.hans", "NotAURL")
 	def normalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de")
-	def unnormalizedLegalForm: List[String] = List("Aktiengesellschaft", "Gesellschaft mit beschränkter Haftung", "Eingetragene Genossenschaft", "GmbH & Co. KG")
-	def normalizedLegalForm: List[String] = List("AG", "GmbH", "EG", "GmbH & Co. KG")
+	def unnormalizedLegalForm: List[String] = List("Gesellschaft mit beschränkter Haftung", "Eingetragene Genossenschaft", "GmbH & Co. KG")
+	def normalizedLegalForm: List[String] = List("GmbH", "EG", "GmbH & Co. KG")
 
 	def applyInput: List[List[String]] = List(
 		this.unnormalizedCoords,
