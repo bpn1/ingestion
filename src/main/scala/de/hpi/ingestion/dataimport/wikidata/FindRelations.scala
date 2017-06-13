@@ -17,7 +17,7 @@ import de.hpi.ingestion.framework.SparkJob
   * and replaces the Wikidata Ids with their names.
   */
 object FindRelations extends SparkJob {
-	appName = "FindRelations_v1.1"
+	appName = "Find Relations v1.1"
 	configFile = "wikidata_import.xml"
 	val datasources = List("wikidata_20161117", "wikidata")
 
@@ -61,34 +61,29 @@ object FindRelations extends SparkJob {
 		version: Version
 	): Subject = {
 		val sm = new SubjectManager(subject, version)
-		val relationsMap = mutable.Map[UUID, Map[String, String]]()
-		val relationTypeKey = "type"
 		val idRegex = new Regex("^Q[0-9]+$")
-		val propertyMap = mutable.Map() ++ subject.properties
-
-		subject.properties
-			.filter(_._1 != settings("wikidataIdKey"))
-		    .foreach { case (key, list) =>
-				val updatedList = mutable.ListBuffer[String]()
-
-				// skip properties without wikidata id or without resolve entry
-				val (resolvableValues, doneValues) = list.partition(value =>
+		var relationsMap = Map[UUID, Map[String, String]]()
+		val resolvedProperties = subject.properties
+		    .filterKeys(_ != settings("wikidataIdKey"))
+			.map { case (property, propertyValues) =>
+				val (resolvableValues, doneValues) = propertyValues.partition(value =>
 					idRegex.findFirstIn(value).isDefined && nameResolveMap.contains(value))
-				updatedList ++= doneValues
 
 				// add relations to subject with the corresponding wikidata id
-				relationsMap ++= resolvableValues.map(value =>
-					(nameResolveMap(value)._1, Map(relationTypeKey -> key))).toMap
-
-				// append resolved name to property value if it exists
-				updatedList ++= resolvableValues
-					.filter(nameResolveMap(_)._2.nonEmpty)
-					.map(nameResolveMap(_)._2)
-				propertyMap(key) = updatedList.toList
+				relationsMap ++= resolvableValues
+					.map(value => (nameResolveMap(value)._1, Map(property -> "")))
+					.toMap[UUID, Map[String, String]]
+				val resolvedValues = resolvableValues
+				    .map { id =>
+						nameResolveMap.get(id)
+						    .map(_._2)
+					    	.filter(_.nonEmpty)
+							.getOrElse(id)
+					}
+				(property, resolvedValues ++ doneValues)
 			}
-
-		sm.addProperties(propertyMap.toMap)
-		sm.addRelations(relationsMap.toMap)
+		sm.overwriteProperties(resolvedProperties)
+		sm.addRelations(relationsMap)
 		subject
 	}
 

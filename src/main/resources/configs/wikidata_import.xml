@@ -5,7 +5,7 @@
         <wikidataTable>wikidata</wikidataTable>
         <subjectKeyspace>datalake</subjectKeyspace>
         <subjectTable>subject_wikidata</subjectTable>
-        <wikidataIdKey>wikidata_id</wikidataIdKey>
+        <wikidataIdKey>id_wikidata</wikidataIdKey>
         <wikidataPathProperty>wikidata_path</wikidataPathProperty>
         <inputFile>wikidata.json</inputFile>
         <language>de</language>
