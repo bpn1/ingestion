@@ -1,8 +1,7 @@
-
 package de.hpi.ingestion.framework
 
 import de.hpi.ingestion.deduplication.models.config.{AttributeConfig, SimilarityMeasureConfig}
-import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan, SimilarityMeasure}
+import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan}
 import scala.xml.{Node, XML}
 
 object TestData {

@@ -20,6 +20,10 @@
                 <weight>0.7</weight>
                 <scale>1</scale>
             </feature>
+            <feature>
+                <similarityMeasure>ExactMatch</similarityMeasure>
+                <scale>1</scale>
+            </feature>
         </attribute>
     </simMeasurements>
 </config>

@@ -1164,7 +1164,7 @@ object TestData {
 				Link("President of the United States", "President of the United States", Option(29))),
 
 			"Leadinstrument" -> List(
-				Link("Leadinstrument", "Lead (Musik)")) // Redirect link
+				Link("Leadinstrument", "Lead (Musik)", Option(9))) // Redirect link
 		)
 	}
 
@@ -1264,7 +1264,7 @@ object TestData {
 			ParsedWikipediaEntry(
 				"Salzachtal",
 				Option("""REDIRECT Salzach#Salzachtal Kategorie:Tal im Land Salzburg Kategorie:Tal in Oberösterreich Kategorie:Tal in Bayern !"""),
-				textlinks = List(Link("Salzachtal", "Salzach#Salzachtal")),
+				textlinks = List(Link("Salzachtal", "Salzach#Salzachtal", Option(9))),
 				categorylinks = List(Link("Tal im Land Salzburg", "Tal im Land Salzburg"), Link("Tal in Oberösterreich", "Tal in Oberösterreich"), Link("Tal in Bayern", "Tal in Bayern"), Link("!", "Salzach")))
 		)
 	}
