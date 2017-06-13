@@ -4,7 +4,6 @@ import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd._
-
 import scala.language.postfixOps
 import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikiDataEntity}
 import de.hpi.ingestion.framework.SparkJob
@@ -15,15 +14,30 @@ import de.hpi.ingestion.framework.SparkJob
   */
 object TagEntities extends SparkJob {
 	appName = "TagEntities"
-	val keyspace = "wikidumps"
-	val tablename = "wikidata"
-	val tagClasses = Map(
-		"Q43229" -> "organization",
-		"Q4830453" -> "business",
-		"Q268592" -> "economic branch")
+	configFile = "wikidata_import.xml"
 	val instanceProperty = "instance of"
 	val subclassProperty = "subclass of"
-	val wikidataPathProperty = "wikidata_path"
+	val tagClasses = Map(
+		"Q268592" -> "economic branch",
+		"Q362482" -> "operation",
+		"Q179076" -> "exchange",
+		"Q650241" -> "financial institutions",
+		"Q1664720" -> "institute",
+		"Q563787" -> "health maintenance organization",
+		"Q79913" -> "non-governmental organization",
+		"Q783794" -> "company",
+		"Q7275" -> "state",
+		"Q1785733" -> "environmental organization",
+		"Q15911314" -> "association",
+		"Q6881511" -> "enterprise",
+		"Q4287745" -> "medical organization",
+		"Q2222986" -> "lobbying organization",
+		"Q672386" -> "collection agency",
+		"Q1331793" -> "media company",
+		"Q1123526" -> "chamber of commerce",
+		"Q1047437" -> "copyright collective",
+		"Q4830453" -> "business enterprise"
+	)
 
 	// $COVERAGE-OFF$
 	/**
@@ -33,7 +47,7 @@ object TagEntities extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
+		val wikidata = sc.cassandraTable[WikiDataEntity](settings("keyspace"), settings("wikidataTable"))
 		List(wikidata).toAnyRDD()
 	}
 
@@ -47,7 +61,10 @@ object TagEntities extends SparkJob {
 		output
 			.fromAnyRDD[(String, String, Map[String, List[String]])]()
 			.head
-			.saveToCassandra(keyspace, tablename, SomeColumns("id", "instancetype", "data" append))
+			.saveToCassandra(
+				settings("keyspace"),
+				settings("wikidataTable"),
+				SomeColumns("id", "instancetype", "data" append))
 	}
 	// $COVERAGE-ON$
 
@@ -62,9 +79,8 @@ object TagEntities extends SparkJob {
 		subclasses: Map[String, List[String]],
 		oldClasses: Map[String, List[String]]
 	): Map[String, List[String]] = {
-		subclasses ++ oldClasses.filter { case (key, path) =>
-			val oldPathLength = subclasses.get(key).map(_.size)
-			oldPathLength.isEmpty || path.size < oldPathLength.get
+		subclasses ++ oldClasses.filterNot { case (key, path) =>
+			subclasses.get(key).exists(_.size <= path.size)
 		}
 	}
 
@@ -90,12 +106,12 @@ object TagEntities extends SparkJob {
 
 				// iteratively append next layer of subclass tree
 				val newClasses = categoryData
-					.map { entry =>
-						entry.classList = entry.data(subclassProperty).filter(oldClasses.contains)
-						entry
-					}.filter(_.classList.nonEmpty)
-					.map(entry => (entry.id, oldClasses(entry.classList.head) ++ List(entry.label)))
-					.collect
+					.map(entry => entry.copy(classList = entry.data(subclassProperty).filter(oldClasses.contains)))
+					.flatMap { case SubclassEntry(id, label, data, classList) =>
+						classList.headOption
+							.flatMap(oldClasses.get)
+							.map(newClassList => (id, newClassList :+ label))
+					}.collect
 					.toMap
 
 				// check if new elements were added and not stuck in a loop
@@ -121,18 +137,6 @@ object TagEntities extends SparkJob {
 	}
 
 	/**
-	  * Returns true of the entry is an instance of one of the given classes.
-	  * @param entry Subclass entry to test
-	  * @param classes map of class data used to test the entry
-	  * @return true if one of the values of the instance of property of the entry exists as key
-	  * in the class map
-	  */
-	def isInstanceOf(entry: SubclassEntry, classes: Map[String, List[String]]): Boolean = {
-		entry.data.contains(instanceProperty) &&
-			entry.data(instanceProperty).exists(classes.contains)
-	}
-
-	/**
 	  * Creates value of the instancetype column and creates new data entry containing the subclass
 	  * path for a Wikidata entity.
 	  * @param entry Subclass entry containing the id and data of the Wikidata entry
@@ -147,7 +151,23 @@ object TagEntities extends SparkJob {
 			.filter(classes.contains)
 			.head
 		val path = classes(classKey)
-		(entry.id, path.head, Map(wikidataPathProperty -> path))
+		(entry.id, path.head, Map(settings("wikidataPathProperty") -> path))
+	}
+
+	/**
+	  * Updates the instancetype and wikidata path for all entries which are an instance of a class listed in the
+	  * subclasses Map.
+	  * @param entries RDD of Subclass Entries to update
+	  * @param subclasses Map containing the subclasses and their path
+	  * @return RDD of triples containing wikidata id, instancetype and the path property
+	  */
+	def updateEntities(
+		entries: RDD[SubclassEntry],
+		subclasses: Map[String, List[String]]
+	): RDD[(String, String, Map[String, List[String]])] = {
+		entries
+		    .filter(_.data.get(instanceProperty).exists(_.exists(subclasses.contains)))
+			.map(updateInstanceOfProperty(_, subclasses))
 	}
 
 	/**
@@ -164,9 +184,7 @@ object TagEntities extends SparkJob {
 			.filter(_.data.contains(subclassProperty))
 			.cache
 		val subclasses = buildSubclassMap(subclassData, tagClasses)
-		val updatedEntities = classData
-			.filter(isInstanceOf(_, subclasses))
-			.map(updateInstanceOfProperty(_, subclasses))
+		val updatedEntities = updateEntities(classData, subclasses)
 		List(updatedEntities).toAnyRDD()
 	}
 }

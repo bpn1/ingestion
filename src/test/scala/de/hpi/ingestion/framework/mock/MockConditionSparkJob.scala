@@ -5,7 +5,6 @@ import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.scalatest.FlatSpec
-
 import scala.collection.mutable.ListBuffer
 
 class MockConditionSparkJob extends FlatSpec with SparkJob with SharedSparkContext {

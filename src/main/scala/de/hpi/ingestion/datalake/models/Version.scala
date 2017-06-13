@@ -1,7 +1,6 @@
 package de.hpi.ingestion.datalake.models
 
 import java.util.{Date, UUID}
-
 import com.datastax.driver.core.utils.UUIDs
 import com.datastax.spark.connector._
 import org.apache.spark.SparkContext

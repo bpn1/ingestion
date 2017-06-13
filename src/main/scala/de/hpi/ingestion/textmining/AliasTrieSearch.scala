@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining
 
 import java.io.InputStream
-
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import com.esotericsoftware.kryo.io.Input
@@ -14,7 +13,6 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
-
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -93,8 +91,7 @@ object AliasTrieSearch extends SparkJob {
 			val aliasMatches = trie.matchTokens(testTokens.map(_.token))
 			val offsetMatches = aliasMatches.map(textTokens => testTokens.take(textTokens.length))
 			resultList ++= offsetMatches
-			if(aliasMatches.nonEmpty) {
-				val longestMatch = offsetMatches.maxBy(_.length)
+			offsetMatches.sortBy(_.length).lastOption.foreach { longestMatch =>
 				val offset = longestMatch.headOption.map(_.beginOffset)
 				offset.foreach { begin =>
 					val alias = entry.getText().substring(begin, longestMatch.last.endOffset)

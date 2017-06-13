@@ -1,7 +1,6 @@
 package de.hpi.ingestion.datamerge
 
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.DuplicateCandidates

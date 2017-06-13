@@ -3,7 +3,6 @@ package de.hpi.ingestion.framework
 import com.datastax.spark.connector.cql.CassandraConnector
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 

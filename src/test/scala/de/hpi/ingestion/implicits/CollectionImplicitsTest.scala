@@ -55,4 +55,13 @@ class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkCon
 		val expectedCounts = TestData.countedData
 		countedData shouldEqual expectedCounts
 	}
+
+	"Map keys" should "be mapped" in {
+		val testMap = Map(1 -> 2, 2 -> 3, 3 -> 4)
+		val mappedKeysMap = testMap.mapKeys(_ + 1)
+		mappedKeysMap should not be empty
+		mappedKeysMap.foreach { case (key, value) =>
+			key shouldEqual value
+		}
+	}
 }

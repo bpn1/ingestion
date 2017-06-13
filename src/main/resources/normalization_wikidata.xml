@@ -82,7 +82,7 @@
             <mapping>e-mail</mapping>
         </attribute>
         <attribute>
-            <key>gen_legal</key>
+            <key>gen_legal_form</key>
             <mapping>legal form</mapping>
         </attribute>
         <attribute>

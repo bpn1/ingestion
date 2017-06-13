@@ -3,7 +3,6 @@ package de.hpi.ingestion.versioncontrol
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import java.util.UUID
-
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import play.api.libs.json.JsValue
 

@@ -9,10 +9,8 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 
 object CSVExport extends SparkJob {
 	appName = "CSVExport_v1.0"
-
 	val keyspace = "datalake"
 	val tablename = "subject"
-
 	val quote = "\""
 	val separator = ","
 	val arraySeparator = ";"
@@ -36,15 +34,19 @@ object CSVExport extends SparkJob {
 	  * @param args arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val data = output.fromAnyRDD[String]()
+		val List(nodes, edges) = output.fromAnyRDD[String]()
 		val timestamp = System.currentTimeMillis / 1000
-		data.head.saveAsTextFile("export_nodes_" + timestamp)
-		data(1).saveAsTextFile("export_edges_" + timestamp)
+		nodes.saveAsTextFile(s"export_nodes_$timestamp")
+		edges.saveAsTextFile(s"export_edges_$timestamp")
 	}
 	// $COVERAGE-ON$
 
-	// header:
-	// :ID(Subject),name,aliases:string[],category:LABEL
+	/**
+	  * Parses a Subject into a csv node in the following format:
+	  * :ID(Subject),name,aliases:string[],category:LABEL
+	  * @param subject Subject to parse
+	  * @return a comma separated line containing the id, name, aliases and category of the Subject
+	  */
 	def nodeToCSV(subject: Subject): String = {
 		val aliasString = subject.aliases
 			.mkString(arraySeparator)
@@ -53,20 +55,23 @@ object CSVExport extends SparkJob {
 		val name = subject.name.getOrElse("").replace("\"", "'")
 		val output = List(subject.id.toString, name, aliasString, subject.category.getOrElse(""))
 			.mkString(quote + separator + quote)
-
 		// TODO serialize properties to JSON string
 		quote + output + quote
 	}
 
-	// header:
-	// :START_ID(Subject),:END_ID(Subject),:TYPE
-	def edgesToCSV(subject: Subject): String = {
-		val lines = subject.relations.map { case (id, props) =>
+	/**
+	  * Parses a Subjects relations to multiple csv edges in the following format:
+	  * :START_ID(Subject),:END_ID(Subject),:TYPE
+	  * @param subject Subject to parse
+	  * @return List of comma separated lines of subject id, target id, relation type
+	  */
+	def edgesToCSV(subject: Subject): List[String] = {
+		subject.relations.map { case (id, props) =>
 			val relType = props.getOrElse("type", "")
 			subject.id + separator + id + separator + relType
-		}
-
-		lines.mkString("\n").trim
+		}.map(_.trim)
+		.filter(_.nonEmpty)
+	    .toList
 	}
 
 	/**
@@ -76,12 +81,10 @@ object CSVExport extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val subjects = input.fromAnyRDD[Subject]().head
 		val nodes = subjects.map(nodeToCSV)
-		val edges = subjects
-			.map(edgesToCSV)
-			.filter(_.trim != "")
+		val edges = subjects.flatMap(edgesToCSV)
 		List(nodes, edges).toAnyRDD()
 	}
 }

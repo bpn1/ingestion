@@ -1,7 +1,6 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._

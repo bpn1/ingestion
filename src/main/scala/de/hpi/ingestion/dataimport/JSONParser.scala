@@ -2,7 +2,6 @@ package de.hpi.ingestion.dataimport
 
 import java.text.SimpleDateFormat
 import java.util.Date
-
 import play.api.libs.json._
 
 /**

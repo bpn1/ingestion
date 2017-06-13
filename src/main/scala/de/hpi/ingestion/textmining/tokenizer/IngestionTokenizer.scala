@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining.tokenizer
 
 import de.hpi.ingestion.textmining.models.OffsetToken
-
 import scala.io.Source
 import scala.util.Try
 

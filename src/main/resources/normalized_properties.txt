@@ -44,6 +44,6 @@ gen_sectors
 gen_urls
 gen_phones
 gen_emails
-gen_legal
+gen_legal_form
 gen_founder
 gen_description

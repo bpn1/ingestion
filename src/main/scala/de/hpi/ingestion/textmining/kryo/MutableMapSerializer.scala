@@ -2,7 +2,6 @@ package de.hpi.ingestion.textmining.kryo
 
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
-
 import scala.collection.mutable
 
 /**

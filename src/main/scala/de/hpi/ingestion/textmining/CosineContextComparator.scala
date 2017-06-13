@@ -6,10 +6,8 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-
 import scala.collection.mutable
 import java.io.{BufferedReader, InputStreamReader}
-
 import org.apache.spark.broadcast.Broadcast
 
 /**

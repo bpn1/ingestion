@@ -26,11 +26,11 @@ class TagEntitiesTest extends FlatSpec with SharedSparkContext with Matchers {
 		entries shouldEqual expectedEntries
 	}
 
-	"Instance-of property" should "be checked correctly" in {
-		val entries = TestData.subclassEntries()
-			.filter(TagEntities.isInstanceOf(_, TestData.classMap()))
-		val expectedEntries = TestData.validInstanceOfProperties()
-		entries shouldEqual expectedEntries
+	"Instance-of entities" should "be updated" in {
+		val entries = sc.parallelize(TestData.subclassEntries())
+		val updatedEntries = TagEntities.updateEntities(entries, TestData.classMap()).collect.toSet
+		val expectedEntries = TestData.updatedInstanceOfProperties().toSet
+		updatedEntries shouldEqual expectedEntries
 	}
 
 	it should "be updated correctly" in {

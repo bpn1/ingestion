@@ -1,7 +1,6 @@
 package de.hpi.ingestion.dataimport
 
 import java.util.GregorianCalendar
-
 import de.hpi.ingestion.dataimport.mock.MockJSONParser
 import org.scalatest.{FlatSpec, Matchers}
 import play.api.libs.json.{JsBoolean, JsNumber, JsString}

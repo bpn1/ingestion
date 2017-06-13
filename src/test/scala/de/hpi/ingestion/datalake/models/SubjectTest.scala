@@ -1,7 +1,6 @@
 package de.hpi.ingestion.datalake.models
 
 import java.util.UUID
-
 import org.scalatest.{FlatSpec, Matchers}
 
 class SubjectTest extends FlatSpec with Matchers {

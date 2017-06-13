@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-
 import org.scalatest.{FlatSpec, Matchers}
 
 class LocalTrieBuilderTest extends FlatSpec with Matchers {

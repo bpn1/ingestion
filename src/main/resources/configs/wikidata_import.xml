@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <keyspace>wikidumps</keyspace>
+        <wikidataTable>wikidata</wikidataTable>
+        <subjectKeyspace>datalake</subjectKeyspace>
+        <subjectTable>subject_wikidata</subjectTable>
+        <wikidataIdKey>id_wikidata</wikidataIdKey>
+        <wikidataPathProperty>wikidata_path</wikidataPathProperty>
+        <inputFile>wikidata.json</inputFile>
+        <language>de</language>
+        <fallbackLanguage>en</fallbackLanguage>
+    </settings>
+</config>
