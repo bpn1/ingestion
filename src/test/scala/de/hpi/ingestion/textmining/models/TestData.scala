@@ -3,6 +3,7 @@ package de.hpi.ingestion.textmining.models
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 
+// scalastyle:off line.size.limit
 object TestData {
 	def featureEntries(): List[FeatureEntry] = {
 		List(
@@ -389,3 +390,4 @@ object TestData {
 			(Link("historisches Jahr", "1377", Option(24)), Map("audi" -> tf1df3, "brachttal" -> tf1df2, "hess" -> tf2df2, "main-kinzig-kreis" -> tf1df2, "buding" -> tf1df2, "wald" -> tf1df2, "backfisch" -> tf1df1, "nochmal" -> tf1df1)))
 	}
 }
+// scalastyle:on line.size.limit
