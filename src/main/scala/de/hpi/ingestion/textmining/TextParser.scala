@@ -3,20 +3,17 @@ package de.hpi.ingestion.textmining
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
-
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Comment, Document, Element, TextNode}
 import java.net.URLDecoder
-
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
-
 import scala.io.Source
 
 /**

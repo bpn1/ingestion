@@ -174,6 +174,19 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	}
 
 	/**
+	  * Adds a list of properties and their values to the Subject, overwrites existing values and writes the
+	  * corresponding Version fields.
+	  * @param value Map of properties and their values
+	  * @param validity validity of each property
+	  */
+	def overwriteProperties(
+		value: Map[String, List[String]],
+		validity: Map[String, Map[String, String]] = Map()
+	): Unit = {
+		setProperties(subject.properties ++ value, validity)
+	}
+
+	/**
 	  * Clears all property fields of the Subject and adds the clearing of these to their history.
 	  * @param validity validity of the removal of the properties
 	  */

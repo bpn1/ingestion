@@ -4,7 +4,6 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.serializers.FieldSerializer
 import de.hpi.ingestion.textmining.models.TrieNode
 import org.apache.spark.serializer.KryoRegistrator
-
 import scala.collection.mutable
 
 /**
