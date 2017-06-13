@@ -48,7 +48,7 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 			.map(article => Article(article.title, article.getText()))
 		val links = sc.parallelize(TestData.linksWithArticleAnnotation().toList)
-		val anchorRegex = new Regex("<a href=\".+?\">.+?<\\/a>")
+		val anchorRegex = new Regex("(?s)<a href=\".+?\">.+?<\\/a>")
 		TextNEL.generateArticlesWithLinks(articles, links)
 			.collect
 			.foreach { article =>

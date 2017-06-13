@@ -5,11 +5,9 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.rdd.RDD
-
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
-
 import scala.collection.mutable
 
 
@@ -63,7 +61,7 @@ object LinkExtender extends SparkJob {
 		article: ParsedWikipediaEntry,
 		pages: Map[String, Map[String, Int]]
 	): Map[String, Map[String, Int]] = {
-		val links = article.textlinks
+		val links = article.textlinksreduced
 		val filteredPages = mutable.Map[String, Map[String, Int]]()
 		pages.get(article.title).foreach { aliases =>
 			filteredPages(article.title) = aliases
@@ -165,12 +163,11 @@ object LinkExtender extends SparkJob {
 		val parsedArticles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val pages = input(1).asInstanceOf[RDD[Page]]
 			.map { page =>
-				val aliases = page.aliases
+				val aliases = page.aliasesreduced
 				val totalAliasOccurrences = aliases.values.sum
 				val threshold = 0.005
 				(page.page, aliases.filter(_._2.toFloat / totalAliasOccurrences > threshold))
-			}
-			.filter(_._2.nonEmpty)
+			}.filter(_._2.nonEmpty)
 			.collect
 			.toMap
 		val pagesBroadcast = sc.broadcast(pages)

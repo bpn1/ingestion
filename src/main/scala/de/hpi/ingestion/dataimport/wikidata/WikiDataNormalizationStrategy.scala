@@ -1,6 +1,7 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import de.hpi.ingestion.implicits.RegexImplicits._
+import de.hpi.ingestion.dataimport.{CountryISO3166Mapping, SharedNormalizations}
 
 /**
   * Strategies for the normalization of WikiData entities
@@ -19,13 +20,25 @@ object WikiDataNormalizationStrategy extends Serializable {
 	}
 
 	/**
+	  * Normalizes cities: e.g. "Q30", "Berlin"
+	  * @param values city list
+	  * @return normalized cities
+	  */
+	def normalizeCity(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""([A-Za-zÄäÖöÜüß\-_ ]*)$country""" => List(country)
+			case _ => None
+		}.map(_.replaceAll("(_|-)", " ")).distinct
+	}
+
+	/**
 	  * Normalizes countries: e.g. "Q30", "Vereinigte Staaten"
 	  * @param values country list
 	  * @return normalized countries
 	  */
-	def normalizeLocation(values: List[String]): List[String] = {
+	def normalizeCountry(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""([A-Za-zÄäÖöÜüß\-_ ]*)$country""" => List(country)
+			case r"""([A-Za-zÄäÖöÜüß\-_ ]*)$country""" => CountryISO3166Mapping.mapping.get(country)
 			case _ => None
 		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
@@ -55,6 +68,15 @@ object WikiDataNormalizationStrategy extends Serializable {
 	}
 
 	/**
+	  * Normalize urls
+	  * @param values list of urls
+	  * @return valid urls
+	  */
+	def normalizeURLs(values: List[String]): List[String] = {
+		values.filter(SharedNormalizations.isValidUrl)
+	}
+
+	/**
 	  * Normalizes all other values by default dashes
 	  * @param values Strings to be normalized
 	  * @return normalized strings
@@ -72,8 +94,10 @@ object WikiDataNormalizationStrategy extends Serializable {
 		attribute match {
 			case "gen_sectors" => this.normalizeSector
 			case "geo_coords" => this.normalizeCoords
-			case "geo_country" | "geo_city" => this.normalizeLocation
+			case "geo_country" => this.normalizeCountry
+			case "geo_city" => this.normalizeCity
 			case "gen_employees" => this.normalizeEmployees
+			case "gen_urls" => this.normalizeURLs
 			case _ => this.normalizeDefault
 		}
 	}

@@ -195,7 +195,7 @@ object TextNEL extends SplitSparkJob {
 					.map(_.page)
 					.reduce(_ + "\n" + _)
 				val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
-				html += s"<a href=\"$wikipediaPage\" class=\"importance 0\" title=\"$pages\">"
+				html += s"""<a href="$wikipediaPage" class="importance 0" title="$pages">"""
 				html += text.substring(processedCharacters, processedCharacters + mainLink.alias.length)
 				processedCharacters += mainLink.alias.length
 				//html += "<ul style=\"display: none\">" + "<li>some other link</li>" + "</ul></a>"
@@ -270,7 +270,7 @@ object TextNEL extends SplitSparkJob {
 
 		val classifier = modelFunction(sc)
 		val linkFeatureEntries = CosineContextComparator
-			.compareLinksWithArticles(linkCandidatesTfidf, aliasPageScores, articleTfidf)
+			.compareLinksWithArticles(linkCandidatesTfidf, sc.broadcast(aliasPageScores), articleTfidf)
 		val data = linkFeatureEntries.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
 		val namedEntities = linkNamedEntities(data, classifier)
 		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)

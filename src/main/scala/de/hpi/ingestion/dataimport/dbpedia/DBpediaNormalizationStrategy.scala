@@ -1,6 +1,7 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.implicits.RegexImplicits._
+import de.hpi.ingestion.dataimport.{CountryISO3166Mapping, SharedNormalizations}
 
 /**
   * Strategies for the normalization of DBPedia entities
@@ -27,8 +28,10 @@ object DBpediaNormalizationStrategy extends Serializable {
 	  */
 	def normalizeCountry(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" => List(country)
-			case r"""([A-Za-zÄäÖöÜüß\-]{3,})${country}@de \.""" => List(country)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" => CountryISO3166Mapping.mapping.get(country)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{2})${country}""" => List(country)
+			case r"""([A-Za-zÄäÖöÜüß\-]{3,})${country}@de \.""" => CountryISO3166Mapping.mapping.get(country)
+			case r"""([A-Za-zÄäÖöÜüß\-]{2})${country}@de \.""" => List(country)
 			case _ => None
 		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
@@ -71,6 +74,18 @@ object DBpediaNormalizationStrategy extends Serializable {
 	}
 
 	/**
+	  * Normalize urls
+	  * @param values list of urls
+	  * @return valid urls
+	  */
+	def normalizeURLs(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""(.+)${value}@de \.""" => List(value)
+			case other => List(other)
+		}.filter(SharedNormalizations.isValidUrl)
+	}
+
+	/**
 	  * Normalizes all other values by default (removing pre- and suffixes and dashes)
 	  * @param values Strings to be normalized
 	  * @return normalized strings
@@ -96,6 +111,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case "geo_country" => this.normalizeCountry
 			case "geo_coords" => this.normalizeCoords
 			case "geo_city" => this.normalizeCity
+			case "gen_urls" => this.normalizeURLs
 			case _ => this.normalizeDefault
 		}
 	}

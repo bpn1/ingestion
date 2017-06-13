@@ -7,15 +7,15 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	"Input String" should "be processed" in {
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val tokens = TestData.testSentences()
+		val tokens = TestData.sentencesList()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.stemmedAndFilteredSentences()
 		tokens shouldEqual expectedTokens
 	}
 
-	it should "keep stopwordsSet" in {
+	it should "keep stopwords" in {
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, false, true)
-		val tokens = TestData.testSentences()
+		val tokens = TestData.sentencesList()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.stemmedTokenizedSentences()
 		tokens shouldEqual expectedTokens
@@ -24,7 +24,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	it should "not be stemmed" in {
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, false)
-		val tokens = TestData.testSentences()
+		val tokens = TestData.sentencesList()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.filteredTokenizedSentences()
 		tokens shouldEqual expectedTokens
@@ -32,23 +32,23 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	it should "only be tokenized" in {
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer)
-		val tokens = TestData.testSentences()
+		val tokens = TestData.sentencesList()
 			.map(tokenizer.process)
-		val expectedTokens = TestData.tokenizedTestSentences()
+		val expectedTokens = TestData.tokenizedSentences()
 		tokens shouldEqual expectedTokens
 	}
 
 	"Input tokens" should "be processed" in {
 		val tokenizer = IngestionTokenizer()
-		val tokens = TestData.tokenizedTestSentences()
+		val tokens = TestData.tokenizedSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.stemmedAndFilteredSentences()
 		tokens shouldEqual expectedTokens
 	}
 
-	they should "keep stopwordsSet" in {
+	they should "keep stopwords" in {
 		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, false, true)
-		val tokens = TestData.tokenizedTestSentences()
+		val tokens = TestData.tokenizedSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.stemmedTokenizedSentences()
 		tokens shouldEqual expectedTokens
@@ -56,7 +56,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	they should "not be stemmed" in {
 		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, true)
-		val tokens = TestData.tokenizedTestSentences()
+		val tokens = TestData.tokenizedSentences()
 			.map(tokenizer.process)
 		val expectedTokens = TestData.filteredTokenizedSentences()
 		tokens shouldEqual expectedTokens
@@ -64,26 +64,26 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	they should "remain unchanged" in {
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer)
-		val tokens = TestData.tokenizedTestSentences()
+		val tokens = TestData.tokenizedSentences()
 			.map(tokenizer.process)
-		val expectedTokens = TestData.tokenizedTestSentences()
+		val expectedTokens = TestData.tokenizedSentences()
 		tokens shouldEqual expectedTokens
 	}
 
 	"Only tokenize" should "only tokenize the input" in {
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer)
-		val tokens = TestData.testSentences()
+		val tokens = TestData.sentencesList()
 			.map(tokenizer.onlyTokenize)
-		val expectedTokens = TestData.tokenizedTestSentences()
+		val expectedTokens = TestData.tokenizedSentences()
 		tokens shouldEqual expectedTokens
 	}
 
 	"Reverse" should "revert the input tokens" in {
 		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer)
 		val tokenizer2 = IngestionTokenizer(new CoreNLPTokenizer)
-		val sentences = TestData.tokenizedTestSentences()
+		val sentences = TestData.tokenizedSentences()
 			.map(tokenizer.reverse)
-		val sentences2 = TestData.tokenizedTestSentences()
+		val sentences2 = TestData.tokenizedSentences()
 			.map(tokenizer2.reverse)
 		val expectedSentences = TestData.reversedSentences()
 		sentences shouldEqual expectedSentences
@@ -135,14 +135,14 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	"Tokens with offset" should "not be empty" in {
 		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, false, false)
-		TestData.testSentences()
+		TestData.sentencesList()
 			.map(tokenizer.processWithOffsets)
 			.foreach(_ should not be empty)
 	}
 
 	they should "have offsets that are consistent with their token" in {
 		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, false, false)
-		TestData.testSentences()
+		TestData.sentencesList()
 			.map(sentence => (sentence, tokenizer.processWithOffsets(sentence)))
 			.foreach { case (sentence, tokensWithOffset) =>
 				tokensWithOffset.foreach { tokenWithOffset =>
@@ -155,7 +155,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	they should "have offsets that are consistent with the text" in {
 		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, false, false)
-		TestData.testSentences()
+		TestData.sentencesList()
 			.map(sentence => (sentence, tokenizer.processWithOffsets(sentence)))
 			.foreach { case (sentence, tokensWithOffset) =>
 				tokensWithOffset.foreach { tokenWithOffset =>
@@ -169,9 +169,9 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 			}
 	}
 
-	they should "not contain stopwordsSet" in {
+	they should "not contain stopwords" in {
 		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, true, false)
-		val tokens = TestData.testSentences()
+		val tokens = TestData.sentencesList()
 			.map(tokenizer.processWithOffsets)
 			.map(_.map(_.token))
 		val expectedTokens = TestData.filteredUncleanTokenizedSentences()
@@ -180,7 +180,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	they should "be stemmed" in {
 		val tokenizer = IngestionTokenizer(new CoreNLPTokenizer, true, true)
-		val tokens = TestData.testSentences()
+		val tokens = TestData.sentencesList()
 			.map(tokenizer.processWithOffsets)
 			.map(_.map(_.token))
 		val expectedTokens = TestData.stemmedAndFilteredUncleanTokenizedSentences()
@@ -195,21 +195,21 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	"Cleaned tokenized sentences" should "contain multiple tokens" in {
 		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, false)
-		TestData.testSentences()
+		TestData.sentencesList()
 			.map(tokenizer.process)
 			.foreach(tokens => tokens.length should be > 1)
 	}
 
 	they should "be exactly these token lists" in {
 		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, false)
-		val tokenizedSentences = TestData.testSentences()
+		val tokenizedSentences = TestData.sentencesList()
 			.map(tokenizer.process)
-		tokenizedSentences shouldEqual TestData.tokenizedTestSentencesWithoutSpecialCharacters()
+		tokenizedSentences shouldEqual TestData.tokenizedSentencesWithoutSpecialCharacters()
 	}
 
 	"Clean Whitespace Tokenizer" should "reverse token lists" in {
 		val tokenizer = new CleanWhitespaceTokenizer
-		val reversedTexts = TestData.tokenizedTestSentencesWithoutSpecialCharacters().map(tokenizer.reverse)
+		val reversedTexts = TestData.tokenizedSentencesWithoutSpecialCharacters().map(tokenizer.reverse)
 		val expectedTexts = TestData.cleanedReversedSentences()
 		reversedTexts shouldEqual expectedTexts
 	}
@@ -224,7 +224,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 
 	"Whitespace Tokenizer" should "tokenize text" in {
 		val tokenizer = new WhitespaceTokenizer
-		val tokenList = TestData.testSentences().map(tokenizer.tokenize)
+		val tokenList = TestData.sentencesList().map(tokenizer.tokenize)
 		val expected = TestData.uncleanTokenizedSentences()
 		tokenList shouldEqual expected
 	}
@@ -232,7 +232,7 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	it should "reverse tokens into text" in {
 		val tokenizer = new WhitespaceTokenizer
 		val sentences = TestData.uncleanTokenizedSentences().map(tokenizer.reverse)
-		val expected = TestData.testSentences()
+		val expected = TestData.sentencesList()
 		sentences shouldEqual expected
 	}
 

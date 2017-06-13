@@ -1,6 +1,7 @@
 package de.hpi.ingestion.dataimport.wikidata
 
 import com.datastax.spark.connector._
+import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.framework.SparkJob
@@ -11,13 +12,9 @@ import play.api.libs.json._
 /**
   * This job parses a Wikidata JSON dump into Wikidata entities and imports them into the Cassandra.
   */
-object WikiDataImport extends SparkJob {
-	appName = "WikiDataImport"
-	val defaultInputFile = "wikidata.json"
-	val language = "de"
-	val fallbackLanguage = "en"
-	val keyspace = "wikidumps"
-	val tablename = "wikidata"
+object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
+	appName = "Wikidata Import"
+	configFile = "wikidata_import.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -27,7 +24,7 @@ object WikiDataImport extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val inputFile = if(args.length > 0) args.head else defaultInputFile
+		val inputFile = args.headOption.getOrElse(settings("inputFile"))
 		List(sc.textFile(inputFile)).toAnyRDD()
 	}
 
@@ -41,84 +38,9 @@ object WikiDataImport extends SparkJob {
 		output
 			.fromAnyRDD[WikiDataEntity]()
 			.head
-			.saveToCassandra(keyspace, tablename)
+			.saveToCassandra(settings("keyspace"), settings("wikidataTable"))
 	}
 	// $COVERAGE-ON$
-
-	/**
-	  * Removes array syntax from Json for parallel parsing of the JSON objects.
-	  * @param json JSON String to clean
-	  * @return cleaned JSON String in which each line is either a JSON object or empty
-	  */
-	def cleanJSON(json: String): String = {
-		json.replaceAll("^\\[|,$|, $|\\]$", "")
-	}
-
-	/**
-	  * Extracts a JSON value from a JSON object.
-	  * @param json JSON object containing the data
-	  * @param path JSON path of the object fields to traverse
-	  * @return JSON value of the JSON field
-	  */
-	def getValue(json: JsValue, path: List[String]): Option[JsValue] = {
-		var element = json
-		for(pathSegment <- path) {
-			if(element.as[JsObject].value.contains(pathSegment)) {
-				element = (element \ pathSegment).as[JsValue]
-			} else {
-				return None
-			}
-		}
-		if(element.getClass == classOf[JsUndefined]) {
-			None
-		} else {
-			Option(element)
-		}
-	}
-
-	/**
-	  * Extracts a String value from a JSON object.
-	  * @param json JSON object containing the data
-	  * @param path JSON path of the object fields to traverse
-	  * @return String value of the JSON field
-	  */
-	def extractString(json: JsValue, path: List[String]): Option[String] = {
-		val value = getValue(json, path)
-		value.map(_.as[String])
-	}
-
-	/**
-	  * Extracts a JSON array as List from a JSON object.
-	  * @param json JSON object containing the data
-	  * @param path JSON path of the object fields to traverse
-	  * @return JSON array as List
-	  */
-	def extractList(json: JsValue, path: List[String]): List[JsValue] = {
-		val value = getValue(json, path).map(_.as[List[JsValue]])
-		value.toList.flatten
-	}
-
-	/**
-	  * Extracts a JSON object as Map from a JSON object.
-	  * @param json JSON object containing the data
-	  * @param path JSON path of the object fields to traverse
-	  * @return JSON object as Map
-	  */
-	def extractMap(json: JsValue, path: List[String]): Map[String, JsValue] = {
-		val value = getValue(json, path).map(_.as[Map[String, JsValue]])
-		value.toList.flatten.toMap
-	}
-
-	/**
-	  * Extracts a Double value from a JSON object.
-	  * @param json JSON object containing the data
-	  * @param path JSON path of the object fields to traverse
-	  * @return Double value of the JSON field as String
-	  */
-	def extractDouble(json: JsValue, path: List[String]): Option[String] = {
-		val value = getValue(json, path)
-		value.map(_.as[Double].toString)
-	}
 
 	/**
 	  * Extracts data of given data type out of JSON object.
@@ -151,18 +73,18 @@ object WikiDataImport extends SparkJob {
 	}
 
 	/**
-	  * Extracts the label for a WikiDataEntity from a given JSON object. The first choice of the label langauge is
-	  * {@language} if the entity is not a property. The second choice of the language is {@fallbackLanguage}. If both
-	  * of these are not available the first available language is taken.
+	  * Extracts the label for a WikiDataEntity from a given JSON object. The first choice of the label language
+	  * (defined in the config) is used if the entity is not a property. The second choice of the language is defined in
+	  * the config as well. If both of these are not available then the first available language is taken.
 	  * @param json JSON object containing the data
 	  * @param entityType type of the entity for which the labels are extracted
 	  * @return Option of the label (if it exists
 	  */
 	def extractLabels(json: JsValue, entityType: Option[String]): Option[String] = {
 		val labelMap = extractMap(json, List("labels"))
-		labelMap.get(language)
+		labelMap.get(settings("language"))
 			.filter(lang => !entityType.contains("property"))
-			.orElse(labelMap.get(fallbackLanguage))
+			.orElse(labelMap.get(settings("fallbackLanguage")))
 			.orElse(labelMap.values.headOption)
 			.flatMap(extractString(_, List("value")))
 	}
@@ -172,12 +94,12 @@ object WikiDataImport extends SparkJob {
 	  * @param json JSON object of the Wikidata entry
 	  * @return WikiDataEntity with every field other than the properties and aliases filled with data
 	  */
-	def fillEntityValues(json: JsValue): WikiDataEntity = {
+	def fillSimpleValues(json: JsValue): WikiDataEntity = {
 		val entity = WikiDataEntity(extractString(json, List("id")).getOrElse(""))
 		entity.entitytype = extractString(json, List("type"))
-		entity.wikiname = extractString(json, List("sitelinks", language + "wiki", "title"))
-		entity.description = extractString(json, List("descriptions", language, "value"))
-			.orElse(extractString(json, List("descriptions", fallbackLanguage, "value")))
+		entity.wikiname = extractString(json, List("sitelinks", settings("language") + "wiki", "title"))
+		entity.description = extractString(json, List("descriptions", settings("language"), "value"))
+			.orElse(extractString(json, List("descriptions", settings("fallbackLanguage"), "value")))
 		entity.label = extractLabels(json, entity.entitytype)
 		entity
 	}
@@ -214,13 +136,12 @@ object WikiDataImport extends SparkJob {
 	}
 
 	/**
-	  * Parses a JSON object given as String into a WikiDataEntity
-	  * @param line String containing the JSON object
-	  * @return WikiDataEntity filled with the data contained in the JSON object
+	  * Parses a JSON object into a WikiDataEntity
+	  * @param json JSON-Object containing the data
+	  * @return WikiDataEntity containing the parsed data
 	  */
-	def parseEntity(line: String): WikiDataEntity = {
-		val json = Json.parse(line)
-		val entity = fillEntityValues(json)
+	override def fillEntityValues(json: JsValue): WikiDataEntity = {
+		val entity = fillSimpleValues(json)
 		entity.aliases = extractAliases(json)
 
 		val claims = extractMap(json, List("claims"))
@@ -240,10 +161,7 @@ object WikiDataImport extends SparkJob {
 	  * @return Wikidata Entity with translated property ids
 	  */
 	def translatePropertyIDs(entity: WikiDataEntity, properties: Map[String, String]): WikiDataEntity = {
-		entity.data = entity.data.map { case (key, value) =>
-			(properties.getOrElse(key, key), value)
-		}
-		entity
+		entity.copy(data = entity.data.mapKeys(key => properties.getOrElse(key, key)))
 	}
 
 	/**
@@ -271,8 +189,8 @@ object WikiDataImport extends SparkJob {
 		val jsonFile = input.fromAnyRDD[String]().head
 		val wikiData = jsonFile
 			.map(cleanJSON)
-			.filter(_.nonEmpty)
-			.map(parseEntity)
+			.collect { case line: String if line.nonEmpty => Json.parse(line) }
+			.map(fillEntityValues)
 		val properties = buildPropertyMap(wikiData)
 		val propertyBroadcast = sc.broadcast(properties)
 

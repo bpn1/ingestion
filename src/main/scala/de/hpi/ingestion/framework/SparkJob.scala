@@ -3,7 +3,6 @@ package de.hpi.ingestion.framework
 import com.datastax.spark.connector.cql.CassandraConnector
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
@@ -17,7 +16,7 @@ trait SparkJob extends Configurable {
 	val cassandraSaveQueries = ListBuffer[String]()
 
 	/**
-	  * Loads a four-tuple of RDD-Options used in the job.
+	  * Loads a number of input RDDs used in the job.
 	  * @param sc Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
@@ -51,9 +50,8 @@ trait SparkJob extends Configurable {
 		args
 			.headOption
 			.foreach(file => configFile = file)
-		if(configFile.nonEmpty) {
-			parseConfig()
-		}
+		if(configFile.nonEmpty) parseConfig()
+		if(importConfigFile.nonEmpty) parseImportConfig()
 		true
 	}
 

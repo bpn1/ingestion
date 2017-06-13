@@ -2,7 +2,6 @@ package de.hpi.ingestion.dataimport.spiegel
 
 import de.hpi.ingestion.dataimport.spiegel.models.SpiegelArticle
 import play.api.libs.json.{JsObject, Json}
-
 import scala.io.Source
 
 object TestData {
