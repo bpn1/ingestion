@@ -27,10 +27,10 @@ trait Configurable {
 	}
 
 	def parseImportConfig(): Unit = {
-		val importXml = if(importConfigFile.contains("/")) {
-			XML.loadFile(importConfigFile)
-		} else {
-			XML.load(getClass.getResource(s"/configs/$importConfigFile"))
+		val url = getClass.getResource(s"/configs/$importConfigFile")
+		val importXml = url match {
+			case null => XML.loadFile(importConfigFile)
+			case _ => XML.load(url)
 		}
 		_normalizationSettings = parseNormalizationConfig(importXml)
 		_sectorSettings = parseSectorConfig(importXml)
