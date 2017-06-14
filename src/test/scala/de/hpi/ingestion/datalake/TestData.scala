@@ -98,13 +98,14 @@ object TestData {
 		)
 	}
 
-	def companyNames: Map[String, List[String]] = {
+	def companyNames: Map[String, Option[String]] = {
 		Map(
-			"Audisport AG" -> List("AG"),
-			"Audiobuch Verlag oHG" -> List("oHG"),
-			"Audax GmbH" -> List("GmbH"),
-			"Audio Active" -> Nil,
-			"" -> Nil
+			"Audisport AG" -> Option("AG"),
+			"Audiobuch Verlag oHG" -> Option("oHG"),
+			"Audax GmbH" -> Option("GmbH"),
+			"Schützenverein 1863, e.V." -> Option("e.V."),
+			"Audio Active" -> None,
+			"" -> None
 		)
 	}
 
