@@ -103,7 +103,6 @@ object TestData {
 			"Audisport AG" -> Option("AG"),
 			"Audiobuch Verlag oHG" -> Option("oHG"),
 			"Audax GmbH" -> Option("GmbH"),
-			"Schützenverein 1863, e.V." -> Option("e.V."),
 			"Audio Active" -> None,
 			"" -> None
 		)

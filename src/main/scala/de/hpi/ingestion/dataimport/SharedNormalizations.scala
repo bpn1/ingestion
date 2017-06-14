@@ -26,7 +26,7 @@ object SharedNormalizations {
 	  */
 	def normalizeLegalForm(values: List[String]): List[String] = {
 		values
-			.flatMap(value => List(this.legalFormMapping.getOrElse(value, value)))
+			.flatMap(value => List(this.legalFormMapping.getOrElse(value, value).replaceAll(" \\.", ".")))
 			.distinct
 	}
 
