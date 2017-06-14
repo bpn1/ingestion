@@ -19,7 +19,7 @@ object SharedNormalizations {
 		catch { case ex: MalformedURLException => false }
 	}
 
-	/***
+	/**
 	  * Normalize Legal Form to its abbreviation by using the legalFormMapping Map
 	  * @param values list of legal forms
 	  * @return normalized legal forms
