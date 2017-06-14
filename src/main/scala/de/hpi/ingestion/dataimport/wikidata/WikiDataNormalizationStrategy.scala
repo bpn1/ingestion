@@ -77,9 +77,9 @@ object WikiDataNormalizationStrategy extends Serializable {
 	}
 
 	/***
-	  * Normalize Legal Form
-	  * @param values
-	  * @return
+	  * Normalize Legal Form to its abbreviation by using the legalFormMapping Map
+	  * @param values list of legal forms
+	  * @return normalized legal forms
 	  */
 	def normalizeLegalForm(values: List[String]): List[String] = {
 		values.flatMap(value => List(legalFormMapping.getOrElse(value, value)))
@@ -89,7 +89,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 	  * Mapping of legal Form
 	  * @return
 	  */
-	def legalFormMapping: Map[String, String] = Map(
+	val legalFormMapping = Map(
 		"Aktiengesellschaft" -> "AG",
 		"Gesellschaft mit beschränkter Haftung" -> "GmbH",
 		"Eingetragene Genossenschaft" -> "EG",
