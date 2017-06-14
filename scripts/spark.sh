@@ -6,7 +6,7 @@ if [ "$#" -lt 1 ]; then
     exit 1
 fi
 
-while getopts ":hm:c:n:d:e:t" opt; do
+while getopts ":hm:c:n:d:e:tj:x" opt; do
 	case $opt in
 		h)
 			echo $usage
@@ -16,6 +16,8 @@ while getopts ":hm:c:n:d:e:t" opt; do
 			echo -e "-d <num_gb>\tnumber of GB used as driver memory"
 			echo -e "-e <num_gb>\tnumber of GB used as executor memory"
 			echo -e "-t\t\tincrease executor stack size for trie deserialization"
+			echo -e "-j <jars>\textra jars to add to the classpath (comma separated list)"
+			echo -e "-x\t\tuse a node of the cluster as driver (deploy mode cluster)"
 			exit 1
 			;;
 		m)
@@ -35,6 +37,12 @@ while getopts ":hm:c:n:d:e:t" opt; do
 			;;
 		t)
 			trie_option="--conf spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
+			;;
+		j)
+			jar_option="--jars $OPTARG"
+			;;
+		x)
+			deploy_mode="--deploy-mode cluster"
 			;;
 		\?)
 			echo "Invalid option: -$OPTARG" >&2
@@ -79,7 +87,7 @@ num_exec="--num-executors $num_executors"
 submit_command="spark-submit $class $num_exec $exec_cores $exec_mem $driver_mem $trie_option $jarPath $*"
 export HADOOP_USER_NAME="bp2016n1"
 if [ "$mode" = "yarn" ]; then
-	spark-submit $class $num_exec $exec_cores $exec_mem $driver_mem $trie_option $jarPath $*
+	spark-submit $class $jar_option $deploy_mode $num_exec $exec_cores $exec_mem $driver_mem $trie_option $jarPath $*
 elif [ "$mode" = "shell" ]; then
 	spark-shell $num_exec $exec_cores $exec_mem $driver_mem $trie_option --jars $jarPath $*
 elif [ "$mode" = "print" ]; then
