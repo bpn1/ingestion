@@ -129,6 +129,13 @@ CREATE TABLE wikidumps.redirects (
 	page text
 );
 
+CREATE TABLE wikidumps.dbpediarelations (
+	subjectentity text,
+	relationtype text,
+	objectentity text,
+	PRIMARY KEY (subjectentity, relationtype, objectentity)
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,
