@@ -5,6 +5,7 @@ import queue
 import time
 import pause
 import sys
+import weakref
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 
@@ -13,6 +14,7 @@ geocoder = Geocoder(
 
 
 class MapboxSubject:
+	instances = []
 	def __init__(
 		self,
 		identifier=uuid.uuid4(),
@@ -21,6 +23,7 @@ class MapboxSubject:
 		request_string = "",
 		coordinates = ""
 	):
+		self.__class__.instances.append(weakref.proxy(self))
 		self.uuid = identifier
 		self.name = name
 		self.place_name = place_name
@@ -61,18 +64,14 @@ def generate_request(
 
 def process_api_response(response):
 	try:
-		response.json()['features'][0]
-		if 'center' in response.json()['features'][0]:
-			coordinates = response.json()['features'][0]['center']
+		coordinates = response.json()['features'][0]['center'] or ""
+		name = response.json()['features'][0]['text'] or ""
+		place_name = response.json()['features'][0]['place_name'] or ""
+
+		if isinstance(coordinates, list):
+			coordinates = ";".join(str(x) for x in coordinates)
 		else:
 			coordinates = ""
-
-		if 'text' in response.json()['features'][0]:
-			name = response.json()['features'][0]['text']
-		else:
-			name = ""
-
-		place_name = response.json()['features'][0]['place_name'] or ""
 
 		return {
 			"coordinates": coordinates,
@@ -83,9 +82,10 @@ def process_api_response(response):
 		print("OS error: {0}".format(err))
 	except ValueError:
 		print("Value Error")
+	except IndexError:
+		pass
 	except:
 		print("Unexpected error:", sys.exc_info()[0])
-		raise
 
 
 def fire_single_request_to_obtain_coordinates(request_string):
@@ -114,7 +114,7 @@ def fire_single_request_to_obtain_coordinates(request_string):
 
 def evaluate_geocoding_response_status(response):
 	if response.status_code == 200:
-		print(response.json())
+		#print(response.json())
 		return {
 			"response": response,
 		}
@@ -179,7 +179,6 @@ def main():
 
 		if response:
 			try:
-				#print (response)
 				subject.add_geocode(repr(response['coordinates']))
 				session.execute(
 					"""
@@ -193,8 +192,11 @@ def main():
 			except ValueError:
 				print("Value Error")
 			except:
-				print("Unexpected error:", sys.exc_info()[0])
+				print("Unexpected error2:", sys.exc_info()[0])
 				raise
+
+	for subject in A.instances:
+		print(subject.name)
 
 if __name__ == '__main__':
 	main()
