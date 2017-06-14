@@ -5,11 +5,9 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.rdd.RDD
-
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
-
 import scala.collection.mutable
 
 

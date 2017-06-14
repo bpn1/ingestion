@@ -192,6 +192,8 @@ object TestData {
 	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Unknown")
 	def normalizedSectors: List[String] = List("Kraftfahrzeughersteller", "Brauerei")
 	def mappedSectors: List[String] = List("29", "45", "11")
+	def unnormalizedURLs: List[String] = List("https://youtube.de@de .", "http://facebook.de@de .", "http://www.google.de", "www.hans", "NotAURL@de .")
+	def normalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de")
 	def unnormalizedDefaults: List[String] = List("very^^xsd:nonNegativeInteger", "generic@de .", "dbpedia-de:values", "even", "dash-containing^^xsd:float", "123^^xsd:integer", "b4ckf1sh")
 	def normalizedDefaults: List[String] = List("very", "generic", "values", "even", "dash containing", "123", "b4ckf1sh")
 
@@ -201,15 +203,17 @@ object TestData {
 		this.unnormalizedCountries,
 		this.unnormalizedSectors,
 		this.unnormalizedEmployees,
+		this.unnormalizedURLs,
 		List("default")
 	)
-	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "default")
+	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "gen_urls", "default")
 	def applyStrategies: List[(List[String] => List[String])] = List(
 		DBpediaNormalizationStrategy.normalizeCoords,
 		DBpediaNormalizationStrategy.normalizeCity,
 		DBpediaNormalizationStrategy.normalizeCountry,
 		DBpediaNormalizationStrategy.normalizeSector,
 		DBpediaNormalizationStrategy.normalizeEmployees,
+		DBpediaNormalizationStrategy.normalizeURLs,
 		identity
 	)
 	def unnormalizedAttributes: Map[String, List[String]] = Map(
@@ -217,14 +221,16 @@ object TestData {
 		"geo_coords" -> this.unnormalizedCoords,
 		"geo_country" -> this.unnormalizedCountries,
 		"geo_city" -> this.unnormalizedCities,
-		"gen_employees" -> this.unnormalizedEmployees
+		"gen_employees" -> this.unnormalizedEmployees,
+		"gen_urls" -> this.unnormalizedURLs
 	)
 	def normalizedAttributes: Map[String, List[String]] = Map(
 		"gen_sectors" -> this.mappedSectors,
 		"geo_coords" -> this.normalizedCoords,
 		"geo_country" -> this.normalizedCountries,
 		"geo_city" -> this.normalizedCities,
-		"gen_employees" -> this.normalizedEmployees
+		"gen_employees" -> this.normalizedEmployees,
+		"gen_urls" -> this.normalizedURLs
 	)
 }
 // scalastyle:on line.size.limit

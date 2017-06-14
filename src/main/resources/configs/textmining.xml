@@ -12,6 +12,7 @@
         <redirectTable>redirects</redirectTable>
         <simMeasureStatsTable>sim_measure_stats</simMeasureStatsTable>
         <featureTable>featureentries</featureTable>
+        <secondOrderFeatureTable>featureentrieswithsof</secondOrderFeatureTable>
         <trieFile>wikipedia/trie_full.bin</trieFile>
         <dfFile>wikipedia/wikipedia_docfreq</dfFile>
         <sentenceTable>wikipediasentences</sentenceTable>

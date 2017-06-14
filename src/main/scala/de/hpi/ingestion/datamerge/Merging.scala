@@ -1,7 +1,6 @@
 package de.hpi.ingestion.datamerge
 
 import java.util.UUID
-
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
