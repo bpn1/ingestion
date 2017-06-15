@@ -171,7 +171,7 @@ object ClassifierTraining extends SparkJob {
 	def averageStatistics(stats: List[PrecisionRecallDataTuple]): PrecisionRecallDataTuple = {
 		val n = stats.length
 		val threshold = stats.headOption.map(_.threshold).getOrElse(1.0)
-		stats.map { case PrecisionRecallDataTuple(thresh, precision, recall, fscore) =>
+		stats.map { case PrecisionRecallDataTuple(statThreshold, precision, recall, fscore) =>
 			(precision, recall, fscore)
 		}.unzip3 match {
 			case (precision, recall, fscore) =>
