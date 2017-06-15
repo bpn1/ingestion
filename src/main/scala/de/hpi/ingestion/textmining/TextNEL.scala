@@ -19,6 +19,7 @@ import org.apache.spark.mllib.tree.model.RandomForestModel
 object TextNEL extends SplitSparkJob {
 	appName = "Text NEL"
 	configFile = "textmining.xml"
+	cassandraSaveQueries += s"TRUNCATE TABLE ${settings("keyspace")}.${settings("linkedArticlesTable")}"
 	var classifier: Option[RandomForestModel] = None
 
 	// $COVERAGE-OFF$
@@ -245,18 +246,18 @@ object TextNEL extends SplitSparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		loadModelFunction(sc)
-		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
+		val allArticles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
-		val linkArticles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
+		val articlesPartition = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
 
-		val numDocuments = articlesWithTermFrequencies.count()
+		val numDocuments = allArticles.count()
 		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 		val defaultIdf = calculateIdf(defaultDf, numDocuments)
 
-		val articleTfs = transformArticleTfs(articlesWithTermFrequencies)
+		val articleTfs = transformArticleTfs(allArticles)
 		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf)
 
-		val articles = linkArticles.map(article => Article(article.title, article.getText()))
+		val articles = articlesPartition.map(article => Article(article.title, article.getText()))
 		val linkCandidatesTfs = findLinkCandidates(articles, aliases, sc)
 		val linkCandidatesTfidf = calculateTfidf(linkCandidatesTfs, numDocuments, defaultIdf)
 		val aliasPageScores = computeAliasPageScores(aliases)

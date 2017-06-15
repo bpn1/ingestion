@@ -153,7 +153,7 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			.foreach(_ should not be empty)
 	}
 
-	"Input split" should "split input into 10 parts" in {
+	"Input split" should "split input into 10 parts with each one consisting of 3 parts" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
