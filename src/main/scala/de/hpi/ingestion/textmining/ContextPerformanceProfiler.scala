@@ -76,7 +76,7 @@ object ContextPerformanceProfiler extends SparkJob {
 		val articles = articlesWithTermFrequencies.map(_.getText().split(" ").toSeq)
 		sparkMLlibContextExtraction(articles, sc)
 
-		val statistics = List[(String, Double)]()
+		val statistics = List[(String, Double)](("SparkMLlib", 1234.567))
 		List(sc.parallelize(statistics)).toAnyRDD()
 	}
 }
