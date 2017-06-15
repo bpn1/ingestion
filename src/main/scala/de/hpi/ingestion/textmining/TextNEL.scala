@@ -232,8 +232,7 @@ object TextNEL extends SplitSparkJob {
 	  * @return Collection of input RDD Lists to be processed sequentially.
 	  */
 	override def splitInput(input: List[RDD[Any]], args: Array[String] = Array()): Traversable[List[RDD[Any]]] = {
-		val partitions = CosineContextComparator.splitInput(input, args)
-		partitions.map { case List(leanerArticles, aliases, articlePartition) => List(articlePartition, aliases) }
+		CosineContextComparator.splitInput(input, args)
 	}
 
 	/**
@@ -248,6 +247,7 @@ object TextNEL extends SplitSparkJob {
 		loadModelFunction(sc)
 		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
+		val linkArticles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
 
 		val numDocuments = articlesWithTermFrequencies.count()
 		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
@@ -256,9 +256,8 @@ object TextNEL extends SplitSparkJob {
 		val articleTfs = transformArticleTfs(articlesWithTermFrequencies)
 		val articleTfidf = calculateTfidf(articleTfs, numDocuments, defaultIdf)
 
-		val articles = articlesWithTermFrequencies.map(article => Article(article.title, article.getText()))
+		val articles = linkArticles.map(article => Article(article.title, article.getText()))
 		val linkCandidatesTfs = findLinkCandidates(articles, aliases, sc)
-		val a = linkCandidatesTfs.collect
 		val linkCandidatesTfidf = calculateTfidf(linkCandidatesTfs, numDocuments, defaultIdf)
 		val aliasPageScores = computeAliasPageScores(aliases)
 			.collect
@@ -266,13 +265,9 @@ object TextNEL extends SplitSparkJob {
 
 		val linkFeatureEntries = CosineContextComparator
 			.compareLinksWithArticles(linkCandidatesTfidf, sc.broadcast(aliasPageScores), articleTfidf)
-		val b = linkFeatureEntries.collect
 		val data = linkFeatureEntries.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
-		val c = data.collect
 		val namedEntities = linkNamedEntities(data)
-		val d = namedEntities.collect
 		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)
-		val e = articlesWithLinks.collect
 		List(namedEntities).toAnyRDD() ++ List(articlesWithLinks).toAnyRDD()
 	}
 }

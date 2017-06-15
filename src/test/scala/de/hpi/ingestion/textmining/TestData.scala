@@ -30,17 +30,30 @@ object TestData {
 			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test mit Link")),
 			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test ohne Link")),
 			Link("Audi", "Audi Test mit Link", Option(7), Map(), Option("Testartikel")),
-			Link("Brachttal", "Audi Test ohne Link", Option(13), Map(), Option("Testartikel")),
-			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel")),
 			Link("Brachttal", "Audi Test ohne Link", Option(55), Map(), Option("Streitberg (Brachttal)")),
-			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
-			Link("Büdinger Wald", "Testartikel", Option(546), Map(), Option("Streitberg (Brachttal)")),
-			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
+			Link("Brachttal", "Audi Test ohne Link", Option(13), Map(), Option("Testartikel")),
 			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(66), Map(), Option("Streitberg (Brachttal)")),
-			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
-			Link("Hessen", "Streitberg (Brachttal)", Option(87), Map(), Option("Streitberg (Brachttal)")),
 			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64), Map(), Option("Testartikel")),
-			Link("1377", "Testartikel", Option(225), Map(), Option("Streitberg (Brachttal)"))
+			Link("Hessen", "Streitberg (Brachttal)", Option(87), Map(), Option("Streitberg (Brachttal)")),
+			Link("1377", "Testartikel", Option(225), Map(), Option("Streitberg (Brachttal)")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
+			Link("Büdinger Wald", "Testartikel", Option(546), Map(), Option("Streitberg (Brachttal)")),
+			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
+			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel"))
+		)
+	}
+
+	def namedEntitiesForIncompleteArticlesSet(): Set[Link] = {
+		Set(
+			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test ohne Link")),
+			Link("Audi", "Audi Test mit Link", Option(7), Map(), Option("Testartikel")),
+			Link("Brachttal", "Audi Test ohne Link", Option(13), Map(), Option("Testartikel")),
+			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64), Map(), Option("Testartikel")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
+			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
+			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel"))
 		)
 	}
 
@@ -450,6 +463,36 @@ object TestData {
 					Link("Brachttal", "Brachttal", Option(13)),
 					Link("historisches Jahr", "1377", Option(24)))
 			))
+	}
+
+	def incompleteArticlesWithCompleteContexts(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
+				List(),
+				List(),
+				List("Audi"),
+				linkswithcontext = List(),
+				context = Map("audi" -> 1, "verlink" -> 1)
+			),
+			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
+				List(
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24))
+				),
+				List(),
+				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
+				linkswithcontext = List(
+					Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1))),
+				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1),
+				textlinksreduced = List(
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24)))
+			)
+		)
 	}
 
 	def articlesWithLinkAndAliasContexts(): Set[ParsedWikipediaEntry] = {

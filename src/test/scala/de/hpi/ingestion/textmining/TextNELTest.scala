@@ -26,7 +26,7 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
 		val namedEntities = TextNEL
 			.run(input, sc)
 			.fromAnyRDD[Link]()
@@ -56,7 +56,7 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
 		val namedEntities = TextNEL
 			.run(input, sc)
 			.fromAnyRDD[Link]()
@@ -64,6 +64,38 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			.collect
 			.toSet
 		namedEntities shouldEqual TestData.namedEntitiesSet()
+
+		TextNEL.predictionFunction = oldPredictionFunction
+		TextNEL.loadModelFunction = oldModelFunction
+		CosineContextComparator.docfreqStreamFunction = oldDocFreqStreamFunction
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	"Found named entities for incomplete articles" should "be exactly these named entities" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val testTrieStreamFunction = TestData.fullTrieStream _
+		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
+		val oldDocFreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val testDocFreqStreamFunction = TestData.docfreqStream("docfreq") _
+		CosineContextComparator.docfreqStreamFunction = testDocFreqStreamFunction
+		val oldModelFunction = TextNEL.loadModelFunction
+		val testModelFunction = TestData.dummyFunction _
+		TextNEL.loadModelFunction = testModelFunction
+		val oldPredictionFunction = TextNEL.predictionFunction
+		val testPredictionFunction = TestData.predictionFunction _
+		TextNEL.predictionFunction = testPredictionFunction
+
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		val incompleteArticles = sc.parallelize(TestData.incompleteArticlesWithCompleteContexts().toList)
+		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(incompleteArticles).toAnyRDD()
+		val namedEntities = TextNEL
+			.run(input, sc)
+			.fromAnyRDD[Link]()
+			.head
+			.collect
+			.toSet
+		namedEntities shouldEqual TestData.namedEntitiesForIncompleteArticlesSet()
 
 		TextNEL.predictionFunction = oldPredictionFunction
 		TextNEL.loadModelFunction = oldModelFunction
@@ -128,7 +160,7 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val splitInput = TextNEL.splitInput(input).toList
 		splitInput should have length 10
 		splitInput.foreach { case inputPartition =>
-			inputPartition should have length 2
+			inputPartition should have length 3
 		}
 	}
 }
