@@ -2467,8 +2467,20 @@ object TestData {
 			(0.0, 0.0))
 	}
 
+	def badLabeledPredictions(): List[(Double, Double)] = {
+		List(
+			(0.0, 0.0),
+			(0.0, 0.0),
+			(0.0, 0.0)
+		)
+	}
+
 	def predictionStatistics(): PrecisionRecallDataTuple = {
 		PrecisionRecallDataTuple(1.0, 5.0 / 7.0, 5.0 / 6.0, 25.0 / 34.0)
+	}
+
+	def badPredictionStatistics(): PrecisionRecallDataTuple = {
+		PrecisionRecallDataTuple(1.0, 0.0, 0.0, 0.0)
 	}
 
 	def statisticTuples(): List[PrecisionRecallDataTuple] = {

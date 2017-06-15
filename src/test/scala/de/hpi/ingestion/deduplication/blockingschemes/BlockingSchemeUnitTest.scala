@@ -21,7 +21,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	}
 
 	"LastLettersBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.subjects
+		val subjects = TestData.subjects :+ Subject()
 		val blockingScheme = LastLettersBlockingScheme("Test LastLettersBS")
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.lastLettersBlockingScheme
@@ -63,5 +63,12 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.randomBlockingScheme
 		keys.toSet shouldEqual expected.toSet
+	}
+
+	it should "be created with the proper tag" in {
+		val name = "Test Random Scheme"
+		val scheme = RandomBlockingScheme(name)
+		scheme.tag shouldEqual name
+		scheme.isInstanceOf[RandomBlockingScheme] shouldBe true
 	}
 }
