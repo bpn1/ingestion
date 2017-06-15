@@ -157,22 +157,6 @@ object TextNEL extends SplitSparkJob {
 	}
 
 	/**
-	  * Replaces special characters with proper HTML encoding.
-	  *
-	  * @param text original text with special characters
-	  * @return text with HTML encoded characters
-	  */
-	def replaceSpecialCharacters(text: String): String = {
-		val htmlEncodingMap = Map("ä" -> "&auml;", "ö" -> "&ouml;", "ü" -> "&uuml;", "Ä" -> "&Auml;", "Ö" -> "&Ouml;",
-			"Ü" -> "&Uuml;")
-		var encodedText = text
-		htmlEncodingMap.foreach { case (specialCharacter, encoding) =>
-			encodedText = encodedText.replaceAll(specialCharacter, encoding)
-		}
-		encodedText
-	}
-
-	/**
 	  * Inserts HTML links into an article text where named entities were found.
 	  *
 	  * @param title title of the article
@@ -202,7 +186,6 @@ object TextNEL extends SplitSparkJob {
 				html += "</a>"
 			}
 		html += text.substring(processedCharacters, text.length)
-		html = replaceSpecialCharacters(html)
 		Article(title, html)
 	}
 
