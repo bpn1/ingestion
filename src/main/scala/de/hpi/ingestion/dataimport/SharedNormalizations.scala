@@ -31,26 +31,61 @@ object SharedNormalizations {
 	}
 
 	val legalFormMapping = Map(
+		// AG
 		"Aktiengesellschaft" -> "AG",
-		"Gesellschaft mit beschränkter Haftung" -> "GmbH",
-		"Gesellschaft mbH" -> "GmbH",
-		"Eingetragene Genossenschaft" -> "EG",
-		"Anstalt des öffentlichen Rechts"-> "AdöR",
-		"Kommanditgesellschaft" -> "KG",
-		"Europäische Gesellschaft" -> "SE",
-		"Offene Handelsgesellschaft" -> "oHG",
-		"Gesellschaft bürgerlichen Rechts" -> "GbR",
-		"eingetragener Verein" -> "e.V.",
-		"gemeinnütziger Verein" -> "e.V.",
-		"Gemeinnützige GmbH" -> "GmbH",
-		"Kommanditgesellschaft auf Aktien" -> "KGaA",
-		"Kommanditgesellschaft auf Aktien (allgemein)" -> "KGaA",
-		"Einpersonen GmbH" -> "GmbH",
 		"Kleine Aktiengesellschaft" -> "AG",
-		"Verein" -> "e.V.",
 		"Gemeinnützige Aktiengesellschaft" -> "AG",
 		"Geschlossene Aktiengesellschaft" -> "AG",
-		"Kommanditaktiengesellschaft" -> "KGaA",
-		"e.V" -> "e.V."
+		// GmbH
+		"Gesellschaft mit beschränkter Haftung" -> "GmbH",
+		"Gemeinnützige GmbH" -> "GmbH",
+		"Gesellschaft mbH" -> "GmbH",
+		"gesellschaft mbH" -> "GmbH",
+		"GmbH gesellschaft" -> "GmbH",
+		"gesellschaft GmbH" -> "GmbH",
+		"GmbH." -> "GmbH",
+		"gesellschaft m. b. H" -> "GmbH",
+		"GmbH Gesellschaft" -> "GmbH",
+		". GmbH" -> "GmbH",
+		"Einpersonen GmbH" -> "GmbH",
+		// gGmbH
+		"gemeinnützige GmbH" -> "gGmbH",
+		// GmbH & Co. KG
+		"gesellschaft mbH & Co. KG" -> "GmbH & Co. KG",
+		"GmbH & Co KG" -> "GmbH & Co. KG",
+		"gesellschaft GmbH & Co. KG" -> "GmbH & Co. KG",
+		"GmbH Co. KG" -> "GmbH & Co. KG",
+		"GmbH Co KG" -> "GmbH & Co. KG",
+		"GmbH + Co. KG" -> "GmbH & Co. KG",
+		// e.V.
+		"eingetragener Verein" -> "e.V.",
+		"gemeinnütziger Verein" -> "e.V.",
+		"Verein" -> "e.V.",
+		"e.V" -> "e.V.",
+		"e. V." -> "e.V.",
+		"e V." -> "e.V.",
+		"e V" -> "e.V.",
+		"gemeinschaft e. V" -> "e.V.",
+		// e.K.
+		"e. K." -> "e.K.",
+		"e K." -> "e.K.",
+		// UG haftungsbeschränkt
+		"gesellschaft UG haftungsbeschränkt" -> "UG haftungsbeschränkt",
+		// EG
+		"Eingetragene Genossenschaft" -> "EG",
+		// AdöR
+		"Anstalt des öffentlichen Rechts"-> "AdöR",
+		// KG
+		"Kommanditgesellschaft" -> "KG",
+		// SE
+		"Europäische Gesellschaft" -> "SE",
+		// oHG
+		"Offene Handelsgesellschaft" -> "oHG",
+		// GbR
+		"Gesellschaft bürgerlichen Rechts" -> "GbR",
+		// KGaA
+		"Kommanditgesellschaft auf Aktien" -> "KGaA",
+		"Kommanditgesellschaft auf Aktien (allgemein)" -> "KGaA",
+		"Kommanditaktiengesellschaft" -> "KGaA"
 	)
 }
