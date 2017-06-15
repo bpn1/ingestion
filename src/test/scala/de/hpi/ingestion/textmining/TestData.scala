@@ -10,7 +10,7 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models.{TrieAlias, _}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
-import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.mllib.linalg.{DenseVector, Vector}
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
@@ -25,6 +25,25 @@ import scala.io.{BufferedSource, Source}
 // scalastyle:off file.size.limit
 
 object TestData {
+	def namedEntitiesSet(): Set[Link] = {
+		Set(
+			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test mit Link")),
+			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test ohne Link")),
+			Link("Audi", "Audi Test mit Link", Option(7), Map(), Option("Testartikel")),
+			Link("Brachttal", "Audi Test ohne Link", Option(13), Map(), Option("Testartikel")),
+			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel")),
+			Link("Brachttal", "Audi Test ohne Link", Option(55), Map(), Option("Streitberg (Brachttal)")),
+			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
+			Link("Büdinger Wald", "Testartikel", Option(546), Map(), Option("Streitberg (Brachttal)")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
+			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(66), Map(), Option("Streitberg (Brachttal)")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(87), Map(), Option("Streitberg (Brachttal)")),
+			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64), Map(), Option("Testartikel")),
+			Link("1377", "Testartikel", Option(225), Map(), Option("Streitberg (Brachttal)"))
+		)
+	}
+
 	def valuesList(): List[Double] = {
 		List(5.0, 7.1, 5.0, 2.9, 7.1)
 	}
@@ -2529,6 +2548,12 @@ object TestData {
 
 	def loadRandomForestModel(sc: SparkContext): RandomForestModel = {
 		randomForestModel()
+	}
+
+	def dummyFunction(sc: SparkContext): Unit = {}
+
+	def predictionFunction(dataPoint: Vector): Double = {
+		1.0
 	}
 
 	def formattedPredictionStatistics(): String = {

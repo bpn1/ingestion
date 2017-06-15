@@ -9,6 +9,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.AliasTrieSearch._
 import de.hpi.ingestion.textmining.CosineContextComparator._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.model.RandomForestModel
 
@@ -18,9 +19,11 @@ import org.apache.spark.mllib.tree.model.RandomForestModel
 object TextNEL extends SplitSparkJob {
 	appName = "Text NEL"
 	configFile = "textmining.xml"
+	var classifier: Option[RandomForestModel] = None
 
 	// $COVERAGE-OFF$
-	var modelFunction = loadModel _
+	var loadModelFunction = loadModel _
+	var predictionFunction = predict _
 
 	/**
 	  * Loads Wikipedia entries from the Cassandra.
@@ -53,10 +56,20 @@ object TextNEL extends SplitSparkJob {
 	/**
 	  * Loads the random forest classifier model from the HDFS.
 	  *
-	  * @return random forest classifier model
+	  * @param sc SparkContext used for loading from the HDFS
 	  */
-	def loadModel(sc: SparkContext): RandomForestModel = {
-		RandomForestModel.load(sc, settings("classifierModel"))
+	def loadModel(sc: SparkContext): Unit = {
+		classifier = Some(RandomForestModel.load(sc, settings("classifierModel")))
+	}
+
+	/**
+	  * Predicts the classes of the given features.
+	  *
+	  * @param dataPoint data point consisting of features
+	  * @return predicted class
+	  */
+	def predict(dataPoint: Vector): Double = {
+		classifier.get.predict(dataPoint)
 	}
 
 	// $COVERAGE-ON$
@@ -64,16 +77,14 @@ object TextNEL extends SplitSparkJob {
 	/**
 	  * Uses the trained classifier to find and link named entities.
 	  *
-	  * @param data       link candidates with their respective labeled points
-	  * @param classifier trained random forest classifier model
+	  * @param data link candidates with their respective labeled points
 	  * @return identified links to named entities
 	  */
 	def linkNamedEntities(
-		data: RDD[(Link, LabeledPoint)],
-		classifier: RandomForestModel
+		data: RDD[(Link, LabeledPoint)]
 	): RDD[Link] = {
-		data.map { case (linkCandidate, LabeledPoint(label, features)) =>
-			val prediction = classifier.predict(features)
+		data.map { case (linkCandidate, LabeledPoint(label, dataPoint)) =>
+			val prediction = predictionFunction(dataPoint)
 			(linkCandidate, prediction)
 		}.filter(_._2 == 1)
 			.map(_._1)
@@ -234,6 +245,7 @@ object TextNEL extends SplitSparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+		loadModelFunction(sc)
 		val articlesWithTermFrequencies = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
 
@@ -246,17 +258,21 @@ object TextNEL extends SplitSparkJob {
 
 		val articles = articlesWithTermFrequencies.map(article => Article(article.title, article.getText()))
 		val linkCandidatesTfs = findLinkCandidates(articles, aliases, sc)
+		val a = linkCandidatesTfs.collect
 		val linkCandidatesTfidf = calculateTfidf(linkCandidatesTfs, numDocuments, defaultIdf)
 		val aliasPageScores = computeAliasPageScores(aliases)
 			.collect
 			.toMap
 
-		val classifier = modelFunction(sc)
 		val linkFeatureEntries = CosineContextComparator
 			.compareLinksWithArticles(linkCandidatesTfidf, sc.broadcast(aliasPageScores), articleTfidf)
+		val b = linkFeatureEntries.collect
 		val data = linkFeatureEntries.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
-		val namedEntities = linkNamedEntities(data, classifier)
+		val c = data.collect
+		val namedEntities = linkNamedEntities(data)
+		val d = namedEntities.collect
 		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)
+		val e = articlesWithLinks.collect
 		List(namedEntities).toAnyRDD() ++ List(articlesWithLinks).toAnyRDD()
 	}
 }

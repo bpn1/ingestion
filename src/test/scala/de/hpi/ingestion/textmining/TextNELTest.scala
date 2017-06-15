@@ -5,22 +5,24 @@ import de.hpi.ingestion.textmining.models._
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
-import org.apache.spark.rdd.RDD
 import org.jsoup.Jsoup
 
 import scala.util.matching.Regex
 
 class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
-	"Found named entities" should "be empty (due to empty classifier model)" in {
+	"Found named entities" should "not be empty" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
 		val testTrieStreamFunction = TestData.fullTrieStream _
 		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
 		val oldDocFreqStreamFunction = CosineContextComparator.docfreqStreamFunction
 		val testDocFreqStreamFunction = TestData.docfreqStream("docfreq") _
 		CosineContextComparator.docfreqStreamFunction = testDocFreqStreamFunction
-		val oldModelFunction = TextNEL.modelFunction
-		val testModelFunction = TestData.loadRandomForestModel _
-		TextNEL.modelFunction = testModelFunction
+		val oldModelFunction = TextNEL.loadModelFunction
+		val testModelFunction = TestData.dummyFunction _
+		TextNEL.loadModelFunction = testModelFunction
+		val oldPredictionFunction = TextNEL.predictionFunction
+		val testPredictionFunction = TestData.predictionFunction _
+		TextNEL.predictionFunction = testPredictionFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
@@ -30,9 +32,41 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			.fromAnyRDD[Link]()
 			.head
 			.collect
-		namedEntities shouldBe empty
+		namedEntities should not be empty
 
-		TextNEL.modelFunction = oldModelFunction
+		TextNEL.predictionFunction = oldPredictionFunction
+		TextNEL.loadModelFunction = oldModelFunction
+		CosineContextComparator.docfreqStreamFunction = oldDocFreqStreamFunction
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	they should "be exactly these named entities" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val testTrieStreamFunction = TestData.fullTrieStream _
+		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
+		val oldDocFreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val testDocFreqStreamFunction = TestData.docfreqStream("docfreq") _
+		CosineContextComparator.docfreqStreamFunction = testDocFreqStreamFunction
+		val oldModelFunction = TextNEL.loadModelFunction
+		val testModelFunction = TestData.dummyFunction _
+		TextNEL.loadModelFunction = testModelFunction
+		val oldPredictionFunction = TextNEL.predictionFunction
+		val testPredictionFunction = TestData.predictionFunction _
+		TextNEL.predictionFunction = testPredictionFunction
+
+		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val namedEntities = TextNEL
+			.run(input, sc)
+			.fromAnyRDD[Link]()
+			.head
+			.collect
+			.toSet
+		namedEntities shouldEqual TestData.namedEntitiesSet()
+
+		TextNEL.predictionFunction = oldPredictionFunction
+		TextNEL.loadModelFunction = oldModelFunction
 		CosineContextComparator.docfreqStreamFunction = oldDocFreqStreamFunction
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
