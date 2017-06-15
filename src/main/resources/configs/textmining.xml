@@ -20,5 +20,7 @@
         <contextSize>20</contextSize>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
+        <articleCountTable>wikipediaarticlecount</articleCountTable>
+        <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
     </settings>
 </config>

@@ -152,6 +152,23 @@ CREATE TABLE wikidumps.redirects (
 	page text
 );
 
+CREATE TABLE wikidumps.wikipediaarticlecount (
+    countedtable text PRIMARY KEY,
+    count bigint
+);
+
+CREATE TABLE wikidumps.spiegelfeatureentries (
+    article text,
+    offset int,
+    alias text,
+    entity text,
+    correct boolean,
+    cosine_sim multifeature,
+    entity_score multifeature,
+    link_score double,
+    PRIMARY KEY (article, offset, alias, entity)
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,
