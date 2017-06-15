@@ -375,7 +375,7 @@ object TestData {
 		identity
 	)
 	def unnormalizedAttributes: Map[String, List[String]] = Map(
-		"gen_sectors" -> this.unnormalizedSectors,
+		"gen_sectors" -> (this.unnormalizedSectors :+ "Test_Sector"),
 		"geo_coords" -> this.unnormalizedCoords,
 		"geo_country" -> this.unnormalizedCountries,
 		"geo_city" -> this.unnormalizedCities,
@@ -383,7 +383,7 @@ object TestData {
 		"gen_urls" -> this.unnormalizedURLs
 	)
 	def normalizedAttributes: Map[String, List[String]] = Map(
-		"gen_sectors" -> this.mappedSectors,
+		"gen_sectors" -> (this.mappedSectors :+ "Test_Sector"),
 		"geo_coords" -> this.normalizedCoords,
 		"geo_country" -> this.normalizedCountries,
 		"geo_city" -> this.normalizedCities,

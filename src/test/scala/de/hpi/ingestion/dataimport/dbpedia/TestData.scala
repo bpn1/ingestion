@@ -1,5 +1,7 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
+import de.hpi.ingestion.dataimport.SharedNormalizations
+
 import scala.io.Source
 import scala.xml.XML
 import org.apache.spark.SparkContext
@@ -185,13 +187,13 @@ object TestData {
 	def normalizedEmployees: List[String] = List("27000", "10", "1000")
 	def unnormalizedCoords: List[String] = List("48.34822^^xsd:float;10.905282^^xsd:float","48348220^^xsd:integer;10905282^^xsd:integer", "48.34822^^xsd:double;10.905282^^xsd:double")
 	def normalizedCoords: List[String] = List("48.34822;10.905282")
-	def unnormalizedCountries: List[String] = List("dbpedia-de:Japanisches_Kaiser-reich", "LI@de .", "Deutschland@de .", "dbpedia-de:Datei:Flag_of_Bavaria_(striped).svg", "15^^xsd:integer")
-	def normalizedCountries: List[String] = List("LI", "DE")
+	def unnormalizedCountries: List[String] = List("dbpedia-de:Japanisches_Kaiser-reich", "LI@de .", "Deutschland@de .", "dbpedia-de:Datei:Flag_of_Bavaria_(striped).svg", "15^^xsd:integer", "dbpedia-de:AB")
+	def normalizedCountries: List[String] = List("LI", "DE", "AB")
 	def unnormalizedCities: List[String] = List("Frankfurt a.M.@de .", "Frankfurt/Main@de .", "London", "dbpedia-de:Berlin-Tegel")
 	def normalizedCities: List[String] = List("Frankfurt a.M.", "Frankfurt/Main", "London", "Berlin Tegel")
-	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Unknown")
-	def normalizedSectors: List[String] = List("Kraftfahrzeughersteller", "Brauerei")
-	def mappedSectors: List[String] = List("29", "45", "11")
+	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Unknown", "dbpedia-de:TestSector")
+	def normalizedSectors: List[String] = List("Kraftfahrzeughersteller", "Brauerei", "TestSector")
+	def mappedSectors: List[String] = List("29", "45", "11", "TestSector")
 	def unnormalizedURLs: List[String] = List("https://youtube.de@de .", "http://facebook.de@de .", "http://www.google.de", "www.hans", "NotAURL@de .")
 	def normalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de")
 	def unnormalizedDefaults: List[String] = List("very^^xsd:nonNegativeInteger", "generic@de .", "dbpedia-de:values", "even", "dash-containing^^xsd:float", "123^^xsd:integer", "b4ckf1sh")
@@ -204,9 +206,10 @@ object TestData {
 		this.unnormalizedSectors,
 		this.unnormalizedEmployees,
 		this.unnormalizedURLs,
-		List("default")
+		List("default"),
+		List("GmbH", "&", "Co", ".", "KG")
 	)
-	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "gen_urls", "default")
+	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "gen_urls", "default", "gen_legal_form")
 	def applyStrategies: List[(List[String] => List[String])] = List(
 		DBpediaNormalizationStrategy.normalizeCoords,
 		DBpediaNormalizationStrategy.normalizeCity,
@@ -214,7 +217,8 @@ object TestData {
 		DBpediaNormalizationStrategy.normalizeSector,
 		DBpediaNormalizationStrategy.normalizeEmployees,
 		DBpediaNormalizationStrategy.normalizeURLs,
-		identity
+		identity,
+		SharedNormalizations.normalizeLegalForm
 	)
 	def unnormalizedAttributes: Map[String, List[String]] = Map(
 		"gen_sectors" -> this.unnormalizedSectors,

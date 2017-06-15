@@ -282,14 +282,15 @@ object Blocking extends SparkJob {
 			.values
 			.reduceByKey(_ ++ _)
 			.union(statsSum)
-			.map { case (tag, blockStats) =>
+			.flatMap { case (tag, blockStats) =>
 				val minBlockSize = settings("minBlockSize").toInt
 				val filteredStats = blockStats.filter(!filterSmall || !_.isTiny(minBlockSize))
 				val blockComment = Option(s"$comment")
 				val tagCompleteness = pairsCompleteness.getOrElse(tag, 0.0)
 				val tagBlockCount = blockCount.getOrElse(tag, 0)
-				val tagComparisons: BigInt = comparisonCount.getOrElse(tag, 0)
-				BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, tagBlockCount, tagComparisons)
+				comparisonCount
+					.get(tag)
+					.map(BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, tagBlockCount, _))
 			}
 	}
 }

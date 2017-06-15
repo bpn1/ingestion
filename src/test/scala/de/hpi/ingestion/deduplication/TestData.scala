@@ -548,7 +548,8 @@ object TestData {
 								BlockStats("Ferra", 1, 0, 0.0),
 								BlockStats("Porsc", 1, 0, 0.0),
 								BlockStats("Volks", 1, 1, 1.0)
-							), Some("Test comment"), 1.0, 4, 2)))
+							), Some("Test comment"), 1.0, 4, 2)
+		))
 	}
 
 	def emptyBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -568,7 +569,7 @@ object TestData {
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
-	def lastLettersBlockingScheme: List[List[String]] = List(List(" GmbH"), List("wagen"), List("rrari"), List("rsche"))
+	def lastLettersBlockingScheme: List[List[String]] = List(List(" GmbH"), List("wagen"), List("rrari"), List("rsche"), List("undefined"))
 	def listBlockingScheme: List[List[String]] = List(List("Berlin", "Hamburg", "1234"), List("Berlin", "33"), List("undefined"))
 	def geoCoordsBlockingScheme: List[List[String]] = List(List("52;11"), List("52;13"), List("53;14"), List("undefined"))
 	def randomBlockingScheme: List[List[String]] = List(List("-235"), List("754"), List("446"), List("-7"))

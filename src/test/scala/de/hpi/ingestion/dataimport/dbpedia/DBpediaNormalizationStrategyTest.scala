@@ -60,8 +60,7 @@ class DBpediaNormalizationStrategyTest extends FlatSpec with Matchers {
 		(results, strategies, inputs).zipped
 			.map { case (result, expected, input) =>
 				(result(input), expected(input))
-			}
-			.foreach { case (result, expected) =>
+			}.foreach { case (result, expected) =>
 				result shouldEqual expected
 			}
 	}
