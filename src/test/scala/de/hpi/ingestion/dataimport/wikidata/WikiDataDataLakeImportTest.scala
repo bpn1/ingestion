@@ -77,6 +77,6 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val strategies = TestData.strategies
 		val classifier = WikiDataDataLakeImport.classifier
 		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
-		subject.properties("gen_legal_form") shouldEqual TestData.normalizedLegalForm ::: List("AG")
+		subject.properties("gen_legal_form") shouldEqual List("AG")
 	}
 }

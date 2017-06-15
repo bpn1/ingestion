@@ -45,13 +45,6 @@ class WikiDataNormalizationStrategyTest extends FlatSpec with Matchers {
 		result shouldEqual expected
 	}
 
-	"normalizeLegalForm" should "normalize legal forms" in {
-		val legal_froms = TestData.unnormalizedLegalForm
-		val result = WikiDataNormalizationStrategy.normalizeLegalForm(legal_froms)
-		val expected = TestData.normalizedLegalForm
-		result shouldEqual expected
-	}
-
 	"apply" should "return the right normalization method based on a given attribute" in {
 		val inputs = TestData.applyInput
 		val attributes = TestData.applyAttributes

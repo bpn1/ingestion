@@ -123,7 +123,7 @@ object TestData {
 
 	def testEntity: DBpediaEntity = DBpediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
-		label = Option("Liste von Autoren GmbH@de ."),
+		label = Option("Gesellschaft Liste von Autoren mbH@de ."),
 		data = Map(
 			"wikidata_id" -> List("Q123"),
 			"dbo:viafId" -> List("X123"),

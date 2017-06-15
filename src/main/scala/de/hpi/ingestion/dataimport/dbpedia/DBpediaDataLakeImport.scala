@@ -8,8 +8,8 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
+import de.hpi.ingestion.dataimport.SharedNormalizations
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import scala.collection.mutable
 
 /**
   * Import-Job to import DBpedia Subjects into the staging table of the datalake.
@@ -59,22 +59,24 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
-		entity.label.foreach(label => sm.setName(label.replaceAll("""@de \.$""", "")))
-		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
+		sm.setName(entity.label.map(_.replaceAll("""@de \.$""", "")))
+		sm.setCategory(entity.instancetype)
+		sm.addProperties(entity.data)
+
+		val legalForm = subject.name.flatMap(extractLegalForm(_, classifier)).toList
+		val normalizedLegalForm = SharedNormalizations.normalizeLegalForm(legalForm)
+		sm.addProperties(Map("gen_legal_form" -> normalizedLegalForm))
 
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
-		val properties = mutable.Map[String, List[String]]((entity.data ++ normalizedProperties).toSeq: _*)
+		sm.addProperties(normalizedProperties)
 
 		if (normalizedProperties.contains("geo_coords_lat") && normalizedProperties.contains("geo_coords_long")) {
-			properties("geo_coords") = normalizedProperties("geo_coords_lat")
+			val coords = normalizedProperties("geo_coords_lat")
 				.zip(normalizedProperties("geo_coords_long"))
 				.map { case (lat, long) => s"$lat;$long" }
+			sm.addProperties(Map("geo_coords" -> coords))
 		}
 
-		val legalForm = subject.name.map(extractLegalForm(_, classifier)).getOrElse(Nil)
-		if (legalForm.nonEmpty) properties("gen_legal_form") = legalForm
-
-		sm.addProperties(properties.toMap)
 		subject
 	}
 }
