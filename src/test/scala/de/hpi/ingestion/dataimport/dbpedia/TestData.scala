@@ -220,6 +220,7 @@ object TestData {
 		"geo_city" -> this.normalizedCities,
 		"gen_employees" -> this.normalizedEmployees
 	)
+
 }
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods

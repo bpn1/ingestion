@@ -7,13 +7,19 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import scala.io.Source
+
+import scala.io.{BufferedSource, Source}
 /**
   * Import-Job to import DBpedia Subjects into the staging table of the datalake.
   */
 object DBpediaRelationParser extends SparkJob {
 	appName = "DBpediaRelationParser"
 	configFile = "textmining.xml"
+
+	val prefixFile: BufferedSource = Source.fromURL(getClass.getResource("/prefixes.txt"))
+	val prefixes: List[(String,String)] = prefixFile.getLines.toList
+		.map(_.trim.replaceAll("""[()]""", "").split(","))
+		.map(pair => (pair(0), pair(1)))
 
 	// $COVERAGE-OFF$
 	/**
@@ -45,6 +51,16 @@ object DBpediaRelationParser extends SparkJob {
 
 	// $COVERAGE-ON$
 
+	def getGermanLabels(labels: RDD[String]): Map[String, String] = {
+		labels
+			.map(tokenize)
+			.map(_.map(listEntry => cleanURL(listEntry, prefixes)))
+			.filter { case List(subj, rel, obj) => rel.startsWith("owl:") && obj.startsWith("dbpedia-de:") }
+			.map(_.map(listEntry => listEntry.replaceAll("dbo:|dbpedia-de:|dbr:", "")))
+			.map { case List(subj, rel, obj) => subj -> obj }
+			.collect
+			.toMap
+	}
 	/**
 	  * TODO
 	  *
@@ -53,44 +69,18 @@ object DBpediaRelationParser extends SparkJob {
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
+
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val dbpedia = input.fromAnyRDD[String]().head
 		val labels = input.fromAnyRDD[String]().last
 
-		val prefixFile = Source.fromURL(getClass.getResource("/prefixes.txt"))
-		val prefixes = prefixFile.getLines.toList
-			.map(_.trim.replaceAll("""[()]""", "").split(","))
-			.map(pair => (pair(0), pair(1)))
-
-		val relationtypes = Set(
-			"owningCompany",
-			"divison",
-			"publisher",
-			"parentCompany",
-			"manufactorer",
-			"subsidiary",
-			"production",
-			"equity",
-			"assets",
-			"assetUnderManagement",
-			"successor",
-			"predecessor"
-		)
-		val germanLabels = labels
-			.map(tokenize)
-			.map(_.map(listEntry => cleanURL(listEntry, prefixes)))
-			.filter { case List(subj, rel, obj) => rel.startsWith("owl:") && obj.startsWith("dbpedia-de:") }
-			.map(_.map(listEntry => listEntry.replaceAll("dbo:|dbpedia-de:|dbr:", "")))
-			.map { case List(subj, rel, obj) => subj -> obj }
-			.collect
-			.toMap
+		val germanLabels = getGermanLabels(labels)
 
 		val gerLabelsBroadcast = sc.broadcast(germanLabels)
 		val relations = dbpedia
 			.map(tokenize)
 			.map(_.map(listEntry => cleanURL(listEntry, prefixes)))
 			.map(_.map(listEntry => listEntry.replaceAll("dbo:|dbr:", "")))
-//			.filter { case List(subj, rel, obj) => relationtypes.contains(rel) }
 			.mapPartitions({ entryPartition =>
 				val localGerLabels = gerLabelsBroadcast.value
 				entryPartition.map { case List(subj, rel, obj) =>
