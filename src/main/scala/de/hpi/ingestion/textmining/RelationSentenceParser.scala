@@ -2,6 +2,7 @@ package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.framework.SparkJob
 import com.datastax.spark.connector._
+import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.textmining.models.{EntityLink, ParsedWikipediaEntry, Sentence}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -13,6 +14,7 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
   */
 object RelationSentenceParser extends SparkJob {
 	appName = "Relation Sentence Parser"
+	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipediasentences"
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
@@ -25,7 +27,7 @@ object RelationSentenceParser extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(articles).toAnyRDD()
+		List(articles).toAnyRDD() ++ List(relations).toAnyRDD()
 	}
 
 	/**
@@ -44,7 +46,7 @@ object RelationSentenceParser extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Parses all Sentences from a parsed Wikipedia etry with at least 2 entities
+	  * Parses all Sentences from a parsed Wikipedia entry with at least 2 entities
 	  * and recalculating relative offsets of entities.
 	  *
 	  * @param entry     Parsed Wikipedia Entry to be processed into sentences

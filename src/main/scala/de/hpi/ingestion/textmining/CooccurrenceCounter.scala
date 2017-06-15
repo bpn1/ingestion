@@ -13,6 +13,7 @@ import org.apache.spark.rdd.RDD
   */
 object CooccurrenceCounter extends SparkJob {
 	appName = "Cooccurrence Counter"
+	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipediacooccurrences"
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
