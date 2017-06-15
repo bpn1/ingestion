@@ -52,7 +52,7 @@ object SpiegelNEL extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val spiegel = input.head.asInstanceOf[RDD[SpiegelArticle]]
+		val spiegel = input.head.asInstanceOf[RDD[SpiegelArticle]].sample(false, 0.01)
 		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].first.count.toLong
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val articles = input(3).asInstanceOf[RDD[ParsedWikipediaEntry]].map { entry =>
