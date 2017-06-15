@@ -570,10 +570,16 @@ object TestData {
 	def simpleBlockingScheme: List[List[String]] = List(List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
 	def lastLettersBlockingScheme: List[List[String]] = List(List(" GmbH"), List("wagen"), List("rrari"), List("rsche"))
 	def listBlockingScheme: List[List[String]] = List(List("Berlin", "Hamburg", "1234"), List("Berlin", "33"), List("undefined"))
-	def geoCoordsBlockingScheme: List[List[String]] = List(
+	def geoCoordsBlockingSchemeDefault: List[List[String]] = List(
 		List("52.1;11.5", "52.1;11.6", "52.2;11.5", "52.2;11.6"),
 		List("52.1;13.1", "52.1;13.2", "52.2;13.1", "52.2;13.2"),
 		List("52.2;13.6", "52.2;13.7", "52.3;13.6", "52.3;13.7"),
+		List("undefined")
+	)
+	def geoCoordsBlockingSchemeDecimals: List[List[String]] = List(
+		List("52.12;11.56", "52.12;11.57", "52.13;11.56", "52.13;11.57"),
+		List("52.12;13.12", "52.12;13.13", "52.13;13.12", "52.13;13.13"),
+		List("52.23;13.67", "52.23;13.68", "52.24;13.67", "52.24;13.68"),
 		List("undefined")
 	)
 	def randomBlockingScheme: List[List[String]] = List(List("-235"), List("754"), List("446"), List("-7"))

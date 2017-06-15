@@ -59,9 +59,17 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 
 	"GeoCoordsBlockingScheme" should "generate proper keys" in {
 		val subjects = TestData.subjects
-		val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS", 1)
+		val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS")
 		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.geoCoordsBlockingScheme
+		val expected = TestData.geoCoordsBlockingSchemeDefault
+		keys.toSet shouldEqual expected.toSet
+	}
+
+	it should "let you adjust the count of decimals" in {
+		val subjects = TestData.subjects
+		val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS", 2)
+		val keys = subjects.map(blockingScheme.generateKey)
+		val expected = TestData.geoCoordsBlockingSchemeDecimals
 		keys.toSet shouldEqual expected.toSet
 	}
 
