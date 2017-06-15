@@ -98,7 +98,7 @@ object TextNEL extends SplitSparkJob {
 		tokenizer: IngestionTokenizer,
 		contextTokenizer: IngestionTokenizer
 	): List[TrieAlias] = {
-		var contextAliases = List[TrieAlias]()
+		var trieAliases = List[TrieAlias]()
 		val tokens = tokenizer.processWithOffsets(text)
 		for(i <- tokens.indices) {
 			val testTokens = tokens.slice(i, tokens.length)
@@ -110,11 +110,11 @@ object TextNEL extends SplitSparkJob {
 				offset.foreach { begin =>
 					val alias = text.substring(begin, longestMatch.last.endOffset)
 					val context = extractAliasContext(longestMatch, tokens, i, contextTokenizer).getCounts()
-					contextAliases :+= TrieAlias(alias, offset, context)
+					trieAliases :+= TrieAlias(alias, offset, context)
 				}
 			}
 		}
-		contextAliases
+		trieAliases
 	}
 
 	/**
@@ -179,7 +179,7 @@ object TextNEL extends SplitSparkJob {
 					.map(_.page)
 					.reduce(_ + "\n" + _)
 				val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
-				html += s"""<a href="$wikipediaPage" class="importance 0" title="$pages">"""
+				html += s"""<a href="$wikipediaPage" title="$pages">"""
 				html += text.substring(processedCharacters, processedCharacters + mainLink.alias.length)
 				processedCharacters += mainLink.alias.length
 				//html += "<ul style=\"display: none\">" + "<li>some other link</li>" + "</ul></a>"

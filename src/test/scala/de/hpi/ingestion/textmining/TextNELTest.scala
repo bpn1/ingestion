@@ -4,6 +4,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.textmining.models._
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.rdd.RDD
 import org.jsoup.Jsoup
 
@@ -74,6 +75,16 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			}.collect
 			.toSet
 		texts shouldEqual originalTexts
+	}
+
+	"Alias matches" should "be found" in {
+		val tokenizer = IngestionTokenizer(false, false)
+		val contextTokenizer = IngestionTokenizer(true, true)
+		val trie = TestData.dataTrie(tokenizer)
+		val texts = TestData.parsedWikipediaWithTextsSet().map(_.getText())
+		texts
+			.map(TextNEL.matchTrieAliases(_, trie, tokenizer, contextTokenizer))
+			.foreach(_ should not be empty)
 	}
 
 	"Input split" should "split input into 10 parts" in {
