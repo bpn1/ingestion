@@ -2,6 +2,7 @@ package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.framework.SparkJob
 import com.datastax.spark.connector._
+import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.textmining.models.{EntityLink, ParsedWikipediaEntry, Sentence}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -13,6 +14,7 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
   */
 object RelationSentenceParser extends SparkJob {
 	appName = "Relation Sentence Parser"
+	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipediasentences"
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
@@ -25,7 +27,8 @@ object RelationSentenceParser extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(articles).toAnyRDD()
+		val relations = sc.cassandraTable[Relation](settings("keyspace"), settings("DBpediaRelationTable"))
+		List(articles).toAnyRDD() ++ List(relations).toAnyRDD()
 	}
 
 	/**
@@ -44,7 +47,7 @@ object RelationSentenceParser extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Parses all Sentences from a parsed Wikipedia etry with at least 2 entities
+	  * Parses all Sentences from a parsed Wikipedia entry with at least 2 entities
 	  * and recalculating relative offsets of entities.
 	  *
 	  * @param entry     Parsed Wikipedia Entry to be processed into sentences
@@ -80,8 +83,33 @@ object RelationSentenceParser extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
+		val relations = input.fromAnyRDD[Relation]().last
+
+		val relationtypes = Set(
+			"country",
+			"capital",
+			"location",
+			"city",
+			"birthPlace",
+			"district",
+			"federalState",
+			"state"
+		)
 		val tokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
 		val sentences = articles.flatMap(entry => entryToSentencesWithEntities(entry, tokenizer))
-		List(sentences).toAnyRDD()
+
+		val blacklist = relations.filter(relation => relationtypes.contains(relation.relationtype))
+			.map(_.objectentity)
+			.collect
+			.toSet
+		val blacklistBroadcast = sc.broadcast(blacklist)
+		val filteredSentences = sentences.mapPartitions({ entryPartition =>
+			val localBlacklist = blacklistBroadcast.value
+			entryPartition.map { sentence =>
+				val filteredEntities = sentence.entities.filter(entity => !localBlacklist.contains(entity.entity))
+				sentence.copy(entities = filteredEntities)
+			}
+		}).filter(_.entities.length > 1)
+		List(filteredSentences).toAnyRDD()
 	}
 }

@@ -90,7 +90,6 @@ object DBpediaRelationParser extends SparkJob {
 			.map(tokenize)
 			.map(_.map(listEntry => cleanURL(listEntry, prefixes)))
 			.map(_.map(listEntry => listEntry.replaceAll("dbo:|dbr:", "")))
-//			.filter { case List(subj, rel, obj) => relationtypes.contains(rel) }
 			.mapPartitions({ entryPartition =>
 				val localGerLabels = gerLabelsBroadcast.value
 				entryPartition.map { case List(subj, rel, obj) =>
