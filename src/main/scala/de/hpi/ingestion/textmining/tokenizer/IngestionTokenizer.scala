@@ -17,7 +17,7 @@ case class IngestionTokenizer(
 	stem: Boolean = false
 ) extends Serializable {
 	val stopwordsPath = "german_stopwords.txt"
-	val stopwords = Source.fromURL(getClass.getResource(s"/$stopwordsPath"))
+	val stopwords = Source.fromURL(getClass.getResource(s"/$stopwordsPath"), "UTF-8")
 		.getLines()
 		.toSet
 	/**

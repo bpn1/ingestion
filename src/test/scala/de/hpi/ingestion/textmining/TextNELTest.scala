@@ -27,8 +27,7 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
-		val namedEntities = TextNEL
-			.run(input, sc)
+		val namedEntities = TextNEL.run(input, sc)
 			.fromAnyRDD[Link]()
 			.head
 			.collect
@@ -57,8 +56,7 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
-		val namedEntities = TextNEL
-			.run(input, sc)
+		val namedEntities = TextNEL.run(input, sc)
 			.fromAnyRDD[Link]()
 			.head
 			.collect
@@ -89,8 +87,7 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val incompleteArticles = sc.parallelize(TestData.incompleteArticlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(incompleteArticles).toAnyRDD()
-		val namedEntities = TextNEL
-			.run(input, sc)
+		val namedEntities = TextNEL.run(input, sc)
 			.fromAnyRDD[Link]()
 			.head
 			.collect

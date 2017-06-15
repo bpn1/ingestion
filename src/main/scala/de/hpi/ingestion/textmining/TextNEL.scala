@@ -63,16 +63,19 @@ object TextNEL extends SplitSparkJob {
 		classifier = Some(RandomForestModel.load(sc, settings("classifierModel")))
 	}
 
-	/**
-	  * Predicts the classes of the given features.
-	  *
-	  * @param dataPoint data point consisting of features
-	  * @return predicted class
-	  */
-	def predict(dataPoint: Vector): Double = {
-		classifier.get.predict(dataPoint)
-	}
+//	/**
+//	  * Predicts the classes of the given features.
+//	  *
+//	  * @param dataPoint data point consisting of features
+//	  * @return predicted class
+//	  */
+//	def predict(dataPoint: Vector): Double = {
+//		classifier.get.predict(dataPoint)
+//	}
 
+	def predict(dataPoint: Vector): Double = {
+		1.0
+	}
 	// $COVERAGE-ON$
 
 	/**
