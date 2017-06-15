@@ -2055,17 +2055,17 @@ object TestData {
 		trie
 	}
 
-	def dataTrie(tokenizer: IngestionTokenizer): TrieNode = {
+	def dataTrie(tokenizer: IngestionTokenizer, file: String = "/textmining/triealiases"): TrieNode = {
 		val trie = new TrieNode()
-		val aliasList = Source.fromURL(getClass.getResource("/textmining/triealiases")).getLines()
+		val aliasList = Source.fromURL(getClass.getResource(file)).getLines()
 		for(alias <- aliasList) {
 			trie.append(tokenizer.process(alias))
 		}
 		trie
 	}
 
-	def fullTrieStream(file: String): ByteArrayInputStream = {
-		val aliasStream = Source.fromURL(getClass.getResource("/textmining/triealiases"))
+	def fullTrieStream(inputFile: String = "/textmining/triealiases")(file: String): ByteArrayInputStream = {
+		val aliasStream = Source.fromURL(getClass.getResource(inputFile))
 		val trieStream = new ByteArrayOutputStream(1024 * 10)
 		LocalTrieBuilder.serializeTrie(aliasStream, trieStream)
 		new ByteArrayInputStream(trieStream.toByteArray)
