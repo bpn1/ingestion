@@ -14,6 +14,7 @@
         <featureTable>featureentries</featureTable>
         <secondOrderFeatureTable>featureentrieswithsof</secondOrderFeatureTable>
         <trieFile>wikipedia/trie_full.bin</trieFile>
+        <smallerTrieFile>wikipedia/trie_full_smaller.bin</smallerTrieFile>
         <dfFile>wikipedia/wikipedia_docfreq</dfFile>
         <sentenceTable>wikipediasentences</sentenceTable>
         <cooccurrenceTable>wikipediacooccurrences</cooccurrenceTable>

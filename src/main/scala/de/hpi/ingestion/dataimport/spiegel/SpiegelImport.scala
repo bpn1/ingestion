@@ -59,7 +59,7 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 		val parsedArticles = spiegelDump
 			.map(parseJSON)
 			.mapPartitions({ partition =>
-				val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
+				val trie = deserializeTrie(trieStreamFunction(settings("smallerTrieFile")))
 				partition.map(findAliases(_, tokenizer, trie))
 			}, true)
 		List(parsedArticles).toAnyRDD()

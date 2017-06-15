@@ -92,7 +92,7 @@ object DocumentFrequencyCounter extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val numArticles = articles.asInstanceOf[CassandraTableScanRDD[ParsedWikipediaEntry]].cassandraCount()
+		val numArticles = articles.asInstanceOf[RDD[ParsedWikipediaEntry]].count
 		val articleCount = WikipediaArticleCount("parsedwikipedia", BigInt(numArticles))
 		val articleCountRDD = sc.parallelize(List(articleCount))
 		val documentFrequencies = countDocumentFrequencies(articles)

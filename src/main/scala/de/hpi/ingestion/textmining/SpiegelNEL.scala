@@ -27,7 +27,7 @@ object SpiegelNEL extends SparkJob {
 		val articleCount = sc.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
 		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
 		val wikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(spiegel, articleCount, aliases, wikipedia).toAnyRDD()// .flatMap(List(_).toAnyRDD())
+		List(spiegel, articleCount, aliases, wikipedia).flatMap(List(_).toAnyRDD())
 	}
 
 	/**
