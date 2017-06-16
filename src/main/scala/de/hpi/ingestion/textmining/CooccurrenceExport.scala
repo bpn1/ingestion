@@ -16,6 +16,7 @@ object CooccurrenceExport extends SparkJob {
 	configFile = "textmining.xml"
 	val separator = ","
 	val quote = "\""
+	sparkOptions("spark.yarn.executor.memoryOverhead") = "5G"
 
 	// $COVERAGE-OFF$
 	/**
@@ -41,7 +42,7 @@ object CooccurrenceExport extends SparkJob {
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val List(nodes, edges) = output.fromAnyRDD[String]()
 		nodes.saveAsTextFile(s"relation_nodes_${System.currentTimeMillis()}")
-		edges.saveAsTextFile(s"cooccurrence_edges_${System.currentTimeMillis()}")
+		edges.saveAsTextFile(s"relation_edges_${System.currentTimeMillis()}")
 	}
 	// $COVERAGE-ON$
 
@@ -60,12 +61,12 @@ object CooccurrenceExport extends SparkJob {
 			occurrence.copy(entitylist = cleanedEntities)
 		}
 		val cleanedRelations = relations.map { relation =>
-			val cleanedSubject = relation.subjectentity.replaceAll("\"", "\\\\\"")
-			val cleanedObject = relation.objectentity.replaceAll("\"", "\\\\\"")
+			val cleanedSubject = relation.subjectentity.replaceAll("\"", "\\\\\"").trim
+			val cleanedObject = relation.objectentity.replaceAll("\"", "\\\\\"").trim
 			relation.copy(subjectentity = cleanedSubject, objectentity = cleanedObject)
 		}
 		val nodesCooc = cleanedCooccurrences
-			.flatMap(_.entitylist)
+			.flatMap(_.entitylist.map(_.trim))
 
 		val edgesCooc = cleanedCooccurrences
 			.flatMap { case Cooccurrence(entities, count) =>
@@ -73,15 +74,15 @@ object CooccurrenceExport extends SparkJob {
 			}.reduceByKey(_ + _)
 			.map { case ((start, end), count) =>
 				s"${quote}${start}${quote},${count},${quote}${end}${quote},CO_OCCURRENCE"
-			}
-		val nodesRel = cleanedRelations.flatMap(rel => List(rel.subjectentity, rel.objectentity))
+			}.distinct
+		val nodesRel = cleanedRelations.flatMap(rel => List(rel.subjectentity.trim, rel.objectentity.trim))
 		val nodes = (nodesCooc ++ nodesRel)
-			.distinct
 			.map(node => s"${quote}${node}${quote},${quote}${node}${quote},Entity")
+			.distinct
 		val edgesRel = cleanedRelations
 			.map { case Relation(subjectentity, relationtype, objectentity) =>
 				s"${quote}${subjectentity}${quote},${relationtype},${quote}${objectentity}${quote},DBPEDIA"
-			}
+			}.distinct
 		val edges = edgesCooc ++ edgesRel
 		List(nodes, edges).toAnyRDD()
 	}
