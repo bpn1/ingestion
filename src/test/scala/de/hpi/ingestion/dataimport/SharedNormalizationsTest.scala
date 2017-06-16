@@ -18,4 +18,12 @@ class SharedNormalizationsTest extends FlatSpec with Matchers {
 
 		normalized shouldEqual expected
 	}
+
+	"matchesGmbH" should "find different variations of GmbHs" in {
+		val gmbHs = TestData.gmbHs.map(SharedNormalizations.matchesGmbH)
+		val notGmHs = TestData.notGmbHs.map(SharedNormalizations.matchesGmbH)
+
+		gmbHs.foreach(_ shouldBe true)
+		notGmHs.foreach(_ shouldBe false)
+	}
 }

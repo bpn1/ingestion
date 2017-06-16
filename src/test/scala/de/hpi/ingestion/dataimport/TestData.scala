@@ -20,6 +20,14 @@ object TestData {
 		List("e.K.", "e.V.", "GmbH & Co. KG")
 	}
 
+	def gmbHs: List[String] = {
+		List("Gesellschaft mbH", "gemeinschaft m.b.H.", "Einperson GmbH", "Gesellschaft GmbH", ". GmbH")
+	}
+
+	def notGmbHs: List[String] = {
+		List("Gesellschaft mbH & Co. KG", "AG")
+	}
+
 	def parsedJSON(): JsValue = {
 		Json.parse(Source.fromURL(getClass.getResource("/parsing.json")).getLines().mkString("\n"))
 	}

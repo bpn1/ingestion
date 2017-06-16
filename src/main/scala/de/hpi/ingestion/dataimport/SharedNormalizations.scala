@@ -27,8 +27,52 @@ object SharedNormalizations {
 	def normalizeLegalForm(values: List[String]): List[String] = {
 		values
 			.map(_.replaceAll(" \\.", "."))
-			.flatMap(value => List(this.legalFormMapping.getOrElse(value, value)))
+			.flatMap(value => List(this.legalFormMapping.getOrElse(value, matchesLegalForm(value))))
 			.distinct
+	}
+
+	def matchesLegalForm(legalForm: String): String = {
+		val replacedForm = legalForm.replaceAll("(\\.| )", "")
+		replacedForm match {
+			case x if matchesAG(x) => "AG"
+			case x if matchesGmbH(x) => "GmbH" + " & Co. KG".filter(t => matchesCoKG(x))
+			case x if matchesEV(x) => "e.V."
+			case x if matchesEK(x) => "e.K."
+			case x => x
+		}
+	}
+
+	def matchesAG(legalForm: String): Boolean = {
+		val patternAG = """(?i)(aktiengesellschaft)""".r
+		patternAG.findFirstIn(legalForm).isDefined
+	}
+
+	def matchesGmbH(legalForm: String): Boolean = {
+		val replacedLegalForm = legalForm.replaceAll("(\\.| )", "")
+		val patternGMBH = """(?i)(gmbh)""".r
+		val patternMBH = """(?i)(mbh)""".r
+		val patternGesellschaftGemeinschaft = """(?i)(gesellschaft|gemeinschaft)""".r
+		replacedLegalForm match {
+			case x if patternGMBH.findFirstIn(x).isDefined => true
+			case x if patternMBH.findFirstIn(x).isDefined
+				&& patternGesellschaftGemeinschaft.findFirstIn(x).isDefined => true
+			case _ => false
+		}
+	}
+
+	def matchesCoKG(legalForm: String): Boolean = {
+		val patternCoKG = """(?i)(&?cokg)""".r
+		patternCoKG.findFirstIn(legalForm).isDefined
+	}
+
+	def matchesEV(legalForm: String): Boolean = {
+		val patternEV = """(?i)(ev)""".r
+		patternEV.findFirstIn(legalForm).isDefined
+	}
+
+	def matchesEK(legalForm: String): Boolean = {
+		val patternEK = """(?i)(ek)""".r
+		patternEK.findFirstIn(legalForm).isDefined
 	}
 
 	val legalFormMapping = Map(
@@ -39,46 +83,10 @@ object SharedNormalizations {
 		"Geschlossene Aktiengesellschaft" -> "AG",
 		// GmbH
 		"Gesellschaft mit beschränkter Haftung" -> "GmbH",
-		"Gemeinnützige GmbH" -> "GmbH",
-		"Gesellschaft mbH" -> "GmbH",
-		"gesellschaft mbH" -> "GmbH",
-		"GmbH gesellschaft" -> "GmbH",
-		"gesellschaft GmbH" -> "GmbH",
-		"GmbH." -> "GmbH",
-		"gesellschaft m. b. H" -> "GmbH",
-		"GmbH Gesellschaft" -> "GmbH",
-		"Gesellschaft GmbH" -> "GmbH",
-		". GmbH" -> "GmbH",
-		"Einpersonen GmbH" -> "GmbH",
-		"GmbH gesellschaft gesellschaft" -> "GmbH",
-		"gesellschaft mbH." -> "GmbH",
-		// gGmbH
-		"gemeinnützige GmbH" -> "gGmbH",
-		// GmbH & Co. KG
-		"Gesellschaft mbH & Co. KG" -> "GmbH & Co. KG",
-		"gesellschaft mbH & Co. KG" -> "GmbH & Co. KG",
-		"gesellschaft mbH & Co KG" -> "GmbH & Co. KG",
-		"GmbH & Co KG" -> "GmbH & Co. KG",
-		"gesellschaft GmbH & Co. KG" -> "GmbH & Co. KG",
-		"GmbH Co. KG" -> "GmbH & Co. KG",
-		"GmbH Co KG" -> "GmbH & Co. KG",
-		"GmbH + Co. KG" -> "GmbH & Co. KG",
 		// e.V.
 		"eingetragener Verein" -> "e.V.",
 		"gemeinnütziger Verein" -> "e.V.",
 		"Verein" -> "e.V.",
-		"e.V" -> "e.V.",
-		"e. V." -> "e.V.",
-		"e V." -> "e.V.",
-		"e V" -> "e.V.",
-		"e. V" -> "e.V.",
-		"gemeinschaft e. V" -> "e.V.",
-		"Gesellschaft e. V." -> "e.V.",
-		// e.K.
-		"e. K." -> "e.K.",
-		"e K." -> "e.K.",
-		"e. K" -> "e.K.",
-		". e. K." -> "e.K.",
 		// UG haftungsbeschränkt
 		"gesellschaft UG haftungsbeschränkt" -> "UG haftungsbeschränkt",
 		"gemeinnützige UG haftungsbeschränkt" -> "UG haftungsbeschränkt",
