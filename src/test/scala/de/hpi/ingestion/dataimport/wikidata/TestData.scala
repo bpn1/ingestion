@@ -286,7 +286,7 @@ object TestData {
 			Option("testwikiname"),
 			Option("en_testwikiname"),
 			Option("test_instancetype"),
-			Option("Protein AG"),
+			Option("Protein"),
 			Map(
 				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
 				"subclass of" -> List("Protein", "FAM177 family"),
@@ -296,6 +296,8 @@ object TestData {
 				"headquarters location" -> this.unnormalizedCities,
 				"country" -> this.unnormalizedCountries,
 				"employees" -> this.unnormalizedEmployees,
+				"official website" -> this.unnormalizedURLs,
+				"legal form" -> List("Aktiengesellschaft"),
 				"testProperty" -> List("test")
 			)
 		)
@@ -329,7 +331,9 @@ object TestData {
 		"geo_coords" -> List("coordinate location"),
 		"geo_city" -> List("headquarters location"),
 		"geo_country" -> List("country"),
-		"gen_employees" -> List("employees")
+		"gen_employees" -> List("employees"),
+		"gen_urls" -> List("official website"),
+		"gen_legal_form" -> List("legal form")
 	)
 
 	def strategies: Map[String, List[String]] = Map(
@@ -371,7 +375,7 @@ object TestData {
 		identity
 	)
 	def unnormalizedAttributes: Map[String, List[String]] = Map(
-		"gen_sectors" -> this.unnormalizedSectors,
+		"gen_sectors" -> (this.unnormalizedSectors :+ "Test_Sector"),
 		"geo_coords" -> this.unnormalizedCoords,
 		"geo_country" -> this.unnormalizedCountries,
 		"geo_city" -> this.unnormalizedCities,
@@ -379,7 +383,7 @@ object TestData {
 		"gen_urls" -> this.unnormalizedURLs
 	)
 	def normalizedAttributes: Map[String, List[String]] = Map(
-		"gen_sectors" -> this.mappedSectors,
+		"gen_sectors" -> (this.mappedSectors :+ "Test_Sector"),
 		"geo_coords" -> this.normalizedCoords,
 		"geo_country" -> this.normalizedCountries,
 		"geo_city" -> this.normalizedCities,

@@ -36,7 +36,7 @@ class DataLakeImportImplementationTest extends FlatSpec with Matchers with Share
 			val legalForms = MockImport.extractLegalForm(name, classifier)
 			legalForms shouldEqual expected
 		}
-		MockImport.extractLegalForm(null, classifier) shouldEqual Nil
+		MockImport.extractLegalForm(null, classifier) shouldEqual None
 	}
 
 	"run" should "import a new datasource to the datalake" in {

@@ -34,6 +34,13 @@ class ClassifierTrainingTest extends FlatSpec with Matchers with SharedSparkCont
 		statistics shouldEqual expectedStats
 	}
 
+	they should "be 0.0 if there are no values to calculate them" in {
+		val data = sc.parallelize(TestData.badLabeledPredictions())
+		val statistics = ClassifierTraining.calculateStatistics(data, 0.5)
+		val expectedStats = TestData.badPredictionStatistics()
+		statistics shouldEqual expectedStats
+	}
+
 	they should "be averaged" in {
 		val statistics = TestData.statisticTuples()
 		val normalAvg = ClassifierTraining.averageStatistics(statistics)

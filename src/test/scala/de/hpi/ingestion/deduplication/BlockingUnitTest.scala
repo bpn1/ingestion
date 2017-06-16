@@ -1,7 +1,8 @@
 package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.deduplication.blockingschemes.SimpleBlockingScheme
+import de.hpi.ingestion.datalake.models.Subject
+import de.hpi.ingestion.deduplication.blockingschemes.{ListBlockingScheme, SimpleBlockingScheme}
 import de.hpi.ingestion.deduplication.models.BlockEvaluation
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._

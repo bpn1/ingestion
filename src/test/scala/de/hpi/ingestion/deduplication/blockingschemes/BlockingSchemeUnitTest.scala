@@ -21,7 +21,7 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 	}
 
 	"LastLettersBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.subjects
+		val subjects = TestData.subjects :+ Subject()
 		val blockingScheme = LastLettersBlockingScheme("Test LastLettersBS")
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.lastLettersBlockingScheme
@@ -57,26 +57,18 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 			}
 	}
 
-	"GeoCoordsBlockingScheme" should "generate proper keys from coordinates" in {
-		val subjects = TestData.subjects :+ Subject()
-		val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS")
-		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.geoCoordsBlockingScheme
-		keys.toSet shouldEqual expected.toSet
-	}
-
-	it should "be created with the proper tag" in {
-		val name = "Test Geo Scheme"
-		val scheme = GeoCoordsBlockingScheme(name)
-		scheme.tag shouldEqual name
-		scheme.isInstanceOf[GeoCoordsBlockingScheme] shouldBe true
-	}
-
 	"RandomBlockingScheme" should "generate random keys from the UUIDs" in {
 		val subjects = TestData.subjects
 		val blockingScheme = new RandomBlockingScheme
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.randomBlockingScheme
 		keys.toSet shouldEqual expected.toSet
+	}
+
+	it should "be created with the proper tag" in {
+		val name = "Test Random Scheme"
+		val scheme = RandomBlockingScheme(name)
+		scheme.tag shouldEqual name
+		scheme.isInstanceOf[RandomBlockingScheme] shouldBe true
 	}
 }
