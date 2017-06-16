@@ -26,7 +26,8 @@ object SharedNormalizations {
 	  */
 	def normalizeLegalForm(values: List[String]): List[String] = {
 		values
-			.flatMap(value => List(this.legalFormMapping.getOrElse(value, value).replaceAll(" \\.", ".")))
+			.map(_.replaceAll(" \\.", "."))
+			.flatMap(value => List(this.legalFormMapping.getOrElse(value, value)))
 			.distinct
 	}
 
@@ -46,12 +47,17 @@ object SharedNormalizations {
 		"GmbH." -> "GmbH",
 		"gesellschaft m. b. H" -> "GmbH",
 		"GmbH Gesellschaft" -> "GmbH",
+		"Gesellschaft GmbH" -> "GmbH",
 		". GmbH" -> "GmbH",
 		"Einpersonen GmbH" -> "GmbH",
+		"GmbH gesellschaft gesellschaft" -> "GmbH",
+		"gesellschaft mbH." -> "GmbH",
 		// gGmbH
 		"gemeinnützige GmbH" -> "gGmbH",
 		// GmbH & Co. KG
+		"Gesellschaft mbH & Co. KG" -> "GmbH & Co. KG",
 		"gesellschaft mbH & Co. KG" -> "GmbH & Co. KG",
+		"gesellschaft mbH & Co KG" -> "GmbH & Co. KG",
 		"GmbH & Co KG" -> "GmbH & Co. KG",
 		"gesellschaft GmbH & Co. KG" -> "GmbH & Co. KG",
 		"GmbH Co. KG" -> "GmbH & Co. KG",
@@ -65,12 +71,17 @@ object SharedNormalizations {
 		"e. V." -> "e.V.",
 		"e V." -> "e.V.",
 		"e V" -> "e.V.",
+		"e. V" -> "e.V.",
 		"gemeinschaft e. V" -> "e.V.",
+		"Gesellschaft e. V." -> "e.V.",
 		// e.K.
 		"e. K." -> "e.K.",
 		"e K." -> "e.K.",
+		"e. K" -> "e.K.",
+		". e. K." -> "e.K.",
 		// UG haftungsbeschränkt
 		"gesellschaft UG haftungsbeschränkt" -> "UG haftungsbeschränkt",
+		"gemeinnützige UG haftungsbeschränkt" -> "UG haftungsbeschränkt",
 		// EG
 		"Eingetragene Genossenschaft" -> "EG",
 		// AdöR
@@ -81,6 +92,7 @@ object SharedNormalizations {
 		"Europäische Gesellschaft" -> "SE",
 		// oHG
 		"Offene Handelsgesellschaft" -> "oHG",
+		"OHG" -> "oHG",
 		// GbR
 		"Gesellschaft bürgerlichen Rechts" -> "GbR",
 		// KGaA
