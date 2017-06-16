@@ -73,7 +73,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 	  * @return valid urls
 	  */
 	def normalizeURLs(values: List[String]): List[String] = {
-		values.filter(SharedNormalizations.isValidUrl)
+		values.filter(SharedNormalizations.isValidUrl).distinct
 	}
 
 	/**
@@ -98,6 +98,7 @@ object WikiDataNormalizationStrategy extends Serializable {
 			case "geo_city" => this.normalizeCity
 			case "gen_employees" => this.normalizeEmployees
 			case "gen_urls" => this.normalizeURLs
+			case "gen_legal_form" => SharedNormalizations.normalizeLegalForm
 			case _ => this.normalizeDefault
 		}
 	}

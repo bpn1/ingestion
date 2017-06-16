@@ -3,6 +3,7 @@ package de.hpi.ingestion.dataimport.wikidata
 import com.datastax.spark.connector._
 import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
+import de.hpi.ingestion.dataimport.SharedNormalizations
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
@@ -76,11 +77,14 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		sm.setName(entity.label)
 		sm.setCategory(entity.instancetype.flatMap(categoryMap.get))
 		sm.addAliases(entity.aliases)
+		sm.addProperties(entity.data)
+
+		val legalForm = subject.name.flatMap(extractLegalForm(_, classifier)).toList
+		val normalizedLegalForm = SharedNormalizations.normalizeLegalForm(legalForm)
+		sm.addProperties(Map("gen_legal_form" -> normalizedLegalForm))
 
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
-		sm.addProperties(entity.data ++ normalizedProperties)
-		val legalForm = subject.name.map(extractLegalForm(_, classifier)).getOrElse(Nil)
-		if (legalForm.nonEmpty) sm.addProperties(Map("gen_legal_form" -> legalForm))
+		sm.addProperties(normalizedProperties)
 
 		subject
 	}
