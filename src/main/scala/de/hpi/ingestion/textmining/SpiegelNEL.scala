@@ -5,10 +5,9 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.spiegel.models.SpiegelArticle
-import de.hpi.ingestion.deduplication.models.FeatureEntry
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.CosineContextComparator.{calculateDefaultDf, calculateIdf}
-import de.hpi.ingestion.textmining.models.{Alias, ParsedWikipediaEntry, WikipediaArticleCount}
+import de.hpi.ingestion.textmining.models.{Alias, ParsedWikipediaEntry, WikipediaArticleCount, FeatureEntry}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 object SpiegelNEL extends SparkJob {
@@ -53,7 +52,7 @@ object SpiegelNEL extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val spiegel = input.head.asInstanceOf[RDD[SpiegelArticle]].sample(false, 0.01)
-		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].first.count.toLong
+		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].collect.head.count.toLong
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val articles = input(3).asInstanceOf[RDD[ParsedWikipediaEntry]].map { entry =>
 			ParsedWikipediaEntry(entry.title, context = entry.context)

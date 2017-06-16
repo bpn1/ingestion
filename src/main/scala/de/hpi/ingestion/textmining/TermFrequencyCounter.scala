@@ -90,15 +90,16 @@ object TermFrequencyCounter extends SparkJob {
 	def extractContext(tokens: List[OffsetToken], link: Link, tokenizer: IngestionTokenizer): Bag[String, Int] = {
 		val contextSize = settings("contextSize").toInt
 		val aliasTokens = tokenizer.onlyTokenizeWithOffst(link.alias)
-		val firstAliasToken = tokens.find(token => link.offset.contains(token.beginOffset)).get
-		val aliasIndex = tokens.indexOf(firstAliasToken)
-		val aliasTokenLength = aliasTokens.length
-		val contextStart = Math.max(aliasIndex - contextSize, 0)
-		val preAliasContext = tokens.slice(contextStart, aliasIndex)
-		val contextEnd = Math.min(aliasIndex + aliasTokenLength + contextSize, tokens.length)
-		val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
-		val context = (preAliasContext ++ postAliasContext).map(_.token)
-		Bag.extract(tokenizer.process(context))
+		tokens.find(token => link.offset.contains(token.beginOffset)).map { firstAliasToken =>
+			val aliasIndex = tokens.indexOf(firstAliasToken)
+			val aliasTokenLength = aliasTokens.length
+			val contextStart = Math.max(aliasIndex - contextSize, 0)
+			val preAliasContext = tokens.slice(contextStart, aliasIndex)
+			val contextEnd = Math.min(aliasIndex + aliasTokenLength + contextSize, tokens.length)
+			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
+			val context = (preAliasContext ++ postAliasContext).map(_.token)
+			Bag.extract(tokenizer.process(context))
+		}.getOrElse(Bag.empty[String, Int])
 	}
 
 	/**

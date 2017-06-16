@@ -9,7 +9,7 @@ import org.jsoup.Jsoup
 import play.api.libs.json.JsValue
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.JSONParser
-import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, matchEntry, trieStreamFunction}
+import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, trieStreamFunction}
 import de.hpi.ingestion.textmining.models.{TrieAlias, TrieNode}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 

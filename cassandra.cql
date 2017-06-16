@@ -142,8 +142,9 @@ CREATE TABLE wikidumps.wikipediacooccurrences (
 
 CREATE TABLE wikidumps.spiegel (
     id text PRIMARY KEY,
-    title text,
     text text,
+    title text,
+    triealiases frozen<list<frozen<triealias>>>,
     url text
 );
 
