@@ -2,7 +2,7 @@
 <config>
     <settings>
         <outputKeyspace>datalake</outputKeyspace>
-        <outputTable>subject</outputTable>
+        <outputTable>subject_temp</outputTable>
         <versionTable>version</versionTable>
     </settings>
 </config>

@@ -38,7 +38,7 @@ object SharedNormalizations {
 			case x if matchesGmbH(x) => "GmbH" + " & Co. KG".filter(t => matchesCoKG(x))
 			case x if matchesEV(x) => "e.V."
 			case x if matchesEK(x) => "e.K."
-			case x => x
+			case _ => legalForm
 		}
 	}
 
@@ -81,6 +81,7 @@ object SharedNormalizations {
 		"Kleine Aktiengesellschaft" -> "AG",
 		"Gemeinnützige Aktiengesellschaft" -> "AG",
 		"Geschlossene Aktiengesellschaft" -> "AG",
+		"Offene Aktiengesellschaft" -> "AG",
 		// GmbH
 		"Gesellschaft mit beschränkter Haftung" -> "GmbH",
 		// e.V.
