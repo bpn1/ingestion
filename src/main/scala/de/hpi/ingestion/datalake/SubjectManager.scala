@@ -165,12 +165,15 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param validity validity of each property
 	  */
 	def addProperties(value: Map[String, List[String]], validity: Map[String, Map[String, String]] = Map()): Unit = {
-		val properties = (value.keySet ++ subject.properties.keySet)
-			.map { prop =>
-				val propValues = subject.properties.getOrElse(prop, Nil) ++ value.getOrElse(prop, Nil)
-				(prop, propValues.distinct)
-			}.toMap
-		setProperties(properties, validity)
+		val nonEmptyValues = value.filter(_._2.nonEmpty)
+		if (nonEmptyValues.nonEmpty) {
+			val properties = (nonEmptyValues.keySet ++ subject.properties.keySet)
+				.map { prop =>
+					val propValues = subject.properties.getOrElse(prop, Nil) ++ nonEmptyValues.getOrElse(prop, Nil)
+					prop -> propValues.distinct
+				}.toMap
+			setProperties(properties, validity)
+		}
 	}
 
 	/**
