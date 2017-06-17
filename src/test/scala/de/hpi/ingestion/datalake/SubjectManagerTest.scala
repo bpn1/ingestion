@@ -146,6 +146,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 		val subject = Subject()
 		val version = Version.apply("SM Test", Nil, sc, false)
 		val sm = new SubjectManager(subject, version)
+
 		sm.addProperties(Map("key 1" -> List("value 1", "value 2")))
 		subject.properties("key 1") shouldEqual List("value 1", "value 2")
 		subject.properties_history("key 1") should have length 1
@@ -155,6 +156,10 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 		subject.properties("key 2") shouldEqual List("value 3")
 		subject.properties_history("key 2") should have length 1
 		subject.properties_history("key 2").last.value shouldEqual List("value 3")
+
+		sm.addProperties(Map("key 3" -> Nil))
+		subject.properties.get("key 3") shouldEqual None
+		subject.properties_history.get("key 3") shouldEqual None
 
 		sm.removeProperties(List("key 1"))
 		subject.properties.get("key 1") shouldBe empty
