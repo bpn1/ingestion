@@ -71,9 +71,14 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val testModelFunction = TestData.randomForestModelWithPositivePrediciton _
 		TextNEL.loadModelFunction = testModelFunction
 
-		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-		val incompleteArticles = sc.parallelize(TestData.incompleteArticlesWithCompleteContexts().toList)
-		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
+		val concatenatedArticles = TestData.articlesWithCompleteContexts() ++ TestData.articlesWithoutContexts() +
+			TestData.articleWithCompleteContext()
+		val concatenatedIncompleteArticles = TestData.incompleteArticlesWithCompleteContexts() +
+			TestData.articleWithCompleteContext
+		val concatenatedAliases = TestData.aliasesWithExistingPagesSet() + TestData.alias
+		val articles = sc.parallelize(concatenatedArticles.toList)
+		val incompleteArticles = sc.parallelize(concatenatedIncompleteArticles.toList)
+		val aliases = sc.parallelize(concatenatedAliases.toList)
 		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(incompleteArticles).toAnyRDD()
 		val namedEntities = TextNEL.run(input, sc)
 			.fromAnyRDD[Link]()

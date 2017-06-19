@@ -463,6 +463,32 @@ object TestData {
 			))
 	}
 
+	def articleWithCompleteContext(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry("Toan Anh", Option("REDIRECT Van Toan Nguyen"),
+			context = Map("nguy" -> 1, "redirec" -> 1, "toa" -> 1, "van" -> 1)
+		)
+	}
+
+	def articlesWithoutContexts(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Chevrolet"),
+			ParsedWikipediaEntry("Chevrolet Van"),
+			ParsedWikipediaEntry("Flughafen Ferit Melen"),
+			ParsedWikipediaEntry("Kastenwagen"),
+			ParsedWikipediaEntry("Reliant"),
+			ParsedWikipediaEntry("Reliant Van"),
+			ParsedWikipediaEntry("Toyota"),
+			ParsedWikipediaEntry("Tušpa"),
+			ParsedWikipediaEntry("Türkisch Van"),
+			ParsedWikipediaEntry("Van"),
+			ParsedWikipediaEntry("Van (Automobil)"),
+			ParsedWikipediaEntry("Van (Provinz)"),
+			ParsedWikipediaEntry("Van (Türkei)"),
+			ParsedWikipediaEntry("Vansee"),
+			ParsedWikipediaEntry("Vilâyet Van")
+		)
+	}
+
 	def incompleteArticlesWithCompleteContexts(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
@@ -690,10 +716,20 @@ object TestData {
 		)
 	}
 
+	def alias(): Alias = {
+		Alias("Van",
+			Map("Chevrolet" -> 1, "Chevrolet Van" -> 9, "Flughafen Ferit Melen" -> 1, "Kastenwagen" -> 1, "Reliant" -> 7, "Reliant Van" -> 2, "Toyota" -> 1, "Tušpa" -> 2, "Türkisch Van" -> 12, "Van" -> 159, "Van (Automobil)" -> 443, "Van (Provinz)" -> 83, "Van (Türkei)" -> 292, "Vansee" -> 5, "Vilâyet Van" -> 13),
+			linkoccurrences = Option(1040),
+			totaloccurrences = Option(20508)
+		)
+	}
+
 	def allPageNamesOfTestArticleList(): Set[String] = {
-		Set("Audi",
+		Set(
+			"Audi",
 			"Brachttal",
-			"1377")
+			"1377"
+		)
 	}
 
 	def articleContextWordSets(): Map[String, Set[String]] = {

@@ -150,11 +150,6 @@ object TextNEL extends SplitSparkJob {
 						aliasPagesMap
 							.getOrElse(trieAlias.alias, Nil)
 							.map { page =>
-								if(trieAlias.offset.getOrElse(0) < 0) {
-									println(s"AAAAA ${trieAlias.offset}")
-									println(s"BBBBB ${trieAlias.alias}")
-									println(s"CCCCC $article")
-								}
 								(Link(trieAlias.alias, page, trieAlias.offset, article = Option(article.title)),
 									Bag(trieAlias.context))
 							}
@@ -176,22 +171,38 @@ object TextNEL extends SplitSparkJob {
 		var processedCharacters = 0
 		links
 			.groupBy(_.offset)
-			.filter(_._1.get >= 0)
 			.toList
 			.sortBy(_._1)
 			.foreach { case (offset, groupedLinks) =>
-				val mainLink = groupedLinks.head
-				html += text.substring(processedCharacters, offset.get)
-				processedCharacters = offset.get
-				val pages = groupedLinks
-					.map(_.page)
-					.reduce(_ + "\n" + _)
-				val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
-				html += s"""<a href="$wikipediaPage" title="$pages">"""
-				html += text.substring(processedCharacters, processedCharacters + mainLink.alias.length)
-				processedCharacters += mainLink.alias.length
-				//html += "<ul style=\"display: none\">" + "<li>some other link</li>" + "</ul></a>"
-				html += "</a>"
+				if(offset.get < 0 || processedCharacters < 0) {
+					print(s"AAAAA ${offset.get}")
+					print(s"AAAAA $processedCharacters")
+					print(s"AAAAA $groupedLinks")
+					print(s"AAAAA $title")
+					print(s"CCCCC $text")
+				} else {
+					val distinctLinks = groupedLinks.distinct // hotfix against duplicates
+					val mainLink = distinctLinks.head
+					html += text.substring(processedCharacters, offset.get)
+					processedCharacters = offset.get
+					val pages = distinctLinks
+						.map(_.page)
+						.reduce(_ + "\n" + _)
+					val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
+					html += s"""<a href="$wikipediaPage" title="$pages">"""
+					val end = processedCharacters + mainLink.alias.length
+					if(processedCharacters < 0 || end < 0) {
+						print(s"BBBB $processedCharacters")
+						print(s"BBBB $end")
+						print(s"BBBB ${mainLink.alias.length}")
+						print(s"BBBB $mainLink")
+					} else {
+						html += text.substring(processedCharacters, end)
+						processedCharacters += mainLink.alias.length
+					}
+					//html += "<ul style=\"display: none\">" + "<li>some other link</li>" + "</ul></a>"
+					html += "</a>"
+				}
 			}
 		html += text.substring(processedCharacters, text.length)
 		Article(title, html)
@@ -216,8 +227,7 @@ object TextNEL extends SplitSparkJob {
 					case Some(linksList) => (title, text, linksList)
 					case None => (title, text, Nil)
 				}
-			}
-			.map((generateArticleWithLinks _).tupled)
+			}.map((generateArticleWithLinks _).tupled)
 	}
 
 	/**
