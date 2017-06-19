@@ -50,6 +50,7 @@ object RelationClassifier extends SparkJob {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
+			.head
 			.asInstanceOf[RDD[RelationClassifierStats]]
 			.saveToCassandra(settings("keyspace"), settings("relClassifierStatsTable"))
 	}
@@ -292,7 +293,7 @@ object RelationClassifier extends SparkJob {
 		val sentences = input.fromAnyRDD[Sentence]()(0)
 		val relations = input.fromAnyRDD[Relation]()(1)
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]()(2)
-		var comment = "naive Bayes"
+		var comment = "naive Bayes, sentences except the ones with the given relation"
 		val rels = Set(
 			"parentCompany",
 			"owningCompany",
@@ -307,7 +308,7 @@ object RelationClassifier extends SparkJob {
 			//			val noRelationsBagOfWords = parseBagOfWordsWithNORelations(relations, sentences, rel)
 
 			val labeledTfidf = calculateLabeledHashTFIDF(relationsWithBagOfWords, noRelationsBagOfWords)
-			val result = crossValidate(labeledTfidf.map(_._2), 10)
+			val result = crossValidate(labeledTfidf.map(_._2), 3)
 			//			predictionAndLabel
 			//				.filter(_._2._1 == 1.0)
 			//				.collect
