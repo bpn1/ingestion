@@ -61,57 +61,6 @@ object VersionRestore extends SparkJob {
 	def timeFromUUID(uuid: UUID): Long = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000
 
 	/**
-	  * Returns list of values of the given version or a previous version that changed the given field.
-	  * @param queryVersionID TimeUUID of the wanted version of the attributes
-	  * @param versionList list of all existing versions of the field
-	  * @return value of the field at the point of the queried version
-	  */
-	// TODO move to SubjectManager
-	def findVersion(queryVersionID: UUID, versionList: List[Version]): Option[Version] = {
-		val queryVersion = versionList.find(_.version == queryVersion) //.map(_.value)
-		val olderVersions = versionList.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersionID))
-		val olderVersion = if(olderVersions.nonEmpty) {
-			val lastVersion = olderVersions.maxBy(v => timeFromUUID(v.version))
-			Option(lastVersion)
-		} else {
-			None
-		}
-		queryVersion.orElse(olderVersion)
-	}
-
-	/**
-	  * Restores all given subjects to the data in the specified Version
-	  * @param subject Subject containing the data
-	  * @param version TimeUUID of the version that will be reverted to
-	  * @return Modified subject with restored data
-	  */
-	// TODO move to SubjectManager as new function restoreToVersion
-	def restoreSubjects(
-		subject: Subject,
-		version: UUID,
-		templateVersion: Version
-	): Subject = {
-		val nameVersion = findVersion(version, subject.name_history)
-		val aliasesVersion = findVersion(version, subject.aliases_history)
-		val categoryVersion = findVersion(version, subject.category_history)
-		val propertiesVersion = subject.properties_history.mapValues(findVersion(version, _))
-		val relationsVersion = subject.relations_history
-			.mapValues(_.mapValues(findVersion(version, _)))
-
-		// TODO add data sources from specific attribute to that attribute's version (or concat them all)
-		val sm = new SubjectManager(subject, templateVersion)
-
-		// write fields into subject if found
-		sm.restoreName(nameVersion)
-		sm.setAliases(aliasesVersion)
-		sm.setCategory(categoryVersion)
-		sm.setProperties(propertiesVersion)
-		sm.setRelations(relationsVersion)
-
-		subject
-	}
-
-	/**
 	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
