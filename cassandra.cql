@@ -82,6 +82,7 @@ CREATE TABLE wikidumps.wikipediasentences (
    articleoffset int,
    text text,
    entities frozen<list<frozen<entitylink>>>,
+   bagofwords frozen<list<text>>,
    PRIMARY KEY (articletitle, articleoffset)
 );
 
