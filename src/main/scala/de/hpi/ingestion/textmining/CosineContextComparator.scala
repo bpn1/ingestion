@@ -170,7 +170,7 @@ object CosineContextComparator extends SplitSparkJob {
 		linkContexts
 			.mapPartitions({ partition =>
 				val localAliases = aliasPageScores.value
-				partition.map { case (link, tfidfMap) =>
+				partition.flatMap { case (link, tfidfMap) =>
 					localAliases.getOrElse(link.alias, Nil)
 						.map { case (page, linkScore, pageScore) =>
 							// Note: The page in the link is the actual target for the alias occurrence,
@@ -179,7 +179,6 @@ object CosineContextComparator extends SplitSparkJob {
 						}
 				}
 			}, true)
-			.flatMap(identity)
 			.join(articleContexts)
 			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
 				protoFeatureEntries.map { protoFeatureEntry =>

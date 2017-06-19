@@ -7,7 +7,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.spiegel.models.SpiegelArticle
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.CosineContextComparator.{calculateDefaultDf, calculateIdf}
-import de.hpi.ingestion.textmining.models.{Alias, ParsedWikipediaEntry, WikipediaArticleCount, FeatureEntry}
+import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 object SpiegelNEL extends SparkJob {
@@ -25,8 +25,8 @@ object SpiegelNEL extends SparkJob {
 		val spiegel = sc.cassandraTable[SpiegelArticle](settings("keyspace"), settings("spiegelTable"))
 		val articleCount = sc.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
 		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
-		val wikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(spiegel, articleCount, aliases, wikipedia).flatMap(List(_).toAnyRDD())
+		val articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
+		List(spiegel, articleCount, aliases, articleTfidf).flatMap(List(_).toAnyRDD())
 	}
 
 	/**
@@ -51,12 +51,10 @@ object SpiegelNEL extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val spiegel = input.head.asInstanceOf[RDD[SpiegelArticle]].sample(false, 0.01)
+		val spiegel = input.head.asInstanceOf[RDD[SpiegelArticle]].sample(false, 0.0001)
 		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].collect.head.count.toLong
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
-		val articles = input(3).asInstanceOf[RDD[ParsedWikipediaEntry]].map { entry =>
-			ParsedWikipediaEntry(entry.title, context = entry.context)
-		}
+		val wikipediaTfidf = input(3).asInstanceOf[RDD[ArticleTfIdf]].flatMap(ArticleTfIdf.unapply)
 
 		val aliasPageScores = CosineContextComparator.computeAliasPageScores(aliases)
 	    	.collect
@@ -75,15 +73,10 @@ object SpiegelNEL extends SparkJob {
 			}
 		}
 		val aliasTfIdf = CosineContextComparator.calculateTfidf(articleAliases, numDocuments, defaultIdf)
-		val articleTfIdf = CosineContextComparator.calculateTfidf(
-			CosineContextComparator.transformArticleTfs(articles),
-			numDocuments,
-			defaultIdf)
-
 		val featureEntries = CosineContextComparator.compareLinksWithArticles(
 			aliasTfIdf,
 			aliasPageScoreBroadcast,
-			articleTfIdf)
+			wikipediaTfidf)
 
 		SecondOrderFeatureGenerator.run(List(featureEntries).toAnyRDD(), sc)
 	}

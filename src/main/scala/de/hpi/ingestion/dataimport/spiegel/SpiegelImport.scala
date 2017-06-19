@@ -75,6 +75,7 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 	def findAliases(article: SpiegelArticle, tokenizer: IngestionTokenizer, trie: TrieNode): SpiegelArticle = {
 		val text = article.text.getOrElse("")
 		val tokens = tokenizer.processWithOffsets(text)
+		var invalidIndices = Set.empty[Int]
 		val foundAliases = tokens.indices
 			.flatMap { i =>
 				val testTokens = tokens.slice(i, tokens.length)
@@ -84,12 +85,15 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 					.sortBy(_.length)
 					.lastOption
 					.flatMap { longestMatch =>
+						invalidIndices ++= longestMatch.indices.slice(1, longestMatch.length).map(_ + i)
 						val offset = longestMatch.headOption.map(_.beginOffset)
 						offset.map { begin =>
 							val alias = text.substring(begin, longestMatch.last.endOffset)
-							TrieAlias(alias, offset)
+							(i , TrieAlias(alias, offset))
 						}
 				}
+			}.collect {
+				case (index: Int, alias: TrieAlias) if !invalidIndices.contains(index) => alias
 			}.toList
 		article.copy(triealiases = foundAliases)
 	}

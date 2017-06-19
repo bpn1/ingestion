@@ -170,6 +170,11 @@ CREATE TABLE wikidumps.spiegelfeatureentries (
     PRIMARY KEY (article, offset, alias, entity)
 );
 
+CREATE TABLE wikidumps.articletfidf (
+    article text PRIMARY KEY,
+    tfidf map<text, double>
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,

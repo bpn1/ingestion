@@ -23,5 +23,6 @@
         <spiegelTable>spiegel</spiegelTable>
         <articleCountTable>wikipediaarticlecount</articleCountTable>
         <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
+        <tfidfTable>articletfidf</tfidfTable>
     </settings>
 </config>
