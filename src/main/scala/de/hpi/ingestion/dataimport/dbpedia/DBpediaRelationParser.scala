@@ -9,21 +9,22 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.io.{BufferedSource, Source}
+
 /**
-  * Import-Job to import DBpedia Subjects into the staging table of the datalake.
+  * Extracts all relations from english dbpedia and translates the english title to the german ones.
   */
 object DBpediaRelationParser extends SparkJob {
 	appName = "DBpediaRelationParser"
 	configFile = "textmining.xml"
 
 	val prefixFile: BufferedSource = Source.fromURL(getClass.getResource("/prefixes.txt"))
-	val prefixes: List[(String,String)] = prefixFile.getLines.toList
+	val prefixes: List[(String, String)] = prefixFile.getLines.toList
 		.map(_.trim.replaceAll("""[()]""", "").split(","))
 		.map(pair => (pair(0), pair(1)))
 
 	// $COVERAGE-OFF$
 	/**
-	  * TODO
+	  * Loads triples of relations and english to german translation from ttl files.
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
@@ -36,7 +37,7 @@ object DBpediaRelationParser extends SparkJob {
 	}
 
 	/**
-	  * TODO
+	  * Saves relations to cassandra.
 	  *
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
@@ -51,6 +52,12 @@ object DBpediaRelationParser extends SparkJob {
 
 	// $COVERAGE-ON$
 
+	/**
+	  * Parses only english to german translations from dbpedia triples
+	  *
+	  * @param labels RDD of triples containing the same as relations
+	  * @return Map from english wikipedia titles to their german counterparts
+	  */
 	def getGermanLabels(labels: RDD[String]): Map[String, String] = {
 		labels
 			.map(tokenize)
@@ -61,8 +68,9 @@ object DBpediaRelationParser extends SparkJob {
 			.collect
 			.toMap
 	}
+
 	/**
-	  * TODO
+	  * Extracts all relations from english dbpedia and translates the english title to the german ones.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

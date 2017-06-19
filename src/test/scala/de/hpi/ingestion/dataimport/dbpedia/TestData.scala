@@ -221,6 +221,14 @@ object TestData {
 		"gen_employees" -> this.normalizedEmployees
 	)
 
+	def interlanguageLinksEn(): List[String] = List(
+		"""<http://dbpedia.org/resource/Audi_EN> <http://www.w3.org/2002/07/owl#sameas> <http://de.dbpedia.org/resource/Audi_DE> .""",
+		"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> ."""
+	)
+
+	def germanLabels(): Map[String, String] = {
+		Map("Audi_EN" -> "Audi_DE")
+	}
 }
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods
