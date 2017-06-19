@@ -12,7 +12,10 @@ object TestData {
 	val secondMasterIds = List.fill(2)(UUID.randomUUID()).sorted
 
 	val masterName = Option("masterNode")
-	val subjectNames = List.fill(10)("slaveNode").zipWithIndex.map { case (name, index) => Option(s"$name$index")}
+	val subjectNames = List
+		.fill(10)("slaveNode")
+		.zipWithIndex
+		.map { case (name, index) => Option(s"$name$index")}
 	val secondMasterNames = List(Option("masterNode2.1"), Option("masterNode2.1"))
 
 	val dataSource = "testSource"
