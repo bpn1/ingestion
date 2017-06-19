@@ -2,6 +2,7 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.implicits.RegexImplicits._
 import de.hpi.ingestion.dataimport.{CountryISO3166Mapping, SharedNormalizations}
+import de.hpi.ingestion.dataimport.SharedNormalizations
 
 /**
   * Strategies for the normalization of DBPedia entities
@@ -112,6 +113,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case "geo_coords" => this.normalizeCoords
 			case "geo_city" => this.normalizeCity
 			case "gen_urls" => this.normalizeURLs
+			case "gen_legal_form" => SharedNormalizations.normalizeLegalForm
 			case _ => this.normalizeDefault
 		}
 	}

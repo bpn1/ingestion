@@ -82,7 +82,7 @@ object TestData {
 			Subject(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), name = Option("Entry 2"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q2"), "test" -> List("Entry 3")), relations = Map(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d") -> Map("test" -> ""))),
 			Subject(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), name = Option("Entry 3"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q3"), "test" -> List("Entry 4")), relations = Map(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("test" -> ""))),
 			Subject(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), name = Option("Entry 4"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q4"))),
-			Subject(UUID.fromString("7bfd2ffe-154b-486a-b30d-581d785940c6"), name = Option("Entry 5"), properties = Map(FindRelations.settings("wikidataIdKey") -> Nil, "test" -> List("Entry 1")), relations = Map(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58") -> Map("test" -> ""))),
+			Subject(UUID.fromString("7bfd2ffe-154b-486a-b30d-581d785940c6"), name = Option("Entry 5"), properties = Map("test" -> List("Entry 1")), relations = Map(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58") -> Map("test" -> ""))),
 			Subject(UUID.fromString("bbd8f942-1663-4fea-9e70-3cf27896bc57"), name = Option("Entry 6"), properties = Map("test" -> List("Q5"))))
 	}
 
@@ -286,7 +286,7 @@ object TestData {
 			Option("testwikiname"),
 			Option("en_testwikiname"),
 			Option("test_instancetype"),
-			Option("Protein AG"),
+			Option("Protein"),
 			Map(
 				"Ensembl Protein ID" -> List("ENSP00000280987", "ENSP00000371843", "ENSP00000379734"),
 				"subclass of" -> List("Protein", "FAM177 family"),
@@ -297,7 +297,7 @@ object TestData {
 				"country" -> this.unnormalizedCountries,
 				"employees" -> this.unnormalizedEmployees,
 				"official website" -> this.unnormalizedURLs,
-				"legal form" -> this.unnormalizedLegalForm,
+				"legal form" -> List("Aktiengesellschaft"),
 				"testProperty" -> List("test")
 			)
 		)
@@ -354,8 +354,6 @@ object TestData {
 	def normalizedEmployees: List[String] = List("500", "1337")
 	def unnormalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de", "www.hans", "NotAURL")
 	def normalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de")
-	def unnormalizedLegalForm: List[String] = List("Gesellschaft mit beschränkter Haftung", "Eingetragene Genossenschaft", "GmbH & Co. KG")
-	def normalizedLegalForm: List[String] = List("GmbH", "EG", "GmbH & Co. KG")
 
 	def applyInput: List[List[String]] = List(
 		this.unnormalizedCoords,
@@ -364,10 +362,9 @@ object TestData {
 		this.unnormalizedSectors,
 		this.unnormalizedEmployees,
 		this.unnormalizedURLs,
-		this.unnormalizedLegalForm,
 		List("default")
 	)
-	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "gen_urls", "gen_legal_form", "default")
+	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "gen_urls", "default")
 	def applyStrategies: List[(List[String] => List[String])] = List(
 		WikiDataNormalizationStrategy.normalizeCoords,
 		WikiDataNormalizationStrategy.normalizeCity,
@@ -375,26 +372,23 @@ object TestData {
 		WikiDataNormalizationStrategy.normalizeSector,
 		WikiDataNormalizationStrategy.normalizeEmployees,
 		WikiDataNormalizationStrategy.normalizeURLs,
-		WikiDataNormalizationStrategy.normalizeLegalForm,
 		identity
 	)
 	def unnormalizedAttributes: Map[String, List[String]] = Map(
-		"gen_sectors" -> this.unnormalizedSectors,
+		"gen_sectors" -> (this.unnormalizedSectors :+ "Test_Sector"),
 		"geo_coords" -> this.unnormalizedCoords,
 		"geo_country" -> this.unnormalizedCountries,
 		"geo_city" -> this.unnormalizedCities,
 		"gen_employees" -> this.unnormalizedEmployees,
-		"gen_urls" -> this.unnormalizedURLs,
-		"gen_legal_form" -> this.unnormalizedLegalForm
+		"gen_urls" -> this.unnormalizedURLs
 	)
 	def normalizedAttributes: Map[String, List[String]] = Map(
-		"gen_sectors" -> this.mappedSectors,
+		"gen_sectors" -> (this.mappedSectors :+ "Test_Sector"),
 		"geo_coords" -> this.normalizedCoords,
 		"geo_country" -> this.normalizedCountries,
 		"geo_city" -> this.normalizedCities,
 		"gen_employees" -> this.normalizedEmployees,
-		"gen_urls" -> this.normalizedURLs,
-		"gen_legal_form" -> this.normalizedLegalForm
+		"gen_urls" -> this.normalizedURLs
 	)
 }
 // scalastyle:on line.size.limit
