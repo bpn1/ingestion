@@ -317,6 +317,7 @@ object RelationClassifier extends SparkJob {
 				rel = rel,
 				sentenceswithrelation = relationsWithBagOfWords.count.toInt,
 				sentenceswithnorelation = relationsWithBagOfWords.count.toInt,
+				average = averageStatistics(result),
 				data = result,
 				comment = Option(comment))
 		}.toList

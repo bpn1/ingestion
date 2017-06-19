@@ -190,14 +190,15 @@ CREATE TYPE wikidumps.extendedlink (
     offset int
 );
 
-    CREATE TABLE wikidumps.relationclassifierstats (
-        id uuid PRIMARY KEY,
-        rel text,
-        sentenceswithrelation int,
-        sentenceswithnorelation int,
-        data list<frozen<precisionrecalldatatuple>>,
-        comment text
-    );
+CREATE TABLE wikidumps.relationclassifierstats (
+    id uuid PRIMARY KEY,
+    rel text,
+    sentenceswithrelation int,
+    sentenceswithnorelation int,
+    average precisionrecalldatatuple,
+    data list<frozen<precisionrecalldatatuple>>,
+    comment text
+);
 
 -- Datalake
 CREATE KEYSPACE datalake WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
