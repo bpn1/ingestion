@@ -51,7 +51,22 @@ object TestData {
 			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
 			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
 			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
-			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel"))
+			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel")),
+			Link("Van", "Van (Automobil)", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Reliant", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Toyota", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Flughafen Ferit Melen", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Kastenwagen", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Van", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Van (Provinz)", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Vansee", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Van (Türkei)", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Tušpa", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Chevrolet Van", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Chevrolet", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Reliant Van", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Vilâyet Van", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Türkisch Van", Option(9), Map(), Option("Toan Anh"))
 		)
 	}
 
