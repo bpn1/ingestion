@@ -99,6 +99,23 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 	}
 
 	/**
+	  * Extracts the text contents of the HTML page.
+	  * @param html HTML page as String
+	  * @return text contents of the page
+	  */
+	def extractArticleText(html: String): String = {
+		val contentTags = List("div.spArticleContent", "div.dig-artikel", "div.article-section")
+		val doc = Jsoup.parse(html)
+		val title = doc.head().text()
+		val content = contentTags
+			.map(doc.select)
+	    	.find(_.size == 1)
+	    	.map(_.text())
+	    	.getOrElse(doc.body.text())
+		s"$title $content".trim
+	}
+
+	/**
 	  * Extracts the article data from a given JSON object, parses the HTML content into text and finds the occurring
 	  * aliases in the text.
 	  * @param json JSON object containing the article data
@@ -108,11 +125,11 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 		val id = extractString(json, List("_id", "$oid")).get
 		val url = extractString(json, List("url"))
 		val title = extractString(json, List("title"))
+			.map(_.replaceAll("&nbsp;", " "))
 		val content = extractString(json, List("content"))
 		val text = content
 			.map(_.replaceAll("&nbsp;", " "))
-			.map(Jsoup.parse)
-			.map(htmlDoc => s"${htmlDoc.head().text()} ${htmlDoc.body().text()}".trim)
+		    .map(extractArticleText)
 		SpiegelArticle(id, title, text, url)
 	}
 }

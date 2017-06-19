@@ -97,6 +97,10 @@ object TestData {
 			SpiegelArticle(
 				id = "4",
 				text = Option("Dieser Satz enthält Audi. Dieser Satz enthält Audi AG. Dieser Satz enthält Volkswagen.")
+			),
+			SpiegelArticle(
+				id = "5",
+				text = Option("-buch aktuell -Der Audio Verlag DER SPIEGEL Dein")
 			)
 		)
 	}
@@ -132,6 +136,13 @@ object TestData {
 					TrieAlias("Audi", Option(20)),
 					TrieAlias("Audi AG", Option(46)),
 					TrieAlias("Volkswagen", Option(75))
+				)
+			),
+			SpiegelArticle(
+				id = "5",
+				text = Option("-buch aktuell -Der Audio Verlag DER SPIEGEL Dein"),
+				triealiases = List(
+					TrieAlias("Der Audio Verlag", Option(15))
 				)
 			)
 		)
