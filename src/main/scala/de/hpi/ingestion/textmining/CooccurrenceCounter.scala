@@ -52,7 +52,7 @@ object CooccurrenceCounter extends SparkJob {
 	  * @return List of unique entities in order of entity link offset
 	  */
 	def sentenceToEntityList(sentence: Sentence): List[String] = {
-		sentence.entities.sortBy(_.offset).map(_.entity).distinct
+		sentence.entities.map(_.entity).distinct
 	}
 
 	/**
