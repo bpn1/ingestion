@@ -1,9 +1,18 @@
 package de.hpi.ingestion.textmining.models
 
 /**
-  * Case class representing a Wikipedia page and all aliases that link to this page.
+  * Case class representing a sentence in an article
   *
-  * @param text    name of this page
-  * @param entities all aliases that link to this page and how often they do
+  * @param articletitle  title of the article the sentence was extracted from
+  * @param articleoffset offset in the article the sentence was extracted from
+  * @param text          text of the sentence
+  * @param entities      found entity links in this article
+  * @param bagofwords    bag of words of the sentence except for the aliases of the entities
   */
-case class Sentence(articletitle: String, articleoffset: Int, text: String, entities: List[EntityLink])
+case class Sentence(
+	articletitle: String,
+	articleoffset: Int,
+	text: String,
+	entities: List[EntityLink],
+	bagofwords: List[String]
+)

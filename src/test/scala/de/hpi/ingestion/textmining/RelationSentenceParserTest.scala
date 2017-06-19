@@ -9,8 +9,9 @@ import org.scalatest.{FlatSpec, Matchers}
 class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"Wikipedia text" should "be split into exactly these Sentences with these entities" in {
 		val parsedEntry = TestData.bigLinkExtenderParsedEntry()
-		val tokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
-		val sentences = RelationSentenceParser.entryToSentencesWithEntities(parsedEntry, tokenizer)
+		val sentenceTokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
+		val tokenizer = IngestionTokenizer(Array("CleanWhitespaceTokenizer", "false", "false"))
+		val sentences = RelationSentenceParser.entryToSentencesWithEntities(parsedEntry, sentenceTokenizer, tokenizer)
 		sentences shouldEqual TestData.sentenceList()
 	}
 
