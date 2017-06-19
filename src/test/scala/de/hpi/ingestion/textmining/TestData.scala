@@ -1,6 +1,9 @@
 package de.hpi.ingestion.textmining
 
 import java.io._
+
+import de.hpi.ingestion.dataimport.dbpedia.models.Relation
+
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
@@ -14,6 +17,7 @@ import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
+
 import scala.io.{BufferedSource, Source}
 
 // scalastyle:off number.of.methods
@@ -2221,6 +2225,14 @@ object TestData {
 	def alternativeSentenceList(): List[Sentence] = {
 		List(
 			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9)))),
+			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7)))),
+			Sentence("Audi", 40, "Audi ist Deutschland.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Deutschland", "Deutschland", Some(9)))),
+			Sentence("Audi", 60, "VW ist in Wolfsburg", List(EntityLink("VW", "VW", Some(0)), EntityLink("Wolfsburg", "Wolfsburg", Some(10))))
+		)
+	}
+	def alternativeSentenceListFiltered(): List[Sentence] = {
+		List(
+			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9)))),
 			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))))
 		)
 	}
@@ -2230,6 +2242,13 @@ object TestData {
 			List("Hochhaus", "Postbank", "Berlin", "Berlin-Kreuzberg"),
 			List("Frankfurt (Oder)", "Potsdam", "Magdeburg", "Stettin"),
 			List("Deutsche Funkturm", "Deutsche Telekom")
+		)
+	}
+
+	def relationList(): List[Relation] = {
+		List(
+			Relation("Audi", "country", "Deutschland"),
+			Relation("Volkswagen", "city", "Wolfsburg")
 		)
 	}
 

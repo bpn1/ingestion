@@ -44,6 +44,7 @@ object RelationSentenceParser extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("sentenceTable"))
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -69,8 +70,44 @@ object RelationSentenceParser extends SparkJob {
 			}
 				.map(link => EntityLink(link.alias, link.page, link.offset.map(_ - offset)))
 			offset += sentence.length
-			Sentence(entry.title, offset-sentence.length, sentence, sentenceEntities)
+			Sentence(entry.title, offset - sentence.length, sentence, sentenceEntities)
 		}.filter(_.entities.length > 1)
+	}
+
+	/**
+	  * Filters Entities of Sentences from countries or cities (non companies)
+	  * and removes the sentences with less than 1 entity afterwards
+	  *
+	  * @param sentences sentences to be filtered
+	  * @param relations relations to be filtered by
+	  * @param sc        Sparkcontext needed for broadcasting
+	  * @return filtered List
+	  */
+	def filterSentences(sentences: RDD[Sentence], relations: RDD[Relation], sc: SparkContext): RDD[Sentence] = {
+		val relationtypes = Set(
+			"country",
+			"capital",
+			"location",
+			"city",
+			"birthPlace",
+			"district",
+			"federalState",
+			"state"
+		)
+
+		val blacklist = relations.filter(relation => relationtypes.contains(relation.relationtype))
+			.map(_.objectentity)
+			.collect
+			.toSet
+		val blacklistBroadcast = sc.broadcast(blacklist)
+		sentences.mapPartitions({ entryPartition =>
+			val localBlacklist = blacklistBroadcast.value
+			entryPartition.map { sentence =>
+				val filteredEntities = sentence.entities.filter(entity => !localBlacklist.contains(entity.entity))
+				println(sentence.copy(entities = filteredEntities))
+				sentence.copy(entities = filteredEntities)
+			}
+		}).filter(_.entities.length > 1)
 	}
 
 	/**
@@ -85,31 +122,10 @@ object RelationSentenceParser extends SparkJob {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
 		val relations = input.fromAnyRDD[Relation]().last
 
-		val relationtypes = Set(
-			"country",
-			"capital",
-			"location",
-			"city",
-			"birthPlace",
-			"district",
-			"federalState",
-			"state"
-		)
 		val tokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
 		val sentences = articles.flatMap(entry => entryToSentencesWithEntities(entry, tokenizer))
 
-		val blacklist = relations.filter(relation => relationtypes.contains(relation.relationtype))
-			.map(_.objectentity)
-			.collect
-			.toSet
-		val blacklistBroadcast = sc.broadcast(blacklist)
-		val filteredSentences = sentences.mapPartitions({ entryPartition =>
-			val localBlacklist = blacklistBroadcast.value
-			entryPartition.map { sentence =>
-				val filteredEntities = sentence.entities.filter(entity => !localBlacklist.contains(entity.entity))
-				sentence.copy(entities = filteredEntities)
-			}
-		}).filter(_.entities.length > 1)
+		val filteredSentences = filterSentences(sentences, relations, sc)
 		List(filteredSentences).toAnyRDD()
 	}
 }
