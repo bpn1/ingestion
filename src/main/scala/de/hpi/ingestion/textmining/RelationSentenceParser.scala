@@ -70,11 +70,11 @@ object RelationSentenceParser extends SparkJob {
 				link.offset.exists(_ >= offset) && link.offset.exists(_ + link.alias.length <= offset + sentence.length)
 			}
 				.map(link => EntityLink(link.alias, link.page, link.offset.map(_ - offset)))
+				.sortBy(_.offset)
 			offset += sentence.length
 			var sentenceOffset = 0
 			var bagOfWords = List.empty[String]
 			sentenceEntities
-				.sortBy(_.offset)
 				.foreach { entity =>
 					entity.offset.foreach { entityOffset =>
 						bagOfWords ++= tokenizer.process(sentence.substring(sentenceOffset, entityOffset))
@@ -115,7 +115,10 @@ object RelationSentenceParser extends SparkJob {
 		sentences.mapPartitions({ entryPartition =>
 			val localBlacklist = blacklistBroadcast.value
 			entryPartition.map { sentence =>
-				val filteredEntities = sentence.entities.filter(entity => !localBlacklist.contains(entity.entity))
+				val filteredEntities = sentence
+					.entities
+					.filter(entity => !localBlacklist.contains(entity.entity))
+					.sortBy(_.offset)
 				println(sentence.copy(entities = filteredEntities))
 				sentence.copy(entities = filteredEntities)
 			}
