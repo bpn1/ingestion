@@ -46,7 +46,7 @@ object DBpediaRelationParser extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Parses only english to german translations from dbpedia triples.
+	  * Parses only English to German translations from DBpedia triples.
 	  *
 	  * @param labels RDD of triples containing the same as relation
 	  * @return Map from english wikipedia titles to their german counterparts
@@ -61,7 +61,7 @@ object DBpediaRelationParser extends SparkJob {
 	}
 
 	/**
-	  * Extracts all relations from english dbpedia and translates the english title to the german ones.
+	  * Extracts all relations from English DBpedia and translates the English title to the German ones.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
