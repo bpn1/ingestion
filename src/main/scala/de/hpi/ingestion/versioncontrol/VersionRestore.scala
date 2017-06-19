@@ -80,22 +80,6 @@ object VersionRestore extends SparkJob {
 	}
 
 	/**
-	  * Returns tuple of old and new values for the given field.
-	  * @param version TimeUUID of the version that will be reverted to
-	  * @param versionList list of all existing versions of the field
-	  * @return Option of tuple of old and new values
-	  */
-	def createValueList(
-		version: UUID,
-		versionList: List[Version]
-	): Option[List[String]] = {
-		findVersion(version, versionList) match {
-			case Nil => None
-			case t => Option(t)
-		}
-	}
-
-	/**
 	  * Transforms version histories to the data in that version
 	  * @param subject Subject containing the data
 	  * @param version TimeUUID of the version that will be reverted to
@@ -106,22 +90,22 @@ object VersionRestore extends SparkJob {
 		version: UUID,
 		templateVersion: Version
 	): Subject = {
-		val name = createValueList(version, subject.name_history).getOrElse(List()).headOption
-		val aliases = createValueList(version, subject.aliases_history).getOrElse(List())
-		val category = createValueList(version, subject.category_history).getOrElse(List()).headOption
-		val properties = subject.properties_history.mapValues(createValueList(version, _).getOrElse(List()))
-		val relations = subject.relations_history
-			.mapValues(_.mapValues(createValueList(version, _).getOrElse(List("")).head))
+		val nameVersion = findVersion(version, subject.name_history)
+		val aliasesVersion = findVersion(version, subject.aliases_history)
+		val categoryVersion = findVersion(version, subject.category_history)
+		val propertiesVersion = subject.properties_history.mapValues(findVersion(version, _))
+		val relationsVersion = subject.relations_history
+			.mapValues(_.mapValues(findVersion(version, _)))
 
 		// TODO add data sources from specific attribute to that attribute's version (or concat them all)
 		val sm = new SubjectManager(subject, templateVersion)
 
 		// write fields into subject if found
-		sm.setName(name)
-		sm.setAliases(aliases)
-		sm.setCategory(category)
-		sm.setProperties(properties)
-		sm.setRelations(relations)
+		sm.setName(nameVersion)
+		sm.setAliases(aliasesVersion)
+		sm.setCategory(categoryVersion)
+		sm.setProperties(propertiesVersion)
+		sm.setRelations(relationsVersion)
 
 		subject
 	}
