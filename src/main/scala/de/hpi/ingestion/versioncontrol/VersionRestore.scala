@@ -4,8 +4,11 @@ import de.hpi.ingestion.datalake.models._
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import java.util.UUID
+
+import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.framework.SparkJob
 import play.api.libs.json._
+
 import scala.collection.mutable
 import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.versioncontrol.models.HistoryEntry
@@ -20,6 +23,7 @@ object VersionRestore extends SparkJob {
 	appName = "VersionRestore"
 	val keyspace = "datalake"
 	val tablename = "subject"
+	val outputTablename = "subject_restored"
 	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
 
 	// $COVERAGE-OFF$
@@ -42,9 +46,9 @@ object VersionRestore extends SparkJob {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[JsValue]()
+			.fromAnyRDD[Subject]()
 			.head
-			.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
+			.saveToCassandra(keyspace, outputTablename)
 	}
 	// $COVERAGE-ON$
 
@@ -58,20 +62,21 @@ object VersionRestore extends SparkJob {
 
 	/**
 	  * Returns list of values of the given version or a previous version that changed the given field.
-	  * @param queryVersion TimeUUID of the wanted version of the attributes
+	  * @param queryVersionID TimeUUID of the wanted version of the attributes
 	  * @param versionList list of all existing versions of the field
 	  * @return value of the field at the point of the queried version
 	  */
-	def findValues(queryVersion: UUID, versionList: List[Version]): List[String] = {
-		val queryValue = versionList.find(_.version == queryVersion).map(_.value)
-		val olderVersions = versionList.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersion))
-		val olderValue = if(olderVersions.nonEmpty) {
+	// TODO filter by timestamp, not exact match
+	def findVersion(queryVersionID: UUID, versionList: List[Version]): Option[Version] = {
+		val queryVersion = versionList.find(_.version == queryVersion) //.map(_.value)
+		val olderVersions = versionList.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersionID))
+		val olderVersion = if(olderVersions.nonEmpty) {
 			val lastVersion = olderVersions.maxBy(v => timeFromUUID(v.version))
-			Option(lastVersion.value)
+			Option(lastVersion)
 		} else {
 			None
 		}
-		queryValue.orElse(olderValue).getOrElse(Nil)
+		queryVersion.orElse(olderVersion)
 	}
 
 	/**
@@ -84,28 +89,41 @@ object VersionRestore extends SparkJob {
 		version: UUID,
 		versionList: List[Version]
 	): Option[List[String]] = {
-		findValues(version, versionList) match {
+		findVersion(version, versionList) match {
 			case Nil => None
 			case t => Option(t)
 		}
 	}
 
 	/**
-	  * Transforms version histories to tuples of old and new values of every field.
+	  * Transforms version histories to the data in that version
 	  * @param subject Subject containing the data
 	  * @param version TimeUUID of the version that will be reverted to
-	  * @return History Entry containing the diffs of each field of the Subject
+	  * @return Modified subject with restored data
 	  */
-	def retrieveVersions(
+	def restoreSubjects(
 		subject: Subject,
-		version: UUID
-	): HistoryEntry = {
-		val nameList = createValueList(version, subject.name_history)
-		val aliasesList = createValueList(version, subject.aliases_history)
-		val categoryList = createValueList(version, subject.category_history)
-		val properties = subject.properties_history.mapValues(createValueList(version, _))
-		val relations = subject.relations_history.mapValues(_.mapValues(createValueList(version, _)))
-		HistoryEntry(subject.id, nameList, aliasesList, categoryList, properties, relations)
+		version: UUID,
+		templateVersion: Version
+	): Subject = {
+		val name = createValueList(version, subject.name_history).getOrElse(List()).headOption
+		val aliases = createValueList(version, subject.aliases_history).getOrElse(List())
+		val category = createValueList(version, subject.category_history).getOrElse(List()).headOption
+		val properties = subject.properties_history.mapValues(createValueList(version, _).getOrElse(List()))
+		val relations = subject.relations_history
+			.mapValues(_.mapValues(createValueList(version, _).getOrElse(List("")).head))
+
+		// TODO add data sources from specific attribute to that attribute's version (or concat them all)
+		val sm = new SubjectManager(subject, templateVersion)
+
+		// write fields into subject if found
+		sm.setName(name)
+		sm.setAliases(aliases)
+		sm.setCategory(category)
+		sm.setProperties(properties)
+		sm.setRelations(relations)
+
+		subject
 	}
 
 	/**
@@ -117,8 +135,9 @@ object VersionRestore extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val version = UUID.fromString(args(0))
+		val templateVersion = Version(appName, List("history"), sc, timestampName = false)
 		input.fromAnyRDD[Subject]()
-			.map(rdd => rdd.map(retrieveVersions(_, version)))
+			.map(rdd => rdd.map(restoreSubjects(_, version, templateVersion)))
 			.toAnyRDD()
 	}
 
