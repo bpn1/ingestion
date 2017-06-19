@@ -53,9 +53,9 @@ object DBpediaRelationParser extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Parses only english to german translations from dbpedia triples
+	  * Parses only english to german translations from dbpedia triples.
 	  *
-	  * @param labels RDD of triples containing the same as relations
+	  * @param labels RDD of triples containing the same as relation
 	  * @return Map from english wikipedia titles to their german counterparts
 	  */
 	def getGermanLabels(labels: RDD[String]): Map[String, String] = {
