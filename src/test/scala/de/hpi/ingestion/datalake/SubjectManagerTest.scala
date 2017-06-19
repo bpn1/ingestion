@@ -146,6 +146,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 		val subject = Subject()
 		val version = Version.apply("SM Test", Nil, sc, false)
 		val sm = new SubjectManager(subject, version)
+
 		sm.addProperties(Map("key 1" -> List("value 1", "value 2")))
 		subject.properties("key 1") shouldEqual List("value 1", "value 2")
 		subject.properties_history("key 1") should have length 1
@@ -156,16 +157,43 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 		subject.properties_history("key 2") should have length 1
 		subject.properties_history("key 2").last.value shouldEqual List("value 3")
 
+		sm.addProperties(Map("key 2" -> List("value 4")))
+		subject.properties("key 2") shouldEqual List("value 3", "value 4")
+		subject.properties_history("key 2") should have length 2
+		subject.properties_history("key 2").last.value shouldEqual List("value 3", "value 4")
+
+		sm.addProperties(Map("key 3" -> List("value 5", "value 6"), "key 4" -> Nil))
+		subject.properties("key 3") shouldEqual List("value 5", "value 6")
+		subject.properties_history("key 3") should have length 1
+		subject.properties_history("key 3").last.value shouldEqual List("value 5", "value 6")
+		subject.properties.get("key 4") shouldBe empty
+		subject.properties_history.get("key 4") shouldBe empty
+
+		sm.overwriteProperties(Map("key 2" -> List("value 3")))
+		subject.properties("key 2") shouldEqual List("value 3")
+		subject.properties_history("key 2") should have length 3
+		subject.properties_history("key 2").last.value shouldEqual List("value 3")
+
+		sm.overwriteProperties(Map("key 2" -> Nil))
+		subject.properties.get("key 2") shouldEqual None
+		subject.properties_history("key 2") should have length 4
+		subject.properties_history("key 2").last.value shouldBe empty
+
 		sm.removeProperties(List("key 1"))
 		subject.properties.get("key 1") shouldBe empty
 		subject.properties_history("key 1") should have length 2
 		subject.properties_history("key 1").last.value shouldBe empty
 
 		sm.clearProperties()
+		subject.properties.get("key 1") shouldBe empty
 		subject.properties.get("key 2") shouldBe empty
+		subject.properties.get("key 3") shouldBe empty
 		subject.properties_history("key 1") should have length 2
-		subject.properties_history("key 2") should have length 2
+		subject.properties_history("key 2") should have length 4
+		subject.properties_history("key 3") should have length 2
+		subject.properties_history("key 1").last.value shouldBe empty
 		subject.properties_history("key 2").last.value shouldBe empty
+		subject.properties_history("key 3").last.value shouldBe empty
 	}
 
 	"Relations" should "be added and removed" in {
