@@ -43,10 +43,10 @@ object Deduplication extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(subjects, staging) = input.fromAnyRDD[Subject]()
-		val filteredSubjects = subjects.filter(_.master.isDefined)
-		val blocks = Blocking.blocking(filteredSubjects, staging, blockingSchemes)
+		//val filteredSubjects = subjects.filter(_.master.isDefined)
+		val blocks = Blocking.blocking(subjects, staging, blockingSchemes)
 		val subjectPairs = findDuplicates(blocks.values, sc)
-		val duplicates = createDuplicateCandidates(subjectPairs)
+		val duplicates = createDuplicates(subjectPairs)
 		List(duplicates).toAnyRDD()
 	}
 
@@ -78,7 +78,7 @@ object Deduplication extends SparkJob {
 	  * @param subjectPairs RDD of Subject pairs containing all found duplicates
 	  * @return RDD of grouped Duplicate Candidates
 	  */
-	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[Duplicates] = {
+	def createDuplicates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[Duplicates] = {
 		val stagingTable = settings("stagingTable")
 		subjectPairs
 			.map { case (subject, staging, score) =>

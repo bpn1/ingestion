@@ -1,7 +1,7 @@
 package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.deduplication.models.{Block, DuplicateCandidates, Duplicates}
+import de.hpi.ingestion.deduplication.models.Duplicates
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -54,7 +54,7 @@ class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDCompari
 		val subjects = TestData.subjects
 		val stagings = TestData.stagings
 		val duplicates = TestData.testDuplicates(sc)
-		val candidates = Deduplication.createDuplicateCandidates(duplicates)
+		val candidates = Deduplication.createDuplicates(duplicates)
 		val expectedCandidates = sc.parallelize(TestData.createdDuplicateCandidates(subjects, stagings))
 		assertRDDEquals(candidates, expectedCandidates)
 
@@ -68,9 +68,9 @@ class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDCompari
 		Deduplication.scoreConfigSettings = TestData.simpleTestConfig
 		Deduplication.settings = Map("confidence" -> "0.0")
 		val blocks = TestData.testBlocks(sc)
-		val duplicateCandidates = Deduplication.findDuplicates(blocks, sc).map(_.copy(_3 = 0.0))
-		val expectedCandidates = TestData.distinctDuplicateCandidates(sc)
-		assertRDDEquals(duplicateCandidates, expectedCandidates)
+		val duplicates = Deduplication.findDuplicates(blocks, sc).map(_.copy(_3 = 0.0))
+		val expected = TestData.distinctDuplicateCandidates(sc)
+		assertRDDEquals(duplicates, expected)
 
 		Deduplication.scoreConfigSettings = originalConfig
 		Deduplication.settings = originalSettings
@@ -87,6 +87,9 @@ class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDCompari
 		val input = List(sc.parallelize(subjects), sc.parallelize(stagings)).toAnyRDD()
 		val duplicates = Deduplication.run(input, sc).fromAnyRDD[Duplicates]().head
 		val expected = sc.parallelize(TestData.trueDuplicateCandidates(subjects, stagings))
+
+		duplicates.foreach(println)
+
 		assertRDDEquals(duplicates, expected)
 
 		Deduplication.scoreConfigSettings = originalConfig
