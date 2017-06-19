@@ -19,7 +19,7 @@ object RelationSentenceParser extends SparkJob {
 
 	// $COVERAGE-OFF$
 	/**
-	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * Loads Parsed Wikipedia entries and DBpedia Relations from the Cassandra.
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
