@@ -1,23 +1,21 @@
 package de.hpi.ingestion.textmining
 
-import java.io._
-
-import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
-import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models.{TrieAlias, _}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
-import org.apache.spark.mllib.linalg.{DenseVector, Vector}
+import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
-
+import scala.collection.JavaConversions._
 import scala.io.{BufferedSource, Source}
+import java.io._
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -2585,8 +2583,14 @@ object TestData {
 		SimilarityMeasureStats(null, List(averagedStatisticTuples()), Option("Test comment"))
 	}
 
-	def randomForestModel(): RandomForestModel = {
+	def randomForestModelWithNegativePrediction(): RandomForestModel = {
 		val node = new Node(0, new Predict(0.0, 1.0), 0.0, true, None, None, None, None)
+		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
+		new RandomForestModel(Algo.Classification, Array(dtmodel))
+	}
+
+	def randomForestModelWithPositivePrediciton(sc: SparkContext): RandomForestModel = {
+		val node = new Node(0, new Predict(1.0, 1.0), 0.0, true, None, None, None, None)
 		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
 		new RandomForestModel(Algo.Classification, Array(dtmodel))
 	}
@@ -2598,17 +2602,11 @@ object TestData {
 		maxDepth: Int = 4,
 		maxBins: Int = 32
 	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
-		(simMeasureStats(), Option(randomForestModel()))
+		(simMeasureStats(), Option(randomForestModelWithNegativePrediction()))
 	}
 
 	def loadRandomForestModel(sc: SparkContext): RandomForestModel = {
-		randomForestModel()
-	}
-
-	def dummyFunction(sc: SparkContext): Option[RandomForestModel] = None
-
-	def predictionFunction(classifier: Option[RandomForestModel], dataPoint: Vector): Double = {
-		1.0
+		randomForestModelWithNegativePrediction()
 	}
 
 	def formattedPredictionStatistics(): String = {

@@ -2,17 +2,16 @@ package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.framework.SplitSparkJob
 import de.hpi.ingestion.textmining.models._
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
-import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.AliasTrieSearch._
 import de.hpi.ingestion.textmining.CosineContextComparator._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.model.RandomForestModel
+import com.datastax.spark.connector._
 
 /**
   * Uses a trained classifier model to perform NER and NEL on Wikipedia articles.
@@ -22,8 +21,7 @@ object TextNEL extends SplitSparkJob {
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
-	var loadModelFunction: SparkContext => Option[RandomForestModel] = loadModel _
-	var predictionFunction: (Option[RandomForestModel], Vector) => Double = predict _
+	var loadModelFunction: SparkContext => RandomForestModel = loadModel
 
 	/**
 	  * Loads Wikipedia entries from the Cassandra.
@@ -59,19 +57,8 @@ object TextNEL extends SplitSparkJob {
 	  * @param sc SparkContext used for loading from the HDFS
 	  * @return random forest classifier model
 	  */
-	def loadModel(sc: SparkContext): Option[RandomForestModel] = {
-		Some(RandomForestModel.load(sc, settings("classifierModel")))
-	}
-
-	/**
-	  * Predicts the classes of the given features.
-	  *
-	  * @param classifier random forest classifier model
-	  * @param dataPoint  data point consisting of features
-	  * @return predicted class
-	  */
-	def predict(classifier: Option[RandomForestModel], dataPoint: Vector): Double = {
-		classifier.get.predict(dataPoint)
+	def loadModel(sc: SparkContext): RandomForestModel = {
+		RandomForestModel.load(sc, settings("classifierModel"))
 	}
 
 	// $COVERAGE-ON$
@@ -85,10 +72,10 @@ object TextNEL extends SplitSparkJob {
 	  */
 	def linkNamedEntities(
 		data: RDD[(Link, LabeledPoint)],
-		classifier: Broadcast[Option[RandomForestModel]]
+		classifier: Broadcast[RandomForestModel]
 	): RDD[Link] = {
 		data.map { case (linkCandidate, LabeledPoint(label, dataPoint)) =>
-			val prediction = predictionFunction(classifier.value, dataPoint)
+			val prediction = classifier.value.predict(dataPoint)
 			(linkCandidate, prediction)
 		}.filter(_._2 == 1)
 			.map(_._1)
@@ -254,7 +241,6 @@ object TextNEL extends SplitSparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val classifier = loadModelFunction(sc)
 		val allArticles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
 		val articlesPartition = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
@@ -276,7 +262,8 @@ object TextNEL extends SplitSparkJob {
 		val linkFeatureEntries = CosineContextComparator
 			.compareLinksWithArticles(linkCandidatesTfidf, sc.broadcast(aliasPageScores), articleTfidf)
 		val data = linkFeatureEntries.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
-		val namedEntities = linkNamedEntities(data, sc.broadcast(classifier))
+		val classifier = sc.broadcast(loadModelFunction(sc))
+		val namedEntities = linkNamedEntities(data, classifier)
 		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)
 		List(namedEntities).toAnyRDD() ++ List(articlesWithLinks).toAnyRDD()
 	}

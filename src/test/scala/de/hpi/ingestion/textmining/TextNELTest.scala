@@ -1,12 +1,11 @@
 package de.hpi.ingestion.textmining
 
-import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.textmining.models._
-import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import org.scalatest.{FlatSpec, Matchers}
 import org.jsoup.Jsoup
-
+import com.holdenkarau.spark.testing.SharedSparkContext
 import scala.util.matching.Regex
 
 class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
@@ -18,11 +17,8 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val testDocFreqStreamFunction = TestData.docfreqStream("docfreq") _
 		CosineContextComparator.docfreqStreamFunction = testDocFreqStreamFunction
 		val oldModelFunction = TextNEL.loadModelFunction
-		val testModelFunction = TestData.dummyFunction _
+		val testModelFunction = TestData.randomForestModelWithPositivePrediciton _
 		TextNEL.loadModelFunction = testModelFunction
-		val oldPredictionFunction = TextNEL.predictionFunction
-		val testPredictionFunction = TestData.predictionFunction _
-		TextNEL.predictionFunction = testPredictionFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
@@ -33,7 +29,6 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			.collect
 		namedEntities should not be empty
 
-		TextNEL.predictionFunction = oldPredictionFunction
 		TextNEL.loadModelFunction = oldModelFunction
 		CosineContextComparator.docfreqStreamFunction = oldDocFreqStreamFunction
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
@@ -47,11 +42,8 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val testDocFreqStreamFunction = TestData.docfreqStream("docfreq") _
 		CosineContextComparator.docfreqStreamFunction = testDocFreqStreamFunction
 		val oldModelFunction = TextNEL.loadModelFunction
-		val testModelFunction = TestData.dummyFunction _
+		val testModelFunction = TestData.randomForestModelWithPositivePrediciton _
 		TextNEL.loadModelFunction = testModelFunction
-		val oldPredictionFunction = TextNEL.predictionFunction
-		val testPredictionFunction = TestData.predictionFunction _
-		TextNEL.predictionFunction = testPredictionFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
@@ -63,7 +55,6 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			.toSet
 		namedEntities shouldEqual TestData.namedEntitiesSet()
 
-		TextNEL.predictionFunction = oldPredictionFunction
 		TextNEL.loadModelFunction = oldModelFunction
 		CosineContextComparator.docfreqStreamFunction = oldDocFreqStreamFunction
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
@@ -77,11 +68,8 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 		val testDocFreqStreamFunction = TestData.docfreqStream("docfreq") _
 		CosineContextComparator.docfreqStreamFunction = testDocFreqStreamFunction
 		val oldModelFunction = TextNEL.loadModelFunction
-		val testModelFunction = TestData.dummyFunction _
+		val testModelFunction = TestData.randomForestModelWithPositivePrediciton _
 		TextNEL.loadModelFunction = testModelFunction
-		val oldPredictionFunction = TextNEL.predictionFunction
-		val testPredictionFunction = TestData.predictionFunction _
-		TextNEL.predictionFunction = testPredictionFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val incompleteArticles = sc.parallelize(TestData.incompleteArticlesWithCompleteContexts().toList)
@@ -94,7 +82,6 @@ class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 			.toSet
 		namedEntities shouldEqual TestData.namedEntitiesForIncompleteArticlesSet()
 
-		TextNEL.predictionFunction = oldPredictionFunction
 		TextNEL.loadModelFunction = oldModelFunction
 		CosineContextComparator.docfreqStreamFunction = oldDocFreqStreamFunction
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
