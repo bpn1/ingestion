@@ -26,6 +26,7 @@ object RelationClassifier extends SparkJob {
 	appName = "Relation Classifier"
 	configFile = "textmining.xml"
 
+	val directed = "true"
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
@@ -145,29 +146,18 @@ object RelationClassifier extends SparkJob {
 		sentences: RDD[Sentence],
 		rel: String
 	): RDD[(Double, List[String])] = {
-		sentences.subtract(relations
-			.map(rel => (List(rel.subjectentity, rel.objectentity), rel.relationtype))
-			.collect {
-				case (entities, relation) if relation == rel => (entities, rel)
-			}
-			.join(
-				sentences
-					.map(sentence => (
-						sentence.entities.map(_.entity),
-						(
-							sentence.bagofwords,
-							sentence.articleoffset,
-							sentence.articletitle,
-							sentence.text,
-							sentence.entities
-						)
-					)
-					)
-					.filter(_._1.length == 2)
+		sentences.subtract(
+			relations
+				.map(rel => (List(rel.subjectentity, rel.objectentity), rel.relationtype))
+				.collect { case (entities, relation) if relation == rel => (entities, rel)
+				}
+				.join(
+					sentences
+						.map(sentence => (sentence.entities.map(_.entity), sentence))
+						.filter(_._1.length == 2)
+				)
+				.map { case (key, (relation, sentence)) => sentence}
 			)
-			.map { case (key, (relation, (bagofwords, articleoffset, articletitle, text, entities))) =>
-				Sentence(articletitle, articleoffset, text, entities, bagofwords)
-			})
 			.map(sentence => (0.0, sentence.bagofwords))
 	}
 
@@ -293,19 +283,21 @@ object RelationClassifier extends SparkJob {
 		val sentences = input.fromAnyRDD[Sentence]()(0)
 		val relations = input.fromAnyRDD[Relation]()(1)
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]()(2)
-		var comment = "naive Bayes, sentences except the ones with the given relation"
+		var comment = "naive Bayes, sentences except the ones with the given relation, directed"
 		val rels = Set(
 			"parentCompany",
 			"owningCompany",
 			"successor",
 			"predecessor",
-			"subsidiary"
+			"subsidiary",
+			"childOrganisation",
+			"division"
 		)
 		val stats = rels.map { rel =>
 			val relationsWithBagOfWords = parseBagOfWordsForRelations(relations, sentences, rel)
-			val noRelationsBagOfWords = parseBagOfWordsWithNoKnownRelations(relations, sentences, rel)
+			//			val noRelationsBagOfWords = parseBagOfWordsWithNoKnownRelations(relations, sentences, rel)
 			//			val noRelationsBagOfWords = parseBagOfWordsForNoRelations(cooccurrences, sentences)
-			//			val noRelationsBagOfWords = parseBagOfWordsWithNORelations(relations, sentences, rel)
+			val noRelationsBagOfWords = parseBagOfWordsWithNORelations(relations, sentences, rel)
 
 			val labeledTfidf = calculateLabeledHashTFIDF(relationsWithBagOfWords, noRelationsBagOfWords)
 			val result = crossValidate(labeledTfidf.map(_._2), 3)
