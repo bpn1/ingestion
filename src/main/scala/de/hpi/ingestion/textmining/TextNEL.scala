@@ -79,7 +79,7 @@ object TextNEL extends SplitSparkJob {
 	/**
 	  * Uses the trained classifier to find and link named entities.
 	  *
-	  * @param data link candidates with their respective labeled points
+	  * @param data       link candidates with their respective labeled points
 	  * @param classifier random forest classifier model
 	  * @return identified links to named entities
 	  */
@@ -163,6 +163,11 @@ object TextNEL extends SplitSparkJob {
 						aliasPagesMap
 							.getOrElse(trieAlias.alias, Nil)
 							.map { page =>
+								if(trieAlias.offset.getOrElse(0) < 0) {
+									println(s"AAAAA ${trieAlias.offset}")
+									println(s"BBBBB ${trieAlias.alias}")
+									println(s"CCCCC $article")
+								}
 								(Link(trieAlias.alias, page, trieAlias.offset, article = Option(article.title)),
 									Bag(trieAlias.context))
 							}
@@ -184,6 +189,7 @@ object TextNEL extends SplitSparkJob {
 		var processedCharacters = 0
 		links
 			.groupBy(_.offset)
+			.filter(_._1.get >= 0)
 			.toList
 			.sortBy(_._1)
 			.foreach { case (offset, groupedLinks) =>
