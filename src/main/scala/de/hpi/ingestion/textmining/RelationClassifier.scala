@@ -26,7 +26,6 @@ object RelationClassifier extends SparkJob {
 	appName = "Relation Classifier"
 	configFile = "textmining.xml"
 
-	val directed = "true"
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
@@ -202,8 +201,8 @@ object RelationClassifier extends SparkJob {
 		segments
 			.map { case (test, trainingList) =>
 				val training = trainingList.reduce(_.union(_))
-				val model = trainNaiveBayes(training)
-//				val model = trainRandomForest(training)
+//				val model = trainNaiveBayes(training)
+				val model = trainRandomForest(training)
 				val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
 					val prediction = model.predict(features)
 					(prediction, label)
@@ -308,7 +307,7 @@ object RelationClassifier extends SparkJob {
 			RelationClassifierStats(
 				rel = rel,
 				sentenceswithrelation = relationsWithBagOfWords.count.toInt,
-				sentenceswithnorelation = relationsWithBagOfWords.count.toInt,
+				sentenceswithnorelation = noRelationsBagOfWords.count.toInt,
 				average = averageStatistics(result),
 				data = result,
 				comment = Option(comment))
