@@ -2605,9 +2605,9 @@ object TestData {
 		randomForestModel()
 	}
 
-	def dummyFunction(sc: SparkContext): Unit = {}
+	def dummyFunction(sc: SparkContext): Option[RandomForestModel] = None
 
-	def predictionFunction(dataPoint: Vector): Double = {
+	def predictionFunction(classifier: Option[RandomForestModel], dataPoint: Vector): Double = {
 		1.0
 	}
 
