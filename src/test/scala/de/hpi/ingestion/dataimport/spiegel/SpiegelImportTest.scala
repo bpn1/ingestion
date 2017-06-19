@@ -31,6 +31,12 @@ class SpiegelImportTest extends FlatSpec with Matchers with SharedSparkContext {
 		articles shouldEqual expectedArticles
 	}
 
+	"Article text" should "be extracted" in {
+		val extractedContents = TestData.spiegelPages().map(SpiegelImport.extractArticleText)
+		val expectedContents = TestData.pageTexts()
+		extractedContents shouldEqual expectedContents
+	}
+
 	"Found aliases" should "be exactly these aliases" in {
 		val tokenizer = IngestionTokenizer(false, false)
 		val trie = TextTestData.dataTrie(tokenizer, "/spiegel/triealiases")

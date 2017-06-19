@@ -20,6 +20,24 @@ object TestData {
 			.map(_.as[JsObject])
 	}
 
+	def spiegelPages(): List[String] = {
+		List(
+			"""<div class="spArticleContent">test tag 1</div> abc""",
+			"""<div class="dig-artikel">test tag 2</div> abc""",
+			"""<div class="article-section">test tag 3</div> abc""",
+			"""test no tag"""
+		)
+	}
+
+	def pageTexts(): List[String] = {
+		List(
+			"test tag 1",
+			"test tag 2",
+			"test tag 3",
+			"test no tag"
+		)
+	}
+
 	def parsedArticles(): List[SpiegelArticle] = {
 		List(
 			SpiegelArticle(

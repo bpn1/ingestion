@@ -24,7 +24,7 @@ object SpiegelNEL extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val spiegel = sc.cassandraTable[SpiegelArticle](settings("keyspace"), settings("spiegelTable"))
-			.sample(false, 0.001)
+//			.sample(false, 0.001)
 		val articleCount = sc.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
 		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
 		val articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
