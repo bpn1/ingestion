@@ -6,19 +6,18 @@ import scala.io.Source
 
 case class Subject(
 	var id: UUID = UUID.randomUUID(),
+	var datasource: String,
 	var name: Option[String] = None,
 	var aliases: List[String] = Nil,
 	var category: Option[String] = None,
 	var properties: Map[String, List[String]] = Map(),
 	var relations: Map[UUID, Map[String, String]] = Map(),
-	var master: Option[UUID] = None,
 
 	var name_history: List[Version] = Nil,
 	var aliases_history: List[Version] = Nil,
 	var category_history: List[Version] = Nil,
 	var properties_history: Map[String, List[Version]] = Map(),
 	var relations_history: Map[UUID, Map[String, List[Version]]] = Map(),
-	var master_history: List[Version] = Nil
 ) extends DLImportEntity {
 	/**
 	  * Compares the subject using its uuid
@@ -69,7 +68,8 @@ case class Subject(
 	  * @return score of the master node relation
 	  */
 	def masterScore(): Option[Double] = {
-		master
+		relations
+			.get()
 			.flatMap(relations.get)
 			.flatMap(_.get(SubjectManager.slaveKey))
 			.map(_.toDouble)
