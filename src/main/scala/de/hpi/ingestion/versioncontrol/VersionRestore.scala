@@ -66,7 +66,7 @@ object VersionRestore extends SparkJob {
 	  * @param versionList list of all existing versions of the field
 	  * @return value of the field at the point of the queried version
 	  */
-	// TODO filter by timestamp, not exact match
+	// TODO move to SubjectManager
 	def findVersion(queryVersionID: UUID, versionList: List[Version]): Option[Version] = {
 		val queryVersion = versionList.find(_.version == queryVersion) //.map(_.value)
 		val olderVersions = versionList.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersionID))
@@ -80,11 +80,12 @@ object VersionRestore extends SparkJob {
 	}
 
 	/**
-	  * Transforms version histories to the data in that version
+	  * Restores all given subjects to the data in the specified Version
 	  * @param subject Subject containing the data
 	  * @param version TimeUUID of the version that will be reverted to
 	  * @return Modified subject with restored data
 	  */
+	// TODO move to SubjectManager as new function restoreToVersion
 	def restoreSubjects(
 		subject: Subject,
 		version: UUID,
@@ -101,7 +102,7 @@ object VersionRestore extends SparkJob {
 		val sm = new SubjectManager(subject, templateVersion)
 
 		// write fields into subject if found
-		sm.setName(nameVersion)
+		sm.restoreName(nameVersion)
 		sm.setAliases(aliasesVersion)
 		sm.setCategory(categoryVersion)
 		sm.setProperties(propertiesVersion)

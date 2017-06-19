@@ -21,6 +21,17 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	}
 
 	/**
+	  * Creates copy of the template version with a new value and additional data sources.
+	  * @param value value to use
+	  * @param datasources data source list to append to template Version's
+	  * @return new Version containing the new data
+	  */
+	def makeVersion(value: List[String], datasources: List[String] = List()): Version = {
+		val oldSources = templateVersion.datasources
+		templateVersion.copy(value = value, datasources = datasources ++ oldSources)
+	}
+
+	/**
 	  * Sets the name of the Subject with the given validity.
 	  * @param value name of the Subject
 	  * @param validity Map containing the data about the validity
@@ -44,6 +55,20 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param validity Map containing the data about the validity
 	  */
 	def setName(value: String, validity: Map[String, String] = Map()): Unit = setName(Option(value), validity)
+
+	/**
+	  * Sets the name of the Subject to the value of the given Version and use its data sources
+	  * @param version: Option of the Version that contains the value and relevant data sources
+	  */
+	def restoreName(version: Option[Version]): Unit = {
+		if(version.isEmpty) return
+		val value = Option(version.get.value.head)
+		val dataSources = version.get.datasources
+		if(subject.name != value) {
+			subject.name = value
+			subject.name_history :+= makeVersion(value.toList, dataSources)
+		}
+	}
 
 	/**
 	  * Adds a list of aliases to the currently set aliases of the Subject.
