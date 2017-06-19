@@ -358,10 +358,10 @@ object TestData {
 	}
 
 	def subjects: List[Subject] = List(
-		Subject(id = UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52;11"), "gen_income" -> List("1234"))),
-		Subject(id = UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52;13"), "gen_income" -> List("33"))),
-		Subject(id = UUID.fromString("c9621786-1cce-45bf-968a-3e8d06e16fda"), name = Some("Porsche"), properties = Map("geo_coords" -> List("52;13"), "gen_sectors" -> List("cars", "music", "games"))),
-		Subject(id = UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), name = Some("Ferrari"), properties = Map("geo_coords" -> List("53;14"), "gen_sectors" -> List("games", "cars", "music")))
+		Subject(id = UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52.1234;11.5677"), "gen_income" -> List("1234"))),
+		Subject(id = UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52.1234;13.1234"), "gen_income" -> List("33"))),
+		Subject(id = UUID.fromString("c9621786-1cce-45bf-968a-3e8d06e16fda"), name = Some("Porsche"), properties = Map("geo_coords" -> List("52.2345;13.6789"), "gen_sectors" -> List("cars", "music", "games"))),
+		Subject(id = UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), name = Some("Ferrari"), properties = Map("gen_sectors" -> List("games", "cars", "music")))
 	)
 
 	def stagings: List[Subject] = List(
@@ -571,7 +571,18 @@ object TestData {
 	def simpleBlockingScheme: List[List[String]] = List(List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
 	def lastLettersBlockingScheme: List[List[String]] = List(List(" GmbH"), List("wagen"), List("rrari"), List("rsche"), List("undefined"))
 	def listBlockingScheme: List[List[String]] = List(List("Berlin", "Hamburg", "1234"), List("Berlin", "33"), List("undefined"))
-	def geoCoordsBlockingScheme: List[List[String]] = List(List("52;11"), List("52;13"), List("53;14"), List("undefined"))
+	def geoCoordsBlockingSchemeDefault: List[List[String]] = List(
+		List("52.1;11.5", "52.1;11.6", "52.2;11.5", "52.2;11.6"),
+		List("52.1;13.1", "52.1;13.2", "52.2;13.1", "52.2;13.2"),
+		List("52.2;13.6", "52.2;13.7", "52.3;13.6", "52.3;13.7"),
+		List("undefined")
+	)
+	def geoCoordsBlockingSchemeDecimals: List[List[String]] = List(
+		List("52.12;11.56", "52.12;11.57", "52.13;11.56", "52.13;11.57"),
+		List("52.12;13.12", "52.12;13.13", "52.13;13.12", "52.13;13.13"),
+		List("52.23;13.67", "52.23;13.68", "52.24;13.67", "52.24;13.68"),
+		List("undefined")
+	)
 	def randomBlockingScheme: List[List[String]] = List(List("-235"), List("754"), List("446"), List("-7"))
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
 
