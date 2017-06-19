@@ -10,7 +10,8 @@ class DBpediaRelationParserTest extends FlatSpec with SharedSparkContext with Ma
 
 	"Translation triple" should "be parsed into map from english to german wikipedia titles" in {
 		val ttl = sc.parallelize(TestData.interlanguageLinksEn())
-		DBpediaRelationParser.getGermanLabels(ttl) shouldEqual TestData.germanLabels()
+		val prefixesList = TestData.prefixesList
+		DBpediaRelationParser.getGermanLabels(ttl, prefixesList) shouldEqual TestData.germanLabels()
 	}
 
 	"The parsed relations" should "be exactly these" in {

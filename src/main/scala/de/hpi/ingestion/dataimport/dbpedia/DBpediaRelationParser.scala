@@ -2,13 +2,11 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
-import de.hpi.ingestion.dataimport.dbpedia.DBpediaImport.{cleanURL, tokenize}
+import de.hpi.ingestion.dataimport.dbpedia.DBpediaImport.{dbpediaToCleanedTriples, getPrefixesFromFile}
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
-import scala.io.{BufferedSource, Source}
 
 /**
   * Extracts all relations from english dbpedia and translates the english title to the german ones.
@@ -16,12 +14,6 @@ import scala.io.{BufferedSource, Source}
 object DBpediaRelationParser extends SparkJob {
 	appName = "DBpediaRelationParser"
 	configFile = "textmining.xml"
-
-	val prefixes: List[(String, String)] = Source.fromURL(getClass.getResource("/prefixes.txt"))
-		.getLines
-		.toList
-		.map(_.trim.replaceAll("""[()]""", "").split(","))
-		.map(pair => (pair(0), pair(1)))
 
 	// $COVERAGE-OFF$
 	/**
@@ -59,10 +51,8 @@ object DBpediaRelationParser extends SparkJob {
 	  * @param labels RDD of triples containing the same as relation
 	  * @return Map from english wikipedia titles to their german counterparts
 	  */
-	def getGermanLabels(labels: RDD[String]): Map[String, String] = {
-		labels
-			.map(tokenize)
-			.map(_.map(cleanURL(_, prefixes)))
+	def getGermanLabels(labels: RDD[String], prefixes: List[(String, String)]): Map[String, String] = {
+		dbpediaToCleanedTriples(labels, prefixes)
 			.filter { case List(subj, rel, obj) => rel.startsWith("owl:") && obj.startsWith("dbpedia-de:") }
 			.map(_.map(_.replaceAll("dbo:|dbpedia-de:|dbr:", "")))
 			.map { case List(subj, rel, obj) => subj -> obj }
@@ -81,14 +71,10 @@ object DBpediaRelationParser extends SparkJob {
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(dbpedia, labels) = input.fromAnyRDD[String]()
-
-		val germanLabels = getGermanLabels(labels)
-
+		val prefixes = getPrefixesFromFile()
+		val germanLabels = getGermanLabels(labels, prefixes)
 		val gerLabelsBroadcast = sc.broadcast(germanLabels)
-		val relations = dbpedia
-			.map(tokenize)
-			.map(_.map(listEntry => cleanURL(listEntry, prefixes)))
-			.map(_.map(listEntry => listEntry.replaceAll("dbo:|dbr:", "")))
+		val relations = dbpediaToCleanedTriples(dbpedia, prefixes, "dbo:|dbr:")
 			.mapPartitions({ entryPartition =>
 				val localGerLabels = gerLabelsBroadcast.value
 				entryPartition.map { case List(subj, rel, obj) =>
