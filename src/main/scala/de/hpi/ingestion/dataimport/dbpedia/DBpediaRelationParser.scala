@@ -17,8 +17,9 @@ object DBpediaRelationParser extends SparkJob {
 	appName = "DBpediaRelationParser"
 	configFile = "textmining.xml"
 
-	val prefixFile: BufferedSource = Source.fromURL(getClass.getResource("/prefixes.txt"))
-	val prefixes: List[(String, String)] = prefixFile.getLines.toList
+	val prefixes: List[(String, String)] = Source.fromURL(getClass.getResource("/prefixes.txt"))
+		.getLines
+		.toList
 		.map(_.trim.replaceAll("""[()]""", "").split(","))
 		.map(pair => (pair(0), pair(1)))
 
@@ -61,9 +62,9 @@ object DBpediaRelationParser extends SparkJob {
 	def getGermanLabels(labels: RDD[String]): Map[String, String] = {
 		labels
 			.map(tokenize)
-			.map(_.map(listEntry => cleanURL(listEntry, prefixes)))
+			.map(_.map(cleanURL(_, prefixes)))
 			.filter { case List(subj, rel, obj) => rel.startsWith("owl:") && obj.startsWith("dbpedia-de:") }
-			.map(_.map(listEntry => listEntry.replaceAll("dbo:|dbpedia-de:|dbr:", "")))
+			.map(_.map(_.replaceAll("dbo:|dbpedia-de:|dbr:", "")))
 			.map { case List(subj, rel, obj) => subj -> obj }
 			.collect
 			.toMap
@@ -79,8 +80,7 @@ object DBpediaRelationParser extends SparkJob {
 	  */
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val dbpedia = input.fromAnyRDD[String]().head
-		val labels = input.fromAnyRDD[String]().last
+		val List(dbpedia, labels) = input.fromAnyRDD[String]()
 
 		val germanLabels = getGermanLabels(labels)
 
