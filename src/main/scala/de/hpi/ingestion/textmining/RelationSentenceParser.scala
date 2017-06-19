@@ -27,7 +27,7 @@ object RelationSentenceParser extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(articles).toAnyRDD() ++ List(relations).toAnyRDD()
+		List(articles).toAnyRDD()
 	}
 
 	/**

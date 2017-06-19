@@ -21,5 +21,6 @@
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
         <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
+        <relClassifierStatsTable>relationclassifierstats</relClassifierStatsTable>
     </settings>
 </config>
