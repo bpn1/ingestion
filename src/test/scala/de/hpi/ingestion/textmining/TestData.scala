@@ -2054,7 +2054,7 @@ object TestData {
 			Cooccurrence(List("e 1", "e 3"), 2))
 	}
 
-	def Nodes(): Set[String] = {
+	def nodes(): Set[String] = {
 		Set(
 			"\"e 1\",\"e 1\",Entity",
 			"\"e 2\",\"e 2\",Entity",
@@ -2065,7 +2065,7 @@ object TestData {
 		)
 	}
 
-	def Edges(): Set[String] = {
+	def edges(): Set[String] = {
 		Set(
 			"\"e 1\",5,\"e\\\" 2\",CO_OCCURRENCE",
 			"\"e 1\",7,\"e 3\",CO_OCCURRENCE",
