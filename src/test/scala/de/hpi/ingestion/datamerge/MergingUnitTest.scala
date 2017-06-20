@@ -103,8 +103,8 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext {
 	they should "be merged with the current subjects and create new subjects" in {
 		val staging = sc.parallelize(TestData.smallerDuplicatesWithoutMaster())
 		val subjects = sc.parallelize(TestData.existingSubjects())
-		val duplicatecandidates = sc.parallelize(TestData.complexDuplicateCandidates())
-		val input = List(subjects).toAnyRDD() ++ List(staging).toAnyRDD() ++ List(duplicatecandidates).toAnyRDD()
+		val duplicates = sc.parallelize(TestData.complexDuplicateCandidates())
+		val input = List(subjects).toAnyRDD() ::: List(staging).toAnyRDD() ::: List(duplicates).toAnyRDD()
 		val mergedSubjects = Merging.run(input, sc).fromAnyRDD[Subject]().head.collect.toList
 		val (masters, slaves) = mergedSubjects.sortBy(_.id).partition(_.master.isEmpty)
 		val newUUIDs = masters
