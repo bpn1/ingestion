@@ -77,7 +77,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @return version data of the field at the point of the queried version
 	  */
 	def findVersion(queryVersionID: UUID, versionList: List[Version]): Option[Version] = {
-		val queryVersion = versionList.find(_.version == queryVersion) //.map(_.value)
+		val queryVersion = versionList.find(_.version == queryVersionID)
 		val olderVersions = versionList.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersionID))
 		val olderVersion = if(olderVersions.nonEmpty) {
 			val lastVersion = olderVersions.maxBy(v => timeFromUUID(v.version))
@@ -131,7 +131,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param value List of aliases the Subject will have
 	  * @param validity validity of the aliases
 	  */
-	def setAliases(value: List[String], validity: Map[String, String] = Map(), datasources: List[String]): Unit = {
+	def setAliases(value: List[String], validity: Map[String, String] = Map(), datasources: List[String] = Nil): Unit = {
 		val newAliases = value.distinct
 		if(subject.aliases != newAliases) {
 			subject.aliases = newAliases
