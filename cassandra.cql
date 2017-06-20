@@ -166,7 +166,8 @@ CREATE TABLE wikidumps.spiegel (
 CREATE TABLE wikidumps.wikipedianel (
     article text PRIMARY KEY,
     text text,
-    triealiases frozen<list<triealias>>
+    triealiases frozen<list<triealias>>,
+    foundentities frozen<list<frozen<link>>>
 );
 
 CREATE TABLE wikidumps.redirects (

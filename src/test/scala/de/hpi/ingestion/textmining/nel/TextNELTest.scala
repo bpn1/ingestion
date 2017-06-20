@@ -1,14 +1,8 @@
-package de.hpi.ingestion.textmining
+package de.hpi.ingestion.textmining.nel
 
-import de.hpi.ingestion.textmining.models._
-import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
-import org.scalatest.{FlatSpec, Matchers}
-import org.jsoup.Jsoup
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.textmining.nel.TextNEL
-
-import scala.util.matching.Regex
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.scalatest.{FlatSpec, Matchers}
 
 class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
 	//	"Found named entities" should "not be empty" in {
