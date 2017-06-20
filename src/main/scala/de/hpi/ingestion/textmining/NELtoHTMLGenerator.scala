@@ -9,7 +9,7 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 
 /**
-  * #todo
+  * Generates HTML from found links to named entities and their corresponding raw articles.
   */
 object NELtoHTMLGenerator extends SparkJob {
 	appName = "NEL to HTML Generator"
@@ -122,7 +122,7 @@ object NELtoHTMLGenerator extends SparkJob {
 	}
 
 	/**
-	  * #todo
+	  * Generates HTML from found links to named entities and their corresponding raw articles.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

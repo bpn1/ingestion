@@ -4,12 +4,11 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models.{ParsedWikipediaEntry, TrieAliasArticle}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
-import org.apache.spark.mllib.tree.model.RandomForestModel
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 
 /**
-  * todo
+  * Reduces ParsedWikipediaArticles to relevant attributes for NEL.
   */
 object WikipediaNELReduction extends SparkJob {
 	appName = "Wikipedia NEL Reduction"
@@ -29,7 +28,7 @@ object WikipediaNELReduction extends SparkJob {
 	}
 
 	/**
-	  * #todo
+	  * Save reduced Wikipedia articles to the Cassandra.
 	  *
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
@@ -39,22 +38,13 @@ object WikipediaNELReduction extends SparkJob {
 		val namedEntities = output.head.asInstanceOf[RDD[TrieAliasArticle]]
 		namedEntities.saveToCassandra(settings("keyspace"), settings("wikipediaNELTable"))
 	}
+	// $COVERAGE-ON$
 
 	/**
-	  * Loads the random forest classifier model from the HDFS.
-	  *
-	  * @param sc SparkContext used for loading from the HDFS
-	  * @return random forest classifier model
-	  */
-	def loadModel(sc: SparkContext): RandomForestModel = {
-		RandomForestModel.load(sc, settings("classifierModel"))
-	}
-
-	/**
-	  * #todo
+	  * Reduces ParsedWikipediaArticles to relevant attributes for NEL.
 	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param sc    Spark Context
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
@@ -63,6 +53,4 @@ object WikipediaNELReduction extends SparkJob {
 		val trieAliasArticles = wikipediaArticles.map(article => TrieAliasArticle(article.title, article.text))
 		List(trieAliasArticles).toAnyRDD()
 	}
-
-	// $COVERAGE-ON$
 }
