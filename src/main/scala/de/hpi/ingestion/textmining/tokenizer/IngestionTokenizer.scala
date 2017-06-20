@@ -75,6 +75,16 @@ case class IngestionTokenizer(
 	}
 
 	/**
+	  * Tokenizes a text with offsets.
+	  *
+	  * @param text text to be tokenized
+	  * @return List of tokens with offsets
+	  */
+	def onlyTokenizeWithOffst(text: String): List[OffsetToken] = {
+		tokenizer.tokenizeWithOffsets(text)
+	}
+
+	/**
 	  * Reverts the tokenization step. Only useful when the tokens were not stemmed and the stopwords were not filtered.
 	  *
 	  * @param tokens List of tokens to join

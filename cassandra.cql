@@ -156,8 +156,10 @@ CREATE TABLE wikidumps.wikipediacooccurrences (
 
 CREATE TABLE wikidumps.spiegel (
     id text PRIMARY KEY,
-    title text,
+    foundentities frozen<list<frozen<link>>>,
     text text,
+    title text,
+    triealiases frozen<list<frozen<triealias>>>,
     url text
 );
 
@@ -170,6 +172,28 @@ CREATE TABLE wikidumps.wikipedianel (
 CREATE TABLE wikidumps.redirects (
 	alias text PRIMARY KEY,
 	page text
+);
+
+CREATE TABLE wikidumps.wikipediaarticlecount (
+    countedtable text PRIMARY KEY,
+    count bigint
+);
+
+CREATE TABLE wikidumps.spiegelfeatureentries (
+    article text,
+    offset int,
+    alias text,
+    entity text,
+    correct boolean,
+    cosine_sim multifeature,
+    entity_score multifeature,
+    link_score double,
+    PRIMARY KEY (article, offset, alias, entity)
+);
+
+CREATE TABLE wikidumps.articletfidf (
+    article text PRIMARY KEY,
+    tfidf map<text, double>
 );
 
 -- Wikidumps.Wikidata

@@ -75,6 +75,17 @@ object CosineContextComparator extends SplitSparkJob {
 	}
 
 	/**
+	  * Calculates a default idf value for terms under the document frequency threshold.
+	  * @param numDocs number of documents used
+	  * @return default idf value
+	  */
+	def defaultIdf(numDocs: Long): Double = {
+		calculateIdf(
+			calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency),
+			numDocs)
+	}
+
+	/**
 	  * Returns default value for the Document Frequency used in the idf calculation.
 	  *
 	  * @param threshold least significant Document Frequency
@@ -140,7 +151,7 @@ object CosineContextComparator extends SplitSparkJob {
 	}
 
 	/**
-	  * Computes scores for alias being a link and referring to a specific page for all aliases.
+	  * Computes scores for an alias being a link and referring to a specific page for all aliases.
 	  *
 	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
 	  * @return aliases with link score, pages and respective page scores
@@ -155,6 +166,18 @@ object CosineContextComparator extends SplitSparkJob {
 				// Although linkScore is the same in each list entry, it is stored multiple times for easier processing.
 				alias.pages.keySet.map(page => (alias.alias, List((page, linkScore, pageScores(page)))))
 			}.reduceByKey(_ ++ _)
+	}
+
+	/**
+	  * Computes scores for an Alias being a link and referring to a specific page for all aliases and collects the data
+	  * into a Map.
+	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
+	  * @return Map containing link score, pages and respective page scores for each alias
+	  */
+	def collectAliasPageScores(aliases: RDD[Alias]): Map[String, List[(String, Double, Double)]] = {
+		computeAliasPageScores(aliases)
+			.collect
+			.toMap
 	}
 
 	/** Adds the cosine similarity feature value to the link and page score feature values.
@@ -172,7 +195,7 @@ object CosineContextComparator extends SplitSparkJob {
 		linkContexts
 			.mapPartitions({ partition =>
 				val localAliases = aliasPageScores.value
-				partition.map { case (link, tfidfMap) =>
+				partition.flatMap { case (link, tfidfMap) =>
 					localAliases.getOrElse(link.alias, Nil)
 						.map { case (page, linkScore, pageScore) =>
 							// Note: The page in the link is the actual target for the alias occurrence,
@@ -181,7 +204,6 @@ object CosineContextComparator extends SplitSparkJob {
 						}
 				}
 			}, true)
-			.flatMap(identity)
 			.join(articleContexts)
 			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
 				protoFeatureEntries.map { protoFeatureEntry =>
@@ -295,9 +317,7 @@ object CosineContextComparator extends SplitSparkJob {
 		val contextTfs = transformLinkContextTfs(linkArticles)
 		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf, settingsBroadcast.value)
 
-		val aliasPageScores = computeAliasPageScores(aliases)
-			.collect
-			.toMap
+		val aliasPageScores = collectAliasPageScores(aliases)
 		val featureEntries = compareLinksWithArticles(contextTfidf, sc.broadcast(aliasPageScores), articleTfidf)
 			.map(_._2)
 		List(featureEntries).toAnyRDD()

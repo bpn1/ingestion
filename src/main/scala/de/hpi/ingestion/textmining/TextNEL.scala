@@ -150,9 +150,7 @@ object TextNEL extends SplitSparkJob {
 
 		val linkCandidatesTfs = findLinkCandidates(articlesPartition, aliases, sc)
 		val linkCandidatesTfidf = calculateTfidf(linkCandidatesTfs, numDocuments, defaultIdf)
-		val aliasPageScores = computeAliasPageScores(aliases)
-			.collect
-			.toMap
+		val aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
 
 		val linkFeatureEntries = CosineContextComparator
 			.compareLinksWithArticles(linkCandidatesTfidf, sc.broadcast(aliasPageScores), articleTfidf)

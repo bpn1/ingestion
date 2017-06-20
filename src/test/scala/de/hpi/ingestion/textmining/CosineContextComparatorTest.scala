@@ -156,11 +156,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 				CosineContextComparator.transformLinkContextTfs(articles),
 				numDocuments,
 				defaultIdf)
-			.map { case (link, tfidfContext) =>
-				val smallLink = link
-				smallLink.context = Map() // allows smaller test data
-				(smallLink, tfidfContext)
-			}.collect
+			.map { case (link, tfidfContext) => (link.copy(context = Map()), tfidfContext) }
+			.collect
 			.toList
 			.sortBy(_._1.alias)
 		val expectedTfidf = TestData.linkContextsTfidfList()
@@ -186,11 +183,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 				CosineContextComparator.transformLinkContextTfs(articles),
 				numDocuments,
 				defaultIdf)
-			.map { case (link, tfidfContext) =>
-				val smallLink = link
-				smallLink.context = Map() // allows smaller test data
-				(smallLink, tfidfContext)
-			}.collect
+			.map { case (link, tfidfContext) => (link.copy(context = Map()), tfidfContext) }
+			.collect
 			.toSet
 		val expectedTfidf = TestData.linkContextsTfidfWithTrieAliases()
 		linkContextValues shouldBe expectedTfidf
