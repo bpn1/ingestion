@@ -123,6 +123,40 @@ object TestData {
 					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(1)))))
 	}
 
+	def restoredSubjects(): List[Subject] = {
+		List(
+			Subject(
+				id = UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				name = foundValues().head._1.headOption,
+				aliases = foundValues()(1)._1,
+				category = foundValues()(2)._1.headOption,
+				properties = Map("test property" -> foundValues()(3)._1),
+				relations = Map(
+					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") ->
+						Map("test relation" -> foundValues()(4)._1.headOption.getOrElse(""))),
+				name_history = versions().head,
+				aliases_history = versions()(1),
+				category_history = versions()(2),
+				properties_history = Map("test property" -> versions()(3)),
+				relations_history = Map(
+					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> versions()(4)))),
+			Subject(
+				id = UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				name = foundValues()(4)._1.headOption,
+				aliases = foundValues()(4)._1,
+				category = foundValues()(4)._1.headOption,
+				properties = Map("test property" -> foundValues().head._1),
+				relations = Map(
+					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") ->
+						Map("test relation" -> foundValues()(1)._1.headOption.getOrElse(""))),
+				name_history = versions()(4),
+				aliases_history = versions()(4),
+				category_history = versions()(4),
+				properties_history = Map("test property" -> versions().head),
+				relations_history = Map(
+					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(1)))))
+	}
+
 	def jsonDiff(): List[JsValue] = {
 		val rawJson = Source.fromURL(getClass.getResource("/versioncontrol/diff.json")).getLines().mkString("\n")
 		Json.parse(rawJson).as[List[JsValue]]
