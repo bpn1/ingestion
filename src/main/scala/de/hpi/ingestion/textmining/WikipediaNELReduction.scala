@@ -36,7 +36,7 @@ object WikipediaNELReduction extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val namedEntities = output.head.asInstanceOf[RDD[Link]]
+		val namedEntities = output.head.asInstanceOf[RDD[TrieAliasArticle]]
 		namedEntities.saveToCassandra(settings("keyspace"), settings("namedEntitiesTable"))
 	}
 
