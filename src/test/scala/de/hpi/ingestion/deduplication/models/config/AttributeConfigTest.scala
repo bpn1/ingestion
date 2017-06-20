@@ -2,9 +2,6 @@ package de.hpi.ingestion.deduplication.models.config
 
 import org.scalatest.{FlatSpec, Matchers}
 
-/**
-  * Created by Lando on 06.06.17.
-  */
 class AttributeConfigTest extends FlatSpec with Matchers {
 	"updateWeight" should "update the weight" in {
 		val config = AttributeConfig("name", 1.0)
