@@ -69,7 +69,7 @@ object NELtoHTMLGenerator extends SparkJob {
 			.toList
 			.sortBy(_._1)
 			.foreach { case (offset, groupedLinks) =>
-				if(offset.get < 0 || processedCharacters < 0) {
+				if(offset.get < processedCharacters) {
 					print(s"AAAAA ${offset.get}")
 					print(s"AAAAA $processedCharacters")
 					print(s"AAAAA $groupedLinks")
@@ -86,7 +86,7 @@ object NELtoHTMLGenerator extends SparkJob {
 					val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
 					html += s"""<a href="$wikipediaPage" title="$pages">"""
 					val end = processedCharacters + mainLink.alias.length
-					if(processedCharacters < 0 || end < 0) {
+					if(processedCharacters > end) {
 						print(s"BBBB $processedCharacters")
 						print(s"BBBB $end")
 						print(s"BBBB ${mainLink.alias.length}")
@@ -122,7 +122,7 @@ object NELtoHTMLGenerator extends SparkJob {
 	}
 
 	/**
-	  * Uses a trained classifier model to perform NER and NEL on Wikipedia articles.
+	  * #todo
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

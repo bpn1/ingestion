@@ -161,6 +161,12 @@ CREATE TABLE wikidumps.spiegel (
     url text
 );
 
+CREATE TABLE wikidumps.wikipedianel (
+    article text PRIMARY KEY,
+    text text,
+    triealiases frozen<list<triealias>>
+);
+
 CREATE TABLE wikidumps.redirects (
 	alias text PRIMARY KEY,
 	page text

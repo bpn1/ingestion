@@ -178,7 +178,7 @@ object TextNEL extends SplitSparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val allArticles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		val aliases = input(1).asInstanceOf[RDD[Alias]]
-		val articlesPartition = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
+		val articlesPartition = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]].take(10)
 
 		val numDocuments = allArticles.count()
 		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
