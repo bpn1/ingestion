@@ -1,7 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.textmining.models.{Link, ParsedWikipediaEntry, TrieAliasArticle}
+import de.hpi.ingestion.textmining.models.{ParsedWikipediaEntry, TrieAliasArticle}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.tree.model.RandomForestModel
@@ -29,7 +29,7 @@ object WikipediaNELReduction extends SparkJob {
 	}
 
 	/**
-	  * Saves found links to named entities to the HDFS.
+	  * #todo
 	  *
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
@@ -37,7 +37,7 @@ object WikipediaNELReduction extends SparkJob {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val namedEntities = output.head.asInstanceOf[RDD[TrieAliasArticle]]
-		namedEntities.saveToCassandra(settings("keyspace"), settings("namedEntitiesTable"))
+		namedEntities.saveToCassandra(settings("keyspace"), settings("wikipediaNELTable"))
 	}
 
 	/**

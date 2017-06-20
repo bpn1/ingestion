@@ -27,7 +27,7 @@ object AliasTrieSearch extends SparkJob {
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
 
 	// $COVERAGE-OFF$
-	var trieStreamFunction = hdfsFileStream _
+	var trieStreamFunction: String => InputStream = hdfsFileStream _
 
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.

@@ -24,7 +24,7 @@ object TextNEL extends SplitSparkJob {
 	var loadModelFunction: SparkContext => RandomForestModel = loadModel
 
 	/**
-	  * Loads Wikipedia entries and aliases from the Cassandra.
+	  * Loads Wikipedia entries with term frequencies, articles with trie matches and aliases from the Cassandra.
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
@@ -32,8 +32,9 @@ object TextNEL extends SplitSparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+		val trieAliasArticles = sc.cassandraTable[Alias](settings("keyspace"), settings("wikipediaNELTable"))
 		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
-		List(tfArticles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		List(tfArticles).toAnyRDD() ++ List(trieAliasArticles).toAnyRDD() ++ List(aliases).toAnyRDD()
 	}
 
 	/**
