@@ -81,15 +81,13 @@ class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDCompari
 		val originalConfig = Deduplication.scoreConfigSettings(false)
 
 		Deduplication.scoreConfigSettings = TestData.testConfig()
-		Deduplication.settings = Map("stagingTable" -> "subject_wikidata", "confidence" -> "0.35")
+		Deduplication.settings = Map("stagingTable" -> "subject_wikidata", "confidence" -> "0.9")
+
 		val subjects = TestData.subjects
 		val stagings = TestData.stagings
 		val input = List(sc.parallelize(subjects), sc.parallelize(stagings)).toAnyRDD()
 		val duplicates = Deduplication.run(input, sc).fromAnyRDD[Duplicates]().head
-		val expected = sc.parallelize(TestData.trueDuplicateCandidates(subjects, stagings))
-
-		duplicates.foreach(println)
-
+		val expected = sc.parallelize(TestData.trueDuplicates(subjects, stagings))
 		assertRDDEquals(duplicates, expected)
 
 		Deduplication.scoreConfigSettings = originalConfig

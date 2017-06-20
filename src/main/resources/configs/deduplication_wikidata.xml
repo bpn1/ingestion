@@ -11,12 +11,12 @@
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
         <maxBlockSize>500000</maxBlockSize>
-        <confidence>0.8</confidence>
+        <confidence>0.9</confidence>
     </settings>
     <simMeasurements>
         <attribute>
             <key>name</key>
-            <weight>0.7</weight>
+            <weight>0.8</weight>
             <feature>
                 <similarityMeasure>JaroWinkler</similarityMeasure>
                 <weight>0.7</weight>
@@ -33,15 +33,6 @@
             <weight>0.2</weight>
             <feature>
                 <similarityMeasure>UrlCompare</similarityMeasure>
-                <weight>1.0</weight>
-                <scale>1</scale>
-            </feature>
-        </attribute>
-        <attribute>
-            <key>gen_legal_form</key>
-            <weight>0.1</weight>
-            <feature>
-                <similarityMeasure>ExactMatchString</similarityMeasure>
                 <weight>1.0</weight>
                 <scale>1</scale>
             </feature>

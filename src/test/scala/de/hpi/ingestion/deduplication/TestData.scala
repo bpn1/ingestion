@@ -279,46 +279,20 @@ object TestData {
 		))
 	}
 
-	def trueDuplicateCandidates(subjects: List[Subject], stagings: List[Subject]): List[Duplicates] = {
+	def trueDuplicates(subjects: List[Subject], stagings: List[Subject]): List[Duplicates] = {
 		val stagingTable = "subject_wikidata"
 		List(
 			Duplicates(
 				subjects.head.id,
 				subjects.head.name,
 				stagingTable,
-				List(Candidate(stagings.head.id, stagings.head.name, 0.9784615384615384))
+				List(Candidate(stagings.head.id, stagings.head.name, 0.9769230769230769))
 			),
 			Duplicates(
 				subjects(1).id,
 				subjects(1).name,
 				stagingTable,
 				List(Candidate(stagings(1).id, stagings(1).name, 1.0))
-			)
-		)
-	}
-
-	def duplicateCandidates(subjects: List[Subject]): List[Duplicates] = {
-		val stagingTable = "subject_wikidata"
-		List(
-			Duplicates(
-				subjects.head.id,
-				subjects.head.name,
-				stagingTable,
-				List(
-					Candidate(subjects(1).id, subjects(1).name, 0.9784615384615384),
-					Candidate(subjects(4).id, subjects(4).name, 0.5761904761904763)
-				)),
-			Duplicates(
-				subjects(1).id,
-				subjects(1).name,
-				stagingTable,
-				List(Candidate(subjects(4).id, subjects(4).name, 0.5654212454212454))
-			),
-			Duplicates(
-				subjects(2).id,
-				subjects(2).name,
-				stagingTable,
-				List(Candidate(subjects(3).id, subjects(3).name, 0.9446913580246914))
 			)
 		)
 	}
