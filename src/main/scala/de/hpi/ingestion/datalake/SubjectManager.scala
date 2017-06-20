@@ -61,13 +61,9 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreName(version: Option[Version]): Unit = {
-		version match {
-			case Some(restoreVersion) =>
-				val value = restoreVersion.value.headOption
-				val dataSources = restoreVersion.datasources
-				setName(value, Map[String, String](), dataSources)
-			case None => setName(None)
-		}
+		val dataSources = version.map(_.datasources).toList.flatten
+		val value = version.flatMap(_.value.headOption)
+		setName(value, Map[String, String](), dataSources)
 	}
 
 	/**
@@ -131,7 +127,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param value List of aliases the Subject will have
 	  * @param validity validity of the aliases
 	  */
-	def setAliases(value: List[String], validity: Map[String, String] = Map(), datasources: List[String] = Nil): Unit = {
+	def setAliases(value: List[String], validity: Map[String, String] = Map(), datasources: List[String] = Nil) {
 		val newAliases = value.distinct
 		if(subject.aliases != newAliases) {
 			subject.aliases = newAliases
@@ -203,7 +199,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		value: Option[UUID],
 		score: Double = 1.0,
 		validity: Map[String, String] = Map(),
-		datasources: List[String]
+		datasources: List[String] = Nil
 	): Unit = {
 		val higherScore = subject.master
 			.flatMap(subject.relations.get)
@@ -315,15 +311,19 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param versions: Map from property name to Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreProperties(versions: Map[String, Option[Version]]): Unit = {
-		val restoredValue = versions.mapValues {
-			case Some(restoreVersion) => restoreVersion.value
-			case None => Nil
-		}.filter(_._2.nonEmpty)
+		val restoredValue = versions
+			.mapValues {
+				case Some(restoreVersion) => restoreVersion.value
+				case None => Nil
+			}.map(identity)
+			.filter(_._2.nonEmpty)
 
-		val restoredDataSources = versions.mapValues {
-			case Some(restoreVersion) => restoreVersion.datasources
-			case None => Nil
-		}.filter(_._2.nonEmpty)
+		val restoredDataSources = versions
+			.mapValues {
+				case Some(restoreVersion) => restoreVersion.datasources
+				case None => Nil
+			}.map(identity)
+			.filter(_._2.nonEmpty)
 
 		setProperties(restoredValue, Map(), restoredDataSources)
 	}
@@ -429,17 +429,17 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	def restoreRelations(versions: Map[UUID, Map[String, Option[Version]]]): Unit = {
 		val restoredValue = versions.mapValues { targetVersions =>
 			targetVersions.mapValues {
-				case Some(restoreVersion) => restoreVersion.value.head
+				case Some(restoreVersion) => restoreVersion.value.headOption.getOrElse("")
 				case None => ""
-			}
-		}.filter(_._2.nonEmpty)
+			}.map(identity)
+		}.map(identity).filter(_._2.nonEmpty)
 
 		val restoredDataSources = versions.mapValues { targetVersions =>
 			targetVersions.mapValues {
 				case Some(restoreVersion) => restoreVersion.datasources
 				case None => Nil
-			}
-		}.filter(_._2.nonEmpty)
+			}.map(identity)
+		}.map(identity).filter(_._2.nonEmpty)
 
 		setRelations(restoredValue, Map(), restoredDataSources)
 	}
