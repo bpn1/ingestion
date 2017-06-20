@@ -99,7 +99,7 @@ object TermFrequencyCounter extends SparkJob {
 			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
 			val context = (preAliasContext ++ postAliasContext).map(_.token)
 			Bag.extract(tokenizer.process(context))
-		}.getOrElse(Bag.empty[String, Int])
+		}.getOrElse(Bag.extract(Nil))
 	}
 
 	/**

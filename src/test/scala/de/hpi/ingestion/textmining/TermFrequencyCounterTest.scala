@@ -109,4 +109,16 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 
 		TermFrequencyCounter.settings = oldSettings
 	}
+
+	"Extracted link contexts" should "be exactly these contexts" in {
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+		val extractedLinks = TestData.linkContextExtractionData().map { article =>
+			val tokens = tokenizer.onlyTokenizeWithOffst(article.getText())
+			article.textlinks.map { link =>
+				link.copy(context = TermFrequencyCounter.extractContext(tokens, link, tokenizer).getCounts())
+			}
+		}
+		val expectedLinks = TestData.linkContextExtractionData().map(_.linkswithcontext)
+		extractedLinks shouldEqual expectedLinks
+	}
 }

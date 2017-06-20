@@ -1,6 +1,5 @@
 package de.hpi.ingestion.dataimport.spiegel
 
-import de.hpi.ingestion.dataimport.spiegel.models.SpiegelArticle
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -9,14 +8,12 @@ import org.jsoup.Jsoup
 import play.api.libs.json.JsValue
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.JSONParser
-import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, trieStreamFunction}
-import de.hpi.ingestion.textmining.models.{TrieAlias, TrieNode}
-import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import de.hpi.ingestion.textmining.models.TrieAliasArticle
 
 /**
-  * Parses the Spiegel JSON dump to Spiegel Articles, parses the HTML to raw text and saves them to the Cassandra.
+  * Parses the Spiegel JSON dump to Articles, parses the HTML to raw text and saves them to the Cassandra.
   */
-object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
+object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 	appName = "Spiegel Import"
 	configFile = "textmining.xml"
 
@@ -40,7 +37,7 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[SpiegelArticle]()
+			.fromAnyRDD[TrieAliasArticle]()
 			.head
 			.saveToCassandra(settings("keyspace"), settings("spiegelTable"))
 	}
@@ -53,49 +50,10 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val spiegelDump = input.fromAnyRDD().head
-		val tokenizer = IngestionTokenizer(false, false)
-		val parsedArticles = spiegelDump
-			.map(parseJSON)
-			.mapPartitions({ partition =>
-				val trie = deserializeTrie(trieStreamFunction(settings("smallerTrieFile")))
-				partition.map(findAliases(_, tokenizer, trie))
-			}, true)
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
+		val spiegelDump = input.fromAnyRDD[String]().head
+		val parsedArticles = spiegelDump.map(parseJSON)
 		List(parsedArticles).toAnyRDD()
-	}
-
-	/**
-	  * Finds Aliases in a given Spiegel Article by applying the given Trie to find occurrences of known token lists.
-	  * @param article Spiegel Article to find the aliases in
-	  * @param tokenizer tokenizer used to tokenize the text
-	  * @param trie Trie used to find aliases
-	  * @return Spiegel Article enriched with the found aliases
-	  */
-	def findAliases(article: SpiegelArticle, tokenizer: IngestionTokenizer, trie: TrieNode): SpiegelArticle = {
-		val text = article.text.getOrElse("")
-		val tokens = tokenizer.processWithOffsets(text)
-		var invalidIndices = Set.empty[Int]
-		val foundAliases = tokens.indices
-			.flatMap { i =>
-				val testTokens = tokens.slice(i, tokens.length)
-				val aliasMatches = trie.matchTokens(testTokens.map(_.token))
-				val offsetMatches = aliasMatches.map(textTokens => testTokens.take(textTokens.length))
-				offsetMatches
-					.sortBy(_.length)
-					.lastOption
-					.flatMap { longestMatch =>
-						invalidIndices ++= longestMatch.indices.slice(1, longestMatch.length).map(_ + i)
-						val offset = longestMatch.headOption.map(_.beginOffset)
-						offset.map { begin =>
-							val alias = text.substring(begin, longestMatch.last.endOffset)
-							(i , TrieAlias(alias, offset))
-						}
-				}
-			}.collect {
-				case (index: Int, alias: TrieAlias) if !invalidIndices.contains(index) => alias
-			}.toList
-		article.copy(triealiases = foundAliases)
 	}
 
 	/**
@@ -121,15 +79,12 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 	  * @param json JSON object containing the article data
 	  * @return Spiegel Article containing the parsed JSON data
 	  */
-	override def fillEntityValues(json: JsValue): SpiegelArticle = {
+	override def fillEntityValues(json: JsValue): TrieAliasArticle = {
 		val id = extractString(json, List("_id", "$oid")).get
-		val url = extractString(json, List("url"))
-		val title = extractString(json, List("title"))
-			.map(_.replaceAll("&nbsp;", " "))
 		val content = extractString(json, List("content"))
 		val text = content
 			.map(_.replaceAll("&nbsp;", " "))
 		    .map(extractArticleText)
-		SpiegelArticle(id, title, text, url)
+		TrieAliasArticle(id, text)
 	}
 }
