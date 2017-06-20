@@ -20,6 +20,7 @@
         <contextSize>20</contextSize>
 		<classifierModel>wikipedia_randomforest_model_1494495223381</classifierModel>
 		<linkedArticlesTable>linkedarticles</linkedArticlesTable>
+        <namedEntitiesTable>namedentities</namedEntitiesTable>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
         <numberArticlePartitions>10</numberArticlePartitions>

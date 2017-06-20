@@ -24,7 +24,7 @@ object TextNEL extends SplitSparkJob {
 	var loadModelFunction: SparkContext => RandomForestModel = loadModel
 
 	/**
-	  * Loads Wikipedia entries from the Cassandra.
+	  * Loads Wikipedia entries and aliases from the Cassandra.
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
@@ -44,11 +44,8 @@ object TextNEL extends SplitSparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val timestamp = System.currentTimeMillis / 1000
 		val namedEntities = output.head.asInstanceOf[RDD[Link]]
-		val articlesWithLinks = output(1).asInstanceOf[RDD[Article]]
-		articlesWithLinks.saveToCassandra(settings("keyspace"), settings("linkedArticlesTable"))
-		namedEntities.saveAsTextFile(s"named_entities_$timestamp")
+		namedEntities.saveToCassandra(settings("keyspace"), settings("namedEntitiesTable"))
 	}
 
 	/**
@@ -159,78 +156,6 @@ object TextNEL extends SplitSparkJob {
 	}
 
 	/**
-	  * Inserts HTML links into an article text where named entities were found.
-	  *
-	  * @param title title of the article
-	  * @param text  text of the article
-	  * @param links linked named entities found in the article
-	  * @return HTML containing links
-	  */
-	def generateArticleWithLinks(title: String, text: String, links: List[Link]): Article = {
-		var html = s"<h1>$title</h1>\n"
-		var processedCharacters = 0
-		links
-			.groupBy(_.offset)
-			.toList
-			.sortBy(_._1)
-			.foreach { case (offset, groupedLinks) =>
-				if(offset.get < 0 || processedCharacters < 0) {
-					print(s"AAAAA ${offset.get}")
-					print(s"AAAAA $processedCharacters")
-					print(s"AAAAA $groupedLinks")
-					print(s"AAAAA $title")
-					print(s"CCCCC $text")
-				} else {
-					val distinctLinks = groupedLinks.distinct // hotfix against duplicates
-					val mainLink = distinctLinks.head
-					html += text.substring(processedCharacters, offset.get)
-					processedCharacters = offset.get
-					val pages = distinctLinks
-						.map(_.page)
-						.reduce(_ + "\n" + _)
-					val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
-					html += s"""<a href="$wikipediaPage" title="$pages">"""
-					val end = processedCharacters + mainLink.alias.length
-					if(processedCharacters < 0 || end < 0) {
-						print(s"BBBB $processedCharacters")
-						print(s"BBBB $end")
-						print(s"BBBB ${mainLink.alias.length}")
-						print(s"BBBB $mainLink")
-					} else {
-						html += text.substring(processedCharacters, end)
-						processedCharacters += mainLink.alias.length
-					}
-					//html += "<ul style=\"display: none\">" + "<li>some other link</li>" + "</ul></a>"
-					html += "</a>"
-				}
-			}
-		html += text.substring(processedCharacters, text.length)
-		Article(title, html)
-	}
-
-	/**
-	  * Inserts HTML links into all article texts where named entities were found.
-	  *
-	  * @param articles all articles
-	  * @param links    all linked named entities found in the articles
-	  * @return all articles with HTML as text
-	  */
-	def generateArticlesWithLinks(articles: RDD[Article], links: RDD[Link]): RDD[Article] = {
-		val groupedLinks = links
-			.map(link => (link.article.get, List(link)))
-			.reduceByKey(_ ++ _)
-		articles
-			.map(article => (article.title, article.text))
-			.leftOuterJoin(groupedLinks)
-			.map { case (title, (text, linksForArticle)) =>
-				linksForArticle match {
-					case Some(linksList) => (title, text, linksList)
-					case None => (title, text, Nil)
-				}
-			}.map((generateArticleWithLinks _).tupled)
-	}
-
-	/**
 	  * Splits the input articles into 10 partitions which will be processed sequentially. Also removes any not needed
 	  * data from the Parsed Wikipedia Entries.
 	  *
@@ -274,7 +199,6 @@ object TextNEL extends SplitSparkJob {
 		val data = linkFeatureEntries.map { case (link, featureEntry) => (link, featureEntry.labeledPoint()) }
 		val classifier = sc.broadcast(loadModelFunction(sc))
 		val namedEntities = linkNamedEntities(data, classifier)
-		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)
-		List(namedEntities).toAnyRDD() ++ List(articlesWithLinks).toAnyRDD()
+		List(namedEntities).toAnyRDD()
 	}
 }
