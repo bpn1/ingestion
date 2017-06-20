@@ -1,12 +1,12 @@
-package de.hpi.ingestion.textmining
+package de.hpi.ingestion.textmining.nel
 
+import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.{Article, Link, ParsedWikipediaEntry}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.tree.model.RandomForestModel
 import org.apache.spark.rdd.RDD
-import com.datastax.spark.connector._
 
 /**
   * Generates HTML from found links to named entities and their corresponding raw articles.

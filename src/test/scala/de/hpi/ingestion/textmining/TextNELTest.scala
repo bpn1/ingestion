@@ -6,6 +6,8 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.scalatest.{FlatSpec, Matchers}
 import org.jsoup.Jsoup
 import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.textmining.nel.TextNEL
+
 import scala.util.matching.Regex
 
 class TextNELTest extends FlatSpec with SharedSparkContext with Matchers {
