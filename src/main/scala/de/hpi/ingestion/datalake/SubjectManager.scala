@@ -72,10 +72,10 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	}
 
 	/**
-	  * Returns list of values of the given version or a previous version that changed the given field.
-	  * @param queryVersionID TimeUUID of the wanted version of the attributes
-	  * @param versionList list of all existing versions of the field
-	  * @return value of the field at the point of the queried version
+	  * Searches the given version's version object or that of a previous version that changed the given field.
+	  * @param queryVersionID TimeUUID of the wanted version
+	  * @param versionList list of all existing versions of the field (history)
+	  * @return version data of the field at the point of the queried version
 	  */
 	// TODO move to SubjectManager
 	def findVersion(queryVersionID: UUID, versionList: List[Version]): Option[Version] = {
@@ -91,17 +91,11 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	}
 
 	/**
-	  * Restores all given subjects to the data in the specified Version
-	  * @param subject Subject containing the data
+	  * Restores all data in this subject to the data in the specified Version
 	  * @param version TimeUUID of the version that will be reverted to
 	  * @return Modified subject with restored data
 	  */
-	// TODO move to SubjectManager as new function restoreToVersion
-	def restoreSubjects(
-		subject: Subject,
-		version: UUID,
-		templateVersion: Version
-	): Subject = {
+	def restoreVersion(version: UUID): Unit = {
 		val nameVersion = findVersion(version, subject.name_history)
 		val aliasesVersion = findVersion(version, subject.aliases_history)
 		val categoryVersion = findVersion(version, subject.category_history)
@@ -109,17 +103,11 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		val relationsVersion = subject.relations_history
 			.mapValues(_.mapValues(findVersion(version, _)))
 
-		// TODO add data sources from specific attribute to that attribute's version (or concat them all)
-		val sm = new SubjectManager(subject, templateVersion)
-
-		// write fields into subject if found
 		restoreName(nameVersion)
-		sm.setAliases(aliasesVersion)
-		sm.setCategory(categoryVersion)
-		sm.setProperties(propertiesVersion)
-		sm.setRelations(relationsVersion)
-
-		subject
+		restoreAliases(aliasesVersion)
+		restoreCategory(categoryVersion)
+		restoreProperties(propertiesVersion)
+		restoreRelations(relationsVersion)
 	}
 
 	/**
