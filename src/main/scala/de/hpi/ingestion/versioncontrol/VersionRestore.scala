@@ -61,6 +61,21 @@ object VersionRestore extends SparkJob {
 	def timeFromUUID(uuid: UUID): Long = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000
 
 	/**
+	  * Restores all subjects to the data in the specified Version
+	  * @param version TimeUUID of the version that will be reverted to
+	  * @return Modified subject with restored data
+	  */
+	def restoreSubjects(
+		subject: Subject,
+		version: UUID,
+		templateVersion: Version
+	): Subject = {
+		val sm = new SubjectManager(subject, templateVersion)
+		sm.restoreVersion(version)
+		subject
+	}
+
+	/**
 	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
