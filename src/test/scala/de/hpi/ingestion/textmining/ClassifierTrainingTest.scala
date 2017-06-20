@@ -13,7 +13,7 @@ class ClassifierTrainingTest extends FlatSpec with Matchers with SharedSparkCont
 	"Run" should "return statistics and a possible model" in {
 		val oldFunction = ClassifierTraining.trainingFunction
 
-		ClassifierTraining.trainingFunction = TestData.testCrossValidationMethod
+		ClassifierTraining.trainingFunction = TestData.crossValidationMethod
 		val input = List(sc.parallelize(TestData.classifierFeatureEntries())).toAnyRDD()
 		val List(stats, model) = ClassifierTraining.run(input, sc)
 		val simStats = stats.asInstanceOf[RDD[SimilarityMeasureStats]].first.copy(id = null)
@@ -31,6 +31,13 @@ class ClassifierTrainingTest extends FlatSpec with Matchers with SharedSparkCont
 		val data = sc.parallelize(TestData.labeledPredictions())
 		val statistics = ClassifierTraining.calculateStatistics(data, 0.5)
 		val expectedStats = TestData.predictionStatistics()
+		statistics shouldEqual expectedStats
+	}
+
+	they should "be 0.0 if there are no values to calculate them" in {
+		val data = sc.parallelize(TestData.badLabeledPredictions())
+		val statistics = ClassifierTraining.calculateStatistics(data, 0.5)
+		val expectedStats = TestData.badPredictionStatistics()
 		statistics shouldEqual expectedStats
 	}
 

@@ -33,7 +33,10 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		translatedSubjects.foreach { case (entity, subject) =>
 			subject.name shouldEqual entity.label
 			subject.aliases shouldEqual entity.aliases
-			subject.category shouldEqual entity.instancetype
+			entity.instancetype match {
+				case Some(x) => subject.category should contain ("business")
+				case None => subject.category shouldBe empty
+			}
 		}
 	}
 
@@ -53,6 +56,7 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		subject.properties("geo_country") shouldEqual TestData.normalizedCountries
 		subject.properties("geo_city") shouldEqual TestData.normalizedCities
 		subject.properties("gen_employees") shouldEqual TestData.normalizedEmployees
+		subject.properties("gen_urls") shouldEqual TestData.normalizedURLs
 		subject.properties shouldNot contain key "id_lccn"
 	}
 

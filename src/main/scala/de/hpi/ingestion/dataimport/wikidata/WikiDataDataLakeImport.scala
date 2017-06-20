@@ -3,6 +3,7 @@ package de.hpi.ingestion.dataimport.wikidata
 import com.datastax.spark.connector._
 import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
+import de.hpi.ingestion.dataimport.SharedNormalizations
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
@@ -10,19 +11,38 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import scala.collection.mutable
-
 /**
   * This job translates Wikidata entities into Subjects and writes them into a staging table.
   */
 object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntity](
-	List("wikidata_20161117"),
-	"normalization_wikidata.xml",
-	"categorization_wikidata.xml",
+	List("wikidata_20161117", "wikidata"),
 	"wikidumps",
 	"wikidata"
 ){
-	appName = s"WikiDataDataLakeImport_v1.0"
+	appName = "WikiDataDataLakeImport_v1.0"
+	configFile = "datalake_import_wikidata.xml"
+	importConfigFile = "normalization_wikidata.xml"
+	val categoryMap = Map(
+		"economic branch" -> "sector",
+		"operation" -> "business",
+		"exchange" -> "business",
+		"financial institutions" -> "business",
+		"institute" -> "business",
+		"health maintenance organization" -> "business",
+		"non-governmental organization" -> "business",
+		"company" -> "business",
+		"state" -> "business",
+		"environmental organization" -> "business",
+		"association" -> "business",
+		"enterprise" -> "business",
+		"medical organization" -> "business",
+		"lobbying organization" -> "business",
+		"collection agency" -> "business",
+		"media company" -> "business",
+		"chamber of commerce" -> "business",
+		"copyright collective" -> "business",
+		"business enterprise" -> "business"
+	)
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
@@ -54,18 +74,18 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		val subject = Subject()
 		val sm = new SubjectManager(subject, version)
 
-		entity.label.foreach(label => sm.setName(label))
-		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
-		if(entity.aliases.nonEmpty) sm.addAliases(entity.aliases)
+		sm.setName(entity.label)
+		sm.setCategory(entity.instancetype.flatMap(categoryMap.get))
+		sm.addAliases(entity.aliases)
+		sm.addProperties(entity.data)
+
+		val legalForm = subject.name.flatMap(extractLegalForm(_, classifier)).toList
+		val normalizedLegalForm = SharedNormalizations.normalizeLegalForm(legalForm)
+		sm.addProperties(Map("gen_legal_form" -> normalizedLegalForm))
 
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
-		val properties = mutable.Map[String, List[String]]((entity.data ++ normalizedProperties).toSeq: _*)
+		sm.addProperties(normalizedProperties)
 
-		val legalForm = entity.label.map(extractLegalForm(_, classifier)).getOrElse(Nil)
-		if (legalForm.nonEmpty) properties("gen_legal_form") = legalForm
-
-		sm.addProperties(properties.toMap)
 		subject
 	}
-
 }

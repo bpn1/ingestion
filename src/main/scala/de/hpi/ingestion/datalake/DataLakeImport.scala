@@ -1,7 +1,6 @@
 package de.hpi.ingestion.datalake
 
 import java.net.URL
-
 import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
@@ -39,38 +38,6 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	): Subject
 
 	/**
-	  * Parses the normalization config file into a Map.
-	  *
-	  * @param url the path to the config file
-	  * @return a Map containing the normalized attributes mapped to the new subject attributes
-	  */
-	def parseNormalizationConfig(url: URL): Map[String, List[String]]
-
-	/**
-	  * Parses the normalization config file into a Map.
-	  *
-	  * @param path the path to the config file
-	  * @return a Map containing the normalized attributes mapped to the new subject attributes
-	  */
-	def parseNormalizationConfig(path: String): Map[String, List[String]]
-
-	/**
-	  * Parses the category normalization config file into a Map.
-	  *
-	  * @param url the path to the config file
-	  * @return a Map containing the normalized categories
-	  */
-	def parseCategoryConfig(url: URL): Map[String, List[String]]
-
-	/**
-	  * Parses the category normalization config file into a Map.
-	  *
-	  * @param path the path to the config file
-	  * @return a Map containing the normalized categories
-	  */
-	def parseCategoryConfig(path: String): Map[String, List[String]]
-
-	/**
 	  * Normalizes a given entity into a map.
 	  *
 	  * @param entity the object to be normalized
@@ -99,7 +66,7 @@ trait DataLakeImport[T <: DLImportEntity] extends Serializable {
 	  * @param name Name of the entity
 	  * @return List of legal form occurrences in the name
 	  */
-	def extractLegalForm(name: String, classifier: AClassifier[Tag]): List[String]
+	def extractLegalForm(name: String, classifier: AClassifier[Tag]): Option[String]
 
 	/**
 	  * Getter for the company split classifier

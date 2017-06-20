@@ -3,12 +3,12 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.{Alias, FeatureEntry, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.models.{FeatureEntry, ParsedWikipediaEntry}
 import org.apache.spark.rdd.RDD
 
 class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Inverse document frequencies" should "contain as many tokens as document frequencies" in {
-		val documentFrequencies = TestData.documentFrequenciesTestSet()
+		val documentFrequencies = TestData.documentFrequenciesSet()
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(CosineContextComparator.calculateIdf(_, numDocuments))
@@ -16,7 +16,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "be exactly these inverse document frequencies" in {
-		val documentFrequencies = TestData.documentFrequenciesTestSet()
+		val documentFrequencies = TestData.documentFrequenciesSet()
 		val numDocuments = 4
 		val inverseDocumentFrequencies = documentFrequencies
 			.map(CosineContextComparator.calculateIdf(_, numDocuments))
@@ -161,8 +161,9 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 				smallLink.context = Map() // allows smaller test data
 				(smallLink, tfidfContext)
 			}.collect
-			.toSet
-		val expectedTfidf = TestData.linkContextsTfidf()
+			.toList
+			.sortBy(_._1.alias)
+		val expectedTfidf = TestData.linkContextsTfidfList()
 		linkContextValues shouldBe expectedTfidf
 
 		CosineContextComparator.settings = oldSettings
@@ -198,21 +199,32 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
-	"Alias probabilities" should "not be empty" in {
+	"Link and page scores" should "not be empty" in {
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
 		val pages = CosineContextComparator
-			.computeAliasProbabilities(aliases)
+			.computeAliasPageScores(aliases)
 			.collect
 		pages should not be empty
 	}
 
-	they should "be exactly these probabilites" in {
-		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
-		val pages = CosineContextComparator
-			.computeAliasProbabilities(aliases)
+	they should "be exactly these scores" in {
+		val aliases1 = sc.parallelize(TestData.finalAliasesSet().toList)
+		val aliases2 = sc.parallelize(List(TestData.aliasWithManyPages()))
+
+		val pages1 = CosineContextComparator
+			.computeAliasPageScores(aliases1)
 			.collect
 			.toMap
-		pages shouldEqual TestData.aliasProbabilitiesMap()
+		val pages2 = CosineContextComparator
+			.computeAliasPageScores(aliases2)
+			.collect
+			.toMap
+			.map(alias => (alias._1, alias._2.toSet))
+
+		pages1 shouldEqual TestData.aliasPagesScoresMap()
+		val expectedPages = TestData.singleAliasManyPagesScoresMap()
+			.map(alias => (alias._1, alias._2.toSet))
+		pages2 shouldEqual expectedPages
 	}
 
 	"Cosine similarity between contexts" should "be exactly this value" in {
@@ -222,39 +234,100 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		cosineSimilarity shouldBe 0.608944778982726
 	}
 
+	it should "be 0 if one vector is empty" in {
+		val linkContext = TestData.shortLinkContextsTfidfList().head._2
+		val pageContext = Map[String, Double]()
+		val cosineSimilarity = CosineContextComparator.calculateCosineSimilarity(linkContext, pageContext)
+		cosineSimilarity shouldBe 0.0
+
+	}
+
 	"Extracted feature entries for known tfidf values and pages" should "not be empty" in {
 		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
+		val aliasPageScores = sc.broadcast(TestData.aliasPagesScoresMap())
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
-			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
 			.collect
 		featureEntries should not be empty
 	}
 
 	they should "be exactly these feature entries" in {
-		val contextTfidf = sc.parallelize(TestData.shortLinkContextsTfidfList())
-		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
+		val contextTfidf = sc.parallelize(
+			TestData.shortLinkContextsTfidfList() ++ TestData.deadAliasContextsTfidfList())
+		val aliasPageScores = sc.broadcast(TestData.aliasPagesScoresMap())
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
-			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
 			.collect
-			.map(_.copy(id = null))
-			.toSet
-		featureEntries shouldEqual TestData.featureEntriesSet()
+			.toList
+			.sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
+		featureEntries shouldEqual TestData.featureEntriesList()
 	}
 
 	they should "be calculated for trie aliases as well" in {
-		val contextTfidf = sc.parallelize(TestData.shortLinkAndAliasContextsTfidfList())
-		val aliasPageProbabilities = TestData.aliasProbabilitiesMap()
+		val contextTfidf = sc.parallelize(
+			TestData.shortLinkAndAliasContextsTfidfList() ++ TestData.deadAliasContextsTfidfList())
+		val aliasPageScores = sc.broadcast(TestData.aliasPagesScoresMap())
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
-			.compareLinksWithArticles(contextTfidf, aliasPageProbabilities, articleTfidf)
+			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
 			.collect
-			.map(_.copy(id = null))
 			.toSet
 		val expected = TestData.featureEntriesWithAliasesSet()
 		featureEntries shouldEqual expected
+	}
+
+	"Feature entries" should "be calculated correctly" in {
+		val contextTfidf = sc.parallelize(TestData.singleAliasLinkList())
+		val aliasPageScores = sc.broadcast(TestData.singleAliasPageScoresMap())
+		val articleTfidf = sc.parallelize(TestData.emptyArticlesTfidfMap().toList)
+		val featureEntries = CosineContextComparator
+			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
+			.collect
+			.toList
+			.sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
+		val expected = TestData.featureEntriesForSingleAliasList()
+		featureEntries shouldEqual expected
+	}
+
+	they should "be calculated correctly for many possible entities" in {
+		val contextTfidf = sc.parallelize(List(TestData.singleAliasLinkList().head))
+		val aliasPageScores = sc.broadcast(TestData.singleAliasManyPagesScoresMap())
+		val articleTfidf = sc.parallelize(TestData.emptyArticlesTfidfMap().toList)
+		val featureEntries = CosineContextComparator
+			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
+			.collect
+			.toList
+			.sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
+		val expected = TestData.featureEntriesForManyPossibleEntitiesList()
+		featureEntries shouldEqual expected
+	}
+
+	they should "be calculated correctly when using the run method" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
+		val oldSettings = CosineContextComparator.settings(false)
+		CosineContextComparator.parseConfig()
+
+		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		val articles = sc.parallelize(TestData.articlesForSingleAlias().toList)
+		val aliases = sc.parallelize(List(TestData.aliasWithManyPages()))
+		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
+		val featureEntries = CosineContextComparator
+			.run(input, sc)
+			.fromAnyRDD[FeatureEntry]()
+			.head
+			.collect
+			.toList
+			.sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
+		featureEntries shouldEqual TestData.featureEntriesForManyPossibleEntitiesList()
+
+		CosineContextComparator.settings = oldSettings
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	"Extracted feature entries from links with missing pages" should "be empty" in {
@@ -280,6 +353,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Extracted feature entries from links with existing pages" should "not be empty" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 
@@ -296,11 +371,14 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		featureEntries should not be empty
 
 		CosineContextComparator.settings = oldSettings
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	they should "be the same amount as links" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 
@@ -318,6 +396,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		featureEntries.length shouldBe linkCount
 
 		CosineContextComparator.settings = oldSettings
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 

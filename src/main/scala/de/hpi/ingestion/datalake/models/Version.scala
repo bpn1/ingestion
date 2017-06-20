@@ -1,7 +1,6 @@
 package de.hpi.ingestion.datalake.models
 
 import java.util.{Date, UUID}
-
 import com.datastax.driver.core.utils.UUIDs
 import com.datastax.spark.connector._
 import org.apache.spark.SparkContext
@@ -19,7 +18,7 @@ case class Version(
 	version: UUID = UUIDs.timeBased(),
 	var program: String,
 	var value: List[String] = Nil,
-	var validity: Map[String, String] = Map[String, String](),
+	var validity: Map[String, String] = Map(),
 	var datasources: List[String] = Nil,
 	var timestamp: Date = new Date())
 
