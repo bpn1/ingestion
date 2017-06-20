@@ -7,7 +7,7 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.deduplication.models.DuplicateCandidates
+import de.hpi.ingestion.deduplication.models.{Duplicates, Candidate}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 
@@ -29,7 +29,7 @@ object Merging extends SparkJob {
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
 		val stagings = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
-		val duplicates = sc.cassandraTable[DuplicateCandidates](
+		val duplicates = sc.cassandraTable[Duplicates](
 			settings("keyspaceDuplicatesTable"),
 			settings("duplicatesTable"))
 		List(subjects, stagings).toAnyRDD() ::: List(duplicates).toAnyRDD()
@@ -53,35 +53,35 @@ object Merging extends SparkJob {
 	  * Sets the master node for the staged subject and adds symmetrical duplicate relation between the Subject and the
 	  * staged Subject if the Subject is not a master node.
 	  * @param subject existing Subject
-	  * @param staged duplicate Subject
-	  * @param duplicateCandidates Duplicate Candidates object containing the Subject and the staged Subject
+	  * @param staging duplicate Subject
+	  * @param duplicates Duplicates object containing the Subject and the staged Subject
 	  * @param version Version used for versioning
 	  * @return List of the Subject and the staged Subject
 	  */
 	def addToMasterNode(
 		subject: Subject,
-		staged: Subject,
-		duplicateCandidates: Option[DuplicateCandidates],
+		staging: Subject,
+		duplicates: Option[Duplicates],
 		version: Version
 	): List[Subject] = {
-		val score = duplicateCandidates
-			.flatMap(_.candidates.find(_._1 == staged.id))
-			.map(_._3)
+		val score = duplicates
+			.flatMap(_.candidates.find(_.id == staging.id))
+			.map(_.score)
 			.getOrElse(1.0)
-		val stagedSm = new SubjectManager(staged, version)
 		val subjectSm = new SubjectManager(subject, version)
+		val stagingSm = new SubjectManager(staging, version)
 		subject.master match {
 			case Some(masterId) =>
-				duplicateCandidates.foreach { dupCandidate =>
-					dupCandidate.candidates.foreach { case (duplicate, source, dupeScore) =>
-						subjectSm.addRelations(Map(duplicate -> Map("duplicate" -> dupeScore.toString)))
+				duplicates.foreach { duplicate =>
+					duplicate.candidates.foreach { case Candidate(id, name, score) =>
+						subjectSm.addRelations(Map(id -> Map("duplicate" -> score.toString)))
 					}
 				}
-				stagedSm.addRelations(Map(subject.id -> Map("duplicate" -> score.toString)))
-				stagedSm.setMaster(masterId, score)
-			case None => stagedSm.setMaster(subject.id, score)
+				stagingSm.addRelations(Map(subject.id -> Map("duplicate" -> score.toString)))
+				stagingSm.setMaster(masterId, score)
+			case None => stagingSm.setMaster(subject.id, score)
 		}
-		List(subject, staged)
+		List(subject, staging)
 	}
 
 	/**
@@ -197,21 +197,21 @@ object Merging extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(subjects, stagings) = input.take(2).fromAnyRDD[Subject]()
-		val duplicateCandidates = input(2).asInstanceOf[RDD[DuplicateCandidates]]
+		val duplicates = input(2).asInstanceOf[RDD[Duplicates]]
 		val version = Version("Merging", List("merging"), sc, true)
 
 		// TODO merge multiple duplicate candidates with the same subject #430
-		val mergedSubjects = duplicateCandidates
-			.map(candidate => (candidate.subject_id, candidate))
-			.join(subjects.map(sub => Tuple2(sub.id, sub)))
+		val mergedSubjects = duplicates
+			.map(duplicate => (duplicate.subject_id, duplicate))
+			.join(subjects.map(subject => Tuple2(subject.id, subject)))
 			.values
-			.flatMap { case (candidate, sub) =>
-				candidate.candidates.map(tuple => (tuple._1, (candidate, sub)))
-			}.rightOuterJoin(stagings.map(sub => Tuple2(sub.id, sub)))
+			.flatMap { case (duplicate, subject) =>
+				duplicate.candidates.map(candidate => (candidate.id, (duplicate, subject)))
+			}.rightOuterJoin(stagings.map(subject => Tuple2(subject.id, subject)))
 			.values
-			.flatMap { case (candidateTupleOption, staged) =>
-				val (candidateOpt, subjectOpt) = candidateTupleOption.unzip.map(_.headOption, _.headOption)
-				addToMasterNode(subjectOpt.getOrElse(Subject()), staged, candidateOpt, version)
+			.flatMap { case (duplicateOption, staging) =>
+				val (duplicatesOption, subjectOption) = duplicateOption.unzip.map(_.headOption, _.headOption)
+				addToMasterNode(subjectOption.getOrElse(Subject()), staging, duplicatesOption, version)
 			}.distinct
 			.map(sub => (sub.master.getOrElse(sub.id), sub))
 			.cogroup(subjects.map(sub => Tuple2(sub.master.getOrElse(sub.id), sub)))

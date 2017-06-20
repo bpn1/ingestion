@@ -2,41 +2,37 @@
 <config>
     <settings>
         <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
-        <subjectTable>subject</subjectTable>
+        <subjectTable>subject_temp</subjectTable>
         <keyspaceStagingTable>datalake</keyspaceStagingTable>
-        <stagingTable>subject_temp</stagingTable>
+        <stagingTable>subject_wikidata</stagingTable>
         <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
         <duplicatesTable>duplicates</duplicatesTable>
         <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
         <maxBlockSize>500000</maxBlockSize>
-        <confidence>0.7</confidence>
+        <confidence>0.9</confidence>
     </settings>
     <simMeasurements>
         <attribute>
             <key>name</key>
-            <weight>0.6</weight>
+            <weight>0.8</weight>
             <feature>
                 <similarityMeasure>JaroWinkler</similarityMeasure>
-                <weight>1</weight>
+                <weight>0.7</weight>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>MongeElkan</similarityMeasure>
+                <weight>0.3</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
         <attribute>
-            <key>gen_employees</key>
+            <key>gen_urls</key>
             <weight>0.2</weight>
             <feature>
-                <similarityMeasure>RoughlyEqualNumbers</similarityMeasure>
-                <weight>1.0</weight>
-                <scale>1</scale>
-            </feature>
-        </attribute>
-        <attribute>
-            <key>geo_city</key>
-            <weight>0.2</weight>
-            <feature>
-                <similarityMeasure>Jaccard</similarityMeasure>
+                <similarityMeasure>UrlCompare</similarityMeasure>
                 <weight>1.0</weight>
                 <scale>1</scale>
             </feature>

@@ -4,7 +4,7 @@ import java.util.UUID
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import de.hpi.ingestion.deduplication.models.{DuplicateCandidates, PrecisionRecallDataTuple, SimilarityMeasureStats}
+import de.hpi.ingestion.deduplication.models.{Duplicates, Candidate, PrecisionRecallDataTuple, SimilarityMeasureStats}
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.Bag
@@ -15,7 +15,7 @@ object SimilarityMeasureEvaluation extends SparkJob {
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val training = sc.cassandraTable[DuplicateCandidates](
+		val training = sc.cassandraTable[Duplicates](
 			settings("keyspaceTrainingTable"),
 			settings("trainingTable"))
 		val test = sc.cassandraTable[(UUID, UUID)](settings("keyspaceTestTable"), settings("testTable"))
@@ -38,9 +38,11 @@ object SimilarityMeasureEvaluation extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val training = input.head.asInstanceOf[RDD[DuplicateCandidates]]
-			.flatMap { case DuplicateCandidates(subject_id, candidates) =>
-				candidates.map(candidate => ((subject_id, candidate._1), candidate._3))
+		val training = input.head.asInstanceOf[RDD[Duplicates]]
+			.flatMap { case Duplicates(subject_id, subject_name, datasource, candidates) =>
+				candidates.map { case Candidate(candidate_id, candidate_name, score) =>
+					((subject_id, candidate_id), score)
+				}
 			}.distinct
 		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]].map(pair => (pair, 1.0))
 		implicit val buckets = generateBuckets(this.settings("buckets").toInt)
