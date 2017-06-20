@@ -31,6 +31,11 @@ object SharedNormalizations {
 			.distinct
 	}
 
+	/**
+	  * Matches several variations of legal form
+	  * @param legalForm legal form to be matched
+	  * @return matched legal form or input value if input could not be matched
+	  */
 	def matchesLegalForm(legalForm: String): String = {
 		val replacedForm = legalForm.replaceAll("(\\.| )", "")
 		replacedForm match {
@@ -42,17 +47,26 @@ object SharedNormalizations {
 		}
 	}
 
+	/**
+	  * Matches several variations of AG
+	  * @param legalForm legal form to be matched
+	  * @return boolean whether legal form matches AG
+	  */
 	def matchesAG(legalForm: String): Boolean = {
 		val patternAG = """(?i)(aktiengesellschaft)""".r
 		patternAG.findFirstIn(legalForm).isDefined
 	}
 
+	/**
+	  * Matches several variations of GmbH
+	  * @param legalForm legal form to be matched
+	  * @return boolean whether legal form matches GmbH
+	  */
 	def matchesGmbH(legalForm: String): Boolean = {
-		val replacedLegalForm = legalForm.replaceAll("(\\.| )", "")
 		val patternGMBH = """(?i)(gmbh)""".r
 		val patternMBH = """(?i)(mbh)""".r
 		val patternGesellschaftGemeinschaft = """(?i)(gesellschaft|gemeinschaft)""".r
-		replacedLegalForm match {
+		legalForm match {
 			case x if patternGMBH.findFirstIn(x).isDefined => true
 			case x if patternMBH.findFirstIn(x).isDefined
 				&& patternGesellschaftGemeinschaft.findFirstIn(x).isDefined => true
@@ -60,16 +74,31 @@ object SharedNormalizations {
 		}
 	}
 
+	/**
+	  * Matches several variations of Co KG
+	  * @param legalForm legal form to be matched
+	  * @return boolean whether legal form matches Co KG
+	  */
 	def matchesCoKG(legalForm: String): Boolean = {
 		val patternCoKG = """(?i)(&?cokg)""".r
 		patternCoKG.findFirstIn(legalForm).isDefined
 	}
 
+	/**
+	  * Matches several variations of e.V.
+	  * @param legalForm legal form to be matched
+	  * @return boolean whether legal form matches e.V.
+	  */
 	def matchesEV(legalForm: String): Boolean = {
 		val patternEV = """(?i)(ev)""".r
 		patternEV.findFirstIn(legalForm).isDefined
 	}
 
+	/**
+	  * Matches several variations of EK
+	  * @param legalForm legal form to be matched
+	  * @return boolean whether legal form matches EK
+	  */
 	def matchesEK(legalForm: String): Boolean = {
 		val patternEK = """(?i)(ek)""".r
 		patternEK.findFirstIn(legalForm).isDefined

@@ -13,19 +13,30 @@ object TestData {
 	}
 
 	def unnormalizedLegalForms: List[String] = {
-		List("e. K.", "e. V.", "gesellschaft mbH & Co. KG", "gesellschaft GmbH & Co. KG")
+		List(
+			"e. K.",
+			"e. V.",
+			"Verein",
+			"gesellschaft mbH & Co. KG",
+			"Gesellschaft GmbH & Co. KG",
+			"GmbH Co KG",
+			"Gesellschaft mit beschränkter Haftung",
+			"Gemeinschaft m.b.H.",
+			"Gesellschaft mbh",
+			"Gesellschaft bürgerlichen Rechts",
+			"Kommanditgesellschaft auf Aktien"
+		)
 	}
 
 	def normalizedLegalForms: List[String] = {
-		List("e.K.", "e.V.", "GmbH & Co. KG")
-	}
-
-	def gmbHs: List[String] = {
-		List("Gesellschaft mbH", "gemeinschaft m.b.H.", "Einperson GmbH", "Gesellschaft GmbH", ". GmbH")
-	}
-
-	def notGmbHs: List[String] = {
-		List("Gesellschaft mbH & Co. KG", "AG")
+		List(
+			"e.K.",
+			"e.V.",
+			"GmbH & Co. KG",
+			"GmbH",
+			"GbR",
+			"KGaA"
+		)
 	}
 
 	def parsedJSON(): JsValue = {
