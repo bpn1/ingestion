@@ -3,11 +3,13 @@ package de.hpi.ingestion.textmining.nel
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SplitSparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.textmining.CosineContextComparator.{calculateTfidf, compareLinksWithArticles, defaultIdf}
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import de.hpi.ingestion.textmining.{CosineContextComparator, SecondOrderFeatureGenerator, TermFrequencyCounter}
 import org.apache.spark.SparkContext
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.tree.model.RandomForestModel
 import org.apache.spark.rdd.RDD
 
@@ -19,8 +21,10 @@ object TextNEL extends SplitSparkJob {
 	appName = "Text NEL"
 	configFile = "textmining.xml"
 	sparkOptions("spark.yarn.executor.memoryOverhead") = "4096"
+	var aliasPageScores = Map.empty[String, List[(String, Double, Double)]]
 
 	// $COVERAGE-OFF$
+	var loadModelFunction = loadModel _
 	/**
 	  * Loads the Trie Alias Articles from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
@@ -51,13 +55,69 @@ object TextNEL extends SplitSparkJob {
 				settings("NELTable"),
 				SomeColumns("article", "foundentities"))
 	}
+
+	/**
+	  * Loads the random forest classifier model from the HDFS.
+	  *
+	  * @param sc SparkContext used for loading from the HDFS
+	  * @return random forest classifier model
+	  */
+	def loadModel(sc: SparkContext): RandomForestModel = {
+		RandomForestModel.load(sc, settings("classifierModel"))
+	}
 	// $COVERAGE-ON$
 
-	override def splitInput(input: List[RDD[Any]], args: Array[String]): Traversable[List[RDD[Any]]] = {
+	/**
+	  * Splits the Articles into n parts.
+	  * @param input List of RDDs containing the input data
+	  * @param args arguments of the program
+	  * @return Collection of input RDD Lists to be processed sequentially.
+	  */
+	override def splitInput(input: List[RDD[Any]], args: Array[String] = Array()): Traversable[List[RDD[Any]]] = {
 		val List(articles, numDocuments, aliases, wikipediaTfidf) = input
 		articles
 			.randomSplit(Array.fill(20)(1.0))
 			.map(List(_, numDocuments, aliases, wikipediaTfidf))
+	}
+
+	/**
+	  * Extracts the contexts of an articles Trie Aliases.
+	  * @param article article containing the text and the Trie Aliases.
+	  * @param tokenizer Tokenizer used to create the contexts
+	  * @return List of the Trie Aliases as Links and their contexts as Bags as tuples
+	  */
+	def extractTrieAliasContexts(
+		article: TrieAliasArticle,
+		tokenizer: IngestionTokenizer
+	): List[(Link, Bag[String, Int])] = {
+		val articleTokens = article.text.map(tokenizer.onlyTokenizeWithOffst).getOrElse(Nil)
+		article.triealiases.map { triealias =>
+			val context = TermFrequencyCounter.extractContext(articleTokens, triealias.toLink(), tokenizer)
+			(triealias.toLink().copy(article = Option(article.article)), context)
+		}
+	}
+
+	/**
+	  * Uses a Random Forest Model to classify the given Feature Entries and transforms them into Links.
+	  * @param featureEntries RDD of Feature Entries to classify
+	  * @param model broadcast of the Random Forest Model
+	  * @return RDD of tuples containing the article and the entities linked in the article
+	  */
+	def classifyFeatureEntries(
+		featureEntries: RDD[FeatureEntry],
+		model: Broadcast[RandomForestModel]
+	): RDD[(String, List[Link])] = {
+		featureEntries.mapPartitions({ partition =>
+			val localModel = model.value
+			partition.map { featureEntry =>
+				(featureEntry, localModel.predict(featureEntry.labeledPoint().features))
+			}
+		}).collect {
+			case (featureEntry, prediction) if prediction == 1.0 =>
+				val link = Link(featureEntry.alias, featureEntry.entity, Option(featureEntry.offset))
+				(featureEntry.article, List(link))
+		}.reduceByKey(_ ++ _)
+	    .map(_.map(identity, _.sortBy(_.offset)))
 	}
 
 	/**
@@ -72,34 +132,18 @@ object TextNEL extends SplitSparkJob {
 		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].collect.head.count.toLong
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val wikipediaTfidf = input(3).asInstanceOf[RDD[ArticleTfIdf]].flatMap(ArticleTfIdf.unapply)
-
-		val aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
-		val tokenizer = IngestionTokenizer()
-
-		val articleAliases = articles.flatMap { article =>
-			val articleTokens = article.text.map(tokenizer.processWithOffsets).getOrElse(Nil)
-			article.triealiases.map { triealias =>
-				val context = TermFrequencyCounter.extractContext(articleTokens, triealias.toLink(), tokenizer)
-				(triealias.toLink().copy(article = Option(article.article)), context)
-			}
+		if(aliasPageScores.isEmpty) {
+			aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
 		}
+		val tokenizer = IngestionTokenizer()
+		val articleAliases = articles.flatMap(extractTrieAliasContexts(_, tokenizer))
 		val aliasTfIdf = calculateTfidf(articleAliases, numDocuments, defaultIdf(numDocuments))
-
 		val featureEntries = compareLinksWithArticles(aliasTfIdf, sc.broadcast(aliasPageScores), wikipediaTfidf)
-		val extendedFeatureEntries = SecondOrderFeatureGenerator.run(List(featureEntries).toAnyRDD(), sc)
-			.fromAnyRDD[FeatureEntry]().head
-
-		val modelBroadcast = sc.broadcast(RandomForestModel.load(sc, settings("classifierModel")))
-		val foundEntities = extendedFeatureEntries.mapPartitions({ partition =>
-			val model = modelBroadcast.value
-			partition.map { featureEntry =>
-				(featureEntry, model.predict(featureEntry.labeledPoint().features))
-			}
-		}).collect {
-			case (featureEntry, prediction) if prediction == 1.0 =>
-				val link = Link(featureEntry.alias, featureEntry.entity, Option(featureEntry.offset))
-				(featureEntry.article, List(link))
-		}.reduceByKey(_ ++ _)
+		val extendedFeatureEntries = SecondOrderFeatureGenerator
+			.run(List(featureEntries).toAnyRDD(), sc)
+			.fromAnyRDD[FeatureEntry]()
+			.head
+		val foundEntities = classifyFeatureEntries(extendedFeatureEntries, sc.broadcast(loadModelFunction(sc)))
 		List(foundEntities).toAnyRDD()
 	}
 }

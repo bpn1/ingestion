@@ -1,6 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import java.io._
+
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
@@ -8,12 +9,14 @@ import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, Similari
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models.{TrieAlias, _}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
+
 import scala.io.{BufferedSource, Source}
 
 // scalastyle:off number.of.methods
@@ -2500,10 +2503,14 @@ object TestData {
 		SimilarityMeasureStats(null, List(averagedStatisticTuples()), Option("Test comment"))
 	}
 
-	def randomForestModel(): RandomForestModel = {
-		val node = new Node(0, new Predict(0.0, 1.0), 0.0, true, None, None, None, None)
+	def randomForestModel(prediction: Double = 0.0): RandomForestModel = {
+		val node = new Node(0, new Predict(prediction, 1.0), 0.0, true, None, None, None, None)
 		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
 		new RandomForestModel(Algo.Classification, Array(dtmodel))
+	}
+
+	def hdfsRandomForestModel(prediction: Double = 0.0)(sc: SparkContext) = {
+		randomForestModel(prediction)
 	}
 
 	def crossValidationMethod(
