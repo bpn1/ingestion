@@ -9,11 +9,8 @@ class SimpleBlockingScheme extends BlockingScheme {
 	tag = "SimpleBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
 		subject.name.map { name =>
-			if (name.startsWith("The ")) {
-				List(name.substring(4, Math.min(9, name.length)))
-			} else {
-				List(name.substring(0, Math.min(5, name.length)))
-			}
+			val beginOffset = if(name.startsWith("The ")) 4 else 0
+			List(name.slice(beginOffset, 5 + beginOffset))
 		}.getOrElse(List(undefinedValue))
 	}
 }
