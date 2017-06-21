@@ -27,5 +27,12 @@ class VersionRestoreTest extends FlatSpec with SharedSparkContext with Matchers 
 		}
 	}
 
-
+	"Version Restore assertion" should "return false if there is not exactly one versions provided" in {
+		val successArgs = Array("v1")
+		val failArgsEmpty = Array[String]()
+		val failArgsTooMany = Array("v1", "v2")
+		VersionRestore.assertConditions(successArgs) shouldBe true
+		VersionRestore.assertConditions(failArgsEmpty) shouldBe false
+		VersionRestore.assertConditions(failArgsTooMany) shouldBe false
+	}
 }

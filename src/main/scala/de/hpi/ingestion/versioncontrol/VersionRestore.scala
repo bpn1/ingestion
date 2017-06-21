@@ -96,6 +96,6 @@ object VersionRestore extends SparkJob {
 	  * @return true if there are at least two arguments provided
 	  */
 	override def assertConditions(args: Array[String]): Boolean = {
-		args.length >= 1
+		args.length == 1
 	}
 }
