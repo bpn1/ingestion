@@ -1,13 +1,11 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.dataimport.SharedNormalizations
-
 import scala.io.Source
 import scala.xml.XML
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDDimport de.hpi.ingestion.data
-import.dbpedia.models.{DBpediaEntity, Relation}
-import de.hpi.ingestion.datalake.models.Version
+import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.dataimport.dbpedia.models.{DBpediaEntity, Relation}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 
 // scalastyle:off number.of.methods
