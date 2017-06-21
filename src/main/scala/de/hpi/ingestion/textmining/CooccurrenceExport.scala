@@ -6,6 +6,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 
 /**
   * Exports the Cooccurrences to Neo4j CSV.
@@ -15,6 +16,7 @@ object CooccurrenceExport extends SparkJob {
 	configFile = "textmining.xml"
 	val separator = ","
 	val quote = "\""
+	sparkOptions("spark.yarn.executor.memoryOverhead") = "5G"
 
 	// $COVERAGE-OFF$
 	/**
@@ -26,7 +28,8 @@ object CooccurrenceExport extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val cooccurrences = sc.cassandraTable[Cooccurrence](settings("keyspace"), settings("cooccurrenceTable"))
-		List(cooccurrences).toAnyRDD()
+		val relations = sc.cassandraTable[Relation](settings("keyspace"), settings("DBpediaRelationTable"))
+		List(cooccurrences).toAnyRDD() ++ List(relations).toAnyRDD()
 	}
 
 	/**
@@ -38,8 +41,8 @@ object CooccurrenceExport extends SparkJob {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val List(nodes, edges) = output.fromAnyRDD[String]()
-		nodes.saveAsTextFile(s"cooccurrence_nodes_${System.currentTimeMillis()}")
-		edges.saveAsTextFile(s"cooccurrence_edges_${System.currentTimeMillis()}")
+		nodes.saveAsTextFile(s"relation_nodes_${System.currentTimeMillis()}")
+		edges.saveAsTextFile(s"relation_edges_${System.currentTimeMillis()}")
 	}
 	// $COVERAGE-ON$
 
@@ -52,21 +55,35 @@ object CooccurrenceExport extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]().head
+		val relations = input.fromAnyRDD[Relation]().last
 		val cleanedCooccurrences = cooccurrences.map { occurrence =>
 			val cleanedEntities = occurrence.entitylist.map(_.replaceAll("\"", "\\\\\""))
 			occurrence.copy(entitylist = cleanedEntities)
 		}
-		val nodes = cleanedCooccurrences
-			.flatMap(_.entitylist)
-			.distinct
-			.map(node => s"${quote}${node}${quote},${quote}${node}${quote},Entity")
-		val edges = cleanedCooccurrences
+		val cleanedRelations = relations.map { relation =>
+			val cleanedSubject = relation.subjectentity.replaceAll("\"", "\\\\\"").trim
+			val cleanedObject = relation.objectentity.replaceAll("\"", "\\\\\"").trim
+			relation.copy(subjectentity = cleanedSubject, objectentity = cleanedObject)
+		}
+		val nodesCooc = cleanedCooccurrences
+			.flatMap(_.entitylist.map(_.trim))
+
+		val edgesCooc = cleanedCooccurrences
 			.flatMap { case Cooccurrence(entities, count) =>
 				entities.asymSquare().map((_, count))
 			}.reduceByKey(_ + _)
 			.map { case ((start, end), count) =>
 				s"${quote}${start}${quote},${count},${quote}${end}${quote},CO_OCCURRENCE"
-			}
+			}.distinct
+		val nodesRel = cleanedRelations.flatMap(rel => List(rel.subjectentity.trim, rel.objectentity.trim))
+		val nodes = (nodesCooc ++ nodesRel)
+			.map(node => s"${quote}${node}${quote},${quote}${node}${quote},Entity")
+			.distinct
+		val edgesRel = cleanedRelations
+			.map { case Relation(subjectentity, relationtype, objectentity) =>
+				s"${quote}${subjectentity}${quote},${relationtype},${quote}${objectentity}${quote},DBPEDIA"
+			}.distinct
+		val edges = edgesCooc ++ edgesRel
 		List(nodes, edges).toAnyRDD()
 	}
 }

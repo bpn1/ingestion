@@ -17,11 +17,7 @@ class DBpediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 
 	they should "have namespace prefixes after cleaning" in {
 		val prefixesList = TestData.prefixesList
-		val parsed = TestData.turtleRDD(sc)
-			.map(DBpediaImport.tokenize)
-			.map { tripleList =>
-				tripleList.map(DBpediaImport.cleanURL(_, prefixesList))
-			}
+		val parsed = DBpediaImport.dbpediaToCleanedTriples(TestData.turtleRDD(sc), prefixesList)
 			.map { case List(a, b, c) => (a, b, c) }
 
 		val expected = TestData.tripleRDD(sc).map(el => (el._1, el._2._1, el._2._2))

@@ -3,8 +3,6 @@ package de.hpi.ingestion.dataimport.wikidata
 import org.apache.spark.SparkContext
 import java.util.UUID
 import de.hpi.ingestion.implicits.CollectionImplicits._
-
-import scala.collection.mutable
 import scala.util.matching.Regex
 import com.datastax.spark.connector._
 import org.apache.spark.rdd.RDD
@@ -114,7 +112,7 @@ object FindRelations extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val subjects = input.fromAnyRDD[Subject]().head
 		val nameResolveMap = resolvableNamesMap(subjects)
-		val version = Version(appName, datasources, sc, true)
+		val version = Version(appName, datasources, sc, false)
 		val subjectsWithRelations = subjects.map(findRelations(_, nameResolveMap, version))
 		List(subjectsWithRelations).toAnyRDD()
 	}

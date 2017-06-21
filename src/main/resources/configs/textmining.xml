@@ -20,5 +20,6 @@
         <contextSize>20</contextSize>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
+        <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
     </settings>
 </config>
