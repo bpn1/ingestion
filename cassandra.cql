@@ -211,6 +211,12 @@ CREATE TYPE datalake.subject (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
+CREATE TYPE datalake.candidate (
+    id uuid,
+    name text,
+    score double
+);
+
 CREATE TABLE datalake.subject (
     id uuid PRIMARY KEY,
     aliases list<text>,
@@ -296,9 +302,11 @@ CREATE TABLE datalake.blockingstats (
     PRIMARY KEY (jobid, schemetag)
 );
 
-CREATE TABLE datalake.duplicatecandidates (
+CREATE TABLE datalake.duplicates (
     subject_id uuid PRIMARY KEY,
-    candidates list<frozen<tuple<subject, text, double>>>
+    subject_name text,
+    datasource text,
+    candidates list<frozen<candidate>>
 );
 
 CREATE TABLE datalake.sim_measure_stats (
@@ -344,6 +352,12 @@ CREATE TYPE evaluation.subject (
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+);
+
+CREATE TYPE evaluation.candidate (
+    id uuid,
+    name text,
+    score double
 );
 
 -- Tables
@@ -397,9 +411,11 @@ CREATE TABLE evaluation.version (
     timestamp timestamp
 );
 
-CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
+CREATE TABLE evaluation.dbpedia_wikidata_duplicates (
     subject_id uuid PRIMARY KEY,
-    candidates list<frozen<tuple<subject, text, double>>>
+    subject_name text,
+    datasources text,
+    candidates list<frozen<candidate>>
 );
 
 CREATE TABLE evaluation.dbpedia_wikidata_deduplication_only_uuid (
