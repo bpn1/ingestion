@@ -1,18 +1,13 @@
 package de.hpi.ingestion.versioncontrol
 
-import de.hpi.ingestion.datalake.models._
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import java.util.UUID
 
+import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.framework.SparkJob
-import play.api.libs.json._
-
-import scala.collection.mutable
-import de.hpi.ingestion.implicits.TupleImplicits._
-import de.hpi.ingestion.versioncontrol.models.HistoryEntry
-import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
