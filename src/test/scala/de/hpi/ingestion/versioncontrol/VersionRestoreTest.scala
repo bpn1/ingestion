@@ -8,7 +8,7 @@ import org.scalatest.{FlatSpec, Matchers}
 class VersionRestoreTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"Subject data" should "be restored" in {
 		val subjects = sc.parallelize(TestData.diffSubjects())
-		val versions = Array(TestData.versionsToCompare()._2.toString)
+		val versions = Array(TestData.versionsToCompare()._1.toString)
 		val rddList = List(subjects).toAnyRDD()
 		val restoredSubjects = VersionRestore.run(rddList, sc, versions)
 			.fromAnyRDD[Subject]()
