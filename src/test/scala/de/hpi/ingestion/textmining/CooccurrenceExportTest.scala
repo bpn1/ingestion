@@ -7,10 +7,12 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 class CooccurrenceExportTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Nodes and Edges" should "be extracted" in {
-		val input = List(sc.parallelize(TestData.exportCooccurrences())).toAnyRDD()
+		val cooccurrences = sc.parallelize(TestData.exportCooccurrences())
+		val dbpediaRelations = sc.parallelize(TestData.exportDBpediaRelations())
+		val input = List(cooccurrences).toAnyRDD() ++ List(dbpediaRelations).toAnyRDD()
 		val List(nodes, edges) = CooccurrenceExport.run(input, sc).fromAnyRDD[String]().map(_.collect.toSet)
-		val expectedNodes = TestData.cooccurrenceNodes()
-		val expectedEdges = TestData.cooccurrenceEdges()
+		val expectedNodes = TestData.nodes()
+		val expectedEdges = TestData.edges()
 		nodes shouldEqual expectedNodes
 		edges shouldEqual expectedEdges
 	}

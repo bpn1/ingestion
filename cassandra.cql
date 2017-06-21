@@ -173,6 +173,12 @@ CREATE TABLE wikidumps.spiegelfeatureentries (
 CREATE TABLE wikidumps.articletfidf (
     article text PRIMARY KEY,
     tfidf map<text, double>
+
+CREATE TABLE wikidumps.dbpediarelations (
+	subjectentity text,
+	relationtype text,
+	objectentity text,
+	PRIMARY KEY (subjectentity, relationtype, objectentity)
 );
 
 -- Wikidumps.Wikidata
