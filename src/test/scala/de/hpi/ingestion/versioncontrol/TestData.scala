@@ -56,11 +56,14 @@ object TestData {
 				testVersion("f44df8b0-2425-11e7-aec2-2d07f82c7921", List("a", "b"), "2017-04-18 10:58:28.923+0000")),
 			List(testVersion("224e1a50-13e2-11e7-9a30-7384674b582f", List("b"), "2017-03-28 18:12:41.710+0000"),
 				testVersion("f44df8b0-2425-11e7-aec2-2d07f82c7921", Nil, "2017-04-18 10:58:28.923+0000"),
-				testVersion("7b410340-243e-11e7-937a-ad9adce5e136", List("a"), "2017-04-18 13:54:03.253+0000")),
-			List(testVersion("f44df8b0-2425-11e7-aec2-2d07f82c7921", List("new"), "2017-04-18 10:58:28.923+0000"),
-				testVersion("f44df8b0-2425-11e7-aec2-2d07f82c7921", Nil, "2017-04-18 10:58:28.923+0000"),
-				testVersion("f44df8b0-2425-11e7-aec2-2d07f82c7921", List("new"), "2017-04-18 10:58:28.923+0000"))
+				testVersion("7b410340-243e-11e7-937a-ad9adce5e136", List("a"), "2017-04-18 13:54:03.253+0000"))
 		)
+	}
+
+	def futureVersions(): List[Version] = {
+		List(testVersion("f44df8b0-2425-11e7-aec2-2d07f82c7921", List("new"), "2017-04-18 10:58:28.923+0000"),
+			testVersion("f44df8b0-2425-11e7-aec2-2d07f82c7921", Nil, "2017-04-18 10:58:28.923+0000"),
+			testVersion("f44df8b0-2425-11e7-aec2-2d07f82c7921", List("new"), "2017-04-18 10:58:28.923+0000"))
 	}
 
 	def foundValues(): List[(List[String], List[String])] = {
@@ -69,7 +72,6 @@ object TestData {
 			(List("a"), Nil),
 			(Nil, List("b")),
 			(List("a", "b"), List("a", "b")),
-			(Nil, Nil),
 			(Nil, Nil))
 	}
 
@@ -132,12 +134,12 @@ object TestData {
 	def tooNewSubject(): Subject = {
 		Subject(
 			id = UUID.fromString("d34db33f-c621-42ad-a4f2-34e229602989"),
-			name_history = versions()(5),
-			aliases_history = versions()(5),
-			category_history = versions()(5),
-			properties_history = Map("test property" -> versions()(5)),
+			name_history = futureVersions(),
+			aliases_history = futureVersions(),
+			category_history = futureVersions(),
+			properties_history = Map("test property" -> futureVersions()),
 			relations_history = Map(
-				UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(5))))
+				UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> futureVersions())))
 	}
 
 	def restoredSubjects(): List[Subject] = {
@@ -174,17 +176,19 @@ object TestData {
 					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(1)))),
 			Subject(
 				id = UUID.fromString("d34db33f-c621-42ad-a4f2-34e229602989"),
-				name = foundValues()(5)._1.headOption,
-				aliases = foundValues()(5)._1,
-				category = foundValues()(5)._1.headOption,
+				name = None,
+				aliases = Nil,
+				category = None,
 				properties = Map(),
 				relations = Map(UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> "")),
-				name_history = versions()(5),
-				aliases_history = versions()(5),
-				category_history = versions()(5),
+				name_history = futureVersions(),
+				aliases_history = futureVersions(),
+				category_history = futureVersions(),
 				properties_history = Map("test property" -> versions().head),
 				relations_history = Map(
-					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(5)))))
+					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> futureVersions()))
+			)
+		)
 	}
 
 	def jsonDiff(): List[JsValue] = {
