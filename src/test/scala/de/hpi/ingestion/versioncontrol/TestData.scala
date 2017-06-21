@@ -43,6 +43,7 @@ object TestData {
 	def versions(): List[List[Version]] = {
 		List(
 			List(
+				testVersion("00000001-f6ba-11e6-aa16-63ef39f49c5d", List("very old"), "1970-01-01 00:00:00.001Z"),
 				testVersion("2195bc70-f6ba-11e6-aa16-63ef39f49c5d", List("a", "b"), "2017-02-19 15:43:16.912+0000"),
 				testVersion("224e1a50-13e2-11e7-9a30-7384674b582f", List("b", "c"), "2017-03-28 18:12:41.710+0000")),
 			List(testVersion("2195bc70-f6ba-11e6-aa16-63ef39f49c5d", List("a"), "2017-02-19 15:43:16.912+0000"),
