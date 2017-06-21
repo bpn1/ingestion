@@ -1,15 +1,14 @@
 package de.hpi.ingestion.textmining
 
 import java.io._
-
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
-import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models.{TrieAlias, _}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
@@ -17,8 +16,8 @@ import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
-
 import scala.io.{BufferedSource, Source}
+import java.io._
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -26,6 +25,53 @@ import scala.io.{BufferedSource, Source}
 // scalastyle:off file.size.limit
 
 object TestData {
+	def namedEntitiesSet(): Set[Link] = {
+		Set(
+			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test mit Link")),
+			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test ohne Link")),
+			Link("Audi", "Audi Test mit Link", Option(7), Map(), Option("Testartikel")),
+			Link("Brachttal", "Audi Test ohne Link", Option(55), Map(), Option("Streitberg (Brachttal)")),
+			Link("Brachttal", "Audi Test ohne Link", Option(13), Map(), Option("Testartikel")),
+			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(66), Map(), Option("Streitberg (Brachttal)")),
+			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64), Map(), Option("Testartikel")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(87), Map(), Option("Streitberg (Brachttal)")),
+			Link("1377", "Testartikel", Option(225), Map(), Option("Streitberg (Brachttal)")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
+			Link("Büdinger Wald", "Testartikel", Option(546), Map(), Option("Streitberg (Brachttal)")),
+			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
+			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel"))
+		)
+	}
+
+	def namedEntitiesForIncompleteArticlesSet(): Set[Link] = {
+		Set(
+			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test ohne Link")),
+			Link("Audi", "Audi Test mit Link", Option(7), Map(), Option("Testartikel")),
+			Link("Brachttal", "Audi Test ohne Link", Option(13), Map(), Option("Testartikel")),
+			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64), Map(), Option("Testartikel")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
+			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
+			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
+			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel")),
+			Link("Van", "Van (Automobil)", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Reliant", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Toyota", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Flughafen Ferit Melen", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Kastenwagen", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Van", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Van (Provinz)", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Vansee", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Van (Türkei)", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Tušpa", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Chevrolet Van", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Chevrolet", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Reliant Van", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Vilâyet Van", Option(9), Map(), Option("Toan Anh")),
+			Link("Van", "Türkisch Van", Option(9), Map(), Option("Toan Anh"))
+		)
+	}
+
 	def valuesList(): List[Double] = {
 		List(5.0, 7.1, 5.0, 2.9, 7.1)
 	}
@@ -351,6 +397,26 @@ object TestData {
 			))
 	}
 
+	def linksWithArticleAnnotation(): Set[Link] = {
+		Set(
+			Link("Audi", "Audi", Option(9), article = Option("Audi Test mit Link")),
+			Link("Audi", "BMW", Option(9), article = Option("Audi Test mit Link")),
+			Link("Audi", "Ferrari", Option(9), article = Option("Audi Test mit Link")),
+			Link("Brachttal", "Brachttal", Option(55), article = Option("Streitberg (Brachttal)")),
+			Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), article = Option("Streitberg (Brachttal)")),
+			Link("Hessen", "Hessen", Option(87), article = Option("Streitberg (Brachttal)")),
+			Link("Hessen", "Hessen (Stamm)", Option(87), article = Option("Streitberg (Brachttal)")),
+			Link("Hessen", "Kanton Hessen", Option(87), article = Option("Streitberg (Brachttal)")),
+			Link("1377", "1377", Option(225), article = Option("Streitberg (Brachttal)")),
+			Link("Büdinger Wald", "Büdinger Wald", Option(546), article = Option("Streitberg (Brachttal)")),
+			Link("Audi", "Audi", Option(7), article = Option("Testartikel")),
+			Link("Brachttal", "Brachttal", Option(13), article = Option("Testartikel")),
+			Link("historisches Jahr", "1377", Option(24), article = Option("Testartikel")),
+			Link("historisches Jahr", "1996", Option(24), article = Option("Testartikel")),
+			Link("historisches Jahr", "2017", Option(24), article = Option("Testartikel"))
+		)
+	}
+
 	def articlesWithCompleteContexts(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),
@@ -412,6 +478,62 @@ object TestData {
 					Link("Brachttal", "Brachttal", Option(13)),
 					Link("historisches Jahr", "1377", Option(24)))
 			))
+	}
+
+	def articleWithCompleteContext(): ParsedWikipediaEntry = {
+		ParsedWikipediaEntry("Toan Anh", Option("REDIRECT Van Toan Nguyen"),
+			context = Map("nguy" -> 1, "redirec" -> 1, "toa" -> 1, "van" -> 1)
+		)
+	}
+
+	def articlesWithoutContexts(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Chevrolet"),
+			ParsedWikipediaEntry("Chevrolet Van"),
+			ParsedWikipediaEntry("Flughafen Ferit Melen"),
+			ParsedWikipediaEntry("Kastenwagen"),
+			ParsedWikipediaEntry("Reliant"),
+			ParsedWikipediaEntry("Reliant Van"),
+			ParsedWikipediaEntry("Toyota"),
+			ParsedWikipediaEntry("Tušpa"),
+			ParsedWikipediaEntry("Türkisch Van"),
+			ParsedWikipediaEntry("Van"),
+			ParsedWikipediaEntry("Van (Automobil)"),
+			ParsedWikipediaEntry("Van (Provinz)"),
+			ParsedWikipediaEntry("Van (Türkei)"),
+			ParsedWikipediaEntry("Vansee"),
+			ParsedWikipediaEntry("Vilâyet Van")
+		)
+	}
+
+	def incompleteArticlesWithCompleteContexts(): Set[ParsedWikipediaEntry] = {
+		Set(
+			ParsedWikipediaEntry("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt."),
+				List(),
+				List(),
+				List("Audi"),
+				linkswithcontext = List(),
+				context = Map("audi" -> 1, "verlink" -> 1)
+			),
+			ParsedWikipediaEntry("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
+				List(
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24))
+				),
+				List(),
+				List("Audi", "Brachttal", "historisches Jahr", "Hessen", "Main-Kinzig-Kreis", "Büdinger Wald", "Backfisch"),
+				linkswithcontext = List(
+					Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+					Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1))),
+				context = Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1),
+				textlinksreduced = List(
+					Link("Audi", "Audi", Option(7)),
+					Link("Brachttal", "Brachttal", Option(13)),
+					Link("historisches Jahr", "1377", Option(24)))
+			)
+		)
 	}
 
 	def articlesWithLinkAndAliasContexts(): Set[ParsedWikipediaEntry] = {
@@ -611,10 +733,20 @@ object TestData {
 		)
 	}
 
+	def alias(): Alias = {
+		Alias("Van",
+			Map("Chevrolet" -> 1, "Chevrolet Van" -> 9, "Flughafen Ferit Melen" -> 1, "Kastenwagen" -> 1, "Reliant" -> 7, "Reliant Van" -> 2, "Toyota" -> 1, "Tušpa" -> 2, "Türkisch Van" -> 12, "Van" -> 159, "Van (Automobil)" -> 443, "Van (Provinz)" -> 83, "Van (Türkei)" -> 292, "Vansee" -> 5, "Vilâyet Van" -> 13),
+			linkoccurrences = Option(1040),
+			totaloccurrences = Option(20508)
+		)
+	}
+
 	def allPageNamesOfTestArticleList(): Set[String] = {
-		Set("Audi",
+		Set(
+			"Audi",
 			"Brachttal",
-			"1377")
+			"1377"
+		)
 	}
 
 	def articleContextWordSets(): Map[String, Set[String]] = {
@@ -1417,7 +1549,7 @@ object TestData {
 		)
 	}
 
-	def parsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaSetWithoutText(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry(
 				"Audi",
@@ -2525,6 +2657,19 @@ object TestData {
 		maxBins: Int = 32
 	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
 		(simMeasureStats(), Option(randomForestModel()))
+	}
+
+	def loadRandomForestModel(sc: SparkContext): RandomForestModel = {
+		randomForestModel()
+	}
+
+	def formattedPredictionStatistics(): String = {
+		s"precision\t1.0\t${5.0 / 7.0}" + "\n" +
+			"precision\t0.0\t0.6" + "\n" +
+			s"recall\t1.0\t${5.0 / 6.0}" + "\n" +
+			"recall\t0.0\t1.0" + "\n" +
+			s"fscore with beta 0.5\t1.0\t${25.0 / 34.0}" + "\n" +
+			"fscore with beta 0.5\t0.0\t0.6521739130434783"
 	}
 
 	def exportDBpediaRelations(): List[Relation] = {

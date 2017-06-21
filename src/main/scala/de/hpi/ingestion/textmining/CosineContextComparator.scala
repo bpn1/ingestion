@@ -18,6 +18,8 @@ object CosineContextComparator extends SplitSparkJob {
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
+	var docfreqStreamFunction = AliasTrieSearch.hdfsFileStream _
+
 	/**
 	  * Loads Parsed Wikipedia entries with their term frequencies and the document frequencies from the Cassandra.
 	  *
@@ -192,7 +194,7 @@ object CosineContextComparator extends SplitSparkJob {
 		linkContexts: RDD[(Link, Map[String, Double])],
 		aliasPageScores: Broadcast[Map[String, List[(String, Double, Double)]]],
 		articleContexts: RDD[(String, Map[String, Double])]
-	): RDD[FeatureEntry] = {
+	): RDD[(Link, FeatureEntry)] = {
 		linkContexts
 			.mapPartitions({ partition =>
 				val localAliases = aliasPageScores.value
@@ -209,7 +211,8 @@ object CosineContextComparator extends SplitSparkJob {
 			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
 				protoFeatureEntries.map { protoFeatureEntry =>
 					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
-					protoFeatureEntry.toFeatureEntry(page, MultiFeature(cosineSim))
+					val featureEntry = protoFeatureEntry.toFeatureEntry(page, MultiFeature(cosineSim))
+					(protoFeatureEntry.link, featureEntry)
 				}
 			}
 	}
@@ -280,7 +283,7 @@ object CosineContextComparator extends SplitSparkJob {
 				listlinks = Nil,
 				disambiguationlinks = Nil,
 				foundaliases = Nil))
-		val weights = (0 until 10).map(t => 1.0).toArray
+		val weights = Array.fill[Double](settings("numberArticlePartitions").toInt)(1.0)
 		val articleSplit = leanArticles.randomSplit(weights)
 		articleSplit.map { articlePartition =>
 			val leanerArticles = leanArticles.map(_.copy(triealiases = Nil))
@@ -310,6 +313,7 @@ object CosineContextComparator extends SplitSparkJob {
 		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf(numDocuments))
 		val aliasPageScores = collectAliasPageScores(aliases)
 		val featureEntries = compareLinksWithArticles(contextTfidf, sc.broadcast(aliasPageScores), articleTfidf)
+			.map(_._2)
 		List(featureEntries).toAnyRDD()
 	}
 }
