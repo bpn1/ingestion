@@ -17,13 +17,14 @@ class VersionRestoreTest extends FlatSpec with SharedSparkContext with Matchers 
 			.sortBy(_.id)
 
 		val zippedSubjects = restoredSubjects.zip(TestData.restoredSubjects())
-		zippedSubjects.foreach { case (originalSubject, restoredSubject) =>
-			originalSubject.name shouldEqual restoredSubject.name
-			originalSubject.master shouldEqual restoredSubject.master
-			originalSubject.aliases shouldEqual restoredSubject.aliases
-			originalSubject.category shouldEqual restoredSubject.category
-			originalSubject.properties shouldEqual restoredSubject.properties
-			originalSubject.relations shouldEqual restoredSubject.relations
+		println(restoredSubjects.head)
+		zippedSubjects.foreach { case (restoredSubject, testSubject) =>
+			restoredSubject.name shouldEqual testSubject.name
+			restoredSubject.master shouldEqual testSubject.master
+			restoredSubject.aliases shouldEqual testSubject.aliases
+			restoredSubject.category shouldEqual testSubject.category
+			restoredSubject.properties shouldEqual testSubject.properties
+			restoredSubject.relations shouldEqual testSubject.relations
 		}
 	}
 }
