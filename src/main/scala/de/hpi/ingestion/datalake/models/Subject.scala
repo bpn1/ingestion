@@ -6,6 +6,7 @@ import scala.io.Source
 
 case class Subject(
 	var id: UUID = UUID.randomUUID(),
+	var master: UUID,
 	var datasource: String,
 	var name: Option[String] = None,
 	var aliases: List[String] = Nil,
@@ -13,6 +14,7 @@ case class Subject(
 	var properties: Map[String, List[String]] = Map(),
 	var relations: Map[UUID, Map[String, String]] = Map(),
 
+	var master_history: List[Version] = Nil,
 	var name_history: List[Version] = Nil,
 	var aliases_history: List[Version] = Nil,
 	var category_history: List[Version] = Nil,
@@ -47,7 +49,7 @@ case class Subject(
 			attribute match {
 				case "name" | "category" => field.get(this).asInstanceOf[Option[String]].toList
 				case "aliases" => field.get(this).asInstanceOf[List[String]]
-				case "master" => field.get(this).asInstanceOf[Option[UUID]].map(_.toString).toList
+				case "master" => List(field.get(this).asInstanceOf[UUID].toString)
 				case _ => Nil
 			}
 		} else {
@@ -59,7 +61,7 @@ case class Subject(
 	  * Returns only the normalized properties of this Subject.
 	  * @return subset of the properties Map containing only the normalized properties
 	  */
-	def normalizedProperties(): Map[String, List[String]] = {
+	def normalizedProperties: Map[String, List[String]] = {
 		properties.filterKeys(Subject.normalizedPropertyKeys)
 	}
 
@@ -67,12 +69,13 @@ case class Subject(
 	  * Returns the score of the slave relation to this Subjects master node if it has one.
 	  * @return score of the master node relation
 	  */
-	def masterScore(): Option[Double] = {
-		relations
-			.get()
-			.flatMap(relations.get)
-			.flatMap(_.get(SubjectManager.slaveKey))
-			.map(_.toDouble)
+	def masterScore: Double = {
+		if (this.datasource == "master") 1.0
+		else {
+			this
+				.relations(this.master)(SubjectManager.slaveKey)
+				.toDouble
+		}
 	}
 }
 
@@ -80,8 +83,12 @@ case class Subject(
   * Companion-Object to the Subject case class containing the keys for all normalized properties.
   */
 object Subject {
-	val normalizedPropertyKeys = Source
+	val normalizedPropertyKeys : Set[String] = Source
 		.fromURL(this.getClass.getResource("/normalized_properties.txt"))
 		.getLines
 		.toSet
+
+	def master(id: UUID = UUID.randomUUID()): Subject = {
+		Subject(id = id, master = id, datasource = "master")
+	}
 }
