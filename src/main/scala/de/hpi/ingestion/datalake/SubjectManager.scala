@@ -91,6 +91,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  */
 	def restoreVersion(version: UUID): Unit = {
 		val nameVersion = findVersion(version, subject.name_history)
+		val masterVersion = findVersion(version, subject.master_history)
 		val aliasesVersion = findVersion(version, subject.aliases_history)
 		val categoryVersion = findVersion(version, subject.category_history)
 		val propertiesVersion = subject.properties_history.mapValues(findVersion(version, _))
@@ -98,6 +99,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 			.mapValues(_.mapValues(findVersion(version, _)))
 
 		restoreName(nameVersion)
+		restoreMaster(masterVersion)
 		restoreAliases(aliasesVersion)
 		restoreCategory(categoryVersion)
 		restoreProperties(propertiesVersion)
@@ -235,6 +237,17 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param score score of the relation
 	  */
 	def setMaster(value: UUID, score: Double): Unit = setMaster(value, score, Map[String, String]())
+
+	/**
+	  * Sets the master of the Subject to the value of the given Version and uses its data sources
+	  * @param version: Option of a Version that contains the value and relevant data sources
+	  */
+	def restoreMaster(version: Option[Version]): Unit = {
+		val dataSources = version.map(_.datasources).toList.flatten
+		val value = version.flatMap(_.value.headOption).map(UUID.fromString)
+		// TODO replace the 1.0 score by the original value (not saved?)
+		setMaster(value, 1.0, Map[String, String](), dataSources)
+	}
 
 	/**
 	  * Sets the properties of the Subject to the given subjects.
