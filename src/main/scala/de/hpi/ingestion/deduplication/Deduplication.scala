@@ -17,7 +17,10 @@ import org.apache.spark.rdd.RDD
 object Deduplication extends SparkJob {
 	appName = "Deduplication"
 	configFile = "deduplication.xml"
-	val blockingSchemes = List[BlockingScheme](SimpleBlockingScheme("simple_scheme"))
+	val blockingSchemes = List[BlockingScheme](
+		SimpleBlockingScheme("simple_scheme"),
+		ListBlockingScheme("sectorBlocking_scheme", "gen_sectors")
+	)
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
@@ -28,7 +31,7 @@ object Deduplication extends SparkJob {
 
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[DuplicateCandidates]()
+			.fromAnyRDD[Duplicates]()
 			.head
 			.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
@@ -45,7 +48,7 @@ object Deduplication extends SparkJob {
 		val List(subjects, staging) = input.fromAnyRDD[Subject]()
 		val blocks = Blocking.blocking(subjects, staging, blockingSchemes)
 		val subjectPairs = findDuplicates(blocks.values, sc)
-		val duplicates = createDuplicateCandidates(subjectPairs)
+		val duplicates = createDuplicates(subjectPairs)
 		List(duplicates).toAnyRDD()
 	}
 
@@ -77,13 +80,13 @@ object Deduplication extends SparkJob {
 	  * @param subjectPairs RDD of Subject pairs containing all found duplicates
 	  * @return RDD of grouped Duplicate Candidates
 	  */
-	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
+	def createDuplicates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[Duplicates] = {
 		val stagingTable = settings("stagingTable")
 		subjectPairs
-			.map { case (subject1, subject2, score) =>
-				(subject1.id, List((subject2.id, stagingTable, score)))
+			.map { case (subject, staging, score) =>
+				((subject.id, subject.name), List(Candidate(staging.id, staging.name, score)))
 			}.reduceByKey(_ ::: _)
-			.map(DuplicateCandidates.tupled)
+			.map { case ((id, name), candidates) => Duplicates(id, name, stagingTable, candidates) }
 	}
 
 	/**

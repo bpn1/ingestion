@@ -53,20 +53,32 @@ object RelationSentenceParser extends SparkJob {
 	  */
 	def entryToSentencesWithEntities(
 		entry: ParsedWikipediaEntry,
+		sentenceTokenizer: IngestionTokenizer,
 		tokenizer: IngestionTokenizer
 	): List[Sentence] = {
 		val text = entry.getText()
-		val sentences = tokenizer.process(text)
+		val sentences = sentenceTokenizer.process(text)
 		val links = entry.reducedLinks().filter(_.offset.exists(_ >= 0)).distinct
 		var offset = 0
 		sentences.map { sentence =>
 			offset = text.indexOf(sentence, offset)
 			val sentenceEntities = links.filter { link =>
-				link.offset.exists(_ >= offset) && link.offset.exists(_ < offset + sentence.length)
+				link.offset.exists(_ >= offset) && link.offset.exists(_ + link.alias.length <= offset + sentence.length)
 			}
 				.map(link => EntityLink(link.alias, link.page, link.offset.map(_ - offset)))
 			offset += sentence.length
-			Sentence(entry.title, offset-sentence.length, sentence, sentenceEntities)
+			var sentenceOffset = 0
+			var bagOfWords = List.empty[String]
+			sentenceEntities
+				.sortBy(_.offset)
+				.foreach { entity =>
+					entity.offset.foreach { entityOffset =>
+						bagOfWords ++= tokenizer.process(sentence.substring(sentenceOffset, entityOffset))
+						sentenceOffset = entityOffset + entity.alias.length
+					}
+				}
+			bagOfWords ++= tokenizer.process(sentence.substring(sentenceOffset, sentence.length))
+			Sentence(entry.title, offset-sentence.length, sentence, sentenceEntities, bagOfWords.filter(_.nonEmpty))
 		}.filter(_.entities.length > 1)
 	}
 
@@ -80,8 +92,9 @@ object RelationSentenceParser extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val tokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
-		val sentences = articles.flatMap(entry => entryToSentencesWithEntities(entry, tokenizer))
+		val sentenceTokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
+		val tokenizer = IngestionTokenizer(Array("CleanWhitespaceTokenizer", "false", "false"))
+		val sentences = articles.flatMap(entry => entryToSentencesWithEntities(entry, sentenceTokenizer, tokenizer))
 		List(sentences).toAnyRDD()
 	}
 }
