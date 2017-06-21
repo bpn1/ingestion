@@ -1,7 +1,7 @@
 package de.hpi.ingestion.textmining.nel
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SplitSparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.CosineContextComparator.{calculateTfidf, compareLinksWithArticles, defaultIdf}
 import de.hpi.ingestion.textmining.models._
@@ -15,9 +15,10 @@ import org.apache.spark.rdd.RDD
   * Classifies the Trie Aliases found in Articles by the Article Trie Search and writes the positives as found entities
   * to the same table.
   */
-object TextNEL extends SparkJob {
+object TextNEL extends SplitSparkJob {
 	appName = "Text NEL"
 	configFile = "textmining.xml"
+	sparkOptions("spark.yarn.executor.memoryOverhead") = "4096"
 
 	// $COVERAGE-OFF$
 	/**
@@ -48,9 +49,16 @@ object TextNEL extends SparkJob {
 			.saveToCassandra(
 				settings("keyspace"),
 				settings("NELTable"),
-				SomeColumns("id", "foundentities"))
+				SomeColumns("article", "foundentities"))
 	}
 	// $COVERAGE-ON$
+
+	override def splitInput(input: List[RDD[Any]], args: Array[String]): Traversable[List[RDD[Any]]] = {
+		val List(articles, numDocuments, aliases, wikipediaTfidf) = input
+		articles
+			.randomSplit(Array.fill(20)(1.0))
+			.map(List(_, numDocuments, aliases, wikipediaTfidf))
+	}
 
 	/**
 	  * Generates Feature Entries for the Aliases extraced from the Trie Alias Articles.

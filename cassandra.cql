@@ -144,9 +144,7 @@ CREATE TABLE wikidumps.spiegel (
     id text PRIMARY KEY,
     foundentities frozen<list<frozen<link>>>,
     text text,
-    title text,
-    triealiases frozen<list<frozen<triealias>>>,
-    url text
+    triealiases frozen<list<frozen<triealias>>>
 );
 
 CREATE TABLE wikidumps.redirects (
