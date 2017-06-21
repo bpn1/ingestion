@@ -444,14 +444,14 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 			targetVersions.mapValues {
 				case Some(restoreVersion) => restoreVersion.value.headOption.getOrElse("")
 				case None => ""
-			}.map(identity)
+			}.map(identity).filter(_._2.nonEmpty)
 		}.map(identity).filter(_._2.nonEmpty)
 
 		val restoredDataSources = versions.mapValues { targetVersions =>
 			targetVersions.mapValues {
 				case Some(restoreVersion) => restoreVersion.datasources
 				case None => Nil
-			}.map(identity)
+			}.map(identity).filter(_._2.nonEmpty)
 		}.map(identity).filter(_._2.nonEmpty)
 
 		setRelations(restoredValue, Map(), restoredDataSources)

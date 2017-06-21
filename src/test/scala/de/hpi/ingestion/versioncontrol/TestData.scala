@@ -150,9 +150,7 @@ object TestData {
 				aliases = foundValues()(1)._1,
 				category = foundValues()(2)._1.headOption,
 				properties = Map("test property" -> foundValues()(3)._1),
-				relations = Map(
-					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") ->
-						Map("test relation" -> foundValues()(4)._1.headOption.getOrElse(""))),
+				relations = Map(),
 				name_history = versions().head,
 				aliases_history = versions()(1),
 				category_history = versions()(2),
@@ -180,7 +178,7 @@ object TestData {
 				aliases = Nil,
 				category = None,
 				properties = Map(),
-				relations = Map(UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> "")),
+				relations = Map(),
 				name_history = futureVersions(),
 				aliases_history = futureVersions(),
 				category_history = futureVersions(),
