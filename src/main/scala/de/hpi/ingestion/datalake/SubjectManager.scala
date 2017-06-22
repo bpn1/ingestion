@@ -101,9 +101,13 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		val masterVersion = findVersion(version, subject.master_history)
 		val aliasesVersion = findVersion(version, subject.aliases_history)
 		val categoryVersion = findVersion(version, subject.category_history)
-		val propertiesVersion = subject.properties_history.mapValues(findVersion(version, _))
+		val propertiesVersion = subject.properties_history.flatMap { case (prop, values) =>
+			findVersion(version, values).map((prop, _))
+		}
 		val relationsVersion = subject.relations_history
-			.mapValues(_.mapValues(findVersion(version, _)))
+			.mapValues(_.flatMap { case (relationProp, versionList) =>
+				findVersion(version, versionList).map((relationProp, _))
+			})
 
 		restoreName(nameVersion)
 		restoreMaster(masterVersion, relationsVersion)
@@ -243,7 +247,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * Sets the master of the Subject to the value of the given Version and uses its data sources.
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
-	def restoreMaster(version: Option[Version], relationsVersions: Map[UUID, Map[String, Option[Version]]]): Unit = {
+	def restoreMaster(version: Option[Version], relationsVersions: Map[UUID, Map[String, Version]]): Unit = {
 		// TODO replace the 1.0 score by the original value (not saved?)
 		val (value, validity, dataSources) = extractVersionData(version)
 		val masterID = value.headOption.map(UUID.fromString)
@@ -251,7 +255,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		// extract master score from the relevant relation
 		val scoreOption = masterID
 			.flatMap(relationsVersions.get)
-			.flatMap(_.get(SubjectManager.masterKey).flatten)
+			.flatMap(_.get(SubjectManager.masterKey))
 			.flatMap(_.value.headOption)
 			.map(_.toDouble)
 
@@ -330,21 +334,21 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 
 	/**
 	  * Sets the properties of the Subject to the value of the given Version and uses its data sources.
-	  * @param versions: Map from property name to Option of a Version that contains the value and relevant data sources
+	  * @param versions: Map from property name to a Version that contains the value and relevant data sources
 	  */
-	def restoreProperties(versions: Map[String, Option[Version]]): Unit = {
+	def restoreProperties(versions: Map[String, Version]): Unit = {
 		val restoredValue = versions
-			.mapValues(_.map(_.value).toList.flatten)
+			.mapValues(_.value)
 			.map(identity)
 			.filter(_._2.nonEmpty)
 
 		val restoredValidity = versions
-			.mapValues(_.map(_.validity).toList.flatten.toMap)
+			.mapValues(_.validity)
 			.map(identity)
 			.filter(_._2.nonEmpty)
 
 		val restoredDataSources = versions
-			.mapValues(_.map(_.datasources).toList.flatten)
+			.mapValues(_.datasources)
 			.map(identity)
 			.filter(_._2.nonEmpty)
 
@@ -446,27 +450,26 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 
 	/**
 	  * Sets the relations of the Subject to the value of the given Version and uses its data sources.
-	  * @param versions: Map from relation target to property name to Option of a Version that contains the value and
+	  * @param versions: Map from relation target to property name to a Version that contains the value and
 	  *                  relevant data sources
 	  */
-	def restoreRelations(versions: Map[UUID, Map[String, Option[Version]]]): Unit = {
-		val restoredValue = versions.mapValues { targetVersions =>
-			targetVersions.flatMap { case (prop, version) =>
-				version.flatMap(v => v.value.headOption.map((prop, _)))
-			}
-		}.map(identity).filter(_._2.nonEmpty)
+	def restoreRelations(versions: Map[UUID, Map[String, Version]]): Unit = {
+		val restoredValue = versions
+			.mapValues(_.flatMap { case (prop, version) =>
+					version.value.headOption.map((prop, _))
+			})
+			.map(identity)
+			.filter(_._2.nonEmpty)
 
-		val restoredValidity = versions.mapValues { targetVersions =>
-			targetVersions.flatMap { case (prop, version) =>
-				version.flatMap(v => Option(v.validity).map((prop, _)))
-			}
-		}.map(identity).filter(_._2.nonEmpty)
+		val restoredValidity = versions
+			.mapValues(_.mapValues(_.validity))
+			.map(identity)
+			.filter(_._2.nonEmpty)
 
-		val restoredDataSources = versions.mapValues { targetVersions =>
-			targetVersions.flatMap { case (prop, version) =>
-				version.flatMap(v => Option(v.datasources).map((prop, _)))
-			}
-		}.map(identity).filter(_._2.nonEmpty)
+		val restoredDataSources = versions
+			.mapValues(_.mapValues(_.datasources))
+			.map(identity)
+			.filter(_._2.nonEmpty)
 
 		setRelations(restoredValue, restoredValidity, restoredDataSources)
 	}
@@ -501,7 +504,7 @@ object SubjectManager {
 	  */
 	def buildDuplicatesSCC(duplicates: List[(Subject, Subject, Double)], version: Version): Unit = {
 		duplicates.foreach { case (subject1, subject2, score) =>
-			val duplicateRelation = Map("type" -> "isDuplicate", "confidence" -> score.toString)
+			val duplicateRelation = Map("isDuplicate" -> score.toString)
 			addSymRelation(subject1, subject2, duplicateRelation, version)
 		}
 	}
