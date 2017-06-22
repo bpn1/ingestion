@@ -459,13 +459,13 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 
 		val restoredValidity = versions.mapValues { targetVersions =>
 			targetVersions.flatMap { case (prop, version) =>
-				version.flatMap(v => Some(v.validity).map((prop, _)))
+				version.flatMap(v => Option(v.validity).map((prop, _)))
 			}
 		}.map(identity).filter(_._2.nonEmpty)
 
 		val restoredDataSources = versions.mapValues { targetVersions =>
 			targetVersions.flatMap { case (prop, version) =>
-				version.flatMap(v => Some(v.datasources).map((prop, _)))
+				version.flatMap(v => Option(v.datasources).map((prop, _)))
 			}
 		}.map(identity).filter(_._2.nonEmpty)
 
