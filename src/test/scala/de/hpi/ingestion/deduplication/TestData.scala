@@ -357,6 +357,8 @@ object TestData {
 		Subject(id = UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), name = Some("Ferrari"), properties = Map("gen_sectors" -> List("games", "cars", "music")))
 	)
 
+	def subjectsStartingWithThe: List[Subject] = List(Subject(name = Some("The HPI")), Subject(name = Some("The University")), Subject(name = Some("Volkswagen")))
+
 	def stagings: List[Subject] = List(
 		Subject(id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"), name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "gen_income" -> List("12"))),
 		Subject(id = UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53;14"), "gen_income" -> List("600")))
@@ -562,6 +564,7 @@ object TestData {
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
+	def simpleBlockingSchemeWithThe: List[List[String]] = List(List("HPI"), List("Unive"), List("Volks"))
 	def lastLettersBlockingScheme: List[List[String]] = List(List(" GmbH"), List("wagen"), List("rrari"), List("rsche"), List("undefined"))
 	def listBlockingScheme: List[List[String]] = List(List("Berlin", "Hamburg", "1234"), List("Berlin", "33"), List("undefined"))
 	def geoCoordsBlockingSchemeDefault: List[List[String]] = List(
