@@ -8,7 +8,7 @@
         <keyspaceGoldStandardTable>evaluation</keyspaceGoldStandardTable>
         <goldStandardTable>goldstandard</goldStandardTable>
         <keyspaceDuplicatesTable>evaluation</keyspaceDuplicatesTable>
-        <duplicatesTable>dbpedia_wikidata_deduplication_only_uuid</duplicatesTable>
+        <duplicatesTable>dbpedia_wikidata_duplicates</duplicatesTable>
         <keyspaceVersionTable>evaluation</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
