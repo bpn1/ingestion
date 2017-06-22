@@ -107,20 +107,29 @@ object TestData {
 		List(
 			Subject(
 				id = UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				master = null,
+				datasource = null,
 				name_history = versions().head,
 				aliases_history = versions()(1),
 				category_history = versions()(2),
 				properties_history = Map("test property" -> versions()(3)),
 				relations_history = Map(
-					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> versions()(4)))),
+					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> versions()(4))
+				)
+			),
 			Subject(
 				id = UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				master = null,
+				datasource = null,
 				name_history = versions()(4),
 				aliases_history = versions()(4),
 				category_history = versions()(4),
 				properties_history = Map("test property" -> versions().head),
 				relations_history = Map(
-					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(1)))))
+					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(1))
+				)
+			)
+		)
 	}
 
 	def jsonDiff(): List[JsValue] = {

@@ -108,30 +108,22 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param validity Map containing the data about the validity
 	  */
 	def setMaster(value: UUID, score: Double = 1.0, validity: Map[String, String] = Map()): Unit = {
-		val higherScore = subject
-			.relations(subject.master)(SubjectManager.slaveKey)
-	    	.toDouble <= score
+		val isHigherScore = subject.relations.get(subject.master)
+			.flatMap(_.get(SubjectManager.slaveKey))
+			.exists(_.toDouble < score)
 
-		if (value != subject.master || higherScore){
-			addRelations(
-				Map(value -> SubjectManager.slaveRelation(score)),
-				Map(value -> Map(SubjectManager.slaveKey -> validity))
-			)
-		}
-
+		if (value == subject.master && !isHigherScore) return
 		if (value != subject.master){
 			removeRelations(Map(subject.master -> List(SubjectManager.slaveKey)))
 			subject.master_history :+= makeVersion(List(value.toString), validity)
+			subject.master = value
 		}
-		subject.master = value
-	}
 
-	/**
-	  * Sets the master node of the Subject without validity.
-	  * @param value UUID of the master node of the Subject
-	  * @param score score of the relation
-	  */
-	def setMaster(value: UUID, score: Double = 1.0): Unit = setMaster(value, score, Map[String, String]())
+		this.addRelations(
+			Map(value -> SubjectManager.slaveRelation(score)),
+			Map(value -> Map(SubjectManager.slaveKey -> validity))
+		)
+	}
 
 	/**
 	  * Sets the properties of the Subject to the given subjects.

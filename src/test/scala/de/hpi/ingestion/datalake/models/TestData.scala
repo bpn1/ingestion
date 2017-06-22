@@ -38,7 +38,7 @@ object TestData {
 			"geo_coords" -> List("0;0")
 		),
 		relations = Map(
-			idList(1) -> Map("slave" -> "0.5")
+			idList(1) -> Map("master" -> "0.5")
 		)
 	)
 
@@ -52,7 +52,7 @@ object TestData {
 			"gen_urls" -> List("http://gen-urls.com")
 		),
 		relations = Map(
-			idList.head -> Map("master" -> "0.5")
+			idList.head -> Map("slave" -> "0.5")
 		)
 	)
 }

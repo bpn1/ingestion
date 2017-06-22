@@ -39,8 +39,8 @@ class SubjectTest extends FlatSpec with Matchers {
 		val master = TestData.master
 		val slave = TestData.slave
 
-		slave.masterScore shouldEqual "0.5"
-		master.masterScore shouldEqual "1.0"
+		slave.masterScore shouldEqual 0.5
+		master.masterScore shouldEqual 1.0
 	}
 
 	"Master" should "be easily created" in {
@@ -49,5 +49,12 @@ class SubjectTest extends FlatSpec with Matchers {
 		master.id shouldEqual TestData.idList.head
 		master.master shouldEqual TestData.idList.head
 		master.datasource shouldEqual "master"
+	}
+
+	"Empty Subject" should "be easily created" in {
+		val emptySubject = Subject.empty(TestData.idList.head)
+
+		emptySubject.id shouldEqual TestData.idList.head
+		emptySubject.master shouldEqual TestData.idList.head
 	}
 }

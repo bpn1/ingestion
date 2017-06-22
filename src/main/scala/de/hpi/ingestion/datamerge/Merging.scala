@@ -76,7 +76,7 @@ object Merging extends SparkJob {
 		val master = Subject.master()
 		val stagingManager = new SubjectManager(staging, version)
 
-		stagingManager.setMaster(master.master, 1.0)
+		stagingManager.setMaster(master.master)
 		List(staging, master)
 	}
 
@@ -89,16 +89,9 @@ object Merging extends SparkJob {
 	def mergeProperties(duplicates: List[Subject]): Map[String, List[String]] = {
 		Subject
 	    	.normalizedPropertyKeys
-	    	.map { property =>
-				val values = sourcePriority.flatMap { datasource =>
-					duplicates
-				    	.filter(_.datasource == datasource)
-						.flatMap(_.properties.get(property))
-						.foldLeft(List[String]())(_ ::: _)
-				    	.distinct
-				}
-				property -> values
-			}.toMap
+	    	.map(property => property -> getPrioritized(property, duplicates))
+	    	.filter(_._2.nonEmpty)
+	    	.toMap
 	}
 
 	/**
@@ -115,11 +108,10 @@ object Merging extends SparkJob {
 	/**
 	  * Merges the relations of the duplicates and uses the non empty relation property of the best data source defined
 	  * by {@sourcePriority}.
-	  * @param master master node of the duplicates
 	  * @param duplicates List of duplicate Subject
 	  * @return Map containing the relations and their properties
 	  */
-	def mergeRelations(master: Subject, duplicates: List[Subject]): Map[UUID, Map[String, String]] = {
+	def mergeRelations(duplicates: List[Subject]): Map[UUID, Map[String, String]] = {
 		sourcePriority
 			.reverse
 			.flatMap { datasource =>
@@ -134,6 +126,12 @@ object Merging extends SparkJob {
 			}
 	}
 
+	/**
+	  * Retrieves Attributes
+	  * @param key
+	  * @param subjects
+	  * @return
+	  */
 	def getPrioritized(key: String, subjects: List[Subject]): List[String] = {
 		sourcePriority.flatMap { datasource =>
 			subjects
@@ -163,13 +161,12 @@ object Merging extends SparkJob {
 
 	/**
 	  * Merges relations of every duplicate and writes them to the master node.
-	  * @param master master node
 	  * @param masterManager Subject Manager of the master node
 	  * @param slaves List of duplicates
 	  */
-	def mergeRelations(master: Subject, masterManager: SubjectManager, slaves: List[Subject]): Unit = {
+	def mergeRelations(masterManager: SubjectManager, slaves: List[Subject]): Unit = {
 		val masterRelations = this.masterRelations(slaves)
-		val mergedRelations = this.mergeRelations(master, slaves)
+		val mergedRelations = this.mergeRelations(slaves)
 
 		masterManager.clearRelations()
 		masterManager.addRelations(masterRelations)
@@ -186,7 +183,7 @@ object Merging extends SparkJob {
 	def mergeIntoMaster(master: Subject, slaves: List[Subject], version: Version): List[Subject] = {
 		val masterManager = new SubjectManager(master, version)
 		mergeAttributes(masterManager, slaves)
-		mergeRelations(master, masterManager, slaves)
+		mergeRelations(masterManager, slaves)
 		master :: slaves
 	}
 
@@ -229,7 +226,7 @@ object Merging extends SparkJob {
 	    	.map(subject => (subject.master, subject))
 	    	.cogroup(subjectMasterTuple)
 			.map { case (id, (newDuplicates, oldDuplicates)) =>
-				val duplicates = (newDuplicates ++ oldDuplicates).toList
+				val duplicates = (newDuplicates ++ oldDuplicates).toList.distinct
 				val (master, slaves) = duplicates.partition(_.id == id)
 				(master.head, slaves)
 			}.flatMap { case (master, slaves) => mergeIntoMaster(master, slaves, version) }

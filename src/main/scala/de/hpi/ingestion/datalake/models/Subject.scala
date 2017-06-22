@@ -19,7 +19,7 @@ case class Subject(
 	var aliases_history: List[Version] = Nil,
 	var category_history: List[Version] = Nil,
 	var properties_history: Map[String, List[Version]] = Map(),
-	var relations_history: Map[UUID, Map[String, List[Version]]] = Map(),
+	var relations_history: Map[UUID, Map[String, List[Version]]] = Map()
 ) extends DLImportEntity {
 	/**
 	  * Compares the subject using its uuid
@@ -47,9 +47,10 @@ case class Subject(
 			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {
+				case "master" => List(field.get(this).asInstanceOf[UUID].toString)
+				case "datasource" => List(field.get(this).asInstanceOf[String])
 				case "name" | "category" => field.get(this).asInstanceOf[Option[String]].toList
 				case "aliases" => field.get(this).asInstanceOf[List[String]]
-				case "master" => List(field.get(this).asInstanceOf[UUID].toString)
 				case _ => Nil
 			}
 		} else {
@@ -70,12 +71,10 @@ case class Subject(
 	  * @return score of the master node relation
 	  */
 	def masterScore: Double = {
-		if (this.datasource == "master") 1.0
-		else {
-			this
-				.relations(this.master)(SubjectManager.slaveKey)
-				.toDouble
-		}
+		if (this.datasource == "master") return 1.0
+		this
+			.relations(this.master)(SubjectManager.slaveKey)
+			.toDouble
 	}
 }
 
@@ -87,6 +86,10 @@ object Subject {
 		.fromURL(this.getClass.getResource("/normalized_properties.txt"))
 		.getLines
 		.toSet
+
+	def empty(id: UUID = UUID.randomUUID()): Subject = {
+		Subject(id = id, master = id, datasource = null)
+	}
 
 	def master(id: UUID = UUID.randomUUID()): Subject = {
 		Subject(id = id, master = id, datasource = "master")
