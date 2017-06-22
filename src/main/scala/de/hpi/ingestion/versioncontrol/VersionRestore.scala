@@ -34,8 +34,8 @@ object VersionRestore extends SparkJob {
 	}
 
 	/**
-	  * Writes the JSON diff to the HDFS.
-	  * @param output first element is the RDD of JSON diffs
+	  * Writes the restored subjects to a Cassandra table
+	  * @param output first element is the RDD of subjects
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  * @param args arguments of the program
 	  */
