@@ -4,7 +4,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.framework.SparkJob
@@ -72,8 +71,9 @@ object VersionRestore extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val version = UUID.fromString(args(0))
 		val templateVersion = Version(appName, List("history"), sc, timestampName = false)
-		input.fromAnyRDD[Subject]()
-			.map(rdd => rdd.map(restoreSubjects(_, version, templateVersion)))
+		input
+			.fromAnyRDD[Subject]()
+			.map(_.map(restoreSubjects(_, version, templateVersion)))
 			.toAnyRDD()
 	}
 
