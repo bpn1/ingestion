@@ -26,31 +26,105 @@ object SharedNormalizations {
 	  */
 	def normalizeLegalForm(values: List[String]): List[String] = {
 		values
-			.flatMap(value => List(this.legalFormMapping.getOrElse(value, value).replaceAll(" \\.", ".")))
+			.map(_.replaceAll(" \\.", "."))
+			.flatMap(value => List(this.legalFormMapping.getOrElse(value, matchesLegalForm(value))))
 			.distinct
+	}
+
+	/**
+	  * Matches several variations of legal form
+	  * @param legalForm legal form to be matched
+	  * @return matched legal form or input value if input could not be matched
+	  */
+	def matchesLegalForm(legalForm: String): String = {
+		val replacedForm = legalForm.replaceAll("(\\.| )", "")
+		replacedForm match {
+			case x if matchesAG(x) => "AG"
+			case x if matchesGmbH(x) => "GmbH" + " & Co. KG".filter(t => matchesCoKG(x))
+			case x if matchesEV(x) => "e.V."
+			case x if matchesEK(x) => "e.K."
+			case _ => legalForm
+		}
+	}
+
+	/**
+	  * Matches several variations of AG
+	  * @param legalForm legal form to be matched
+	  * @return boolean whether legal form matches AG
+	  */
+	def matchesAG(legalForm: String): Boolean = {
+		val patternAG = """(?i)(aktiengesellschaft)""".r
+		patternAG.findFirstIn(legalForm).isDefined
+	}
+
+	/**
+	  * Matches several variations of GmbH
+	  * @param legalForm legal form to be matched
+	  * @return boolean whether legal form matches GmbH
+	  */
+	def matchesGmbH(legalForm: String): Boolean = {
+		val patternGMBH = """(?i)(gmbh)""".r
+		val patternMBH = """(?i)(mbh)""".r
+		val patternGesellschaftGemeinschaft = """(?i)(gesellschaft|gemeinschaft)""".r
+		legalForm match {
+			case x if patternGMBH.findFirstIn(x).isDefined => true
+			case x if patternMBH.findFirstIn(x).isDefined
+				&& patternGesellschaftGemeinschaft.findFirstIn(x).isDefined => true
+			case _ => false
+		}
+	}
+
+	/**
+	  * Matches several variations of Co KG
+	  * @param legalForm legal form to be matched
+	  * @return boolean whether legal form matches Co KG
+	  */
+	def matchesCoKG(legalForm: String): Boolean = {
+		val patternCoKG = """(?i)(&?cokg)""".r
+		patternCoKG.findFirstIn(legalForm).isDefined
+	}
+
+	/**
+	  * Matches several variations of e.V.
+	  * @param legalForm legal form to be matched
+	  * @return boolean whether legal form matches e.V.
+	  */
+	def matchesEV(legalForm: String): Boolean = {
+		val patternEV = """(?i)(ev)""".r
+		patternEV.findFirstIn(legalForm).isDefined
+	}
+
+	/**
+	  * Matches several variations of EK
+	  * @param legalForm legal form to be matched
+	  * @return boolean whether legal form matches EK
+	  */
+	def matchesEK(legalForm: String): Boolean = {
+		val patternEK = """(?i)(ek)""".r
+		patternEK.findFirstIn(legalForm).isDefined
 	}
 
 	val legalFormMapping = Map(
 		"Aktiengesellschaft" -> "AG",
+		"Kleine Aktiengesellschaft" -> "AG",
+		"Gemeinnützige Aktiengesellschaft" -> "AG",
+		"Geschlossene Aktiengesellschaft" -> "AG",
+		"Offene Aktiengesellschaft" -> "AG",
 		"Gesellschaft mit beschränkter Haftung" -> "GmbH",
-		"Gesellschaft mbH" -> "GmbH",
+		"eingetragener Verein" -> "e.V.",
+		"gemeinnütziger Verein" -> "e.V.",
+		"Verein" -> "e.V.",
+		"gesellschaft UG haftungsbeschränkt" -> "UG haftungsbeschränkt",
+		"gemeinnützige UG haftungsbeschränkt" -> "UG haftungsbeschränkt",
 		"Eingetragene Genossenschaft" -> "EG",
 		"Anstalt des öffentlichen Rechts"-> "AdöR",
 		"Kommanditgesellschaft" -> "KG",
 		"Europäische Gesellschaft" -> "SE",
 		"Offene Handelsgesellschaft" -> "oHG",
+		"OHG" -> "oHG",
 		"Gesellschaft bürgerlichen Rechts" -> "GbR",
-		"eingetragener Verein" -> "e.V.",
-		"gemeinnütziger Verein" -> "e.V.",
-		"Gemeinnützige GmbH" -> "GmbH",
 		"Kommanditgesellschaft auf Aktien" -> "KGaA",
 		"Kommanditgesellschaft auf Aktien (allgemein)" -> "KGaA",
-		"Einpersonen GmbH" -> "GmbH",
-		"Kleine Aktiengesellschaft" -> "AG",
-		"Verein" -> "e.V.",
-		"Gemeinnützige Aktiengesellschaft" -> "AG",
-		"Geschlossene Aktiengesellschaft" -> "AG",
-		"Kommanditaktiengesellschaft" -> "KGaA",
-		"e.V" -> "e.V."
+		"Kommanditaktiengesellschaft" -> "KGaA"
 	)
 }

@@ -7,7 +7,15 @@ class SharedNormalizationsTest extends FlatSpec with Matchers {
 		val validURLs = TestData.validURLs.map(SharedNormalizations.isValidUrl)
 		val invalidURLs = TestData.invalidURLs.map(SharedNormalizations.isValidUrl)
 
-		validURLs.foreach(_ shouldBe true)
-		invalidURLs.foreach(_ shouldBe false)
+		validURLs.forall(identity) shouldBe true
+		invalidURLs.exists(identity) shouldBe false
+	}
+
+	"normalizeLegalForm" should "normalize a legal forms to its abbreviation" in {
+		val legalForms = TestData.unnormalizedLegalForms
+		val normalized = SharedNormalizations.normalizeLegalForm(legalForms)
+		val expected = TestData.normalizedLegalForms
+
+		normalized shouldEqual expected
 	}
 }
