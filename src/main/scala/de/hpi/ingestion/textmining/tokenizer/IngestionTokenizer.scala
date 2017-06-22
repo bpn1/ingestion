@@ -82,7 +82,7 @@ case class IngestionTokenizer(
 	  * @param text text to be tokenized
 	  * @return List of tokens with offsets
 	  */
-	def onlyTokenizeWithOffst(text: String): List[OffsetToken] = {
+	def onlyTokenizeWithOffset(text: String): List[OffsetToken] = {
 		tokenizer.tokenizeWithOffsets(text)
 	}
 
