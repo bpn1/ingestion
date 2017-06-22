@@ -12,6 +12,7 @@ class CompareStrategyTest extends FlatSpec with Matchers {
 		for {AttributeConfig(attribute, weight, scoreConfigs) <- config; scoreConfig <- scoreConfigs}{
 			val score = scoreConfig.compare(subject.get(attribute).head, staging.get(attribute).head)
 			val expected = TestData.testCompareScore(
+				attribute,
 				subject,
 				staging,
 				scoreConfig.similarityMeasure,
@@ -20,8 +21,16 @@ class CompareStrategyTest extends FlatSpec with Matchers {
 			score shouldEqual expected
 		}
 	}
+	/*de.hpi.ingestion.deduplication.CompareStrategyTest
+[error]         de.hpi.ingestion.textmining.TermFrequencyCounterTest
+[error]         de.hpi.ingestion.deduplication.BlockingUnitTest
+[error]         de.hpi.ingestion.dataimport.wikipedia.WikipediaImportTest
+[error]         de.hpi.ingestion.deduplication.DeduplicationTest
+[error]         de.hpi.ingestion.deduplication.blockingschemes.BlockingSchemeUnitTest
+[error]         de.hpi.ingestion.textmining.AliasTrieSearchTest
+[error]         de.hpi.ingestion.deduplication.FeatureCalculationTest*/
 
-	"simpleStringCompare" should "only compare the first element in a list" in {
+	"caseInsensitiveCompare" should "compare the values, ignoring upper case" in {
 		val config = TestData.testConfig()
 		val subject = TestData.subjects.head
 		val staging = TestData.stagings.head
@@ -32,6 +41,28 @@ class CompareStrategyTest extends FlatSpec with Matchers {
 				scoreConfig
 			)
 			val expected = TestData.testCompareScore(
+				attribute,
+				subject,
+				staging,
+				scoreConfig.similarityMeasure,
+				scoreConfig
+			)
+			score shouldEqual expected
+		}
+	}
+
+	"simpleStringCompare" should "only compare the first element in a list" in {
+		val config = TestData.testConfig("geo_postal")
+		val subject = TestData.subjects.head
+		val staging = TestData.stagings.head
+		for {AttributeConfig(attribute, weight, scoreConfigs) <- config; scoreConfig <- scoreConfigs}{
+			val score = CompareStrategy.singleStringCompare(
+				subject.get(attribute),
+				staging.get(attribute),
+				scoreConfig
+			)
+			val expected = TestData.testCompareScore(
+				attribute,
 				subject,
 				staging,
 				scoreConfig.similarityMeasure,
@@ -59,7 +90,8 @@ class CompareStrategyTest extends FlatSpec with Matchers {
 	"apply" should "decide, which strategy should be used regarding the input attribute" in {
 		val inputValues = TestData.testCompareInput
 		val strategies = List(
-			CompareStrategy.apply("geo_city"),
+			CompareStrategy.apply("name"),
+			CompareStrategy.apply("geo_postal"),
 			CompareStrategy.apply("gen_income")
 		)
 		val output = strategies.map(_.tupled(inputValues))
