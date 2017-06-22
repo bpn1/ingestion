@@ -69,10 +69,19 @@ object TestData {
 
 	def masterVersions(): List[Version] = {
 		List(
-			testVersion("00000001-f6ba-11e6-aa16-63ef39f49c5d", List("465b3a7a-c621-42ad-a4f2-34e229602989"),
-				"2017-04-18 10:58:28.923+0000"),
+			testVersion("710b962e-041c-11e1-9234-0123456789ab", List("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				"2011-11-01 00:00:00.000+0000"),
 			testVersion("2195bc70-f6ba-11e6-aa16-63ef39f49c5d", List("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
-				"2017-04-18 10:58:28.923+0000"),
+				"2017-02-19 15:43:16.912+0000"),
+			testVersion("f44df8b0-2425-11e7-aec2-2d07f82c7921", Nil, "2017-04-18 10:58:28.923+0000"))
+	}
+
+	def masterValuesVersions(): List[Version] = {
+		List(
+			testVersion("710b962e-041c-11e1-9234-0123456789ab", List("0.8"),
+				"2011-11-01 00:00:00.000+0000"),
+			testVersion("2195bc70-f6ba-11e6-aa16-63ef39f49c5d", List("1.0"),
+				"2017-02-19 15:43:16.912+0000"),
 			testVersion("f44df8b0-2425-11e7-aec2-2d07f82c7921", Nil, "2017-04-18 10:58:28.923+0000"))
 	}
 
@@ -153,7 +162,12 @@ object TestData {
 					-> Map("test relation" -> futureVersions()))),
 			Subject(
 				id = UUID.fromString("10200a26-a66a-4405-aab1-4977852e02a9"),
-				master_history = masterVersions()))
+				master_history = masterVersions(),
+				relations_history = Map(
+					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989")
+						-> Map("master" -> List(masterValuesVersions().head)),
+					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252")
+						-> Map("master" -> List(masterValuesVersions()(1))))))
 	}
 
 	def restoredSubjects(): List[Subject] = {
@@ -202,6 +216,9 @@ object TestData {
 			Subject(
 				id = UUID.fromString("10200a26-a66a-4405-aab1-4977852e02a9"),
 				master = Some(UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252")),
+				relations = Map(
+					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("master" -> "0.8"),
+					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("master" -> "1.0")),
 				master_history = masterVersions()))
 	}
 
