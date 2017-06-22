@@ -18,7 +18,7 @@ object CompareStrategy extends Serializable {
 		rightValue: List[String],
 		scoreConfig: SimilarityMeasureConfig[String, SimilarityMeasure[String]]
 	): Double = {
-		scoreConfig.compare(leftValue.head, rightValue.head)
+		defaultCompare(leftValue.map(_.toLowerCase), rightValue.map(_.toLowerCase), scoreConfig)
 	}
 
 	/**
@@ -66,7 +66,8 @@ object CompareStrategy extends Serializable {
 		attribute match {
 			case "name"
 				 | "geo_country"
-				 | "geo_city" => caseInsensitiveCompare
+				 | "geo_city"
+				 | "aliases" => caseInsensitiveCompare
 			case "category"
 				 | "geo_postal"
 				 | "gen_employees" => singleStringCompare
