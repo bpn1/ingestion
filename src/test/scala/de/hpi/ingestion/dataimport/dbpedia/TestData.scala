@@ -1,13 +1,12 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.dataimport.SharedNormalizations
-
 import scala.io.Source
 import scala.xml.XML
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.dataimport.dbpedia.models.{DBpediaEntity, Relation}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -235,6 +234,24 @@ object TestData {
 		"geo_city" -> this.normalizedCities,
 		"gen_employees" -> this.normalizedEmployees,
 		"gen_urls" -> this.normalizedURLs
+	)
+
+	def interlanguageLinksEn(): List[String] = List(
+		"""<http://dbpedia.org/resource/Audi_EN> <http://www.w3.org/2002/07/owl#sameas> <http://de.dbpedia.org/resource/Audi_DE> .""",
+		"""<http://dbpedia.org/resource/Volkswagen_EN> <http://www.w3.org/2002/07/owl#sameas> <http://de.dbpedia.org/resource/Volkswagen_DE> .""",
+		"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> ."""
+	)
+
+	def germanLabels(): Map[String, String] = {
+		Map("Audi_EN" -> "Audi_DE", "Volkswagen_EN" -> "Volkswagen_DE")
+	}
+
+	def dbpediaRawRelations(): List[String] = List(
+		"""<http://dbpedia.org/resource/Audi_EN> <http://dbpedia.org/ontology/parentCompany> <http://dbpedia.org/resource/Volkswagen_EN> ."""
+	)
+
+	def dbpediaParsedRelations(): List[Relation] = List(
+		Relation("Audi DE", "parentCompany", "Volkswagen DE")
 	)
 }
 // scalastyle:on line.size.limit
