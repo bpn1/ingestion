@@ -48,14 +48,6 @@ object VersionRestore extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Extracts the time component of a TimeUUID.
-	  * Source: https://git.io/vSxjU
-	  * @param uuid TimeUUID used to extract the time
-	  * @return time as long
-	  */
-	def timeFromUUID(uuid: UUID): Long = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000
-
-	/**
 	  * Restores all subjects to the data in the specified Version
 	  * @param version TimeUUID of the version that will be reverted to
 	  * @return Modified subject with restored data

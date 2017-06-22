@@ -3,7 +3,7 @@ package de.hpi.ingestion.datalake
 import java.util.UUID
 
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.versioncontrol.VersionRestore.timeFromUUID
+import de.hpi.ingestion.versioncontrol.VersionDiff.timeFromUUID
 
 /**
   * Manages adding and removing properties of subjects and writes the version fields for changes.
