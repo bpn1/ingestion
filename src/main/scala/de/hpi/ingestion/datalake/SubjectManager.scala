@@ -63,7 +63,6 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	def restoreName(version: Option[Version]): Unit = {
 		val (value, validity, dataSources) = extractVersionData(version)
 		setName(value.headOption, validity, dataSources)
-		// ambiguous: (setName _).tupled(extractVersionData(version))
 	}
 
 	/**
@@ -193,7 +192,6 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	def restoreCategory(version: Option[Version]): Unit = {
 		val (value, validity, dataSources) = extractVersionData(version)
 		setCategory(value.headOption, validity, dataSources)
-		// ambiguous: (setCategory _).tupled(extractVersionData(version))
 	}
 
 	/**
@@ -248,7 +246,6 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreMaster(version: Option[Version], relationsVersions: Map[UUID, Map[String, Version]]): Unit = {
-		// TODO replace the 1.0 score by the original value (not saved?)
 		val (value, validity, dataSources) = extractVersionData(version)
 		val masterID = value.headOption.map(UUID.fromString)
 
