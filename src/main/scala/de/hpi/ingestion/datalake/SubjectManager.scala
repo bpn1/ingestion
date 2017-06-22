@@ -61,9 +61,9 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreName(version: Option[Version]): Unit = {
-		val dataSources = version.map(_.datasources).toList.flatten
-		val value = version.flatMap(_.value.headOption)
-		setName(value, Map[String, String](), dataSources)
+		val (value, validity, dataSources) = extractVersionData(version)
+		setName(value.headOption, validity, dataSources)
+		// ambiguous: (setName _).tupled(extractVersionData(version))
 	}
 
 	/**
@@ -85,7 +85,19 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	}
 
 	/**
-	  * Restores all data in this subject to the data in the specified Version
+	  * Extracts value, validity and data sources from given Version.
+	  * @param version Option of a version that contains the relevant data
+	  * @return Three element tuple of Version value list, validity map and data source list
+	  */
+	def extractVersionData(version: Option[Version]): (List[String], Map[String, String], List[String]) = {
+		val value = version.map(_.value).toList.flatten
+		val validity = version.map(_.validity).getOrElse(Map())
+		val dataSources = version.map(_.datasources).toList.flatten
+		(value, validity, dataSources)
+	}
+
+	/**
+	  * Restores all data in this subject to the data in the specified Version.
 	  * @param version TimeUUID of the version that will be reverted to
 	  * @return Modified subject with restored data
 	  */
@@ -129,7 +141,11 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param value List of aliases the Subject will have
 	  * @param validity validity of the aliases
 	  */
-	def setAliases(value: List[String], validity: Map[String, String] = Map(), datasources: List[String] = Nil) {
+	def setAliases(
+		value: List[String],
+		validity: Map[String, String] = Map(),
+		datasources: List[String] = Nil
+	): Unit = {
 		val newAliases = value.distinct
 		if(subject.aliases != newAliases) {
 			subject.aliases = newAliases
@@ -142,13 +158,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreAliases(version: Option[Version]): Unit = {
-		version match {
-			case Some(restoreVersion) =>
-				val value = restoreVersion.value
-				val dataSources = restoreVersion.datasources
-				setAliases(value, Map[String, String](), dataSources)
-			case None => setAliases(Nil, Map[String, String](), Nil)
-		}
+		(setAliases _).tupled(extractVersionData(version))
 	}
 
 	/**
@@ -182,13 +192,9 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreCategory(version: Option[Version]): Unit = {
-		version match {
-			case Some(restoreVersion) =>
-				val value = restoreVersion.value.headOption
-				val dataSources = restoreVersion.datasources
-				setCategory(value, Map[String, String](), dataSources)
-			case None => setCategory(None)
-		}
+		val (value, validity, dataSources) = extractVersionData(version)
+		setCategory(value.headOption, validity, dataSources)
+		// ambiguous: (setCategory _).tupled(extractVersionData(version))
 	}
 
 	/**
@@ -243,10 +249,9 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreMaster(version: Option[Version]): Unit = {
-		val dataSources = version.map(_.datasources).toList.flatten
-		val value = version.flatMap(_.value.headOption).map(UUID.fromString)
 		// TODO replace the 1.0 score by the original value (not saved?)
-		setMaster(value, 1.0, Map[String, String](), dataSources)
+		val (value, validity, dataSources) = extractVersionData(version)
+		setMaster(value.headOption.map(UUID.fromString), 1.0, validity, dataSources)
 	}
 
 	/**
@@ -325,20 +330,21 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  */
 	def restoreProperties(versions: Map[String, Option[Version]]): Unit = {
 		val restoredValue = versions
-			.mapValues {
-				case Some(restoreVersion) => restoreVersion.value
-				case None => Nil
-			}.map(identity)
+			.mapValues(_.map(_.value).toList.flatten)
+			.map(identity)
+			.filter(_._2.nonEmpty)
+
+		val restoredValidity = versions
+			.mapValues(_.map(_.validity).toList.flatten.toMap)
+			.map(identity)
 			.filter(_._2.nonEmpty)
 
 		val restoredDataSources = versions
-			.mapValues {
-				case Some(restoreVersion) => restoreVersion.datasources
-				case None => Nil
-			}.map(identity)
+			.mapValues(_.map(_.datasources).toList.flatten)
+			.map(identity)
 			.filter(_._2.nonEmpty)
 
-		setProperties(restoredValue, Map(), restoredDataSources)
+		setProperties(restoredValue, restoredValidity, restoredDataSources)
 	}
 
 	/**
@@ -441,20 +447,24 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  */
 	def restoreRelations(versions: Map[UUID, Map[String, Option[Version]]]): Unit = {
 		val restoredValue = versions.mapValues { targetVersions =>
-			targetVersions.mapValues {
-				case Some(restoreVersion) => restoreVersion.value.headOption.getOrElse("")
-				case None => ""
-			}.map(identity).filter(_._2.nonEmpty)
+			targetVersions.flatMap { case (prop, version) =>
+				version.flatMap(v => v.value.headOption.map((prop, _)))
+			}
+		}.map(identity).filter(_._2.nonEmpty)
+
+		val restoredValidity = versions.mapValues { targetVersions =>
+			targetVersions.flatMap { case (prop, version) =>
+				version.flatMap(v => Some(v.validity).map((prop, _)))
+			}
 		}.map(identity).filter(_._2.nonEmpty)
 
 		val restoredDataSources = versions.mapValues { targetVersions =>
-			targetVersions.mapValues {
-				case Some(restoreVersion) => restoreVersion.datasources
-				case None => Nil
-			}.map(identity).filter(_._2.nonEmpty)
+			targetVersions.flatMap { case (prop, version) =>
+				version.flatMap(v => Some(v.datasources).map((prop, _)))
+			}
 		}.map(identity).filter(_._2.nonEmpty)
 
-		setRelations(restoredValue, Map(), restoredDataSources)
+		setRelations(restoredValue, restoredValidity, restoredDataSources)
 	}
 }
 
