@@ -27,8 +27,7 @@ object AliasTrieSearch extends SparkJob {
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
 
 	// $COVERAGE-OFF$
-	var trieStreamFunction: String => InputStream = hdfsFileStream _
-
+	var trieStreamFunction = hdfsFileStream _
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
 	  *
@@ -65,7 +64,6 @@ object AliasTrieSearch extends SparkJob {
 		val fs = FileSystem.get(hadoopConf)
 		fs.open(new Path(file))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
@@ -115,36 +113,11 @@ object AliasTrieSearch extends SparkJob {
 				val end = offsetTokens.lastOption.map(_.endOffset)
 				(begin, end)
 			}.collect {
-			case (begin, end) if begin.isDefined && end.isDefined =>
-				entry.getText().substring(begin.get, end.get)
-		}.toList
+				case (begin, end) if begin.isDefined && end.isDefined =>
+					entry.getText().substring(begin.get, end.get)
+			}.toList
 
 		entry.copy(foundaliases = cleanFoundAliases(foundAliases), triealiases = contextAliases)
-	}
-
-	/**
-	  * Extracts the context of a found alias from the tokenized text and returns a Bag of words of this context.
-	  *
-	  * @param alias tokenized alias
-	  * @param text  tokenized text
-	  * @param index offset of the tokenized alias in the tokenized text
-	  * @return Bag of words of the context of the alias
-	  */
-	def extractAliasContext(
-		alias: List[OffsetToken],
-		text: List[OffsetToken],
-		index: Int,
-		contextTokenizer: IngestionTokenizer,
-		settings: Map[String, String] = this.settings
-	): Bag[String, Int] = {
-		val contextSize = settings("contextSize").toInt
-		val contextStart = Math.max(index - contextSize, 0)
-		val preAliasContext = text.slice(contextStart, index)
-		val aliasEndIndex = index + alias.length
-		val contextEnd = Math.min(aliasEndIndex + contextSize, text.length)
-		val postAliasContext = text.slice(aliasEndIndex, contextEnd)
-		val context = (preAliasContext ++ postAliasContext).map(_.token)
-		Bag.extract(contextTokenizer.process(context))
 	}
 
 	/**
@@ -176,7 +149,7 @@ object AliasTrieSearch extends SparkJob {
 	  * Uses a pre-built Trie to find aliases in the text of articles and writes them into the foundaliases field.
 	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to, e.g., broadcast variables
+	  * @param sc    Spark Context used to e.g. broadcast variables
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */

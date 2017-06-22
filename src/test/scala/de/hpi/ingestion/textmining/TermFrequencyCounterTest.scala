@@ -97,7 +97,6 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 		val oldSettings = TermFrequencyCounter.settings(false)
 		TermFrequencyCounter.parseConfig()
 
-
 		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val enrichedArticles = TermFrequencyCounter
 			.run(List(articles).toAnyRDD(), sc, Array("CleanCoreNLPTokenizer", "true", "true"))

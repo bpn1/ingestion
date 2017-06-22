@@ -9,8 +9,7 @@ CREATE TYPE wikidumps.link (
     alias text,
     page text,
     offset int,
-    context map<text, int>,
-    article text
+    context map<text, int>
 );
 
 CREATE TYPE wikidumps.entitylink (
@@ -137,19 +136,6 @@ CREATE TYPE wikidumps.triealias (
 	context map<text, int>
 );
 
-CREATE TABLE wikidumps.namedentities (
-    alias text,
-    page text,
-    offset int,
-    context map<text, int>,
-    article text,
-    PRIMARY KEY (alias, page, offset, article)
-);
-
-CREATE TABLE wikidumps.linkedarticles (
-	title text PRIMARY KEY,
-	text text
-
 CREATE TABLE wikidumps.wikipediacooccurrences (
       entityList frozen<list<text>> PRIMARY KEY,
       count int
@@ -160,13 +146,6 @@ CREATE TABLE wikidumps.spiegel (
     foundentities frozen<list<frozen<link>>>,
     text text,
     triealiases frozen<list<frozen<triealias>>>
-);
-
-CREATE TABLE wikidumps.wikipedianel (
-    article text PRIMARY KEY,
-    text text,
-    triealiases frozen<list<triealias>>,
-    foundentities frozen<list<frozen<link>>>
 );
 
 CREATE TABLE wikidumps.redirects (
