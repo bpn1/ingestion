@@ -57,7 +57,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	def setName(value: String, validity: Map[String, String] = Map()): Unit = setName(Option(value), validity, Nil)
 
 	/**
-	  * Sets the name of the Subject to the value of the given Version and uses its data sources
+	  * Sets the name of the Subject to the value of the given Version and uses its data sources.
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreName(version: Option[Version]): Unit = {
@@ -149,7 +149,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	}
 
 	/**
-	  * Sets the aliases of the Subject to the value of the given Version and uses its data sources
+	  * Sets the aliases of the Subject to the value of the given Version and uses its data sources.
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreAliases(version: Option[Version]): Unit = {
@@ -183,7 +183,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	def setCategory(value: Option[String]): Unit = setCategory(value, Map[String, String](), Nil)
 
 	/**
-	  * Sets the category of the Subject to the value of the given Version and uses its data sources
+	  * Sets the category of the Subject to the value of the given Version and uses its data sources.
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreCategory(version: Option[Version]): Unit = {
@@ -240,7 +240,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	def setMaster(value: UUID, score: Double): Unit = setMaster(value, score, Map[String, String]())
 
 	/**
-	  * Sets the master of the Subject to the value of the given Version and uses its data sources
+	  * Sets the master of the Subject to the value of the given Version and uses its data sources.
 	  * @param version: Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreMaster(version: Option[Version], relationsVersions: Map[UUID, Map[String, Option[Version]]]): Unit = {
@@ -329,7 +329,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	}
 
 	/**
-	  * Sets the properties of the Subject to the value of the given Version and uses its data sources
+	  * Sets the properties of the Subject to the value of the given Version and uses its data sources.
 	  * @param versions: Map from property name to Option of a Version that contains the value and relevant data sources
 	  */
 	def restoreProperties(versions: Map[String, Option[Version]]): Unit = {
@@ -352,7 +352,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	}
 
 	/**
-	  * Sets the relations of the Subject to the given relations
+	  * Sets the relations of the Subject to the given relations.
 	  * @param value Map of the new relations
 	  * @param validity validity of each relation
 	  */
@@ -445,7 +445,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	}
 
 	/**
-	  * Sets the relations of the Subject to the value of the given Version and uses its data sources
+	  * Sets the relations of the Subject to the value of the given Version and uses its data sources.
 	  * @param versions: Map from relation target to property name to Option of a Version that contains the value and
 	  *                  relevant data sources
 	  */
