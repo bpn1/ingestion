@@ -249,12 +249,11 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		val masterID = value.headOption.map(UUID.fromString)
 
 		// extract master score from the relevant relation
-		val scoreOption = masterID.flatMap(master =>
-			relationsVersions
-				.get(master)
-				.flatMap(_.get(SubjectManager.masterKey))
-				.flatMap(t => version.map((_, t)))
-				.flatMap(_._2.flatMap(_.value.headOption.map(_.toDouble))))
+		val scoreOption = masterID
+			.flatMap(relationsVersions.get)
+			.flatMap(_.get(SubjectManager.masterKey).flatten)
+			.flatMap(_.value.headOption)
+			.map(_.toDouble)
 
 		scoreOption.foreach(score => setMaster(masterID, score, validity, dataSources))
 	}
