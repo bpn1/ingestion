@@ -105,35 +105,24 @@ object SharedNormalizations {
 	}
 
 	val legalFormMapping = Map(
-		// AG
 		"Aktiengesellschaft" -> "AG",
 		"Kleine Aktiengesellschaft" -> "AG",
 		"Gemeinnützige Aktiengesellschaft" -> "AG",
 		"Geschlossene Aktiengesellschaft" -> "AG",
 		"Offene Aktiengesellschaft" -> "AG",
-		// GmbH
 		"Gesellschaft mit beschränkter Haftung" -> "GmbH",
-		// e.V.
 		"eingetragener Verein" -> "e.V.",
 		"gemeinnütziger Verein" -> "e.V.",
 		"Verein" -> "e.V.",
-		// UG haftungsbeschränkt
 		"gesellschaft UG haftungsbeschränkt" -> "UG haftungsbeschränkt",
 		"gemeinnützige UG haftungsbeschränkt" -> "UG haftungsbeschränkt",
-		// EG
 		"Eingetragene Genossenschaft" -> "EG",
-		// AdöR
 		"Anstalt des öffentlichen Rechts"-> "AdöR",
-		// KG
 		"Kommanditgesellschaft" -> "KG",
-		// SE
 		"Europäische Gesellschaft" -> "SE",
-		// oHG
 		"Offene Handelsgesellschaft" -> "oHG",
 		"OHG" -> "oHG",
-		// GbR
 		"Gesellschaft bürgerlichen Rechts" -> "GbR",
-		// KGaA
 		"Kommanditgesellschaft auf Aktien" -> "KGaA",
 		"Kommanditgesellschaft auf Aktien (allgemein)" -> "KGaA",
 		"Kommanditaktiengesellschaft" -> "KGaA"
