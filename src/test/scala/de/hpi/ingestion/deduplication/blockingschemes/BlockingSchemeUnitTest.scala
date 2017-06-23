@@ -20,6 +20,14 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		key shouldEqual List(blockingScheme.undefinedValue)
 	}
 
+	it should "ignore 'The ' at the beginning of the name when generating a key" in {
+		val subjects = TestData.subjectsStartingWithThe
+		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
+		val keys = subjects.map(blockingScheme.generateKey)
+		val expected = TestData.simpleBlockingSchemeWithThe
+		keys.toSet shouldEqual expected.toSet
+	}
+
 	"LastLettersBlockingScheme" should "generate proper keys" in {
 		val subjects = TestData.subjects :+ Subject()
 		val blockingScheme = LastLettersBlockingScheme("Test LastLettersBS")
@@ -55,6 +63,22 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 			.foreach { case (keys, expected) =>
 				keys shouldEqual expected
 			}
+	}
+
+	"GeoCoordsBlockingScheme" should "generate proper keys" in {
+		val subjects = TestData.subjects
+		val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS")
+		val keys = subjects.map(blockingScheme.generateKey)
+		val expected = TestData.geoCoordsBlockingSchemeDefault
+		keys.toSet shouldEqual expected.toSet
+	}
+
+	it should "let you adjust the number of decimal places" in {
+		val subjects = TestData.subjects
+		val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS", 2)
+		val keys = subjects.map(blockingScheme.generateKey)
+		val expected = TestData.geoCoordsBlockingSchemeDecimals
+		keys.toSet shouldEqual expected.toSet
 	}
 
 	"RandomBlockingScheme" should "generate random keys from the UUIDs" in {

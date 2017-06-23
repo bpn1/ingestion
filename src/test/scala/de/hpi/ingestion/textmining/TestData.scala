@@ -4,6 +4,7 @@ import java.io._
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
+import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models.{TrieAlias, _}
@@ -2193,7 +2194,8 @@ object TestData {
 					EntityLink("Postbank", "Postbank", Option(126)),
 					EntityLink("Berliner", "Berlin", Option(190)),
 					EntityLink("Kreuzberg", "Berlin-Kreuzberg", Option(208))
-				)
+				),
+				List("Das", "heutige", "Postbank-Hochhaus", "früher", "Postscheckamt", "Berlin", "West", "Bln", "W", "seit", "1985", "Postgiroamt", "Berlin", "ist", "ein", "der", "am", "Halleschen", "Ufer", "40–60", "und", "der", "Großbeerenstraße", "2", "im", "Ortsteil")
 			),
 			Sentence(
 				"Postbank-Hochhaus (Berlin)",
@@ -2204,7 +2206,8 @@ object TestData {
 					EntityLink("Potsdam", "Potsdam", Option(264)),
 					EntityLink("Magdeburg", "Magdeburg", Option(273)),
 					EntityLink("Stettin", "Stettin", Option(287))
-				)
+				),
+				List("Das", "Postscheckamt", "von", "Berlin", "war", "ab", "1909", "in", "einem", "Neubau", "in", "der", "Dorotheenstraße", "29", "heute", "84", "der", "einen", "Teil", "der", "ehemaligen", "Markthalle", "IV", "integrierte", "untergebracht", "und", "war", "bis", "zum", "Ende", "des", "Zweiten", "Weltkriegs", "für", "den", "Bereich", "der", "Städte", "Berlin", "und", "zuständig")
 			),
 			Sentence(
 				"Postbank-Hochhaus (Berlin)",
@@ -2213,15 +2216,16 @@ object TestData {
 				List(
 					EntityLink("Deutsche Funkturm", "Deutsche Funkturm", Option(4)),
 					EntityLink("Deutschen Telekom AG", "Deutsche Telekom", Option(59))
-				)
+				),
+				List("Die", "DFMG", "eine", "Tochtergesellschaft", "der", "stellt", "dafür", "Standorte", "wie", "das", "Berliner", "Postbank-Hochhaus", "bereit")
 			)
 		)
 	}
 
 	def alternativeSentenceList(): List[Sentence] = {
 		List(
-			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9)))),
-			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))))
+			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9))), List("ist")),
+			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))), List("ist"))
 		)
 	}
 
@@ -2235,8 +2239,8 @@ object TestData {
 
 	def sentencesWithCooccurrences(): List[Sentence] = {
 		List(
-			Sentence("Audi", 0, "Audi ist Volkswagen.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Volkswagen", "Volkswagen AG", Some(1)))),
-			Sentence("Audi", 18, "Audi ist Volkswagen AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Volkswagen AG", "Volkswagen AG", Some(1))))
+			Sentence("Audi", 0, "Audi ist Volkswagen.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Volkswagen", "Volkswagen AG", Some(1))), List("ist")),
+			Sentence("Audi", 18, "Audi ist Volkswagen AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Volkswagen AG", "Volkswagen AG", Some(1))), List("ist"))
 		)
 	}
 
@@ -2516,6 +2520,14 @@ object TestData {
 		(simMeasureStats(), Option(randomForestModel()))
 	}
 
+	def exportDBpediaRelations(): List[Relation] = {
+		List(
+			Relation("e 1", "r 1", "e 2"),
+			Relation("e 1", "r 2", "e 2"),
+			Relation("d 1", "r 1", "d 2")
+		)
+	}
+
 	def exportCooccurrences(): List[Cooccurrence] = {
 		List(
 			Cooccurrence(List("e 1", "e\" 2", "e 3"), 5),
@@ -2523,20 +2535,27 @@ object TestData {
 			Cooccurrence(List("e 1", "e 3"), 2))
 	}
 
-	def cooccurrenceNodes(): Set[String] = {
+	def nodes(): Set[String] = {
 		Set(
 			"\"e 1\",\"e 1\",Entity",
+			"\"e 2\",\"e 2\",Entity",
 			"\"e\\\" 2\",\"e\\\" 2\",Entity",
 			"\"e 3\",\"e 3\",Entity",
-			"\"d 2\",\"d 2\",Entity")
+			"\"d 2\",\"d 2\",Entity",
+			"\"d 1\",\"d 1\",Entity"
+		)
 	}
 
-	def cooccurrenceEdges(): Set[String] = {
+	def edges(): Set[String] = {
 		Set(
 			"\"e 1\",5,\"e\\\" 2\",CO_OCCURRENCE",
 			"\"e 1\",7,\"e 3\",CO_OCCURRENCE",
 			"\"e\\\" 2\",5,\"e 3\",CO_OCCURRENCE",
-			"\"e 1\",2,\"d 2\",CO_OCCURRENCE")
+			"\"e 1\",2,\"d 2\",CO_OCCURRENCE",
+			"\"e 1\",r 1,\"e 2\",DBPEDIA",
+			"\"e 1\",r 2,\"e 2\",DBPEDIA",
+			"\"d 1\",r 1,\"d 2\",DBPEDIA"
+		)
 	}
 
 	def aliasCounterArticles(): List[ParsedWikipediaEntry] = {
