@@ -21,7 +21,7 @@ class CompareStrategyTest extends FlatSpec with Matchers {
 			score shouldEqual expected
 		}
 	}
-	
+
 	"caseInsensitiveCompare" should "compare the values, ignoring upper case" in {
 		val config = TestData.testConfig()
 		val subject = TestData.subjects.head
