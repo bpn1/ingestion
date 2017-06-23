@@ -560,7 +560,7 @@ object TestData {
 
 	def simpleBlockingScheme: List[List[String]] = List(List("audi "), List("volks"), List("ferra"), List("porsc"))
 	def simpleBlockingSchemeWithThe: List[List[String]] = List(List("hpi"), List("unive"), List("volks"))
-	def lastLettersBlockingScheme: List[List[String]] = List(List(" GmbH"), List("wagen"), List("rrari"), List("rsche"), List("undefined"))
+	def lastLettersBlockingScheme: List[List[String]] = List(List(" gmbh"), List("wagen"), List("rrari"), List("rsche"), List("undefined"))
 	def listBlockingScheme: List[List[String]] = List(List("Berlin", "Hamburg", "1234"), List("Berlin", "33"), List("undefined"))
 	def geoCoordsBlockingSchemeDefault: List[List[String]] = List(
 		List("52.1;11.5", "52.1;11.6", "52.2;11.5", "52.2;11.6"),
