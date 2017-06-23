@@ -20,6 +20,14 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 		key shouldEqual List(blockingScheme.undefinedValue)
 	}
 
+	it should "ignore 'The ' at the beginning of the name when generating a key" in {
+		val subjects = TestData.subjectsStartingWithThe
+		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
+		val keys = subjects.map(blockingScheme.generateKey)
+		val expected = TestData.simpleBlockingSchemeWithThe
+		keys.toSet shouldEqual expected.toSet
+	}
+
 	"LastLettersBlockingScheme" should "generate proper keys" in {
 		val subjects = TestData.subjects :+ Subject()
 		val blockingScheme = LastLettersBlockingScheme("Test LastLettersBS")
