@@ -9,7 +9,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	"buildDuplicatesSCC" should "should add isDuplicate relation with a confidence for a list of tuples" in {
 		val subjects = TestData.subjects
 		val duplicates = List((subjects.head, subjects(2), 0.8), (subjects(1), subjects(3), 0.8))
-		val expectedRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
+		val expectedRelation = Map("isDuplicate" -> "0.8")
 		val expectedRelationNode1 = Map(subjects(2).id -> expectedRelation)
 		val expectedRelationNode2 = Map(subjects(3).id -> expectedRelation)
 		val version = TestData.version(sc)
@@ -21,7 +21,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 	"addSymRelation" should "add a symmetric relation between two given nodes" in {
 		val subjects = TestData.subjects
-		val relation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
+		val relation = Map("isDuplicate" -> "0.8")
 		val version = TestData.version(sc)
 		val expectedRelations = List(
 			Map(subjects(1).id -> relation),
@@ -34,7 +34,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 	"Aliases" should "be added and removed" in {
 		val subject = Subject()
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val version = Version("SM Test", Nil, sc, false)
 		val sm = new SubjectManager(subject, version)
 		sm.addAliases(List("alias 1", "alias 2"))
 		subject.aliases shouldEqual List("alias 1", "alias 2")
