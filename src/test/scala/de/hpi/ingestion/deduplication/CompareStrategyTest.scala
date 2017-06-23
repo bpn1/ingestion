@@ -21,15 +21,7 @@ class CompareStrategyTest extends FlatSpec with Matchers {
 			score shouldEqual expected
 		}
 	}
-	/*de.hpi.ingestion.deduplication.CompareStrategyTest
-[error]         de.hpi.ingestion.textmining.TermFrequencyCounterTest
-[error]         de.hpi.ingestion.deduplication.BlockingUnitTest
-[error]         de.hpi.ingestion.dataimport.wikipedia.WikipediaImportTest
-[error]         de.hpi.ingestion.deduplication.DeduplicationTest
-[error]         de.hpi.ingestion.deduplication.blockingschemes.BlockingSchemeUnitTest
-[error]         de.hpi.ingestion.textmining.AliasTrieSearchTest
-[error]         de.hpi.ingestion.deduplication.FeatureCalculationTest*/
-
+	
 	"caseInsensitiveCompare" should "compare the values, ignoring upper case" in {
 		val config = TestData.testConfig()
 		val subject = TestData.subjects.head
