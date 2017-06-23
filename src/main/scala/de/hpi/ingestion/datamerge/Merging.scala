@@ -7,7 +7,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.deduplication.models.{Duplicates, Candidate}
+import de.hpi.ingestion.deduplication.models.Duplicates
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
@@ -89,7 +89,7 @@ object Merging extends SparkJob {
 	def mergeProperties(duplicates: List[Subject]): Map[String, List[String]] = {
 		Subject
 	    	.normalizedPropertyKeys
-	    	.map(property => property -> getPrioritized(property, duplicates))
+	    	.map(property => property -> getPrioritizedSingle(property, duplicates))
 	    	.filter(_._2.nonEmpty)
 	    	.toMap
 	}
@@ -138,6 +138,21 @@ object Merging extends SparkJob {
 		    	.filter(_.datasource == datasource)
 				.flatMap(_.get(key))
 		}.distinct
+	}
+
+	/**
+	  * Retrive
+	  * @param key
+	  * @param subjects
+	  * @return
+	  */
+	def getPrioritizedSingle(key: String, subjects: List[Subject]): List[String] = {
+		sourcePriority.map { datasource =>
+			subjects
+				.filter(_.datasource == datasource)
+				.flatMap(_.get(key))
+		}.find(_.nonEmpty)
+		.getOrElse(Nil)
 	}
 
 	/**
