@@ -395,26 +395,6 @@ object TestData {
 			))
 	}
 
-	def linksWithArticleAnnotation(): Set[Link] = {
-		Set(
-			Link("Audi", "Audi", Option(9), article = Option("Audi Test mit Link")),
-			Link("Audi", "BMW", Option(9), article = Option("Audi Test mit Link")),
-			Link("Audi", "Ferrari", Option(9), article = Option("Audi Test mit Link")),
-			Link("Brachttal", "Brachttal", Option(55), article = Option("Streitberg (Brachttal)")),
-			Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), article = Option("Streitberg (Brachttal)")),
-			Link("Hessen", "Hessen", Option(87), article = Option("Streitberg (Brachttal)")),
-			Link("Hessen", "Hessen (Stamm)", Option(87), article = Option("Streitberg (Brachttal)")),
-			Link("Hessen", "Kanton Hessen", Option(87), article = Option("Streitberg (Brachttal)")),
-			Link("1377", "1377", Option(225), article = Option("Streitberg (Brachttal)")),
-			Link("Büdinger Wald", "Büdinger Wald", Option(546), article = Option("Streitberg (Brachttal)")),
-			Link("Audi", "Audi", Option(7), article = Option("Testartikel")),
-			Link("Brachttal", "Brachttal", Option(13), article = Option("Testartikel")),
-			Link("historisches Jahr", "1377", Option(24), article = Option("Testartikel")),
-			Link("historisches Jahr", "1996", Option(24), article = Option("Testartikel")),
-			Link("historisches Jahr", "2017", Option(24), article = Option("Testartikel"))
-		)
-	}
-
 	def articlesWithCompleteContexts(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Audi Test mit Link", Option("Hier ist Audi verlinkt."),

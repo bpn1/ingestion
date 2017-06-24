@@ -1,12 +1,11 @@
 package de.hpi.ingestion.textmining.nel
 
-import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.{Article, Link, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.models.{Article, TrieAliasArticle}
 import org.apache.spark.SparkContext
-import org.apache.spark.mllib.tree.model.RandomForestModel
 import org.apache.spark.rdd.RDD
+import com.datastax.spark.connector._
 
 /**
   * Generates HTML from found links to named entities and their corresponding raw articles.
@@ -17,16 +16,15 @@ object NELtoHTMLGenerator extends SparkJob {
 
 	// $COVERAGE-OFF$
 	/**
-	  * Loads Wikipedia entries and found links to named entities from the Cassandra.
+	  * Loads articles with their found links to named entities from the Cassandra.
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		val namedEntities = sc.cassandraTable[Link](settings("keyspace"), settings("namedEntitiesTable"))
-		List(articles).toAnyRDD() ++ List(namedEntities).toAnyRDD()
+		val articles = sc.cassandraTable[TrieAliasArticle](settings("keyspace"), settings("NELTable"))
+		List(articles).toAnyRDD()
 	}
 
 	/**
@@ -37,34 +35,23 @@ object NELtoHTMLGenerator extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val articlesWithLinks = output.head.asInstanceOf[RDD[Article]]
-		articlesWithLinks.saveToCassandra(settings("keyspace"), settings("linkedArticlesTable"))
+		val htmlArticles = output.head.asInstanceOf[RDD[Article]]
+		htmlArticles.saveToCassandra(settings("keyspace"), settings("linkedArticlesTable"))
 	}
-
-	/**
-	  * Loads the random forest classifier model from the HDFS.
-	  *
-	  * @param sc SparkContext used for loading from the HDFS
-	  * @return random forest classifier model
-	  */
-	def loadModel(sc: SparkContext): RandomForestModel = {
-		RandomForestModel.load(sc, settings("classifierModel"))
-	}
-
 	// $COVERAGE-ON$
 
 	/**
 	  * Inserts HTML links into an article text where named entities were found.
 	  *
-	  * @param title title of the article
-	  * @param text  text of the article
-	  * @param links linked named entities found in the article
+	  * @param article article with its found links to named entities
 	  * @return HTML containing links
 	  */
-	def generateArticleWithLinks(title: String, text: String, links: List[Link]): Article = {
+	def generateArticleWithLinks(article: TrieAliasArticle): Article = {
+		val title = article.article
 		var html = s"<h1>$title</h1>\n"
+		val text = article.getText
 		var processedCharacters = 0
-		links
+		article.foundentities
 			.groupBy(_.offset)
 			.toList
 			.sortBy(_._1)
@@ -83,8 +70,8 @@ object NELtoHTMLGenerator extends SparkJob {
 					val pages = distinctLinks
 						.map(_.page)
 						.reduce(_ + "\n" + _)
-					val wikipediaPage = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
-					html += s"""<a href="$wikipediaPage" title="$pages">"""
+					val page = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
+					html += s"""<a href="$page" title="$pages">"""
 					val end = processedCharacters + mainLink.alias.length
 					if(processedCharacters > end) {
 						print(s"BBBB $processedCharacters")
@@ -104,24 +91,6 @@ object NELtoHTMLGenerator extends SparkJob {
 	}
 
 	/**
-	  * Inserts HTML links into all article texts where named entities were found.
-	  *
-	  * @param articles all articles
-	  * @param links    all linked named entities found in the articles
-	  * @return all articles with HTML as text
-	  */
-	def generateArticlesWithLinks(articles: RDD[Article], links: RDD[Link]): RDD[Article] = {
-		val groupedLinks = links
-			.map(link => (link.article.get, List(link)))
-			.reduceByKey(_ ++ _)
-		articles
-			.map(article => (article.title, article.text))
-			.join(groupedLinks)
-			.map { case (title, (text, linksForArticle)) => (title, text, linksForArticle) }
-			.map((generateArticleWithLinks _).tupled)
-	}
-
-	/**
 	  * Generates HTML from found links to named entities and their corresponding raw articles.
 	  *
 	  * @param input List of RDDs containing the input data
@@ -130,10 +99,8 @@ object NELtoHTMLGenerator extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val wikipediaArticles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
-		val namedEntities = input(1).asInstanceOf[RDD[Link]]
-		val articles = wikipediaArticles.map(article => Article(article.title, article.getText()))
-		val articlesWithLinks = generateArticlesWithLinks(articles, namedEntities)
-		List(articlesWithLinks).toAnyRDD()
+		val articlesWithLinks = input.head.asInstanceOf[RDD[TrieAliasArticle]]
+		val htmlArticles = articlesWithLinks.map(generateArticleWithLinks)
+		List(htmlArticles).toAnyRDD()
 	}
 }
