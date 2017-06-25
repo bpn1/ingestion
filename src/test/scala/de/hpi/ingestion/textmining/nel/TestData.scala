@@ -5,6 +5,15 @@ import de.hpi.ingestion.textmining.models.{Link, TrieAlias, TrieAliasArticle}
 // scalastyle:off line.size.limit
 
 object TestData {
+	def reducedWikipediaArticles(): Set[TrieAliasArticle] = {
+		Set(
+			TrieAliasArticle("Audi Test mit Link", Option("Hier ist Audi verlinkt.")),
+			TrieAliasArticle("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt.")),
+			TrieAliasArticle("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald.""")),
+			TrieAliasArticle("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."))
+		)
+	}
+
 	def articlesWithFoundLinks(): Set[TrieAliasArticle] = {
 		Set(
 			TrieAliasArticle("Audi Test mit Link",

@@ -10,8 +10,8 @@ import org.apache.spark.rdd.RDD
 /**
   * Reduces ParsedWikipediaArticles to relevant attributes for NEL.
   */
-object WikipediaNELReduction extends SparkJob {
-	appName = "Wikipedia NEL Reduction"
+object WikipediaReduction extends SparkJob {
+	appName = "Wikipedia Reduction"
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
@@ -50,7 +50,7 @@ object WikipediaNELReduction extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val wikipediaArticles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
-		val trieAliasArticles = wikipediaArticles.map(article => TrieAliasArticle(article.title, article.text))
-		List(trieAliasArticles).toAnyRDD()
+		val reducedArticles = wikipediaArticles.map(article => TrieAliasArticle(article.title, article.text))
+		List(reducedArticles).toAnyRDD()
 	}
 }
