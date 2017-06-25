@@ -56,35 +56,19 @@ object HtmlGenerator extends SparkJob {
 			.toList
 			.sortBy(_._1)
 			.foreach { case (offset, groupedLinks) =>
-				if(offset.get < processedCharacters) {
-					print(s"AAAAA ${offset.get}")
-					print(s"AAAAA $processedCharacters")
-					print(s"AAAAA $groupedLinks")
-					print(s"AAAAA $title")
-					print(s"CCCCC $text")
-				} else {
-					val distinctLinks = groupedLinks.distinct // hotfix against duplicates
-					val mainLink = distinctLinks.head
-					html += text.substring(processedCharacters, offset.get)
-					processedCharacters = offset.get
-					val pages = distinctLinks
-						.map(_.page)
-						.reduce(_ + "\n" + _)
-					val page = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
-					html += s"""<a href="$page" title="$pages">"""
-					val end = processedCharacters + mainLink.alias.length
-					if(processedCharacters > end) {
-						print(s"BBBB $processedCharacters")
-						print(s"BBBB $end")
-						print(s"BBBB ${mainLink.alias.length}")
-						print(s"BBBB $mainLink")
-					} else {
-						html += text.substring(processedCharacters, end)
-						processedCharacters += mainLink.alias.length
-					}
-					//html += "<ul style=\"display: none\">" + "<li>some other link</li>" + "</ul></a>"
-					html += "</a>"
-				}
+				val distinctLinks = groupedLinks.distinct // hotfix against duplicates
+				val mainLink = distinctLinks.head
+				html += text.substring(processedCharacters, offset.get)
+				processedCharacters = offset.get
+				val pages = distinctLinks
+					.map(_.page)
+					.reduce(_ + "\n" + _)
+				val page = "https://de.wikipedia.org/wiki/" + mainLink.page.replaceAll(" ", "_")
+				html += s"""<a href="$page" title="$pages">"""
+				val end = processedCharacters + mainLink.alias.length
+				html += text.substring(processedCharacters, end)
+				processedCharacters += mainLink.alias.length
+				html += "</a>"
 			}
 		html += text.substring(processedCharacters, text.length)
 		Article(title, html)
