@@ -1,6 +1,5 @@
 package de.hpi.ingestion.textmining.nel
 
-import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SplitSparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
@@ -12,6 +11,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.tree.model.RandomForestModel
 import org.apache.spark.rdd.RDD
+import com.datastax.spark.connector._
 
 /**
   * Classifies the Trie Aliases found in Articles by the Article Trie Search and writes the positives as found entities
@@ -24,27 +24,29 @@ object TextNEL extends SplitSparkJob {
 	var aliasPageScores = Map.empty[String, List[(String, Double, Double)]]
 
 	// $COVERAGE-OFF$
-	var loadModelFunction = loadModel _
+	var loadModelFunction: SparkContext => RandomForestModel = loadModel _
+
 	/**
 	  * Loads the Trie Alias Articles from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val spiegel = sc.cassandraTable[TrieAliasArticle](settings("keyspace"), settings("NELTable"))
-//			.sample(false, 0.001)
+		val articles = sc.cassandraTable[TrieAliasArticle](settings("keyspace"), settings("NELTable"))
 		val articleCount = sc.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
 		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
 		val articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
-		List(spiegel, articleCount, aliases, articleTfidf).flatMap(List(_).toAnyRDD())
+		List(articles, articleCount, aliases, articleTfidf).flatMap(List(_).toAnyRDD())
 	}
 
 	/**
 	  * Saves the found entities to the Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
@@ -69,8 +71,9 @@ object TextNEL extends SplitSparkJob {
 
 	/**
 	  * Splits the Articles into n parts.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param args arguments of the program
+	  * @param args  arguments of the program
 	  * @return Collection of input RDD Lists to be processed sequentially.
 	  */
 	override def splitInput(input: List[RDD[Any]], args: Array[String] = Array()): Traversable[List[RDD[Any]]] = {
@@ -82,7 +85,8 @@ object TextNEL extends SplitSparkJob {
 
 	/**
 	  * Extracts the contexts of an articles Trie Aliases.
-	  * @param article article containing the text and the Trie Aliases.
+	  *
+	  * @param article   article containing the text and the Trie Aliases.
 	  * @param tokenizer Tokenizer used to create the contexts
 	  * @return List of the Trie Aliases as Links and their contexts as Bags as tuples
 	  */
@@ -99,8 +103,9 @@ object TextNEL extends SplitSparkJob {
 
 	/**
 	  * Uses a Random Forest Model to classify the given Feature Entries and transforms them into Links.
+	  *
 	  * @param featureEntries RDD of Feature Entries to classify
-	  * @param model broadcast of the Random Forest Model
+	  * @param model          broadcast of the Random Forest Model
 	  * @return RDD of tuples containing the article and the entities linked in the article
 	  */
 	def classifyFeatureEntries(
@@ -117,14 +122,15 @@ object TextNEL extends SplitSparkJob {
 				val link = Link(featureEntry.alias, featureEntry.entity, Option(featureEntry.offset))
 				(featureEntry.article, List(link))
 		}.reduceByKey(_ ++ _)
-	    .map(_.map(identity, _.sortBy(_.offset)))
+			.map(_.map(identity, _.sortBy(_.offset)))
 	}
 
 	/**
-	  * Generates Feature Entries for the Aliases extraced from the Trie Alias Articles.
+	  * Generates Feature Entries for the Aliases extracted from the Trie Alias Articles.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
