@@ -88,38 +88,6 @@
 //		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 //	}
 //
-//	they should "contain html links" in {
-//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-//			.map(article => Article(article.title, article.getText()))
-//		val links = sc.parallelize(TestData.linksWithArticleAnnotation().toList)
-//		val anchorRegex = new Regex("(?s)<a href=\".+?\">.+?<\\/a>")
-//		TextNEL.generateArticlesWithLinks(articles, links)
-//			.collect
-//			.foreach { article =>
-//				if(article.title != "Audi Test ohne Link") {
-//					anchorRegex.findFirstIn(article.text) should not be empty
-//				}
-//			}
-//	}
-//
-//	they should "only contain the title and the original text" in {
-//		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-//			.map(article => Article(article.title, article.getText()))
-//		val links = sc.parallelize(TestData.linksWithArticleAnnotation().toList)
-//		val originalTexts = articles
-//			.map(article => article.title + "\n" + article.text)
-//			.collect
-//			.toSet
-//		val texts = TextNEL.generateArticlesWithLinks(articles, links)
-//			.map { article =>
-//				// Escape newlines with an improbable string. Otherwise jsoup will replace them with spaces.
-//				val escapedNewlines = Jsoup.parse(article.text.replaceAll("\n", "#EscapedNewline")).body.text
-//				escapedNewlines.replaceAll("#EscapedNewline", "\n")
-//			}.collect
-//			.toSet
-//		texts shouldEqual originalTexts
-//	}
-//
 //	"Alias matches" should "be found" in {
 //		val tokenizer = IngestionTokenizer(false, false)
 //		val contextTokenizer = IngestionTokenizer(true, true)
