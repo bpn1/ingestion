@@ -30,5 +30,6 @@
         <articleCountTable>wikipediaarticlecount</articleCountTable>
         <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
         <tfidfTable>articletfidf</tfidfTable>
+        <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
     </settings>
 </config>
