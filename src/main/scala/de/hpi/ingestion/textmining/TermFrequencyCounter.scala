@@ -41,7 +41,6 @@ object TermFrequencyCounter extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**

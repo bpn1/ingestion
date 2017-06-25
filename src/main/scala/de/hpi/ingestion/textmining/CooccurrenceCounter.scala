@@ -41,7 +41,6 @@ object CooccurrenceCounter extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("cooccurrenceTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**

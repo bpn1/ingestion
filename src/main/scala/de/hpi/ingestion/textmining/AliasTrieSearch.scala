@@ -65,7 +65,6 @@ object AliasTrieSearch extends SparkJob {
 		val fs = FileSystem.get(hadoopConf)
 		fs.open(new Path(file))
 	}
-
 	// $COVERAGE-ON$
 
 	/**

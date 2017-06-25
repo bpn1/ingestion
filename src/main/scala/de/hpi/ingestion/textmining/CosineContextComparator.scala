@@ -46,7 +46,6 @@ object CosineContextComparator extends SplitSparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("featureTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
