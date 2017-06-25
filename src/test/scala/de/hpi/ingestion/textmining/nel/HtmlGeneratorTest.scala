@@ -8,11 +8,11 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 
 import scala.util.matching.Regex
 
-class NELtoHTMLGeneratorTest extends FlatSpec with SharedSparkContext with Matchers {
+class HtmlGeneratorTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Articles with links" should "not be empty" in {
 		val articles = sc.parallelize(TestData.aliasSearchArticles())
 		val input = List(articles).toAnyRDD()
-		val articlesWithLinks = NELtoHTMLGenerator.run(input, sc)
+		val articlesWithLinks = HtmlGenerator.run(input, sc)
 		articlesWithLinks should not be empty
 	}
 
@@ -20,7 +20,7 @@ class NELtoHTMLGeneratorTest extends FlatSpec with SharedSparkContext with Match
 		val anchorRegex = new Regex("(?s)<a href=\".+?\">.+?<\\/a>")
 		val articles = sc.parallelize(TestData.articlesWithFoundLinks().toList)
 		val input = List(articles).toAnyRDD()
-		NELtoHTMLGenerator.run(input, sc)
+		HtmlGenerator.run(input, sc)
 			.fromAnyRDD[Article]()
 			.head
 			.collect
@@ -38,7 +38,7 @@ class NELtoHTMLGeneratorTest extends FlatSpec with SharedSparkContext with Match
 			.map(article => article.article + "\n" + article.getText)
 			.collect
 			.toSet
-		val texts = NELtoHTMLGenerator.run(input, sc)
+		val texts = HtmlGenerator.run(input, sc)
 			.fromAnyRDD[Article]()
 			.head
 			.map { article =>

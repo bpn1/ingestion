@@ -10,8 +10,8 @@ import com.datastax.spark.connector._
 /**
   * Generates HTML from found links to named entities and their corresponding raw articles.
   */
-object NELtoHTMLGenerator extends SparkJob {
-	appName = "NEL to HTML Generator"
+object HtmlGenerator extends SparkJob {
+	appName = "HTML Generator"
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
