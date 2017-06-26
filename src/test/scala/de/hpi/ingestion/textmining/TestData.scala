@@ -22,10 +22,10 @@ import scala.io.{BufferedSource, Source}
 // scalastyle:off file.size.limit
 
 object TestData {
-	def tokenizedDocumentsList(): List[Seq[String]] = {
+	def tokenizedDocumentsList(): List[List[String]] = {
 		List(
-			Seq("Hier", "ist", "Audi", "verlinkt."),
-			Seq("Hier", "ist", "Audi", "nicht", "verlinkt.")
+			List("Hier", "ist", "Audi", "verlinkt."),
+			List("Hier", "ist", "Audi", "nicht", "verlinkt.")
 		)
 	}
 
