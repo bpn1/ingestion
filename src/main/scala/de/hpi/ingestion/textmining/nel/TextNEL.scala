@@ -84,7 +84,7 @@ object TextNEL extends SplitSparkJob {
 	}
 
 	/**
-	  * Extracts the contexts of an articles Trie Aliases.
+	  * Extracts the contexts of an article's Trie Aliases.
 	  *
 	  * @param article   article containing the text and the Trie Aliases.
 	  * @param tokenizer Tokenizer used to create the contexts

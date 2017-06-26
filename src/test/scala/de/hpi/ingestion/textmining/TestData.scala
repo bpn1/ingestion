@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining
 
 import java.io._
-
 import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
@@ -17,7 +16,6 @@ import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
-
 import scala.io.{BufferedSource, Source}
 
 // scalastyle:off number.of.methods

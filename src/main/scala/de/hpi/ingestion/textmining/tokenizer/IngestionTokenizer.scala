@@ -59,8 +59,8 @@ case class IngestionTokenizer(
 	def process(tokens: List[String]): List[String] = {
 		val stemmer = new AccessibleGermanStemmer
 		tokens
-	    	.filterNot(token => removeStopwords && stopwords.contains(token))
-	    	.map {
+			.filterNot(token => removeStopwords && stopwords.contains(token))
+			.map {
 				case token if stem => stemmer.stem(token)
 				case token if !stem => token
 			}
