@@ -65,6 +65,7 @@ object AliasTrieSearch extends SparkJob {
 		val fs = FileSystem.get(hadoopConf)
 		fs.open(new Path(file))
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -114,9 +115,9 @@ object AliasTrieSearch extends SparkJob {
 				val end = offsetTokens.lastOption.map(_.endOffset)
 				(begin, end)
 			}.collect {
-			case (begin, end) if begin.isDefined && end.isDefined =>
-				entry.getText().substring(begin.get, end.get)
-		}.toList
+				case (begin, end) if begin.isDefined && end.isDefined =>
+					entry.getText().substring(begin.get, end.get)
+			}.toList
 
 		entry.copy(foundaliases = cleanFoundAliases(foundAliases), triealiases = contextAliases)
 	}

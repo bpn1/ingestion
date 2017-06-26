@@ -35,8 +35,8 @@ object WikipediaReduction extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val namedEntities = output.head.asInstanceOf[RDD[TrieAliasArticle]]
-		namedEntities.saveToCassandra(settings("keyspace"), settings("wikipediaNELTable"))
+		val reducedArticles = output.fromAnyRDD[TrieAliasArticle]().head
+		reducedArticles.saveToCassandra(settings("keyspace"), settings("wikipediaNELTable"))
 	}
 	// $COVERAGE-ON$
 

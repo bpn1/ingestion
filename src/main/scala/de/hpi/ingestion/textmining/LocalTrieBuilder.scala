@@ -13,7 +13,7 @@ import scala.io.{BufferedSource, Source}
   */
 object LocalTrieBuilder {
 	val aliasFileName = "aliaslist"
-	val trieFileName = "wikipedia/trie_full.bin"
+	val trieFileName = "trie_full.bin"
 
 	/**
 	  * Creates Trie of the aliases in the given file and serializes it to a binary of the given name.

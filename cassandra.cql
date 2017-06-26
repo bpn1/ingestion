@@ -137,15 +137,6 @@ CREATE TYPE wikidumps.triealias (
 	context map<text, int>
 );
 
-CREATE TABLE wikidumps.namedentities (
-    alias text,
-    page text,
-    offset int,
-    context map<text, int>,
-    article text,
-    PRIMARY KEY (alias, page, offset, article)
-);
-
 CREATE TABLE wikidumps.linkedarticles (
 	title text PRIMARY KEY,
 	text text

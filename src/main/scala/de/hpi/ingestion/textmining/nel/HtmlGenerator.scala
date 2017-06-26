@@ -35,7 +35,7 @@ object HtmlGenerator extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val htmlArticles = output.head.asInstanceOf[RDD[Article]]
+		val htmlArticles = output.fromAnyRDD[Article]().head
 		htmlArticles.saveToCassandra(settings("keyspace"), settings("linkedArticlesTable"))
 	}
 	// $COVERAGE-ON$
@@ -83,7 +83,7 @@ object HtmlGenerator extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articlesWithLinks = input.head.asInstanceOf[RDD[TrieAliasArticle]]
+		val articlesWithLinks = input.fromAnyRDD[TrieAliasArticle]().head
 		val htmlArticles = articlesWithLinks.map(generateArticleWithLinks)
 		List(htmlArticles).toAnyRDD()
 	}

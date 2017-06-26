@@ -19,10 +19,9 @@
         <sentenceTable>wikipediasentences</sentenceTable>
         <cooccurrenceTable>wikipediacooccurrences</cooccurrenceTable>
         <contextSize>20</contextSize>
-		<classifierModel>wikipedia_randomforest_model_1494495223381</classifierModel>
+        <classifierModel>wikipedia_randomforest_model_1494495223381</classifierModel>
         <wikipediaNELTable>wikipedianel</wikipediaNELTable>
         <NELTable>wikipedianel</NELTable>
-        <namedEntitiesTable>namedentities</namedEntitiesTable>
         <linkedArticlesTable>linkedarticles</linkedArticlesTable>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
