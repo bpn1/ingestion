@@ -35,6 +35,30 @@ object TestData {
 		)
 	}
 
+	def foundTrieAliases(): Set[(String, List[TrieAlias])] = {
+		Set(
+			("1", List(
+				TrieAlias("Audi", Option(29))
+			)),
+			("2", List(
+				TrieAlias("Audi AG", Option(4)),
+				TrieAlias("Volkswagen AG", Option(43))
+			)),
+			("3", List(
+				TrieAlias("Volkswagen", Option(4))
+			)),
+			("4", List(
+				TrieAlias("Audi", Option(20)),
+				TrieAlias("Audi AG", Option(46)),
+				TrieAlias("Volkswagen", Option(75))
+			)),
+			("5", List(
+				TrieAlias("Der Audio Verlag", Option(15))
+			)),
+			("6", List())
+		)
+	}
+
 	def foundAliasArticles(): List[TrieAliasArticle] = {
 		List(
 			TrieAliasArticle(
@@ -154,4 +178,5 @@ object TestData {
 		)
 	}
 }
+
 // scalastyle:on line.size.limit
