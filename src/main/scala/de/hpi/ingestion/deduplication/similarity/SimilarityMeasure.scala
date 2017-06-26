@@ -32,7 +32,8 @@ object SimilarityMeasure {
 		"N-Gram" -> NGram,
 		"Overlap" -> Overlap,
 		"EuclidianDistance" -> EuclidianDistance,
-		"RelativeNumbersSimilarity" -> RelativeNumbersSimilarity
+		"RelativeNumbersSimilarity" -> RelativeNumbersSimilarity,
+		"UrlCompare" -> UrlCompare
 	)
 
 	/**

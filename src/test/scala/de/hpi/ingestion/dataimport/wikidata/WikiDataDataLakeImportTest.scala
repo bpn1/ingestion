@@ -56,6 +56,7 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		subject.properties("geo_country") shouldEqual TestData.normalizedCountries
 		subject.properties("geo_city") shouldEqual TestData.normalizedCities
 		subject.properties("gen_employees") shouldEqual TestData.normalizedEmployees
+		subject.properties("gen_urls") shouldEqual TestData.normalizedURLs
 		subject.properties shouldNot contain key "id_lccn"
 	}
 

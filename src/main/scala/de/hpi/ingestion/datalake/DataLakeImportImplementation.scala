@@ -54,7 +54,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val version = Version(appName, dataSources, sc, true)
+		val version = Version(appName, dataSources, sc, false)
 		val mapping = sc.broadcast(normalizationSettings)
 		val strategies = sc.broadcast(sectorSettings)
 		val classifier = this.classifier
@@ -83,16 +83,16 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 			}.filter(_._2.nonEmpty)
 	}
 
-	override def extractLegalForm(name: String, classifier: AClassifier[Tag]): List[String] = {
+	override def extractLegalForm(name: String, classifier: AClassifier[Tag]): Option[String] = {
 		val tags = List(Tag.LEGAL_FORM)
 		try {
-			classifier
+			val legalForm = classifier
 				.getTags(name)
 				.filter(pair => tags.contains(pair.getValue))
 				.map(_.getKey.getRawForm)
-				.toList
+			Option(legalForm).filter(_.nonEmpty).map(_.mkString(" "))
 		} catch {
-			case _: Throwable => Nil
+			case _: Throwable => None
 		}
 	}
 
