@@ -10,11 +10,10 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.mllib.tree.RandomForest
 import org.apache.spark.mllib.tree.model.RandomForestModel
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.regression.LabeledPoint
 
 /**
-  * Trains a Naive Bayes model with Feature Entries and evaluates it using precision, recall and f-score.
+  * Trains a Random Forest model with Feature Entries and evaluates it using precision, recall and f-score.
   */
 object ClassifierTraining extends SparkJob {
 	appName = "Classifier Training"
@@ -31,12 +30,13 @@ object ClassifierTraining extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val entries = sc.cassandraTable[FeatureEntry](settings("keyspace"), settings("secondOrderFeatureTable"))
+		val entries = sc.cassandraTable[FeatureEntry](settings("keyspace"), "featureentries_testing")
+		//settings("secondOrderFeatureTable"))
 		List(entries).toAnyRDD()
 	}
 
 	/**
-	  * Saves Naive Bayes Model to the HDFS.
+	  * Saves Random Forest Model to the HDFS.
 	  *
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
@@ -50,7 +50,7 @@ object ClassifierTraining extends SparkJob {
 		model
 			.asInstanceOf[RDD[Option[RandomForestModel]]]
 			.first
-			.foreach(_.save(sc, s"wikipedia_randomforest_model_${System.currentTimeMillis()}"))
+			.foreach(_.save(sc, s"wikipedia_randomforest_testing_${System.currentTimeMillis()}"))
 	}
 
 	// $COVERAGE-ON$
@@ -215,22 +215,23 @@ object ClassifierTraining extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
 		val data = entries.map(_.labeledPoint()).cache
-		val (stats, model) = trainingFunction(data, 5, 5, 4, 32)
-		val statsList = List(sc.parallelize(List(stats))).toAnyRDD()
-		val modelList = List(sc.parallelize(List(model))).toAnyRDD()
-		statsList ++ modelList
+//		val (stats, model) = trainingFunction(data, 5, 5, 4, 32)
+//		val statsList = List(sc.parallelize(List(stats))).toAnyRDD()
+//		val modelList = List(sc.parallelize(List(model))).toAnyRDD()
+//		statsList ++ modelList
 
 		//		Code outcommented due to missing tests
-		//		val Array(train, test) = data.randomSplit(Array(0.7, 0.3))
-		//		val model = trainRandomForest(train, 100, 4, 32)
-		//		val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
-		//			val prediction = model.predict(features)
-		//			(prediction, label)
-		//		}
-		//		val stats = calculateStatistics(predictionAndLabels)
-		//		val results = SimilarityMeasureStats(data = List(stats),
-		//			comment = Option("Random Forest Split Validation"))
-		//		val modelOption = sc.parallelize(List(Option(model)))
-		//		List(sc.parallelize(List(results))).toAnyRDD() ++ List(modelOption).toAnyRDD()
+		val Array(train, test) = data.randomSplit(Array(0.7, 0.3))
+		val model = trainRandomForest(train, 5, 4, 32)
+		val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
+			val prediction = model.predict(features)
+			(prediction, label)
+		}
+		val stats = calculateStatistics(predictionAndLabels)
+		val results = SimilarityMeasureStats(
+			data = List(stats),
+			comment = Option("Random Forest with Trie"))
+		val modelOption = sc.parallelize(List(Option(model)))
+		List(sc.parallelize(List(results))).toAnyRDD() ++ List(modelOption).toAnyRDD()
 	}
 }
