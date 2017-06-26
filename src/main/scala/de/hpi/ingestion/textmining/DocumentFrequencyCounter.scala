@@ -46,7 +46,7 @@ object DocumentFrequencyCounter extends SparkJob {
 			.asInstanceOf[RDD[DocumentFrequency]]
 			.saveToCassandra(settings("keyspace"), settings("dfTable"))
 		articleCount
-		    .asInstanceOf[RDD[WikipediaArticleCount]]
+			.asInstanceOf[RDD[WikipediaArticleCount]]
 			.saveToCassandra(settings("keyspace"), settings("articleCountTable"))
 	}
 	// $COVERAGE-ON$
