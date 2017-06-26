@@ -609,6 +609,15 @@ object TestData {
 		)
 	}
 
+	def existingPagesTfIdfMap(): List[ArticleTfIdf] = {
+		List(
+			ArticleTfIdf("Audi Test mit Link", Map()),
+			ArticleTfIdf("Audi Test ohne Link", Map()),
+			ArticleTfIdf("Streitberg (Brachttal)", Map()),
+			ArticleTfIdf("Testartikel", Map())
+		)
+	}
+
 	def allPageNamesOfTestArticleList(): Set[String] = {
 		Set("Audi",
 			"Brachttal",
@@ -898,6 +907,22 @@ object TestData {
 			"BMW M10" -> 1,
 			"BMW 501/502" -> 1
 		), linkoccurrences = Option(2525), totaloccurrences = Option(4235))
+	}
+
+	def aliasScoresWithManyPages(): Map[String, List[(String, Double, Double)]] = {
+		Map(
+			"BMW" -> List(
+				("BMW-Motorrad", 0.5962219598583235, 0.17504950495049504),
+				("BMW", 0.5962219598583235, 0.7239603960396039),
+				("BMW (Automarke)", 0.5962219598583235, 0.038415841584158415),
+				("Berlins Most Wanted", 0.5962219598583235, 0.001188118811881188),
+				("Liste der BMW-Motorräder", 0.5962219598583235,7.920792079207921E-4),
+				("BMW 501/502", 0.5962219598583235,3.9603960396039607E-4),
+				("BMW M10", 0.5962219598583235,3.9603960396039607E-4),
+				("BMW (Motorsport)", 0.5962219598583235, 0.05821782178217822),
+				("BMW E21", 0.5962219598583235,3.9603960396039607E-4),
+				("BMW E36", 0.5962219598583235, 0.001188118811881188))
+		)
 	}
 
 	def articlesForSingleAlias(): Set[ParsedWikipediaEntry] = {

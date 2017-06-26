@@ -324,6 +324,6 @@ object CosineContextComparator extends SplitSparkJob {
 		val contextTfs = transformLinkContextTfs(linkArticles, tokenizer)
 		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf(numDocuments))
 		val featureEntries = compareLinksWithArticles(contextTfidf, sc.broadcast(aliasPageScores), articleTfidf)
-		List(featureEntries).toAnyRDD()
+		SecondOrderFeatureGenerator.run(List(featureEntries).toAnyRDD(), sc, args)
 	}
 }

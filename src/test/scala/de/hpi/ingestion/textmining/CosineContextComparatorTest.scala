@@ -212,6 +212,49 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		pages2 shouldEqual expectedPages
 	}
 
+	they should "not be recalculated" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
+		val oldSettings = CosineContextComparator.settings(false)
+		CosineContextComparator.parseConfig()
+		val oldAliases = CosineContextComparator.aliasPageScores
+
+		CosineContextComparator.aliasPageScores = TestData.aliasScoresWithManyPages()
+		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+
+		val tfIdf = sc.parallelize(TestData.emptyArticlesTfIdfList())
+		val aliases = sc.parallelize(List(TestData.aliasWithManyPages()))
+		val articles = sc.parallelize(TestData.articlesForSingleAlias().toList)
+		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesForSingleAlias().size)
+		val articleCount = sc.parallelize(List(numDocuments))
+		val input = List(tfIdf, aliases, articles, articleCount).flatMap(List(_).toAnyRDD())
+
+		val featureEntries = CosineContextComparator
+			.run(input, sc)
+			.fromAnyRDD[FeatureEntry]()
+			.head
+			.collect
+			.toList
+			.map(feature => feature.copy(
+				entity_score = feature.entity_score.copy(
+					rank = 1,
+					delta_successor = Double.PositiveInfinity,
+					delta_top = Double.PositiveInfinity),
+				cosine_sim = feature.cosine_sim.copy(
+					rank = 1,
+					delta_successor = Double.PositiveInfinity,
+					delta_top = Double.PositiveInfinity)))
+			.sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
+		featureEntries shouldEqual TestData.featureEntriesForManyPossibleEntitiesList()
+
+		CosineContextComparator.aliasPageScores = oldAliases
+		CosineContextComparator.settings = oldSettings
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
 	"Cosine similarity between contexts" should "be exactly this value" in {
 		val linkContext = TestData.shortLinkContextsTfidfList().head._2
 		val pageContext = TestData.articleWordsTfidfMap().head._2
@@ -314,6 +357,15 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.head
 			.collect
 			.toList
+		    .map(feature => feature.copy(
+				entity_score = feature.entity_score.copy(
+					rank = 1,
+					delta_successor = Double.PositiveInfinity,
+					delta_top = Double.PositiveInfinity),
+				cosine_sim = feature.cosine_sim.copy(
+					rank = 1,
+					delta_successor = Double.PositiveInfinity,
+					delta_top = Double.PositiveInfinity)))
 			.sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
 		featureEntries shouldEqual TestData.featureEntriesForManyPossibleEntitiesList()
 
@@ -361,10 +413,11 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		CosineContextComparator.aliasPageScores = Map()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesWithCompleteContexts().size)
 		val articleCount = sc.parallelize(List(numDocuments))
-		val tfIdf = sc.parallelize(TestData.articleTfidfList())
+		val tfIdf = sc.parallelize(TestData.existingPagesTfIdfMap())
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val input = List(tfIdf, aliases, articles, articleCount).flatMap(List(_).toAnyRDD())
 		val featureEntries = CosineContextComparator
@@ -395,7 +448,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesWithCompleteContexts().size)
 		val articleCount = sc.parallelize(List(numDocuments))
-		val tfIdf = sc.parallelize(TestData.articleTfidfList())
+		val tfIdf = sc.parallelize(TestData.existingPagesTfIdfMap())
 		val input = List(tfIdf, aliases, articles, articleCount).flatMap(List(_).toAnyRDD())
 		val featureEntries = CosineContextComparator
 			.run(input, sc)
