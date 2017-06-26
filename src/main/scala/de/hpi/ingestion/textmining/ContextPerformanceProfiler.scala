@@ -4,7 +4,7 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import de.hpi.ingestion.textmining.CosineContextComparator._
-import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import de.hpi.ingestion.textmining.tokenizer.{CoreNLPTokenizer, IngestionTokenizer}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.mllib.feature.HashingTF
@@ -108,9 +108,9 @@ object ContextPerformanceProfiler extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articles = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(100000))
+		val articles = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(10000))
 
-		val tokenizer = IngestionTokenizer()
+		val tokenizer = IngestionTokenizer(args)
 
 		val (tokensPerDocument, timeSparkContext) = profileTime(articles.map { article =>
 			tokenizer.process(article.getText())
