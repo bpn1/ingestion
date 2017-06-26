@@ -17,7 +17,7 @@ class ArticleTrieSearchTest extends FlatSpec with Matchers with SharedSparkConte
 		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
 		val input = List(sc.parallelize(TestData.aliasSearchArticles())).toAnyRDD()
 		val articles = ArticleTrieSearch.run(input, sc).fromAnyRDD[TrieAliasArticle]().head.collect.toSet
-		val expectedArticles = TestData.foundAliasArticles().toSet
+		val expectedArticles = TestData.foundTrieAliases()
 		articles shouldEqual expectedArticles
 
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
