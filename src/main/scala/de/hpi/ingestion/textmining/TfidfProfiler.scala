@@ -17,7 +17,7 @@ import de.hpi.ingestion.textmining.TermFrequencyCounter.extractArticleContext
   * Compares the performance of the context extraction and tf-idf computation of the Ingestion project with the
   * implementation in the Spark MLlib.
   */
-object ContextPerformanceProfiler extends SparkJob {
+object TfidfProfiler extends SparkJob {
 	appName = "Context Performance Profiler"
 	configFile = "textmining.xml"
 
@@ -136,7 +136,7 @@ object ContextPerformanceProfiler extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articles = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(10000))
+		val articles = sc.parallelize(input.fromAnyRDD[ParsedWikipediaEntry]().head.take(1000))
 		val tokenizer = IngestionTokenizer(args)
 
 		val (wordsPerArticle, timeSparkContext) = profileTime(contextExtractionForSparkMLlib(articles, tokenizer))

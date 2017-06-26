@@ -23,6 +23,17 @@ import scala.io.{BufferedSource, Source}
 // scalastyle:off file.size.limit
 
 object TestData {
+	def profilingStatisticLables(): Set[String] = {
+		Set(
+			"SparkMLlib Context Extraction",
+			"Ingestion Context Extraction",
+			"SparkMLlib Tfidf Computation",
+			"Ingestion Tfidf Computation",
+			"SparkMLlib total",
+			"Ingestion total"
+		)
+	}
+
 	def tokenizedDocumentsList(): List[List[String]] = {
 		List(
 			List("Hier", "ist", "Audi", "verlinkt."),
