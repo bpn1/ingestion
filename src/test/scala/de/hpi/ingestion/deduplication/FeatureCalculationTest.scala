@@ -34,7 +34,7 @@ class FeatureCalculationTest extends FlatSpec with Matchers with SharedSparkCont
 		val subject = TestData.subjects.head
 		val staging = TestData.stagings.head
 		val feature = FeatureCalculation.createFeature(subject, staging, config)
-		val expected = FeatureEntry(feature.id, subject, staging, Map("geo_city" -> List(0.5, 0.5)))
+		val expected = FeatureEntry(feature.id, subject, staging, Map("geo_city" -> List(0.25, 0.3556547619047619)))
 
 		feature shouldEqual expected
 	}
