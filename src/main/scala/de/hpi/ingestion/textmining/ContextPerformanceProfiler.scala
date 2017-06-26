@@ -2,15 +2,16 @@ package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.{Alias, ParsedWikipediaEntry}
-import com.datastax.spark.connector._
+import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import de.hpi.ingestion.textmining.CosineContextComparator._
-import de.hpi.ingestion.textmining.tokenizer.{CoreNLPTokenizer, IngestionTokenizer}
+import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.mllib.feature.HashingTF
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.feature.IDF
+import com.datastax.spark.connector._
+import de.hpi.ingestion.textmining.TermFrequencyCounter.extractArticleContext
 
 /**
   * Compares the performance of the context extraction and tf-idf computation with the implementation in the
@@ -44,7 +45,7 @@ object ContextPerformanceProfiler extends SparkJob {
 		output
 			.fromAnyRDD[List[(String, Long)]]()
 			.head
-			.saveAsTextFile(s"context_performance_profile${System.currentTimeMillis()}")
+			.saveAsTextFile(s"context_performance_profile_${System.currentTimeMillis()}")
 	}
 
 	// $COVERAGE-ON$
@@ -90,22 +91,11 @@ object ContextPerformanceProfiler extends SparkJob {
 	  * @tparam T
 	  * @return microsecs
 	  */
-	def profileTime[T](function: => T): Long = {
+	def profileTime[T](function: => T): (T, Long) = {
 		val start = System.nanoTime()
 		val res = function
 		val end = System.nanoTime()
-		(end - start) / 1000
-	}
-
-	/**
-	  * #todo
-	  *
-	  * @param articles
-	  * @return articles with term frequencies
-	  */
-	def extractSimpleContexts(articles: RDD[ParsedWikipediaEntry]): RDD[(String, List[String])] = {
-		val tokenizer = IngestionTokenizer()
-		articles.map(article => (article.title, tokenizer.process(article.getText())))
+		(res, (end - start) / 1000)
 	}
 
 	/**
@@ -118,14 +108,28 @@ object ContextPerformanceProfiler extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articlesWithMapContexts = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]] //.sample(0.01)
+		val articles = sc.parallelize(input.head.asInstanceOf[RDD[ParsedWikipediaEntry]].take(100000))
 
-		val articlesWithListContexts = extractSimpleContexts(articlesWithMapContexts)
-		val tokensPerDocument = articlesWithListContexts.map(_._2)
-		val timeSpark = profileTime(sparkMLlibTfidfComputation(tokensPerDocument, sc))
-		val timeIngestion = profileTime(ingestionTfidfComputation(articlesWithMapContexts, sc))
+		val tokenizer = IngestionTokenizer()
 
-		val statistics = List[(String, Long)](("SparkMLlib", timeSpark), ("Ingestion", timeIngestion))
+		val (tokensPerDocument, timeSparkContext) = profileTime(articles.map { article =>
+			tokenizer.process(article.getText())
+		})
+		val (articlesWithContexts, timeIngestionContext) = profileTime(articles.map {
+			extractArticleContext(_, tokenizer)
+		})
+
+		val (sparkTfidf, timeSparkTfidf) = profileTime(sparkMLlibTfidfComputation(tokensPerDocument, sc))
+		val (ingestionTfidf, timeIngestionTfidf) = profileTime(ingestionTfidfComputation(articlesWithContexts, sc))
+
+		val statistics = List[(String, Long)](
+			("SparkMLlib Context Extraction", timeSparkContext),
+			("Ingestion Context Extraction", timeIngestionContext),
+			("SparkMLlib Tfidf Computation", timeSparkTfidf),
+			("Ingestion Tfidf Computation", timeIngestionTfidf),
+			("SparkMLlib total", timeSparkContext + timeSparkTfidf),
+			("Ingestion total", timeIngestionTfidf + timeIngestionTfidf)
+		)
 		List(sc.parallelize(statistics)).toAnyRDD()
 	}
 }
