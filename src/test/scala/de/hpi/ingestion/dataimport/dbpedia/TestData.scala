@@ -1,6 +1,9 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
+import java.util.UUID
+
 import de.hpi.ingestion.dataimport.SharedNormalizations
+
 import scala.io.Source
 import scala.xml.XML
 import org.apache.spark.SparkContext
@@ -12,6 +15,8 @@ import de.hpi.ingestion.datalake.models.{Subject, Version}
 // scalastyle:off line.size.limit
 
 object TestData {
+	val idList = List.fill(6)(UUID.randomUUID())
+
 	def prefixesList: List[(String,String)] = {
 		val prefixFile = Source.fromURL(getClass.getResource("/prefixes.txt"))
 		val prefixes = prefixFile.getLines.toList
@@ -252,6 +257,42 @@ object TestData {
 
 	def dbpediaParsedRelations(): List[Relation] = List(
 		Relation("Audi DE", "parentCompany", "Volkswagen DE")
+	)
+
+	def dbpediaRelations: List[Relation] = List(
+		Relation("Audi", "parentCompany", "Volkswagen"),
+		Relation("Audi", "subsidiary", "Lamborghini"),
+		Relation("Audi", "type", "Aktiengesellschaft"),
+		Relation("BMW", "division", "BMW Motorsport"),
+		Relation("BWM", "foaf:Hompage", "http://www.bmw.com/"),
+		Relation("BMW", "product", "Fahrrad")
+	)
+
+	def dbpedia: List[Subject] = List(
+		Subject(id = idList.head, name = Option("Audi")),
+		Subject(id = idList(1), name = Option("BMW")),
+		Subject(id = idList(2), name = Option("Volkswagen")),
+		Subject(id = idList(3), name = Option("BMW Motorsport")),
+		Subject(id = idList(4), name = Option("Commerzbank")),
+		Subject(id = idList(5), name = Option("Lamborghini"))
+	)
+
+	def dbpediaImportedRelations = List(
+		Subject(
+			id = idList.head,
+			name = Option("Audi"),
+			relations = Map(
+				idList(2) -> Map("parentCompany" -> ""),
+				idList(5) -> Map("subsidiary" -> "")
+			)
+		),
+		Subject(
+			id = idList(1),
+			name = Option("BMW"),
+			relations = Map(
+				idList(3) -> Map("division" -> "")
+			)
+		)
 	)
 }
 // scalastyle:on line.size.limit
