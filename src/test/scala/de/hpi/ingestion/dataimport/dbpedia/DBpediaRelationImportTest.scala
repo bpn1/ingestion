@@ -1,7 +1,6 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaRelationImport
 import de.hpi.ingestion.datalake.models.Subject
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._

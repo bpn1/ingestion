@@ -3,7 +3,7 @@
     <settings>
         <keyspaceDBpediaTable>datalake</keyspaceDBpediaTable>
         <dbpediaTable>subject_dbpedia</dbpediaTable>
-        <keyspaceDBpediaRelationTable>wikidumps</keyspaceDBpediaRelationTable>
-        <dbpediaRelationTable>dbpediarelations</dbpediaRelationTable>
+        <keyspaceDBpediaRelationsTable>wikidumps</keyspaceDBpediaRelationsTable>
+        <dbpediaRelationsTable>dbpediarelations</dbpediaRelationsTable>
     </settings>
 </config>
