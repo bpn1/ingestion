@@ -3,14 +3,14 @@ package de.hpi.ingestion.deduplication.blockingschemes
 import de.hpi.ingestion.datalake.models.Subject
 
 /**
-  * This class uses the first five characters of the name property as key, ignoring "The ".
+  * This class uses the first five characters lowercase of the name property as key, ignoring "The ".
   */
 class SimpleBlockingScheme extends BlockingScheme {
 	tag = "SimpleBlockingScheme"
 	override def generateKey(subject: Subject): List[String] = {
 		subject.name.map { name =>
 			val beginOffset = if(name.startsWith("The ")) 4 else 0
-			List(name.slice(beginOffset, 5 + beginOffset))
+			List(name.slice(beginOffset, 5 + beginOffset).toLowerCase)
 		}.getOrElse(List(undefinedValue))
 	}
 }
