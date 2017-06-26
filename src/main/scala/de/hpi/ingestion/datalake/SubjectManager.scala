@@ -285,6 +285,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 object SubjectManager {
 	val slaveKey = "slave"
 	val masterKey = "master"
+	val duplicateKey = "isDuplicate"
 
 	/**
 	  * Adds symmetric relations between two subjects.
@@ -308,7 +309,7 @@ object SubjectManager {
 	  */
 	def buildDuplicatesSCC(duplicates: List[(Subject, Subject, Double)], version: Version): Unit = {
 		duplicates.foreach { case (subject1, subject2, score) =>
-			val duplicateRelation = Map("type" -> "isDuplicate", "confidence" -> score.toString)
+			val duplicateRelation = Map("type" -> duplicateKey, "confidence" -> score.toString)
 			addSymRelation(subject1, subject2, duplicateRelation, version)
 		}
 	}
@@ -326,4 +327,6 @@ object SubjectManager {
 	  * @return Map containing the data of the default master slave relation
 	  */
 	def masterRelation(score: Double): Map[String, String] = Map(masterKey -> score.toString)
+
+	def isDuplicateRelation(score: Double): Map[String, String] = Map(duplicateKey -> score.toString)
 }

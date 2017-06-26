@@ -76,12 +76,32 @@ case class Subject(
 			.relations(this.master)(SubjectManager.slaveKey)
 			.toDouble
 	}
+
+	def masterRelations: Map[UUID, Map[String, String]] = {
+		this
+	    	.relations
+	    	.mapValues(_.filterKeys(!Subject.relationBlackList(_)))
+	    	.filter(_._2.nonEmpty)
+	}
+
+	/**
+	  * Returns a list of UUIDs of slaves
+	  * @return List of UUIDs of slaves
+	  */
+	def slaves: List[UUID] = {
+		this
+			.relations
+	    	.filter(_._2.contains(SubjectManager.masterKey))
+	    	.keys
+	    	.toList
+	}
 }
 
 /**
   * Companion-Object to the Subject case class containing the keys for all normalized properties.
   */
 object Subject {
+	val relationBlackList = Set(SubjectManager.masterKey, SubjectManager.slaveKey, SubjectManager.duplicateKey)
 	val normalizedPropertyKeys : Set[String] = Source
 		.fromURL(this.getClass.getResource("/normalized_properties.txt"))
 		.getLines

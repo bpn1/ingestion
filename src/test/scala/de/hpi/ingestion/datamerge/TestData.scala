@@ -81,7 +81,7 @@ object TestData {
 			datasource = "implisense",
 			name = Option("Firma B"),
 			properties = Map(
-				"implisense" -> List("2"),
+				"id_implisense" -> List("2"),
 				"gen_urls" -> List("http://curation.de", "http://nahverkehr.de"),
 				"geo_city" -> List("Potsdam"),
 				"gen_legal_form" -> List("GmbH"),
@@ -188,7 +188,7 @@ object TestData {
 			properties = Map(
 				"id_implisense" -> List("1"),
 				"geo_postal" -> List("10777"),
-				"geo_city" -> List("Berlin"),
+				"geo_city" -> List("Potsdam", "Berlin"),
 				"geo_county" -> List("Landkreis Neu-Brandenburg")
 			),
 			relations = Map(
@@ -211,8 +211,8 @@ object TestData {
 			relations = Map(
 				idList.head -> SubjectManager.slaveRelation(1.0),
 				idList(10) -> Map("country" -> "0.5", "county" -> "0.6"),
-				idList(5) -> Map("duplicate" -> "1.0"),
-				idList(6) -> Map("duplicate" -> "0.8")
+				idList(5) -> SubjectManager.isDuplicateRelation(1.0),
+				idList(6) -> SubjectManager.isDuplicateRelation(0.8)
 			)
 		),
 		Subject(
@@ -249,7 +249,7 @@ object TestData {
 				idList(2) -> SubjectManager.slaveRelation(1.0),
 				idList(11) -> Map("county" -> ""),
 				idList(12) -> Map("city" -> "0.9"),
-				idList(2) -> Map("duplicate" -> "0.9")
+				idList(7) -> SubjectManager.isDuplicateRelation(0.9)
 			)
 		),
 		Subject(
@@ -282,7 +282,7 @@ object TestData {
 			relations = Map(
 				idList(7) -> Map("successor" -> ""),
 				idList.head -> SubjectManager.slaveRelation(1.0),
-				idList(1) -> Map("duplicate" -> "1.0")
+				idList(1) -> SubjectManager.isDuplicateRelation(1.0)
 			)
 		),
 		Subject(
@@ -298,7 +298,7 @@ object TestData {
 			),
 			relations = Map(
 				idList.head -> SubjectManager.slaveRelation(0.8),
-				idList(1) -> Map("duplicate" -> "0.8")
+				idList(1) -> SubjectManager.isDuplicateRelation(0.8)
 			)
 		),
 		Subject(
@@ -313,7 +313,7 @@ object TestData {
 			),
 			relations = Map(
 				idList(2) -> SubjectManager.slaveRelation(0.9),
-				idList(3) -> Map("duplicate" -> "0.9")
+				idList(3) -> SubjectManager.isDuplicateRelation(0.9)
 			)
 		),
 		Subject(

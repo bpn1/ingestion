@@ -57,12 +57,11 @@ object Merging extends SparkJob {
 	  * @return List of the subject, staging and master Subject
 	  */
 	def addToMasterNode(subject: Subject, staging: Subject, score: Double, version: Version): List[Subject] = {
-		val subjectManager = new SubjectManager(subject, version)
 		val stagingManager = new SubjectManager(staging, version)
-
 		stagingManager.setMaster(subject.master, score)
-		subjectManager.addRelations(Map(staging.id -> Map("duplicate" -> score.toString)))
-		stagingManager.addRelations(Map(subject.id -> Map("duplicate" -> score.toString)))
+
+		SubjectManager.addSymRelation(subject, staging, SubjectManager.isDuplicateRelation(score), version)
+
 		List(subject, staging)
 	}
 
@@ -117,13 +116,13 @@ object Merging extends SparkJob {
 			.flatMap { datasource =>
 				duplicates
 					.filter(_.datasource == datasource)
-					.map(_.relations)
+					.map(_.masterRelations)
 			}.foldLeft(Map[UUID, Map[String, String]]()) { (accum, relations) =>
 				val keys = accum.keySet ++ relations.keySet
 				keys
 					.map(key => key -> (accum.getOrElse(key, Map()) ++ relations.getOrElse(key, Map())))
 					.toMap
-			}
+			}.filter(_._2.nonEmpty)
 	}
 
 	/**

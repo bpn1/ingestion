@@ -8,25 +8,6 @@ import org.apache.spark.rdd.RDD
 import org.scalatest.{FlatSpec, Matchers}
 
 class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
-
-	"addToMasterNode" should "create a new master node for a staging subject" in {
-		val List(staging, master) = Merging.addToMasterNode(TestData.staging.head, TestData.version)
-
-		staging.master shouldEqual master.id
-		staging.master shouldEqual master.master
-	}
-
-	it should "add an existing master node for a staging subject" in {
-		val version = TestData.version
-		val score = 0.8
-		val List(subject, staging) = Merging
-			.addToMasterNode(TestData.subjects.head, TestData.staging.head, score, version)
-
-		staging.master shouldEqual subject.master
-		staging.relations(subject.id)("duplicate") shouldEqual score.toString
-		subject.relations(staging.id)("duplicate") shouldEqual score.toString
-	}
-
 	"Master Nodes" should "contain relevant attributes" in {
 		val staging = sc.parallelize(TestData.staging)
 		val subjects = sc.parallelize(TestData.subjects)
@@ -39,22 +20,27 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 	    	.partition(master => TestData.idList.contains(master.id))
 
 		existingMaster
-			.map(master => (master.properties, TestData.mergedSubjects.find(_ == master).get.properties))
+			.map { master =>
+				(
+					master
+						.properties
+				    	.mapValues(_.sorted),
+					TestData
+						.mergedSubjects
+						.find(_ == master)
+						.get
+						.properties
+				    	.mapValues(_.sorted)
+				)
+			}
 	    	.foreach { case (properties, expected) =>
 				properties shouldEqual expected
 			}
 
 		newMaster
-	    	.map { master =>
-				(master.properties,
-					TestData.mergedSubjects
-						.find(subject => subject.master == master.id && subject.datasource == "master")
-						.get.properties
-				)
-			}
-			.foreach { case (properties, expected) =>
-				properties shouldEqual expected
-			}
+			.map(_.properties.mapValues(_.sorted))
+			.toSet
+	    	.shouldEqual(Set(TestData.mergedSubjects(8).properties, TestData.mergedSubjects(10).properties))
 	}
 
 	it should "contain relevant relations" in {
@@ -69,30 +55,33 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 			.partition(master => TestData.idList.contains(master.id))
 
 		existingMaster
-			.map(master => (master.relations, TestData.mergedSubjects.find(_ == master).get.relations))
+			.map(master => (master.masterRelations, TestData.mergedSubjects.find(_ == master).get.masterRelations))
 			.foreach { case (relations, expected) =>
 				relations shouldEqual expected
 			}
 
 		newMaster
-			.map { master =>
-				(master.relations,
-					TestData.mergedSubjects
-						.find(subject => subject.master == master.id && subject.datasource == "master")
-						.get.relations
-				)
-			}
-			.foreach { case (relations, expected) =>
-				relations shouldEqual expected
-			}
+			.map(_.masterRelations)
+	    	.toSet
+	    	.shouldEqual(Set(TestData.mergedSubjects(8).masterRelations, TestData.mergedSubjects(10).masterRelations))
 	}
 
 	it should "contain a master relations for each slave" in {
+		val staging = sc.parallelize(TestData.staging)
+		val subjects = sc.parallelize(TestData.subjects)
+		val duplicates = sc.parallelize(TestData.duplicates)
+		val input = List(subjects, staging).toAnyRDD() ::: List(duplicates).toAnyRDD()
+		val output = Merging.run(input, sc).head.asInstanceOf[RDD[Subject]]
 
-	}
+		val relationsList = output
+			.groupBy(_.master)
+	    	.map { case (id, subjects) => subjects.partition(_.id == id) }
+	    	.map(x => (x._1.head, x._2.map(_.id)))
+			.collect
 
-	it should "be created if neccessary" in {
-
+		relationsList.foreach { case (master, slaves) =>
+			master.slaves.toSet shouldEqual slaves.toSet
+		}
 	}
 
 	"Slaves" should "update their master" in {
@@ -100,134 +89,38 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 		val subjects = sc.parallelize(TestData.subjects)
 		val duplicates = sc.parallelize(TestData.duplicates)
 		val input = List(subjects, staging).toAnyRDD() ::: List(duplicates).toAnyRDD()
-		val output = Merging.run(input, sc).head.asInstanceOf[RDD[Subject]].collect.toList
+		val output = Merging.run(input, sc).head.asInstanceOf[RDD[Subject]]
+
+		val relationsList = output
+	    	.groupBy(_.master)
+	    	.map { case (id, subjects) => subjects.partition(_.id == id) }
+	    	.map(x => (x._1.head.id, x._2.map(_.master)))
+	    	.collect
+
+		relationsList.foreach { case (master, slaves) =>
+			slaves.forall(_ == master) shouldBe true
+		}
 	}
 
 	it should "contain a relation to their duplicate" in {
+		val staging = sc.parallelize(TestData.staging)
+		val subjects = sc.parallelize(TestData.subjects)
+		val duplicates = sc.parallelize(TestData.duplicates)
+		val input = List(subjects, staging).toAnyRDD() ::: List(duplicates).toAnyRDD()
+		val output = Merging.run(input, sc).head.asInstanceOf[RDD[Subject]]
 
-	}
+		val duplicateRelations = output
+			.flatMap(_.relations.find(_._2.contains(SubjectManager.duplicateKey)))
+			.mapValues(_.filter(_._1 == SubjectManager.duplicateKey))
+	    	.collect
+	    	.toSet
 
-	"Subject" should "be added to a master node" in {
-		val duplicatesWithScore = TestData.simpleAttributeDuplicatesWithoutMaster()
-		val master = TestData.master()
-		val version = TestData.version("")
-		val duplicatesWithRelation = duplicatesWithScore
-			.flatMap { case (dupe, score) =>
-				val duplicateCandidates = TestData.simpleDuplicateCandidates().headOption
-				Merging.addToMasterNode(master, dupe, duplicateCandidates, version) }
-			.filter(_ != master)
-		val expectedDuplicates = TestData.simpleAttributeDuplicates()
-		duplicatesWithRelation.zip(expectedDuplicates).foreach { case (dupe, expected) =>
-			dupe shouldEqual expected
-			dupe.name shouldEqual expected.name
-			dupe.aliases shouldEqual expected.aliases
-			dupe.category shouldEqual expected.category
-			dupe.relations shouldEqual expected.relations
-		}
-	}
+		val expectedRelations = TestData
+	    	.mergedSubjects
+			.flatMap(_.relations.find(_._2.contains(SubjectManager.duplicateKey)))
+			.map(x => x._1 -> x._2.filter(_._1 == SubjectManager.duplicateKey))
+			.toSet
 
-	"Slave properties" should "be merged" in {
-		val duplicatesWithProperties = TestData.propertyDuplicates()
-		val masterProperties = Merging.mergeProperties(duplicatesWithProperties)
-		val expectedProperties = TestData.mergedProperties()
-		masterProperties shouldEqual expectedProperties
-	}
-
-	"Slave relations" should "be merged" in {
-		val master = TestData.master()
-		val duplicatesWithRelations = TestData.relationDuplicates()
-		val masterRelations = Merging.mergeRelations(master, duplicatesWithRelations)
-		val expectedRelations = TestData.mergedRelations()
-		masterRelations shouldEqual expectedRelations
-	}
-
-	"Simple slave attributes" should "be merged" in {
-		val duplicates = TestData.simpleAttributeDuplicates()
-		val master = TestData.master()
-		val masterSM = TestData.masterSM(master)
-		Merging.mergeSimpleAttributes(masterSM, duplicates)
-		val expectedName = TestData.mergedName()
-		val expectedAliases = TestData.mergedAliases()
-		val expectedCategory = TestData.mergedCategory()
-		master.name shouldEqual expectedName
-		master.aliases shouldEqual expectedAliases
-		master.category shouldEqual expectedCategory
-	}
-
-	"Master slave relations" should "be created" in {
-		val duplicates = TestData.simpleAttributeDuplicates()
-		val masterRelations = Merging.masterRelations(duplicates)
-		val expectedRelations = TestData.masterRelations()
-		masterRelations shouldEqual expectedRelations
-	}
-
-	"Duplicates" should "be merged into a master node" in {
-		val master = TestData.master()
-		val duplicates = TestData.duplicates()
-		val version = TestData.version("Merging Test")
-		val mergedMaster :: duplicateSubjects = Merging.mergeIntoMaster(master, duplicates, version)
-		val expectedMaster = TestData.mergedMaster()
-		mergedMaster shouldEqual expectedMaster
-		mergedMaster.name shouldEqual expectedMaster.name
-		mergedMaster.category shouldEqual expectedMaster.category
-		mergedMaster.aliases shouldEqual expectedMaster.aliases
-		mergedMaster.properties shouldEqual expectedMaster.properties
-		mergedMaster.relations shouldEqual expectedMaster.relations
-	}
-
-	they should "be merged" in {
-		val staging = sc.parallelize(TestData.duplicatesWithoutMaster())
-		val subjects = sc.parallelize(List(TestData.master()))
-		val duplicatecandidates = sc.parallelize(TestData.simpleDuplicateCandidates())
-		val input = List(subjects).toAnyRDD() ++ List(staging).toAnyRDD() ++ List(duplicatecandidates).toAnyRDD()
-		val mergedSubjects = Merging.run(input, sc).fromAnyRDD[Subject]().head.collect.toList
-		val (List(mergedMaster), slaves) = mergedSubjects.partition(_.master.isEmpty)
-		val expectedMaster = TestData.mergedMaster()
-		val expectedSlaves = TestData.duplicates().sortBy(_.id)
-		mergedMaster shouldEqual expectedMaster
-		mergedMaster.name shouldEqual expectedMaster.name
-		mergedMaster.category shouldEqual expectedMaster.category
-		mergedMaster.aliases.toSet shouldEqual expectedMaster.aliases.toSet
-		mergedMaster.properties shouldEqual expectedMaster.properties
-		mergedMaster.relations shouldEqual expectedMaster.relations
-		slaves.sortBy(_.id).zip(expectedSlaves).foreach { case (slave, expected) =>
-			slave shouldEqual expected
-			slave.name shouldEqual expected.name
-			slave.category shouldEqual expected.category
-			slave.aliases.toSet shouldEqual expected.aliases.toSet
-			slave.properties shouldEqual expected.properties
-			slave.relations shouldEqual expected.relations
-		}
-	}
-
-	they should "be merged with the current subjects and create new subjects" in {
-		val staging = sc.parallelize(TestData.smallerDuplicatesWithoutMaster())
-		val subjects = sc.parallelize(TestData.existingSubjects())
-		val duplicates = sc.parallelize(TestData.complexDuplicateCandidates())
-		val input = List(subjects).toAnyRDD() ::: List(staging).toAnyRDD() ::: List(duplicates).toAnyRDD()
-		val mergedSubjects = Merging.run(input, sc).fromAnyRDD[Subject]().head.collect.toList
-		val (masters, slaves) = mergedSubjects.sortBy(_.id).partition(_.master.isEmpty)
-		val newUUIDs = masters
-			.filter(_.id != TestData.masterId)
-			.sortBy(_.relations.keySet.head)
-			.map(_.id)
-		val expectedMasters = TestData.resultMasters(newUUIDs).sortBy(_.id)
-		val expectedSlaves = TestData.resultSlaves(newUUIDs).sortBy(_.id)
-		masters.zip(expectedMasters).foreach { case (master, expected) =>
-			master shouldEqual expected
-			master.name shouldEqual expected.name
-			master.category shouldEqual expected.category
-			master.aliases.toSet shouldEqual expected.aliases.toSet
-			master.properties shouldEqual expected.properties
-			master.relations shouldEqual expected.relations
-		}
-		slaves.zip(expectedSlaves).foreach { case (slave, expected) =>
-			slave shouldEqual expected
-			slave.name shouldEqual expected.name
-			slave.category shouldEqual expected.category
-			slave.aliases.toSet shouldEqual expected.aliases.toSet
-			slave.properties shouldEqual expected.properties
-			slave.relations shouldEqual expected.relations
-		}
+		duplicateRelations shouldEqual expectedRelations
 	}
 }
