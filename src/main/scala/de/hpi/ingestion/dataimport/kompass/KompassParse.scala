@@ -5,14 +5,11 @@ import scala.collection.mutable.ListBuffer
 import org.apache.spark.SparkContext
 import play.api.libs.json._
 import com.datastax.spark.connector._
-import com.fasterxml.jackson.databind.JsonMappingException
 import org.apache.spark.rdd.RDD
 import org.jsoup.Jsoup
 import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.dataimport.kompass.models.KompassEntity
-import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.versioncontrol.VersionDiff.{keyspace, tablename}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 object KompassParse extends SparkJob with JSONParser[KompassEntity]{
@@ -25,7 +22,6 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 
 	// attribute names in JSON
 	val providedAttributes: Seq[String] = Seq(
-		"name",
 		"url",
 		"sector",
 		"specified_sector",
@@ -65,19 +61,10 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 	}
 	// $COVERAGE-ON$
 
-	def extractData(line: String): Option[Map[String, List[String]]] = {
+	override def fillEntityValues(json: JsValue): KompassEntity = {
 		var extractedData: Map[String, List[String]] = Map()
-		val row: Option[String] = Some(cleanJSON(line))
-		if(row.isEmpty) return None
-		var json: JsValue = null
-		try {
-			json = Json.parse(line)
-		} catch {
-			case jme: JsonMappingException =>
-				jme.printStackTrace()
-				return None
-		}
 		providedAttributes.foreach(attribute => extractedData += attribute -> List((json \ attribute).as[String]))
+		val name = getValue(json, List("name")).map(_.as[String])
 
 		val doc = Jsoup.parse((json \ "html").as[String])
 		for((attribute, selector) <- attributeSelectors) {
@@ -113,13 +100,14 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 		}
 		extractedData += "activities" -> activities.toList
 
-		Option(extractedData)
+		KompassEntity(name, extractedData)
 	}
 
 	def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		input
 			.fromAnyRDD[String]()
-			.map(_.flatMap(extractData))
+			.map(_.map(cleanJSON))
+			.map(_.collect { case line: String if line.nonEmpty => parseJSON(line) })
 			.toAnyRDD()
 	}
 }
