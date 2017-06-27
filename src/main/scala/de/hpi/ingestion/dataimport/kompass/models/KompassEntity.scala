@@ -10,9 +10,9 @@ import de.hpi.ingestion.datalake.models.DLImportEntity
   * @param data all other information about the entity
   */
 case class KompassEntity(
-	id: UUID = UUID.randomUUID(),
 	var name: Option[String] = None,
-	var data: Map[String, List[String]] = Map[String, List[String]]()
+	var data: Map[String, List[String]] = Map[String, List[String]](),
+	id: UUID = UUID.randomUUID()
 ) extends DLImportEntity {
 	def get(attribute: String): List[String] = {
 		if(this.fieldNames[KompassEntity]().contains(attribute)) {
