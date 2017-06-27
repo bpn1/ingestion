@@ -103,7 +103,8 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		val propertiesVersion = subject.properties_history.flatMap { case (prop, values) =>
 			findVersion(version, values).map((prop, _))
 		}
-		val relationsVersion = subject.relations_history
+		val relationsVersion = subject
+			.relations_history
 			.mapValues(_.flatMap { case (relationProp, versionList) =>
 				findVersion(version, versionList).map((relationProp, _))
 			})
@@ -229,16 +230,16 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  */
 	def restoreMaster(version: Option[Version], relationsVersions: Map[UUID, Map[String, Version]]): Unit = {
 		val (value, validity, dataSources) = extractVersionData(version)
-		val masterID = value.headOption.map(UUID.fromString)
+		val master = UUID.fromString(value.head)
 
 		// extract master score from the relevant relation
-		val scoreOption = masterID
-			.flatMap(relationsVersions.get)
-			.flatMap(_.get(SubjectManager.masterKey))
-			.flatMap(_.value.headOption)
-			.map(_.toDouble)
+		val scoreOption = relationsVersions
+			.get(master)
+	    	.flatMap(_.get(SubjectManager.masterKey))
+	    	.flatMap(_.value.headOption)
+	    	.map(_.toDouble)
 
-		scoreOption.foreach(score => setMaster(masterID, score, validity, dataSources))
+		scoreOption.foreach(score => setMaster(master, score, validity, dataSources))
 	}
 
 	/**
