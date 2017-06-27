@@ -45,11 +45,11 @@ object TestData {
 
 	def profilingStatisticLables(): Set[String] = {
 		Set(
-			"SparkMLlib Context Extraction",
+			"Spark MLlib Context Extraction",
 			"Ingestion Context Extraction",
-			"SparkMLlib Tfidf Computation",
+			"Spark MLlib Tfidf Computation",
 			"Ingestion Tfidf Computation",
-			"SparkMLlib total",
+			"Spark MLlib total",
 			"Ingestion total"
 		)
 	}

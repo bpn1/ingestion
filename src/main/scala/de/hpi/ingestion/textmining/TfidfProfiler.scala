@@ -43,11 +43,18 @@ object TfidfProfiler extends SparkJob {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val List(sparkTfidf, ingestionTfidf, runtimes) = output
-		//		val sparkTfidf = output(1).asInstanceOf[RDD[Vector]]
-		//		val ingestionTfidf = output(2).asInstanceOf[RDD[(String, Map[String, Double])]]
+		val timestamp = System.currentTimeMillis()
 		runtimes
 			.asInstanceOf[RDD[(String, Long)]]
-			.saveAsTextFile(s"context_tfidf_runtimes_${System.currentTimeMillis()}")
+			.saveAsTextFile(s"tfidf_profiler_runtimes_$timestamp")
+
+		// save output for debug purposes
+		sparkTfidf
+			.asInstanceOf[RDD[Vector]]
+			.saveAsTextFile(s"tfidf_profiler_sparkTfidf_$timestamp")
+		ingestionTfidf
+			.asInstanceOf[RDD[(String, Map[String, Double])]]
+			.saveAsTextFile(s"tfidf_profiler_ingestionTfidf_$timestamp")
 	}
 	// $COVERAGE-ON$
 
@@ -80,7 +87,7 @@ object TfidfProfiler extends SparkJob {
 	}
 
 	/**
-	  * Calculates tfidf values by means of the SparkMLlib.
+	  * Calculates tfidf values by means of the Spark MLlib.
 	  * https://spark.apache.org/docs/1.2.0/mllib-feature-extraction.html
 	  *
 	  * @param wordsPerArticle each article as a list of words
@@ -147,11 +154,11 @@ object TfidfProfiler extends SparkJob {
 		val (ingestionTfidf, timeIngestionTfidf) = profileTime(ingestionTfidfComputation(contextArticles, sc))
 
 		val statistics = List[(String, Long)](
-			("SparkMLlib Context Extraction", timeSparkContext),
+			("Spark MLlib Context Extraction", timeSparkContext),
 			("Ingestion Context Extraction", timeIngestionContext),
-			("SparkMLlib Tfidf Computation", timeSparkTfidf),
+			("Spark MLlib Tfidf Computation", timeSparkTfidf),
 			("Ingestion Tfidf Computation", timeIngestionTfidf),
-			("SparkMLlib total", timeSparkContext + timeSparkTfidf),
+			("Spark MLlib total", timeSparkContext + timeSparkTfidf),
 			("Ingestion total", timeIngestionContext + timeIngestionTfidf)
 		)
 		List(sparkTfidf).toAnyRDD() ++ List(ingestionTfidf).toAnyRDD() ++ List(sc.parallelize(statistics)).toAnyRDD()
