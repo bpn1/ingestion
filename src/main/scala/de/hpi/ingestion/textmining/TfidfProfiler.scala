@@ -136,7 +136,7 @@ object TfidfProfiler extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articles = sc.parallelize(input.fromAnyRDD[ParsedWikipediaEntry]().head.take(1000))
+		val articles = sc.parallelize(input.fromAnyRDD[ParsedWikipediaEntry]().head.take(100000))
 		val tokenizer = IngestionTokenizer(args)
 
 		val (wordsPerArticle, timeSparkContext) = profileTime(contextExtractionForSparkMLlib(articles, tokenizer))
@@ -150,7 +150,7 @@ object TfidfProfiler extends SparkJob {
 			("SparkMLlib Tfidf Computation", timeSparkTfidf),
 			("Ingestion Tfidf Computation", timeIngestionTfidf),
 			("SparkMLlib total", timeSparkContext + timeSparkTfidf),
-			("Ingestion total", timeIngestionTfidf + timeIngestionTfidf)
+			("Ingestion total", timeIngestionContext + timeIngestionTfidf)
 		)
 		List(sc.parallelize(statistics)).toAnyRDD()
 	}
