@@ -87,10 +87,10 @@ object Merging extends SparkJob {
 	  */
 	def mergeProperties(duplicates: List[Subject]): Map[String, List[String]] = {
 		Subject
-	    	.normalizedPropertyKeys
-	    	.map(property => property -> getPrioritizedSingle(property, duplicates))
-	    	.filter(_._2.nonEmpty)
-	    	.toMap
+			.normalizedPropertyKeys
+			.map(property => property -> getPrioritizedSingle(property, duplicates))
+			.filter(_._2.nonEmpty)
+			.toMap
 	}
 
 	/**
@@ -100,8 +100,8 @@ object Merging extends SparkJob {
 	  */
 	def masterRelations(duplicates: List[Subject]): Map[UUID, Map[String, String]] = {
 		duplicates
-			.map(duplicate => duplicate.id -> SubjectManager.masterRelation(duplicate.masterScore))
-	    	.toMap
+			.map(duplicate => duplicate.id -> SubjectManager.masterRelation(duplicate.masterScore.get))
+			.toMap
 	}
 
 	/**
@@ -118,8 +118,7 @@ object Merging extends SparkJob {
 					.filter(_.datasource == datasource)
 					.map(_.masterRelations)
 			}.foldLeft(Map[UUID, Map[String, String]]()) { (accum, relations) =>
-				val keys = accum.keySet ++ relations.keySet
-				keys
+				(accum.keySet ++ relations.keySet)
 					.map(key => key -> (accum.getOrElse(key, Map()) ++ relations.getOrElse(key, Map())))
 					.toMap
 			}.filter(_._2.nonEmpty)
@@ -134,7 +133,7 @@ object Merging extends SparkJob {
 	def getPrioritized(key: String, subjects: List[Subject]): List[String] = {
 		sourcePriority.flatMap { datasource =>
 			subjects
-		    	.filter(_.datasource == datasource)
+				.filter(_.datasource == datasource)
 				.flatMap(_.get(key))
 		}.distinct
 	}
@@ -161,8 +160,8 @@ object Merging extends SparkJob {
 	  */
 	def mergeAttributes(masterManager: SubjectManager, slaves: List[Subject]): Unit = {
 		val names = getPrioritized("name", slaves)
-		val aliases = names.drop(1) ::: slaves.flatMap(_.aliases)
-		val category = getPrioritized("category", slaves)
+		val aliases = names.drop(1) ::: getPrioritized("aliases", slaves)
+		val category = getPrioritizedSingle("category", slaves)
 		val properties = mergeProperties(slaves)
 
 		masterManager.setName(names.headOption)
@@ -220,25 +219,25 @@ object Merging extends SparkJob {
 		val stagingTuple = stagings.map(staging => (staging.id, staging))
 
 		val subjectJoinedDuplicates : RDD[(Duplicates, Subject)] = duplicates
-	    	.map(duplicate => (duplicate.subject_id, duplicate))
-	    	.join(subjectIdTuple)
-	    	.values
+			.map(duplicate => (duplicate.subject_id, duplicate))
+			.join(subjectIdTuple)
+			.values
 
 		val stagingJoinedDuplicates : RDD[(Option[(Double, Subject)], Subject)] = subjectJoinedDuplicates
 			.flatMap { case (duplicate, subject) =>
 				duplicate.candidates.map(candidate => (candidate.id, Tuple2(candidate.score, subject)))
 			}.rightOuterJoin(stagingTuple)
-	    	.values
+			.values
 
 		val taggedSubjects : RDD[Subject] = stagingJoinedDuplicates
-	    	.flatMap { case (option, staging) => option match {
+			.flatMap { case (option, staging) => option match {
 				case Some((score, subject)) => addToMasterNode(subject, staging, score, version)
 				case None => addToMasterNode(staging, version)
 			}}.distinct
 
 		val mergedSubjects = taggedSubjects
-	    	.map(subject => (subject.master, subject))
-	    	.cogroup(subjectMasterTuple)
+			.map(subject => (subject.master, subject))
+			.cogroup(subjectMasterTuple)
 			.map { case (id, (newDuplicates, oldDuplicates)) =>
 				val duplicates = (newDuplicates ++ oldDuplicates).toList.distinct
 				val (master, slaves) = duplicates.partition(_.id == id)

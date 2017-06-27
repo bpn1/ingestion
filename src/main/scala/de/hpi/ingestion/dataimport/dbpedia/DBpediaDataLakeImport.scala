@@ -56,9 +56,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		strategies: Map[String, List[String]],
 		classifier: AClassifier[Tag]
 	): Subject = {
-		val subject = Subject.empty()
-		subject.datasource = "dbpedia"
-
+		val subject = Subject.empty(datasource = "dbpedia")
 		val sm = new SubjectManager(subject, version)
 
 		sm.setName(entity.label.map(_.replaceAll("""@de \.$""", "")))

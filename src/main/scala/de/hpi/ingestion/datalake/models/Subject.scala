@@ -70,11 +70,11 @@ case class Subject(
 	  * Returns the score of the slave relation to this Subjects master node if it has one.
 	  * @return score of the master node relation
 	  */
-	def masterScore: Double = {
-		if (this.datasource == "master") return 1.0
+	def masterScore: Option[Double] = {
 		this
-			.relations(this.master)(SubjectManager.slaveKey)
-			.toDouble
+			.relations
+			.get(this.master)
+			.map(_(SubjectManager.slaveKey).toDouble)
 	}
 
 	/**
@@ -95,9 +95,9 @@ case class Subject(
 	def slaves: List[UUID] = {
 		this
 			.relations
-	    	.filter(_._2.contains(SubjectManager.masterKey))
-	    	.keys
-	    	.toList
+			.filter(_._2.contains(SubjectManager.masterKey))
+			.keys
+			.toList
 	}
 }
 
@@ -114,10 +114,11 @@ object Subject {
 	/**
 	  * Creates a default empty Subject with equal id and master
 	  * @param id uuid for master and id
-	  * @return Subject with equal id and master and an empty datasource
+	  * @param datasource datasource of the Subject
+	  * @return Subject with equal id and master and the given datasource
 	  */
-	def empty(id: UUID = UUID.randomUUID()): Subject = {
-		Subject(id = id, master = id, datasource = null)
+	def empty(id: UUID = UUID.randomUUID(), datasource: String): Subject = {
+		Subject(id = id, master = id, datasource = String)
 	}
 
 	/**

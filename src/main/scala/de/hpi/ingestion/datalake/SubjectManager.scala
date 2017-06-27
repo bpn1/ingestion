@@ -236,9 +236,9 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		// extract master score from the relevant relation
 		val scoreOption = relationsVersions
 			.get(master)
-	    	.flatMap(_.get(SubjectManager.masterKey))
-	    	.flatMap(_.value.headOption)
-	    	.map(_.toDouble)
+			.flatMap(_.get(SubjectManager.masterKey))
+			.flatMap(_.value.headOption)
+			.map(_.toDouble)
 
 		scoreOption.foreach(score => setMaster(master, score, validity, dataSources))
 	}

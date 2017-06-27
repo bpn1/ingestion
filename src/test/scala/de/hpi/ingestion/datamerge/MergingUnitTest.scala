@@ -17,7 +17,7 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 
 		val (existingMaster, newMaster) = output
 			.filter(_.datasource == "master")
-	    	.partition(master => TestData.idList.contains(master.id))
+			.partition(master => TestData.idList.contains(master.id))
 
 		existingMaster
 			.map { master =>
@@ -30,17 +30,20 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 						.find(_ == master)
 						.get
 						.properties
-				    	.mapValues(_.sorted)
+						.mapValues(_.sorted)
 				)
 			}
 	    	.foreach { case (properties, expected) =>
 				properties shouldEqual expected
 			}
 
-		newMaster
+		val newMasterAttributes = newMaster
 			.map(_.properties.mapValues(_.sorted))
 			.toSet
-	    	.shouldEqual(Set(TestData.mergedSubjects(8).properties, TestData.mergedSubjects(10).properties))
+
+		val expectedAttributes = Set(TestData.mergedSubjects(8).properties, TestData.mergedSubjects(10).properties)
+
+		newMaster shouldEqual expectedAttributes
 	}
 
 	it should "contain relevant relations" in {
@@ -60,10 +63,16 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 				relations shouldEqual expected
 			}
 
-		newMaster
+		val newMasterAttributes = newMaster
 			.map(_.masterRelations)
 	    	.toSet
-	    	.shouldEqual(Set(TestData.mergedSubjects(8).masterRelations, TestData.mergedSubjects(10).masterRelations))
+
+		val expectedAttributes = Set(
+			TestData.mergedSubjects(8).masterRelations,
+			TestData.mergedSubjects(10).masterRelations
+		)
+
+		newMasterAttributes shouldEqual expectedAttributes
 	}
 
 	it should "contain a master relations for each slave" in {
@@ -75,8 +84,8 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 
 		val relationsList = output
 			.groupBy(_.master)
-	    	.map { case (id, subjects) => subjects.partition(_.id == id) }
-	    	.map(x => (x._1.head, x._2.map(_.id)))
+			.map { case (id, subjects) => subjects.partition(_.id == id) }
+			.map(x => (x._1.head, x._2.map(_.id)))
 			.collect
 
 		relationsList.foreach { case (master, slaves) =>
@@ -92,10 +101,10 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 		val output = Merging.run(input, sc).head.asInstanceOf[RDD[Subject]]
 
 		val relationsList = output
-	    	.groupBy(_.master)
-	    	.map { case (id, subjects) => subjects.partition(_.id == id) }
-	    	.map(x => (x._1.head.id, x._2.map(_.master)))
-	    	.collect
+			.groupBy(_.master)
+			.map { case (id, subjects) => subjects.partition(_.id == id) }
+			.map(x => (x._1.head.id, x._2.map(_.master)))
+			.collect
 
 		relationsList.foreach { case (master, slaves) =>
 			slaves.forall(_ == master) shouldBe true
@@ -112,11 +121,11 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 		val duplicateRelations = output
 			.flatMap(_.relations.find(_._2.contains(SubjectManager.duplicateKey)))
 			.mapValues(_.filter(_._1 == SubjectManager.duplicateKey))
-	    	.collect
-	    	.toSet
+			.collect
+			.toSet
 
 		val expectedRelations = TestData
-	    	.mergedSubjects
+			.mergedSubjects
 			.flatMap(_.relations.find(_._2.contains(SubjectManager.duplicateKey)))
 			.map(x => x._1 -> x._2.filter(_._1 == SubjectManager.duplicateKey))
 			.toSet
