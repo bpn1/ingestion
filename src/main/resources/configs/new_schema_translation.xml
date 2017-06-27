@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <inputKeyspace>datalake</inputKeyspace>
+        <inputTable>subject_old</inputTable>
+        <outputKeyspace>datalake</outputKeyspace>
+        <outputTable>subject</outputTable>
+        <datasource>implisense</datasource>
+    </settings>
+</config>
