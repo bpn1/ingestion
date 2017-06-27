@@ -67,9 +67,9 @@ object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 		val title = doc.head().text()
 		val content = contentTags
 			.map(doc.select)
-	    	.find(_.size == 1)
-	    	.map(_.text())
-	    	.getOrElse(doc.body.text())
+			.find(_.size == 1)
+			.map(_.text())
+			.getOrElse(doc.body.text())
 		s"$title $content".trim
 	}
 
@@ -84,7 +84,7 @@ object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 		val content = extractString(json, List("content"))
 		val text = content
 			.map(_.replaceAll("&nbsp;", " "))
-		    .map(extractArticleText)
+			.map(extractArticleText)
 		TrieAliasArticle(id, text)
 	}
 }

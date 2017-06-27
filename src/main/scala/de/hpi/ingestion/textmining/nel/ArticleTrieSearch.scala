@@ -93,6 +93,7 @@ object ArticleTrieSearch extends SparkJob {
 				val trie = deserializeTrie(trieStreamFunction(settings("smallerTrieFile")))
 				partition.map(findAliases(_, tokenizer, trie))
 			}, true)
-		List(aliasArticles).toAnyRDD()
+		val trieAliases = aliasArticles.map(article => (article.article, article.triealiases))
+		List(trieAliases).toAnyRDD()
 	}
 }

@@ -2618,16 +2618,14 @@ object TestData {
 		SimilarityMeasureStats(null, List(averagedStatisticTuples()), Option("Test comment"))
 	}
 
-	def randomForestModelWithNegativePrediction(): RandomForestModel = {
-		val node = new Node(0, new Predict(0.0, 1.0), 0.0, true, None, None, None, None)
+	def randomForestModel(prediction: Double = 0.0): RandomForestModel = {
+		val node = new Node(0, new Predict(prediction, 1.0), 0.0, true, None, None, None, None)
 		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
 		new RandomForestModel(Algo.Classification, Array(dtmodel))
 	}
 
-	def randomForestModelWithPositivePrediciton(sc: SparkContext): RandomForestModel = {
-		val node = new Node(0, new Predict(1.0, 1.0), 0.0, true, None, None, None, None)
-		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
-		new RandomForestModel(Algo.Classification, Array(dtmodel))
+	def hdfsRandomForestModel(prediction: Double = 0.0)(sc: SparkContext) = {
+		randomForestModel(prediction)
 	}
 
 	def crossValidationMethod(

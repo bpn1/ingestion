@@ -26,9 +26,9 @@
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
         <numberArticlePartitions>10</numberArticlePartitions>
-        <articleCountTable>wikipediaarticlecount</articleCountTable>
         <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
         <tfidfTable>articletfidf</tfidfTable>
+        <articleCountTable>wikipediaarticlecount</articleCountTable>
         <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
     </settings>
 </config>
