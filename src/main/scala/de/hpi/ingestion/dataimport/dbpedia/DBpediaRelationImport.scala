@@ -50,25 +50,25 @@ object DBpediaRelationImport extends SparkJob {
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val version = Version("DBpediaRelationImport", List("dbpedia"), sc, false)
-		val dbpedia = input.fromAnyRDD[Subject]().head
-		val relations = input.fromAnyRDD[Relation]().last
+		val dbpedia = input.head.asInstanceOf[RDD[Subject]]
+		val relations = input.last.asInstanceOf[RDD[Relation]]
 
 		val dbpediaByName = dbpedia
 			.collect { case subject: Subject if subject.name.isDefined => (subject.name.get, subject) }
 
 		val relatedDBpedia = relations
 			.keyBy(_.objectentity)
-	    	.join(dbpediaByName)
+			.join(dbpediaByName)
 			.values
 			.map { case (Relation(subjectEntity, relationType, objectEntity), subject) =>
 				(subjectEntity, List((relationType, subject.id)))
 			}.reduceByKey(_ ::: _)
-	    	.join(dbpediaByName)
+			.join(dbpediaByName)
 			.values
-	    	.map { case (subjectRelations, subject) =>
-				addRelation(subject, subjectRelations, version)
+			.map { case (subjectRelations, subject) =>
+				addRelations(subject, subjectRelations, version)
 				subject
-			}.distinct
+			}
 
 		List(relatedDBpedia).toAnyRDD()
 	}
@@ -79,7 +79,7 @@ object DBpediaRelationImport extends SparkJob {
 	  * @param relations relation type and objectEntity Id
 	  * @param version version of the Import
 	  */
-	def addRelation(subjectEntity: Subject, relations: List[(String, UUID)], version: Version): Unit = {
+	def addRelations(subjectEntity: Subject, relations: List[(String, UUID)], version: Version): Unit = {
 		val subjectManager = new SubjectManager(subjectEntity, version)
 
 		val newRelations = relations

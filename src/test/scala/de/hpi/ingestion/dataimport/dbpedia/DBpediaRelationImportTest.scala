@@ -14,13 +14,13 @@ class DBpediaRelationImportTest extends FlatSpec with SharedSparkContext with Ma
 			.run(input, sc)
 			.fromAnyRDD[Subject]()
 			.head
-	    	.collect
-	    	.toList
-	    	.sortBy(_.id)
+			.collect
+			.toList
+			.sortBy(_.id)
 
 		val expected =  TestData
 			.dbpediaImportedRelations
-	    	.sortBy(_.id)
+			.sortBy(_.id)
 
 		output should have length expected.length
 		(output, expected).zipped.foreach { case (subject, expectedSubject) =>
