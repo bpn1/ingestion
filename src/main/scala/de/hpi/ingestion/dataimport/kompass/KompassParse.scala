@@ -67,38 +67,34 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 		val name = getValue(json, List("name")).map(_.as[String])
 
 		val doc = Jsoup.parse((json \ "html").as[String])
-		for((attribute, selector) <- attributeSelectors) {
+		attributeSelectors.foreach { case (attribute, selector) =>
 			val elem = doc.select(selector).first
-			if(elem == null) {
+			if (elem == null) {
 				println("Could not find attribute " + attribute + " with selector " + selector)
 			} else {
 				extractedData += attribute -> List(elem.text.trim)
 			}
 		}
-		val city = doc.getElementById("search_category_link[3]")
-		if(city != null) {
-			extractedData += "city" -> List(city.text.trim)
-		}
-		val executives = ListBuffer[String]()
-		for(element <- doc.select("#executives .name")) {
-			executives.append(element.text)
-		}
-		extractedData += "executives" -> executives.toList
 
-		for(element <- doc.select(".general.bloc .presentation.global li")) {
+		val city = doc.getElementById("search_category_link[3]")
+		if(city != null) { extractedData += "city" -> List(city.text.trim) }
+
+		var executives = List[String]()
+		doc.select("#executives .name").foreach(executives += _.text)
+		extractedData += "executives" -> executives
+
+		doc.select(".general.bloc .presentation.global li").foreach { element =>
 			val texts = element.select("p")
 			val title = texts.get(0).text.trim
 			val content = texts.get(1).text.trim
-			if(content != "") {
+			if (content != "") {
 				extractedData += title -> List(content)
 			}
 		}
 
-		val activities = ListBuffer[String]()
-		for(element <- doc.select("#secondaryActivitiesTree a")) {
-			activities.append(element.text.replace("\"","").trim)
-		}
-		extractedData += "activities" -> activities.toList
+		var activities = List[String]()
+		doc.select("#secondaryActivitiesTree a").foreach(activities += _.text.replace("\"","").trim)
+		extractedData += "activities" -> activities
 
 		KompassEntity(name, extractedData)
 	}
