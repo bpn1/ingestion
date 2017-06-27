@@ -118,7 +118,7 @@ object Subject {
 	  * @return Subject with equal id and master and the given datasource
 	  */
 	def empty(id: UUID = UUID.randomUUID(), datasource: String): Subject = {
-		Subject(id = id, master = id, datasource = String)
+		Subject(id = id, master = id, datasource = datasource)
 	}
 
 	/**

@@ -100,7 +100,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 		sm.setMaster(masterId, 0.5)
 		subject.master shouldEqual masterId
-		subject.masterScore shouldEqual 0.5
+		subject.masterScore should contain(0.5)
 		subject.master_history should have length 1
 		subject.master_history.head.value shouldEqual List(masterId.toString)
 		subject.relations(masterId) shouldEqual SubjectManager.slaveRelation(0.5)
@@ -109,20 +109,20 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 		sm.setMaster(masterId, 0.3)
 		subject.master_history should have length 1
-		subject.masterScore shouldEqual 0.5
+		subject.masterScore should contain(0.5)
 		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 1
 		subject.relations_history(masterId)(SubjectManager.slaveKey).last.value shouldEqual List("0.5")
 
 		sm.setMaster(masterId, 1.0)
 		subject.master_history should have length 1
-		subject.masterScore shouldEqual 1.0
+		subject.masterScore should contain(1.0)
 		subject.relations(masterId) shouldEqual SubjectManager.slaveRelation(1.0)
 		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 2
 		subject.relations_history(masterId)(SubjectManager.slaveKey).last.value shouldEqual List("1.0")
 
 		sm.setMaster(masterId2, 0.5)
 		subject.master shouldEqual masterId2
-		subject.masterScore shouldEqual 0.5
+		subject.masterScore should contain(0.5)
 		subject.master_history should have length 2
 		subject.master_history.last.value shouldEqual List(masterId2.toString)
 		subject.relations.get(masterId) shouldBe empty

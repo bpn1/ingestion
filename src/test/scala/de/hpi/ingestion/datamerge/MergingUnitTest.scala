@@ -43,7 +43,7 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 
 		val expectedAttributes = Set(TestData.mergedSubjects(8).properties, TestData.mergedSubjects(10).properties)
 
-		newMaster shouldEqual expectedAttributes
+		newMasterAttributes shouldEqual expectedAttributes
 	}
 
 	it should "contain relevant relations" in {
@@ -119,16 +119,16 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 		val output = Merging.run(input, sc).head.asInstanceOf[RDD[Subject]]
 
 		val duplicateRelations = output
-			.flatMap(_.relations.find(_._2.contains(SubjectManager.duplicateKey)))
+			.flatMap(_.relations.filter(_._2.contains(SubjectManager.duplicateKey)))
 			.mapValues(_.filter(_._1 == SubjectManager.duplicateKey))
 			.collect
-			.toSet
+			.sortBy(_._1)
 
 		val expectedRelations = TestData
 			.mergedSubjects
-			.flatMap(_.relations.find(_._2.contains(SubjectManager.duplicateKey)))
+			.flatMap(_.relations.filter(_._2.contains(SubjectManager.duplicateKey)))
 			.map(x => x._1 -> x._2.filter(_._1 == SubjectManager.duplicateKey))
-			.toSet
+			.sortBy(_._1)
 
 		duplicateRelations shouldEqual expectedRelations
 	}

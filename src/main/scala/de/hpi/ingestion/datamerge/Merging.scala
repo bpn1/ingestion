@@ -56,13 +56,19 @@ object Merging extends SparkJob {
 	  * @param version Version used for versioning
 	  * @return List of the subject, staging and master Subject
 	  */
-	def addToMasterNode(subject: Subject, staging: Subject, score: Double, version: Version): List[Subject] = {
+	def addToMasterNode(
+		subject: Subject,
+		staging: Subject,
+		score: Double,
+		version: Version
+	): List[(Subject, Map[UUID, Map[String, String]])] = {
 		val stagingManager = new SubjectManager(staging, version)
 		stagingManager.setMaster(subject.master, score)
 
-		SubjectManager.addSymRelation(subject, staging, SubjectManager.isDuplicateRelation(score), version)
-
-		List(subject, staging)
+		List(
+			(subject, Map(staging.id -> SubjectManager.isDuplicateRelation(score))),
+			(staging, Map(subject.id -> SubjectManager.isDuplicateRelation(score)))
+		)
 	}
 
 	/**
@@ -71,12 +77,15 @@ object Merging extends SparkJob {
 	  * @param version Version used for versioning
 	  * @return List of the subject, staging and master Subject
 	  */
-	def addToMasterNode(staging: Subject, version: Version): List[Subject] = {
+	def addToMasterNode(staging: Subject, version: Version): List[(Subject, Map[UUID, Map[String, String]])] = {
 		val master = Subject.master()
 		val stagingManager = new SubjectManager(staging, version)
 
 		stagingManager.setMaster(master.master)
-		List(staging, master)
+		List(
+			(master, Map[UUID, Map[String, String]]()),
+			(staging, Map[UUID, Map[String, String]]())
+		)
 	}
 
 	/**
@@ -219,7 +228,7 @@ object Merging extends SparkJob {
 		val stagingTuple = stagings.map(staging => (staging.id, staging))
 
 		val subjectJoinedDuplicates : RDD[(Duplicates, Subject)] = duplicates
-			.map(duplicate => (duplicate.subject_id, duplicate))
+			.keyBy(_.subject_id)
 			.join(subjectIdTuple)
 			.values
 
@@ -230,10 +239,17 @@ object Merging extends SparkJob {
 			.values
 
 		val taggedSubjects : RDD[Subject] = stagingJoinedDuplicates
-			.flatMap { case (option, staging) => option match {
-				case Some((score, subject)) => addToMasterNode(subject, staging, score, version)
-				case None => addToMasterNode(staging, version)
-			}}.distinct
+			.flatMap {
+				case (Some((score, subject)), staging) => addToMasterNode(subject, staging, score, version)
+				case (None, staging) => addToMasterNode(staging, version)
+			}.reduceByKey(_ ++ _)
+	    	.map {
+				case (subject, relations) if relations.nonEmpty =>
+					val subjectManager = new SubjectManager(subject, version)
+					subjectManager.addRelations(relations)
+					subject
+				case (subject, _) => subject
+			}
 
 		val mergedSubjects = taggedSubjects
 			.map(subject => (subject.master, subject))
