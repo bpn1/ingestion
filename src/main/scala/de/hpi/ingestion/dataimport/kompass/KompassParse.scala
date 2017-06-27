@@ -1,7 +1,6 @@
 package de.hpi.ingestion.dataimport.kompass
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable.ListBuffer
 import org.apache.spark.SparkContext
 import play.api.libs.json._
 import com.datastax.spark.connector._
@@ -16,11 +15,9 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 	appName = "Kompass Parse"
 	configFile = "textmining.xml"
 	val inputFile = "kompass.json"
-
 	val keyspace = "datalake"
 	val outputTablename = "kompass_entities"
 
-	// attribute names in JSON
 	val providedAttributes: Seq[String] = Seq(
 		"url",
 		"sector",
@@ -28,7 +25,6 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 		"county",
 		"district"
 	)
-	// attribute names and CSS selectors in HTML
 	val attributeSelectors = Map(
 		"address" -> ".addressCoordinates",
 		"turnover" -> ".turnover li p:eq(1)",
