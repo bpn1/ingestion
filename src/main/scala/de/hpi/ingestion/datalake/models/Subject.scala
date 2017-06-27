@@ -77,6 +77,10 @@ case class Subject(
 			.toDouble
 	}
 
+	/**
+	  * Returns the relation relevant for relation aggregation for merging.
+	  * @return Map containing all relevant relations
+	  */
 	def masterRelations: Map[UUID, Map[String, String]] = {
 		this
 	    	.relations
@@ -107,10 +111,20 @@ object Subject {
 		.getLines
 		.toSet
 
+	/**
+	  * Creates a default empty Subject with equal id and master
+	  * @param id uuid for master and id
+	  * @return Subject with equal id and master and an empty datasource
+	  */
 	def empty(id: UUID = UUID.randomUUID()): Subject = {
 		Subject(id = id, master = id, datasource = null)
 	}
 
+	/**
+	  * Creates a default master Subject
+	  * @param id uuid for master and id
+	  * @return Subject with equal id and master and master as its datasource
+	  */
 	def master(id: UUID = UUID.randomUUID()): Subject = {
 		Subject(id = id, master = id, datasource = "master")
 	}

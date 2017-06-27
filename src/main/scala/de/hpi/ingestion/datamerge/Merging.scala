@@ -126,10 +126,10 @@ object Merging extends SparkJob {
 	}
 
 	/**
-	  * Retrieves Attributes
-	  * @param key
-	  * @param subjects
-	  * @return
+	  * Retrieves Attributes regarding the source priorities
+	  * @param key name of the attribute
+	  * @param subjects subjects from which the attribute should be retrieved from
+	  * @return values of the attribute
 	  */
 	def getPrioritized(key: String, subjects: List[Subject]): List[String] = {
 		sourcePriority.flatMap { datasource =>
@@ -140,10 +140,10 @@ object Merging extends SparkJob {
 	}
 
 	/**
-	  * Retrive
-	  * @param key
-	  * @param subjects
-	  * @return
+	  * Retrieve Attributes regarding the source priorities taking the first non empty candidate
+	  * @param key name of the attribute
+	  * @param subjects subjects from which the attribute should be retrieved from
+	  * @return values of the attribute
 	  */
 	def getPrioritizedSingle(key: String, subjects: List[Subject]): List[String] = {
 		sourcePriority.map { datasource =>
