@@ -1,7 +1,6 @@
 package de.hpi.ingestion.datalake
 
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.versioncontrol.VersionDiff.timeFromUUID
 
@@ -73,8 +72,10 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  */
 	def findVersion(queryVersionID: UUID, versionList: List[Version]): Option[Version] = {
 		val queryVersion = versionList.find(_.version == queryVersionID)
-		val olderVersions = versionList.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersionID))
-		val olderVersion = olderVersions.sortBy(v => timeFromUUID(v.version)).lastOption
+		val olderVersion = versionList
+			.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersionID))
+			.sortBy(v => timeFromUUID(v.version))
+			.lastOption
 		queryVersion.orElse(olderVersion)
 	}
 
