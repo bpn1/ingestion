@@ -29,7 +29,7 @@ class TfidfProfilerTest extends FlatSpec with SharedSparkContext with Matchers {
 		statisticLabels shouldEqual TestData.profilingStatisticLables()
 	}
 
-	"Calculated Tfidf values" should "not be empty" in {
+	"Calculated tf-idf values" should "not be empty" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
 		val testDocFreqFunction = TestData.docfreqStream("smalldocfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
@@ -43,11 +43,34 @@ class TfidfProfilerTest extends FlatSpec with SharedSparkContext with Matchers {
 		val ingestionTfidf = ingestionTfidfRDD
 			.asInstanceOf[RDD[(String, Map[String, Double])]]
 			.collect
+			.toSet
 
 		sparkTfidf should not be empty
 		sparkTfidf.foreach(_.toArray should not be empty)
 		ingestionTfidf should not be empty
 		ingestionTfidf.foreach(_._2 should not be empty)
+
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+	}
+
+	they should "be exactly these tf-idf values" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val testDocFreqFunction = TestData.docfreqStream("smalldocfreq") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+		val input = List(articles).toAnyRDD()
+		val List(sparkTfidfRDD, ingestionTfidfRDD, runtimesRDD) = TfidfProfiler.run(input, sc)
+		val sparkTfidf = sparkTfidfRDD
+			.asInstanceOf[RDD[Vector]]
+			.collect
+		val ingestionTfidf = ingestionTfidfRDD
+			.asInstanceOf[RDD[(String, Map[String, Double])]]
+			.collect
+			.toSet
+
+		sparkTfidf shouldEqual TestData.profilerTfidfVectors()
+		ingestionTfidf shouldEqual TestData.profilerTfidfMaps()
 
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
