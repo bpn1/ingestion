@@ -2635,11 +2635,11 @@ object TestData {
 		maxDepth: Int = 4,
 		maxBins: Int = 32
 	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
-		(simMeasureStats(), Option(randomForestModelWithNegativePrediction()))
+		(simMeasureStats(), Option(randomForestModel()))
 	}
 
 	def loadRandomForestModel(sc: SparkContext): RandomForestModel = {
-		randomForestModelWithNegativePrediction()
+		randomForestModel()
 	}
 
 	def formattedPredictionStatistics(): String = {

@@ -120,7 +120,6 @@ import de.hpi.ingestion.textmining.{AliasTrieSearch, CosineContextComparator, Te
 import org.scalatest.{FlatSpec, Matchers}
 
 class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
-
 	"Entities" should "be tagged in articles" in {
 		val oldModelFunction = TextNEL.loadModelFunction
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction

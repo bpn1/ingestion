@@ -1,5 +1,5 @@
 package de.hpi.ingestion.textmining.nel
-import de.hpi.ingestion.textmining.models.{Link, TrieAlias, TrieAliasArticle}
+import de.hpi.ingestion.textmining.models._
 
 // scalastyle:off line.size.limit
 
