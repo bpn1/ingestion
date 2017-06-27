@@ -60,7 +60,11 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 			.saveToCassandra(keyspace, outputTablename)
 	}
 	// $COVERAGE-ON$
-
+	/**
+	  * Extracts data from the input json and maps them to a Kompass entity.
+	  * @param json JSON-Object containing the data
+	  * @return KompassEntity containing the parsed data
+	  */
 	override def fillEntityValues(json: JsValue): KompassEntity = {
 		var extractedData: Map[String, List[String]] = Map()
 		providedAttributes.foreach(attribute => extractedData += attribute -> List((json \ attribute).as[String]))
@@ -99,6 +103,13 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 		KompassEntity(name, extractedData)
 	}
 
+	/**
+	  * Extracts the information from the json containing the kompass data.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
 	def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		input
 			.fromAnyRDD[String]()
