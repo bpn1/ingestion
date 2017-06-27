@@ -237,4 +237,11 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 		subject.relations_history(sub2)("key 3") should have length 2
 		subject.relations_history(sub2)("key 4") should have length 2
 	}
+
+	"The correct version" should "be found" in {
+		val sm = new SubjectManager(Subject(), Version(program = ""))
+		val foundVersions = TestData.versionQueries().map((sm.findVersion _).tupled).map(_.map(_.version))
+		val expectedVersions = TestData.versionQueryResults()
+		foundVersions shouldEqual expectedVersions
+	}
 }

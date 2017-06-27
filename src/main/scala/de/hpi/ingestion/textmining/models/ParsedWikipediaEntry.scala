@@ -53,7 +53,13 @@ case class ParsedWikipediaEntry(
 	  * @return all links
 	  */
 	def allLinks(): List[Link] = {
-		textlinks ++ templatelinks ++ categorylinks ++ listlinks ++ disambiguationlinks ++ extendedlinks()
+		List(
+			textlinks,
+			templatelinks,
+			categorylinks,
+			listlinks,
+			disambiguationlinks,
+			extendedlinks()).flatten
 	}
 
 	/**

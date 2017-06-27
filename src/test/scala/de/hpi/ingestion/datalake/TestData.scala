@@ -162,5 +162,33 @@ object TestData {
 			"831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,"
 		)
 	}
+
+	def versionQueries(): List[(UUID, List[Version])] = {
+		List(
+			(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"), List(
+				Version(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"), "test"),
+				Version(UUID.fromString("224e1a50-13e2-11e7-9a30-7384674b582f"), "test"))),
+			(UUID.fromString("224e1a50-13e2-11e7-9a30-7384674b582f"), List(
+				Version(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"), "test"),
+				Version(UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921"), "test"))),
+			(UUID.fromString("7b410340-243e-11e7-937a-ad9adce5e136"), List(
+				Version(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"), "test"),
+				Version(UUID.fromString("224e1a50-13e2-11e7-9a30-7384674b582f"), "test"),
+				Version(UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921"), "test"))),
+			(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"), List(
+				Version(UUID.fromString("224e1a50-13e2-11e7-9a30-7384674b582f"), "test"),
+				Version(UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921"), "test"),
+				Version(UUID.fromString("7b410340-243e-11e7-937a-ad9adce5e136"), "test")))
+		)
+	}
+
+	def versionQueryResults(): List[Option[UUID]] = {
+		List(
+			Option(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d")),
+			Option(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d")),
+			Option(UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921")),
+			None
+		)
+	}
 }
 // scalastyle:on line.size.limit

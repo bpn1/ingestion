@@ -1,6 +1,6 @@
 package de.hpi.ingestion.dataimport.spiegel
 
-import de.hpi.ingestion.dataimport.spiegel.models.SpiegelArticle
+import de.hpi.ingestion.textmining.models.TrieAliasArticle
 import play.api.libs.json.{JsObject, Json}
 import scala.io.Source
 
@@ -18,32 +18,40 @@ object TestData {
 			.map(_.as[JsObject])
 	}
 
-	def parsedArticles(): List[SpiegelArticle] = {
+	def spiegelPages(): List[String] = {
 		List(
-			SpiegelArticle(
-				id = "spiegel id 1",
-				url = Option("spiegel.de/test1"),
-				title = Option("test title 1"),
+			"""<div class="spArticleContent">test tag 1</div> abc""",
+			"""<div class="dig-artikel">test tag 2</div> abc""",
+			"""<div class="article-section">test tag 3</div> abc""",
+			"""test no tag"""
+		)
+	}
+
+	def pageTexts(): List[String] = {
+		List(
+			"test tag 1",
+			"test tag 2",
+			"test tag 3",
+			"test no tag"
+		)
+	}
+
+	def parsedArticles(): List[TrieAliasArticle] = {
+		List(
+			TrieAliasArticle(
+				article = "spiegel id 1",
 				text = Option("test title 1 test body 1")),
-			SpiegelArticle(
-				id = "spiegel id 2",
-				url = Option("spiegel.de/test2"),
-				title = Option("test title 2"),
+			TrieAliasArticle(
+				article = "spiegel id 2",
 				text = Option("test body 2")),
-			SpiegelArticle(
-				id = "spiegel id 3",
-				url = None,
-				title = Option("test title 3"),
+			TrieAliasArticle(
+				article = "spiegel id 3",
 				text = Option("test title 3")),
-			SpiegelArticle(
-				id = "spiegel id 4",
-				url = Option("spiegel.de/test4"),
-				title = None,
+			TrieAliasArticle(
+				article = "spiegel id 4",
 				text = Option("abc")),
-			SpiegelArticle(
-				id = "spiegel id 5",
-				url = Option("spiegel.de/test5"),
-				title = Option("test title 5"),
+			TrieAliasArticle(
+				article = "spiegel id 5",
 				text = None))
 	}
 }

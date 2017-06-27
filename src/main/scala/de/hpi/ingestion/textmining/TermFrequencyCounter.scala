@@ -72,20 +72,34 @@ object TermFrequencyCounter extends SparkJob {
 	  * @return list of tuples containing the link and its context
 	  */
 	def extractLinkContexts(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): ParsedWikipediaEntry = {
-		val contextSize = settings("contextSize").toInt
-		val tokens = tokenizer.onlyTokenize(entry.getText())
+		val tokens = tokenizer.onlyTokenizeWithOffst(entry.getText())
 		val contextLinks = (entry.textlinksreduced ++ entry.extendedlinks()).map { link =>
-			val aliasTokens = tokenizer.onlyTokenize(link.alias)
-			val aliasIndex = tokens.indexOfSlice(aliasTokens)
-			val contextStart = Math.max(aliasIndex - contextSize, 0)
-			val preAliasContext = tokens.slice(contextStart, aliasIndex)
-			val contextEnd = Math.min(aliasIndex + contextSize, tokens.length)
-			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
-			val context = preAliasContext ++ postAliasContext
-			val bag = Bag.extract(tokenizer.process(context))
-			link.copy(context = bag.getCounts())
+			val context = extractContext(tokens, link, tokenizer).getCounts()
+			link.copy(context = context)
 		}
 		entry.copy(linkswithcontext = contextLinks)
+	}
+
+	/**
+	  * Extracts the context of a given link out of its article.
+	  * @param tokens Offset Tokens of the links article
+	  * @param link Link whose context will be extracted
+	  * @param tokenizer tokenizer used to tokenize the Links alias
+	  * @return Bag of words of the links context
+	  */
+	def extractContext(tokens: List[OffsetToken], link: Link, tokenizer: IngestionTokenizer): Bag[String, Int] = {
+		val contextSize = settings("contextSize").toInt
+		val aliasTokens = tokenizer.onlyTokenizeWithOffst(link.alias)
+		tokens.find(token => link.offset.contains(token.beginOffset)).map { firstAliasToken =>
+			val aliasIndex = tokens.indexOf(firstAliasToken)
+			val aliasTokenLength = aliasTokens.length
+			val contextStart = Math.max(aliasIndex - contextSize, 0)
+			val preAliasContext = tokens.slice(contextStart, aliasIndex)
+			val contextEnd = Math.min(aliasIndex + aliasTokenLength + contextSize, tokens.length)
+			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
+			val context = (preAliasContext ++ postAliasContext).map(_.token)
+			Bag.extract(tokenizer.process(context))
+		}.getOrElse(Bag.extract(Nil))
 	}
 
 	/**

@@ -46,16 +46,13 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val contexts = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformArticleTfs(articles),
 				numDocuments,
-				defaultIdf,
-				CosineContextComparator.settings)
+				CosineContextComparator.defaultIdf(numDocuments, 2))
 			.collect
 		contexts should not be empty
 		contexts.foreach(context => context._2 should not be empty)
@@ -71,18 +68,16 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq2") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(
 			TestData.articlesWithCompleteContexts()
 				.toList
 				.filter(_.title != "Streitberg (Brachttal)"))
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val contexts = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformArticleTfs(articles),
 				numDocuments,
-				defaultIdf)
+				CosineContextComparator.defaultIdf(numDocuments, 2))
 			.collect
 			.toSet
 		contexts shouldEqual TestData.tfidfContextsSet()
@@ -99,16 +94,14 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq2") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 			.filter(_.title != "Streitberg (Brachttal)")
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val contexts = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformArticleTfs(articles),
 				numDocuments,
-				defaultIdf)
+				CosineContextComparator.defaultIdf(numDocuments, 2))
 			.collect
 			.toSet
 		contexts shouldEqual TestData.tfidfContextsSet()
@@ -124,15 +117,13 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val linkContextValues = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformLinkContextTfs(articles),
 				numDocuments,
-				defaultIdf)
+				CosineContextComparator.defaultIdf(numDocuments, 2))
 			.collect
 		linkContextValues should not be empty
 
@@ -147,20 +138,15 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val linkContextValues = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformLinkContextTfs(articles),
 				numDocuments,
-				defaultIdf)
-			.map { case (link, tfidfContext) =>
-				val smallLink = link
-				smallLink.context = Map() // allows smaller test data
-				(smallLink, tfidfContext)
-			}.collect
+				CosineContextComparator.defaultIdf(numDocuments, 2))
+			.map { case (link, tfidfContext) => (link.copy(context = Map()), tfidfContext) }
+			.collect
 			.toList
 			.sortBy(_._1.alias)
 		val expectedTfidf = TestData.linkContextsTfidfList()
@@ -177,20 +163,15 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
-		val documentFrequencyThreshold = CosineContextComparator.calculateDefaultDf(2)
 		val articles = sc.parallelize(TestData.articlesWithLinkAndAliasContexts().toList)
 		val numDocuments = articles.count
-		val defaultIdf = CosineContextComparator.calculateIdf(documentFrequencyThreshold, numDocuments)
 		val linkContextValues = CosineContextComparator
 			.calculateTfidf(
 				CosineContextComparator.transformLinkContextTfs(articles),
 				numDocuments,
-				defaultIdf)
-			.map { case (link, tfidfContext) =>
-				val smallLink = link
-				smallLink.context = Map() // allows smaller test data
-				(smallLink, tfidfContext)
-			}.collect
+				CosineContextComparator.defaultIdf(numDocuments, 2))
+			.map { case (link, tfidfContext) => (link.copy(context = Map()), tfidfContext) }
+			.collect
 			.toSet
 		val expectedTfidf = TestData.linkContextsTfidfWithTrieAliases()
 		linkContextValues shouldBe expectedTfidf

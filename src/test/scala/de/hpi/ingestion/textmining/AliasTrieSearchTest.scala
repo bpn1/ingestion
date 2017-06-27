@@ -41,7 +41,7 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 		val oldSettings = AliasTrieSearch.settings(false)
 		AliasTrieSearch.parseConfig()
 
-		val testTrieStreamFunction = TestData.fullTrieStream _
+		val testTrieStreamFunction = TestData.fullTrieStream() _
 		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
 		val inputEntry = sc.parallelize(Seq(TestData.parsedEntry()))
 		val searchResult = AliasTrieSearch.run(List(inputEntry).toAnyRDD(), sc)
