@@ -24,7 +24,8 @@ object TestData {
 			"Gemeinschaft m.b.H.",
 			"Gesellschaft mbh",
 			"Gesellschaft bürgerlichen Rechts",
-			"Kommanditgesellschaft auf Aktien"
+			"Kommanditgesellschaft auf Aktien",
+			"aktienGEsellschaft"
 		)
 	}
 
@@ -35,7 +36,8 @@ object TestData {
 			"GmbH & Co. KG",
 			"GmbH",
 			"GbR",
-			"KGaA"
+			"KGaA",
+			"AG"
 		)
 	}
 
