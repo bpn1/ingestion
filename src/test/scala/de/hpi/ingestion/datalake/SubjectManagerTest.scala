@@ -231,7 +231,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"The correct version" should "be found" in {
-		val sm = new SubjectManager(Subject(), Version(program = ""))
+		val sm = new SubjectManager(Subject.empty(), Version(program = ""))
 		val foundVersions = TestData.versionQueries().map((sm.findVersion _).tupled).map(_.map(_.version))
 		val expectedVersions = TestData.versionQueryResults()
 		foundVersions shouldEqual expectedVersions
