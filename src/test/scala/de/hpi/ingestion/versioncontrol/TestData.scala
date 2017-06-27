@@ -228,9 +228,8 @@ object TestData {
 				-> Map("test relation" -> futureVersions()))),
 		Subject(
 			id = UUID.fromString("10200a26-a66a-4405-aab1-4977852e02a9"),
-			master = null,
-			datasource = null,
 			master = UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+			datasource = null,
 			relations = Map(
 				UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("master" -> "0.8"),
 				UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("master" -> "1.0")),
