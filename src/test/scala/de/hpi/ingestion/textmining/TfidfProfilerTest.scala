@@ -2,36 +2,53 @@ package de.hpi.ingestion.textmining
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.mllib.linalg.Vector
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class TfidfProfilerTest extends FlatSpec with SharedSparkContext with Matchers {
-	"Idf vectors" should "not be empty" in {
-		val documents = sc.parallelize(TestData.tokenizedDocumentsList())
-		val idfVectors = TfidfProfiler.sparkMLlibTfidfComputation(documents, sc)
-			.collect
-		idfVectors should not be empty
-		idfVectors.foreach(_.toArray should not be empty)
-	}
-
-	"Statistics" should "not be empty" in {
+	"Runtime statistics" should "not be empty" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val input = List(articles).toAnyRDD()
-		val statistics = TfidfProfiler.run(input, sc)
-			.fromAnyRDD[(String, Long)]()
-			.head
+		val List(sparkTfidfRDD, ingestionTfidfRDD, runtimesRDD) = TfidfProfiler.run(input, sc)
+		val runtimes = runtimesRDD
+			.asInstanceOf[RDD[(String, Long)]]
 			.collect
-		statistics should not be empty
+		runtimes should not be empty
 	}
 
 	they should "contain exactly these labels" in {
 		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val input = List(articles).toAnyRDD()
-		val statisticLabels = TfidfProfiler.run(input, sc)
-			.fromAnyRDD[(String, Long)]()
-			.head
+		val List(sparkTfidfRDD, ingestionTfidfRDD, runtimesRDD) = TfidfProfiler.run(input, sc)
+		val statisticLabels = runtimesRDD
+			.asInstanceOf[RDD[(String, Long)]]
 			.map(_._1)
 			.collect
 			.toSet
 		statisticLabels shouldEqual TestData.profilingStatisticLables()
+	}
+
+	"Calculated Tfidf values" should "not be empty" in {
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val testDocFreqFunction = TestData.docfreqStream("smalldocfreq") _
+		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+
+		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+		val input = List(articles).toAnyRDD()
+		val List(sparkTfidfRDD, ingestionTfidfRDD, runtimesRDD) = TfidfProfiler.run(input, sc)
+		val sparkTfidf = sparkTfidfRDD
+			.asInstanceOf[RDD[Vector]]
+			.collect
+		val ingestionTfidf = ingestionTfidfRDD
+			.asInstanceOf[RDD[(String, Map[String, Double])]]
+			.collect
+
+		sparkTfidf should not be empty
+		sparkTfidf.foreach(_.toArray should not be empty)
+		ingestionTfidf should not be empty
+		ingestionTfidf.foreach(_._2 should not be empty)
+
+		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 }

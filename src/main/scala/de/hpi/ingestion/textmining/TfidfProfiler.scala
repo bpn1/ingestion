@@ -42,9 +42,11 @@ object TfidfProfiler extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[List[(String, Long)]]()
-			.head
+		val List(sparkTfidf, ingestionTfidf, runtimes) = output
+		//		val sparkTfidf = output(1).asInstanceOf[RDD[Vector]]
+		//		val ingestionTfidf = output(2).asInstanceOf[RDD[(String, Map[String, Double])]]
+		runtimes
+			.asInstanceOf[RDD[(String, Long)]]
 			.saveAsTextFile(s"context_tfidf_runtimes_${System.currentTimeMillis()}")
 	}
 	// $COVERAGE-ON$
@@ -136,7 +138,7 @@ object TfidfProfiler extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val articles = sc.parallelize(input.fromAnyRDD[ParsedWikipediaEntry]().head.take(100000))
+		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
 		val tokenizer = IngestionTokenizer(args)
 
 		val (wordsPerArticle, timeSparkContext) = profileTime(contextExtractionForSparkMLlib(articles, tokenizer))
@@ -152,6 +154,6 @@ object TfidfProfiler extends SparkJob {
 			("SparkMLlib total", timeSparkContext + timeSparkTfidf),
 			("Ingestion total", timeIngestionContext + timeIngestionTfidf)
 		)
-		List(sc.parallelize(statistics)).toAnyRDD()
+		List(sparkTfidf).toAnyRDD() ++ List(ingestionTfidf).toAnyRDD() ++ List(sc.parallelize(statistics)).toAnyRDD()
 	}
 }
