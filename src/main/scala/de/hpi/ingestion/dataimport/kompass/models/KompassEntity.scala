@@ -1,5 +1,7 @@
 package de.hpi.ingestion.dataimport.kompass.models
 
+import java.util.UUID
+
 import de.hpi.ingestion.datalake.models.DLImportEntity
 
 /**
@@ -8,6 +10,7 @@ import de.hpi.ingestion.datalake.models.DLImportEntity
   * @param data all other information about the entity
   */
 case class KompassEntity(
+	id: UUID = UUID.randomUUID(),
 	var name: Option[String] = None,
 	var data: Map[String, List[String]] = Map[String, List[String]]()
 ) extends DLImportEntity {
@@ -16,7 +19,7 @@ case class KompassEntity(
 			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {
-				case "name" => {
+				case "id" | "name" => {
 					val value = field.get(this).asInstanceOf[Option[String]]
 					value.map(List(_)).getOrElse(Nil)
 				}
