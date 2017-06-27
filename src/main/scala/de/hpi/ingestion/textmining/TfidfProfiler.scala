@@ -18,7 +18,7 @@ import de.hpi.ingestion.textmining.TermFrequencyCounter.extractArticleContext
   * implementation in the Spark MLlib.
   */
 object TfidfProfiler extends SparkJob {
-	appName = "Context Performance Profiler"
+	appName = "tf-idf Profiler"
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
