@@ -230,7 +230,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  */
 	def restoreMaster(version: Option[Version], relationsVersions: Map[UUID, Map[String, Version]]): Unit = {
 		val (value, validity, dataSources) = extractVersionData(version)
-		val master = UUID.fromString(value.head)
+		val master = value.headOption.map(UUID.fromString).getOrElse(subject.id)
 
 		// extract master score from the relevant relation
 		val scoreOption = relationsVersions
@@ -485,8 +485,7 @@ object SubjectManager {
 	  */
 	def buildDuplicatesSCC(duplicates: List[(Subject, Subject, Double)], version: Version): Unit = {
 		duplicates.foreach { case (subject1, subject2, score) =>
-			val duplicateRelation = Map("type" -> duplicateKey, "confidence" -> score.toString)
-			addSymRelation(subject1, subject2, duplicateRelation, version)
+			addSymRelation(subject1, subject2, isDuplicateRelation(score), version)
 		}
 	}
 
