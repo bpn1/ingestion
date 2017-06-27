@@ -437,3 +437,9 @@ CREATE TABLE evaluation.featureentries (
 	score map<text, frozen<list<double>>>,
 	correct boolean
 );
+
+CREATE TABLE datalake.kompass_entities (
+  id UUID PRIMARY KEY,
+  name text,
+  data map<text, frozen<list<text>>>
+);
