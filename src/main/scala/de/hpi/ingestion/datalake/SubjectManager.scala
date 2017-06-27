@@ -505,7 +505,7 @@ object SubjectManager {
 	def masterRelation(score: Double): Map[String, String] = Map(masterKey -> score.toString)
 
 	/**
-	  * Retunrns default relation Subject have to their duplicates.
+	  * Returns default relation Subject have to their duplicates.
 	  * @param score score of the duplicate relation
 	  * @return Map containing the data of the default isDuplicate relation
 	  */
