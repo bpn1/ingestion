@@ -341,12 +341,6 @@ CREATE TABLE datalake.duplicates (
     candidates list<frozen<candidate>>
 );
 
-CREATE TABLE datalake.sim_measure_stats (
-    id timeuuid PRIMARY KEY,
-    comment text,
-    data text
-);
-
 -- Evaluation
 CREATE KEYSPACE evaluation WITH REPLICATION = {
     'class' : 'SimpleStrategy',
