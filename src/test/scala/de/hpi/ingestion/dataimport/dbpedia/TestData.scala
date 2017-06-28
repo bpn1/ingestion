@@ -161,8 +161,8 @@ object TestData {
 	)
 
 	def translatedSubjects: List[Subject] = List(
-		Subject(name = Option("Liste von Autoren GmbH"), category = Option("type 1")),
-		Subject()
+		Subject(master = null, datasource = "dbpedia", name = Option("Liste von Autoren GmbH"), category = Option("type 1")),
+		Subject(master = null, datasource = "dbpedia")
 	)
 
 	def mapping: Map[String, List[String]] = Map(
