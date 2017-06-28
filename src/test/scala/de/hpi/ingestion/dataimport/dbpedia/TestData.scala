@@ -15,6 +15,7 @@ import de.hpi.ingestion.datalake.models.{Subject, Version}
 // scalastyle:off line.size.limit
 
 object TestData {
+	val datasource = "dbpedia"
 	val idList = List.fill(6)(UUID.randomUUID())
 
 	def prefixesList: List[(String,String)] = {
@@ -269,17 +270,19 @@ object TestData {
 	)
 
 	def dbpedia: List[Subject] = List(
-		Subject(id = idList.head, name = Option("Audi")),
-		Subject(id = idList(1), name = Option("BMW")),
-		Subject(id = idList(2), name = Option("Volkswagen")),
-		Subject(id = idList(3), name = Option("BMW Motorsport")),
-		Subject(id = idList(4), name = Option("Commerzbank")),
-		Subject(id = idList(5), name = Option("Lamborghini"))
+		Subject(id = idList.head, master= idList.head, datasource = datasource, name = Option("Audi")),
+		Subject(id = idList(1), master= idList(1), datasource = datasource, name = Option("BMW")),
+		Subject(id = idList(2), master= idList(2), datasource = datasource, name = Option("Volkswagen")),
+		Subject(id = idList(3), master= idList(3), datasource = datasource, name = Option("BMW Motorsport")),
+		Subject(id = idList(4), master= idList(4), datasource = datasource, name = Option("Commerzbank")),
+		Subject(id = idList(5), master= idList(5), datasource = datasource, name = Option("Lamborghini"))
 	)
 
 	def dbpediaImportedRelations = List(
 		Subject(
 			id = idList.head,
+			master = idList.head,
+			datasource = datasource,
 			name = Option("Audi"),
 			relations = Map(
 				idList(2) -> Map("parentCompany" -> ""),
@@ -288,6 +291,8 @@ object TestData {
 		),
 		Subject(
 			id = idList(1),
+			master = idList(1),
+			datasource = datasource,
 			name = Option("BMW"),
 			relations = Map(
 				idList(3) -> Map("division" -> "")
