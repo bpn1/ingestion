@@ -20,8 +20,7 @@ case class Version(
 	var value: List[String] = Nil,
 	var validity: Map[String, String] = Map(),
 	var datasources: List[String] = Nil,
-	var timestamp: Date = new Date(),
-	var subjecttable: Option[String] = None)
+	var timestamp: Date = new Date())
 
 /**
   * Companion object for the Version case class.
@@ -36,10 +35,9 @@ object Version {
 	  * @param version Version to write
 	  * @param sc Spark Context used to connect to the Cassandra.
 	  */
-	def writeToCassandra(version: Version, sc: SparkContext): Unit = {
+	def writeToCassandra(version: Version, sc: SparkContext, subjecttable: Option[String]): Unit = {
 		if(sc.getConf.contains("spark.cassandra.connection.host")) {
-			val logVersion = (version.version, version.timestamp, version.datasources, version.program,
-				version.subjecttable)
+			val logVersion = (version.version, version.timestamp, version.datasources, version.program, subjecttable)
 			sc.parallelize(List(logVersion)).saveToCassandra(keyspace, tablename,
 				SomeColumns("version", "timestamp", "datasources", "program", "subjecttable"))
 		}
@@ -65,9 +63,8 @@ object Version {
 	): Version = {
 		val time = new Date()
 		val timestamp = s"_$time".filter(c => timestampName)
-		val version = Version(program = s"$program$timestamp", datasources = datasources, timestamp = time,
-			subjecttable = subjecttable)
-		writeToCassandra(version, sc)
+		val version = Version(program = s"$program$timestamp", datasources = datasources, timestamp = time)
+		writeToCassandra(version, sc, subjecttable)
 		version
 	}
 }

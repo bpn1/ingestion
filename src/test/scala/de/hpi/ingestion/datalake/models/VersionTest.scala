@@ -14,7 +14,6 @@ class VersionTest extends FlatSpec with SharedSparkContext with Matchers {
 		version.validity shouldBe empty
 		version.datasources shouldBe empty
 		version.timestamp should not be null
-		version.subjecttable shouldBe None
 	}
 
 	"Program name" should "have a timestamp appended" in {
