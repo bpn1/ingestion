@@ -329,7 +329,7 @@ object ClassifierTraining extends SparkJob {
 			calculateStatistics(predictionAndLabels).copy(threshold = threshold)
 		}.toList
 		val comment = "RF w/ filtered Triehits and variable thresholds"
-		val results = SimilarityMeasureStats(data = statistics, comment = Option(comment))
+		val results = SimilarityMeasureStats(data = statistics, comment = Option(comment), xaxis = Option("threshold"))
 		List(sc.parallelize(List(results))).toAnyRDD()// ++ List(modelOption).toAnyRDD()
 	}
 }
