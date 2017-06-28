@@ -61,7 +61,7 @@ object Version {
 		datasources: List[String],
 		sc: SparkContext,
 		timestampName: Boolean,
-		subjecttable: Option[String] = None
+		subjecttable: Option[String]
 	): Version = {
 		val time = new Date()
 		val timestamp = s"_$time".filter(c => timestampName)
