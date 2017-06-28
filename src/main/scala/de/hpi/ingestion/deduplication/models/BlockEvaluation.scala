@@ -9,6 +9,12 @@ import com.datastax.driver.core.utils.UUIDs
   * @param schemetag Blocking Scheme tag used as primary key identifying the blocking scheme
   * @param data contains the statistical data about each block generates by this scheme
   * @param comment contains extra information about the data
+  * @param pairscompleteness pairs completeness measure of this blocking scheme (% of duplicates that can be found with
+  * this blocking scheme.
+  * @param blockcount total number of blocks created
+  * @param comparisoncount total number of comparisons done with this blocking scheme
+  * @param xaxis label of the x-axis
+  * @param yaxis label of the y-axis
   */
 case class BlockEvaluation(
 	jobid: UUID = UUIDs.timeBased(),
@@ -17,5 +23,7 @@ case class BlockEvaluation(
 	comment: Option[String] = None,
 	pairscompleteness: Double,
 	blockcount: Int,
-	comparisoncount: BigInt
+	comparisoncount: BigInt,
+	xaxis: Option[String] = Option("block keys"),
+	yaxis: Option[String] = Option("# comparisons")
 )
