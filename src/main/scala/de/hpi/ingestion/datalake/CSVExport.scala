@@ -71,7 +71,7 @@ object CSVExport extends SparkJob {
 			subject.id + separator + id + separator + relType
 		}.map(_.trim)
 		.filter(_.nonEmpty)
-	    .toList
+		.toList
 	}
 
 	/**

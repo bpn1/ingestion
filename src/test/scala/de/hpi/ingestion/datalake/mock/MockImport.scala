@@ -16,9 +16,7 @@ object MockImport extends DataLakeImportImplementation[Entity](
 	appName = "TestImport"
 	importConfigFile = "src/test/resources/datalake/normalization.xml"
 
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		List(sc.parallelize(Seq(Subject()))).toAnyRDD()
-	}
+	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = Nil
 
 	override def filterEntities(entity: Entity): Boolean = true
 
@@ -34,7 +32,7 @@ object MockImport extends DataLakeImportImplementation[Entity](
 		mapping: Map[String, List[String]],
 		strategies: Map[String, List[String]],
 		classifier: AClassifier[Tag]
-	): Subject = Subject(name = Option(entity.root_value))
+	): Subject = Subject(master = null, datasource = null, name = Option(entity.root_value))
 
 	override def normalizeProperties(
 		entity: Entity,
