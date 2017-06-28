@@ -83,9 +83,9 @@ case class Subject(
 	  */
 	def masterRelations: Map[UUID, Map[String, String]] = {
 		this
-	    	.relations
-	    	.mapValues(_.filterKeys(!Subject.relationBlackList(_)))
-	    	.filter(_._2.nonEmpty)
+			.relations
+			.mapValues(_.filterKeys(!Subject.relationBlackList(_)))
+			.filter(_._2.nonEmpty)
 	}
 
 	/**

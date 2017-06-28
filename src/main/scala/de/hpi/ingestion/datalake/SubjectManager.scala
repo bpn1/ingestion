@@ -208,7 +208,9 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		validity: Map[String, String] = Map(),
 		datasources: List[String] = Nil
 	): Unit = {
-		val isHigherScore = subject.relations.get(subject.master)
+		val isHigherScore = subject
+			.relations
+			.get(subject.master)
 			.flatMap(_.get(SubjectManager.slaveKey))
 			.exists(_.toDouble < score)
 

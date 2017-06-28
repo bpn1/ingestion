@@ -122,13 +122,16 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 			.flatMap(_.relations.filter(_._2.contains(SubjectManager.duplicateKey)))
 			.mapValues(_.filter(_._1 == SubjectManager.duplicateKey))
 			.collect
-			.sortBy(_._1)
+			.toList
+			.groupBy(_._1)
+	    	.mapValues(_.toSet)
 
 		val expectedRelations = TestData
 			.mergedSubjects
 			.flatMap(_.relations.filter(_._2.contains(SubjectManager.duplicateKey)))
 			.map(x => x._1 -> x._2.filter(_._1 == SubjectManager.duplicateKey))
-			.sortBy(_._1)
+			.groupBy(_._1)
+			.mapValues(_.toSet)
 
 		duplicateRelations shouldEqual expectedRelations
 	}
