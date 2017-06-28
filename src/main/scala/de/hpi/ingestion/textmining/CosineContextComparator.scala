@@ -46,9 +46,8 @@ object CosineContextComparator extends SplitSparkJob {
 		output
 			.fromAnyRDD[FeatureEntry]()
 			.head
-			.saveToCassandra(settings("keyspace"), "featureentries_testing")//settings("featureTable"))
+			.saveToCassandra(settings("keyspace"), settings("featureTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
@@ -299,7 +298,6 @@ object CosineContextComparator extends SplitSparkJob {
 			.map { articlePartition =>
 				List(tfidf, aliases) ++ List(articlePartition).toAnyRDD() ++ List(articleCount)
 			}
-//		List(List(tfidf, aliases, articlesWithTermFrequencies.sample(false, 0.01), articleCount))
 	}
 
 	/**
