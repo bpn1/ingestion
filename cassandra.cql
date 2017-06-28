@@ -127,7 +127,9 @@ CREATE TYPE wikidumps.precisionrecalldatatuple (
 CREATE TABLE wikidumps.sim_measure_stats (
     id timeuuid PRIMARY KEY,
     comment text,
-    data list<frozen<precisionrecalldatatuple>>
+    data list<frozen<precisionrecalldatatuple>>,
+    xaxis text,
+    yaxis text
 );
 
 CREATE TYPE wikidumps.triealias (
@@ -327,6 +329,8 @@ CREATE TABLE datalake.blockingstats (
     comparisoncount bigint,
     data frozen<set<frozen<blockstats>>>,
     pairscompleteness double,
+    xaxis text,
+    yaxis text,
     PRIMARY KEY (jobid, schemetag)
 );
 
@@ -427,9 +431,11 @@ CREATE TABLE evaluation.subject_wikidata (
 );
 
 CREATE TABLE evaluation.sim_measure_stats (
-    id uuid PRIMARY KEY,
+    id timeuuid PRIMARY KEY,
+    comment text,
     data list<frozen<precisionrecalldatatuple>>,
-    comment text
+    xaxis text,
+    yaxis text
 );
 
 CREATE TABLE evaluation.version (
