@@ -10,6 +10,7 @@ class SubjectTest extends FlatSpec with Matchers {
 
 		subject1 shouldEqual subject2
 		subject1 should not equal subject3
+		subject1.equals(subject2.id) shouldBe false
 	}
 
 	"Attribute values" should "be returned" in {

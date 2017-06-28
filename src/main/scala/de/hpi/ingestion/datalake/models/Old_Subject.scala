@@ -20,6 +20,7 @@ case class Old_Subject(
 	var relations_history: Map[UUID, Map[String, List[Version]]] = Map(),
 	var master_history: List[Version] = Nil
 ) extends DLImportEntity {
+	// $COVERAGE-OFF$
 	/**
 	  * Compares the subject using its uuid
 	  * @param obj object to compare this subject to
@@ -74,6 +75,7 @@ case class Old_Subject(
 			.flatMap(_.get(SubjectManager.slaveKey))
 			.map(_.toDouble)
 	}
+	// $COVERAGE-ON$
 }
 
 
