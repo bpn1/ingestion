@@ -8,6 +8,8 @@ import org.apache.spark.rdd.RDD
 
 // scalastyle:off line.size.limit
 object TestData {
+	val datasource = "testSource"
+	def subject: Subject = Subject.empty(datasource = datasource)
 
 	def masterIds(): List[UUID] = {
 		List(
@@ -68,12 +70,12 @@ object TestData {
 
 	def subjects: List[Subject] = {
 		List(
-			Subject(name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52; 11"), "gen_income" -> List("1234"))),
-			Subject(name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "gen_income" -> List("12"))),
-			Subject(name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52; 13"), "gen_income" -> List("33"))),
-			Subject(name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53; 14"), "gen_income" -> List("600"))),
-			Subject(name = Some("Porsche"), properties = Map("geo_coords" -> List("52; 13"), "gen_sectors" -> List("cars", "music", "games"))),
-			Subject(name = Some("Ferrari"), properties = Map("geo_coords" -> List("53; 14"), "gen_sectors" -> List("games", "cars", "music"))))
+			Subject(master = null, datasource = datasource, name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52; 11"), "gen_income" -> List("1234"))),
+			Subject(master = null, datasource = datasource, name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "gen_income" -> List("12"))),
+			Subject(master = null, datasource = datasource, name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52; 13"), "gen_income" -> List("33"))),
+			Subject(master = null, datasource = datasource, name = Some("Audy GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53; 14"), "gen_income" -> List("600"))),
+			Subject(master = null, datasource = datasource, name = Some("Porsche"), properties = Map("geo_coords" -> List("52; 13"), "gen_sectors" -> List("cars", "music", "games"))),
+			Subject(master = null, datasource = datasource, name = Some("Ferrari"), properties = Map("geo_coords" -> List("53; 14"), "gen_sectors" -> List("games", "cars", "music"))))
 	}
 
 	def version(sc: SparkContext): Version = {
@@ -91,10 +93,10 @@ object TestData {
 
 	def translatedSubjects: List[Subject] = {
 		List(
-			Subject(id = null, name = Option("e 1"), properties = Map("key 1" -> List("value 1", "value 2"))),
-			Subject(id = null, name = Option("e 2"), properties = Map("key 2" -> List("value 1"),"key 3" -> List("value 2"))),
-			Subject(id = null, name = Option("e 3"), properties = Map("key 1" -> Nil)),
-			Subject(id = null, name = Option("e 4"))
+			Subject(id = null, master = null, datasource = datasource, name = Option("e 1"), properties = Map("key 1" -> List("value 1", "value 2"))),
+			Subject(id = null, master = null, datasource = datasource, name = Option("e 2"), properties = Map("key 2" -> List("value 1"),"key 3" -> List("value 2"))),
+			Subject(id = null, master = null, datasource = datasource, name = Option("e 3"), properties = Map("key 1" -> Nil)),
+			Subject(id = null, master = null, datasource = datasource, name = Option("e 4"))
 		)
 	}
 
@@ -114,11 +116,11 @@ object TestData {
 
 	def output: List[Subject] = {
 		List(
-			Subject(name = Option("entity1")),
-			Subject(name = Option("entity2")),
-			Subject(name = Option("entity3")),
-			Subject(name = Option("entity4")),
-			Subject(name = None)
+			Subject(master = null, datasource = datasource, name = Option("entity1")),
+			Subject(master = null, datasource = datasource, name = Option("entity2")),
+			Subject(master = null, datasource = datasource, name = Option("entity3")),
+			Subject(master = null, datasource = datasource, name = Option("entity4")),
+			Subject(master = null, datasource = datasource, name = None)
 		)
 	}
 
@@ -126,6 +128,8 @@ object TestData {
 		List(
 			Subject(
 				id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"),
+				master = null,
+				datasource = datasource,
 				name = Option("Name 1"),
 				aliases = List("Alias 1", "Alias 1.1\""),
 				category = None,
@@ -137,6 +141,8 @@ object TestData {
 			),
 			Subject(
 				id = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
+				master = null,
+				datasource = datasource,
 				name = Option("Name 2"),
 				aliases = List("Alias 2"),
 				category = Option("Category 2"),
