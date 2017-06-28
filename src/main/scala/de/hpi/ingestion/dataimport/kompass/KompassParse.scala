@@ -80,7 +80,7 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 		if(city != null) { extractedData += "city" -> List(city.text.trim) }
 
 		var executives = List[String]()
-		doc.select("#executives .name").foreach(executives += _.text)
+		doc.select("#executives .name").foreach(x => executives :::= List(x.text))
 		extractedData += "executives" -> executives
 
 		doc.select(".general.bloc .presentation.global li").foreach { element =>
@@ -93,7 +93,7 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 		}
 
 		var activities = List[String]()
-		doc.select("#secondaryActivitiesTree a").foreach(activities += _.text.replace("\"","").trim)
+		doc.select("#secondaryActivitiesTree a").foreach(x => activities :::= List(x.text.replace("\"","").trim))
 		extractedData += "activities" -> activities
 
 		KompassEntity(name, extractedData)
