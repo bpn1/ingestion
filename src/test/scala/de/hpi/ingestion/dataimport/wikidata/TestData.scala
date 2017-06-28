@@ -285,7 +285,7 @@ object TestData {
 		WikiDataEntity(id = "Q3", instancetype = Option("type 3"))
 	)
 
-	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", List("dataSources"), sc, false)
+	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", List("dataSources"), sc, false, None)
 
 	def testEntity: WikiDataEntity = {
 		WikiDataEntity(

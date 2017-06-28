@@ -94,7 +94,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 	"Master node" should "be set" in {
 		val subject = TestData.subject
-		val version = Version("Subject Manager Test", Nil, sc, false)
+		val version = Version("Subject Manager Test", Nil, sc, false, None)
 		val List(masterId, masterId2) = TestData.masterIds()
 		val sm = new SubjectManager(subject, version)
 
