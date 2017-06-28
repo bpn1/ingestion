@@ -32,6 +32,6 @@ object MockSubjectImport extends DataLakeImportImplementation[Entity](
 		strategies: Map[String, List[String]],
 		classifier: AClassifier[Tag]
 	): Subject = {
-		Subject(id = null, name = Option(entity.root_value), properties = entity.data)
+		Subject(id = null, master = null, datasource = null, name = Option(entity.root_value), properties = entity.data)
 	}
 }
