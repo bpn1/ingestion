@@ -2,7 +2,7 @@
 <config>
     <settings>
         <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
-        <subjectTable>subject_temp</subjectTable>
+        <subjectTable>subject_implisense</subjectTable>
         <keyspaceStagingTable>datalake</keyspaceStagingTable>
         <stagingTable>subject_wikidata</stagingTable>
         <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
@@ -10,7 +10,7 @@
         <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
-        <maxBlockSize>500000</maxBlockSize>
+        <maxBlockSize>1000000</maxBlockSize>
         <confidence>0.9</confidence>
     </settings>
     <simMeasurements>

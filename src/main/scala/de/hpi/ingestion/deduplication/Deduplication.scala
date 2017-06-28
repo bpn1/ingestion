@@ -19,7 +19,8 @@ object Deduplication extends SparkJob {
 	configFile = "deduplication.xml"
 	val blockingSchemes = List[BlockingScheme](
 		SimpleBlockingScheme("simple_scheme"),
-		ListBlockingScheme("sectorBlocking_scheme", "gen_sectors")
+		ListBlockingScheme("sectorBlocking_scheme", "gen_sectors"),
+		ListBlockingScheme("legalForm_scheme", "gen_legal_form")
 	)
 
 	// $COVERAGE-OFF$
