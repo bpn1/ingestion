@@ -13,7 +13,9 @@ import org.apache.spark.rdd.RDD
 // scalastyle:off line.size.limit
 // scalastyle:off number.of.methods
 object TestData {
+	val datasource = "testSource"
 	val idList = List.fill(8)(UUID.randomUUID())
+	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false)
 
 	def bucketsList: Map[Int, List[Double]] = Map(
 		10 -> List(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0),
@@ -105,34 +107,54 @@ object TestData {
 
 	val dbpediaList = List(
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("dbpedia_1"),
 			properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List("Q1"))
 		),
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("dbpedia_2"),
 			properties = Map("id_dbpedia" -> List("dbpedia_2"), "id_wikidata" -> List("Q2"))
 		),
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("dbpedia_3"),
 			properties = Map("id_wikidata" -> List("Q3"))
 		),
-		Subject(name = Option("dbpedia_4"))
+		Subject(
+			master = null,
+			datasource = datasource,
+			name = Option("dbpedia_4")
+		)
 	)
 
 	val wikidataList = List(
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("wikidata_1"),
 			properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List(""))
 		),
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("wikidata_2"),
 			properties = Map("id_dbpedia" -> List("dbpedia_2"), "id_wikidata" -> List("Q2"))
 		),
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("wikidata_3"),
 			properties = Map("id_dbpedia" -> List("dbpedia_3"), "id_wikidata" -> List("Q3"))
 		),
-		Subject(name = Option("wikidata_4"))
+		Subject(
+			master = null,
+			datasource = datasource,
+			name = Option("wikidata_4")
+		)
 	)
 
 	def propertyKeyDBpedia(sc: SparkContext): RDD[(String, Subject)] = {
@@ -164,10 +186,6 @@ object TestData {
 			Block(key = "undefined", subjects = subjects.takeRight(2), staging = Nil)
 		))
 	}
-
-	def emptySubject: Subject = Subject()
-
-	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false)
 
 	def filteredDuplicates(sc: SparkContext): RDD[(Subject, Subject, Double)] = {
 		sc.parallelize(Seq(
@@ -346,17 +364,21 @@ object TestData {
 	}
 
 	def subjects: List[Subject] = List(
-		Subject(id = UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52.1234;11.5677"), "geo_postal" -> List("1234"), "gen_income" -> List("1234"))),
-		Subject(id = UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52.1234;13.1234"), "geo_postal" -> List("1256"), "gen_income" -> List("33"))),
-		Subject(id = UUID.fromString("c9621786-1cce-45bf-968a-3e8d06e16fda"), name = Some("Porsche"), properties = Map("geo_coords" -> List("52.2345;13.6789"), "geo_postal" -> List("1904"), "gen_sectors" -> List("cars", "music", "games"))),
-		Subject(id = UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), name = Some("Ferrari"), properties = Map("gen_sectors" -> List("games", "cars", "music"), "geo_postal" -> List("2222")))
+		Subject(id = UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), master = null, datasource = datasource, name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52.1234;11.5677"), "geo_postal" -> List("1234"), "gen_income" -> List("1234"))),
+		Subject(id = UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"), master = null, datasource = datasource, name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52.1234;13.1234"), "geo_postal" -> List("1256"), "gen_income" -> List("33"))),
+		Subject(id = UUID.fromString("c9621786-1cce-45bf-968a-3e8d06e16fda"), master = null, datasource = datasource, name = Some("Porsche"), properties = Map("geo_coords" -> List("52.2345;13.6789"), "geo_postal" -> List("1904"), "gen_sectors" -> List("cars", "music", "games"))),
+		Subject(id = UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), master = null, datasource = datasource, name = Some("Ferrari"), properties = Map("gen_sectors" -> List("games", "cars", "music"), "geo_postal" -> List("2222")))
 	)
 
-	def subjectsStartingWithThe: List[Subject] = List(Subject(name = Some("The HPI")), Subject(name = Some("The University")), Subject(name = Some("Volkswagen")))
+	def subjectsStartingWithThe: List[Subject] = List(
+		Subject(master = null, datasource = datasource, name = Some("The HPI")),
+		Subject(master = null, datasource = datasource, name = Some("The University")),
+		Subject(master = null, datasource = datasource, name = Some("Volkswagen"))
+	)
 
 	def stagings: List[Subject] = List(
-		Subject(id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"), name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "geo_postal" -> List("1414"), "gen_income" -> List("12"))),
-		Subject(id = UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53;14"), "geo_postal" -> List("8888"), "gen_income" -> List("600")))
+		Subject(id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"), master = null, datasource = datasource, name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "geo_postal" -> List("1414"), "gen_income" -> List("12"))),
+		Subject(id = UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"), master = null, datasource = datasource, name = Some("Audi GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53;14"), "geo_postal" -> List("8888"), "gen_income" -> List("600")))
 	)
 
 	def goldStandard(subjects: List[Subject], stagings: List[Subject]): Set[(UUID, UUID)] = Set(
@@ -493,16 +515,16 @@ object TestData {
 	def blockEvaluationTestSubjects(sc: SparkContext): (RDD[Subject], RDD[Subject]) = {
 		val subjectRDD = sc.parallelize(
 			List.fill(101)(
-				Subject(id = UUID.randomUUID, name = Option("Haushund"))
+				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Haushund"))
 			) ++ List.fill(5)(
-				Subject(id = UUID.randomUUID, name = Option("Nicht Haushund"))
+				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Nicht Haushund"))
 			)
 		)
 		val stagingRDD = sc.parallelize(
 			List.fill(101)(
-				Subject(id = UUID.randomUUID, name = Option("Haushund"))
+				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Haushund"))
 			) ++ List.fill(10)(
-				Subject(id = UUID.randomUUID, name = Option("Nicht Haushund"))
+				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Nicht Haushund"))
 			)
 		)
 		(subjectRDD, stagingRDD)
@@ -578,9 +600,9 @@ object TestData {
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
 
 	def features(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
-		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1))),
-		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3))),
-		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5)))
+		FeatureEntry(subject = Subject(id = idList.head, master = null, datasource = datasource), staging = Subject(id = idList(1), master = null, datasource = datasource)),
+		FeatureEntry(subject = Subject(id = idList(2), master = null, datasource = datasource), staging = Subject(id = idList(3), master = null, datasource = datasource)),
+		FeatureEntry(subject = Subject(id = idList(4), master = null, datasource = datasource), staging = Subject(id = idList(5), master = null, datasource = datasource))
 	))
 
 	def goldStandard(sc: SparkContext): RDD[(UUID, UUID)] = sc.parallelize(List(
@@ -588,9 +610,9 @@ object TestData {
 	))
 
 	def labeledFeatures(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
-		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1), name = Option("Audi AG")), correct = true),
-		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3), name = Option("Volkswagen AG")), correct = true),
-		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5), name = Option("Porsche AG")))
+		FeatureEntry(subject = Subject(id = idList.head, master = null, datasource = datasource), staging = Subject(id = idList(1), name = Option("Audi AG"), master = null, datasource = datasource), correct = true),
+		FeatureEntry(subject = Subject(id = idList(2), master = null, datasource = datasource), staging = Subject(id = idList(3), master = null, datasource = datasource, name = Option("Volkswagen AG")), correct = true),
+		FeatureEntry(subject = Subject(id = idList(4), master = null, datasource = datasource), staging = Subject(id = idList(5), master = null, datasource = datasource, name = Option("Porsche AG")))
 	))
 
 	def requiredSettings: List[String] = {
@@ -624,16 +646,16 @@ object TestData {
 
 	def dbpediaEntries: List[Subject] = {
 		List(
-			Subject(id = idList.head, name = Option("Audi ")),
-			Subject(id = idList(2), name = Option("Volkswagen")),
-			Subject(id = idList(4), name = Option("Porsche")))
+			Subject(id = idList.head, master = null, datasource = datasource, name = Option("Audi ")),
+			Subject(id = idList(2), master = null, datasource = datasource, name = Option("Volkswagen")),
+			Subject(id = idList(4), master = null, datasource = datasource, name = Option("Porsche")))
 	}
 
 	def wikidataEntries: List[Subject] = {
 		List(
-			Subject(id = idList(1), name = Option("Audi AG")),
-			Subject(id = idList(3), name = Option("Volkswagen AG")),
-			Subject(id = idList(5), name = Option("Porsche AG")))
+			Subject(id = idList(1), master = null, datasource = datasource, name = Option("Audi AG")),
+			Subject(id = idList(3), master = null, datasource = datasource, name = Option("Volkswagen AG")),
+			Subject(id = idList(5), master = null, datasource = datasource, name = Option("Porsche AG")))
 	}
 }
 // scalastyle:on line.size.limit
