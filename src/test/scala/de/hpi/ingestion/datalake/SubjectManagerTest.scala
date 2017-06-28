@@ -33,8 +33,8 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"Aliases" should "be added and removed" in {
-		val subject = Subject()
-		val version = Version("SM Test", Nil, sc, false)
+		val subject = TestData.subject
+		val version = Version.apply("SM Test", Nil, sc, false)
 		val sm = new SubjectManager(subject, version)
 		sm.addAliases(List("alias 1", "alias 2"))
 		subject.aliases shouldEqual List("alias 1", "alias 2")
@@ -53,7 +53,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"Name" should "be set" in {
-		val subject = Subject()
+		val subject = TestData.subject
 		val version = Version.apply("SM Test", Nil, sc, false)
 		val sm = new SubjectManager(subject, version)
 		sm.setName("test name")
@@ -73,7 +73,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"Category" should "be set" in {
-		val subject = Subject()
+		val subject = TestData.subject
 		val version = Version.apply("SM Test", Nil, sc, false)
 		val sm = new SubjectManager(subject, version)
 		sm.setCategory("test category")
@@ -93,57 +93,48 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"Master node" should "be set" in {
-		val subject = Subject()
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val subject = TestData.subject
+		val version = Version("Subject Manager Test", Nil, sc, false)
 		val List(masterId, masterId2) = TestData.masterIds()
 		val sm = new SubjectManager(subject, version)
+
 		sm.setMaster(masterId, 0.5)
-		subject.master should contain (masterId)
+		subject.master shouldEqual masterId
+		subject.masterScore should contain(0.5)
 		subject.master_history should have length 1
 		subject.master_history.head.value shouldEqual List(masterId.toString)
-		subject.relations.get(masterId) should contain (SubjectManager.slaveRelation(0.5))
+		subject.relations(masterId) shouldEqual SubjectManager.slaveRelation(0.5)
 		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 1
 		subject.relations_history(masterId)(SubjectManager.slaveKey).head.value shouldEqual List("0.5")
 
-		sm.setMaster(masterId, 0.5)
+		sm.setMaster(masterId, 0.3)
 		subject.master_history should have length 1
-		subject.masterScore should contain (0.5)
+		subject.masterScore should contain(0.5)
 		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 1
-		sm.setMaster(Option(masterId), 0.5)
-		subject.master_history should have length 1
-		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 1
+		subject.relations_history(masterId)(SubjectManager.slaveKey).last.value shouldEqual List("0.5")
 
-		sm.setMaster(Option(masterId), 1.0)
+		sm.setMaster(masterId, 1.0)
 		subject.master_history should have length 1
-		subject.masterScore should contain (1.0)
-		subject.relations.get(masterId) should contain (SubjectManager.slaveRelation(1.0))
+		subject.masterScore should contain(1.0)
+		subject.relations(masterId) shouldEqual SubjectManager.slaveRelation(1.0)
 		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 2
 		subject.relations_history(masterId)(SubjectManager.slaveKey).last.value shouldEqual List("1.0")
 
-		sm.setMaster(Option(masterId2), 0.5)
-		subject.master should contain (masterId2)
-		subject.masterScore should contain (0.5)
+		sm.setMaster(masterId2, 0.5)
+		subject.master shouldEqual masterId2
+		subject.masterScore should contain(0.5)
 		subject.master_history should have length 2
 		subject.master_history.last.value shouldEqual List(masterId2.toString)
+		subject.relations.get(masterId) shouldBe empty
+		subject.relations(masterId2) shouldEqual SubjectManager.slaveRelation(0.5)
 		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 3
 		subject.relations_history(masterId)(SubjectManager.slaveKey).last.value shouldBe empty
 		subject.relations_history(masterId2)(SubjectManager.slaveKey) should have length 1
 		subject.relations_history(masterId2)(SubjectManager.slaveKey).last.value shouldEqual List("0.5")
-		subject.relations.get(masterId) shouldBe empty
-		subject.relations.get(masterId2) should contain (SubjectManager.slaveRelation(0.5))
-
-		sm.setMaster(None)
-		subject.master shouldBe empty
-		subject.masterScore shouldBe empty
-		subject.master_history should have length 3
-		subject.master_history.last.value shouldBe empty
-		subject.relations_history(masterId2)(SubjectManager.slaveKey) should have length 2
-		subject.relations_history(masterId2)(SubjectManager.slaveKey).last.value shouldBe empty
-		subject.relations.get(masterId2) shouldBe empty
 	}
 
 	"Properties" should "be added and removed" in {
-		val subject = Subject()
+		val subject = TestData.subject
 		val version = Version.apply("SM Test", Nil, sc, false)
 		val sm = new SubjectManager(subject, version)
 
@@ -197,10 +188,11 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"Relations" should "be added and removed" in {
-		val subject = Subject()
+		val subject = TestData.subject
 		val version = Version.apply("SM Test", Nil, sc, false)
 		val List(sub1, sub2) = TestData.masterIds()
 		val sm = new SubjectManager(subject, version)
+
 		sm.addRelations(Map(sub1 -> Map("key 1" -> "value 1", "key 2" -> "value 2")))
 		subject.relations(sub1) shouldEqual Map("key 1" -> "value 1", "key 2" -> "value 2")
 		subject.relations_history(sub1)("key 1") should have length 1
@@ -239,7 +231,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"The correct version" should "be found" in {
-		val sm = new SubjectManager(Subject(), Version(program = ""))
+		val sm = new SubjectManager(Subject.empty(datasource = "testSource"), Version(program = ""))
 		val foundVersions = TestData.versionQueries().map((sm.findVersion _).tupled).map(_.map(_.version))
 		val expectedVersions = TestData.versionQueryResults()
 		foundVersions shouldEqual expectedVersions

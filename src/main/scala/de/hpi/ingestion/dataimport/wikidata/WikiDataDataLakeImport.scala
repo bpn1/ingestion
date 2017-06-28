@@ -71,7 +71,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		strategies: Map[String, List[String]],
 		classifier: AClassifier[Tag]
 	): Subject = {
-		val subject = Subject()
+		val subject = Subject.empty(datasource = "wikidata")
 		val sm = new SubjectManager(subject, version)
 
 		sm.setName(entity.label)
