@@ -21,7 +21,7 @@ case class Version(
 	var validity: Map[String, String] = Map(),
 	var datasources: List[String] = Nil,
 	var timestamp: Date = new Date(),
-	var tables: List[String] = Nil)
+	var subjecttable: Option[String] = None)
 
 /**
   * Companion object for the Version case class.
@@ -38,9 +38,10 @@ object Version {
 	  */
 	def writeToCassandra(version: Version, sc: SparkContext): Unit = {
 		if(sc.getConf.contains("spark.cassandra.connection.host")) {
-			val logVersion = (version.version, version.timestamp, version.datasources, version.program, version.tables)
-			sc.parallelize(List(logVersion))
-				.saveToCassandra(keyspace, tablename, SomeColumns("version", "timestamp", "datasources", "program", "tables"))
+			val logVersion = (version.version, version.timestamp, version.datasources, version.program,
+				version.subjecttable)
+			sc.parallelize(List(logVersion)).saveToCassandra(keyspace, tablename,
+				SomeColumns("version", "timestamp", "datasources", "program", "subjecttable"))
 		}
 	}
 	// $COVERAGE-ON$
@@ -52,7 +53,7 @@ object Version {
 	  * @param datasources List of datasources used
 	  * @param sc Spark Context used to connect to the Cassandra
 	  * @param timestampName whether or not a timestamp will be appended to the program name
-	  * @param tables List of the tables that this Version's changes will be written into
+	  * @param subjecttable Name of the table that this Version's changes will be written to
 	  * @return Version with the given parameters
 	  */
 	def apply(
@@ -60,12 +61,12 @@ object Version {
 		datasources: List[String],
 		sc: SparkContext,
 		timestampName: Boolean,
-		tables: List[String] = Nil
+		subjecttable: Option[String] = None
 	): Version = {
 		val time = new Date()
 		val timestamp = s"_$time".filter(c => timestampName)
 		val version = Version(program = s"$program$timestamp", datasources = datasources, timestamp = time,
-			tables = tables)
+			subjecttable = subjecttable)
 		writeToCassandra(version, sc)
 		version
 	}
