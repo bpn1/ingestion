@@ -5,7 +5,7 @@ import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.datalake.models.{Subject, OldSubject}
+import de.hpi.ingestion.datalake.models.{Subject, Old_Subject}
 
 /**
   * Created by Lando on 27.06.17.
@@ -23,7 +23,7 @@ object NewSchemaTranslation extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[OldSubject](settings("inputKeyspace"), settings("inputTable"))
+		val subjects = sc.cassandraTable[Old_Subject](settings("inputKeyspace"), settings("inputTable"))
 		List(subjects).toAnyRDD()
 	}
 
@@ -43,7 +43,7 @@ object NewSchemaTranslation extends SparkJob {
 	// $COVERAGE-ON$
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val oldSubjects = input.head.asInstanceOf[RDD[OldSubject]]
+		val oldSubjects = input.head.asInstanceOf[RDD[Old_Subject]]
 		val datasource = settings("datasource")
 
 		val subjects = oldSubjects.map { oldSubject =>
