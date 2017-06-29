@@ -5,10 +5,10 @@ import de.hpi.ingestion.framework.SplitSparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.broadcast.Broadcast
 import com.datastax.spark.connector._
 import scala.collection.mutable
-import java.io.{BufferedReader, InputStreamReader}
-import org.apache.spark.broadcast.Broadcast
+import java.io.{BufferedReader, InputStream, InputStreamReader}
 
 /**
   * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
@@ -18,7 +18,7 @@ object CosineContextComparator extends SplitSparkJob {
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
-	var docfreqStreamFunction = AliasTrieSearch.hdfsFileStream _
+	var docfreqStreamFunction: String => InputStream = AliasTrieSearch.hdfsFileStream _
 
 	/**
 	  * Loads Parsed Wikipedia entries with their term frequencies and the document frequencies from the Cassandra.
@@ -251,7 +251,7 @@ object CosineContextComparator extends SplitSparkJob {
 	  * @return Map of every term and its inverse document frequency
 	  */
 	def inverseDocumentFrequencies(numDocs: Long): Map[String, Double] = {
-		val docfreqStream = AliasTrieSearch.trieStreamFunction(settings("dfFile"))
+		val docfreqStream = docfreqStreamFunction(settings("dfFile"))
 		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
 		val idfMap = mutable.Map[String, Double]()
 		var line = reader.readLine()
