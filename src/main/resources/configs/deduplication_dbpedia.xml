@@ -11,7 +11,7 @@
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
         <maxBlockSize>500000</maxBlockSize>
-        <confidence>0.5</confidence>
+        <confidence>0.3</confidence>
     </settings>
     <simMeasurements>
         <attribute>
@@ -25,6 +25,19 @@
             <key>id_wikidata</key>
             <feature>
                 <similarityMeasure>ExactMatchString</similarityMeasure>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
+            <key>name</key>
+            <feature>
+                <similarityMeasure>JaroWinkler</similarityMeasure>
+                <weight>0.7</weight>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>MongeElkan</similarityMeasure>
+                <weight>0.3</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
