@@ -21,7 +21,9 @@ object CosineContextComparator extends SplitSparkJob {
 
 	// $COVERAGE-OFF$
 	/**
-	  * Loads Parsed Wikipedia entries with their term frequencies and the document frequencies from the Cassandra.
+	  * Loads Parsed Wikipedia entries with their term frequencies, the aliases with their pages and occurrences,
+	  * the tfidf vectors for the Wikipedia articles and the total number of articles in the parsedwikipedia table
+	  * from the Cassandra.
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
