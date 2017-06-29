@@ -2,21 +2,34 @@
 <config>
     <settings>
         <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
-        <subjectTable>subject_implisense</subjectTable>
+        <subjectTable>subject</subjectTable>
         <keyspaceStagingTable>datalake</keyspaceStagingTable>
-        <stagingTable>subject_wikidata</stagingTable>
+        <stagingTable>subject_dbpedia</stagingTable>
         <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
         <duplicatesTable>duplicates</duplicatesTable>
         <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
         <maxBlockSize>500000</maxBlockSize>
-        <confidence>0.9</confidence>
+        <confidence>0.3</confidence>
     </settings>
     <simMeasurements>
         <attribute>
+            <key>id_dbpedia</key>
+            <feature>
+                <similarityMeasure>ExactMatchString</similarityMeasure>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
+            <key>id_wikidata</key>
+            <feature>
+                <similarityMeasure>ExactMatchString</similarityMeasure>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
             <key>name</key>
-            <weight>0.8</weight>
             <feature>
                 <similarityMeasure>JaroWinkler</similarityMeasure>
                 <weight>0.7</weight>
@@ -25,15 +38,6 @@
             <feature>
                 <similarityMeasure>MongeElkan</similarityMeasure>
                 <weight>0.3</weight>
-                <scale>1</scale>
-            </feature>
-        </attribute>
-        <attribute>
-            <key>gen_urls</key>
-            <weight>0.2</weight>
-            <feature>
-                <similarityMeasure>UrlCompare</similarityMeasure>
-                <weight>1.0</weight>
                 <scale>1</scale>
             </feature>
         </attribute>

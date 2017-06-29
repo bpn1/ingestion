@@ -4,7 +4,7 @@
         <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
         <subjectTable>subject</subjectTable>
         <keyspaceStagingTable>datalake</keyspaceStagingTable>
-        <stagingTable>subject_temp</stagingTable>
+        <stagingTable>subject_dbpedia</stagingTable>
         <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
         <duplicatesTable>duplicates</duplicatesTable>
         <keyspaceVersionTable>datalake</keyspaceVersionTable>

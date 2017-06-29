@@ -99,6 +99,18 @@ case class Subject(
 			.keys
 			.toList
 	}
+
+	/**
+	  * Returns whether the subject is a master node
+	  * @return Boolean if subject is master
+	  */
+	def isMaster: Boolean = this.id == this.master
+
+	/**
+	  * Returns whether the subject is a slave node
+	  * @return Boolean if subject is slave
+	  */
+	def isSlave: Boolean = !isMaster
 }
 
 /**

@@ -1,7 +1,8 @@
 package de.hpi.ingestion.framework
 
 import de.hpi.ingestion.deduplication.models.config.{AttributeConfig, SimilarityMeasureConfig}
-import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan}
+import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler, MongeElkan}
+
 import scala.xml.{Node, XML}
 
 object TestData {
@@ -13,6 +14,24 @@ object TestData {
 			List(
 				SimilarityMeasureConfig(similarityMeasure = MongeElkan, weight = 0.5333),
 				SimilarityMeasureConfig(similarityMeasure = JaroWinkler, weight = 0.4667)
+			)
+		)
+	)
+
+	def parsedScoreConfigWithoutWeights: List[AttributeConfig] = List(
+		AttributeConfig(
+			"name",
+			0.5,
+			List(
+				SimilarityMeasureConfig(similarityMeasure = MongeElkan, weight = 0.5),
+				SimilarityMeasureConfig(similarityMeasure = JaroWinkler, weight = 0.5)
+			)
+		),
+		AttributeConfig(
+			"category",
+			0.5,
+			List(
+				SimilarityMeasureConfig(similarityMeasure = ExactMatchString, weight = 1.0)
 			)
 		)
 	)
@@ -31,6 +50,10 @@ object TestData {
 
 	def configWithoutSettingsXML: Node = {
 		XML.load(getClass.getResource("/framework/test2.xml"))
+	}
+
+	def configsWithoutWeightsXML: Node = {
+		XML.load(getClass.getResource("/framework/test3.xml"))
 	}
 
 	def importConfigXML: Node = {
