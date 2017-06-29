@@ -15,7 +15,7 @@ import org.apache.spark.rdd.RDD
 object TestData {
 	val datasource = "testSource"
 	val idList = List.fill(8)(UUID.randomUUID())
-	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false)
+	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false, None)
 
 	def bucketsList: Map[Int, List[Double]] = Map(
 		10 -> List(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0),

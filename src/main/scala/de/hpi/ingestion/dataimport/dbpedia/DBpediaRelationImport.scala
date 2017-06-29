@@ -49,7 +49,7 @@ object DBpediaRelationImport extends SparkJob {
 	// $COVERAGE-ON$
 
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val version = Version("DBpediaRelationImport", List("dbpedia"), sc, false)
+		val version = Version("DBpediaRelationImport", List("dbpedia"), sc, false, settings.get("dbpediaTable"))
 		val dbpedia = input.head.asInstanceOf[RDD[Subject]]
 		val relations = input.last.asInstanceOf[RDD[Relation]]
 
