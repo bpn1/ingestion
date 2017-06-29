@@ -7,7 +7,7 @@ class VersionTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	"Default version" should "have the default values set" in {
 		val programName = "VersionTest"
-		val version = Version(programName, Nil, sc, false)
+		val version = Version(programName, Nil, sc, false, None)
 		version.version should not be null
 		version.program shouldBe programName
 		version.value shouldBe empty
@@ -18,9 +18,9 @@ class VersionTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	"Program name" should "have a timestamp appended" in {
 		val programName = "VersionTest"
-		val version = Version(programName, Nil, sc, false)
+		val version = Version(programName, Nil, sc, false, None)
 		version.program shouldEqual programName
-		val versionWithTime = Version(programName, Nil, sc, true)
+		val versionWithTime = Version(programName, Nil, sc, true, None)
 		versionWithTime.program should startWith (programName)
 		versionWithTime.program should endWith (version.timestamp.toString)
 	}

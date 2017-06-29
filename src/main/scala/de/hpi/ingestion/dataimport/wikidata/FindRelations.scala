@@ -112,7 +112,7 @@ object FindRelations extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val subjects = input.fromAnyRDD[Subject]().head
 		val nameResolveMap = resolvableNamesMap(subjects)
-		val version = Version(appName, datasources, sc, false)
+		val version = Version(appName, datasources, sc, false, settings.get("subjectTable"))
 		val subjectsWithRelations = subjects.map(findRelations(_, nameResolveMap, version))
 		List(subjectsWithRelations).toAnyRDD()
 	}

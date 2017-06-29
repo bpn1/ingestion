@@ -79,7 +79,7 @@ object TestData {
 	}
 
 	def version(sc: SparkContext): Version = {
-		Version("SomeTestApp", Nil, sc, false)
+		Version("SomeTestApp", Nil, sc, false, None)
 	}
 
 	def translationEntities: List[Entity] = {

@@ -35,11 +35,11 @@ object Version {
 	  * @param version Version to write
 	  * @param sc Spark Context used to connect to the Cassandra.
 	  */
-	def writeToCassandra(version: Version, sc: SparkContext): Unit = {
+	def writeToCassandra(version: Version, sc: SparkContext, subjecttable: Option[String]): Unit = {
 		if(sc.getConf.contains("spark.cassandra.connection.host")) {
-			val logVersion = (version.version, version.timestamp, version.datasources, version.program)
-			sc.parallelize(List(logVersion))
-				.saveToCassandra(keyspace, tablename, SomeColumns("version", "timestamp", "datasources", "program"))
+			val logVersion = (version.version, version.timestamp, version.datasources, version.program, subjecttable)
+			sc.parallelize(List(logVersion)).saveToCassandra(keyspace, tablename,
+				SomeColumns("version", "timestamp", "datasources", "program", "subjecttable"))
 		}
 	}
 	// $COVERAGE-ON$
@@ -51,13 +51,20 @@ object Version {
 	  * @param datasources List of datasources used
 	  * @param sc Spark Context used to connect to the Cassandra
 	  * @param timestampName whether or not a timestamp will be appended to the program name
+	  * @param subjecttable Name of the table that this Version's changes will be written to
 	  * @return Version with the given parameters
 	  */
-	def apply(program: String, datasources: List[String], sc: SparkContext, timestampName: Boolean): Version = {
+	def apply(
+		program: String,
+		datasources: List[String],
+		sc: SparkContext,
+		timestampName: Boolean,
+		subjecttable: Option[String]
+	): Version = {
 		val time = new Date()
 		val timestamp = s"_$time".filter(c => timestampName)
 		val version = Version(program = s"$program$timestamp", datasources = datasources, timestamp = time)
-		writeToCassandra(version, sc)
+		writeToCassandra(version, sc, subjecttable)
 		version
 	}
 }
