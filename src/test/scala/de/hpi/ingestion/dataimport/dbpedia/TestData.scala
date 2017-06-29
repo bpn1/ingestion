@@ -1,18 +1,23 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
+import java.util.UUID
+
 import de.hpi.ingestion.dataimport.SharedNormalizations
 
 import scala.io.Source
 import scala.xml.XML
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.dataimport.dbpedia.models.{DBpediaEntity, Relation}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
 
 object TestData {
+	val datasource = "dbpedia"
+	val idList = List.fill(6)(UUID.randomUUID())
+
 	def prefixesList: List[(String,String)] = {
 		val prefixFile = Source.fromURL(getClass.getResource("/prefixes.txt"))
 		val prefixes = prefixFile.getLines.toList
@@ -121,7 +126,7 @@ object TestData {
 		DBpediaEntity(dbpedianame = "D3", instancetype = Option("type 3"))
 	)
 
-	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", List("dataSources"), sc, false)
+	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", List("dataSources"), sc, false, None)
 
 	def testEntity: DBpediaEntity = DBpediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
@@ -162,8 +167,8 @@ object TestData {
 	)
 
 	def translatedSubjects: List[Subject] = List(
-		Subject(name = Option("Liste von Autoren GmbH"), category = Option("type 1")),
-		Subject()
+		Subject(master = null, datasource = "dbpedia", name = Option("Liste von Autoren GmbH"), category = Option("type 1")),
+		Subject(master = null, datasource = "dbpedia")
 	)
 
 	def mapping: Map[String, List[String]] = Map(
@@ -235,6 +240,64 @@ object TestData {
 		"geo_city" -> this.normalizedCities,
 		"gen_employees" -> this.normalizedEmployees,
 		"gen_urls" -> this.normalizedURLs
+	)
+
+	def interlanguageLinksEn(): List[String] = List(
+		"""<http://dbpedia.org/resource/Audi_EN> <http://www.w3.org/2002/07/owl#sameas> <http://de.dbpedia.org/resource/Audi_DE> .""",
+		"""<http://dbpedia.org/resource/Volkswagen_EN> <http://www.w3.org/2002/07/owl#sameas> <http://de.dbpedia.org/resource/Volkswagen_DE> .""",
+		"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> ."""
+	)
+
+	def germanLabels(): Map[String, String] = {
+		Map("Audi_EN" -> "Audi_DE", "Volkswagen_EN" -> "Volkswagen_DE")
+	}
+
+	def dbpediaRawRelations(): List[String] = List(
+		"""<http://dbpedia.org/resource/Audi_EN> <http://dbpedia.org/ontology/parentCompany> <http://dbpedia.org/resource/Volkswagen_EN> ."""
+	)
+
+	def dbpediaParsedRelations(): List[Relation] = List(
+		Relation("Audi DE", "parentCompany", "Volkswagen DE")
+	)
+
+	def dbpediaRelations: List[Relation] = List(
+		Relation("Audi", "parentCompany", "Volkswagen"),
+		Relation("Audi", "subsidiary", "Lamborghini"),
+		Relation("Audi", "type", "Aktiengesellschaft"),
+		Relation("BMW", "division", "BMW Motorsport"),
+		Relation("BWM", "foaf:Hompage", "http://www.bmw.com/"),
+		Relation("BMW", "product", "Fahrrad")
+	)
+
+	def dbpedia: List[Subject] = List(
+		Subject(id = idList.head, master= idList.head, datasource = datasource, name = Option("Audi")),
+		Subject(id = idList(1), master= idList(1), datasource = datasource, name = Option("BMW")),
+		Subject(id = idList(2), master= idList(2), datasource = datasource, name = Option("Volkswagen")),
+		Subject(id = idList(3), master= idList(3), datasource = datasource, name = Option("BMW Motorsport")),
+		Subject(id = idList(4), master= idList(4), datasource = datasource, name = Option("Commerzbank")),
+		Subject(id = idList(5), master= idList(5), datasource = datasource, name = Option("Lamborghini"))
+	)
+
+	def dbpediaImportedRelations = List(
+		Subject(
+			id = idList.head,
+			master = idList.head,
+			datasource = datasource,
+			name = Option("Audi"),
+			relations = Map(
+				idList(2) -> Map("parentCompany" -> ""),
+				idList(5) -> Map("subsidiary" -> "")
+			)
+		),
+		Subject(
+			id = idList(1),
+			master = idList(1),
+			datasource = datasource,
+			name = Option("BMW"),
+			relations = Map(
+				idList(3) -> Map("division" -> "")
+			)
+		)
 	)
 }
 // scalastyle:on line.size.limit

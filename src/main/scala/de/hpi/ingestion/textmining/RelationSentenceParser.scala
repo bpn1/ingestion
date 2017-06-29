@@ -75,6 +75,7 @@ object RelationSentenceParser extends SparkJob {
 			var sentenceOffset = 0
 			var bagOfWords = List.empty[String]
 			sentenceEntities
+				.sortBy(_.offset)
 				.foreach { entity =>
 					entity.offset.foreach { entityOffset =>
 						bagOfWords ++= tokenizer.process(sentence.substring(sentenceOffset, entityOffset))

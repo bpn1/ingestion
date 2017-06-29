@@ -15,13 +15,21 @@ class BlockingSchemeUnitTest extends FlatSpec with Matchers {
 
 	it should "generate a default undefined key if there is no name" in {
 		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
-		val subject = Subject()
+		val subject = Subject(master = null, datasource = null)
 		val key = blockingScheme.generateKey(subject)
 		key shouldEqual List(blockingScheme.undefinedValue)
 	}
 
+	it should "ignore 'The ' at the beginning of the name when generating a key" in {
+		val subjects = TestData.subjectsStartingWithThe
+		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
+		val keys = subjects.map(blockingScheme.generateKey)
+		val expected = TestData.simpleBlockingSchemeWithThe
+		keys.toSet shouldEqual expected.toSet
+	}
+
 	"LastLettersBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.subjects :+ Subject()
+		val subjects = TestData.subjects :+ Subject(master = null, datasource = null)
 		val blockingScheme = LastLettersBlockingScheme("Test LastLettersBS")
 		val keys = subjects.map(blockingScheme.generateKey)
 		val expected = TestData.lastLettersBlockingScheme
