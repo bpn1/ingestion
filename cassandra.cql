@@ -248,51 +248,93 @@ CREATE TYPE datalake.candidate (
 );
 
 CREATE TABLE datalake.subject (
-    id uuid PRIMARY KEY,
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
     aliases list<text>,
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
-    master uuid,
-    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
-    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
+);
+
+CREATE TABLE datalake.subject_temp (
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
 );
 
 CREATE TABLE datalake.subject_dbpedia (
-    id uuid PRIMARY KEY,
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
     aliases list<text>,
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
-    master uuid,
-    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
-    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
 );
 
 CREATE TABLE datalake.subject_wikidata (
-    id uuid PRIMARY KEY,
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
     aliases list<text>,
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
-    master uuid,
-    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
-    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
+);
+
+CREATE TABLE datalake.subject_implisense (
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
 );
 
 CREATE TABLE datalake.version (
