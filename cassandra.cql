@@ -160,6 +160,15 @@ CREATE TABLE wikidumps.dbpediarelations (
 	PRIMARY KEY (subjectentity, relationtype, objectentity)
 );
 
+CREATE TABLE wikidumps.relationpredictions (
+	subjectentity text,
+	relationtype text,
+	objectentity text,
+	dbpedia boolean,
+	count int,
+	PRIMARY KEY (subjectentity, relationtype, objectentity)
+);
+
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
     id text PRIMARY KEY,
@@ -191,7 +200,7 @@ CREATE TYPE wikidumps.extendedlink (
 );
 
 CREATE TABLE wikidumps.relationclassifierstats (
-    id uuid PRIMARY KEY,
+    id timeuuid PRIMARY KEY,
     rel text,
     sentenceswithrelation int,
     sentenceswithnorelation int,

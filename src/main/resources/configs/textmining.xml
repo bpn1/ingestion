@@ -22,5 +22,6 @@
         <spiegelTable>spiegel</spiegelTable>
         <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
         <relClassifierStatsTable>relationclassifierstats</relClassifierStatsTable>
+        <relPredictionsTable>relationpredictions</relPredictionsTable>
     </settings>
 </config>
