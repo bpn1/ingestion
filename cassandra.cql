@@ -500,3 +500,17 @@ CREATE TABLE evaluation.featureentries (
 	score map<text, frozen<list<double>>>,
 	correct boolean
 );
+
+CREATE TABLE datalake.versiondiff (
+    oldversion timeuuid,
+    newversion timeuuid,
+    id uuid,
+    aliases text,
+    category text,
+    datasource text,
+    master text,
+    name text,
+    properties text,
+    relations text,
+    PRIMARY KEY ((oldversion, newversion), id)
+);
