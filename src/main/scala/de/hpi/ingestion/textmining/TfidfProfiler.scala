@@ -47,14 +47,7 @@ object TfidfProfiler extends SparkJob {
 		runtimes
 			.asInstanceOf[RDD[(String, Long)]]
 			.saveAsTextFile(s"tfidf_profiler_runtimes_$timestamp")
-
-		// save output for debug purposes
-		sparkTfidf
-			.asInstanceOf[RDD[Vector]]
-			.saveAsTextFile(s"tfidf_profiler_sparkTfidf_$timestamp")
-		ingestionTfidf
-			.asInstanceOf[RDD[(String, Map[String, Double])]]
-			.saveAsTextFile(s"tfidf_profiler_ingestionTfidf_$timestamp")
+		// Do not save sparkTfidf and ingestionTfidf. It is only for debugging purposes.
 	}
 	// $COVERAGE-ON$
 
