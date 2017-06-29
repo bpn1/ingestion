@@ -3,8 +3,8 @@ package de.hpi.ingestion.versioncontrol.models
 import java.util.UUID
 
 case class SubjectDiff(
-	oldVersion: UUID,
-	newVersion: UUID,
+	oldversion: UUID,
+	newversion: UUID,
 	id: UUID,
 	var master: Option[String] = None,
 	var datasource: Option[String] = None,
