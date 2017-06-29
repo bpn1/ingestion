@@ -85,10 +85,12 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 
 		doc.select(".general.bloc .presentation.global li").foreach { element =>
 			val texts = element.select("p")
-			val title = texts.get(0).text.trim
-			val content = texts.get(1).text.trim
-			if (content != "") {
-				extractedData += title -> List(content)
+			if (texts.length > 1) {
+				val title = texts.get(0).text.trim
+				val content = texts.get(1).text.trim
+				if (content != "") {
+					extractedData += title -> List(content)
+				}
 			}
 		}
 
