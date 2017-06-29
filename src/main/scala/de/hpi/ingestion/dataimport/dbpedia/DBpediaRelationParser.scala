@@ -42,7 +42,6 @@ object DBpediaRelationParser extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("DBpediaRelationTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**

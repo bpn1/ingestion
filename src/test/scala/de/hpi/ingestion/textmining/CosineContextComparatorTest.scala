@@ -24,19 +24,19 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "be read and calculated from a file" in {
-		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
-
+		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
 		val testDocFreqFunction = TestData.docfreqStream("smalldocfreq") _
 		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+
 		val numDocuments = 4
 		val idfMap = CosineContextComparator.inverseDocumentFrequencies(numDocuments.toLong)
 		val expectedIdfs = TestData.inverseDocumentFrequenciesSet().toMap
 		idfMap shouldEqual expectedIdfs
 
-		CosineContextComparator.settings = oldSettings
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+		CosineContextComparator.settings = oldSettings
 	}
 
 	"Tf-idf contexts for parsed Wikipedia articles with complete document frequencies" should "not be empty" in {

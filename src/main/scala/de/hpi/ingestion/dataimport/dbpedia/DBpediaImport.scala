@@ -44,7 +44,6 @@ object DBpediaImport extends SparkJob {
 			.head
 			.saveToCassandra(keyspace, tablename)
 	}
-
 	// $COVERAGE-ON$
 
 	def getPrefixesFromFile(): List[(String, String)] = {

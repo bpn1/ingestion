@@ -1,22 +1,24 @@
 package de.hpi.ingestion.textmining
 
 import java.io._
-import scala.collection.JavaConversions._
+
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
-import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models.{TrieAlias, _}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import org.apache.spark.rdd.RDD
+import org.apache.spark.mllib.linalg.{DenseVector, SparseVector, Vectors}
 import org.apache.spark.SparkContext
-import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
+
 import scala.io.{BufferedSource, Source}
+import scala.collection.JavaConversions._
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -24,6 +26,42 @@ import scala.io.{BufferedSource, Source}
 // scalastyle:off file.size.limit
 
 object TestData {
+	def profilerTfidfVectors(): Vector[SparseVector] = {
+		Vector(
+			Vectors.sparse(1048576, Array(243877, 626966, 787968), Array(0.0, 0.0, 0.0)),
+			Vectors.sparse(1048576, Array(243877, 626966, 787968), Array(0.0, 0.0, 0.0)),
+			Vectors.sparse(1048576, Array(160447, 162399, 215849, 237331, 262902, 292496, 350912, 456939, 457955, 460563, 461447, 463664, 482788, 487479, 491236, 512566, 513632, 539064, 569819, 573237, 578289, 584752, 592681, 602984, 611518, 649006, 672104, 787968, 851566, 864188, 878450, 925525, 949220, 980295, 981891, 989779, 997427, 998788, 1002571, 1020442, 1028132), Array(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)),
+			Vectors.sparse(1048576, Array(160447, 215849, 457955, 459965, 461447, 626966, 787968, 806439, 932746, 971734, 997427, 1002571, 1028132), Array(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+		).map(_.asInstanceOf[SparseVector])
+	}
+
+	def profilerTfidfMaps(): Set[(String, Map[String, Double])] = {
+		Set (
+			("Audi Test mit Link", Map("audi" -> 0.12493873660829993, "verlink" -> 0.0, "." -> 0.0)),
+			("Audi Test ohne Link", Map("audi" -> 0.12493873660829993, "verlink" -> 0.0, "." -> 0.0)),
+			("Streitberg (Brachttal)", Map("1554" -> 0.0, "waldrech" -> 0.0, "einwohnerzahl" -> 0.0, "streidtburgk" -> 0.0, "19" -> 0.0, "." -> 0.0, "brachttal" -> 0.0, "ort" -> 0.0, "jahrhu" -> 0.0, "nachweislich" -> 0.0, "-lrb-" -> 0.0, "huterech" -> 0.0, "eingeburg" -> 0.0, "steytberg" -> 0.0, "erwahnung" -> 0.0, "ortsteil" -> 0.0, "bezeichnung" -> 0.0, "jahr" -> 0.0, "270" -> 0.0, "-" -> 0.0, "stridberg" -> 0.0, "," -> 0.0, "kleinst" -> 0.0, "-rrb-" -> 0.0, "stamm" -> 0.0, "hess" -> 0.0, "holx" -> 0.0, "buding" -> 0.0, "tauch" -> 0.0, "stripurgk" -> 0.0, "1500" -> 0.0, "gemei" -> 0.0, "1377" -> 0.0, "wald" -> 0.0, "main-kinzig-kreis" -> 0.0, "1528" -> 0.0, "namensvaria" -> 0.0, "ortsnam" -> 0.0, "streitberg" -> 0.0, "mittelal" -> 0.0, "red" -> 0.0)),
+			("Testartikel", Map("." -> 0.0, "brachttal" -> 0.0, "jahr" -> 0.0, "audi" -> 0.12493873660829993, "," -> 0.0, "hess" -> 0.0, "buding" -> 0.0, "historisch" -> 0.0, "wald" -> 0.0, "main-kinzig-kreis" -> 0.0, ":" -> 0.0, "nochmal" -> 0.0, "backfisch" -> 0.6020599913279624))
+		)
+	}
+
+	def profilingStatisticLables(): Set[String] = {
+		Set(
+			"Spark MLlib Context Extraction",
+			"Ingestion Context Extraction",
+			"Spark MLlib Tfidf Computation",
+			"Ingestion Tfidf Computation",
+			"Spark MLlib total",
+			"Ingestion total"
+		)
+	}
+
+	def tokenizedDocumentsList(): List[List[String]] = {
+		List(
+			List("Hier", "ist", "Audi", "verlinkt."),
+			List("Hier", "ist", "Audi", "nicht", "verlinkt.")
+		)
+	}
+
 	def valuesList(): List[Double] = {
 		List(5.0, 7.1, 5.0, 2.9, 7.1)
 	}

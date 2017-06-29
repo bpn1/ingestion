@@ -52,7 +52,6 @@ object ClassifierTraining extends SparkJob {
 			.first
 			.foreach(_.save(sc, s"wikipedia_randomforest_model_${System.currentTimeMillis()}"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
