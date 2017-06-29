@@ -149,7 +149,7 @@ object TestData {
 		DBpediaEntity(
 			dbpedianame = "dbpedia-de:List_von_Autoren",
 			label = Option("Liste von Autoren GmbH@de ."),
-			instancetype = Option("type 1"),
+			instancetype = Option("Company"),
 			data = Map(
 				"wikidata_id" -> List("Q123"),
 				"dbo:viafId" -> List("X123"),
@@ -167,7 +167,7 @@ object TestData {
 	)
 
 	def translatedSubjects: List[Subject] = List(
-		Subject(master = null, datasource = "dbpedia", name = Option("Liste von Autoren GmbH"), category = Option("type 1")),
+		Subject(master = null, datasource = "dbpedia", name = Option("Liste von Autoren GmbH"), category = Option("business")),
 		Subject(master = null, datasource = "dbpedia")
 	)
 

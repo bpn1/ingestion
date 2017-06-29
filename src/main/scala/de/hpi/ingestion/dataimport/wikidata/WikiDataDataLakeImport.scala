@@ -31,7 +31,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		"health maintenance organization" -> "business",
 		"non-governmental organization" -> "business",
 		"company" -> "business",
-		"state" -> "business",
+		"state" -> "country",
 		"environmental organization" -> "business",
 		"association" -> "business",
 		"enterprise" -> "business",
