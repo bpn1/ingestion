@@ -11,6 +11,7 @@ import de.hpi.ingestion.datalake.models.DLImportEntity
   */
 case class KompassEntity(
 	var name: Option[String] = None,
+	var instancetype: Option[String] = None,
 	var data: Map[String, List[String]] = Map[String, List[String]](),
 	id: UUID = UUID.randomUUID()
 ) extends DLImportEntity {

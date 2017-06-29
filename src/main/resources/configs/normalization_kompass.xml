@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <normalization>
+        <attributeMapping>
+            <attribute>
+                <key>id_wikidata</key>
+                <mapping>wikidataid</mapping>
+            </attribute>
+        </attributeMapping>
+    </normalization>
+    <categorization>
+        <category>
+            <key>Kraftfahrzeughersteller</key>
+            <mapping>G45</mapping>
+        </category>
+    </categorization>
+</config>

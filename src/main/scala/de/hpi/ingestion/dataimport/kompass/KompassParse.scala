@@ -98,7 +98,7 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 		doc.select("#secondaryActivitiesTree a").foreach(x => activities :::= List(x.text.replace("\"","").trim))
 		extractedData += "activities" -> activities
 
-		KompassEntity(name, extractedData)
+		KompassEntity(name, Option("company"), extractedData)
 	}
 
 	/**
