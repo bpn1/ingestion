@@ -2,13 +2,10 @@ package de.hpi.ingestion.versioncontrol
 
 import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
-
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
 import play.api.libs.json.{JsValue, Json}
-
 import scala.io.Source
-
 
 object TestData {
 

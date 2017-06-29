@@ -1,18 +1,16 @@
 package de.hpi.ingestion.versioncontrol
 
-import de.hpi.ingestion.datalake.models._
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import java.util.UUID
-
-import de.hpi.ingestion.framework.SparkJob
 import play.api.libs.json._
-
 import scala.collection.mutable
+import de.hpi.ingestion.datalake.models._
+import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
-import org.apache.spark.rdd.RDD
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Compares two versions of the Subject table given their TimeUUIDs as command line arguments and writes the
