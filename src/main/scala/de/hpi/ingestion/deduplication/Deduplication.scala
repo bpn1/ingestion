@@ -19,8 +19,7 @@ object Deduplication extends SparkJob {
 	configFile = "deduplication.xml"
 	val blockingSchemes = List[BlockingScheme](
 		SimpleBlockingScheme("simple_scheme"),
-		ListBlockingScheme("sectorBlocking_scheme", "gen_sectors"),
-		ListBlockingScheme("legalForm_scheme", "gen_legal_form")
+		ListBlockingScheme("sectorBlocking_scheme", "gen_sectors")
 	)
 
 	// $COVERAGE-OFF$
@@ -47,7 +46,8 @@ object Deduplication extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(subjects, staging) = input.fromAnyRDD[Subject]()
-		val blocks = Blocking.blocking(subjects, staging, blockingSchemes)
+		val slaves = subjects.filter(_.isSlave)
+		val blocks = Blocking.blocking(slaves, staging, blockingSchemes)
 		val subjectPairs = findDuplicates(blocks.values, sc)
 		val duplicates = createDuplicates(subjectPairs)
 		List(duplicates).toAnyRDD()
@@ -87,7 +87,7 @@ object Deduplication extends SparkJob {
 			.map { case (subject, staging, score) =>
 				((subject.id, subject.name), List(Candidate(staging.id, staging.name, score)))
 			}.reduceByKey(_ ::: _)
-			.map { case ((id, name), candidates) => Duplicates(id, name, stagingTable, candidates) }
+			.map { case ((id, name), candidates) => Duplicates(id, name, stagingTable, candidates.distinct) }
 	}
 
 	/**
@@ -101,7 +101,6 @@ object Deduplication extends SparkJob {
 		val confBroad = sc.broadcast(scoreConfigSettings)
 		blocks
 			.flatMap(_.crossProduct())
-			.distinct
 			.map { case (subject1, subject2) =>
 				(subject1, subject2, compare(subject1, subject2, confBroad.value))
 			}.filter(_._3 >= threshold)
