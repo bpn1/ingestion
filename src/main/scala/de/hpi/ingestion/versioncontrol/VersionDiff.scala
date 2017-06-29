@@ -143,8 +143,8 @@ object VersionDiff extends SparkJob {
 	def historyToDiff(entry: HistoryEntry, oldVersion: UUID, newVersion: UUID): SubjectDiff = {
 		val subjectDiff = SubjectDiff(oldVersion, newVersion, entry.id)
 		subjectDiff.name = diffLists(entry.name).map(_.toString)
-		diffLists(entry.aliases).map(_.toString)
-		diffLists(entry.category).map(_.toString)
+		subjectDiff.aliases = diffLists(entry.aliases).map(_.toString)
+		subjectDiff.category = diffLists(entry.category).map(_.toString)
 		val propertyDiff = entry.properties.mapValues(diffLists).filter(_._2.nonEmpty)
 		if(propertyDiff.nonEmpty) subjectDiff.properties = Option(Json.toJson(propertyDiff).toString)
 		val relationsMap = entry.relations

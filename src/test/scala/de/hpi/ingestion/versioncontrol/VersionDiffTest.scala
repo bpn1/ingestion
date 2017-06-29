@@ -3,7 +3,9 @@ package de.hpi.ingestion.versioncontrol
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import java.util.UUID
+
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.versioncontrol.models.SubjectDiff
 import play.api.libs.json.JsValue
 
 class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
@@ -16,9 +18,9 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 		val (oldV, newV) = TestData.versionsToCompare()
 		val versions = Array(oldV.toString, newV.toString)
 		val rddList = List(subjects).toAnyRDD()
-		val versionDiff = VersionDiff.run(rddList, sc, versions).fromAnyRDD[JsValue]().head
-		val expectedDiff = sc.parallelize(TestData.jsonDiff())
-		assertRDDEquals(versionDiff, expectedDiff)
+		val versionDiff = VersionDiff.run(rddList, sc, versions).fromAnyRDD[SubjectDiff]().head.collect
+		val expectedDiff = TestData.subjectDiff()
+		versionDiff shouldEqual expectedDiff
 	}
 
 	"Versions" should "be ordered correctly" in {
@@ -48,7 +50,7 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 		val (oldV, newV) = TestData.versionsToCompare()
 		val diff = TestData.historyEntries()
 			.map(VersionDiff.historyToDiff(_, oldV, newV))
-		val expectedDiff = TestData.jsonDiff()
+		val expectedDiff = TestData.subjectDiff()
 		diff shouldEqual expectedDiff
 	}
 

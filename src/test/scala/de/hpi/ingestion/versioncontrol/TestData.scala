@@ -2,9 +2,11 @@ package de.hpi.ingestion.versioncontrol
 
 import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
+
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.versioncontrol.models.HistoryEntry
+import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
 import play.api.libs.json.{JsValue, Json}
+
 import scala.io.Source
 
 
@@ -234,6 +236,21 @@ object TestData {
 				UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("master" -> "1.0")),
 			master_history = masterVersions())
 	)
+
+	def subjectDiff(): List[SubjectDiff] = {
+		val (oldV, newV) = TestData.versionsToCompare()
+		List(
+			SubjectDiff(
+				oldV, newV, UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				name = Option("{\"+\":[\"c\"],\"-\":[\"a\"]}"),
+				aliases = Option("{\"-\":[\"a\"]}"),
+				category = Option("{\"+\":[\"b\"]}")),
+			SubjectDiff(
+				oldV, newV, UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				properties = Option("{\"test property\":{\"+\":[\"c\"],\"-\":[\"a\"]}}"),
+				relations = Option("{\"465b3a7a-c621-42ad-a4f2-34e229602989\":{\"test relation\":{\"-\":[\"a\"]}}}"))
+		)
+	}
 
 	def jsonDiff(): List[JsValue] = {
 		val rawJson = Source.fromURL(getClass.getResource("/versioncontrol/diff.json")).getLines().mkString("\n")
