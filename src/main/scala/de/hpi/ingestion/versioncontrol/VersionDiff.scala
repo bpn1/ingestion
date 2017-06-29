@@ -4,11 +4,13 @@ import de.hpi.ingestion.datalake.models._
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import java.util.UUID
+
 import de.hpi.ingestion.framework.SparkJob
 import play.api.libs.json._
+
 import scala.collection.mutable
 import de.hpi.ingestion.implicits.TupleImplicits._
-import de.hpi.ingestion.versioncontrol.models.HistoryEntry
+import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
@@ -20,6 +22,7 @@ object VersionDiff extends SparkJob {
 	appName = "VersionDiff"
 	val keyspace = "datalake"
 	val tablename = "subject"
+	val outputTablename = "versiondiff"
 	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
 
 	// $COVERAGE-OFF$
@@ -35,16 +38,16 @@ object VersionDiff extends SparkJob {
 	}
 
 	/**
-	  * Writes the JSON diff to the HDFS.
+	  * Writes the JSON diffs to Cassandra.
 	  * @param output first element is the RDD of JSON diffs
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  * @param args arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[JsValue]()
+			.fromAnyRDD[SubjectDiff]()
 			.head
-			.saveAsTextFile("versionDiff_" + System.currentTimeMillis / 1000)
+			.saveToCassandra(keyspace, outputTablename)
 	}
 	// $COVERAGE-ON$
 
@@ -133,25 +136,25 @@ object VersionDiff extends SparkJob {
 	}
 
 	/**
-	  * Creates a diff of the values in the History Entry and writes it to a JSON object.
+	  * Creates a diff of the values in the History Entry and writes it to a SubjectDiff entry
 	  * @param entry History Entry containing the data of two versions
-	  * @return JSON object containing the diff
+	  * @return SubjectDiff case class containing the calculated differences
 	  */
-	def diffToJson(entry: HistoryEntry): JsValue = {
-		val jsonObject = mutable.Map[String, JsValue]()
-		jsonObject("id") = Json.toJson(entry.id)
-		diffLists(entry.name).foreach(name => jsonObject("name") = name)
-		diffLists(entry.aliases).foreach(aliases => jsonObject("aliases") = aliases)
-		diffLists(entry.category).foreach(category => jsonObject("category") = category)
+	def historyToDiff(entry: HistoryEntry, oldVersion: UUID, newVersion: UUID): SubjectDiff = {
+		val subjectDiff = SubjectDiff(oldVersion, newVersion, entry.id)
+		subjectDiff.name = diffLists(entry.name).map(_.toString)
+		diffLists(entry.aliases).map(_.toString)
+		diffLists(entry.category).map(_.toString)
 		val propertyDiff = entry.properties.mapValues(diffLists).filter(_._2.nonEmpty)
-		if(propertyDiff.nonEmpty) jsonObject("properties") = Json.toJson(propertyDiff)
+		if(propertyDiff.nonEmpty) subjectDiff.properties = Option(Json.toJson(propertyDiff).toString)
 		val relationsMap = entry.relations
 			.mapValues(_.mapValues(diffLists))
 			.map(_.map(_.toString, _.filter(_._2.nonEmpty).mapValues(_.get)))
 			.filter(_._2.nonEmpty)
 			.mapValues(Json.toJson(_))
-		if(relationsMap.nonEmpty) jsonObject("relations") = Json.toJson(relationsMap)
-		Json.toJson(jsonObject.toMap)
+		if(relationsMap.nonEmpty) subjectDiff.relations = Option(Json.toJson(relationsMap).toString)
+
+		subjectDiff
 	}
 
 	/**
@@ -181,7 +184,7 @@ object VersionDiff extends SparkJob {
 			.map(rdd =>
 				rdd
 					.map(retrieveVersions(_, oldVersion, newVersion))
-					.map(diffToJson))
+					.map(historyToDiff(_, oldVersion, newVersion)))
 			.toAnyRDD()
 	}
 

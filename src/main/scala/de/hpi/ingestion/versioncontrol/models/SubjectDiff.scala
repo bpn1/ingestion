@@ -6,11 +6,11 @@ case class SubjectDiff(
 	oldVersion: UUID,
 	newVersion: UUID,
 	id: UUID,
-	master: String,
-	datasource: String,
-	aliases: String,
-	category: String,
-	name: String,
-	properties: String,
-	relations: String
+	var master: Option[String] = None,
+	var datasource: Option[String] = None,
+	var aliases: Option[String] = None,
+	var category: Option[String] = None,
+	var name: Option[String] = None,
+	var properties: Option[String] = None,
+	var relations: Option[String] = None
 )

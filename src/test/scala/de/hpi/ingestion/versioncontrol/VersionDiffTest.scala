@@ -44,9 +44,10 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 		fieldValues shouldEqual expectedValues
 	}
 
-	"History entry" should "be diffed and serialized as JSON" in {
+	"History entry" should "be diffed and written into SubjectDiff" in {
+		val (oldV, newV) = TestData.versionsToCompare()
 		val diff = TestData.historyEntries()
-			.map(VersionDiff.diffToJson)
+			.map(VersionDiff.historyToDiff(_, oldV, newV))
 		val expectedDiff = TestData.jsonDiff()
 		diff shouldEqual expectedDiff
 	}
