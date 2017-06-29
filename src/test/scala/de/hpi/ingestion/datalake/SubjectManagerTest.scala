@@ -34,7 +34,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 	"Aliases" should "be added and removed" in {
 		val subject = TestData.subject
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val version = Version.apply("SM Test", Nil, sc, false, None)
 		val sm = new SubjectManager(subject, version)
 		sm.addAliases(List("alias 1", "alias 2"))
 		subject.aliases shouldEqual List("alias 1", "alias 2")
@@ -54,7 +54,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 	"Name" should "be set" in {
 		val subject = TestData.subject
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val version = Version.apply("SM Test", Nil, sc, false, None)
 		val sm = new SubjectManager(subject, version)
 		sm.setName("test name")
 		subject.name should contain ("test name")
@@ -74,7 +74,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 	"Category" should "be set" in {
 		val subject = TestData.subject
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val version = Version.apply("SM Test", Nil, sc, false, None)
 		val sm = new SubjectManager(subject, version)
 		sm.setCategory("test category")
 		subject.category should contain ("test category")
@@ -94,7 +94,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 	"Master node" should "be set" in {
 		val subject = TestData.subject
-		val version = Version("Subject Manager Test", Nil, sc, false)
+		val version = Version("Subject Manager Test", Nil, sc, false, None)
 		val List(masterId, masterId2) = TestData.masterIds()
 		val sm = new SubjectManager(subject, version)
 
@@ -135,7 +135,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 	"Properties" should "be added and removed" in {
 		val subject = TestData.subject
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val version = Version.apply("SM Test", Nil, sc, false, None)
 		val sm = new SubjectManager(subject, version)
 
 		sm.addProperties(Map("key 1" -> List("value 1", "value 2")))
@@ -189,7 +189,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 	"Relations" should "be added and removed" in {
 		val subject = TestData.subject
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val version = Version.apply("SM Test", Nil, sc, false, None)
 		val List(sub1, sub2) = TestData.masterIds()
 		val sm = new SubjectManager(subject, version)
 

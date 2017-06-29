@@ -15,17 +15,25 @@ class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with M
 		sentences shouldEqual TestData.sentenceList()
 	}
 
+	"Sentences" should "not contain these countries and cities as entities" in {
+		val sentences = sc.parallelize(TestData.alternativeSentenceList())
+		val relations = sc.parallelize(TestData.relationList())
+		val filteredSentences = RelationSentenceParser.filterSentences(sentences, relations, sc).collect.toSet
+		filteredSentences shouldEqual TestData.alternativeSentenceListFiltered().toSet
+	}
+
 	"Wikipedia articles" should "be split into exactly these Sentences with these entities" in {
 		val entries = sc.parallelize(
 			(Set(TestData.bigLinkExtenderParsedEntry()) ++ TestData.linkExtenderExtendedParsedEntry()).toList
 		)
-		val input = List(entries).toAnyRDD()
+		val relations = sc.parallelize(TestData.relationList())
+		val input = List(entries).toAnyRDD() ++ List(relations).toAnyRDD()
 		val sentences = RelationSentenceParser.run(input, sc)
 			.fromAnyRDD[Sentence]()
 			.head
 			.collect
 			.toList
-		val expectedSentences = TestData.sentenceList() ++ TestData.alternativeSentenceList()
+		val expectedSentences = TestData.sentenceList() ++ TestData.alternativeSentenceListFiltered()
 		sentences shouldEqual expectedSentences
 	}
 }
