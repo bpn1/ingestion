@@ -3,10 +3,12 @@ package de.hpi.ingestion.textmining
 import de.hpi.ingestion.framework.SparkJob
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
+import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.textmining.models.{EntityLink, ParsedWikipediaEntry, Sentence}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.textmining.CompanyLinkFilter.{extractCompanyPages, settings}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 /**
@@ -28,7 +30,8 @@ object RelationSentenceParser extends SparkJob {
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		val relations = sc.cassandraTable[Relation](settings("keyspace"), settings("DBpediaRelationTable"))
-		List(articles).toAnyRDD() ++ List(relations).toAnyRDD()
+		val wikidata = sc.cassandraTable[WikiDataEntity](settings("keyspace"), settings("wikidataTable"))
+		List(articles).toAnyRDD() ++ List(relations).toAnyRDD() ++ List(wikidata).toAnyRDD()
 	}
 
 	/**
@@ -96,7 +99,12 @@ object RelationSentenceParser extends SparkJob {
 	  * @param sc        Sparkcontext needed for broadcasting
 	  * @return filtered List
 	  */
-	def filterSentences(sentences: RDD[Sentence], relations: RDD[Relation], sc: SparkContext): RDD[Sentence] = {
+	def filterSentences(
+		sentences: RDD[Sentence],
+		relations: RDD[Relation],
+		companies: Set[String],
+		sc: SparkContext
+	): RDD[Sentence] = {
 		val relationtypes = Set(
 			"country",
 			"capital",
@@ -107,18 +115,22 @@ object RelationSentenceParser extends SparkJob {
 			"federalState",
 			"state"
 		)
-
 		val blacklist = relations.filter(relation => relationtypes.contains(relation.relationtype))
 			.map(_.objectentity)
 			.collect
 			.toSet
 		val blacklistBroadcast = sc.broadcast(blacklist)
+		val whiteListBroadcast = sc.broadcast(companies)
 		sentences.mapPartitions({ entryPartition =>
 			val localBlacklist = blacklistBroadcast.value
+			val localWhitelist = whiteListBroadcast.value
 			entryPartition.map { sentence =>
 				val filteredEntities = sentence
 					.entities
-					.filter(entity => !localBlacklist.contains(entity.entity))
+					.filter{ entity =>
+						!localBlacklist.contains(entity.entity) &&
+							localWhitelist.contains(entity.entity)
+					}
 					.sortBy(_.offset)
 				println(sentence.copy(entities = filteredEntities))
 				sentence.copy(entities = filteredEntities)
@@ -135,14 +147,16 @@ object RelationSentenceParser extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val relations = input.fromAnyRDD[Relation]().last
+		val articles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
+		val relations = input(1).asInstanceOf[RDD[Relation]]
+		val wikidata = input(2).asInstanceOf[RDD[WikiDataEntity]]
 
+		val companies = extractCompanyPages(wikidata).collect.toSet
 		val sentenceTokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
 		val tokenizer = IngestionTokenizer(Array("CleanWhitespaceTokenizer", "false", "false"))
 		val sentences = articles.flatMap(entryToSentencesWithEntities(_, sentenceTokenizer, tokenizer))
 
-		val filteredSentences = filterSentences(sentences, relations, sc)
+		val filteredSentences = filterSentences(sentences, relations, companies, sc)
 		List(filteredSentences).toAnyRDD()
 	}
 }
