@@ -2,7 +2,7 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
-import de.hpi.ingestion.dataimport.dbpedia.DBpediaImport.{cleanURL, tokenize, dbpediaToCleanedTriples, getPrefixesFromFile}
+import de.hpi.ingestion.dataimport.dbpedia.DBpediaImport.{dbpediaToCleanedTriples, getPrefixesFromFile}
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
