@@ -128,11 +128,12 @@ object VersionDiff extends SparkJob {
 		newVersion: UUID
 	): HistoryEntry = {
 		val nameList = createValueList(oldVersion, newVersion, subject.name_history)
+		val masterList = createValueList(oldVersion, newVersion, subject.master_history)
 		val aliasesList = createValueList(oldVersion, newVersion, subject.aliases_history)
 		val categoryList = createValueList(oldVersion, newVersion, subject.category_history)
 		val properties = subject.properties_history.mapValues(createValueList(oldVersion, newVersion, _))
 		val relations = subject.relations_history.mapValues(_.mapValues(createValueList(oldVersion, newVersion, _)))
-		HistoryEntry(subject.id, nameList, aliasesList, categoryList, properties, relations)
+		HistoryEntry(subject.id, nameList, masterList, aliasesList, categoryList, properties, relations)
 	}
 
 	/**
@@ -143,6 +144,7 @@ object VersionDiff extends SparkJob {
 	def historyToDiff(entry: HistoryEntry, oldVersion: UUID, newVersion: UUID): SubjectDiff = {
 		val subjectDiff = SubjectDiff(oldVersion, newVersion, entry.id)
 		subjectDiff.name = diffLists(entry.name).map(_.toString)
+		subjectDiff.master = diffLists(entry.master).map(_.toString)
 		subjectDiff.aliases = diffLists(entry.aliases).map(_.toString)
 		subjectDiff.category = diffLists(entry.category).map(_.toString)
 		val propertyDiff = entry.properties.mapValues(diffLists).filter(_._2.nonEmpty)

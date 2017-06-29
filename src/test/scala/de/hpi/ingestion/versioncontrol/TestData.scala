@@ -262,12 +262,14 @@ object TestData {
 			HistoryEntry(
 				UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
 				dataLists().head,
+				None,
 				dataLists()(1),
 				dataLists()(2),
 				Map("test property" -> dataLists()(3)),
 				Map(UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> dataLists()(4)))),
 			HistoryEntry(
 				UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				None,
 				None,
 				None,
 				None,
