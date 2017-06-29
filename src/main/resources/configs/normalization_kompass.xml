@@ -3,14 +3,128 @@
     <normalization>
         <attributeMapping>
             <attribute>
-                <key>id_wikidata</key>
-                <mapping>wikidataid</mapping>
+                <key>gen_ceo</key>
+                <mapping>executives</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_sectors</key>
+                <mapping>specified_sector</mapping>
+                <mapping>sector</mapping>
+            </attribute>
+            <attribute>
+                <key>geo_district</key>
+                <mapping>district</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_activities</key>
+                <mapping>activities</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_employees</key>
+                <mapping>employees</mapping>
+            </attribute>
+            <attribute>
+                <key>geo_county</key>
+                <mapping>county</mapping>
+            </attribute>
+            <attribute>
+                <key>id_kompass</key>
+                <mapping>url</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_fax</key>
+                <mapping>Fax</mapping>
+            </attribute>
+            <attribute>
+                <key>geo_city</key>
+                <mapping>city</mapping>
+            </attribute>
+            <attribute>
+                <key>date_founding</key>
+                <mapping>Gründungsjahr</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_urls</key>
+                <mapping>Webseite</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_legal_form</key>
+                <mapping>Rechtliche Hinweise</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_turnover</key>
+                <mapping>turnover</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_capital</key>
+                <mapping>Kapital</mapping>
+            </attribute>
+            <attribute>
+                <key>id_umsatzsteuer</key>
+                <mapping>MwSt.</mapping>
+                <mapping>Handelsregister</mapping>
             </attribute>
         </attributeMapping>
     </normalization>
     <categorization>
         <category>
-            <key>Kraftfahrzeughersteller</key>
+            <key>Bauwesen</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Business-Service</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>IT, Internet, Forschung  & Entwicklung</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Transport & Logistik</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Metalle, Maschinen & Ingenieurwesen</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Landwirtschaft & Nahrungsmittel</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Papier, Druck, Verlagswesen</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Chemikalien, Arzneimittel & Kunststoffe</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Einzelhandel & Handel</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Freizeit & Tourismus</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Mineralien</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Erziehung, Ausbildung & Organisationen</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Textilien, Bekleidung, Leder, Uhren, Schmuck</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Energie, Umwelt</key>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Elektrik, Elektronik & Optik</key>
             <mapping>G45</mapping>
         </category>
     </categorization>

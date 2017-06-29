@@ -46,10 +46,6 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 	}
 	// $COVERAGE-ON$
 
-	override def filterEntities(entity: KompassEntity): Boolean = {
-		true
-	}
-
 	override def normalizeAttribute(
 		attribute: String,
 		values: List[String],
@@ -71,6 +67,8 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 
 		sm.setCategory(entity.instancetype)
 		sm.addProperties(entity.data)
+
+//		val address = subject.properties.flatMap { case ("adress", value) => extractAdress }.toList
 
 		val legalForm = subject.name.flatMap(extractLegalForm(_, classifier)).toList
 		val normalizedLegalForm = SharedNormalizations.normalizeLegalForm(legalForm)

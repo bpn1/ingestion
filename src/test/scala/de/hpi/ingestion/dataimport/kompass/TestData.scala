@@ -9,6 +9,7 @@ object TestData {
 		List(
 			KompassEntity(
 				Some("Trans-Tech Weisser GmbH"),
+				Some("business"),
 				Map(
 					"specified_sector" -> List("Verpackungsanlagen, Verpackungsmaschinen und Verpackungsdienste"),
 					"city" -> List("Kissing"),
@@ -43,6 +44,7 @@ object TestData {
 			),
 			KompassEntity(
 				Some("Möbel-Logistik GmbH Franken"),
+				Some("business"),
 				Map(
 					"specified_sector" -> List("Transportwesen und Logistik"),
 					"city" -> List("Itzgrund"),
