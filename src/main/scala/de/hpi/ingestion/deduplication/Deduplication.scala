@@ -15,6 +15,8 @@ import org.apache.spark.rdd.RDD
   * in every block and filters all pairs below a given threshold.
   */
 object Deduplication extends SparkJob {
+	sparkOptions("spark.yarn.executor.memoryOverhead") = "8192"
+
 	appName = "Deduplication"
 	configFile = "deduplication.xml"
 	val blockingSchemes = List[BlockingScheme](
@@ -101,6 +103,7 @@ object Deduplication extends SparkJob {
 		val confBroad = sc.broadcast(scoreConfigSettings)
 		blocks
 			.flatMap(_.crossProduct())
+			.distinct
 			.map { case (subject1, subject2) =>
 				(subject1, subject2, compare(subject1, subject2, confBroad.value))
 			}.filter(_._3 >= threshold)

@@ -2,11 +2,11 @@
 <config>
     <settings>
         <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
-        <subjectTable>subject_temp</subjectTable>
+        <subjectTable>subject</subjectTable>
         <keyspaceStagingTable>datalake</keyspaceStagingTable>
-        <stagingTable>subject</stagingTable>
-        <keyspaceDuplicatesTable>evaluation</keyspaceDuplicatesTable>
-        <duplicatesTable>dbpedia_wikidata_deduplication_only_uuid</duplicatesTable>
+        <stagingTable>subject_temp</stagingTable>
+        <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
+        <duplicatesTable>duplicates</duplicatesTable>
         <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
     </settings>
