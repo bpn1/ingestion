@@ -104,7 +104,8 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 		val propertiesVersion = subject.properties_history.flatMap { case (prop, values) =>
 			findVersion(version, values).map((prop, _))
 		}
-		val relationsVersion = subject.relations_history
+		val relationsVersion = subject
+			.relations_history
 			.mapValues(_.flatMap { case (relationProp, versionList) =>
 				findVersion(version, versionList).map((relationProp, _))
 			})
@@ -202,45 +203,29 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  * @param validity Map containing the data about the validity
 	  */
 	def setMaster(
-		value: Option[UUID],
+		value: UUID,
 		score: Double = 1.0,
 		validity: Map[String, String] = Map(),
 		datasources: List[String] = Nil
 	): Unit = {
-		val higherScore = subject.master
-			.flatMap(subject.relations.get)
+		val isHigherScore = subject
+			.relations
+			.get(subject.master)
 			.flatMap(_.get(SubjectManager.slaveKey))
 			.exists(_.toDouble < score)
-		subject.master
-			.filterNot(value.contains)
-			.foreach(masterId => removeRelations(Map(masterId -> List(SubjectManager.slaveKey))))
-		value
-			.filter(!subject.master.contains(_) || higherScore)
-			.foreach(newMasterId =>
-				addRelations(
-					Map(newMasterId -> SubjectManager.slaveRelation(score)),
-					Map(newMasterId -> Map(SubjectManager.slaveKey -> validity))))
-		if(value != subject.master) {
-			subject.master_history :+= makeVersion(value.map(_.toString).toList, validity, datasources)
+
+		if (value == subject.master && !isHigherScore) return
+		if (value != subject.master){
+			removeRelations(Map(subject.master -> List(SubjectManager.slaveKey)))
+			subject.master_history :+= makeVersion(List(value.toString), validity, datasources)
+			subject.master = value
 		}
-		subject.master = value
-	}
 
-	/**
-	  * Sets the master node of the Subject with the given validity.
-	  * @param value UUID of the master node of the Subject
-	  * @param validity Map containing the data about the validity
-	  */
-	def setMaster(value: UUID, score: Double, validity: Map[String, String]): Unit = {
-		setMaster(Option(value), score, validity, Nil)
+		this.addRelations(
+			Map(value -> SubjectManager.slaveRelation(score)),
+			Map(value -> Map(SubjectManager.slaveKey -> validity))
+		)
 	}
-
-	/**
-	  * Sets the master node of the Subject without validity.
-	  * @param value UUID of the master node of the Subject
-	  * @param score score of the relation
-	  */
-	def setMaster(value: UUID, score: Double): Unit = setMaster(value, score, Map[String, String]())
 
 	/**
 	  * Sets the master of the Subject to the value of the given Version and uses its data sources.
@@ -248,16 +233,16 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	  */
 	def restoreMaster(version: Option[Version], relationsVersions: Map[UUID, Map[String, Version]]): Unit = {
 		val (value, validity, dataSources) = extractVersionData(version)
-		val masterID = value.headOption.map(UUID.fromString)
+		val master = value.headOption.map(UUID.fromString).getOrElse(subject.id)
 
 		// extract master score from the relevant relation
-		val scoreOption = masterID
-			.flatMap(relationsVersions.get)
+		val scoreOption = relationsVersions
+			.get(master)
 			.flatMap(_.get(SubjectManager.masterKey))
 			.flatMap(_.value.headOption)
 			.map(_.toDouble)
 
-		scoreOption.foreach(score => setMaster(masterID, score, validity, dataSources))
+		scoreOption.foreach(score => setMaster(master, score, validity, dataSources))
 	}
 
 	/**
@@ -479,6 +464,7 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 object SubjectManager {
 	val slaveKey = "slave"
 	val masterKey = "master"
+	val duplicateKey = "isDuplicate"
 
 	/**
 	  * Adds symmetric relations between two subjects.
@@ -502,8 +488,7 @@ object SubjectManager {
 	  */
 	def buildDuplicatesSCC(duplicates: List[(Subject, Subject, Double)], version: Version): Unit = {
 		duplicates.foreach { case (subject1, subject2, score) =>
-			val duplicateRelation = Map("isDuplicate" -> score.toString)
-			addSymRelation(subject1, subject2, duplicateRelation, version)
+			addSymRelation(subject1, subject2, isDuplicateRelation(score), version)
 		}
 	}
 
@@ -520,4 +505,11 @@ object SubjectManager {
 	  * @return Map containing the data of the default master slave relation
 	  */
 	def masterRelation(score: Double): Map[String, String] = Map(masterKey -> score.toString)
+
+	/**
+	  * Returns default relation Subject have to their duplicates.
+	  * @param score score of the duplicate relation
+	  * @return Map containing the data of the default isDuplicate relation
+	  */
+	def isDuplicateRelation(score: Double): Map[String, String] = Map(duplicateKey -> score.toString)
 }

@@ -128,7 +128,9 @@ CREATE TYPE wikidumps.precisionrecalldatatuple (
 CREATE TABLE wikidumps.sim_measure_stats (
     id timeuuid PRIMARY KEY,
     comment text,
-    data list<frozen<precisionrecalldatatuple>>
+    data list<frozen<precisionrecalldatatuple>>,
+    xaxis text,
+    yaxis text
 );
 
 CREATE TYPE wikidumps.triealias (
@@ -259,51 +261,93 @@ CREATE TYPE datalake.candidate (
 );
 
 CREATE TABLE datalake.subject (
-    id uuid PRIMARY KEY,
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
     aliases list<text>,
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
-    master uuid,
-    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
-    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
+);
+
+CREATE TABLE datalake.subject_temp (
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
 );
 
 CREATE TABLE datalake.subject_dbpedia (
-    id uuid PRIMARY KEY,
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
     aliases list<text>,
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
-    master uuid,
-    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
-    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
 );
 
 CREATE TABLE datalake.subject_wikidata (
-    id uuid PRIMARY KEY,
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
     aliases list<text>,
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
-    master uuid,
-    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
-    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
+);
+
+CREATE TABLE datalake.subject_implisense (
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
 );
 
 CREATE TABLE datalake.version (
@@ -340,6 +384,8 @@ CREATE TABLE datalake.blockingstats (
     comparisoncount bigint,
     data frozen<set<frozen<blockstats>>>,
     pairscompleteness double,
+    xaxis text,
+    yaxis text,
     PRIMARY KEY (jobid, schemetag)
 );
 
@@ -348,12 +394,6 @@ CREATE TABLE datalake.duplicates (
     subject_name text,
     datasource text,
     candidates list<frozen<candidate>>
-);
-
-CREATE TABLE datalake.sim_measure_stats (
-    id timeuuid PRIMARY KEY,
-    comment text,
-    data text
 );
 
 -- Evaluation
@@ -440,9 +480,11 @@ CREATE TABLE evaluation.subject_wikidata (
 );
 
 CREATE TABLE evaluation.sim_measure_stats (
-    id uuid PRIMARY KEY,
+    id timeuuid PRIMARY KEY,
+    comment text,
     data list<frozen<precisionrecalldatatuple>>,
-    comment text
+    xaxis text,
+    yaxis text
 );
 
 CREATE TABLE evaluation.version (
