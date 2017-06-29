@@ -23,6 +23,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 	configFile = "datalake_import_dbpedia.xml"
 	importConfigFile = "normalization_dbpedia.xml"
 	val categoryMap = Map(
+		"Broadcaster" -> "business",
 		"Company" -> "business",
 		"EducationalInstitution" -> "organization",
 		"EmployersOrganisation" -> "business",
