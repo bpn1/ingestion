@@ -62,6 +62,14 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 		valueLists shouldEqual expectedLists
 	}
 
+	"Value lists" should "be created when the versions are the same" in {
+		val oldV = TestData.versionsToCompare()._1
+		val valueLists = TestData.versions()
+			.map(VersionDiff.createValueList(oldV, oldV, _))
+		val expectedLists = TestData.sameVersionDataLists()
+		valueLists shouldEqual expectedLists
+	}
+
 	they should "be diffed and serialized as JSON" in {
 		val valueDiffs = TestData.dataLists()
 			.map(VersionDiff.diffLists)

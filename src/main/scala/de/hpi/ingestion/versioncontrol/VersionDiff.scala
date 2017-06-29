@@ -93,7 +93,8 @@ object VersionDiff extends SparkJob {
 		val newValues = findValues(newVersion, versionList)
 		(oldValues, newValues) match {
 			case (Nil, Nil) => None
-			case t => Option(t)
+			case (x, y) if oldVersion == newVersion => Option((Nil, y))
+			case x => Option(x)
 		}
 	}
 

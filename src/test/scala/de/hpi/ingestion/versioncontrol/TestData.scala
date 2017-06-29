@@ -123,6 +123,15 @@ object TestData {
 			None)
 	}
 
+	def sameVersionDataLists(): List[Option[(List[String], List[String])]] = {
+		List(
+			Option((Nil, List("a", "b"))),
+			Option((Nil, List("a"))),
+			None,
+			Option((Nil, List("a", "b"))),
+			None)
+	}
+
 	def listDiffs(): List[Option[JsValue]] = {
 		List(
 			Option(Json.parse("""{"+": ["c"], "-": ["a"]}""")),
