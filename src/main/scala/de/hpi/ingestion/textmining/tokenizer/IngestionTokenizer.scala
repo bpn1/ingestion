@@ -59,10 +59,12 @@ case class IngestionTokenizer(
 	  */
 	def process(tokens: List[String]): List[String] = {
 		val stemmer = new AccessibleGermanStemmer
-		var newTokens = tokens
-		if(removeStopwords) newTokens = newTokens.filterNot(stopwords)
-		if(stem) newTokens = newTokens.map(stemmer.stem)
-		newTokens
+		tokens
+			.filterNot(token => removeStopwords && stopwords.contains(token))
+			.map {
+				case token if stem => stemmer.stem(token)
+				case token if !stem => token
+			}
 	}
 
 	/**
@@ -73,6 +75,16 @@ case class IngestionTokenizer(
 	  */
 	def onlyTokenize(text: String): List[String] = {
 		tokenizer.tokenize(text)
+	}
+
+	/**
+	  * Tokenizes a text with offsets.
+	  *
+	  * @param text text to be tokenized
+	  * @return List of tokens with offsets
+	  */
+	def onlyTokenizeWithOffst(text: String): List[OffsetToken] = {
+		tokenizer.tokenizeWithOffsets(text)
 	}
 
 	/**
