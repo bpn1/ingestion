@@ -103,9 +103,6 @@ object Deduplication extends SparkJob {
 		val confBroad = sc.broadcast(scoreConfigSettings)
 		blocks
 			.flatMap(_.crossProduct())
-			.keyBy(subjectPair => (subjectPair._1.id, subjectPair._2.id))
-			.reduceByKey { case (pair, _) => pair}
-			.values
 			.map { case (subject1, subject2) =>
 				(subject1, subject2, compare(subject1, subject2, confBroad.value))
 			}.filter(_._3 >= threshold)
