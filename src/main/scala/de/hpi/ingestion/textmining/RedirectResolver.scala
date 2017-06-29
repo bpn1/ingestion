@@ -25,7 +25,6 @@ object RedirectResolver extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		val redirects = sc.cassandraTable[Redirect](settings("keyspace"), settings("redirectTable"))
 		List(articles).toAnyRDD() ++ List(redirects).toAnyRDD()
