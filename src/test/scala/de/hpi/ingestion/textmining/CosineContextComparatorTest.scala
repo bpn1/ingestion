@@ -29,7 +29,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		CosineContextComparator.parseConfig()
 		val testDocfreqStreamFunction = TestData.docfreqStream("smalldocfreq") _
 		CosineContextComparator.docfreqStreamFunction = testDocfreqStreamFunction
-		
+
 		val numDocuments = 4
 		val idfMap = CosineContextComparator.inverseDocumentFrequencies(numDocuments.toLong)
 		val expectedIdfs = TestData.inverseDocumentFrequenciesSet().toMap
