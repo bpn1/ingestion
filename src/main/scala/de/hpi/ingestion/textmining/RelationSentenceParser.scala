@@ -140,7 +140,7 @@ object RelationSentenceParser extends SparkJob {
 
 		val sentenceTokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
 		val tokenizer = IngestionTokenizer(Array("CleanWhitespaceTokenizer", "false", "false"))
-		val sentences = articles.flatMap(entry => entryToSentencesWithEntities(entry, sentenceTokenizer, tokenizer))
+		val sentences = articles.flatMap(entryToSentencesWithEntities(_, sentenceTokenizer, tokenizer))
 
 		val filteredSentences = filterSentences(sentences, relations, sc)
 		List(filteredSentences).toAnyRDD()
