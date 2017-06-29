@@ -46,7 +46,6 @@ object RedirectResolver extends SparkJob {
 		val redirects = output(1).asInstanceOf[RDD[Redirect]]
 		if(!redirects.isEmpty()) redirects.saveToCassandra(settings("keyspace"), settings("redirectTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**

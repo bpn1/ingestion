@@ -98,19 +98,16 @@ object TfidfProfiler extends SparkJob {
 	  * Calculates tfidf values by means of the Ingestion project.
 	  *
 	  * @param articlesWithTermFrequencies each article enriched with its context
-	  * @param sc                          spark context
 	  * @return tfidf values
 	  */
 	def ingestionTfidfComputation(
-		articlesWithTermFrequencies: RDD[ParsedWikipediaEntry],
-		sc: SparkContext
+		articlesWithTermFrequencies: RDD[ParsedWikipediaEntry]
 	): RDD[(String, Map[String, Double])] = {
 		val numDocuments = articlesWithTermFrequencies.count()
 		val defaultDf = calculateDefaultDf(DocumentFrequencyCounter.leastSignificantDocumentFrequency)
 		val defaultIdf = calculateIdf(defaultDf, numDocuments)
-		val settingsBroadcast = sc.broadcast(settings)
 		val articleTfs = transformArticleTfs(articlesWithTermFrequencies)
-		calculateTfidf(articleTfs, numDocuments, defaultIdf, settingsBroadcast.value)
+		calculateTfidf(articleTfs, numDocuments, defaultIdf)
 	}
 
 	/**
@@ -144,7 +141,7 @@ object TfidfProfiler extends SparkJob {
 		val (wordsPerArticle, timeSparkContext) = profileTime(contextExtractionForSparkMLlib(articles, tokenizer))
 		val (contextArticles, timeIngestionContext) = profileTime(contextExtractionForIngestion(articles, tokenizer))
 		val (sparkTfidf, timeSparkTfidf) = profileTime(sparkMLlibTfidfComputation(wordsPerArticle, sc))
-		val (ingestionTfidf, timeIngestionTfidf) = profileTime(ingestionTfidfComputation(contextArticles, sc))
+		val (ingestionTfidf, timeIngestionTfidf) = profileTime(ingestionTfidfComputation(contextArticles))
 
 		val statistics = List[(String, Long)](
 			("Spark MLlib Context Extraction", timeSparkContext),
