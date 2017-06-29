@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <keyspaceDBpediaTable>datalake</keyspaceDBpediaTable>
+        <dbpediaTable>subject_dbpedia</dbpediaTable>
+        <keyspaceDBpediaRelationsTable>wikidumps</keyspaceDBpediaRelationsTable>
+        <dbpediaRelationsTable>dbpediarelations</dbpediaRelationsTable>
+    </settings>
+</config>
