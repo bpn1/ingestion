@@ -22,6 +22,28 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 	appName = "DBpediaDataLakeImport_v1.0"
 	configFile = "datalake_import_dbpedia.xml"
 	importConfigFile = "normalization_dbpedia.xml"
+	val categoryMap = Map(
+		"Broadcaster" -> "business",
+		"Company" -> "business",
+		"EducationalInstitution" -> "organization",
+		"EmployersOrganisation" -> "business",
+		"GeopoliticalOrganisation" -> "organization",
+		"GovernmentAgency" -> "business",
+		"InternationalOrganisation" -> "business",
+		"Legislature" -> "organization",
+		"MilitaryUnit" -> "organization",
+		"Non-ProfitOrganisation" -> "organization",
+		"Parliament" -> "organization",
+		"PoliticalParty" -> "organization",
+		"PublicTransitSystem" -> "business",
+		"ReligiousOrganisation" -> "organization",
+		"SambaSchool" -> "business",
+		"SportsClub" -> "business",
+		"SportsLeague" -> "business",
+		"SportsTeam" -> "business",
+		"TermOfOffice" -> "organization",
+		"TradeUnion" -> "business"
+	)
 
 	// $COVERAGE-OFF$
 	/**
@@ -60,7 +82,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		val sm = new SubjectManager(subject, version)
 
 		sm.setName(entity.label.map(_.replaceAll("""@de \.$""", "")))
-		sm.setCategory(entity.instancetype)
+		sm.setCategory(entity.instancetype.flatMap(categoryMap.get))
 		sm.addProperties(entity.data)
 
 		val legalForm = subject.name.flatMap(extractLegalForm(_, classifier)).toList

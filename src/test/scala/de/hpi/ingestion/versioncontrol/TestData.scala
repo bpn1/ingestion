@@ -3,10 +3,9 @@ package de.hpi.ingestion.versioncontrol
 import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.versioncontrol.models.HistoryEntry
+import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
 import play.api.libs.json.{JsValue, Json}
 import scala.io.Source
-
 
 object TestData {
 
@@ -118,6 +117,15 @@ object TestData {
 			Option((List("a"), Nil)),
 			Option((Nil, List("b"))),
 			Option((List("a", "b"), List("a", "b"))),
+			None)
+	}
+
+	def sameVersionDataLists(): List[Option[(List[String], List[String])]] = {
+		List(
+			Option((Nil, List("a", "b"))),
+			Option((Nil, List("a"))),
+			None,
+			Option((Nil, List("a", "b"))),
 			None)
 	}
 
@@ -235,6 +243,21 @@ object TestData {
 			master_history = masterVersions())
 	)
 
+	def subjectDiff(): List[SubjectDiff] = {
+		val (oldV, newV) = TestData.versionsToCompare()
+		List(
+			SubjectDiff(
+				oldV, newV, UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				name = Option("{\"+\":[\"c\"],\"-\":[\"a\"]}"),
+				aliases = Option("{\"-\":[\"a\"]}"),
+				category = Option("{\"+\":[\"b\"]}")),
+			SubjectDiff(
+				oldV, newV, UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				properties = Option("{\"test property\":{\"+\":[\"c\"],\"-\":[\"a\"]}}"),
+				relations = Option("{\"465b3a7a-c621-42ad-a4f2-34e229602989\":{\"test relation\":{\"-\":[\"a\"]}}}"))
+		)
+	}
+
 	def jsonDiff(): List[JsValue] = {
 		val rawJson = Source.fromURL(getClass.getResource("/versioncontrol/diff.json")).getLines().mkString("\n")
 		Json.parse(rawJson).as[List[JsValue]]
@@ -245,12 +268,14 @@ object TestData {
 			HistoryEntry(
 				UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
 				dataLists().head,
+				None,
 				dataLists()(1),
 				dataLists()(2),
 				Map("test property" -> dataLists()(3)),
 				Map(UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> dataLists()(4)))),
 			HistoryEntry(
 				UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				None,
 				None,
 				None,
 				None,
