@@ -150,13 +150,15 @@ CREATE TABLE wikidumps.wikipediacooccurrences (
 
 CREATE TABLE wikidumps.spiegel (
     id text PRIMARY KEY,
+    title text,
     foundentities frozen<list<frozen<link>>>,
     text text,
     triealiases frozen<list<frozen<triealias>>>
 );
 
 CREATE TABLE wikidumps.wikipedianel (
-    article text PRIMARY KEY,
+    id text PRIMARY KEY,
+    titl text,
     text text,
     triealiases frozen<list<triealias>>,
     foundentities frozen<list<frozen<link>>>

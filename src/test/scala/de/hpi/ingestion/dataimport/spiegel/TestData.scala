@@ -40,19 +40,19 @@ object TestData {
 	def parsedArticles(): List[TrieAliasArticle] = {
 		List(
 			TrieAliasArticle(
-				article = "spiegel id 1",
+				id = "spiegel id 1",
 				text = Option("test title 1 test body 1")),
 			TrieAliasArticle(
-				article = "spiegel id 2",
+				id = "spiegel id 2",
 				text = Option("test body 2")),
 			TrieAliasArticle(
-				article = "spiegel id 3",
+				id = "spiegel id 3",
 				text = Option("test title 3")),
 			TrieAliasArticle(
-				article = "spiegel id 4",
+				id = "spiegel id 4",
 				text = Option("abc")),
 			TrieAliasArticle(
-				article = "spiegel id 5",
+				id = "spiegel id 5",
 				text = None))
 	}
 }
