@@ -30,9 +30,9 @@ class TfidfProfilerTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Calculated tf-idf values" should "not be empty" in {
-		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldDocFreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val testDocFreqFunction = TestData.docfreqStream("smalldocfreq") _
-		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
 
 		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val input = List(articles).toAnyRDD()
@@ -50,13 +50,13 @@ class TfidfProfilerTest extends FlatSpec with SharedSparkContext with Matchers {
 		ingestionTfidf should not be empty
 		ingestionTfidf.foreach(_._2 should not be empty)
 
-		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocFreqStreamFunction
 	}
 
 	they should "be exactly these tf-idf values" in {
-		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldDocFreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val testDocFreqFunction = TestData.docfreqStream("smalldocfreq") _
-		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
 
 		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val input = List(articles).toAnyRDD()
@@ -72,6 +72,6 @@ class TfidfProfilerTest extends FlatSpec with SharedSparkContext with Matchers {
 		sparkTfidf shouldEqual TestData.profilerTfidfVectors()
 		ingestionTfidf shouldEqual TestData.profilerTfidfMaps()
 
-		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocFreqStreamFunction
 	}
 }
