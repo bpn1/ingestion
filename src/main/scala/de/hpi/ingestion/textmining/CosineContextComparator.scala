@@ -5,9 +5,10 @@ import de.hpi.ingestion.framework.SplitSparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.broadcast.Broadcast
 import com.datastax.spark.connector._
 import scala.collection.mutable
-import java.io.{BufferedReader, InputStreamReader}
+import java.io.{BufferedReader, InputStream, InputStreamReader}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.broadcast.Broadcast
 
@@ -20,6 +21,8 @@ object CosineContextComparator extends SplitSparkJob {
 	var aliasPageScores = Map.empty[String, List[(String, Double, Double)]]
 
 	// $COVERAGE-OFF$
+	var docFreqStreamFunction: String => InputStream = AliasTrieSearch.hdfsFileStream _
+
 	/**
 	  * Loads Parsed Wikipedia entries with their term frequencies, the aliases with their pages and occurrences,
 	  * the tfidf vectors for the Wikipedia articles and the total number of articles in the parsedwikipedia table
@@ -87,9 +90,7 @@ object CosineContextComparator extends SplitSparkJob {
 		numDocs: Long,
 		dfThreshold: Int = DocumentFrequencyCounter.leastSignificantDocumentFrequency
 	): Double = {
-		calculateIdf(
-			calculateDefaultDf(dfThreshold),
-			numDocs)
+		calculateIdf(calculateDefaultDf(dfThreshold), numDocs)
 	}
 
 	/**
@@ -267,7 +268,7 @@ object CosineContextComparator extends SplitSparkJob {
 	  * @return Map of every term and its inverse document frequency
 	  */
 	def inverseDocumentFrequencies(numDocs: Long): Map[String, Double] = {
-		val docfreqStream = AliasTrieSearch.trieStreamFunction(settings("dfFile"))
+		val docfreqStream = docFreqStreamFunction(settings("dfFile"))
 		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
 		val idfMap = mutable.Map[String, Double]()
 		var line = reader.readLine()
@@ -296,7 +297,7 @@ object CosineContextComparator extends SplitSparkJob {
 					text = entry.text,
 					linkswithcontext = entry.linkswithcontext,
 					triealiases = entry.triealiases))
-			.randomSplit(Array.fill(10)(1.0))
+			.randomSplit(Array.fill(settings("numberArticlePartitions").toInt)(1.0))
 			.map { articlePartition =>
 				List(tfidf, aliases) ++ List(articlePartition).toAnyRDD() ++ List(articleCount)
 			}
@@ -323,6 +324,7 @@ object CosineContextComparator extends SplitSparkJob {
 		val tokenizer = IngestionTokenizer(true, true)
 		val contextTfs = transformLinkContextTfs(linkArticles, tokenizer)
 		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf(numDocuments))
+
 		val featureEntries = compareLinksWithArticles(contextTfidf, sc.broadcast(aliasPageScores), articleTfidf)
 		SecondOrderFeatureGenerator.run(List(featureEntries).toAnyRDD(), sc, args)
 	}
