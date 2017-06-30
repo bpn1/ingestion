@@ -178,9 +178,15 @@ object VersionDiff extends SparkJob {
 	  * @return True if one of the diff fields in the SubjectDiff is not None
 	  */
 	def hasChanges(diff: SubjectDiff): Boolean = {
-		val fields = List(
-			diff.master, diff.datasource, diff.aliases, diff.category, diff.name, diff.properties, diff.relations)
-		fields.exists(_.isDefined)
+		List(
+			diff.master,
+			diff.datasource,
+			diff.aliases,
+			diff.category,
+			diff.name,
+			diff.properties,
+			diff.relations
+		).exists(_.isDefined)
 	}
 
 	/**
