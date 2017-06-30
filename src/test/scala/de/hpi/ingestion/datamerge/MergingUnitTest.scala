@@ -16,7 +16,7 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 		val output = Merging.run(input, sc).head.asInstanceOf[RDD[Subject]].collect.toList
 
 		val (existingMaster, newMaster) = output
-			.filter(_.datasource == "master")
+			.filter(_.isMaster)
 			.partition(master => TestData.idList.contains(master.id))
 
 		existingMaster
@@ -54,7 +54,7 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 		val output = Merging.run(input, sc).head.asInstanceOf[RDD[Subject]].collect.toList
 
 		val (existingMaster, newMaster) = output
-			.filter(_.datasource == "master")
+			.filter(_.isMaster)
 			.partition(master => TestData.idList.contains(master.id))
 
 		existingMaster
