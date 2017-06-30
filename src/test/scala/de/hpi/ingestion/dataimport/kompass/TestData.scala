@@ -73,7 +73,8 @@ object TestData {
 			"Altrottstr. 31 69190 Walldorf Deutschland",
 			"Am TÜV 1 30519 Hannover Deutschland",
 			"An der Universität 2 30823 Garbsen Deutschland",
-			"Äußere Spitalhofstr. 19 94036 Passau Deutschland"
+			"Äußere Spitalhofstr. 19 94036 Passau Deutschland",
+			"Nö!"
 		)
 	}
 
@@ -83,38 +84,39 @@ object TestData {
 				"geo_street" -> List("Graf-Adolf-Platz 15"),
 				"geo_postal" -> List("40213"),
 				"geo_city" -> List("Düsseldorf"),
-				"geo_country" -> List("Deutschland")
+				"geo_country" -> List("DE")
 			),
 			Map(
 				"geo_street" -> List("ThyssenKrupp Allee 1"),
 				"geo_postal" -> List("45143"),
 				"geo_city" -> List("Essen"),
-				"geo_country" -> List("Deutschland")
+				"geo_country" -> List("DE")
 			),
 			Map(
-				"geo_street" -> List("Altrottstr. 31"),
+				"geo_street" -> List("Altrottstraße 31"),
 				"geo_postal" -> List("69190"),
 				"geo_city" -> List("Walldorf"),
-				"geo_country" -> List("Deutschland")
+				"geo_country" -> List("DE")
 			),
 			Map(
 				"geo_street" -> List("Am TÜV 1"),
 				"geo_postal" -> List("30519"),
 				"geo_city" -> List("Hannover"),
-				"geo_country" -> List("Deutschland")
+				"geo_country" -> List("DE")
 			),
 			Map(
 				"geo_street" -> List("An der Universität 2"),
 				"geo_postal" -> List("30823"),
 				"geo_city" -> List("Garbsen"),
-				"geo_country" -> List("Deutschland")
+				"geo_country" -> List("DE")
 			),
 			Map(
-				"geo_street" -> List("Äußere Spitalhofstr. 19"),
+				"geo_street" -> List("Äußere Spitalhofstraße 19"),
 				"geo_postal" -> List("94036"),
 				"geo_city" -> List("Passau"),
-				"geo_country" -> List("Deutschland")
-			)
+				"geo_country" -> List("DE")
+			),
+			Map()
 		)
 	}
 }

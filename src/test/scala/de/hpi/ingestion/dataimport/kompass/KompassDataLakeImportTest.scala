@@ -2,15 +2,14 @@ package de.hpi.ingestion.dataimport.kompass
 
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class KompassDataLakeImportTest extends FlatSpec with Matchers with SharedSparkContext {
 	"extractAddress" should "extract and normalize street, postal, city and country from the address" in {
 		val addresses = TestData.unnormalizedAddresses
-		val normalizedAddresses = attributes.map { case (attribute, values) =>
-			attribute -> KompassDataLakeImport.normalizeAttribute(attribute, values, strategies)
-		}
-		val expected = TestData.normalizedAttributes
-		normalizedAttributes shouldEqual expected
+		val normalizedAddresses = addresses.map(KompassDataLakeImport.extractAddress)
+		val expected = TestData.normalizedAddresses
+		normalizedAddresses shouldEqual expected
 	}
 
 	/*"normalizeAttribute" should "normalize the values of a given attribute" in {

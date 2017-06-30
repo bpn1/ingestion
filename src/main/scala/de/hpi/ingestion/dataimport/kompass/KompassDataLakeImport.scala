@@ -45,9 +45,9 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 
 	def extractAddress(address: String): Map[String, List[String]] = {
 		address match {
-			case r"""(A-Za-z \.-)${street} (\d{5})${postal} (.+)${city} (Deutschland)${country}""" =>
+			case r"""(.+)${street} (\d{5})${postal} (.+)${city} Deutschland""" =>
 				Map(
-					"geo_street" -> List(street),
+					"geo_street" -> List(street.replaceFirst("str\\.", "straße")),
 					"geo_postal" -> List(postal),
 					"geo_city" -> List(city),
 					"geo_country" -> List("DE")
@@ -69,8 +69,10 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 		sm.setCategory(entity.instancetype)
 		sm.addProperties(entity.data)
 
-		val address = subject.properties.flatMap { case ("adress", value) => extractAddress(value.head) }
-		sm.addProperties(address)
+		val addresses = subject
+			.properties
+			.collect { case (key, value) if key == "address" => extractAddress(value.head) }
+		addresses.foreach(address => sm.addProperties(address))
 
 		val legalForm = subject.name.flatMap(extractLegalForm(_, classifier)).toList
 		val normalizedLegalForm = SharedNormalizations.normalizeLegalForm(legalForm)
