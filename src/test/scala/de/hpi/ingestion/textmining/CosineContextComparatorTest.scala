@@ -213,7 +213,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "not be recalculated" in {
-		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
+		val oldDocFreqFunction = CosineContextComparator.docFreqStreamFunction
 		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
 		val oldSettings = CosineContextComparator.settings(false)
@@ -222,7 +222,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		CosineContextComparator.aliasPageScores = TestData.aliasScoresWithManyPages()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-		AliasTrieSearch.trieStreamFunction = testDocFreqFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
 
 		val tfIdf = sc.parallelize(TestData.emptyArticlesTfIdfList())
 		val aliases = sc.parallelize(List(TestData.aliasWithManyPages()))
@@ -252,7 +252,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		CosineContextComparator.aliasPageScores = oldAliases
 		CosineContextComparator.settings = oldSettings
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
-		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocFreqFunction
 	}
 
 	"Cosine similarity between contexts" should "be exactly this value" in {
@@ -342,7 +342,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		CosineContextComparator.aliasPageScores = Map()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
 
 		val tfIdf = sc.parallelize(TestData.emptyArticlesTfIdfList())
 		val aliases = sc.parallelize(List(TestData.aliasWithManyPages()))
@@ -383,7 +383,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		CosineContextComparator.aliasPageScores = Map()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
 
     val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesWithCompleteContexts().size)
@@ -413,7 +413,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		CosineContextComparator.aliasPageScores = Map()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesWithCompleteContexts().size)
@@ -444,7 +444,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		CosineContextComparator.aliasPageScores = Map()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesWithCompleteContexts().size)
