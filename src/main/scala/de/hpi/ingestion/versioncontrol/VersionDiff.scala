@@ -173,23 +173,6 @@ object VersionDiff extends SparkJob {
 	}
 
 	/**
-	  * Returns true if the current diff contains any changes
-	  * @param diff SubjectDiff that will be checked for changes
-	  * @return True if one of the diff fields in the SubjectDiff is not None
-	  */
-	def hasChanges(diff: SubjectDiff): Boolean = {
-		List(
-			diff.master,
-			diff.datasource,
-			diff.aliases,
-			diff.category,
-			diff.name,
-			diff.properties,
-			diff.relations
-		).exists(_.isDefined)
-	}
-
-	/**
 	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
@@ -203,7 +186,7 @@ object VersionDiff extends SparkJob {
 				rdd
 					.map(retrieveVersions(_, oldVersion, newVersion))
 					.map(historyToDiff(_, oldVersion, newVersion))
-					.filter(hasChanges))
+					.filter(_.hasChanges))
 			.toAnyRDD()
 	}
 
