@@ -125,25 +125,4 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 		val splitInput = TextNEL.splitInput(input)
 		splitInput should have size 20
 	}
-
-	//	"Alias matches" should "be found" in {
-	//		val tokenizer = IngestionTokenizer(false, false)
-	//		val contextTokenizer = IngestionTokenizer(true, true)
-	//		val trie = TestData.dataTrie(tokenizer)
-	//		val texts = TestData.parsedWikipediaWithTextsSet().map(_.getText())
-	//		texts
-	//			.map(TextNEL.matchTrieAliases(_, trie, tokenizer, contextTokenizer))
-	//			.foreach(_ should not be empty)
-	//	}
-	//
-	//	"Input split" should "split input into 10 parts with each one consisting of 3 parts" in {
-	//		val articles = sc.parallelize(TestData.contextArticles().toList)
-	//		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-	//		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
-	//		val splitInput = TextNEL.splitInput(input).toList
-	//		splitInput should have length 10
-	//		splitInput.foreach { case inputPartition =>
-	//			inputPartition should have length 3
-	//		}
-	//	}
 }

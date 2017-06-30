@@ -5,25 +5,6 @@ import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, _}
 // scalastyle:off line.size.limit
 
 object TestData {
-	//	def namedEntitiesSet(): Set[Link] = {
-	//		Set(
-	//			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test mit Link")),
-	//			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test ohne Link")),
-	//			Link("Audi", "Audi Test mit Link", Option(7), Map(), Option("Testartikel")),
-	//			Link("Brachttal", "Audi Test ohne Link", Option(55), Map(), Option("Streitberg (Brachttal)")),
-	//			Link("Brachttal", "Audi Test ohne Link", Option(13), Map(), Option("Testartikel")),
-	//			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(66), Map(), Option("Streitberg (Brachttal)")),
-	//			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64), Map(), Option("Testartikel")),
-	//			Link("Hessen", "Streitberg (Brachttal)", Option(87), Map(), Option("Streitberg (Brachttal)")),
-	//			Link("1377", "Testartikel", Option(225), Map(), Option("Streitberg (Brachttal)")),
-	//			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
-	//			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
-	//			Link("Büdinger Wald", "Testartikel", Option(546), Map(), Option("Streitberg (Brachttal)")),
-	//			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
-	//			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel"))
-	//		)
-	//	}
-
 	def reducedWikipediaArticles(): Set[TrieAliasArticle] = {
 		Set(
 			TrieAliasArticle("Audi Test mit Link", Option("Hier ist Audi verlinkt.")),
