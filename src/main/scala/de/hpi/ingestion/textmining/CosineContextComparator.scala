@@ -192,9 +192,6 @@ object CosineContextComparator extends SplitSparkJob {
 		aliasPageScores: Broadcast[Map[String, List[(String, Double, Double)]]],
 		articleContexts: RDD[(String, Map[String, Double])]
 	): RDD[FeatureEntry] = {
-		val a = linkContexts.collect()
-		val b = aliasPageScores.value
-		val c = articleContexts.collect()
 		linkContexts
 			.mapPartitions({ partition =>
 				val localAliases = aliasPageScores.value
@@ -310,7 +307,7 @@ object CosineContextComparator extends SplitSparkJob {
 
 		val contextTfs = transformLinkContextTfs(linkArticles)
 		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf(numDocuments))
-    
+
 		val aliasPageScores = collectAliasPageScores(aliases)
 		val featureEntries = compareLinksWithArticles(contextTfidf, sc.broadcast(aliasPageScores), articleTfidf)
 		List(featureEntries).toAnyRDD()
