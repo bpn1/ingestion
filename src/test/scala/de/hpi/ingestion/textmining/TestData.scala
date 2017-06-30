@@ -1,9 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import java.io._
-
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
-import scala.collection.JavaConversions._
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
@@ -18,9 +15,9 @@ import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
-
-import scala.io.{BufferedSource, Source}
 import scala.collection.JavaConversions._
+import scala.io.{BufferedSource, Source}
+import java.io._
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -88,12 +85,6 @@ object TestData {
 
 	def deltaSuccessorValuesList(): List[Double] = {
 		List(2.1, 2.0999999999999996, 2.1, Double.PositiveInfinity, 2.0999999999999996)
-	}
-
-	def stopwordsSet(): Set[String] = {
-		Source.fromURL(getClass.getResource("/textmining/german_stopwords_without_umlauts.txt"))
-			.getLines()
-			.toSet
 	}
 
 	def sentencesList(): List[String] = {
@@ -650,9 +641,11 @@ object TestData {
 	}
 
 	def allPageNamesOfTestArticleList(): Set[String] = {
-		Set("Audi",
+		Set(
+			"Audi",
 			"Brachttal",
-			"1377")
+			"1377"
+		)
 	}
 
 	def articleContextWordSets(): Map[String, Set[String]] = {
@@ -1455,7 +1448,7 @@ object TestData {
 		)
 	}
 
-	def parsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaSetWithoutText(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry(
 				"Audi",
@@ -2578,6 +2571,19 @@ object TestData {
 		maxBins: Int = 32
 	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
 		(simMeasureStats(), Option(randomForestModel()))
+	}
+
+	def loadRandomForestModel(sc: SparkContext): RandomForestModel = {
+		randomForestModel()
+	}
+
+	def formattedPredictionStatistics(): String = {
+		s"precision\t1.0\t${5.0 / 7.0}" + "\n" +
+			"precision\t0.0\t0.6" + "\n" +
+			s"recall\t1.0\t${5.0 / 6.0}" + "\n" +
+			"recall\t0.0\t1.0" + "\n" +
+			s"fscore with beta 0.5\t1.0\t${25.0 / 34.0}" + "\n" +
+			"fscore with beta 0.5\t0.0\t0.6521739130434783"
 	}
 
 	def exportDBpediaRelations(): List[Relation] = {

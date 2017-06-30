@@ -1,36 +1,105 @@
 package de.hpi.ingestion.textmining.nel
 
-import de.hpi.ingestion.textmining.models._
-import org.apache.spark.mllib.tree.configuration.Algo
-import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
+import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, _}
 
 // scalastyle:off line.size.limit
+
 object TestData {
+	def reducedWikipediaArticles(): Set[TrieAliasArticle] = {
+		Set(
+			TrieAliasArticle("Audi Test mit Link", Option("Hier ist Audi verlinkt.")),
+			TrieAliasArticle("Audi Test ohne Link", Option("Hier ist Audi nicht verlinkt.")),
+			TrieAliasArticle("Streitberg (Brachttal)", Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald.""")),
+			TrieAliasArticle("Testartikel", Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."))
+		)
+	}
+
+	def articlesWithFoundLinks(): Set[TrieAliasArticle] = {
+		Set(
+			TrieAliasArticle("Audi Test mit Link",
+				Option("Hier ist Audi verlinkt."),
+				List(),
+				List(
+					Link("Audi", "Audi", Option(9), article = Option("Audi Test mit Link")),
+					Link("Audi", "BMW", Option(9), article = Option("Audi Test mit Link")),
+					Link("Audi", "Ferrari", Option(9), article = Option("Audi Test mit Link"))
+				)),
+			TrieAliasArticle("Audi Test ohne Link",
+				Option("Hier ist Audi nicht verlinkt."),
+				List(),
+				List()
+			),
+			TrieAliasArticle("Streitberg (Brachttal)",
+				Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald."""),
+				List(),
+				List(
+					Link("Brachttal", "Brachttal", Option(55), article = Option("Streitberg (Brachttal)")),
+					Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), article = Option("Streitberg (Brachttal)")),
+					Link("Hessen", "Hessen", Option(87), article = Option("Streitberg (Brachttal)")),
+					Link("Hessen", "Hessen (Stamm)", Option(87), article = Option("Streitberg (Brachttal)")),
+					Link("Hessen", "Kanton Hessen", Option(87), article = Option("Streitberg (Brachttal)")),
+					Link("1377", "1377", Option(225), article = Option("Streitberg (Brachttal)")),
+					Link("Büdinger Wald", "Büdinger Wald", Option(546), article = Option("Streitberg (Brachttal)"))
+				)),
+			TrieAliasArticle("Testartikel",
+				Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
+				List(),
+				List(
+					Link("Audi", "Audi", Option(7), article = Option("Testartikel")),
+					Link("Brachttal", "Brachttal", Option(13), article = Option("Testartikel")),
+					Link("historisches Jahr", "1377", Option(24), article = Option("Testartikel")),
+					Link("historisches Jahr", "1996", Option(24), article = Option("Testartikel")),
+					Link("historisches Jahr", "2017", Option(24), article = Option("Testartikel"))
+				))
+		)
+	}
+
 	def aliasSearchArticles(): List[TrieAliasArticle] = {
 		List(
 			TrieAliasArticle(
-				article = "1",
-				text = Option("Dieser Artikel schreibt über Audi.")
+				"1",
+				Option("Dieser Artikel schreibt über Audi.")
 			),
 			TrieAliasArticle(
-				article = "2",
-				text = Option("Die Audi AG ist ein Tochterunternehmen der Volkswagen AG.")
+				"2",
+				Option("Die Audi AG ist ein Tochterunternehmen der Volkswagen AG.")
 			),
 			TrieAliasArticle(
-				article = "3",
-				text = Option("Die Volkswagen Aktiengesellschaft ist nicht sehr umweltfreundlich.")
+				"3",
+				Option("Die Volkswagen Aktiengesellschaft ist nicht sehr umweltfreundlich.")
 			),
 			TrieAliasArticle(
-				article = "4",
-				text = Option("Dieser Satz enthält Audi. Dieser Satz enthält Audi AG. Dieser Satz enthält Volkswagen.")
+				"4",
+				Option("Dieser Satz enthält Audi. Dieser Satz enthält Audi AG. Dieser Satz enthält Volkswagen.")
 			),
 			TrieAliasArticle(
-				article = "5",
-				text = Option("-buch aktuell -Der Audio Verlag DER SPIEGEL Dein")
+				"5",
+				Option("-buch aktuell -Der Audio Verlag DER SPIEGEL Dein")
 			),
 			TrieAliasArticle(
-				article = "6",
-				text = None
+				"6",
+				None
+			)
+		)
+	}
+
+	def realAliasSearchArticles(): List[TrieAliasArticle] = {
+		List(
+			TrieAliasArticle(
+				"Audi Test mit Link",
+				Option("Hier ist Audi verlinkt.")
+			),
+			TrieAliasArticle(
+				"Audi Test ohne Link",
+				Option("Hier ist Audi nicht verlinkt.")
+			),
+			TrieAliasArticle(
+				"Streitberg (Brachttal)",
+				Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald.""")
+			),
+			TrieAliasArticle(
+				"Testartikel",
+				Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.")
 			)
 		)
 	}
@@ -56,6 +125,33 @@ object TestData {
 				TrieAlias("Der Audio Verlag", Option(15))
 			)),
 			("6", List())
+		)
+	}
+
+	def realFoundTrieAliases(): Set[(String, List[TrieAlias])] = {
+		Set(
+			("Audi Test mit Link", List(
+				TrieAlias("Audi", Option(9))
+			)),
+			("Audi Test ohne Link", List(
+				TrieAlias("Audi", Option(9))
+			)),
+			("Streitberg (Brachttal)", List(
+				TrieAlias("Brachttal", Option(55)),
+				TrieAlias("Main-Kinzig-Kreis", Option(66)),
+				TrieAlias("Hessen", Option(87)),
+				TrieAlias("1377", Option(225)),
+				TrieAlias("Büdinger Wald", Option(546))
+			)),
+			("Testartikel", List(
+				TrieAlias("Audi", Option(7)),
+				TrieAlias("Brachttal", Option(13)),
+				TrieAlias("historisches Jahr", Option(24)),
+				TrieAlias("Hessen", Option(56)),
+				TrieAlias("Main-Kinzig-Kreis", Option(64)),
+				TrieAlias("Büdinger Wald", Option(83)),
+				TrieAlias("Hessen", Option(120))
+			))
 		)
 	}
 
@@ -103,6 +199,86 @@ object TestData {
 				article = "6",
 				text = None
 			)
+		)
+	}
+
+	def incompleteFoundAliasArticles(): List[TrieAliasArticle] = {
+		List(
+			TrieAliasArticle(
+				"Audi Test ohne Link",
+				Option("Hier ist Audi nicht verlinkt."),
+				List(
+					TrieAlias("Audi", Option(9))
+				)
+			),
+			TrieAliasArticle(
+				"Testartikel",
+				Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
+				List(
+					TrieAlias("Audi", Option(7)),
+					TrieAlias("Brachttal", Option(13)),
+					TrieAlias("historisches Jahr", Option(24)),
+					TrieAlias("Hessen", Option(56)),
+					TrieAlias("Main-Kinzig-Kreis", Option(64)),
+					TrieAlias("Büdinger Wald", Option(83)),
+					TrieAlias("Hessen", Option(120))
+				)
+			),
+			TrieAliasArticle(
+				"Toan Anh",
+				Option("REDIRECT Van Toan Nguyen"),
+				List(
+					TrieAlias("Van", Option(9))
+				)
+			)
+		)
+	}
+
+	def contextArticles(): List[ArticleTfIdf] = {
+		List(
+			ArticleTfIdf(
+				"Audi Test mit Link",
+				Map("audi" -> 1, "verlink" -> 1)
+			),
+			ArticleTfIdf(
+				"Audi Test ohne Link",
+				Map("audi" -> 1, "verlink" -> 1)
+			),
+			ArticleTfIdf(
+				"Streitberg (Brachttal)",
+				Map("1554" -> 1, "waldrech" -> 1, "einwohnerzahl" -> 1, "streidtburgk" -> 1, "19" -> 1, "brachttal" -> 1, "ort" -> 1, "jahrhu" -> 1, "nachweislich" -> 1, "-lrb-" -> 3, "huterech" -> 1, "eingeburg" -> 1, "steytberg" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "-" -> 1, "stridberg" -> 1, "kleinst" -> 1, "-rrb-" -> 3, "stamm" -> 1, "hess" -> 1, "holx" -> 1, "buding" -> 1, "tauch" -> 1, "stripurgk" -> 1, "1500" -> 1, "gemei" -> 1, "1377" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "1528" -> 1, "namensvaria" -> 1, "ortsnam" -> 1, "streitberg" -> 2, "mittelal" -> 1, "red" -> 1, "stamm" -> 1)
+			),
+			ArticleTfIdf(
+				"Testartikel",
+				Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)
+			),
+			ArticleTfIdf(
+				"Toan Anh",
+				Map("nguy" -> 1, "redirec" -> 1, "toa" -> 1, "van" -> 1)
+			),
+			ArticleTfIdf("Chevrolet"),
+			ArticleTfIdf("Chevrolet Van"),
+			ArticleTfIdf("Flughafen Ferit Melen"),
+			ArticleTfIdf("Kastenwagen"),
+			ArticleTfIdf("Reliant"),
+			ArticleTfIdf("Reliant Van"),
+			ArticleTfIdf("Toyota"),
+			ArticleTfIdf("Tušpa"),
+			ArticleTfIdf("Türkisch Van"),
+			ArticleTfIdf("Van"),
+			ArticleTfIdf("Van (Automobil)"),
+			ArticleTfIdf("Van (Provinz)"),
+			ArticleTfIdf("Van (Türkei)"),
+			ArticleTfIdf("Vansee"),
+			ArticleTfIdf("Vilâyet Van")
+		)
+	}
+
+	def alias(): Alias = {
+		Alias("Van",
+			Map("Chevrolet" -> 1, "Chevrolet Van" -> 9, "Flughafen Ferit Melen" -> 1, "Kastenwagen" -> 1, "Reliant" -> 7, "Reliant Van" -> 2, "Toyota" -> 1, "Tušpa" -> 2, "Türkisch Van" -> 12, "Van" -> 159, "Van (Automobil)" -> 443, "Van (Provinz)" -> 83, "Van (Türkei)" -> 292, "Vansee" -> 5, "Vilâyet Van" -> 13),
+			linkoccurrences = Option(1040),
+			totaloccurrences = Option(20508)
 		)
 	}
 
@@ -175,6 +351,40 @@ object TestData {
 				Link("Volkswagen", "Volkswagen", Option(75))
 			)),
 			("5", List(Link("Der Audio Verlag", "Der Audio Verlag", Option(15))))
+		)
+	}
+
+	def linkedEntitiesForIncompleteArticles(): Set[(String, Set[Link])] = {
+		Set(
+			("Audi Test ohne Link", Set(
+				Link("Audi", "Audi Test mit Link", Option(9))
+			)),
+			("Testartikel", Set(
+				Link("Audi", "Audi Test mit Link", Option(7)),
+				Link("Brachttal", "Audi Test ohne Link", Option(13)),
+				Link("historisches Jahr", "Testartikel", Option(24)),
+				Link("Hessen", "Streitberg (Brachttal)", Option(56)),
+				Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64)),
+				Link("Büdinger Wald", "Testartikel", Option(83)),
+				Link("Hessen", "Streitberg (Brachttal)", Option(120))
+			)),
+			("Toan Anh", Set(
+				Link("Van", "Van (Automobil)", Option(9)),
+				Link("Van", "Vansee", Option(9)),
+				Link("Van", "Van (Provinz)", Option(9)),
+				Link("Van", "Chevrolet", Option(9)),
+				Link("Van", "Van (Türkei)", Option(9)),
+				Link("Van", "Flughafen Ferit Melen", Option(9)),
+				Link("Van", "Tušpa", Option(9)),
+				Link("Van", "Reliant Van", Option(9)),
+				Link("Van", "Vilâyet Van", Option(9)),
+				Link("Van", "Van", Option(9)),
+				Link("Van", "Chevrolet Van", Option(9)),
+				Link("Van", "Türkisch Van", Option(9)),
+				Link("Van", "Toyota", Option(9)),
+				Link("Van", "Kastenwagen", Option(9)),
+				Link("Van", "Reliant", Option(9))
+			))
 		)
 	}
 }

@@ -45,7 +45,6 @@ object DocumentFrequencyCounter extends SparkJob {
 		df
 			.asInstanceOf[RDD[DocumentFrequency]]
 			.saveToCassandra(settings("keyspace"), settings("dfTable"))
-		articleCount
 			.asInstanceOf[RDD[WikipediaArticleCount]]
 			.saveToCassandra(settings("keyspace"), settings("articleCountTable"))
 	}

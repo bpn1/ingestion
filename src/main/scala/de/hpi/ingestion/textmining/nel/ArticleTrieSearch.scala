@@ -47,9 +47,10 @@ object ArticleTrieSearch extends SparkJob {
 
 	/**
 	  * Finds Aliases in a given Article by applying the Trie to find occurrences of known token lists.
-	  * @param article Trie Alias Article to find the aliases in
+	  *
+	  * @param article   Trie Alias Article to find the aliases in
 	  * @param tokenizer tokenizer used to tokenize the text
-	  * @param trie Trie used to find aliases
+	  * @param trie      Trie used to find aliases
 	  * @return Trie Alias Article enriched with the found aliases
 	  */
 	def findAliases(article: TrieAliasArticle, tokenizer: IngestionTokenizer, trie: TrieNode): TrieAliasArticle = {
@@ -69,20 +70,21 @@ object ArticleTrieSearch extends SparkJob {
 						val offset = longestMatch.headOption.map(_.beginOffset)
 						offset.map { begin =>
 							val alias = text.substring(begin, longestMatch.last.endOffset)
-							(i , TrieAlias(alias, offset))
+							(i, TrieAlias(alias, offset))
 						}
 					}
 			}.collect {
-				case (index: Int, alias: TrieAlias) if !invalidIndices.contains(index) => alias
-			}.toList
+			case (index: Int, alias: TrieAlias) if !invalidIndices.contains(index) => alias
+		}.toList
 		article.copy(triealiases = foundAliases)
 	}
 
 	/**
 	  * Finds Aliases in the Articles using the Trie.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {

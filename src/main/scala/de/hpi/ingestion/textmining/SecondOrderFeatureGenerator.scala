@@ -42,6 +42,7 @@ object SecondOrderFeatureGenerator extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("secondOrderFeatureTable"))
 	}
+	// $COVERAGE-ON$
 
 	/**
 	  * Computes the rank for each given value.

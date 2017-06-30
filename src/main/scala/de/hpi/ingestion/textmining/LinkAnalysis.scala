@@ -13,7 +13,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 object LinkAnalysis extends SparkJob {
 	appName = "Link Analysis"
 	configFile = "textmining.xml"
-	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipedialinks"
+	cassandraSaveQueries += s"TRUNCATE TABLE ${settings("keyspace")}.${settings("linkTable")}"
 	val reduceFlag = "toReduced"
 
 	// $COVERAGE-OFF$

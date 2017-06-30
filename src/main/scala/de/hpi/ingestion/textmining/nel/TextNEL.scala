@@ -112,16 +112,17 @@ object TextNEL extends SplitSparkJob {
 		featureEntries: RDD[FeatureEntry],
 		model: Broadcast[RandomForestModel]
 	): RDD[(String, List[Link])] = {
-		featureEntries.mapPartitions({ partition =>
-			val localModel = model.value
-			partition.map { featureEntry =>
-				(featureEntry, localModel.predict(featureEntry.labeledPoint().features))
-			}
-		}).collect {
-			case (featureEntry, prediction) if prediction == 1.0 =>
-				val link = Link(featureEntry.alias, featureEntry.entity, Option(featureEntry.offset))
-				(featureEntry.article, List(link))
-		}.reduceByKey(_ ++ _)
+		featureEntries
+			.mapPartitions({ partition =>
+				val localModel = model.value
+				partition.map { featureEntry =>
+					(featureEntry, localModel.predict(featureEntry.labeledPoint().features))
+				}
+			}).collect {
+				case (featureEntry, prediction) if prediction == 1.0 =>
+					val link = Link(featureEntry.alias, featureEntry.entity, Option(featureEntry.offset))
+					(featureEntry.article, List(link))
+			}.reduceByKey(_ ++ _)
 			.map(_.map(identity, _.sortBy(_.offset)))
 	}
 
@@ -134,7 +135,7 @@ object TextNEL extends SplitSparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = input.head.asInstanceOf[RDD[TrieAliasArticle]]
+		val articlesPartition = input.head.asInstanceOf[RDD[TrieAliasArticle]]
 		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].collect.head.count.toLong
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val wikipediaTfidf = input(3).asInstanceOf[RDD[ArticleTfIdf]].flatMap(ArticleTfIdf.unapply)
@@ -142,14 +143,19 @@ object TextNEL extends SplitSparkJob {
 			aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
 		}
 		val tokenizer = IngestionTokenizer()
-		val articleAliases = articles.flatMap(extractTrieAliasContexts(_, tokenizer))
+		val articleAliases = articlesPartition.flatMap(extractTrieAliasContexts(_, tokenizer))
+		val a = articleAliases.collect()
 		val aliasTfIdf = calculateTfidf(articleAliases, numDocuments, defaultIdf(numDocuments))
+		val b = aliasTfIdf.collect()
 		val featureEntries = compareLinksWithArticles(aliasTfIdf, sc.broadcast(aliasPageScores), wikipediaTfidf)
+		val c = featureEntries.collect()
 		val extendedFeatureEntries = SecondOrderFeatureGenerator
 			.run(List(featureEntries).toAnyRDD(), sc)
 			.fromAnyRDD[FeatureEntry]()
 			.head
+		val d = extendedFeatureEntries.collect()
 		val foundEntities = classifyFeatureEntries(extendedFeatureEntries, sc.broadcast(loadModelFunction(sc)))
+		val e = foundEntities.collect()
 		List(foundEntities).toAnyRDD()
 	}
 }

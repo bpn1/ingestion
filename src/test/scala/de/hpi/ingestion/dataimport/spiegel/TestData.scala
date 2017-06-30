@@ -2,6 +2,7 @@ package de.hpi.ingestion.dataimport.spiegel
 
 import de.hpi.ingestion.textmining.models.TrieAliasArticle
 import play.api.libs.json.{JsObject, Json}
+
 import scala.io.Source
 
 object TestData {
