@@ -1,6 +1,5 @@
 package de.hpi.ingestion.dataimport.spiegel
 
-import de.hpi.ingestion.dataimport.spiegel.models.SpiegelArticle
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -9,11 +8,12 @@ import org.jsoup.Jsoup
 import play.api.libs.json.JsValue
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.JSONParser
+import de.hpi.ingestion.textmining.models.TrieAliasArticle
 
 /**
-  * Parses the Spiegel JSON dump to Spiegel Articles, parses the HTML to raw text and saves them to the Cassandra.
+  * Parses the Spiegel JSON dump to Articles, parses the HTML to raw text and saves them to the Cassandra.
   */
-object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
+object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 	appName = "Spiegel Import"
 	configFile = "textmining.xml"
 
@@ -37,7 +37,7 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[SpiegelArticle]()
+			.fromAnyRDD[TrieAliasArticle]()
 			.head
 			.saveToCassandra(settings("keyspace"), settings("spiegelTable"))
 	}
@@ -50,27 +50,41 @@ object SpiegelImport extends SparkJob with JSONParser[SpiegelArticle] {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		input
-			.fromAnyRDD[String]()
-			.map(_.map(parseJSON))
-			.toAnyRDD()
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
+		val spiegelDump = input.fromAnyRDD[String]().head
+		val parsedArticles = spiegelDump.map(parseJSON)
+		List(parsedArticles).toAnyRDD()
 	}
 
 	/**
-	  * Extracts the article data from a given JSON object and parses the HTML content into text.
+	  * Extracts the text contents of the HTML page.
+	  * @param html HTML page as String
+	  * @return text contents of the page
+	  */
+	def extractArticleText(html: String): String = {
+		val contentTags = List("div.spArticleContent", "div.dig-artikel", "div.article-section")
+		val doc = Jsoup.parse(html)
+		val title = doc.head().text()
+		val content = contentTags
+			.map(doc.select)
+			.find(_.size == 1)
+			.map(_.text())
+			.getOrElse(doc.body.text())
+		s"$title $content".trim
+	}
+
+	/**
+	  * Extracts the article data from a given JSON object, parses the HTML content into text and finds the occurring
+	  * aliases in the text.
 	  * @param json JSON object containing the article data
 	  * @return Spiegel Article containing the parsed JSON data
 	  */
-	override def fillEntityValues(json: JsValue): SpiegelArticle = {
+	override def fillEntityValues(json: JsValue): TrieAliasArticle = {
 		val id = extractString(json, List("_id", "$oid")).get
-		val url = extractString(json, List("url"))
-		val title = extractString(json, List("title"))
 		val content = extractString(json, List("content"))
 		val text = content
 			.map(_.replaceAll("&nbsp;", " "))
-			.map(Jsoup.parse)
-			.map(htmlDoc => s"${htmlDoc.head().text()} ${htmlDoc.body().text()}".trim)
-		SpiegelArticle(id, title, text, url)
+			.map(extractArticleText)
+		TrieAliasArticle(id, text)
 	}
 }

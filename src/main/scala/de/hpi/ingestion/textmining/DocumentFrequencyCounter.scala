@@ -1,8 +1,9 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.textmining.models.{DocumentFrequency, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.models.{DocumentFrequency, ParsedWikipediaEntry, WikipediaArticleCount}
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
+import com.datastax.spark.connector.rdd.CassandraTableScanRDD
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
@@ -16,8 +17,10 @@ object DocumentFrequencyCounter extends SparkJob {
 	configFile = "textmining.xml"
 	val removeStopwords = true
 	val stem = true
-	var leastSignificantDocumentFrequency = 5	// Note: This value must be smaller or equal as the number of considered
-												// documents.
+	/**
+	  * This value must be smaller than or equal to the number of considered documents.
+	  */
+	var leastSignificantDocumentFrequency = 5
 
 	// $COVERAGE-OFF$
 	/**
@@ -38,10 +41,13 @@ object DocumentFrequencyCounter extends SparkJob {
 	  * @param args arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[DocumentFrequency]()
-			.head
+		val List(df, articleCount) = output
+		df
+			.asInstanceOf[RDD[DocumentFrequency]]
 			.saveToCassandra(settings("keyspace"), settings("dfTable"))
+		articleCount
+			.asInstanceOf[RDD[WikipediaArticleCount]]
+			.saveToCassandra(settings("keyspace"), settings("articleCountTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -86,8 +92,11 @@ object DocumentFrequencyCounter extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
+		val numArticles = articles.asInstanceOf[RDD[ParsedWikipediaEntry]].count
+		val articleCount = WikipediaArticleCount("parsedwikipedia", BigInt(numArticles))
+		val articleCountRDD = sc.parallelize(List(articleCount))
 		val documentFrequencies = countDocumentFrequencies(articles)
 		val filteredDFs = filterDocumentFrequencies(documentFrequencies, leastSignificantDocumentFrequency)
-		List(filteredDFs).toAnyRDD()
+		List(filteredDFs).toAnyRDD() ++ List(articleCountRDD).toAnyRDD()
 	}
 }

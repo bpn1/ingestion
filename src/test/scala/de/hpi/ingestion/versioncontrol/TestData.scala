@@ -2,16 +2,15 @@ package de.hpi.ingestion.versioncontrol
 
 import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
-
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.versioncontrol.models.HistoryEntry
+import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
 import play.api.libs.json.{JsValue, Json}
-
 import scala.io.Source
 
 object TestData {
 
 	val timeFormatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSSZZZZZ")
+	val datasource = "testsource"
 
 	def dateOf(date: String): Date = timeFormatter.parse(date)
 
@@ -121,6 +120,15 @@ object TestData {
 			None)
 	}
 
+	def sameVersionDataLists(): List[Option[(List[String], List[String])]] = {
+		List(
+			Option((Nil, List("a", "b"))),
+			Option((Nil, List("a"))),
+			None,
+			Option((Nil, List("a", "b"))),
+			None)
+	}
+
 	def listDiffs(): List[Option[JsValue]] = {
 		List(
 			Option(Json.parse("""{"+": ["c"], "-": ["a"]}""")),
@@ -134,26 +142,37 @@ object TestData {
 		List(
 			Subject(
 				id = UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				master = UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				datasource = datasource,
 				name_history = versions().head,
 				aliases_history = versions()(1),
 				category_history = versions()(2),
 				properties_history = Map("test property" -> versions()(3)),
 				relations_history = Map(
-					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> versions()(4)))),
+					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> versions()(4))
+				)
+			),
 			Subject(
 				id = UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				master = UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				datasource = datasource,
 				name_history = versions()(4),
 				aliases_history = versions()(4),
 				category_history = versions()(4),
 				properties_history = Map("test property" -> versions().head),
 				relations_history = Map(
-					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(1)))))
+					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(1))
+				)
+			)
+		)
 	}
 
 	def additionalRestorationSubjects(): List[Subject] = {
 		List(
 			Subject(
 				id = UUID.fromString("d34db33f-c621-42ad-a4f2-34e229602989"),
+				master = UUID.fromString("d34db33f-c621-42ad-a4f2-34e229602989"),
+				datasource = datasource,
 				name_history = futureVersions(),
 				aliases_history = futureVersions(),
 				category_history = futureVersions(),
@@ -162,6 +181,8 @@ object TestData {
 					-> Map("test relation" -> futureVersions()))),
 			Subject(
 				id = UUID.fromString("10200a26-a66a-4405-aab1-4977852e02a9"),
+				master = UUID.fromString("10200a26-a66a-4405-aab1-4977852e02a9"),
+				datasource = datasource,
 				master_history = masterVersions(),
 				relations_history = Map(
 					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989")
@@ -170,56 +191,71 @@ object TestData {
 						-> Map("master" -> List(masterValuesVersions()(1))))))
 	}
 
-	def restoredSubjects(): List[Subject] = {
+	def restoredSubjects(): List[Subject] = List(
+		Subject(
+			id = UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+			master = UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+			datasource = datasource,
+			name = foundValues().head._1.headOption,
+			aliases = foundValues()(1)._1,
+			category = foundValues()(2)._1.headOption,
+			properties = Map("test property" -> foundValues()(3)._1),
+			name_history = versions().head,
+			aliases_history = versions()(1),
+			category_history = versions()(2),
+			properties_history = Map("test property" -> versions()(3)),
+			relations_history = Map(
+				UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> versions()(4)))),
+		Subject(
+			id = UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+			master = UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+			datasource = datasource,
+			name = foundValues()(4)._1.headOption,
+			aliases = foundValues()(4)._1,
+			category = foundValues()(4)._1.headOption,
+			properties = Map("test property" -> foundValues().head._1),
+			relations = Map(
+				UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") ->
+					Map("test relation" -> foundValues()(1)._1.headOption.getOrElse(""))),
+			name_history = versions()(4),
+			aliases_history = versions()(4),
+			category_history = versions()(4),
+			properties_history = Map("test property" -> versions().head),
+			relations_history = Map(
+				UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(1)))),
+		Subject(
+			id = UUID.fromString("d34db33f-c621-42ad-a4f2-34e229602989"),
+			master = UUID.fromString("d34db33f-c621-42ad-a4f2-34e229602989"),
+			datasource = datasource,
+			name_history = futureVersions(),
+			aliases_history = futureVersions(),
+			category_history = futureVersions(),
+			properties_history = Map("test property" -> versions().head),
+			relations_history = Map(UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989")
+				-> Map("test relation" -> futureVersions()))),
+		Subject(
+			id = UUID.fromString("10200a26-a66a-4405-aab1-4977852e02a9"),
+			master = UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+			datasource = datasource,
+			relations = Map(
+				UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("master" -> "0.8"),
+				UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("master" -> "1.0")),
+			master_history = masterVersions())
+	)
+
+	def subjectDiff(): List[SubjectDiff] = {
+		val (oldV, newV) = TestData.versionsToCompare()
 		List(
-			Subject(
-				id = UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
-				name = foundValues().head._1.headOption,
-				aliases = foundValues()(1)._1,
-				category = foundValues()(2)._1.headOption,
-				properties = Map("test property" -> foundValues()(3)._1),
-				relations = Map(),
-				name_history = versions().head,
-				aliases_history = versions()(1),
-				category_history = versions()(2),
-				properties_history = Map("test property" -> versions()(3)),
-				relations_history = Map(
-					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> versions()(4)))),
-			Subject(
-				id = UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
-				name = foundValues()(4)._1.headOption,
-				aliases = foundValues()(4)._1,
-				category = foundValues()(4)._1.headOption,
-				properties = Map("test property" -> foundValues().head._1),
-				relations = Map(
-					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") ->
-						Map("test relation" -> foundValues()(1)._1.headOption.getOrElse(""))),
-				name_history = versions()(4),
-				aliases_history = versions()(4),
-				category_history = versions()(4),
-				properties_history = Map("test property" -> versions().head),
-				relations_history = Map(
-					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> versions()(1)))),
-			Subject(
-				id = UUID.fromString("d34db33f-c621-42ad-a4f2-34e229602989"),
-				name = None,
-				aliases = Nil,
-				category = None,
-				properties = Map(),
-				relations = Map(),
-				name_history = futureVersions(),
-				aliases_history = futureVersions(),
-				category_history = futureVersions(),
-				properties_history = Map("test property" -> versions().head),
-				relations_history = Map(UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989")
-					-> Map("test relation" -> futureVersions()))),
-			Subject(
-				id = UUID.fromString("10200a26-a66a-4405-aab1-4977852e02a9"),
-				master = Some(UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252")),
-				relations = Map(
-					UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("master" -> "0.8"),
-					UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("master" -> "1.0")),
-				master_history = masterVersions()))
+			SubjectDiff(
+				oldV, newV, UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				name = Option("{\"+\":[\"c\"],\"-\":[\"a\"]}"),
+				aliases = Option("{\"-\":[\"a\"]}"),
+				category = Option("{\"+\":[\"b\"]}")),
+			SubjectDiff(
+				oldV, newV, UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				properties = Option("{\"test property\":{\"+\":[\"c\"],\"-\":[\"a\"]}}"),
+				relations = Option("{\"465b3a7a-c621-42ad-a4f2-34e229602989\":{\"test relation\":{\"-\":[\"a\"]}}}"))
+		)
 	}
 
 	def jsonDiff(): List[JsValue] = {
@@ -232,12 +268,14 @@ object TestData {
 			HistoryEntry(
 				UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
 				dataLists().head,
+				None,
 				dataLists()(1),
 				dataLists()(2),
 				Map("test property" -> dataLists()(3)),
 				Map(UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252") -> Map("test relation" -> dataLists()(4)))),
 			HistoryEntry(
 				UUID.fromString("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252"),
+				None,
 				None,
 				None,
 				None,

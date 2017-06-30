@@ -48,7 +48,10 @@ object SimilarityMeasureEvaluation extends SparkJob {
 		implicit val buckets = generateBuckets(this.settings("buckets").toInt)
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
 		val data = generatePrecisionRecallData(predictionAndLabels)
-		val stats = SimilarityMeasureStats(data = data, comment = Option("Naive Deduplication"))
+		val stats = SimilarityMeasureStats(
+			data = data,
+			comment = Option("Naive Deduplication"),
+			xaxis = Option("threshold"))
 
 		List(sc.parallelize(Seq(stats))).toAnyRDD()
 	}
