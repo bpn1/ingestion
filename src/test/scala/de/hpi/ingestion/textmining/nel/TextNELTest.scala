@@ -63,6 +63,7 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 		val linkedEntities = TextNEL.run(input, sc)
 			.fromAnyRDD[(String, List[Link])]()
 			.head
+			.map(articleLinks => (articleLinks._1, articleLinks._2.toSet))
 			.collect
 			.toSet
 		val expectedEntities = TestData.linkedEntitiesForIncompleteArticles()

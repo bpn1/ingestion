@@ -354,12 +354,12 @@ object TestData {
 		)
 	}
 
-	def linkedEntitiesForIncompleteArticles(): Set[(String, List[Link])] = {
+	def linkedEntitiesForIncompleteArticles(): Set[(String, Set[Link])] = {
 		Set(
-			("Audi Test ohne Link", List(
+			("Audi Test ohne Link", Set(
 				Link("Audi", "Audi Test mit Link", Option(9))
 			)),
-			("Testartikel", List(
+			("Testartikel", Set(
 				Link("Audi", "Audi Test mit Link", Option(7)),
 				Link("Brachttal", "Audi Test ohne Link", Option(13)),
 				Link("historisches Jahr", "Testartikel", Option(24)),
@@ -368,7 +368,7 @@ object TestData {
 				Link("Büdinger Wald", "Testartikel", Option(83)),
 				Link("Hessen", "Streitberg (Brachttal)", Option(120))
 			)),
-			("Toan Anh", List(
+			("Toan Anh", Set(
 				Link("Van", "Van (Automobil)", Option(9)),
 				Link("Van", "Vansee", Option(9)),
 				Link("Van", "Van (Provinz)", Option(9)),
