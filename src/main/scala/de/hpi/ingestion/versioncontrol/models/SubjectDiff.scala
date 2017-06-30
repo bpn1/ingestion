@@ -13,4 +13,12 @@ case class SubjectDiff(
 	var name: Option[String] = None,
 	var properties: Option[String] = None,
 	var relations: Option[String] = None
-)
+) {
+	/**
+	  * Returns true if the current diff contains any changes
+	  * @return True if one of the diff fields in the SubjectDiff is not None
+	  */
+	def hasChanges(): Boolean = {
+		List(master, datasource, aliases, category, name, properties, relations).exists(_.isDefined)
+	}
+}

@@ -185,7 +185,8 @@ object VersionDiff extends SparkJob {
 			.map(rdd =>
 				rdd
 					.map(retrieveVersions(_, oldVersion, newVersion))
-					.map(historyToDiff(_, oldVersion, newVersion)))
+					.map(historyToDiff(_, oldVersion, newVersion))
+					.filter(_.hasChanges))
 			.toAnyRDD()
 	}
 
