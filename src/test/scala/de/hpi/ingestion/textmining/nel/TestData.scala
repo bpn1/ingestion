@@ -1,56 +1,28 @@
 package de.hpi.ingestion.textmining.nel
 
-import de.hpi.ingestion.textmining.models.{TrieAliasArticle, _}
+import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, _}
 
 // scalastyle:off line.size.limit
 
 object TestData {
-	def namedEntitiesSet(): Set[Link] = {
-		Set(
-			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test mit Link")),
-			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test ohne Link")),
-			Link("Audi", "Audi Test mit Link", Option(7), Map(), Option("Testartikel")),
-			Link("Brachttal", "Audi Test ohne Link", Option(55), Map(), Option("Streitberg (Brachttal)")),
-			Link("Brachttal", "Audi Test ohne Link", Option(13), Map(), Option("Testartikel")),
-			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(66), Map(), Option("Streitberg (Brachttal)")),
-			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64), Map(), Option("Testartikel")),
-			Link("Hessen", "Streitberg (Brachttal)", Option(87), Map(), Option("Streitberg (Brachttal)")),
-			Link("1377", "Testartikel", Option(225), Map(), Option("Streitberg (Brachttal)")),
-			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
-			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
-			Link("Büdinger Wald", "Testartikel", Option(546), Map(), Option("Streitberg (Brachttal)")),
-			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
-			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel"))
-		)
-	}
-
-	def namedEntitiesForIncompleteArticlesSet(): Set[Link] = {
-		Set(
-			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test ohne Link")),
-			Link("Audi", "Audi Test mit Link", Option(7), Map(), Option("Testartikel")),
-			Link("Brachttal", "Audi Test ohne Link", Option(13), Map(), Option("Testartikel")),
-			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64), Map(), Option("Testartikel")),
-			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
-			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
-			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
-			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel")),
-			Link("Van", "Van (Automobil)", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Reliant", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Toyota", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Flughafen Ferit Melen", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Kastenwagen", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Van", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Van (Provinz)", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Vansee", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Van (Türkei)", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Tušpa", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Chevrolet Van", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Chevrolet", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Reliant Van", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Vilâyet Van", Option(9), Map(), Option("Toan Anh")),
-			Link("Van", "Türkisch Van", Option(9), Map(), Option("Toan Anh"))
-		)
-	}
+	//	def namedEntitiesSet(): Set[Link] = {
+	//		Set(
+	//			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test mit Link")),
+	//			Link("Audi", "Audi Test mit Link", Option(9), Map(), Option("Audi Test ohne Link")),
+	//			Link("Audi", "Audi Test mit Link", Option(7), Map(), Option("Testartikel")),
+	//			Link("Brachttal", "Audi Test ohne Link", Option(55), Map(), Option("Streitberg (Brachttal)")),
+	//			Link("Brachttal", "Audi Test ohne Link", Option(13), Map(), Option("Testartikel")),
+	//			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(66), Map(), Option("Streitberg (Brachttal)")),
+	//			Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64), Map(), Option("Testartikel")),
+	//			Link("Hessen", "Streitberg (Brachttal)", Option(87), Map(), Option("Streitberg (Brachttal)")),
+	//			Link("1377", "Testartikel", Option(225), Map(), Option("Streitberg (Brachttal)")),
+	//			Link("Hessen", "Streitberg (Brachttal)", Option(56), Map(), Option("Testartikel")),
+	//			Link("Hessen", "Streitberg (Brachttal)", Option(120), Map(), Option("Testartikel")),
+	//			Link("Büdinger Wald", "Testartikel", Option(546), Map(), Option("Streitberg (Brachttal)")),
+	//			Link("Büdinger Wald", "Testartikel", Option(83), Map(), Option("Testartikel")),
+	//			Link("historisches Jahr", "Testartikel", Option(24), Map(), Option("Testartikel"))
+	//		)
+	//	}
 
 	def reducedWikipediaArticles(): Set[TrieAliasArticle] = {
 		Set(
@@ -249,6 +221,86 @@ object TestData {
 		)
 	}
 
+	def incompleteFoundAliasArticles(): List[TrieAliasArticle] = {
+		List(
+			TrieAliasArticle(
+				"Audi Test ohne Link",
+				Option("Hier ist Audi nicht verlinkt."),
+				List(
+					TrieAlias("Audi", Option(9))
+				)
+			),
+			TrieAliasArticle(
+				"Testartikel",
+				Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen."),
+				List(
+					TrieAlias("Audi", Option(7)),
+					TrieAlias("Brachttal", Option(13)),
+					TrieAlias("historisches Jahr", Option(24)),
+					TrieAlias("Hessen", Option(56)),
+					TrieAlias("Main-Kinzig-Kreis", Option(64)),
+					TrieAlias("Büdinger Wald", Option(83)),
+					TrieAlias("Hessen", Option(120))
+				)
+			),
+			TrieAliasArticle(
+				"Toan Anh",
+				Option("REDIRECT Van Toan Nguyen"),
+				List(
+					TrieAlias("Van", Option(9))
+				)
+			)
+		)
+	}
+
+	def contextArticles(): List[ArticleTfIdf] = {
+		List(
+			ArticleTfIdf(
+				"Audi Test mit Link",
+				Map("audi" -> 1, "verlink" -> 1)
+			),
+			ArticleTfIdf(
+				"Audi Test ohne Link",
+				Map("audi" -> 1, "verlink" -> 1)
+			),
+			ArticleTfIdf(
+				"Streitberg (Brachttal)",
+				Map("1554" -> 1, "waldrech" -> 1, "einwohnerzahl" -> 1, "streidtburgk" -> 1, "19" -> 1, "brachttal" -> 1, "ort" -> 1, "jahrhu" -> 1, "nachweislich" -> 1, "-lrb-" -> 3, "huterech" -> 1, "eingeburg" -> 1, "steytberg" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "-" -> 1, "stridberg" -> 1, "kleinst" -> 1, "-rrb-" -> 3, "stamm" -> 1, "hess" -> 1, "holx" -> 1, "buding" -> 1, "tauch" -> 1, "stripurgk" -> 1, "1500" -> 1, "gemei" -> 1, "1377" -> 1, "wald" -> 1, "main-kinzig-kreis" -> 1, "1528" -> 1, "namensvaria" -> 1, "ortsnam" -> 1, "streitberg" -> 2, "mittelal" -> 1, "red" -> 1, "stamm" -> 1)
+			),
+			ArticleTfIdf(
+				"Testartikel",
+				Map("audi" -> 1, "brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)
+			),
+			ArticleTfIdf(
+				"Toan Anh",
+				Map("nguy" -> 1, "redirec" -> 1, "toa" -> 1, "van" -> 1)
+			),
+			ArticleTfIdf("Chevrolet"),
+			ArticleTfIdf("Chevrolet Van"),
+			ArticleTfIdf("Flughafen Ferit Melen"),
+			ArticleTfIdf("Kastenwagen"),
+			ArticleTfIdf("Reliant"),
+			ArticleTfIdf("Reliant Van"),
+			ArticleTfIdf("Toyota"),
+			ArticleTfIdf("Tušpa"),
+			ArticleTfIdf("Türkisch Van"),
+			ArticleTfIdf("Van"),
+			ArticleTfIdf("Van (Automobil)"),
+			ArticleTfIdf("Van (Provinz)"),
+			ArticleTfIdf("Van (Türkei)"),
+			ArticleTfIdf("Vansee"),
+			ArticleTfIdf("Vilâyet Van")
+		)
+	}
+
+	def alias(): Alias = {
+		Alias("Van",
+			Map("Chevrolet" -> 1, "Chevrolet Van" -> 9, "Flughafen Ferit Melen" -> 1, "Kastenwagen" -> 1, "Reliant" -> 7, "Reliant Van" -> 2, "Toyota" -> 1, "Tušpa" -> 2, "Türkisch Van" -> 12, "Van" -> 159, "Van (Automobil)" -> 443, "Van (Provinz)" -> 83, "Van (Türkei)" -> 292, "Vansee" -> 5, "Vilâyet Van" -> 13),
+			linkoccurrences = Option(1040),
+			totaloccurrences = Option(20508)
+		)
+	}
+
 	def aliasContexts(): List[(Link, Bag[String, Int])] = {
 		List(
 			(Link("Audi", null, Option(29), Map(), Option("1")), Bag("artikel" -> 1, "schreib" -> 1, "." -> 1)),
@@ -318,6 +370,40 @@ object TestData {
 				Link("Volkswagen", "Volkswagen", Option(75))
 			)),
 			("5", List(Link("Der Audio Verlag", "Der Audio Verlag", Option(15))))
+		)
+	}
+
+	def linkedEntitiesForIncompleteArticles(): Set[(String, List[Link])] = {
+		Set(
+			("Audi Test ohne Link", List(
+				Link("Audi", "Audi Test mit Link", Option(9))
+			)),
+			("Testartikel", List(
+				Link("Audi", "Audi Test mit Link", Option(7)),
+				Link("Brachttal", "Audi Test ohne Link", Option(13)),
+				Link("historisches Jahr", "Testartikel", Option(24)),
+				Link("Hessen", "Streitberg (Brachttal)", Option(56)),
+				Link("Main-Kinzig-Kreis", "Streitberg (Brachttal)", Option(64)),
+				Link("Büdinger Wald", "Testartikel", Option(83)),
+				Link("Hessen", "Streitberg (Brachttal)", Option(120))
+			)),
+			("Toan Anh", List(
+				Link("Van", "Van (Automobil)", Option(9)),
+				Link("Van", "Vansee", Option(9)),
+				Link("Van", "Van (Provinz)", Option(9)),
+				Link("Van", "Chevrolet", Option(9)),
+				Link("Van", "Van (Türkei)", Option(9)),
+				Link("Van", "Flughafen Ferit Melen", Option(9)),
+				Link("Van", "Tušpa", Option(9)),
+				Link("Van", "Reliant Van", Option(9)),
+				Link("Van", "Vilâyet Van", Option(9)),
+				Link("Van", "Van", Option(9)),
+				Link("Van", "Chevrolet Van", Option(9)),
+				Link("Van", "Türkisch Van", Option(9)),
+				Link("Van", "Toyota", Option(9)),
+				Link("Van", "Kastenwagen", Option(9)),
+				Link("Van", "Reliant", Option(9))
+			))
 		)
 	}
 }

@@ -18,7 +18,7 @@ object CosineContextComparator extends SplitSparkJob {
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
-	var docfreqStreamFunction: String => InputStream = AliasTrieSearch.hdfsFileStream _
+	var docFreqStreamFunction: String => InputStream = AliasTrieSearch.hdfsFileStream _
 
 	/**
 	  * Loads Parsed Wikipedia entries with their term frequencies and the document frequencies from the Cassandra.
@@ -191,7 +191,10 @@ object CosineContextComparator extends SplitSparkJob {
 		linkContexts: RDD[(Link, Map[String, Double])],
 		aliasPageScores: Broadcast[Map[String, List[(String, Double, Double)]]],
 		articleContexts: RDD[(String, Map[String, Double])]
-	): RDD[(Link, FeatureEntry)] = {
+	): RDD[FeatureEntry] = {
+		val a = linkContexts.collect()
+		val b = aliasPageScores.value
+		val c = articleContexts.collect()
 		linkContexts
 			.mapPartitions({ partition =>
 				val localAliases = aliasPageScores.value
@@ -208,8 +211,7 @@ object CosineContextComparator extends SplitSparkJob {
 			.flatMap { case (page, (protoFeatureEntries, articleContext)) =>
 				protoFeatureEntries.map { protoFeatureEntry =>
 					val cosineSim = calculateCosineSimilarity(protoFeatureEntry.linkContext, articleContext)
-					val featureEntry = protoFeatureEntry.toFeatureEntry(page, MultiFeature(cosineSim))
-					(protoFeatureEntry.link, featureEntry)
+					protoFeatureEntry.toFeatureEntry(page, MultiFeature(cosineSim))
 				}
 			}
 	}
@@ -251,7 +253,7 @@ object CosineContextComparator extends SplitSparkJob {
 	  * @return Map of every term and its inverse document frequency
 	  */
 	def inverseDocumentFrequencies(numDocs: Long): Map[String, Double] = {
-		val docfreqStream = docfreqStreamFunction(settings("dfFile"))
+		val docfreqStream = docFreqStreamFunction(settings("dfFile"))
 		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
 		val idfMap = mutable.Map[String, Double]()
 		var line = reader.readLine()
@@ -311,7 +313,6 @@ object CosineContextComparator extends SplitSparkJob {
     
 		val aliasPageScores = collectAliasPageScores(aliases)
 		val featureEntries = compareLinksWithArticles(contextTfidf, sc.broadcast(aliasPageScores), articleTfidf)
-			.map(_._2)
 		List(featureEntries).toAnyRDD()
 	}
 }

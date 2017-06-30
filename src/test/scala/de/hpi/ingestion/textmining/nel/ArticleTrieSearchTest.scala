@@ -2,7 +2,7 @@ package de.hpi.ingestion.textmining.nel
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle}
+import de.hpi.ingestion.textmining.models.TrieAlias
 import de.hpi.ingestion.textmining.{AliasTrieSearch, TestData => TextTestData}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.scalatest.{FlatSpec, Matchers}

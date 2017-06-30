@@ -24,11 +24,11 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	}
 
 	they should "be read and calculated from a file" in {
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 		val testDocfreqStreamFunction = TestData.docfreqStream("smalldocfreq") _
-		CosineContextComparator.docfreqStreamFunction = testDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
 
 		val numDocuments = 4
 		val idfMap = CosineContextComparator.inverseDocumentFrequencies(numDocuments.toLong)
@@ -36,15 +36,15 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		idfMap shouldEqual expectedIdfs
 
 		CosineContextComparator.settings = oldSettings
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 	}
 
 	"Tf-idf contexts for parsed Wikipedia articles with complete document frequencies" should "not be empty" in {
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docfreqStreamFunction = testDocFreqFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
     
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
@@ -58,15 +58,15 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		contexts.foreach(context => context._2 should not be empty)
 
 		CosineContextComparator.settings = oldSettings
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 	}
 
 	they should "be exactly these contexts" in {
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq2") _
-		CosineContextComparator.docfreqStreamFunction = testDocFreqFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
     
 		val articles = sc.parallelize(
 			TestData.articlesWithCompleteContexts()
@@ -83,16 +83,16 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		contexts shouldEqual TestData.tfidfContextsSet()
 
 		CosineContextComparator.settings = oldSettings
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 	}
 
 	"Tf-idf contexts for parsed Wikipedia articles with missing document frequencies" should
 		"be exactly these contexts" in {
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq2") _
-		CosineContextComparator.docfreqStreamFunction = testDocFreqFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
       
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 			.filter(_.title != "Streitberg (Brachttal)")
@@ -107,15 +107,15 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		contexts shouldEqual TestData.tfidfContextsSet()
 
 		CosineContextComparator.settings = oldSettings
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 	}
 
 	"Tf-Idf of link contexts" should "exist" in {
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docfreqStreamFunction = testDocFreqFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
     
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
@@ -128,15 +128,15 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		linkContextValues should not be empty
 
 		CosineContextComparator.settings = oldSettings
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 	}
 
 	they should "be exactly these tf-Idf values (disregarding the contexts)" in {
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docfreqStreamFunction = testDocFreqFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
     
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
@@ -153,15 +153,15 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		linkContextValues shouldBe expectedTfidf
 
 		CosineContextComparator.settings = oldSettings
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 	}
 
 	they should "compute the tf-Idf values for the linkswithcontext and trialiases contexts" in {
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings
 		CosineContextComparator.parseConfig()
 		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docfreqStreamFunction = testDocFreqFunction
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
     
 		val articles = sc.parallelize(TestData.articlesWithLinkAndAliasContexts().toList)
 		val numDocuments = articles.count
@@ -177,7 +177,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		linkContextValues shouldBe expectedTfidf
 
 		CosineContextComparator.settings = oldSettings
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 	}
 
 	"Link and page scores" should "not be empty" in {
@@ -240,7 +240,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
-			.map(_._2)
 			.collect
 			.toList
 			.sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
@@ -254,7 +253,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val articleTfidf = sc.parallelize(TestData.articleWordsTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
-			.map(_._2)
 			.collect
 			.toSet
 		val expected = TestData.featureEntriesWithAliasesSet()
@@ -267,7 +265,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val articleTfidf = sc.parallelize(TestData.emptyArticlesTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
-			.map(_._2)
 			.collect
 			.toList
 			.sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
@@ -281,7 +278,6 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val articleTfidf = sc.parallelize(TestData.emptyArticlesTfidfMap().toList)
 		val featureEntries = CosineContextComparator
 			.compareLinksWithArticles(contextTfidf, aliasPageScores, articleTfidf)
-			.map(_._2)
 			.collect
 			.toList
 			.sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
@@ -292,11 +288,11 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	they should "be calculated correctly when using the run method" in {
 		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 		val testDocfreqStreamFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docfreqStreamFunction = testDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
 
 		val articles = sc.parallelize(TestData.articlesForSingleAlias().toList)
 		val aliases = sc.parallelize(List(TestData.aliasWithManyPages()))
@@ -311,16 +307,16 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		featureEntries shouldEqual TestData.featureEntriesForManyPossibleEntitiesList()
 
 		CosineContextComparator.settings = oldSettings
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
 	}
 
 	"Extracted feature entries from links with missing pages" should "be empty" in {
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 		val testDocfreqStreamFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docfreqStreamFunction = testDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
@@ -333,17 +329,17 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		featureEntries shouldBe empty
 
 		CosineContextComparator.settings = oldSettings
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 	}
 
 	"Extracted feature entries from links with existing pages" should "not be empty" in {
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 		val testDocfreqStreamFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docfreqStreamFunction = testDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
@@ -356,19 +352,19 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		featureEntries should not be empty
 
 		CosineContextComparator.settings = oldSettings
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
 	}
 
 	they should "be the same amount as links" in {
-		val oldDocfreqStreamFunction = CosineContextComparator.docfreqStreamFunction
+		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
 
 		val testDocfreqStreamFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docfreqStreamFunction = testDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
 		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
@@ -382,7 +378,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		CosineContextComparator.settings = oldSettings
 
-		CosineContextComparator.docfreqStreamFunction = oldDocfreqStreamFunction
+		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
 	}
 
