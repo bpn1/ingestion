@@ -527,3 +527,10 @@ CREATE TABLE datalake.versiondiff (
     relations text,
     PRIMARY KEY ((oldversion, newversion), id)
 );
+
+CREATE TABLE datalake.graphs (
+    id uuid PRIMARY KEY,
+    graphtype text,
+    nodes list<uuid>,
+    size int
+);
