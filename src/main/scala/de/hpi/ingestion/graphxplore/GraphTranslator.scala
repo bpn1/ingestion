@@ -1,7 +1,6 @@
 package de.hpi.ingestion.graphxplore
 
 import java.util.UUID
-
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -18,6 +17,7 @@ object GraphTranslator extends SparkJob {
 	val tablename = "subject"
 	val outputTablename = "graphs"
 	val graphType = "ConnectedComponent"
+	val minComponentSize = 3
 
 	// $COVERAGE-OFF$
 	/**
@@ -52,6 +52,7 @@ object GraphTranslator extends SparkJob {
 			.map(row => (row.getAs[Long]("component"), UUID.fromString(row.getAs[String]("id"))))
 			.groupBy(_._1)
 			.map(_._2.map(_._2).toList)
+			.filter(_.length >= minComponentSize)
 			.map(idList => ResultGraph(graphType, idList))
 	}
 
