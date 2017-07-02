@@ -49,7 +49,7 @@ object GraphTranslator extends SparkJob {
 		graph.connectedComponents.run()
 			.select("id", "component")
 			.rdd
-			.map(row => (row.getAs[UUID]("component"), row.getAs[UUID]("id")))
+			.map(row => (row.getAs[Long]("component"), UUID.fromString(row.getAs[String]("id"))))
 			.groupBy(_._1)
 			.map(_._2.map(_._2).toList)
 			.map(idList => ResultGraph(graphType, idList))
@@ -70,15 +70,20 @@ object GraphTranslator extends SparkJob {
 			.getOrCreate()
 		import spark.implicits._
 
+		// TODO find out correct HDFS path (something like hdfs://localhost:PORT/graph_translator)
+		sc.setCheckpointDir("graph_translator")
+
 		val subjects = input
 			.fromAnyRDD[Subject]()
 			.head
 			.filter(_.datasource == "master")
-		val subjectVertices = spark.createDataFrame(subjects)
+		val subjectVertices = subjects
+			.map(subject => (subject.id.toString, subject.name))
+			.toDF("id", "name")
 		val subjectRelations = subjects.flatMap(subject => {
 			subject.relations.flatMap { case (id, relTypes) =>
 				relTypes.map { case (relType, value) =>
-					(subject.id, id, relType, value)
+					(subject.id.toString, id.toString, relType, value)
 				}
 			}
 		}).toDF("src", "dst", "relationship", "value")
