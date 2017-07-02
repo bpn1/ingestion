@@ -41,18 +41,28 @@ object TestData {
 		List(
 			TrieAliasArticle(
 				id = "spiegel id 1",
-				text = Option("test title 1 test body 1")),
+				title = Option("test title 1"),
+				text = Option("test title 1 test body 1")
+			),
 			TrieAliasArticle(
 				id = "spiegel id 2",
-				text = Option("test body 2")),
+				title = Option("test title 2"),
+				text = Option("test body 2")
+			),
 			TrieAliasArticle(
 				id = "spiegel id 3",
-				text = Option("test title 3")),
+				title = Option("test title 3"),
+				text = Option("test title 3")
+			),
 			TrieAliasArticle(
 				id = "spiegel id 4",
-				text = Option("abc")),
+				title = None,
+				text = Option("abc")
+			),
 			TrieAliasArticle(
 				id = "spiegel id 5",
-				text = None))
+				title = Option("test title 5"),
+				text = None)
+		)
 	}
 }
