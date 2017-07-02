@@ -81,28 +81,34 @@ object TestData {
 	def aliasSearchArticles(): List[TrieAliasArticle] = {
 		List(
 			TrieAliasArticle(
-				"1",
-				Option("Dieser Artikel schreibt über Audi.")
+				id = "1",
+				title = Option("1"),
+				text = Option("Dieser Artikel schreibt über Audi.")
 			),
 			TrieAliasArticle(
-				"2",
-				Option("Die Audi AG ist ein Tochterunternehmen der Volkswagen AG.")
+				id = "2",
+				title = Option("2"),
+				text = Option("Die Audi AG ist ein Tochterunternehmen der Volkswagen AG.")
 			),
 			TrieAliasArticle(
-				"3",
-				Option("Die Volkswagen Aktiengesellschaft ist nicht sehr umweltfreundlich.")
+				id = "3",
+				title = Option("3"),
+				text = Option("Die Volkswagen Aktiengesellschaft ist nicht sehr umweltfreundlich.")
 			),
 			TrieAliasArticle(
-				"4",
-				Option("Dieser Satz enthält Audi. Dieser Satz enthält Audi AG. Dieser Satz enthält Volkswagen.")
+				id = "4",
+				title = Option("4"),
+				text = Option("Dieser Satz enthält Audi. Dieser Satz enthält Audi AG. Dieser Satz enthält Volkswagen.")
 			),
 			TrieAliasArticle(
-				"5",
-				Option("-buch aktuell -Der Audio Verlag DER SPIEGEL Dein")
+				id = "5",
+				title = Option("5"),
+				text = Option("-buch aktuell -Der Audio Verlag DER SPIEGEL Dein")
 			),
 			TrieAliasArticle(
-				"6",
-				None
+				id = "6",
+				title = Option("6"),
+				text = None
 			)
 		)
 	}
@@ -110,20 +116,24 @@ object TestData {
 	def realAliasSearchArticles(): List[TrieAliasArticle] = {
 		List(
 			TrieAliasArticle(
-				"Audi Test mit Link",
-				Option("Hier ist Audi verlinkt.")
+				id = "Audi Test mit Link",
+				title = Option("Audi Test mit Link"),
+				text = Option("Hier ist Audi verlinkt.")
 			),
 			TrieAliasArticle(
-				"Audi Test ohne Link",
-				Option("Hier ist Audi nicht verlinkt.")
+				id = "Audi Test ohne Link",
+				title = Option("Audi Test ohne Link"),
+				text = Option("Hier ist Audi nicht verlinkt.")
 			),
 			TrieAliasArticle(
-				"Streitberg (Brachttal)",
-				Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald.""")
+				id = "Streitberg (Brachttal)",
+				title = Option("Streitberg (Brachttal)"),
+				text = Option("""Streitberg ist einer von sechs Ortsteilen der Gemeinde Brachttal, Main-Kinzig-Kreis in Hessen. Es ist zugleich der kleinste Ortsteil mit einer Einwohnerzahl von ca. 270. Die erste nachweisliche Erwähnung stammt aus dem Jahre 1377. Im Jahre 1500 ist von Stridberg die Rede, ein Jahr später taucht die Bezeichnung Streidtburgk auf und weitere Namensvarianten sind Stripurgk (1528) und Steytberg (1554). Danach hat sich der Ortsname Streitberg eingebürgert. Vom Mittelalter bis ins 19. Jahrhundert hatte der Ort Waldrechte (Holz- und Huterechte) im Büdinger Wald.""")
 			),
 			TrieAliasArticle(
-				"Testartikel",
-				Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.")
+				id = "Testartikel",
+				title = Option("Testartikel"),
+				text = Option("Links: Audi, Brachttal, historisches Jahr.\nKeine Links: Hessen, Main-Kinzig-Kreis, Büdinger Wald, Backfisch und nochmal Hessen.")
 			)
 		)
 	}
