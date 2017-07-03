@@ -16,7 +16,12 @@ class SpiegelImportTest extends FlatSpec with Matchers with SharedSparkContext {
 		val testTrieStreamFunction = TextTestData.fullTrieStream("/spiegel/triealiases") _
 		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
 		val input = List(sc.parallelize(TestData.spiegelFile())).toAnyRDD()
-		val articles = SpiegelImport.run(input, sc).fromAnyRDD[TrieAliasArticle]().head.collect.toSet
+		val articles = SpiegelImport
+			.run(input, sc)
+			.fromAnyRDD[TrieAliasArticle]()
+			.head
+			.collect
+			.toSet
 		val expectedArticles = TestData.parsedArticles().toSet
 		articles shouldEqual expectedArticles
 
@@ -35,5 +40,4 @@ class SpiegelImportTest extends FlatSpec with Matchers with SharedSparkContext {
 		val expectedContents = TestData.pageTexts()
 		extractedContents shouldEqual expectedContents
 	}
-
 }

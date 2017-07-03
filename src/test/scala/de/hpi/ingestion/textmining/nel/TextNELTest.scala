@@ -93,8 +93,8 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 		val wikipediaTfIdf = sc.parallelize(TestData.tfidfArticles())
 		val input = List(articles, numDocuments, aliases, wikipediaTfIdf).flatMap(List(_).toAnyRDD())
 		val linkedEntities = TextNEL.run(input, sc).fromAnyRDD[(String, List[Link])]().head.collect.toSet
-		val expectedEntties = TestData.linkedEntities()
-		linkedEntities shouldEqual expectedEntties
+		val expectedEntities = TestData.linkedEntities()
+		linkedEntities shouldEqual expectedEntities
 
 		CosineContextComparator.settings = oldSettings
 		TextNEL.loadModelFunction = oldModelFunction

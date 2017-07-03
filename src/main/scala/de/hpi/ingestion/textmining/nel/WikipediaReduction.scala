@@ -50,7 +50,11 @@ object WikipediaReduction extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
 		val wikipediaArticles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
-		val reducedArticles = wikipediaArticles.map(article => TrieAliasArticle(article.title, article.text))
+		val reducedArticles = wikipediaArticles.map(article => TrieAliasArticle(
+			id = article.title,
+			title = Option(article.title),
+			text = article.text
+		))
 		List(reducedArticles).toAnyRDD()
 	}
 }

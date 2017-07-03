@@ -20,7 +20,8 @@ object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 	// $COVERAGE-OFF$
 	/**
 	  * Loads the Spiegel JSON dump from the HDFS.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
@@ -31,9 +32,10 @@ object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 
 	/**
 	  * Saves the parsed Spiegel Articles to the cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
@@ -45,9 +47,10 @@ object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 
 	/**
 	  * Parses the Spiegel JSON dump into Spiegel Articles.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
@@ -58,6 +61,7 @@ object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 
 	/**
 	  * Extracts the text contents of the HTML page.
+	  *
 	  * @param html HTML page as String
 	  * @return text contents of the page
 	  */
@@ -76,15 +80,18 @@ object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 	/**
 	  * Extracts the article data from a given JSON object, parses the HTML content into text and finds the occurring
 	  * aliases in the text.
+	  *
 	  * @param json JSON object containing the article data
 	  * @return Spiegel Article containing the parsed JSON data
 	  */
 	override def fillEntityValues(json: JsValue): TrieAliasArticle = {
 		val id = extractString(json, List("_id", "$oid")).get
+		val title = extractString(json, List("title"))
+			.map(_.replaceAll("&nbsp;", " "))
 		val content = extractString(json, List("content"))
 		val text = content
 			.map(_.replaceAll("&nbsp;", " "))
 			.map(extractArticleText)
-		TrieAliasArticle(id, text)
+		TrieAliasArticle(id, title, text)
 	}
 }
