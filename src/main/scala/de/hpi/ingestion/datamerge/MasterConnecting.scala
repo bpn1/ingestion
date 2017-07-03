@@ -1,5 +1,7 @@
 package de.hpi.ingestion.datamerge
 
+import java.util.UUID
+
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.SubjectManager
 import org.apache.spark.SparkContext
@@ -41,6 +43,13 @@ object MasterConnecting extends SparkJob {
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Connect master nodes.
+	  * @param input List of RDDs containing the subjects
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the updated master subjects
+	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val subjects = input.head.asInstanceOf[RDD[Subject]]
 		val masters = subjects.filter(master => master.isMaster && master.masterRelations.nonEmpty)
@@ -49,19 +58,11 @@ object MasterConnecting extends SparkJob {
 
 
 		val updatedMasters = masters
-	    	.flatMap { master =>
-				master
-					.masterRelations
-			    	.map { case (id, relations) =>
-						(id, List((master, relations.map(identity))))
-					}
-			}.reduceByKey(_ ::: _)
+	    	.flatMap(extractRelations)
+			.reduceByKey(_ ::: _)
 	    	.join(slaves)
-	    	.flatMap { case (oldId, (list, newId)) =>
-				list.map { case (master, relations) =>
-					(master, List((Map(newId -> relations), oldId)))
-				}
-			}.reduceByKey(_ ::: _)
+	    	.flatMap(Function.tupled(groupByMaster _))
+			.reduceByKey(_ ::: _)
 	    	.map { case (master, list) =>
 				val masterManager = new SubjectManager(master, version)
 				val (relations, ids) = list.unzip
@@ -72,5 +73,34 @@ object MasterConnecting extends SparkJob {
 			}
 
 		List(updatedMasters).toAnyRDD()
+	}
+
+	/**
+	  * Extract relations and group by id.
+	  * @param master subject to extract relations from
+	  * @return Map containing relations
+	  */
+	def extractRelations(master: Subject): Map[UUID, List[(Subject, Map[String, String])]] = {
+		master
+			.masterRelations
+			.map { case (id, relations) =>
+				(id, List((master, relations.map(identity))))
+			}
+	}
+
+	/**
+	  * Group relations by masters
+	  * @param oldId id of slave the relation points to
+	  * @param relationsTuple list of relations to be updated and the id of the master node
+	  * @return list of masters with their updated relations
+	  */
+	def groupByMaster(
+		oldId: UUID,
+		relationsTuple: (List[(Subject, Map[String, String])], UUID)
+	): List[(Subject, List[(Map[UUID, Map[String, String]], UUID)])] = {
+		val (list, newId) = relationsTuple
+		list.map { case (master, relations) =>
+			(master, List((Map(newId -> relations), oldId)))
+		}
 	}
 }
