@@ -60,7 +60,7 @@
                 <mapping>Kapital</mapping>
             </attribute>
             <attribute>
-                <key>id_umsatzsteuer</key>
+                <key>id_tax</key>
                 <mapping>MwSt.</mapping>
                 <mapping>Handelsregister</mapping>
             </attribute>

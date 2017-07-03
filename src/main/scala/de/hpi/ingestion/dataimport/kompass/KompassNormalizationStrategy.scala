@@ -4,6 +4,14 @@ import de.hpi.ingestion.implicits.RegexImplicits._
 import de.hpi.ingestion.dataimport.SharedNormalizations
 
 object KompassNormalizationStrategy extends Serializable {
+	def normalizeCapital(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""(0-9\.)+${value} EUR""" => List(value)
+			case r"""(0-9)+${value} Millionen EUR""" => List(value)
+			case other => List(other)
+		}.map(_.replaceAll("(_|-)", " ")).distinct
+	}
+
 	/**
 	  * Normalizes all other values by default (removing pre- and suffixes and dashes)
 	  * @param values Strings to be normalized
@@ -21,8 +29,8 @@ object KompassNormalizationStrategy extends Serializable {
 	def apply(attribute: String): (List[String]) => List[String] = {
 		attribute match {
 			case "gen_legal_form" => SharedNormalizations.normalizeLegalForm	//ToDo: checken, ob das reicht
-			//ToDo: case "id_umsatzsteuer"
-			//ToDo: case "gen_capital" //75.000 EUR
+			//case "id_umsatzsteuer"
+			//ToDo: case "gen_capital" => normalizeCapital //75.000 EUR
 			//ToDo: case "gen_turnover" //1 - 2 Millionen EUR //> 500 Millionen EUR
 			//ToDo: case "gen_employees" //Von 10 bis 19 Beschäftigte //100 Beschäftigte
 			//ToDo: case "gen_street" //Herriotstr. 3 //aktuell bei addressextraction gemacht
