@@ -10,12 +10,11 @@ import de.hpi.ingestion.textmining.models.{Cooccurrence, RelationPrediction, Sen
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.mllib.feature.{HashingTF, IDF}
-import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
+import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel, SVMWithSGD}
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.RandomForest
 import org.apache.spark.mllib.tree.model.RandomForestModel
 import de.hpi.ingestion.implicits.TupleImplicits._
-
 
 import scala.collection.mutable.ListBuffer
 
@@ -207,6 +206,7 @@ object RelationClassifier extends SparkJob {
 				val training = trainingList.reduce(_.union(_))
 				val model = trainNaiveBayes(training.map(_._2))
 //				val model = trainRandomForest(training.map(_._2))
+//				val model = SVMWithSGD.train(training.map(_._2), 100)
 				val entitiesPredictionAndLabels = test.map { case (sentence, LabeledPoint(label, features)) =>
 					val prediction = model.predict(features)
 					(sentence, (prediction, label))
@@ -322,7 +322,10 @@ object RelationClassifier extends SparkJob {
 		    	.map { case ((entityList, rel, dbpedia), sentences) =>
 					(entityList, (rel, dbpedia, sentences))
 				}
-		    	.join(cooccurrences.map(cooc => (cooc.entitylist, cooc.count)))
+		    	.join(
+					cooccurrences.map(cooc => (cooc.entitylist, cooc.count)
+					)
+				)
 		    	.map { case (entityList, ((rel, dbpedia, sentences), coocCount)) =>
 					RelationPrediction(entityList.head, rel, entityList.last, dbpedia, sentences, sentences.size,
 						sentences.size / coocCount.toDouble
