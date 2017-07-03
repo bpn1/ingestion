@@ -3,7 +3,8 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.{FeatureEntry, ParsedWikipediaEntry}
+import de.hpi.ingestion.textmining.models.{ArticleTfIdf, FeatureEntry, ParsedWikipediaEntry, WikipediaArticleCount}
+import de.hpi.ingestion.textmining.tokenizer.{CleanCoreNLPTokenizer, IngestionTokenizer}
 import org.apache.spark.rdd.RDD
 
 class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with Matchers {
@@ -119,9 +120,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer(), true, true)
 		val linkContextValues = CosineContextComparator
 			.calculateTfidf(
-				CosineContextComparator.transformLinkContextTfs(articles),
+				CosineContextComparator.transformLinkContextTfs(articles, tokenizer),
 				numDocuments,
 				CosineContextComparator.defaultIdf(numDocuments, 2))
 			.collect
@@ -140,9 +142,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val numDocuments = articles.count
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer(), true, true)
 		val linkContextValues = CosineContextComparator
 			.calculateTfidf(
-				CosineContextComparator.transformLinkContextTfs(articles),
+				CosineContextComparator.transformLinkContextTfs(articles, tokenizer),
 				numDocuments,
 				CosineContextComparator.defaultIdf(numDocuments, 2))
 			.map { case (link, tfidfContext) => (link.copy(context = Map()), tfidfContext) }
@@ -165,9 +168,10 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 		val articles = sc.parallelize(TestData.articlesWithLinkAndAliasContexts().toList)
 		val numDocuments = articles.count
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer(), true, true)
 		val linkContextValues = CosineContextComparator
 			.calculateTfidf(
-				CosineContextComparator.transformLinkContextTfs(articles),
+				CosineContextComparator.transformLinkContextTfs(articles, tokenizer),
 				numDocuments,
 				CosineContextComparator.defaultIdf(numDocuments, 2))
 			.map { case (link, tfidfContext) => (link.copy(context = Map()), tfidfContext) }
@@ -206,6 +210,49 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val expectedPages = TestData.singleAliasManyPagesScoresMap()
 			.map(alias => (alias._1, alias._2.toSet))
 		pages2 shouldEqual expectedPages
+	}
+
+	they should "not be recalculated" in {
+		val oldDocFreqFunction = CosineContextComparator.docFreqStreamFunction
+		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
+		val oldSettings = CosineContextComparator.settings(false)
+		CosineContextComparator.parseConfig()
+		val oldAliases = CosineContextComparator.aliasPageScores
+
+		CosineContextComparator.aliasPageScores = TestData.aliasScoresWithManyPages()
+		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
+
+		val tfIdf = sc.parallelize(TestData.emptyArticlesTfIdfList())
+		val aliases = sc.parallelize(List(TestData.aliasWithManyPages()))
+		val articles = sc.parallelize(TestData.articlesForSingleAlias().toList)
+		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesForSingleAlias().size)
+		val articleCount = sc.parallelize(List(numDocuments))
+		val input = List(tfIdf, aliases, articles, articleCount).flatMap(List(_).toAnyRDD())
+
+		val featureEntries = CosineContextComparator
+			.run(input, sc)
+			.fromAnyRDD[FeatureEntry]()
+			.head
+			.collect
+			.toList
+			.map(feature => feature.copy(
+				entity_score = feature.entity_score.copy(
+					rank = 1,
+					delta_successor = Double.PositiveInfinity,
+					delta_top = Double.PositiveInfinity),
+				cosine_sim = feature.cosine_sim.copy(
+					rank = 1,
+					delta_successor = Double.PositiveInfinity,
+					delta_top = Double.PositiveInfinity)))
+			.sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
+		featureEntries shouldEqual TestData.featureEntriesForManyPossibleEntitiesList()
+
+		CosineContextComparator.aliasPageScores = oldAliases
+		CosineContextComparator.settings = oldSettings
+		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
+		CosineContextComparator.docFreqStreamFunction = oldDocFreqFunction
 	}
 
 	"Cosine similarity between contexts" should "be exactly this value" in {
@@ -291,21 +338,38 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
-		val testDocfreqStreamFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
+		val oldAliases = CosineContextComparator.aliasPageScores
 
-		val articles = sc.parallelize(TestData.articlesForSingleAlias().toList)
+		CosineContextComparator.aliasPageScores = Map()
+		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
+
+		val tfIdf = sc.parallelize(TestData.emptyArticlesTfIdfList())
 		val aliases = sc.parallelize(List(TestData.aliasWithManyPages()))
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
+		val articles = sc.parallelize(TestData.articlesForSingleAlias().toList)
+		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesForSingleAlias().size)
+		val articleCount = sc.parallelize(List(numDocuments))
+		val input = List(tfIdf, aliases, articles, articleCount).flatMap(List(_).toAnyRDD())
+
 		val featureEntries = CosineContextComparator
 			.run(input, sc)
 			.fromAnyRDD[FeatureEntry]()
 			.head
 			.collect
 			.toList
+		    .map(feature => feature.copy(
+				entity_score = feature.entity_score.copy(
+					rank = 1,
+					delta_successor = Double.PositiveInfinity,
+					delta_top = Double.PositiveInfinity),
+				cosine_sim = feature.cosine_sim.copy(
+					rank = 1,
+					delta_successor = Double.PositiveInfinity,
+					delta_top = Double.PositiveInfinity)))
 			.sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
 		featureEntries shouldEqual TestData.featureEntriesForManyPossibleEntitiesList()
 
+		CosineContextComparator.aliasPageScores = oldAliases
 		CosineContextComparator.settings = oldSettings
 		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
@@ -315,12 +379,18 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val oldDocfreqStreamFunction = CosineContextComparator.docFreqStreamFunction
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
-		val testDocfreqStreamFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
+		val oldAliases = CosineContextComparator.aliasPageScores
 
-		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		CosineContextComparator.aliasPageScores = Map()
+		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
+
+    val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesWithCompleteContexts().size)
+		val articleCount = sc.parallelize(List(numDocuments))
+		val tfIdf = articles.map(entry => ArticleTfIdf(entry.title, Map()))
 		val aliases = sc.parallelize(TestData.finalAliasesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
+		val input = List(tfIdf, aliases, articles, articleCount).flatMap(List(_).toAnyRDD())
 		val featureEntries = CosineContextComparator
 			.run(input, sc)
 			.fromAnyRDD[FeatureEntry]()
@@ -328,6 +398,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.collect
 		featureEntries shouldBe empty
 
+		CosineContextComparator.aliasPageScores = oldAliases
 		CosineContextComparator.settings = oldSettings
 		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 	}
@@ -338,12 +409,18 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
-		val testDocfreqStreamFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
+		val oldAliases = CosineContextComparator.aliasPageScores
+
+		CosineContextComparator.aliasPageScores = Map()
+		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
 
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
+		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesWithCompleteContexts().size)
+		val articleCount = sc.parallelize(List(numDocuments))
+		val tfIdf = sc.parallelize(TestData.existingPagesTfIdfMap())
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
+		val input = List(tfIdf, aliases, articles, articleCount).flatMap(List(_).toAnyRDD())
 		val featureEntries = CosineContextComparator
 			.run(input, sc)
 			.fromAnyRDD[FeatureEntry]()
@@ -351,6 +428,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 			.collect
 		featureEntries should not be empty
 
+		CosineContextComparator.aliasPageScores = oldAliases
 		CosineContextComparator.settings = oldSettings
 		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
@@ -362,20 +440,26 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 2
 		val oldSettings = CosineContextComparator.settings(false)
 		CosineContextComparator.parseConfig()
+		val oldAliases = CosineContextComparator.aliasPageScores
 
-		val testDocfreqStreamFunction = TestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocfreqStreamFunction
+		CosineContextComparator.aliasPageScores = Map()
+		val testDocFreqFunction = TestData.docfreqStream("docfreq") _
+		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD() ++ List(articles).toAnyRDD()
+		val numDocuments = WikipediaArticleCount("parsedwikipedia", TestData.articlesWithCompleteContexts().size)
+		val articleCount = sc.parallelize(List(numDocuments))
+		val tfIdf = sc.parallelize(TestData.existingPagesTfIdfMap())
+		val input = List(tfIdf, aliases, articles, articleCount).flatMap(List(_).toAnyRDD())
 		val featureEntries = CosineContextComparator
 			.run(input, sc)
 			.fromAnyRDD[FeatureEntry]()
 			.head
 			.collect
 		val linkCount = articles.flatMap(_.allLinks()).count
-		featureEntries.length shouldBe linkCount
+		featureEntries should have length linkCount
 
+		CosineContextComparator.aliasPageScores = oldAliases
 		CosineContextComparator.settings = oldSettings
 
 		CosineContextComparator.docFreqStreamFunction = oldDocfreqStreamFunction
@@ -393,7 +477,8 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 
 	"Link contexts" should "be transformed into the correct format" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
-		val transformedLinks = CosineContextComparator.transformLinkContextTfs(articles)
+		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer(), true, true)
+		val transformedLinks = CosineContextComparator.transformLinkContextTfs(articles, tokenizer)
 			.collect
 			.toSet
 		val expectedLinks = TestData.transformedLinkContexts()
@@ -403,23 +488,26 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 	"Input split" should "split input into 10 parts with each one consisting of 3 parts" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val tfIdf = sc.parallelize(List.empty[ArticleTfIdf])
+		val articleCount = sc.parallelize(List.empty[WikipediaArticleCount])
+		val input = List(articles, aliases, tfIdf, articleCount).flatMap(List(_).toAnyRDD())
 		val splitInput = CosineContextComparator.splitInput(input).toList
 		splitInput should have length 10
-		splitInput.foreach { case inputPartition =>
-			inputPartition should have length 3
+		splitInput.foreach { inputPartition =>
+			inputPartition should have length 4
 		}
 	}
 
 	it should "make the Parsed Wikipedia Entries lean" in {
 		val articles = sc.parallelize(TestData.articlesWithCompleteContexts().toList)
 		val aliases = sc.parallelize(TestData.aliasesWithExistingPagesSet().toList)
-		val input = List(articles).toAnyRDD() ++ List(aliases).toAnyRDD()
+		val tfIdf = sc.parallelize(List.empty[ArticleTfIdf])
+		val articleCount = sc.parallelize(List.empty[WikipediaArticleCount])
+		val input = List(articles, aliases, tfIdf, articleCount).flatMap(List(_).toAnyRDD())
 		CosineContextComparator.splitInput(input)
-			.toList
-			.foreach { case List(leanArticles, allAliases, leanSplit) =>
-				leanArticles.asInstanceOf[RDD[ParsedWikipediaEntry]]
-					.union(leanSplit.asInstanceOf[RDD[ParsedWikipediaEntry]])
+    	.toList
+			.foreach { case List(tfidf, aliases, leanSplit, articleCount) =>
+				leanSplit.asInstanceOf[RDD[ParsedWikipediaEntry]]
 					.collect
 					.foreach { entry =>
 						entry.templatelinks shouldBe empty

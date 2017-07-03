@@ -94,7 +94,7 @@ object TextNEL extends SplitSparkJob {
 		article: TrieAliasArticle,
 		tokenizer: IngestionTokenizer
 	): List[(Link, Bag[String, Int])] = {
-		val articleTokens = article.text.map(tokenizer.onlyTokenizeWithOffst).getOrElse(Nil)
+		val articleTokens = article.text.map(tokenizer.onlyTokenizeWithOffset).getOrElse(Nil)
 		article.triealiases.map { triealias =>
 			val context = TermFrequencyCounter.extractContext(articleTokens, triealias.toLink(), tokenizer)
 			(triealias.toLink().copy(article = Option(article.article)), context)
