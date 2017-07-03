@@ -140,8 +140,9 @@ CREATE TYPE wikidumps.triealias (
 );
 
 CREATE TABLE wikidumps.linkedarticles (
-	title text PRIMARY KEY,
-	text text
+  title text PRIMARY KEY,
+  text text
+);
 
 CREATE TABLE wikidumps.wikipediacooccurrences (
       entityList frozen<list<text>> PRIMARY KEY,
@@ -150,13 +151,15 @@ CREATE TABLE wikidumps.wikipediacooccurrences (
 
 CREATE TABLE wikidumps.spiegel (
     id text PRIMARY KEY,
+    title text,
     foundentities frozen<list<frozen<link>>>,
     text text,
     triealiases frozen<list<frozen<triealias>>>
 );
 
 CREATE TABLE wikidumps.wikipedianel (
-    article text PRIMARY KEY,
+    id text PRIMARY KEY,
+    title text,
     text text,
     triealiases frozen<list<triealias>>,
     foundentities frozen<list<frozen<link>>>
@@ -382,7 +385,7 @@ CREATE TABLE datalake.blockingstats (
     blockcount int,
     comment text,
     comparisoncount bigint,
-    data frozen<set<frozen<blockstats>>>,
+    data frozen<SET<frozen<blockstats>>>,
     pairscompleteness double,
     xaxis text,
     yaxis text,

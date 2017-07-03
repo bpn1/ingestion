@@ -41,7 +41,7 @@ object ArticleTrieSearch extends SparkJob {
 		output
 			.fromAnyRDD[(String, List[TrieAlias])]()
 			.head
-			.saveToCassandra(settings("keyspace"), settings("NELTable"), SomeColumns("article", "triealiases"))
+			.saveToCassandra(settings("keyspace"), settings("NELTable"), SomeColumns("id", "triealiases"))
 	}
 	// $COVERAGE-ON$
 
@@ -95,7 +95,7 @@ object ArticleTrieSearch extends SparkJob {
 				val trie = deserializeTrie(trieStreamFunction(settings("smallerTrieFile")))
 				partition.map(findAliases(_, tokenizer, trie))
 			}, true)
-		val trieAliases = aliasArticles.map(article => (article.article, article.triealiases))
+		val trieAliases = aliasArticles.map(article => (article.id, article.triealiases))
 		List(trieAliases).toAnyRDD()
 	}
 }
