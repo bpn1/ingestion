@@ -55,7 +55,7 @@ object TextNEL extends SplitSparkJob {
 			.saveToCassandra(
 				settings("keyspace"),
 				settings("NELTable"),
-				SomeColumns("article", "foundentities"))
+				SomeColumns("id", "foundentities"))
 	}
 
 	/**
