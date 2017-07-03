@@ -87,6 +87,7 @@ object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 	override def fillEntityValues(json: JsValue): TrieAliasArticle = {
 		val id = extractString(json, List("_id", "$oid")).get
 		val title = extractString(json, List("title"))
+			.map(_.replaceAll("&nbsp;", " "))
 		val content = extractString(json, List("content"))
 		val text = content
 			.map(_.replaceAll("&nbsp;", " "))
