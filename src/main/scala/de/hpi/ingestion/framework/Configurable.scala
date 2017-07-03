@@ -22,8 +22,8 @@ trait Configurable {
 	  */
 	def parseConfig(): Unit = {
 		val xml = XML.load(getClass.getResource(s"/configs/$configFile"))
-		_settings ++= parseSettings(xml)
-		_scoreConfigSettings ++= parseSimilarityMeasures(xml)
+		_settings = parseSettings(xml)
+		_scoreConfigSettings = parseSimilarityMeasures(xml)
 	}
 
 	def parseImportConfig(): Unit = {

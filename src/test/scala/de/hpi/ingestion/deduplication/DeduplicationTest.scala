@@ -61,21 +61,6 @@ class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDCompari
 		Deduplication.settings = originalSettings
 	}
 
-	they should "not be compared twice" in {
-		val originalSettings = Deduplication.settings
-		val originalConfig = Deduplication.scoreConfigSettings
-
-		Deduplication.scoreConfigSettings = TestData.simpleTestConfig
-		Deduplication.settings = Map("confidence" -> "0.0")
-		val blocks = TestData.testBlocks(sc)
-		val duplicates = Deduplication.findDuplicates(blocks, sc).map(_.copy(_3 = 0.0))
-		val expected = TestData.distinctDuplicateCandidates(sc)
-		assertRDDEquals(duplicates, expected)
-
-		Deduplication.scoreConfigSettings = originalConfig
-		Deduplication.settings = originalSettings
-	}
-
 	"Deduplication" should "find duplicates and create duplicate candidates" in {
 		val originalSettings = Deduplication.settings(false)
 		val originalConfig = Deduplication.scoreConfigSettings(false)

@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining
 
-import java.io._
-
+import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
@@ -16,9 +15,9 @@ import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
-
-import scala.io.{BufferedSource, Source}
 import scala.collection.JavaConversions._
+import scala.io.{BufferedSource, Source}
+import java.io._
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -86,12 +85,6 @@ object TestData {
 
 	def deltaSuccessorValuesList(): List[Double] = {
 		List(2.1, 2.0999999999999996, 2.1, Double.PositiveInfinity, 2.0999999999999996)
-	}
-
-	def stopwordsSet(): Set[String] = {
-		Source.fromURL(getClass.getResource("/textmining/german_stopwords_without_umlauts.txt"))
-			.getLines()
-			.toSet
 	}
 
 	def sentencesList(): List[String] = {
@@ -492,15 +485,15 @@ object TestData {
 
 	def transformedLinkContexts(): Set[(Link, Bag[String, Int])] = {
 		Set(
-			(Link("Audi", "Audi", Option(9), Map("verlink" -> 1), Option("Audi Test mit Link")), Bag("verlink" -> 1)),
-			(Link("Brachttal", "Brachttal", Option(55), Map("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "stamm" -> 1), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "stamm" -> 1)),
-			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
-			(Link("Hessen", "Hessen", Option(87), Map("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "jahr" -> 1), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "jahr" -> 1)),
-			(Link("1377", "1377", Option(225), Map("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
-			(Link("Büdinger Wald", "Büdinger Wald", Option(546), Map("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1), Option("Streitberg (Brachttal)")), Bag("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)),
-			(Link("Audi", "Audi", Option(7), Map("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1), Option("Testartikel")), Bag("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
-			(Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1), Option("Testartikel")), Bag("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
-			(Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1), Option("Testartikel")), Bag("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1))
+			(Link("Audi", "Audi", Option(9), Map(), Option("Audi Test mit Link")), Bag("verlink" -> 1)),
+			(Link("Brachttal", "Brachttal", Option(55), Map(), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "hess" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "stamm" -> 1)),
+			(Link("Main-Kinzig-Kreis", "Main-Kinzig-Kreis", Option(66), Map(), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "hess" -> 1, "gemei" -> 1, "streitberg" -> 1)),
+			(Link("Hessen", "Hessen", Option(87), Map(), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "brachttal" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 2, "270" -> 1, "kleinst" -> 1, "stamm" -> 1, "gemei" -> 1, "main-kinzig-kreis" -> 1, "streitberg" -> 1, "jahr" -> 1)),
+			(Link("1377", "1377", Option(225), Map(), Option("Streitberg (Brachttal)")), Bag("einwohnerzahl" -> 1, "streidtburgk" -> 1, "nachweislich" -> 1, "erwahnung" -> 1, "ortsteil" -> 1, "bezeichnung" -> 1, "jahr" -> 3, "270" -> 1, "stridberg" -> 1, "kleinst" -> 1, "stamm" -> 1, "tauch" -> 1, "1500" -> 1, "namensvaria" -> 1, "red" -> 1)),
+			(Link("Büdinger Wald", "Büdinger Wald", Option(546), Map(), Option("Streitberg (Brachttal)")), Bag("waldrech" -> 1, "19" -> 1, "ort" -> 1, "jahrhu" -> 1, "-lrb-" -> 1, "huterech" -> 1, "eingeburg" -> 1, "-" -> 1, "-rrb-" -> 1, "holx" -> 1, "ortsnam" -> 1, "streitberg" -> 1, "mittelal" -> 1)),
+			(Link("Audi", "Audi", Option(7), Map(), Option("Testartikel")), Bag("brachttal" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			(Link("Brachttal", "Brachttal", Option(13), Map(), Option("Testartikel")), Bag("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
+			(Link("historisches Jahr", "1377", Option(24), Map(), Option("Testartikel")), Bag("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1))
 		)
 	}
 
@@ -647,10 +640,21 @@ object TestData {
 		)
 	}
 
+	def existingPagesTfIdfMap(): List[ArticleTfIdf] = {
+		List(
+			ArticleTfIdf("Audi Test mit Link", Map()),
+			ArticleTfIdf("Audi Test ohne Link", Map()),
+			ArticleTfIdf("Streitberg (Brachttal)", Map()),
+			ArticleTfIdf("Testartikel", Map())
+		)
+	}
+
 	def allPageNamesOfTestArticleList(): Set[String] = {
-		Set("Audi",
+		Set(
+			"Audi",
 			"Brachttal",
-			"1377")
+			"1377"
+		)
 	}
 
 	def articleContextWordSets(): Map[String, Set[String]] = {
@@ -816,6 +820,22 @@ object TestData {
 		)
 	}
 
+	def articleTfidfList(): List[ArticleTfIdf] = {
+		// considered to be retrieved from 7 documents
+		val tf1df1 = 0.845
+		val tf1df2 = 0.544
+		val tf1df3 = 0.368
+		List(
+			ArticleTfIdf("Audi", Map("audi" -> tf1df1, "ist" -> tf1df3, "ein" -> tf1df3, "automobilhersteller" -> tf1df1)),
+			ArticleTfIdf("Brachttal", Map("brachttal" -> tf1df1, "ist" -> tf1df3, "irgendein" -> tf1df1, "ortsteil" -> tf1df1)),
+			ArticleTfIdf("Main-Kinzig-Kreis", Map("der" -> tf1df2, "main-kinzig-kreis" -> tf1df2, "ein" -> tf1df3, "einwohnerzahl" -> tf1df1)),
+			ArticleTfIdf("Hessen", Map("hessen" -> tf1df1, "ist" -> tf1df3, "der" -> tf1df2, "main-kinzig-kreis" -> tf1df2)),
+			ArticleTfIdf("1377", Map("ein" -> tf1df3, "jahr" -> tf1df2)),
+			ArticleTfIdf("Büdinger Wald", Map("waldrech" -> tf1df1)),
+			ArticleTfIdf("historisches Jahr", Map("jahr" -> tf1df2))
+		)
+	}
+
 	def shortLinkContextsTfidfList(): List[(Link, Map[String, Double])] = {
 		// considered to be retrieved from 7 documents
 		val tf1df1 = 0.845
@@ -922,6 +942,22 @@ object TestData {
 		), linkoccurrences = Option(2525), totaloccurrences = Option(4235))
 	}
 
+	def aliasScoresWithManyPages(): Map[String, List[(String, Double, Double)]] = {
+		Map(
+			"BMW" -> List(
+				("BMW-Motorrad", 0.5962219598583235, 0.17504950495049504),
+				("BMW", 0.5962219598583235, 0.7239603960396039),
+				("BMW (Automarke)", 0.5962219598583235, 0.038415841584158415),
+				("Berlins Most Wanted", 0.5962219598583235, 0.001188118811881188),
+				("Liste der BMW-Motorräder", 0.5962219598583235,7.920792079207921E-4),
+				("BMW 501/502", 0.5962219598583235,3.9603960396039607E-4),
+				("BMW M10", 0.5962219598583235,3.9603960396039607E-4),
+				("BMW (Motorsport)", 0.5962219598583235, 0.05821782178217822),
+				("BMW E21", 0.5962219598583235,3.9603960396039607E-4),
+				("BMW E36", 0.5962219598583235, 0.001188118811881188))
+		)
+	}
+
 	def articlesForSingleAlias(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry("Automobilhersteller", linkswithcontext = List(Link("BMW", "BMW", Option(0), Map()))),
@@ -950,6 +986,21 @@ object TestData {
 			"BMW E21" -> Map(),
 			"BMW M10" -> Map(),
 			"BMW 501/502" -> Map()
+		)
+	}
+
+	def emptyArticlesTfIdfList(): List[ArticleTfIdf] = {
+		List(
+			ArticleTfIdf("BMW", Map()),
+			ArticleTfIdf("BMW-Motorrad", Map()),
+			ArticleTfIdf("BMW (Motorsport)", Map()),
+			ArticleTfIdf("BMW (Automarke)", Map()),
+			ArticleTfIdf("Berlins Most Wanted", Map()),
+			ArticleTfIdf("BMW E36", Map()),
+			ArticleTfIdf("Liste der BMW-Motorräder", Map()),
+			ArticleTfIdf("BMW E21", Map()),
+			ArticleTfIdf("BMW M10", Map()),
+			ArticleTfIdf("BMW 501/502", Map())
 		)
 	}
 
@@ -1453,7 +1504,7 @@ object TestData {
 		)
 	}
 
-	def parsedWikipediaSet(): Set[ParsedWikipediaEntry] = {
+	def parsedWikipediaSetWithoutText(): Set[ParsedWikipediaEntry] = {
 		Set(
 			ParsedWikipediaEntry(
 				"Audi",
@@ -2264,6 +2315,14 @@ object TestData {
 	def alternativeSentenceList(): List[Sentence] = {
 		List(
 			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9))), List("ist")),
+			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))), List("ist")),
+			Sentence("Audi", 40, "Audi ist Deutschland.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Deutschland", "Deutschland", Some(9))), List("ist")),
+			Sentence("Audi", 60, "VW ist in Wolfsburg", List(EntityLink("VW", "VW", Some(0)), EntityLink("Wolfsburg", "Wolfsburg", Some(10))), List("ist"))
+		)
+	}
+	def alternativeSentenceListFiltered(): List[Sentence] = {
+		List(
+			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9))), List("ist")),
 			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))), List("ist"))
 		)
 	}
@@ -2273,6 +2332,13 @@ object TestData {
 			List("Hochhaus", "Postbank", "Berlin", "Berlin-Kreuzberg"),
 			List("Frankfurt (Oder)", "Potsdam", "Magdeburg", "Stettin"),
 			List("Deutsche Funkturm", "Deutsche Telekom")
+		)
+	}
+
+	def relationList(): List[Relation] = {
+		List(
+			Relation("Audi", "country", "Deutschland"),
+			Relation("Volkswagen", "city", "Wolfsburg")
 		)
 	}
 
@@ -2557,6 +2623,19 @@ object TestData {
 		maxBins: Int = 32
 	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
 		(simMeasureStats(), Option(randomForestModel()))
+	}
+
+	def loadRandomForestModel(sc: SparkContext): RandomForestModel = {
+		randomForestModel()
+	}
+
+	def formattedPredictionStatistics(): String = {
+		s"precision\t1.0\t${5.0 / 7.0}" + "\n" +
+			"precision\t0.0\t0.6" + "\n" +
+			s"recall\t1.0\t${5.0 / 6.0}" + "\n" +
+			"recall\t0.0\t1.0" + "\n" +
+			s"fscore with beta 0.5\t1.0\t${25.0 / 34.0}" + "\n" +
+			"fscore with beta 0.5\t0.0\t0.6521739130434783"
 	}
 
 	def exportDBpediaRelations(): List[Relation] = {

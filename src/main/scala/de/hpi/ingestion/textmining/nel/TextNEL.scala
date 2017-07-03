@@ -55,7 +55,7 @@ object TextNEL extends SplitSparkJob {
 			.saveToCassandra(
 				settings("keyspace"),
 				"spiegel_test",//settings("NELTable"),
-				SomeColumns("article", "foundentities"))
+				SomeColumns("id", "foundentities"))
 	}
 
 	/**
@@ -93,10 +93,10 @@ object TextNEL extends SplitSparkJob {
 		article: TrieAliasArticle,
 		tokenizer: IngestionTokenizer
 	): List[(Link, Bag[String, Int])] = {
-		val articleTokens = article.text.map(tokenizer.onlyTokenizeWithOffst).getOrElse(Nil)
+		val articleTokens = article.text.map(tokenizer.onlyTokenizeWithOffset).getOrElse(Nil)
 		article.triealiases.map { triealias =>
 			val context = TermFrequencyCounter.extractContext(articleTokens, triealias.toLink(), tokenizer)
-			(triealias.toLink().copy(article = Option(article.article)), context)
+			(triealias.toLink().copy(article = Option(article.id)), context)
 		}
 	}
 
@@ -142,7 +142,7 @@ object TextNEL extends SplitSparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val session = SparkSession.builder().getOrCreate()
-		val articles = input.head.asInstanceOf[RDD[TrieAliasArticle]]
+		val articlesPartition = input.head.asInstanceOf[RDD[TrieAliasArticle]]
 		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].collect.head.count.toLong
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val wikipediaTfidf = input(3).asInstanceOf[RDD[ArticleTfIdf]].flatMap(ArticleTfIdf.unapply)
@@ -150,7 +150,7 @@ object TextNEL extends SplitSparkJob {
 			aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
 		}
 		val tokenizer = IngestionTokenizer()
-		val articleAliases = articles.flatMap(extractTrieAliasContexts(_, tokenizer))
+		val articleAliases = articlesPartition.flatMap(extractTrieAliasContexts(_, tokenizer))
 		val aliasTfIdf = calculateTfidf(articleAliases, numDocuments, defaultIdf(numDocuments))
 		val featureEntries = compareLinksWithArticles(aliasTfIdf, sc.broadcast(aliasPageScores), wikipediaTfidf)
 		val extendedFeatureEntries = SecondOrderFeatureGenerator
