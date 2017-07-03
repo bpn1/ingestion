@@ -3,6 +3,7 @@ package de.hpi.ingestion.textmining.nel
 import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, _}
 
 // scalastyle:off line.size.limit
+// scalastyle:off method.length
 
 object TestData {
 	def reducedWikipediaArticles(): Set[TrieAliasArticle] = {
@@ -193,6 +194,7 @@ object TestData {
 		List(
 			TrieAliasArticle(
 				id = "1",
+				title = Option("1"),
 				text = Option("Dieser Artikel schreibt über Audi."),
 				triealiases = List(
 					TrieAlias("Audi", Option(29))
@@ -200,6 +202,7 @@ object TestData {
 			),
 			TrieAliasArticle(
 				id = "2",
+				title = Option("2"),
 				text = Option("Die Audi AG ist ein Tochterunternehmen der Volkswagen AG."),
 				triealiases = List(
 					TrieAlias("Audi AG", Option(4)),
@@ -208,6 +211,7 @@ object TestData {
 			),
 			TrieAliasArticle(
 				id = "3",
+				title = Option("3"),
 				text = Option("Die Volkswagen Aktiengesellschaft ist nicht sehr umweltfreundlich."),
 				triealiases = List(
 					TrieAlias("Volkswagen", Option(4))
@@ -215,6 +219,7 @@ object TestData {
 			),
 			TrieAliasArticle(
 				id = "4",
+				title = Option("4"),
 				text = Option("Dieser Satz enthält Audi. Dieser Satz enthält Audi AG. Dieser Satz enthält Volkswagen."),
 				triealiases = List(
 					TrieAlias("Audi", Option(20)),
@@ -224,6 +229,7 @@ object TestData {
 			),
 			TrieAliasArticle(
 				id = "5",
+				title = Option("5"),
 				text = Option("-buch aktuell -Der Audio Verlag DER SPIEGEL Dein"),
 				triealiases = List(
 					TrieAlias("Der Audio Verlag", Option(15))
@@ -231,6 +237,7 @@ object TestData {
 			),
 			TrieAliasArticle(
 				id = "6",
+				title = Option("6"),
 				text = None
 			)
 		)
@@ -427,4 +434,5 @@ object TestData {
 	}
 }
 
+// scalastyle:on method.length
 // scalastyle:on line.size.limit
