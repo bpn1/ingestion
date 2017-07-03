@@ -35,11 +35,15 @@
             </attribute>
             <attribute>
                 <key>geo_city</key>
+                <mapping>dbo:locationCity</mapping>
+                <mapping>property-de:sitz</mapping>
+
                 <mapping>dbo:headquarter</mapping>
                 <mapping>property-de:ort</mapping>
             </attribute>
             <attribute>
                 <key>geo_country</key>
+                <mapping>dbo:locationCountry</mapping>
                 <mapping>dbo:country</mapping>
                 <mapping>property-de:land</mapping>
             </attribute>
@@ -62,6 +66,8 @@
             </attribute>
             <attribute>
                 <key>date_founding</key>
+                <mapping>property-de:gründungsdatum</mapping>
+                <mapping>property-de:gegründet</mapping>
                 <mapping>dbo:foundingDate</mapping>
                 <mapping>dbo:foundingYear</mapping>
             </attribute>
@@ -76,6 +82,8 @@
             </attribute>
             <attribute>
                 <key>gen_urls</key>
+                <mapping>foaf:homepage</mapping>
+                <mapping>property-de:homepage</mapping>
                 <mapping>property-de:url</mapping>
                 <mapping>property-de:website</mapping>
             </attribute>
@@ -86,6 +94,10 @@
             <attribute>
                 <key>gen_description</key>
                 <mapping>dc:description</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_management</key>
+                <mapping>property-de:leitung</mapping>
             </attribute>
         </attributeMapping>
     </normalization>
