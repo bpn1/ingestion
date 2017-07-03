@@ -119,6 +119,15 @@ object RelationSentenceParser extends SparkJob {
 			.map(_.objectentity)
 			.collect
 			.toSet
+
+		val handmadeBlacklist = Set(
+			"Hörfunk",
+			"Fernsehen",
+			"Einzelhandel",
+			"Großhandel",
+			"Landwirtschaft",
+			"Industrie"
+		)
 		val blacklistBroadcast = sc.broadcast(blacklist)
 		val whiteListBroadcast = sc.broadcast(companies)
 		sentences.mapPartitions({ entryPartition =>
@@ -129,6 +138,7 @@ object RelationSentenceParser extends SparkJob {
 					.entities
 					.filter{ entity =>
 						!localBlacklist.contains(entity.entity) &&
+						!handmadeBlacklist.contains(entity.entity) &&
 							localWhitelist.contains(entity.entity)
 					}
 					.sortBy(_.offset)
