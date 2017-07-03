@@ -89,53 +89,6 @@ object RelationClassifier extends SparkJob {
 	}
 
 	/**
-	  * Parses Bag of Words for all sentences with entities that have cooccurrence of 1
-	  *
-	  * @param cooccurrences cooccurrence in sentence
-	  * @param sentences     sentences to be filtered
-	  * @return list of tuples of 0.0 as label and bag of words for each sentence
-	  */
-	def parseBagOfWordsForNoRelations(
-		cooccurrences: RDD[Cooccurrence],
-		sentences: RDD[Sentence]
-	): RDD[(Double, List[String])] = {
-		cooccurrences
-			.filter(cooc => cooc.count == 1 && cooc.entitylist.length == 2)
-			.map(cooc => (cooc.entitylist, cooc.count))
-			.join(
-				sentences
-					.map(sentence => (sentence.entities.map(_.entity), sentence.bagofwords))
-					.filter(s => s._1.length == 2)
-			).values
-			.map { case (count, bagOfWords) => (0.0, bagOfWords) }
-	}
-
-	/**
-	  * Parses Bag of Words for all sentences except the ones with the given relation.
-	  *
-	  * @param relations tagged relations
-	  * @param sentences sentences to be filtered
-	  * @param rel       relation to be checked
-	  * @return list of tuples of 0.0 as label and bag of words for each sentence
-	  */
-
-	def parseBagOfWordsWithNoKnownRelations(
-		relations: RDD[Relation],
-		sentences: RDD[Sentence],
-		rel: String
-	): RDD[(Double, Sentence)] = {
-		relations
-			.map(rel => (List(rel.subjectentity, rel.objectentity), rel.relationtype))
-			.collect {
-				case (entities, relation) if relation != rel => (entities, 0.0)
-			}
-			.join(
-				sentences
-					.map(sentence => (sentence.entities.map(_.entity), sentence))
-			).values
-	}
-
-	/**
 	  * Parses Bag of Words for all sentenes expcept the ones with the given relation.
 	  *
 	  * @param relations tagged relations
@@ -290,7 +243,7 @@ object RelationClassifier extends SparkJob {
 		val relations = input.fromAnyRDD[Relation]()(1)
 		    	.filter(relation => relation.subjectentity != relation.objectentity)
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]()(2)
-		var comment = "naive base, sentences except relation, directed, bag of words stemmed, 3 folds"
+		var comment = "naive base, sentences, undirected, bag of words stemmed, 10 folds"
 		val rels = Set(
 			Set("parentCompany", "owningCompany", "subsidiary", "division")
 //			, Set("successor", "predecessor")
@@ -301,7 +254,7 @@ object RelationClassifier extends SparkJob {
 
 			val labeledTfidf = calculateLabeledHashTFIDF(relationsWithBagOfWords, noRelationsBagOfWords)
 
-			val (data, predictions) = crossValidate(labeledTfidf, 3)
+			val (data, predictions) = crossValidate(labeledTfidf, 10)
 			(
 				RelationClassifierStats(
 					rel = "owns",
@@ -313,7 +266,7 @@ object RelationClassifier extends SparkJob {
 				),
 				predictions.collect {
 					case (sentence, (prediction, label)) if prediction == 1.0 =>
-						((sentence.entities.map(_.entity), "owns", prediction == label), List(sentence))
+						((sentence.entities.map(_.entity).toSet, "owns", prediction == label), List(sentence))
 				}
 			)
 		}.toList.unzip
@@ -323,8 +276,8 @@ object RelationClassifier extends SparkJob {
 					(entityList, (rel, dbpedia, sentences))
 				}
 		    	.join(
-					cooccurrences.map(cooc => (cooc.entitylist, cooc.count)
-					)
+					cooccurrences.map(cooc => (cooc.entitylist.toSet, cooc.count))
+						.reduceByKey(_ + _)
 				)
 		    	.map { case (entityList, ((rel, dbpedia, sentences), coocCount)) =>
 					RelationPrediction(entityList.head, rel, entityList.last, dbpedia, sentences, sentences.size,
