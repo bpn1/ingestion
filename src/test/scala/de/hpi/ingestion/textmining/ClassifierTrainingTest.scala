@@ -4,6 +4,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.deduplication.models.SimilarityMeasureStats
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.apache.spark.ml.Pipeline
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.mllib.tree.model.RandomForestModel
 import org.apache.spark.rdd.RDD
@@ -14,15 +15,15 @@ class ClassifierTrainingTest extends FlatSpec with Matchers with SharedSparkCont
 		val oldFunction = ClassifierTraining.trainingFunction
 
 		ClassifierTraining.trainingFunction = TestData.crossValidationMethod
-		val input = List(sc.parallelize(TestData.classifierFeatureEntries())).toAnyRDD()
+		val input = List(sc.parallelize(TestData.extendedClassifierFeatureEntries(10))).toAnyRDD()
 		val List(stats, model) = ClassifierTraining.run(input, sc)
-		val simStats = stats.asInstanceOf[RDD[SimilarityMeasureStats]].first.copy(id = null)
+		val simStats = stats.asInstanceOf[RDD[SimilarityMeasureStats]].first.copy(id = null, comment = None)
 		val expectedStats = TestData.simMeasureStats()
 		simStats shouldEqual expectedStats
 
-		val modelOpt = model.asInstanceOf[RDD[Option[RandomForestModel]]].first
+		val modelOpt = model.asInstanceOf[RDD[Option[Pipeline]]].first
 		modelOpt should not be empty
-		modelOpt.isInstanceOf[Option[RandomForestModel]] shouldBe true
+		modelOpt.isInstanceOf[Option[Pipeline]] shouldBe true
 
 		ClassifierTraining.trainingFunction = oldFunction
 	}
@@ -34,11 +35,12 @@ class ClassifierTrainingTest extends FlatSpec with Matchers with SharedSparkCont
 		statistics shouldEqual expectedStats
 	}
 
-	they should "be 0.0 if there are no values to calculate them" in {
+	they should "be NaN if there are no values to calculate them" in {
 		val data = sc.parallelize(TestData.badLabeledPredictions())
 		val statistics = ClassifierTraining.calculateStatistics(data, 0.5)
-		val expectedStats = TestData.badPredictionStatistics()
-		statistics shouldEqual expectedStats
+		statistics.precision.isNaN shouldBe true
+		statistics.recall.isNaN shouldBe true
+		statistics.fscore.isNaN shouldBe true
 	}
 
 	they should "be averaged" in {

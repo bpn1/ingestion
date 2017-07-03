@@ -24,7 +24,7 @@
         <articleCountTable>wikipediaarticlecount</articleCountTable>
         <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
         <tfidfTable>articletfidf</tfidfTable>
-        <classifierModel>wikipedia_randomforest_model_1494495223381</classifierModel>
+        <classifierModel>wikipedia_tuned_df_randomforest_1499086701630</classifierModel>
         <NELTable>spiegel</NELTable>
         <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
     </settings>

@@ -8,10 +8,10 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import de.hpi.ingestion.textmining.{CosineContextComparator, SecondOrderFeatureGenerator, TermFrequencyCounter}
 import org.apache.spark.SparkContext
-import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.mllib.tree.model.RandomForestModel
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import org.apache.spark.ml.PipelineModel
+import org.apache.spark.sql.SparkSession
 
 /**
   * Classifies the Trie Aliases found in Articles by the Article Trie Search and writes the positives as found entities
@@ -24,7 +24,7 @@ object TextNEL extends SplitSparkJob {
 	var aliasPageScores = Map.empty[String, List[(String, Double, Double)]]
 
 	// $COVERAGE-OFF$
-	var loadModelFunction: SparkContext => RandomForestModel = loadModel _
+	var loadModelFunction: () => PipelineModel = loadModel _
 
 	/**
 	  * Loads the Trie Alias Articles from the Cassandra.
@@ -38,7 +38,7 @@ object TextNEL extends SplitSparkJob {
 		val articleCount = sc.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
 		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
 		val articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
-		List(articles, articleCount, aliases, articleTfidf).flatMap(List(_).toAnyRDD())
+		List(articles.sample(false, 0.01), articleCount, aliases, articleTfidf).flatMap(List(_).toAnyRDD())
 	}
 
 	/**
@@ -54,18 +54,17 @@ object TextNEL extends SplitSparkJob {
 			.head
 			.saveToCassandra(
 				settings("keyspace"),
-				settings("NELTable"),
+				"spiegel_test",//settings("NELTable"),
 				SomeColumns("article", "foundentities"))
 	}
 
 	/**
-	  * Loads the random forest classifier model from the HDFS.
+	  * Loads the Dataframe based random forest classifier model from the HDFS.
 	  *
-	  * @param sc SparkContext used for loading from the HDFS
 	  * @return random forest classifier model
 	  */
-	def loadModel(sc: SparkContext): RandomForestModel = {
-		RandomForestModel.load(sc, settings("classifierModel"))
+	def loadModel(): PipelineModel = {
+		PipelineModel.load(settings("classifierModel"))
 	}
 	// $COVERAGE-ON$
 
@@ -105,23 +104,31 @@ object TextNEL extends SplitSparkJob {
 	  * Uses a Random Forest Model to classify the given Feature Entries and transforms them into Links.
 	  *
 	  * @param featureEntries RDD of Feature Entries to classify
-	  * @param model          broadcast of the Random Forest Model
+	  * @param model          Pipeline Model of the trained Random Forest Classifier
+	  * @param session        Spark Session used to access the Dataframe API
 	  * @return RDD of tuples containing the article and the entities linked in the article
 	  */
 	def classifyFeatureEntries(
 		featureEntries: RDD[FeatureEntry],
-		model: Broadcast[RandomForestModel]
+		model: PipelineModel,
+		session: SparkSession
 	): RDD[(String, List[Link])] = {
-		featureEntries.mapPartitions({ partition =>
-			val localModel = model.value
-			partition.map { featureEntry =>
-				(featureEntry, localModel.predict(featureEntry.labeledPoint().features))
-			}
-		}).collect {
-			case (featureEntry, prediction) if prediction == 1.0 =>
-				val link = Link(featureEntry.alias, featureEntry.entity, Option(featureEntry.offset))
-				(featureEntry.article, List(link))
-		}.reduceByKey(_ ++ _)
+		import session.implicits._
+		val entryDF = featureEntries.map { entry =>
+			val labeledPoint = entry.labeledPointDF()
+			(labeledPoint.features, labeledPoint.label, entry)
+		}.toDF("features", "label", "featureentry")
+
+		model.transform(entryDF).rdd
+			.map { row =>
+				val prediction = row.getDouble(row.fieldIndex("prediction"))
+				val entry = row.getAs[FeatureEntry](row.fieldIndex("featureentry"))
+				(entry, prediction)
+			}.collect {
+				case (featureEntry, prediction) if prediction == 1.0 =>
+					val link = Link(featureEntry.alias, featureEntry.entity, Option(featureEntry.offset))
+					(featureEntry.article, List(link))
+			}.reduceByKey(_ ++ _)
 			.map(_.map(identity, _.sortBy(_.offset)))
 	}
 
@@ -134,6 +141,7 @@ object TextNEL extends SplitSparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+		val session = SparkSession.builder().getOrCreate()
 		val articles = input.head.asInstanceOf[RDD[TrieAliasArticle]]
 		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].collect.head.count.toLong
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
@@ -149,7 +157,7 @@ object TextNEL extends SplitSparkJob {
 			.run(List(featureEntries).toAnyRDD(), sc)
 			.fromAnyRDD[FeatureEntry]()
 			.head
-		val foundEntities = classifyFeatureEntries(extendedFeatureEntries, sc.broadcast(loadModelFunction(sc)))
+		val foundEntities = classifyFeatureEntries(extendedFeatureEntries, loadModelFunction(), session)
 		List(foundEntities).toAnyRDD()
 	}
 }

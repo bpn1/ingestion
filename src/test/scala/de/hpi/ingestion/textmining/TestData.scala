@@ -2480,20 +2480,20 @@ object TestData {
 		)
 	}
 
-	def classifierFeatureEntries(): List[FeatureEntry] = {
+	def classifierFeatureEntries(offset: Int = 0): List[FeatureEntry] = {
 		List(
-			FeatureEntry("Audi", 0, "alias1", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
-			FeatureEntry("Audi", 0, "alias2", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
-			FeatureEntry("Audi", 0, "alias3", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
-			FeatureEntry("Audi", 0, "alias4", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
-			FeatureEntry("Audi", 0, "alias5", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
-			FeatureEntry("Audi", 0, "alias6", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
-			FeatureEntry("Audi", 0, "alias7", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
+			FeatureEntry("Audi", offset, "alias1", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
+			FeatureEntry("Audi", offset, "alias2", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
+			FeatureEntry("Audi", offset, "alias3", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry("Audi", offset, "alias4", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
+			FeatureEntry("Audi", offset, "alias5", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
+			FeatureEntry("Audi", offset, "alias6", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
+			FeatureEntry("Audi", offset, "alias7", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
 		)
 	}
 
-	def extendedClassifierFeatureEntries(n: Int): List[FeatureEntry] = {
-		(0 until n).flatMap(t => classifierFeatureEntries()).toList
+	def extendedClassifierFeatureEntries(n: Int = 5): List[FeatureEntry] = {
+		(0 until n).flatMap(classifierFeatureEntries).toList
 	}
 
 	def labeledPredictions(): List[(Double, Double)] = {
@@ -2522,10 +2522,6 @@ object TestData {
 		PrecisionRecallDataTuple(1.0, 5.0 / 7.0, 5.0 / 6.0, 25.0 / 34.0)
 	}
 
-	def badPredictionStatistics(): PrecisionRecallDataTuple = {
-		PrecisionRecallDataTuple(1.0, 0.0, 0.0, 0.0)
-	}
-
 	def statisticTuples(): List[PrecisionRecallDataTuple] = {
 		List(
 			PrecisionRecallDataTuple(1.0, 0.4, 1.0, 1.0),
@@ -2540,7 +2536,7 @@ object TestData {
 	}
 
 	def simMeasureStats(): SimilarityMeasureStats = {
-		SimilarityMeasureStats(null, List(averagedStatisticTuples()), Option("Test comment"))
+		SimilarityMeasureStats(null, List(PrecisionRecallDataTuple(1.0, 1.0, 1.0, 1.0)))
 	}
 
 	def randomForestModel(prediction: Double = 0.0): RandomForestModel = {
