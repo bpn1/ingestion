@@ -47,7 +47,7 @@ object GraphTranslator extends SparkJob {
 
 	def processGraph(graph: GraphFrame): RDD[ResultGraph] = {
 		graph.connectedComponents.run()
-			.select("id", "component")
+			.select("id", "component", "name")
 			.rdd
 			.map(row => (
 				row.getAs[Long]("component"),
@@ -56,7 +56,7 @@ object GraphTranslator extends SparkJob {
 			.groupBy(_._1)
 			.map(_._2.map(t => (t._2, t._3)).toList)
 			.filter(_.length >= minComponentSize)
-			.map(idList => ResultGraph(graphType, idList.map(_._1), idList.map(_._2)))
+			.map(idList => ResultGraph(graphType, idList.map(_._1), idList.filter(_._2 != null).map(_._2)))
 	}
 
 	/**
@@ -85,7 +85,7 @@ object GraphTranslator extends SparkJob {
 			.map(subject => (subject.id.toString, subject.name))
 			.toDF("id", "name")
 		val subjectRelations = subjects.flatMap(subject => {
-			subject.relations.flatMap { case (id, relTypes) =>
+			subject.masterRelations.flatMap { case (id, relTypes) =>
 				relTypes.map { case (relType, value) =>
 					(subject.id.toString, id.toString, relType, value)
 				}
