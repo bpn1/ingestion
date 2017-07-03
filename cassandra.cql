@@ -532,5 +532,6 @@ CREATE TABLE datalake.graphs (
     id uuid PRIMARY KEY,
     graphtype text,
     nodes list<uuid>,
+    nodenames list<text>,
     size int
 );

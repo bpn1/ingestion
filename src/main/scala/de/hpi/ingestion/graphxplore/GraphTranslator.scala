@@ -49,11 +49,14 @@ object GraphTranslator extends SparkJob {
 		graph.connectedComponents.run()
 			.select("id", "component")
 			.rdd
-			.map(row => (row.getAs[Long]("component"), UUID.fromString(row.getAs[String]("id"))))
+			.map(row => (
+				row.getAs[Long]("component"),
+				UUID.fromString(row.getAs[String]("id")),
+				row.getAs[String]("name")))
 			.groupBy(_._1)
-			.map(_._2.map(_._2).toList)
+			.map(_._2.map(t => (t._2, t._3)).toList)
 			.filter(_.length >= minComponentSize)
-			.map(idList => ResultGraph(graphType, idList))
+			.map(idList => ResultGraph(graphType, idList.map(_._1), idList.map(_._2)))
 	}
 
 	/**

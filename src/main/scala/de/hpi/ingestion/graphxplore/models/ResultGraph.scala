@@ -6,11 +6,12 @@ case class ResultGraph (
 	id: UUID,
 	graphtype: String,
 	nodes: List[UUID],
+	nodenames: List[String],
 	size: Int
 )
 
 object ResultGraph {
-	def apply(graphType: String, nodes: List[UUID]): ResultGraph = {
-		ResultGraph(UUID.randomUUID(), graphType, nodes, nodes.length)
+	def apply(graphType: String, nodes: List[UUID], nodeNames: List[String]): ResultGraph = {
+		ResultGraph(UUID.randomUUID(), graphType, nodes, nodeNames, nodes.length)
 	}
 }
