@@ -5,7 +5,7 @@ import de.hpi.ingestion.graphxplore.models.ResultGraph
 import org.apache.spark.rdd.RDD
 import org.graphframes.GraphFrame
 
-object ConnectedComponents extends GraphTranslator {
+object ConnectedComponents extends GraphExtractor {
 	appName = "ConnectedComponents"
 	val graphType = "ConnectedComponent"
 	val minComponentSize = 3

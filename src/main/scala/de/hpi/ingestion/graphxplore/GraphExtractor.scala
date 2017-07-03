@@ -10,8 +10,8 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.graphxplore.models.ResultGraph
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-trait GraphTranslator extends SparkJob {
-	appName = "GraphTranslator"
+trait GraphExtractor extends SparkJob {
+	appName = "GraphExtractor"
 	val keyspace = "datalake"
 	val tablename = "subject"
 	val outputTablename = "graphs"
