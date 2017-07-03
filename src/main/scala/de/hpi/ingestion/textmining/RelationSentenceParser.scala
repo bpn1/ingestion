@@ -120,7 +120,6 @@ object RelationSentenceParser extends SparkJob {
 					.entities
 					.filter(entity => !localBlacklist.contains(entity.entity))
 					.sortBy(_.offset)
-				println(sentence.copy(entities = filteredEntities))
 				sentence.copy(entities = filteredEntities)
 			}
 		}).filter(_.entities.length > 1)
