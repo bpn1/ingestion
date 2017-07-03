@@ -6,5 +6,7 @@ case class RelationPrediction(
 	relationtype: String,
 	objectentity: String,
 	dbpedia: Boolean,
-	count: Int
+	sentences: List[Sentence],
+	count: Int,
+	normalizedcount: Double
 )

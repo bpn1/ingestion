@@ -25,6 +25,8 @@ import scala.collection.mutable.ListBuffer
 object RelationClassifier extends SparkJob {
 	appName = "Relation Classifier"
 	configFile = "textmining.xml"
+	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.relationpredictions"
+
 
 	// $COVERAGE-OFF$
 	/**
@@ -73,17 +75,18 @@ object RelationClassifier extends SparkJob {
 	def parseBagOfWordsForRelations(
 		relations: RDD[Relation],
 		sentences: RDD[Sentence],
-		rel: String
-	): RDD[(List[String],(Double, List[String]))] = {
+		rel: Set[String]
+	): RDD[(Double, Sentence)] = {
 		relations
-			.map(rel => (List(rel.subjectentity, rel.objectentity), rel.relationtype))
+			.map(rel => (Set(rel.subjectentity, rel.objectentity), rel.relationtype))
 			.collect {
-				case (entities, relation) if relation == rel => (entities, 1.0)
+				case (entities, relation) if rel.contains(relation) => (entities, 1.0)
 			}
+	    	.distinct
 			.join(
 				sentences
-					.map(sentence => (sentence.entities.map(_.entity), sentence.bagofwords))
-			)
+					.map(sentence => (sentence.entities.map(_.entity).toSet, sentence))
+			).values
 	}
 
 	/**
@@ -121,7 +124,7 @@ object RelationClassifier extends SparkJob {
 		relations: RDD[Relation],
 		sentences: RDD[Sentence],
 		rel: String
-	): RDD[(List[String],(Double, List[String]))] = {
+	): RDD[(Double, Sentence)] = {
 		relations
 			.map(rel => (List(rel.subjectentity, rel.objectentity), rel.relationtype))
 			.collect {
@@ -129,8 +132,8 @@ object RelationClassifier extends SparkJob {
 			}
 			.join(
 				sentences
-					.map(sentence => (sentence.entities.map(_.entity), sentence.bagofwords))
-			)
+					.map(sentence => (sentence.entities.map(_.entity), sentence))
+			).values
 	}
 
 	/**
@@ -144,20 +147,21 @@ object RelationClassifier extends SparkJob {
 	def parseBagOfWordsWithNORelations(
 		relations: RDD[Relation],
 		sentences: RDD[Sentence],
-		rel: String
-	): RDD[(List[String],(Double, List[String]))] = {
+		rel: Set[String]
+	): RDD[(Double, Sentence)] = {
 		sentences.subtract(
 			relations
-				.map(rel => (List(rel.subjectentity, rel.objectentity), rel.relationtype))
-				.collect { case (entities, relation) if relation == rel => (entities, rel)
+				.map(rel => (Set(rel.subjectentity, rel.objectentity), rel.relationtype))
+				.collect { case (entities, relation) if rel.contains(relation) => (entities, 0.0)
 				}
+		    	.distinct
 				.join(
 					sentences
-						.map(sentence => (sentence.entities.map(_.entity), sentence))
+						.map(sentence => (sentence.entities.map(_.entity).toSet, sentence))
 				)
 				.map { case (key, (relation, sentence)) => sentence}
 			)
-			.map(sentence => (sentence.entities.map(_.entity), (0.0, sentence.bagofwords)))
+			.map(sentence => (0.0, sentence))
 	}
 
 //	/**
@@ -188,9 +192,9 @@ object RelationClassifier extends SparkJob {
 	  * @return list of average statistics for model
 	  */
 	def crossValidate(
-		data: RDD[(List[String], LabeledPoint)],
+		data: RDD[(Sentence, LabeledPoint)],
 		numFolds: Int
-	): (List[PrecisionRecallDataTuple], List[(List[String], (Double, Double))]) = {
+	): (List[PrecisionRecallDataTuple], List[(Sentence, (Double, Double))]) = {
 		val weights = (0 until numFolds).map(t => 1.0 / numFolds).toArray
 		val folds = data.randomSplit(weights)
 		val segments = folds.indices.map { index =>
@@ -203,9 +207,9 @@ object RelationClassifier extends SparkJob {
 				val training = trainingList.reduce(_.union(_))
 				val model = trainNaiveBayes(training.map(_._2))
 //				val model = trainRandomForest(training.map(_._2))
-				val entitiesPredictionAndLabels = test.map { case (entities, LabeledPoint(label, features)) =>
+				val entitiesPredictionAndLabels = test.map { case (sentence, LabeledPoint(label, features)) =>
 					val prediction = model.predict(features)
-					(entities, (prediction, label))
+					(sentence, (prediction, label))
 				}
 				(calculateStatistics(entitiesPredictionAndLabels.map(_._2)), entitiesPredictionAndLabels.collect.toList)
 			}
@@ -253,22 +257,22 @@ object RelationClassifier extends SparkJob {
 	}
 
 	def calculateLabeledHashTFIDF(
-		relationsWithBagOfWords: RDD[(List[String],(Double, List[String]))],
-		noRelationsBagOfWords: RDD[(List[String],(Double, List[String]))]
-	): RDD[(List[String], LabeledPoint)] = {
+		relationsWithBagOfWords: RDD[(Double, Sentence)],
+		noRelationsBagOfWords: RDD[(Double, Sentence)]
+	): RDD[(Sentence, LabeledPoint)] = {
 		val hashingTF = new HashingTF(100000)
-		val tf = (relationsWithBagOfWords ++ noRelationsBagOfWords).map { case (entities, (label, words)) =>
-			val tf = hashingTF.transform(words)
-			(entities, (label, tf))
+		val tf = (relationsWithBagOfWords ++ noRelationsBagOfWords).map { case (label, sentence) =>
+			val tf = hashingTF.transform(sentence.bagofwords)
+			(sentence, (label, tf))
 		}
 
 		// While applying HashingTF only needs a single pass to the data, applying IDF needs two passes:
 		// First to compute the IDF vector and second to scale the term frequencies by IDF.
 		tf.cache()
 		val idf = new IDF().fit(tf.map(_._2._2))
-		tf.map { case (entities, (label, tf)) =>
+		tf.map { case (sentence, (label, tf)) =>
 			val tfidf = idf.transform(tf)
-			(entities, LabeledPoint(label, tfidf))
+			(sentence, LabeledPoint(label, tfidf))
 		}
 	}
 
@@ -282,31 +286,25 @@ object RelationClassifier extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val sentences = input.fromAnyRDD[Sentence]()(0)
-		    	.filter(sentence => sentence.entities.toSet.size > 1 && sentence.entities.size == 2)
+		    	.filter(sentence => sentence.entities.map(_.entity).toSet.size > 1 && sentence.entities.size == 2)
 		val relations = input.fromAnyRDD[Relation]()(1)
 		    	.filter(relation => relation.subjectentity != relation.objectentity)
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]()(2)
 		var comment = "naive base, sentences except relation, directed, bag of words stemmed, 3 folds"
 		val rels = Set(
-			"parentCompany",
-			"owningCompany",
-			"successor",
-			"predecessor",
-			"subsidiary",
-			"childOrganisation",
-			"division"
+			Set("parentCompany", "owningCompany", "subsidiary", "division")
+//			, Set("successor", "predecessor")
 		)
 		val (stats, preds) = rels.map { rel =>
 			val relationsWithBagOfWords = parseBagOfWordsForRelations(relations, sentences, rel)
-//			val noRelationsBagOfWords = parseBagOfWordsWithNoKnownRelations(relations, sentences, rel)
-//			val noRelationsBagOfWords = parseBagOfWordsForNoRelations(cooccurrences, sentences)
 			val noRelationsBagOfWords = parseBagOfWordsWithNORelations(relations, sentences, rel)
 
 			val labeledTfidf = calculateLabeledHashTFIDF(relationsWithBagOfWords, noRelationsBagOfWords)
+
 			val (data, predictions) = crossValidate(labeledTfidf, 3)
 			(
 				RelationClassifierStats(
-					rel = rel,
+					rel = "owns",
 					sentenceswithrelation = relationsWithBagOfWords.count.toInt,
 					sentenceswithnorelation = noRelationsBagOfWords.count.toInt,
 					average = averageStatistics(data),
@@ -314,14 +312,22 @@ object RelationClassifier extends SparkJob {
 					comment = Option(comment)
 				),
 				predictions.collect {
-					case (entities, (prediction, label)) if prediction == 1.0 =>
-						((entities.head, rel, entities.last, prediction == label), 1)
+					case (sentence, (prediction, label)) if prediction == 1.0 =>
+						((sentence.entities.map(_.entity), "owns", prediction == label), List(sentence))
 				}
 			)
 		}.toList.unzip
 		val relationPredictions = sc.parallelize(preds.flatten)
-		    	.reduceByKey(_ + _)
-		    	.map(pred => RelationPrediction(pred._1._1, pred._1._2, pred._1._3, pred._1._4, pred._2))
+		    	.reduceByKey(_ ++ _)
+		    	.map { case ((entityList, rel, dbpedia), sentences) =>
+					(entityList, (rel, dbpedia, sentences))
+				}
+		    	.join(cooccurrences.map(cooc => (cooc.entitylist, cooc.count)))
+		    	.map { case (entityList, ((rel, dbpedia, sentences), coocCount)) =>
+					RelationPrediction(entityList.head, rel, entityList.last, dbpedia, sentences, sentences.size,
+						sentences.size / coocCount.toDouble
+					)
+				}
 		List(sc.parallelize(stats)).toAnyRDD() ++ List(relationPredictions).toAnyRDD()
 	}
 }

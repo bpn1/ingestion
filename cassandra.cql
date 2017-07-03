@@ -165,8 +165,19 @@ CREATE TABLE wikidumps.relationpredictions (
 	relationtype text,
 	objectentity text,
 	dbpedia boolean,
+	sentences frozen<list<sentence>>,
 	count int,
+	normalizedcount double,
 	PRIMARY KEY (subjectentity, relationtype, objectentity)
+);
+
+CREATE TYPE wikidumps.sentence (
+   articletitle text,
+   articleoffset int,
+   text text,
+   entities frozen<list<frozen<entitylink>>>,
+   bagofwords frozen<list<text>>,
+   PRIMARY KEY (articletitle, articleoffset)
 );
 
 -- Wikidumps.Wikidata
