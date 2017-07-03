@@ -1,6 +1,5 @@
 package de.hpi.ingestion.graphxplore
 
-import java.util.UUID
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -11,13 +10,11 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.graphxplore.models.ResultGraph
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-object GraphTranslator extends SparkJob {
+trait GraphTranslator extends SparkJob {
 	appName = "GraphTranslator"
 	val keyspace = "datalake"
 	val tablename = "subject"
 	val outputTablename = "graphs"
-	val graphType = "ConnectedComponent"
-	val minComponentSize = 3
 
 	// $COVERAGE-OFF$
 	/**
@@ -45,28 +42,13 @@ object GraphTranslator extends SparkJob {
 	}
 	// $COVERAGE-ON$
 
-	def processGraph(graph: GraphFrame): RDD[ResultGraph] = {
-		graph.connectedComponents.run()
-			.select("id", "component", "name")
-			.rdd
-			.map(row => (
-				row.getAs[Long]("component"),
-				UUID.fromString(row.getAs[String]("id")),
-				row.getAs[String]("name")))
-			.groupBy(_._1)
-			.map(_._2.map(t => (t._2, t._3)).toList)
-			.filter(_.length >= minComponentSize)
-			.map(idList => ResultGraph(graphType, idList.map(_._1), idList.filter(_._2 != null).map(_._2)))
-	}
-
 	/**
-	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
-	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
+	  * Constructs a GraphFrame from the given subjects
+	  * @param subjects Input data containing relations
+	  * @param sc Spark context reference that is used to create a SparkSession
+	  * @return GraphFrame containing all the subjects as nodes and the master relations as edges
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
+	def extractGraph(subjects: RDD[Subject], sc: SparkContext): GraphFrame = {
 		val spark = SparkSession
 			.builder()
 			.appName(appName)
@@ -74,13 +56,6 @@ object GraphTranslator extends SparkJob {
 			.getOrCreate()
 		import spark.implicits._
 
-		// TODO find out correct HDFS path (something like hdfs://localhost:PORT/graph_translator)
-		sc.setCheckpointDir("graph_translator")
-
-		val subjects = input
-			.fromAnyRDD[Subject]()
-			.head
-			.filter(_.datasource == "master")
 		val subjectVertices = subjects
 			.map(subject => (subject.id.toString, subject.name))
 			.toDF("id", "name")
@@ -92,7 +67,32 @@ object GraphTranslator extends SparkJob {
 			}
 		}).toDF("src", "dst", "relationship", "value")
 
-		val graph = GraphFrame(subjectVertices, subjectRelations)
+		GraphFrame(subjectVertices, subjectRelations)
+	}
+
+	/**
+	  * Works on the translated graph using the GraphFrames API
+	  * @param graph GraphFrame that is processed
+	  * @return RDD of ResultGraph objects that represent extracted subgraphs
+	  */
+	def processGraph(graph: GraphFrame): RDD[ResultGraph]
+
+	/**
+	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
+	  * @param input List of RDDs containing the input data
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @param args arguments of the program
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
+		// this path is local (on executors), not in the HDFS
+		sc.setCheckpointDir(appName + "Checkpoints")
+
+		val subjects = input
+			.fromAnyRDD[Subject]().head
+			.filter(_.datasource == "master")
+
+		val graph = extractGraph(subjects, sc)
 		val output = processGraph(graph)
 		List(output).toAnyRDD()
 	}
