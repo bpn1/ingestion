@@ -74,7 +74,7 @@ object TermFrequencyCounter extends SparkJob {
 	  * @return list of tuples containing the link and its context
 	  */
 	def extractLinkContexts(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): ParsedWikipediaEntry = {
-		val tokens = tokenizer.onlyTokenizeWithOffst(entry.getText())
+		val tokens = tokenizer.onlyTokenizeWithOffset(entry.getText())
 		val contextLinks = (entry.textlinksreduced ++ entry.extendedlinks()).map { link =>
 			val context = extractContext(tokens, link, tokenizer).getCounts()
 			link.copy(context = context)
@@ -91,7 +91,7 @@ object TermFrequencyCounter extends SparkJob {
 	  */
 	def extractContext(tokens: List[OffsetToken], link: Link, tokenizer: IngestionTokenizer): Bag[String, Int] = {
 		val contextSize = settings("contextSize").toInt
-		val aliasTokens = tokenizer.onlyTokenizeWithOffst(link.alias)
+		val aliasTokens = tokenizer.onlyTokenizeWithOffset(link.alias)
 		tokens.find(token => link.offset.contains(token.beginOffset)).map { firstAliasToken =>
 			val aliasIndex = tokens.indexOf(firstAliasToken)
 			val aliasTokenLength = aliasTokens.length
