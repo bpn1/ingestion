@@ -61,9 +61,9 @@ object MasterConnecting extends SparkJob {
 			.flatMap(extractRelations)
 			.reduceByKey(_ ::: _)
 			.join(slaves)
-	    	.flatMap(Function.tupled(groupByMaster _))
+			.flatMap(Function.tupled(groupByMaster _))
 			.reduceByKey(_ ::: _)
-	    	.map { case (master, list) =>
+			.map { case (master, list) =>
 				val masterManager = new SubjectManager(master, version)
 				val (relations, ids) = list.unzip
 
