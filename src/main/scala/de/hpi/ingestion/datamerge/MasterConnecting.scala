@@ -58,9 +58,9 @@ object MasterConnecting extends SparkJob {
 
 
 		val updatedMasters = masters
-	    	.flatMap(extractRelations)
+			.flatMap(extractRelations)
 			.reduceByKey(_ ::: _)
-	    	.join(slaves)
+			.join(slaves)
 	    	.flatMap(Function.tupled(groupByMaster _))
 			.reduceByKey(_ ::: _)
 	    	.map { case (master, list) =>
