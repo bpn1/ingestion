@@ -31,6 +31,7 @@ class DBpediaDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 			DBpediaDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		}
 		val expectedSubjects = TestData.translatedSubjects
+		translatedSubjects should not be empty
 		(translatedSubjects, expectedSubjects).zipped.foreach { case (subject, expected) =>
 			subject.name shouldEqual expected.name
 			subject.category shouldEqual expected.category

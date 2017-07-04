@@ -8,9 +8,13 @@ import com.datastax.driver.core.utils.UUIDs
   * @param id unique UUID used as primary key
   * @param data Array containing (threshold, precision, recall, f1Score) tuple
   * @param comment String containing a comment or description of the data
+  * @param xaxis String containing the label of the x-axis
+  * @param yaxis String containing the label of the y-axis
   */
 case class SimilarityMeasureStats(
 	id: UUID = UUIDs.timeBased(),
 	data: List[PrecisionRecallDataTuple] = Nil,
-	comment: Option[String] = None
+	comment: Option[String] = None,
+	xaxis: Option[String] = None,
+	yaxis: Option[String] = None
 )

@@ -157,8 +157,8 @@ object RelationClassifier extends SparkJob {
 		segments
 			.map { case (test, trainingList) =>
 				val training = trainingList.reduce(_.union(_))
-				val model = trainNaiveBayes(training.map(_._2))
-//				val model = trainRandomForest(training.map(_._2))
+//				val model = trainNaiveBayes(training.map(_._2))
+				val model = trainRandomForest(training.map(_._2))
 //				val model = SVMWithSGD.train(training.map(_._2), 100)
 				val entitiesPredictionAndLabels = test.map { case (sentence, LabeledPoint(label, features)) =>
 					val prediction = model.predict(features)
@@ -243,7 +243,9 @@ object RelationClassifier extends SparkJob {
 		val relations = input.fromAnyRDD[Relation]()(1)
 		    	.filter(relation => relation.subjectentity != relation.objectentity)
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]()(2)
-		var comment = "naive base, sentences, undirected, bag of words stemmed, 10 folds"
+			.map(cooc => (cooc.entitylist.toSet, cooc.count))
+			.reduceByKey(_ + _)
+		var comment = "random forest, sentences, undirected, bag of words stemmed, 10 folds"
 		val rels = Set(
 			Set("parentCompany", "owningCompany", "subsidiary", "division")
 //			, Set("successor", "predecessor")
@@ -276,8 +278,7 @@ object RelationClassifier extends SparkJob {
 					(entityList, (rel, dbpedia, sentences))
 				}
 		    	.join(
-					cooccurrences.map(cooc => (cooc.entitylist.toSet, cooc.count))
-						.reduceByKey(_ + _)
+					cooccurrences
 				)
 		    	.map { case (entityList, ((rel, dbpedia, sentences), coocCount)) =>
 					RelationPrediction(entityList.head, rel, entityList.last, dbpedia, sentences, sentences.size,

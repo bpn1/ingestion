@@ -1,15 +1,14 @@
 package de.hpi.ingestion.datamerge
 
 import java.util.UUID
-import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.deduplication.models.DuplicateCandidates
+import de.hpi.ingestion.deduplication.models.Duplicates
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.implicits.TupleImplicits._
 
 /**
   * Merging-Job for merging duplicates into the subject table
@@ -29,7 +28,7 @@ object Merging extends SparkJob {
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
 		val stagings = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
-		val duplicates = sc.cassandraTable[DuplicateCandidates](
+		val duplicates = sc.cassandraTable[Duplicates](
 			settings("keyspaceDuplicatesTable"),
 			settings("duplicatesTable"))
 		List(subjects, stagings).toAnyRDD() ::: List(duplicates).toAnyRDD()
@@ -50,142 +49,164 @@ object Merging extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Sets the master node for the staged subject and adds symmetrical duplicate relation between the Subject and the
-	  * staged Subject if the Subject is not a master node.
-	  * @param subject existing Subject
-	  * @param staged duplicate Subject
-	  * @param duplicateCandidates Duplicate Candidates object containing the Subject and the staged Subject
+	  * Adds the duplicates relation and a master node for a duplicate pair
+	  * @param subject subject of the duplicate pair
+	  * @param staging staging of the duplicate pair
+	  * @param score Duplicates object containing the Subject and the staged Subject
 	  * @param version Version used for versioning
-	  * @return List of the Subject and the staged Subject
+	  * @return List of the subject, staging and master Subject
 	  */
 	def addToMasterNode(
 		subject: Subject,
-		staged: Subject,
-		duplicateCandidates: Option[DuplicateCandidates],
+		staging: Subject,
+		score: Double,
 		version: Version
-	): List[Subject] = {
-		val score = duplicateCandidates
-			.flatMap(_.candidates.find(_._1 == staged.id))
-			.map(_._3)
-			.getOrElse(1.0)
-		val stagedSm = new SubjectManager(staged, version)
-		val subjectSm = new SubjectManager(subject, version)
-		subject.master match {
-			case Some(masterId) =>
-				duplicateCandidates.foreach { dupCandidate =>
-					dupCandidate.candidates.foreach { case (duplicate, source, dupeScore) =>
-						subjectSm.addRelations(Map(duplicate -> Map("duplicate" -> dupeScore.toString)))
-					}
-				}
-				stagedSm.addRelations(Map(subject.id -> Map("duplicate" -> score.toString)))
-				stagedSm.setMaster(masterId, score)
-			case None => stagedSm.setMaster(subject.id, score)
-		}
-		List(subject, staged)
+	): List[(Subject, Map[UUID, Map[String, String]])] = {
+		val stagingManager = new SubjectManager(staging, version)
+		stagingManager.setMaster(subject.master, score)
+
+		List(
+			(subject, Map(staging.id -> SubjectManager.isDuplicateRelation(score))),
+			(staging, Map(subject.id -> SubjectManager.isDuplicateRelation(score)))
+		)
+	}
+
+	/**
+	  * Adds the a master node for a staging Subject
+	  * @param staging staging of the duplicate pair
+	  * @param version Version used for versioning
+	  * @return List of the subject, staging and master Subject
+	  */
+	def addToMasterNode(staging: Subject, version: Version): List[(Subject, Map[UUID, Map[String, String]])] = {
+		val master = Subject.master()
+		val stagingManager = new SubjectManager(staging, version)
+		stagingManager.setMaster(master.master)
+
+		List(
+			(master, Map[UUID, Map[String, String]]()),
+			(staging, Map[UUID, Map[String, String]]())
+		)
 	}
 
 	/**
 	  * Merges the properties of the duplicates and uses the non empty properties of the best data source defined by
 	  * {@sourcePriority}.
-	  * @param duplicates List of duplicate Subjects
+	  * @param slaves List of slave Subjects
 	  * @return Map containing the properties and the values
 	  */
-	def mergeProperties(duplicates: List[Subject]): Map[String, List[String]] = {
-		Subject.normalizedPropertyKeys.flatMap { prop =>
-			val propValues = sourcePriority.map { dataSource =>
-				duplicates.flatMap { duplicate =>
-					duplicate.properties_history
-						.get(prop)
-						.map(_.last)
-				}.filter(_.datasources.contains(dataSource))
-				.map(_.value)
-				.fold(List.empty[String])(_ ++ _)
-				.distinct
-			}.find(_.nonEmpty)
-			propValues.map((prop, _))
-		}.filter(_._2.nonEmpty)
-		.toMap
+	def mergeProperties(slaves: List[Subject]): Map[String, List[String]] = {
+		Subject
+			.normalizedPropertyKeys
+			.map(property => property -> getPrioritizedSingle(property, slaves))
+			.filter(_._2.nonEmpty)
+			.toMap
 	}
 
 	/**
 	  * Creates master slave relations to every duplicate using the score of the duplicates slave master relation.
-	  * @param duplicates List of duplicate Subjects to which the relations will point
+	  * @param slaves List of slave Subjects to which the relations will point
 	  * @return Map of every duplicates UUID to the relation properties containing the score
 	  */
-	def masterRelations(duplicates: List[Subject]): Map[UUID, Map[String, String]] = {
-		duplicates.flatMap { duplicate =>
-			duplicate.masterScore()
-				.map(SubjectManager.masterRelation)
-				.map((duplicate.id, _))
-		}.toMap
+	def masterRelations(slaves: List[Subject]): Map[UUID, Map[String, String]] = {
+		slaves
+			.map(subject => subject.id -> SubjectManager.masterRelation(subject.masterScore.get))
+			.toMap
 	}
 
 	/**
 	  * Merges the relations of the duplicates and uses the non empty relation property of the best data source defined
 	  * by {@sourcePriority}.
-	  * @param master master node of the duplicates
-	  * @param duplicates List of duplicate Subject
+	  * @param slaves List of slave Subject
 	  * @return Map containing the relations and their properties
 	  */
-	def mergeRelations(master: Subject, duplicates: List[Subject]): Map[UUID, Map[String, String]] = {
-		val rel = duplicates
-			.flatMap(_.relations.keySet)
-			.filter(_ != master.id)
-			.map { relationSub =>
-				val relation = sourcePriority.map { dataSource =>
-					duplicates.flatMap { duplicate =>
-						duplicate.relations_history
-							.getOrElse(relationSub, Map())
-							.filter(_._2.lastOption.exists(_.datasources.contains(dataSource)))
-							.mapValues(_.last.value.headOption)
-							.collect { case (prop, Some(value)) => (prop, value) }
-					}.toMap
-				}.fold(Map()) { (cumulativeMap, dataSourceMap) =>
-					cumulativeMap ++ (dataSourceMap -- cumulativeMap.keySet)
-				}
-				(relationSub, relation)
-			}.toMap
-		rel
+	def mergeRelations(slaves: List[Subject]): Map[UUID, Map[String, String]] = {
+		sourcePriority
+			.reverse
+			.flatMap { datasource =>
+				slaves
+					.filter(_.datasource == datasource)
+					.map(_.masterRelations)
+			}.foldLeft(Map[UUID, Map[String, String]]()) { (accum, relations) =>
+				(accum.keySet ++ relations.keySet)
+					.map(key => key -> (accum.getOrElse(key, Map()) ++ relations.getOrElse(key, Map())))
+					.toMap
+			}.filter(_._2.nonEmpty)
 	}
 
 	/**
-	  * Merges name, aliases and category of every duplicate and writes them to the master node.
-	  * @param masterSM Subject Manager of the master node
-	  * @param duplicates List of duplicate Subjects
+	  * Retrieves Attributes regarding the source priorities
+	  * @param key name of the attribute
+	  * @param slaves subjects from which the attribute should be retrieved from
+	  * @return values of the attribute
 	  */
-	def mergeSimpleAttributes(masterSM: SubjectManager, duplicates: List[Subject]): Unit = {
-		val names = sourcePriority.flatMap { dataSource =>
-			duplicates
-				.filter(_.name_history.lastOption.exists(_.datasources.contains(dataSource)))
-				.flatMap(_.name)
+	def getPrioritized(key: String, slaves: List[Subject]): List[String] = {
+		sourcePriority.flatMap { datasource =>
+			slaves
+				.filter(_.datasource == datasource)
+				.flatMap(_.get(key))
 		}.distinct
-		val aliases = names.drop(1) ++ duplicates.flatMap(_.aliases)
-		val category = sourcePriority.flatMap { dataSource =>
-			duplicates
-				.filter(_.category_history.lastOption.exists(_.datasources.contains(dataSource)))
-				.flatMap(_.category)
-		}.headOption
-		masterSM.setName(names.headOption)
-		masterSM.setAliases(aliases)
-		masterSM.setCategory(category)
+	}
+
+	/**
+	  * Retrieve Attributes regarding the source priorities taking the first non empty candidate
+	  * @param key name of the attribute
+	  * @param slaves subjects from which the attribute should be retrieved from
+	  * @return values of the attribute
+	  */
+	def getPrioritizedSingle(key: String, slaves: List[Subject]): List[String] = {
+		sourcePriority.map { datasource =>
+			slaves
+				.filter(_.datasource == datasource)
+				.flatMap(_.get(key))
+		}.find(_.nonEmpty)
+		.getOrElse(Nil)
+	}
+
+	/**
+	  * Merges name, aliases, category and properties of every duplicate and writes them to the master node.
+	  * @param masterManager Subject Manager of the master node
+	  * @param slaves List of slaves
+	  */
+	def mergeAttributes(masterManager: SubjectManager, slaves: List[Subject]): Unit = {
+		val names = getPrioritized("name", slaves)
+		val aliases = names.drop(1) ::: getPrioritized("aliases", slaves)
+		val category = getPrioritizedSingle("category", slaves)
+		val properties = mergeProperties(slaves)
+
+		masterManager.setName(names.headOption)
+		masterManager.setAliases(aliases)
+		masterManager.setCategory(category.headOption)
+
+		masterManager.clearProperties()
+		masterManager.addProperties(properties)
+	}
+
+	/**
+	  * Merges relations of every duplicate and writes them to the master node.
+	  * @param masterManager Subject Manager of the master node
+	  * @param slaves List of slaves
+	  */
+	def mergeRelations(masterManager: SubjectManager, slaves: List[Subject]): Unit = {
+		val masterRelations = this.masterRelations(slaves)
+		val mergedRelations = this.mergeRelations(slaves)
+
+		masterManager.clearRelations()
+		masterManager.addRelations(masterRelations)
+		masterManager.addRelations(mergedRelations)
 	}
 
 	/**
 	  * Creates the data of the master node by merging the data of the duplicates.
 	  * @param master master node
-	  * @param duplicates List of duplicate Subjects used to generate the data
+	  * @param slaves List of slave Subjects used to generate the data
 	  * @param version Version used for versioning
 	  * @return List of duplicate Subjects and master node containing the merged data
 	  */
-	def mergeIntoMaster(master: Subject, duplicates: List[Subject], version: Version): List[Subject] = {
-		val masterSM = new SubjectManager(master, version)
-		mergeSimpleAttributes(masterSM, duplicates)
-		masterSM.clearRelations()
-		masterSM.addRelations(masterRelations(duplicates))
-		masterSM.addRelations(mergeRelations(master, duplicates))
-		masterSM.clearProperties()
-		masterSM.addProperties(mergeProperties(duplicates))
-		master +: duplicates
+	def mergeIntoMaster(master: Subject, slaves: List[Subject], version: Version): List[Subject] = {
+		val masterManager = new SubjectManager(master, version)
+		mergeAttributes(masterManager, slaves)
+		mergeRelations(masterManager, slaves)
+		master :: slaves
 	}
 
 	/**
@@ -197,34 +218,48 @@ object Merging extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(subjects, stagings) = input.take(2).fromAnyRDD[Subject]()
-		val duplicateCandidates = input(2).asInstanceOf[RDD[DuplicateCandidates]]
-		val version = Version("Merging", List("merging"), sc, true)
+		val duplicates = input(2).asInstanceOf[RDD[Duplicates]]
+		val version = Version("Merging", List("merging"), sc, true, settings.get("subjectTable"))
 
 		// TODO merge multiple duplicate candidates with the same subject #430
-		val mergedSubjects = duplicateCandidates
-			.map(candidate => (candidate.subject_id, candidate))
-			.join(subjects.map(sub => Tuple2(sub.id, sub)))
+
+		val subjectIdTuple = subjects.map(subject => (subject.id, subject))
+		val subjectMasterTuple = subjects.map(subject => (subject.master, subject))
+		val stagingTuple = stagings.map(staging => (staging.id, staging))
+
+		val subjectJoinedDuplicates : RDD[(Duplicates, Subject)] = duplicates
+			.keyBy(_.subject_id)
+			.join(subjectIdTuple)
 			.values
-			.flatMap { case (candidate, sub) =>
-				candidate.candidates.map(tuple => (tuple._1, (candidate, sub)))
-			}.rightOuterJoin(stagings.map(sub => Tuple2(sub.id, sub)))
+
+		val stagingJoinedDuplicates : RDD[(Option[(Double, Subject)], Subject)] = subjectJoinedDuplicates
+			.flatMap { case (duplicate, subject) =>
+				duplicate.candidates.map(candidate => (candidate.id, Tuple2(candidate.score, subject)))
+			}.rightOuterJoin(stagingTuple)
 			.values
-			.flatMap { case (candidateTupleOption, staged) =>
-				val (candidateOpt, subjectOpt) = candidateTupleOption.unzip.map(_.headOption, _.headOption)
-				addToMasterNode(subjectOpt.getOrElse(Subject()), staged, candidateOpt, version)
-			}.distinct
-			.map(sub => (sub.master.getOrElse(sub.id), sub))
-			.cogroup(subjects.map(sub => Tuple2(sub.master.getOrElse(sub.id), sub)))
-			.map { case (masterId, (duplicates, existingMasterAndDuplicates)) =>
-				val master = existingMasterAndDuplicates
-					.find(_.id == masterId)
-					.orElse(duplicates.find(_.id == masterId))
-					.get
-				val mergedDuplicates = (duplicates ++ existingMasterAndDuplicates)
-					.filter(_.id != masterId)
-					.toList
-				(master, mergedDuplicates)
-			}.flatMap { case (master, dupes) => mergeIntoMaster(master, dupes, version)}
+
+		val taggedSubjects : RDD[Subject] = stagingJoinedDuplicates
+			.flatMap {
+				case (Some((score, subject)), staging) => addToMasterNode(subject, staging, score, version)
+				case (None, staging) => addToMasterNode(staging, version)
+			}.reduceByKey(_ ++ _)
+	    	.map {
+				case (subject, relations) if relations.nonEmpty =>
+					val subjectManager = new SubjectManager(subject, version)
+					subjectManager.addRelations(relations)
+					subject
+				case (subject, _) => subject
+			}
+
+		val mergedSubjects = taggedSubjects
+			.map(subject => (subject.master, subject))
+			.cogroup(subjectMasterTuple)
+			.map { case (id, (newDuplicates, oldDuplicates)) =>
+				val duplicates = (newDuplicates ++ oldDuplicates).toList.distinct
+				val (master, slaves) = duplicates.partition(_.id == id)
+				(master.head, slaves)
+			}.flatMap { case (master, slaves) => mergeIntoMaster(master, slaves, version) }
+
 		List(mergedSubjects).toAnyRDD()
 	}
 }

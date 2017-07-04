@@ -68,6 +68,13 @@ class ConfigurableTest extends FlatSpec with Matchers {
 		config shouldEqual expectedConfig
 	}
 
+	it should "equally filled with weights if none is given" in {
+		val configurable = new MockConfigurable
+		val config = configurable.parseSimilarityMeasures(TestData.configsWithoutWeightsXML)
+		val expectedConfig = TestData.parsedScoreConfigWithoutWeights
+		config shouldEqual expectedConfig
+	}
+
 	"Normalization settings" should "be parsed" in {
 		val configurable = new MockConfigurable
 		val config = configurable.parseNormalizationConfig(TestData.importConfigXML)

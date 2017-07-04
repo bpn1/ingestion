@@ -10,7 +10,7 @@ class FindRelationsTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Subject relations" should "be found" in {
 		val nameMap = TestData.resolvedNameMap()
 		val subjects = TestData.unresolvedSubjects()
-			.map(FindRelations.findRelations(_, nameMap, Version("FindRelationsTest", Nil, sc, false)))
+			.map(FindRelations.findRelations(_, nameMap, Version("FindRelationsTest", Nil, sc, false, None)))
 			.map(subject => (subject.id, subject.name, subject.properties, subject.relations))
 		val expectedSubjects = TestData.resolvedSubjects()
 			.map(subject => (subject.id, subject.name, subject.properties, subject.relations))

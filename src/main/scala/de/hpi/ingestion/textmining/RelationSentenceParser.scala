@@ -19,7 +19,7 @@ object RelationSentenceParser extends SparkJob {
 
 	// $COVERAGE-OFF$
 	/**
-	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * Loads Parsed Wikipedia entries and DBpedia Relations from the Cassandra.
 	  *
 	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
@@ -27,7 +27,8 @@ object RelationSentenceParser extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(articles).toAnyRDD()
+		val relations = sc.cassandraTable[Relation](settings("keyspace"), settings("DBpediaRelationTable"))
+		List(articles).toAnyRDD() ++ List(relations).toAnyRDD()
 	}
 
 	/**
@@ -44,6 +45,7 @@ object RelationSentenceParser extends SparkJob {
 			.saveToCassandra(settings("keyspace"), settings("sentenceTable"))
 
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -69,6 +71,7 @@ object RelationSentenceParser extends SparkJob {
 				link.offset.exists(_ >= offset) && link.offset.exists(_ + link.alias.length <= offset + sentence.length)
 			}
 				.map(link => EntityLink(link.alias, link.page, link.offset.map(_ - offset)))
+				.sortBy(_.offset)
 			offset += sentence.length
 			var sentenceOffset = 0
 			var bagOfWords = List.empty[String]
@@ -86,6 +89,44 @@ object RelationSentenceParser extends SparkJob {
 	}
 
 	/**
+	  * Filters Entities of Sentences from countries or cities (non companies)
+	  * and removes the sentences with less than 1 entity afterwards
+	  *
+	  * @param sentences sentences to be filtered
+	  * @param relations relations to be filtered by
+	  * @param sc        Sparkcontext needed for broadcasting
+	  * @return filtered List
+	  */
+	def filterSentences(sentences: RDD[Sentence], relations: RDD[Relation], sc: SparkContext): RDD[Sentence] = {
+		val relationtypes = Set(
+			"country",
+			"capital",
+			"location",
+			"city",
+			"birthPlace",
+			"district",
+			"federalState",
+			"state"
+		)
+
+		val blacklist = relations.filter(relation => relationtypes.contains(relation.relationtype))
+			.map(_.objectentity)
+			.collect
+			.toSet
+		val blacklistBroadcast = sc.broadcast(blacklist)
+		sentences.mapPartitions({ entryPartition =>
+			val localBlacklist = blacklistBroadcast.value
+			entryPartition.map { sentence =>
+				val filteredEntities = sentence
+					.entities
+					.filter(entity => !localBlacklist.contains(entity.entity))
+					.sortBy(_.offset)
+				sentence.copy(entities = filteredEntities)
+			}
+		}).filter(_.entities.length > 1)
+	}
+
+	/**
 	  * Parses all Sentences with at least 2 entities from every Wikipedia article and puts them into an RDD.
 	  *
 	  * @param input List of RDDs containing the input data
@@ -95,9 +136,13 @@ object RelationSentenceParser extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
+		val relations = input.fromAnyRDD[Relation]().last
+
 		val sentenceTokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
 		val tokenizer = IngestionTokenizer(Array("CleanWhitespaceTokenizer", "false", "false"))
-		val sentences = articles.flatMap(entry => entryToSentencesWithEntities(entry, sentenceTokenizer, tokenizer))
-		List(sentences).toAnyRDD()
+		val sentences = articles.flatMap(entryToSentencesWithEntities(_, sentenceTokenizer, tokenizer))
+
+		val filteredSentences = filterSentences(sentences, relations, sc)
+		List(filteredSentences).toAnyRDD()
 	}
 }

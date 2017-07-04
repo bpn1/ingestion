@@ -9,7 +9,8 @@ CREATE TYPE wikidumps.link (
     alias text,
     page text,
     offset int,
-    context map<text, int>
+    context map<text, int>,
+    article text
 );
 
 CREATE TYPE wikidumps.entitylink (
@@ -127,13 +128,20 @@ CREATE TYPE wikidumps.precisionrecalldatatuple (
 CREATE TABLE wikidumps.sim_measure_stats (
     id timeuuid PRIMARY KEY,
     comment text,
-    data list<frozen<precisionrecalldatatuple>>
+    data list<frozen<precisionrecalldatatuple>>,
+    xaxis text,
+    yaxis text
 );
 
 CREATE TYPE wikidumps.triealias (
 	alias text,
 	offset int,
 	context map<text, int>
+);
+
+CREATE TABLE wikidumps.linkedarticles (
+  title text PRIMARY KEY,
+  text text
 );
 
 CREATE TABLE wikidumps.wikipediacooccurrences (
@@ -144,8 +152,17 @@ CREATE TABLE wikidumps.wikipediacooccurrences (
 CREATE TABLE wikidumps.spiegel (
     id text PRIMARY KEY,
     title text,
+    foundentities frozen<list<frozen<link>>>,
     text text,
-    url text
+    triealiases frozen<list<frozen<triealias>>>
+);
+
+CREATE TABLE wikidumps.wikipedianel (
+    id text PRIMARY KEY,
+    title text,
+    text text,
+    triealiases frozen<list<triealias>>,
+    foundentities frozen<list<frozen<link>>>
 );
 
 CREATE TABLE wikidumps.redirects (
@@ -178,6 +195,35 @@ CREATE TYPE wikidumps.sentence (
    entities frozen<list<frozen<entitylink>>>,
    bagofwords frozen<list<text>>,
    PRIMARY KEY (articletitle, articleoffset)
+);
+
+CREATE TABLE wikidumps.wikipediaarticlecount (
+    countedtable text PRIMARY KEY,
+    count bigint
+);
+
+CREATE TABLE wikidumps.spiegelfeatureentries (
+    article text,
+    offset int,
+    alias text,
+    entity text,
+    correct boolean,
+    cosine_sim multifeature,
+    entity_score multifeature,
+    link_score double,
+    PRIMARY KEY (article, offset, alias, entity)
+);
+
+CREATE TABLE wikidumps.articletfidf (
+    article text PRIMARY KEY,
+    tfidf map<text, double>
+);
+
+CREATE TABLE wikidumps.dbpediarelations (
+	subjectentity text,
+	relationtype text,
+	objectentity text,
+	PRIMARY KEY (subjectentity, relationtype, objectentity)
 );
 
 -- Wikidumps.Wikidata
@@ -248,52 +294,100 @@ CREATE TYPE datalake.subject (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
+CREATE TYPE datalake.candidate (
+    id uuid,
+    name text,
+    score double
+);
+
 CREATE TABLE datalake.subject (
-    id uuid PRIMARY KEY,
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
     aliases list<text>,
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
-    master uuid,
-    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
-    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
+);
+
+CREATE TABLE datalake.subject_temp (
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
 );
 
 CREATE TABLE datalake.subject_dbpedia (
-    id uuid PRIMARY KEY,
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
     aliases list<text>,
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
-    master uuid,
-    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
-    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
 );
 
 CREATE TABLE datalake.subject_wikidata (
-    id uuid PRIMARY KEY,
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
     aliases list<text>,
     aliases_history list<frozen<version>>,
     category text,
     category_history list<frozen<version>>,
-    master uuid,
-    master_history list<frozen<version>>,
     name text,
     name_history list<frozen<version>>,
     properties map<text, frozen<list<text>>>,
     properties_history map<text, frozen<list<frozen<version>>>>,
     relations map<uuid, frozen<map<text, text>>>,
-    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
+);
+
+CREATE TABLE datalake.subject_implisense (
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
 );
 
 CREATE TABLE datalake.version (
@@ -328,20 +422,18 @@ CREATE TABLE datalake.blockingstats (
     blockcount int,
     comment text,
     comparisoncount bigint,
-    data frozen<set<frozen<blockstats>>>,
+    data frozen<SET<frozen<blockstats>>>,
     pairscompleteness double,
+    xaxis text,
+    yaxis text,
     PRIMARY KEY (jobid, schemetag)
 );
 
-CREATE TABLE datalake.duplicatecandidates (
+CREATE TABLE datalake.duplicates (
     subject_id uuid PRIMARY KEY,
-    candidates list<frozen<tuple<subject, text, double>>>
-);
-
-CREATE TABLE datalake.sim_measure_stats (
-    id timeuuid PRIMARY KEY,
-    comment text,
-    data text
+    subject_name text,
+    datasource text,
+    candidates list<frozen<candidate>>
 );
 
 -- Evaluation
@@ -383,6 +475,12 @@ CREATE TYPE evaluation.subject (
     relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>
 );
 
+CREATE TYPE evaluation.candidate (
+    id uuid,
+    name text,
+    score double
+);
+
 -- Tables
 CREATE TABLE evaluation.goldstandard (
     id1 uuid PRIMARY KEY,
@@ -422,9 +520,11 @@ CREATE TABLE evaluation.subject_wikidata (
 );
 
 CREATE TABLE evaluation.sim_measure_stats (
-    id uuid PRIMARY KEY,
+    id timeuuid PRIMARY KEY,
+    comment text,
     data list<frozen<precisionrecalldatatuple>>,
-    comment text
+    xaxis text,
+    yaxis text
 );
 
 CREATE TABLE evaluation.version (
@@ -434,9 +534,11 @@ CREATE TABLE evaluation.version (
     timestamp timestamp
 );
 
-CREATE TABLE evaluation.dbpedia_wikidata_deduplication (
+CREATE TABLE evaluation.dbpedia_wikidata_duplicates (
     subject_id uuid PRIMARY KEY,
-    candidates list<frozen<tuple<subject, text, double>>>
+    subject_name text,
+    datasources text,
+    candidates list<frozen<candidate>>
 );
 
 CREATE TABLE evaluation.dbpedia_wikidata_deduplication_only_uuid (
@@ -450,4 +552,18 @@ CREATE TABLE evaluation.featureentries (
 	staging frozen<subject>,
 	score map<text, frozen<list<double>>>,
 	correct boolean
+);
+
+CREATE TABLE datalake.versiondiff (
+    oldversion timeuuid,
+    newversion timeuuid,
+    id uuid,
+    aliases text,
+    category text,
+    datasource text,
+    master text,
+    name text,
+    properties text,
+    relations text,
+    PRIMARY KEY ((oldversion, newversion), id)
 );
