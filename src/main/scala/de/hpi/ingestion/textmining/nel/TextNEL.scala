@@ -38,7 +38,7 @@ object TextNEL extends SplitSparkJob {
 		val articleCount = sc.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
 		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
 		val articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
-		List(articles.sample(false, 0.01), articleCount, aliases, articleTfidf).flatMap(List(_).toAnyRDD())
+		List(articles, articleCount, aliases, articleTfidf).flatMap(List(_).toAnyRDD())
 	}
 
 	/**
@@ -116,18 +116,21 @@ object TextNEL extends SplitSparkJob {
 		import session.implicits._
 		val entryDF = featureEntries.map { entry =>
 			val labeledPoint = entry.labeledPointDF()
-			(labeledPoint.features, labeledPoint.label, entry)
-		}.toDF("features", "label", "featureentry")
+			(labeledPoint.features, labeledPoint.label, entry.article, entry.offset, entry.alias, entry.entity)
+		}.toDF("features", "label", "article", "offset", "alias", "entity")
 
 		model.transform(entryDF).rdd
 			.map { row =>
 				val prediction = row.getDouble(row.fieldIndex("prediction"))
-				val entry = row.getAs[FeatureEntry](row.fieldIndex("featureentry"))
-				(entry, prediction)
+				val article = row.getString(row.fieldIndex("article"))
+				val offset = row.getInt(row.fieldIndex("offset"))
+				val alias = row.getString(row.fieldIndex("alias"))
+				val entity = row.getString(row.fieldIndex("entity"))
+				val link = Link(alias, entity, Option(offset))
+				(article, link, prediction)
 			}.collect {
-				case (featureEntry, prediction) if prediction == 1.0 =>
-					val link = Link(featureEntry.alias, featureEntry.entity, Option(featureEntry.offset))
-					(featureEntry.article, List(link))
+				case (article, link, prediction) if prediction == 1.0 =>
+					(article, List(link))
 			}.reduceByKey(_ ++ _)
 			.map(_.map(identity, _.sortBy(_.offset)))
 	}
