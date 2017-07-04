@@ -55,7 +55,7 @@ object TextNEL extends SplitSparkJob {
 			.saveToCassandra(
 				settings("keyspace"),
 				settings("NELTable"),
-				SomeColumns("article", "foundentities"))
+				SomeColumns("id", "foundentities"))
 	}
 
 	/**
@@ -97,7 +97,7 @@ object TextNEL extends SplitSparkJob {
 		val articleTokens = article.text.map(tokenizer.onlyTokenizeWithOffset).getOrElse(Nil)
 		article.triealiases.map { triealias =>
 			val context = TermFrequencyCounter.extractContext(articleTokens, triealias.toLink(), tokenizer)
-			(triealias.toLink().copy(article = Option(article.article)), context)
+			(triealias.toLink().copy(article = Option(article.id)), context)
 		}
 	}
 
@@ -144,18 +144,13 @@ object TextNEL extends SplitSparkJob {
 		}
 		val tokenizer = IngestionTokenizer()
 		val articleAliases = articlesPartition.flatMap(extractTrieAliasContexts(_, tokenizer))
-		val a = articleAliases.collect()
 		val aliasTfIdf = calculateTfidf(articleAliases, numDocuments, defaultIdf(numDocuments))
-		val b = aliasTfIdf.collect()
 		val featureEntries = compareLinksWithArticles(aliasTfIdf, sc.broadcast(aliasPageScores), wikipediaTfidf)
-		val c = featureEntries.collect()
 		val extendedFeatureEntries = SecondOrderFeatureGenerator
 			.run(List(featureEntries).toAnyRDD(), sc)
 			.fromAnyRDD[FeatureEntry]()
 			.head
-		val d = extendedFeatureEntries.collect()
 		val foundEntities = classifyFeatureEntries(extendedFeatureEntries, sc.broadcast(loadModelFunction(sc)))
-		val e = foundEntities.collect()
 		List(foundEntities).toAnyRDD()
 	}
 }
