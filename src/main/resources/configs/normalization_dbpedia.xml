@@ -37,7 +37,6 @@
                 <key>geo_city</key>
                 <mapping>dbo:locationCity</mapping>
                 <mapping>property-de:sitz</mapping>
-
                 <mapping>dbo:headquarter</mapping>
                 <mapping>property-de:ort</mapping>
             </attribute>
@@ -79,6 +78,12 @@
             <attribute>
                 <key>gen_sectors</key>
                 <mapping>dbo:industry</mapping>
+                <mapping>property-de:branche</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_legal_form</key>
+                <mapping>property-de:unternehmensform</mapping>
+                <mapping>dbo:type</mapping>
             </attribute>
             <attribute>
                 <key>gen_urls</key>
@@ -98,6 +103,14 @@
             <attribute>
                 <key>gen_management</key>
                 <mapping>property-de:leitung</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_revenue</key>
+                <mapping>dbo:revenue</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_sales</key>
+                <mapping>property-de:umsatz</mapping>
             </attribute>
         </attributeMapping>
     </normalization>
@@ -464,6 +477,39 @@
             <mapping>C</mapping>
             <mapping>C30</mapping>
             <mapping>C30.3</mapping>
+        </category>
+        <category>
+            <key>Versandhandel</key>
+            <mapping>I</mapping>
+            <mapping>I47</mapping>
+            <mapping>I47.91</mapping>
+            <mapping>I47.91.1</mapping>
+        </category>
+        <category>
+            <key>Unterhaltungselektronik</key>
+            <mapping>C26.40.0</mapping>
+            <mapping>G46.14.3</mapping>
+            <mapping>G46.43.3</mapping>
+            <mapping>G47.43.0</mapping>
+            <mapping>S95.21.0</mapping>
+        </category>
+        <category>
+            <key>Mineralöl</key>
+            <mapping>C</mapping>
+            <mapping>C19</mapping>
+            <mapping>C19.20</mapping>
+            <mapping>C19.20.0</mapping>
+            <mapping>G</mapping>
+            <mapping>G46</mapping>
+            <mapping>G46.71</mapping>
+            <mapping>G46.71.2</mapping>
+        </category>
+        <category>
+            <key>Massenmedien</key>
+            <mapping>C</mapping>
+            <mapping>C18</mapping>
+            <mapping>C18.13</mapping>
+            <mapping>C18.13.0</mapping>
         </category>
     </categorization>
 </config>
