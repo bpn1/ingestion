@@ -36,7 +36,9 @@ object TagEntities extends SparkJob {
 		"Q1331793" -> "media company",
 		"Q1123526" -> "chamber of commerce",
 		"Q1047437" -> "copyright collective",
-		"Q4830453" -> "business enterprise"
+		"Q4830453" -> "business enterprise",
+		"Q1418640" -> "local government in Germany",
+		"Q15734684" -> "Körperschaft des öffentlichen Rechts"
 	)
 
 	// $COVERAGE-OFF$

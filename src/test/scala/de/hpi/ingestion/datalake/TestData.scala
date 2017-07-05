@@ -128,27 +128,27 @@ object TestData {
 		List(
 			Subject(
 				id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"),
-				master = null,
+				master = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
 				datasource = datasource,
 				name = Option("Name 1"),
 				aliases = List("Alias 1", "Alias 1.1\""),
 				category = None,
 				properties = Map(),
 				relations = Map(
-					UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("relation" -> "test 1", "type" -> "test"),
+					UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("owned by" -> ""),
 					UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130") -> Map("type" -> "reflexive")
 				)
 			),
 			Subject(
 				id = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
-				master = null,
+				master = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
 				datasource = datasource,
 				name = Option("Name 2"),
 				aliases = List("Alias 2"),
 				category = Option("Category 2"),
 				properties = Map("test_prop" -> List("value 1", "value 2")),
 				relations = Map(
-					UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130") -> Map("relation" -> "test 2")
+					UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130") -> Map("owns" -> "")
 				)
 			)
 		)
