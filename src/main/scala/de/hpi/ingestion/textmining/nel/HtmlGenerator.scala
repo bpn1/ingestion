@@ -48,10 +48,9 @@ object HtmlGenerator extends SparkJob {
 	  * @return HTML containing links
 	  */
 	def generateArticleWithLinks(article: TrieAliasArticle): Article = {
-		var title = article.title.getOrElse(defaultTitle)
-		if(title.isEmpty) {
-			title = defaultTitle
-		}
+		val title = article.title
+			.filter(_.nonEmpty)
+			.getOrElse(defaultTitle)
 		var html = s"<h1>$title</h1>\n"
 		val text = article.getText
 		var processedCharacters = 0

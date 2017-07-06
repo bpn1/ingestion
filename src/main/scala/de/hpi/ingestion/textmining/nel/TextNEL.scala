@@ -141,8 +141,9 @@ object TextNEL extends SplitSparkJob {
 	): RDD[(String, List[Link])] = {
 		allArticleIds
 			.map(id => (id, id))
-	    	.leftOuterJoin(foundEntities)
-			.map{ case (id, (id1, links)) => (id, links.getOrElse(List()))}
+			.leftOuterJoin(foundEntities)
+			.values
+			.map { case (id, links) => (id, links.getOrElse(Nil)) }
 	}
 
 	/**
