@@ -43,7 +43,8 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		"copyright collective" -> "business",
 		"business enterprise" -> "business",
 		"local government in Germany" -> "city",
-		"Körperschaft des öffentlichen Rechts" -> "organization"
+		"statutory corporation" -> "organization",
+		"municipality of Germany" -> "city"
 	)
 
 	// $COVERAGE-OFF$
