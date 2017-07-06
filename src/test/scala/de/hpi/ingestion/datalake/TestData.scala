@@ -170,14 +170,14 @@ object TestData {
 	def exportedEdgeCSV: List[String] = {
 		List(
 			"4fbc0340-4862-431f-9c28-a508234b8130,831f2c54-33d5-43fc-a515-d871946a655d,owned by",
-			"831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,owns",
+			"831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,owned by",
 			"831f2c54-33d5-43fc-a515-d871946a655d,831f2c54-33d5-43fc-a515-d871946a655d,owned by"
 		)
 	}
 
 	def exportedMasterEdgeCSV: List[String] = {
 		List(
-			"831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,owns",
+			"831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,owned by",
 			"831f2c54-33d5-43fc-a515-d871946a655d,831f2c54-33d5-43fc-a515-d871946a655d,owned by"
 		)
 	}
