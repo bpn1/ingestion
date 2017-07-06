@@ -88,6 +88,26 @@ object TagEntities extends SparkJob {
 	}
 
 	/**
+	  * Merges two subclass Maps by choosing the shortest Path to the target classes.
+	  * @param left first subclass Map
+	  * @param right second subclass Map
+	  * @return merged subclass Map
+	  */
+	def mergeSubclassMaps(
+		left: Map[String, List[String]],
+		right: Map[String, List[String]]
+	): Map[String, List[String]] = {
+		(left.keySet ++ right.keySet).flatMap { classId =>
+			val leftPath = left.get(classId)
+			val rightPath = right.get(classId)
+			val shorterPath = leftPath
+				.filter(l => !rightPath.exists(_.length < l.length))
+				.orElse(rightPath)
+			shorterPath.map((classId, _))
+		}.toMap
+	}
+
+	/**
 	  * Builds a map of subclass paths given a list of subclass entries containing
 	  * the {@subclassProperty} property.
 	  * @param categoryData RDD of Subclass Entries containing the subclass information.
@@ -122,7 +142,7 @@ object TagEntities extends SparkJob {
 				oldClasses = newClasses
 			}
 			subclasses
-		}.reduce(_ ++ _)
+		}.reduce(mergeSubclassMaps)
 	}
 
 	/**
