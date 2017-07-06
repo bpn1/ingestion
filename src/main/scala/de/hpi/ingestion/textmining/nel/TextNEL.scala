@@ -127,6 +127,23 @@ object TextNEL extends SplitSparkJob {
 	}
 
 	/**
+	  * Add missing article IDs to found entities so that the foundentities column in the Cassandra does not stay null.
+	  *
+	  * @param foundEntities RDD of tuples containing the article and the entities linked in the article
+	  * @param allArticleIds IDs of all articles (in split partition)
+	  * @return found entities for all articles
+	  */
+	def addMissingArticleIds(
+		foundEntities: RDD[(String, List[Link])],
+		allArticleIds: RDD[String]
+	): RDD[(String, List[Link])] = {
+		allArticleIds
+			.map(id => (id, id))
+	    	.leftOuterJoin(foundEntities)
+			.map{ case (id, (id1, links)) => (id, links.getOrElse(List()))}
+	}
+
+	/**
 	  * Generates Feature Entries for the Aliases extracted from the Trie Alias Articles.
 	  *
 	  * @param input List of RDDs containing the input data
@@ -139,6 +156,7 @@ object TextNEL extends SplitSparkJob {
 		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].collect.head.count.toLong
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val wikipediaTfidf = input(3).asInstanceOf[RDD[ArticleTfIdf]].flatMap(ArticleTfIdf.unapply)
+
 		if(aliasPageScores.isEmpty) {
 			aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
 		}
@@ -151,6 +169,9 @@ object TextNEL extends SplitSparkJob {
 			.fromAnyRDD[FeatureEntry]()
 			.head
 		val foundEntities = classifyFeatureEntries(extendedFeatureEntries, sc.broadcast(loadModelFunction(sc)))
-		List(foundEntities).toAnyRDD()
+		val articleIds = articlesPartition.map(_.id)
+		val foundEntitiesForAllArticles = addMissingArticleIds(foundEntities, articleIds)
+
+		List(foundEntitiesForAllArticles).toAnyRDD()
 	}
 }
