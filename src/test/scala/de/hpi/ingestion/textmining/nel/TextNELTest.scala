@@ -113,17 +113,26 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 		val featureEntries = sc.parallelize(TestData.featureEntries())
 		val model = sc.broadcast(TextTestData.randomForestModel(1.0))
 		val linkedEntities = TextNEL.classifyFeatureEntries(featureEntries, model).collect.toSet
-		val expectedEntties = TestData.linkedEntities()
-		linkedEntities shouldEqual expectedEntties
+		val expectedEntities = TestData.linkedEntities()
+		linkedEntities shouldEqual expectedEntities
 	}
 
 	"Input articles" should "be split" in {
+		val oldSettings = TextNEL.settings(false)
+
 		val articles = sc.parallelize(TestData.foundAliasArticles())
 		val numDocuments = sc.parallelize(List(WikipediaArticleCount("parsedwikipedia", 3)))
 		val aliases = sc.parallelize(TestData.rawAliases())
 		val wikipediaTfIdf = sc.parallelize(TestData.tfidfArticles())
 		val input = List(articles, numDocuments, aliases, wikipediaTfIdf).flatMap(List(_).toAnyRDD())
-		val splitInput = TextNEL.splitInput(input)
-		splitInput should have size 20
+
+		TextNEL.settings = Map("NELTable" -> "wikipedianel")
+		val splitInputWikipedia = TextNEL.splitInput(input)
+		splitInputWikipedia should have size 100
+		TextNEL.settings = Map("NELTable" -> "spiegel")
+		val splitInputSpiegel = TextNEL.splitInput(input)
+		splitInputSpiegel should have size 20
+
+		TextNEL.settings = oldSettings
 	}
 }

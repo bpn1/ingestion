@@ -78,8 +78,10 @@ object TextNEL extends SplitSparkJob {
 	  */
 	override def splitInput(input: List[RDD[Any]], args: Array[String] = Array()): Traversable[List[RDD[Any]]] = {
 		val List(articles, numDocuments, aliases, wikipediaTfidf) = input
+		val splitMap = Map("wikipedianel" -> 100, "spiegel" -> 20)
+		val splitCount = splitMap.getOrElse(settings("NELTable"), 20)
 		articles
-			.randomSplit(Array.fill(100)(1.0)) // #todo: Differentiate between spiegel and wikipedia
+			.randomSplit(Array.fill(splitCount)(1.0))
 			.map(List(_, numDocuments, aliases, wikipediaTfidf))
 	}
 
