@@ -135,8 +135,7 @@ object TestData {
 				category = None,
 				properties = Map(),
 				relations = Map(
-					UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("owned by" -> ""),
-					UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130") -> Map("type" -> "reflexive")
+					UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("owned by" -> "")
 				)
 			),
 			Subject(
@@ -148,7 +147,8 @@ object TestData {
 				category = Option("Category 2"),
 				properties = Map("test_prop" -> List("value 1", "value 2")),
 				relations = Map(
-					UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130") -> Map("owns" -> "")
+					UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130") -> Map("owns" -> "", "parent organization" -> ""),
+					UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("owned by" -> "")
 				)
 			)
 		)
@@ -156,16 +156,29 @@ object TestData {
 
 	def exportedNodeCSV: List[String] = {
 		List(
-			"\"4fbc0340-4862-431f-9c28-a508234b8130\",\"Name 1\",\"Alias 1;Alias 1.1\\\"\",\"\"",
-			"\"831f2c54-33d5-43fc-a515-d871946a655d\",\"Name 2\",\"Alias 2\",\"Category 2\""
+			"\"4fbc0340-4862-431f-9c28-a508234b8130\",\"Name 1\",\"Alias 1;Alias 1.1\\\"\",\"\",\"\"",
+			"\"831f2c54-33d5-43fc-a515-d871946a655d\",\"Name 2\",\"Alias 2\",\"Category 2\",\"\""
+		)
+	}
+
+	def exportedMasterNodeCSV: List[String] = {
+		List(
+			"\"831f2c54-33d5-43fc-a515-d871946a655d\",\"Name 2\",\"Alias 2\",\"Category 2\",\"\""
 		)
 	}
 
 	def exportedEdgeCSV: List[String] = {
 		List(
-			"4fbc0340-4862-431f-9c28-a508234b8130,831f2c54-33d5-43fc-a515-d871946a655d,test",
-			"4fbc0340-4862-431f-9c28-a508234b8130,4fbc0340-4862-431f-9c28-a508234b8130,reflexive",
-			"831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,"
+			"4fbc0340-4862-431f-9c28-a508234b8130,831f2c54-33d5-43fc-a515-d871946a655d,owned by",
+			"831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,owns",
+			"831f2c54-33d5-43fc-a515-d871946a655d,831f2c54-33d5-43fc-a515-d871946a655d,owned by"
+		)
+	}
+
+	def exportedMasterEdgeCSV: List[String] = {
+		List(
+			"831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,owns",
+			"831f2c54-33d5-43fc-a515-d871946a655d,831f2c54-33d5-43fc-a515-d871946a655d,owned by"
 		)
 	}
 
