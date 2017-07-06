@@ -14,14 +14,13 @@ object CSVExport extends SparkJob {
 	val quote = "\""
 	val separator = ","
 	val arraySeparator = ";"
-
 	val categoryColors = Map(
 		"business" -> "2471A3",
 		"organization" -> "A6ACAF",
 		"country" -> "27AE60",
 		"city" -> "A04000",
-		"sector" -> "D68910")
-
+		"sector" -> "D68910"
+	)
 	val relationNormalization = Map(
 		"country" -> "located in",
 		"located in the administrative territorial entity" -> "located in",
@@ -29,8 +28,8 @@ object CSVExport extends SparkJob {
 		"contains administrative territorial entity" -> "contains location",
 		"owned by" -> "owned by",
 		"stock exchange" -> "stock exchange",
-		"parent organization" -> "owns",
-		"subsidiary" -> "owned by",
+		"parent organization" -> "owned by",
+		"subsidiary" -> "owns",
 		"industry" -> "has industry",
 		"country of origin" -> "founded in location",
 		"followed by" -> "followed by",
@@ -39,8 +38,8 @@ object CSVExport extends SparkJob {
 		"location of formation" -> "founded in location",
 		"owningCompany" -> "owned by",
 		"owner" -> "owned by",
-		"successor" -> "follows",
-		"predecessor" -> "followed by",
+		"successor" -> "followed by",
+		"predecessor" -> "follows",
 		"distributingCompany" -> "distributes for",
 		"distributingLabel" -> "distributes for",
 		"gen_founder" -> "founded by",
@@ -64,7 +63,8 @@ object CSVExport extends SparkJob {
 		"producer" -> "produced by",
 		"replaces" -> "follows",
 		"replaced by" -> "followed by",
-		"childOrganisation" -> "owns")
+		"childOrganisation" -> "owns"
+	)
 
 	// $COVERAGE-OFF$
 	/**
