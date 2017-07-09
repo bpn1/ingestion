@@ -1,7 +1,5 @@
 package de.hpi.ingestion.graphxplore
 
-import java.util.UUID
-
 import de.hpi.ingestion.graphxplore.models.ResultGraph
 import org.apache.spark.rdd.RDD
 import org.graphframes.GraphFrame
@@ -37,6 +35,6 @@ object CompanyGroupExtractor extends GraphExtractor {
 			ownershipRelations.contains(edge.getAs[String]("relationship")))
 		val ownershipGraph = GraphFrame(graph.vertices, ownershipEdges)
 
-		ConnectedComponents.processGraph(ownershipGraph)
+		ConnectedComponents.findConnectedComponents(ownershipGraph, graphType)
 	}
 }
