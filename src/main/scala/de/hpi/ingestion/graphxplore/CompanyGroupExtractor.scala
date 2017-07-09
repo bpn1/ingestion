@@ -9,7 +9,6 @@ import org.graphframes.GraphFrame
 object CompanyGroupExtractor extends GraphExtractor {
 	appName = "CompanyGroupExtractor"
 	val graphType = "CompanyGroup"
-	val minComponentSize = 3
 
 	val ownershipRelations = List(
 		"ownedBy",
@@ -38,16 +37,6 @@ object CompanyGroupExtractor extends GraphExtractor {
 			ownershipRelations.contains(edge.getAs[String]("relationship")))
 		val ownershipGraph = GraphFrame(graph.vertices, ownershipEdges)
 
-		ownershipGraph.connectedComponents.run()
-			.select("id", "component", "name")
-			.rdd
-			.map(row => (
-				row.getAs[Long]("component"),
-				UUID.fromString(row.getAs[String]("id")),
-				row.getAs[String]("name")))
-			.groupBy(_._1) // component
-			.map(_._2.map(t => (t._2, t._3)).toList) // extract id and name
-			.filter(_.length >= minComponentSize)
-			.map(idList => ResultGraph(graphType, idList.map(_._1), idList.filter(_._2 != null).map(_._2)))
+		ConnectedComponents.processGraph(ownershipGraph)
 	}
 }

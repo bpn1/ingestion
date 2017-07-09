@@ -26,6 +26,9 @@ object ConnectedComponents extends GraphExtractor {
 			.groupBy(_._1) // component
 			.map(_._2.map(t => (t._2, t._3)).toList) // extract id and name
 			.filter(_.length >= minComponentSize)
-			.map(idList => ResultGraph(graphType, idList.map(_._1), idList.filter(_._2 != null).map(_._2)))
+			.map(idNameTuples => ResultGraph(
+				graphType,
+				idNameTuples.map(_._1),
+				idNameTuples.filter(_._2 != null).map(_._2)))
 	}
 }
