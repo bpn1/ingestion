@@ -28,12 +28,12 @@ object CompanyGroupExtractor extends GraphExtractor {
 	) */
 
 	/**
-	  * Finds connected components based on the ownership edges in the given graph
+	  * Finds connected components based on the ownership relations in the given graph
 	  * @param graph GraphFrame that is processed
 	  * @return RDD of ResultGraph objects that represent extracted company groups
 	  */
 	override def processGraph(graph: GraphFrame): RDD[ResultGraph] = {
-		// pre-filter for company edges
+		// pre-filter for ownership-related edges
 		val ownershipEdges = graph.edges.filter((edge) =>
 			ownershipRelations.contains(edge.getAs[String]("relationship")))
 		val ownershipGraph = GraphFrame(graph.vertices, ownershipEdges)
