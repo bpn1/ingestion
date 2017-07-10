@@ -117,7 +117,7 @@ object CSVExport extends SparkJob {
 
 	/**
 	  * Parses a Subjects relations to multiple csv edges in the following format:
-	  * :START_ID(Subject),:END_ID(Subject),:TYPE,color
+	  * :START_ID(Subject),:END_ID(Subject),:TYPE
 	  * @param subject Subject to parse
 	  * @return List of comma separated lines of subject id, target id, relation type
 	  */
@@ -129,7 +129,7 @@ object CSVExport extends SparkJob {
 					.flatMap(relationNormalization.get)
 					.toList
 					.distinct
-					.map(subject.id + separator + id + separator + _ + separator + "\"000000\"")
+					.map(subject.id + separator + id + separator + _)
 			}.map(_.trim)
 			.filter(_.nonEmpty)
 			.toList
