@@ -29,7 +29,7 @@ object CompanyGroupExtractor extends GraphExtractor {
 
 	def findCompanyGroups(graph: GraphFrame, outputGraphType: String): RDD[ResultGraph] = {
 		graph.connectedComponents.run()
-			.join(graph.degrees)
+			.join(graph.degrees, List("id"))
 			.select("id", "component", "name", "degree")
 			.rdd
 			.map(row => (
