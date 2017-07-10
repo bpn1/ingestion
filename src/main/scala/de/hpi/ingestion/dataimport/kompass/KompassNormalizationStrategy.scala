@@ -4,37 +4,40 @@ import de.hpi.ingestion.implicits.RegexImplicits._
 import de.hpi.ingestion.dataimport.SharedNormalizations
 
 object KompassNormalizationStrategy extends Serializable {
-	def normalizeCapital(values: List[String]): List[String] = {
+	def normalizeTurnover(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""(0-9\.)+${value} EUR""" => List(value)
-			case r"""(0-9)+${value} Millionen EUR""" => List(value)
-			case other => List(other)
-		}.map(_.replaceAll("(_|-)", " ")).distinct
+			case r"""([0-9\.]+)${value} EUR""" => List(value)
+			case r"""([0-9]+)${value} Million[en]{0,2} EUR""" => List(value + "000000")
+			case r"""< ([0-9 ]+)${value} EUR""" => List("0", value)
+			case r"""([0-9]+)${first} - ([0-9]+)${second} Millionen EUR""" => List(first, second).map(_ + "000000")
+			case r"""([0-9 ]+)${first} - ([0-9]+)${second} Million[en]{0,2} EUR""" => List(first, second + "000000")
+			case _ => Nil
+		}.map(_.replaceAll("( |\\.)", "")).distinct
 	}
 
-	/**
-	  * Normalizes all other values by default (removing pre- and suffixes and dashes)
-	  * @param values Strings to be normalized
-	  * @return normalized strings
-	  */
-	def normalizeDefault(values: List[String]): List[String] = {
+	def normalizeCapital(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""(.+)${value}\^\^xsd:.+""" => List(value)
-			case r"""(.+)${value}@de \.""" => List(value)
-			case r"""dbpedia-de:(.+)${value}""" => List(value)
-			case other => List(other)
-		}.map(_.replaceAll("(_|-)", " ")).distinct
+			case r"""([0-9\.]+)${value} EUR""" => List(value)
+			case _ => Nil
+		}.map(_.replaceAll("( |\\.)", "")).distinct
+	}
+
+	def normalizeEmployees(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""Von ([0-9]+)${first} bis ([0-9]+)${second} Beschäftigte""" => List(first, second)
+			case r"""([0-9]+)${value} Beschäftigte""" => List(value)
+			case r"""Mehr als ([0-9]+)${value} Beschäftigte""" => List(value)
+			case _ => Nil
+		}.map(_.replaceAll("( |\\.)", "")).distinct
 	}
 
 	def apply(attribute: String): (List[String]) => List[String] = {
 		attribute match {
-			case "gen_legal_form" => SharedNormalizations.normalizeLegalForm	//ToDo: checken, ob das reicht
-			//case "id_umsatzsteuer"
-			//ToDo: case "gen_capital" => normalizeCapital //75.000 EUR
-			//ToDo: case "gen_turnover" //1 - 2 Millionen EUR //> 500 Millionen EUR
-			//ToDo: case "gen_employees" //Von 10 bis 19 Beschäftigte //100 Beschäftigte
-			//ToDo: case "gen_street" //Herriotstr. 3 //aktuell bei addressextraction gemacht
-			case _ => this.normalizeDefault
+			case "gen_legal_form" => SharedNormalizations.normalizeLegalForm
+			case "gen_capital" => normalizeCapital
+			case "gen_turnover" => normalizeTurnover
+			case "gen_employees" => normalizeEmployees
+			case _ => _
 		}
 	}
 
