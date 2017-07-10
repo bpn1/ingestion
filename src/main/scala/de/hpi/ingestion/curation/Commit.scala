@@ -11,7 +11,7 @@ import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-object Commiting extends SparkJob {
+object Commit extends SparkJob {
   appName = "Commit"
 
   /**
