@@ -32,7 +32,7 @@ object ConnectedComponents extends GraphExtractor {
 				idNameTuples.filter(_._2 != null).map(_._2)))
 	}
 
-	override def processGraph(graph: GraphFrame): RDD[ResultGraph] = {
-		findConnectedComponents(graph, graphType)
+	override def processGraph(graph: GraphFrame): List[RDD[ResultGraph]] = {
+		List(findConnectedComponents(graph, graphType))
 	}
 }

@@ -37,8 +37,7 @@ trait GraphExtractor extends SparkJob {
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
 			.fromAnyRDD[ResultGraph]()
-			.head
-			.saveToCassandra(keyspace, outputTablename)
+			.foreach(_.saveToCassandra(keyspace, outputTablename))
 	}
 	// $COVERAGE-ON$
 
@@ -75,7 +74,7 @@ trait GraphExtractor extends SparkJob {
 	  * @param graph GraphFrame that is processed
 	  * @return RDD of ResultGraph objects that represent extracted subgraphs
 	  */
-	def processGraph(graph: GraphFrame): RDD[ResultGraph]
+	def processGraph(graph: GraphFrame): List[RDD[ResultGraph]]
 
 	/**
 	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
@@ -94,6 +93,6 @@ trait GraphExtractor extends SparkJob {
 
 		val graph = extractGraph(subjects, sc)
 		val output = processGraph(graph)
-		List(output).toAnyRDD()
+		output.toAnyRDD()
 	}
 }

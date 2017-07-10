@@ -51,12 +51,12 @@ object CompanyGroupExtractor extends GraphExtractor {
 	  * @param graph GraphFrame that is processed
 	  * @return RDD of ResultGraph objects that represent extracted company groups
 	  */
-	override def processGraph(graph: GraphFrame): RDD[ResultGraph] = {
+	override def processGraph(graph: GraphFrame): List[RDD[ResultGraph]] = {
 		// pre-filter for ownership-related edges
 		val ownershipEdges = graph.edges.filter((edge) =>
 			ownershipRelations.contains(edge.getAs[String]("relationship")))
 		val ownershipGraph = GraphFrame(graph.vertices, ownershipEdges)
 
-		findCompanyGroups(ownershipGraph, graphType)
+		List(findCompanyGroups(ownershipGraph, graphType))
 	}
 }
