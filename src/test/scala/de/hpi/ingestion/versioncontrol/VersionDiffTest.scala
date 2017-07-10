@@ -4,6 +4,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import java.util.UUID
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.versioncontrol.models.SubjectDiff
 import play.api.libs.json.JsValue
 
 class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
@@ -16,9 +17,9 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 		val (oldV, newV) = TestData.versionsToCompare()
 		val versions = Array(oldV.toString, newV.toString)
 		val rddList = List(subjects).toAnyRDD()
-		val versionDiff = VersionDiff.run(rddList, sc, versions).fromAnyRDD[JsValue]().head
-		val expectedDiff = sc.parallelize(TestData.jsonDiff())
-		assertRDDEquals(versionDiff, expectedDiff)
+		val versionDiff = VersionDiff.run(rddList, sc, versions).fromAnyRDD[SubjectDiff]().head.collect
+		val expectedDiff = TestData.subjectDiff()
+		versionDiff shouldEqual expectedDiff
 	}
 
 	"Versions" should "be ordered correctly" in {
@@ -44,10 +45,11 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 		fieldValues shouldEqual expectedValues
 	}
 
-	"History entry" should "be diffed and serialized as JSON" in {
+	"History entry" should "be diffed and written into SubjectDiff" in {
+		val (oldV, newV) = TestData.versionsToCompare()
 		val diff = TestData.historyEntries()
-			.map(VersionDiff.diffToJson)
-		val expectedDiff = TestData.jsonDiff()
+			.map(VersionDiff.historyToDiff(_, oldV, newV))
+		val expectedDiff = TestData.subjectDiff()
 		diff shouldEqual expectedDiff
 	}
 
@@ -56,6 +58,14 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 		val valueLists = TestData.versions()
 			.map(VersionDiff.createValueList(oldV, newV, _))
 		val expectedLists = TestData.dataLists()
+		valueLists shouldEqual expectedLists
+	}
+
+	"Value lists" should "be created when the versions are the same" in {
+		val oldV = TestData.versionsToCompare()._1
+		val valueLists = TestData.versions()
+			.map(VersionDiff.createValueList(oldV, oldV, _))
+		val expectedLists = TestData.sameVersionDataLists()
 		valueLists shouldEqual expectedLists
 	}
 
