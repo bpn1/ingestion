@@ -17,8 +17,7 @@ object CompanyGroupExtractor extends GraphExtractor {
 		"parent organization",
 		"subsidiary",
 		"owner",
-		"owningCompany",
-		"location of formation" //?
+		"owningCompany"
 	)
 
 	// when operating on normalized edges
