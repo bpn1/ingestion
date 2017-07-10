@@ -40,7 +40,7 @@ object CompanyGroupExtractor extends GraphExtractor {
 			.groupBy(_._1) // component
 			.map(_._2.map(t => (t._2, t._3, t._4)).toList) // extract id, name and degree
 			.filter(_.length >= minComponentSize)
-			.map(group => group.sortBy(tuple => tuple._3)) // sort results by degree
+			.map(group => group.sortBy(_._3)(Ordering[Int].reverse)) // sort results by degree (descending)
 			.map(idNameTuples => ResultGraph(
 				outputGraphType,
 				idNameTuples.map(_._1),
