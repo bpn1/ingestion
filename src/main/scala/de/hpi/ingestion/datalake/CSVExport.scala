@@ -8,7 +8,7 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 object CSVExport extends SparkJob {
-	appName = "CSVExport_v1.0"
+	appName = "CSVExport v1.0"
 	val keyspace = "datalake"
 	val tablename = "subject"
 	val quote = "\""
@@ -28,7 +28,7 @@ object CSVExport extends SparkJob {
 		"contains administrative territorial entity" -> "contains location",
 		"owned by" -> "owned by",
 		"stock exchange" -> "stock exchange",
-		"parent organization" -> "owned by",
+		"parent organization" -> "owns",
 		"subsidiary" -> "owns",
 		"industry" -> "has industry",
 		"country of origin" -> "founded in location",
@@ -117,7 +117,7 @@ object CSVExport extends SparkJob {
 
 	/**
 	  * Parses a Subjects relations to multiple csv edges in the following format:
-	  * :START_ID(Subject),:END_ID(Subject),:TYPE
+	  * :START_ID(Subject),:END_ID(Subject),:TYPE,color
 	  * @param subject Subject to parse
 	  * @return List of comma separated lines of subject id, target id, relation type
 	  */
@@ -129,7 +129,7 @@ object CSVExport extends SparkJob {
 					.flatMap(relationNormalization.get)
 					.toList
 					.distinct
-					.map(subject.id + separator + id + separator + _)
+					.map(subject.id + separator + id + separator + _ + separator + "\"000000\"")
 			}.map(_.trim)
 			.filter(_.nonEmpty)
 			.toList
