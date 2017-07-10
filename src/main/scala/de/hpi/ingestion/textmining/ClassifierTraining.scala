@@ -9,7 +9,7 @@ import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.ml.classification.RandomForestClassifier
+import org.apache.spark.ml.classification.{GBTClassifier, RandomForestClassifier}
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}
 import org.apache.spark.mllib.tree.RandomForest
 import org.apache.spark.mllib.tree.model.RandomForestModel
@@ -48,14 +48,15 @@ object ClassifierTraining extends SparkJob {
 	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val List(stats, model) = output
-		stats
+//		val List(stats, model) = output
+//		stats
+		output.head
 			.asInstanceOf[RDD[SimilarityMeasureStats]]
 			.saveToCassandra(settings("keyspace"), settings("simMeasureStatsTable"))
-		model
-			.asInstanceOf[RDD[Option[PipelineModel]]]
-			.first
-			.foreach(_.save(s"wikipedia_tuned_df_randomforest_${System.currentTimeMillis()}"))
+//		model
+//			.asInstanceOf[RDD[Option[PipelineModel]]]
+//			.first
+//			.foreach(_.save(s"wikipedia_tuned_df_gbt_${System.currentTimeMillis()}"))
 	}
 	// $COVERAGE-ON$
 
@@ -128,7 +129,8 @@ object ClassifierTraining extends SparkJob {
 	  */
 	def trainRandomForestDF(
 		training: Dataset[Row],
-		classifier: RandomForestClassifier
+		classifier: RandomForestClassifier,
+		iter: Int = 10
 	): PipelineModel = {
 		val labelIndexer = new StringIndexer()
 			.setInputCol("label")
@@ -141,13 +143,20 @@ object ClassifierTraining extends SparkJob {
 			.setMaxCategories(4)
 			.fit(training)
 
+		// gradient boost
+		val gbt = new GBTClassifier()
+			.setLabelCol("indexedLabel")
+			.setFeaturesCol("indexedFeatures")
+			.setMaxIter(iter)
+
 		val labelConverter = new IndexToString()
 			.setInputCol("prediction")
 			.setOutputCol("predictedLabel")
 			.setLabels(labelIndexer.labels)
 
 		val pipeline = new Pipeline()
-			.setStages(Array(labelIndexer, featureIndexer, classifier, labelConverter))
+//			.setStages(Array(labelIndexer, featureIndexer, classifier, labelConverter))
+			.setStages(Array(labelIndexer, featureIndexer, gbt, labelConverter))
 		pipeline.fit(training)
 	}
 
@@ -304,18 +313,22 @@ object ClassifierTraining extends SparkJob {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
 		val (training, test) = trainingSplit(entries, session)
 
-		val classifier = randomForestClassifier(maxDepth = 6, maxBins = 40, numTrees = 20)
-		val model = trainRandomForestDF(training, classifier)
-		val predictions = model.transform(test)
-		val predictionAndLabels = predictions.rdd.map { row =>
-			val prediction = row.getDouble(row.fieldIndex("prediction"))
-			val label = row.getDouble(row.fieldIndex("indexedLabel"))
-			(prediction, label)
-		}
-		val statistics = List(calculateStatistics(predictionAndLabels))
-		val comment = "RF w/ filtered Triehits and DF model"
-		val results = SimilarityMeasureStats(data = statistics, comment = Option(comment))
-		val modelOption = sc.parallelize(List(Option(model)))
+		val statistics = (1 to 20).map { i =>
+			val classifier = randomForestClassifier(maxDepth = 6, maxBins = 40, numTrees = 20)
+			val model = trainRandomForestDF(training, classifier, i)
+			val predictions = model.transform(test)
+			val predictionAndLabels = predictions.rdd.map { row =>
+				val prediction = row.getDouble(row.fieldIndex("prediction"))
+				val label = row.getDouble(row.fieldIndex("indexedLabel"))
+				(prediction, label)
+			}
+			calculateStatistics(predictionAndLabels).copy(threshold = i)
+		}.toList
+//		val statistics = List(calculateStatistics(predictionAndLabels))
+		val comment = "GBT variable maxIterations"
+		val results = SimilarityMeasureStats(data = statistics, comment = Option(comment), xaxis = Option("max Iter"))
+//		val modelOption = sc.parallelize(List(Option(model)))
+		val modelOption = sc.parallelize(List(None))
 		List(sc.parallelize(List(results))).toAnyRDD() ++ List(modelOption).toAnyRDD()
 	}
 }
