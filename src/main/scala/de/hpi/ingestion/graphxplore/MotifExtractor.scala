@@ -9,8 +9,8 @@ import de.hpi.ingestion.graphxplore.models.ResultGraph
 object MotifExtractor extends GraphExtractor {
 	appName = "MotifExtractor"
 	val graphType = "Motif"
-	val minStarSize = 10 // 3
-	val maxStarSize = 10 // can't be > 26
+	val minStarSize = 3
+	val maxStarSize = 5 // can't be > 26
 
 	/**
 	  * Finds pre-defined motifs in the given graph
@@ -24,7 +24,6 @@ object MotifExtractor extends GraphExtractor {
 			val nodeNames = ('a' to 'z').take(starSize)
 			val motifQuery = nodeNames.map(char => s"($char)-[]->(center)").mkString("; ")
 			val motifs = graph.find(motifQuery)
-			motifs.show()
 
 			val idColumns = nodeNames.map(name => col(name.toString + ".id"))
 			val nameColumns = nodeNames.map(name => col(name.toString + ".name"))
