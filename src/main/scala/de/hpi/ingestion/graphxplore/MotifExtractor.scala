@@ -18,7 +18,7 @@ object MotifExtractor extends GraphExtractor {
 	  * @return RDD of ResultGraph objects that represent extracted company groups
 	  */
 	override def processGraph(graph: GraphFrame): List[RDD[ResultGraph]] = {
-		var resultMotifs = List[RDD[ResultGraph]]()
+		var resultGraphs = List[RDD[ResultGraph]]()
 
 		for(starSize <- minStarSize to maxStarSize) {
 			val nodeNames = ('a' to 'z').take(starSize)
@@ -28,7 +28,7 @@ object MotifExtractor extends GraphExtractor {
 			val idColumns = nodeNames.map(name => col(name.toString + ".id"))
 			val nameColumns = nodeNames.map(name => col(name.toString + ".name"))
 
-			motifs
+			val graphs = motifs
 				.select(idColumns ++ nameColumns: _*)
 				.rdd
 				.map(_.toSeq.toList.map(_.toString))
@@ -42,9 +42,9 @@ object MotifExtractor extends GraphExtractor {
 					idNameTuples.map(_._1),
 					idNameTuples.filter(_._2 != null).map(_._2)))
 
-			resultMotifs :+= motifs
+			resultGraphs :+= graphs
 		}
 
-		resultMotifs
+		resultGraphs
 	}
 }
