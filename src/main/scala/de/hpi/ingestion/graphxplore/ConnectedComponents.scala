@@ -15,7 +15,7 @@ object ConnectedComponents extends GraphExtractor {
 	  * @param graph GraphFrame that is processed
 	  * @return RDD of ResultGraph objects that represent extracted connected components
 	  */
-	def findConnectedComponents(graph: GraphFrame, outputGraphType: String): RDD[ResultGraph] = {
+	def findConnectedComponents(graph: GraphFrame): RDD[ResultGraph] = {
 		graph.connectedComponents.run()
 			.select("id", "component", "name")
 			.rdd
@@ -27,12 +27,12 @@ object ConnectedComponents extends GraphExtractor {
 			.map(_._2.map(t => (t._2, t._3)).toList) // extract id and name
 			.filter(_.length >= minComponentSize)
 			.map(idNameTuples => ResultGraph(
-				outputGraphType,
+				graphType,
 				idNameTuples.map(_._1),
 				idNameTuples.filter(_._2 != null).map(_._2)))
 	}
 
 	override def processGraph(graph: GraphFrame): List[RDD[ResultGraph]] = {
-		List(findConnectedComponents(graph, graphType))
+		List(findConnectedComponents(graph))
 	}
 }
