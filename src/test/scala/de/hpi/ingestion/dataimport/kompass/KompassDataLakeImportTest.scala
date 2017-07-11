@@ -20,7 +20,7 @@ class KompassDataLakeImportTest extends FlatSpec with Matchers with SharedSparkC
 		}
 		val expected = TestData.normalizedAttributes
 		normalizedAttributes shouldEqual expected
-	}
+	}*/
 	/*
 
 	"translateToSubject" should "map the entity label on subject name" in {

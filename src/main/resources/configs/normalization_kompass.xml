@@ -69,15 +69,24 @@
     <categorization>
         <category>
             <key>Bauwesen</key>
-            <mapping>G45</mapping>
+            <mapping>F</mapping>
+            <mapping>F41</mapping>
+            <mapping>F41.2</mapping>
+            <mapping>F41.20</mapping>
         </category>
         <category>
             <key>Business-Service</key>
-            <mapping>G45</mapping>
+            <mapping>M</mapping>
+            <mapping>M70</mapping>
+            <mapping>M70.1</mapping>
+            <mapping>M70.10</mapping>
+            <mapping>M70.10.1</mapping>
+            <mapping>M70.22</mapping>
         </category>
         <category>
             <key>IT, Internet, Forschung  &amp; Entwicklung</key>
-            <mapping>G45</mapping>
+            <mapping>M</mapping>
+            <mapping>M72</mapping>
         </category>
         <category>
             <key>Transport &amp; Logistik</key>
@@ -127,9 +136,7 @@
             <key>Elektrik, Elektronik &amp; Optik</key>
             <mapping>G45</mapping>
         </category>
-        // specified
-
-        <category>
+        <category>                                      // specified
             <key>Unternehmensdienstleistungen</key>
             <mapping>G45</mapping>
         </category>
