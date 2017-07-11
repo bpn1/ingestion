@@ -14,10 +14,9 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 		AliasTrieSearch.parseConfig()
 
 		val tokenizer = IngestionTokenizer()
-		val contextTokenizer = IngestionTokenizer(true, true)
 		val trie = TestData.dataTrie(tokenizer)
 		val entry = TestData.parsedEntry()
-		val resultEntry = AliasTrieSearch.matchEntry(entry, trie, tokenizer, contextTokenizer)
+		val resultEntry = AliasTrieSearch.matchEntry(entry, trie, tokenizer)
 		resultEntry.foundaliases should not be empty
 
 		AliasTrieSearch.settings = oldSettings
@@ -58,11 +57,24 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 		AliasTrieSearch.parseConfig()
 
 		val tokenizer = IngestionTokenizer()
-		val contextTokenizer = IngestionTokenizer(true, true)
 		val trie = TestData.dataTrie(tokenizer)
 		val entries = TestData.parsedEntriesWithLessText()
-		val trieAliases = entries.map(AliasTrieSearch.matchEntry(_, trie, tokenizer, contextTokenizer).triealiases)
+		val trieAliases = entries.map(AliasTrieSearch.matchEntry(_, trie, tokenizer).triealiases)
 		val expected = TestData.foundTrieAliases()
+		trieAliases shouldEqual expected
+
+		AliasTrieSearch.settings = oldSettings
+	}
+
+	they should "not be overlapped by other trie aliases or links" in {
+		val oldSettings = AliasTrieSearch.settings(false)
+		AliasTrieSearch.parseConfig()
+
+		val tokenizer = IngestionTokenizer()
+		val trie = TestData.dataTrie(tokenizer, "/spiegel/triealiases")
+		val entries = TestData.articlesWithoutTrieAliases()
+		val trieAliases = entries.map(AliasTrieSearch.matchEntry(_, trie, tokenizer))
+		val expected = TestData.articlesWithTrieAliases()
 		trieAliases shouldEqual expected
 
 		AliasTrieSearch.settings = oldSettings

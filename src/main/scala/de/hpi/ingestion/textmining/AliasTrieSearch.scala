@@ -1,6 +1,7 @@
 package de.hpi.ingestion.textmining
 
 import java.io.InputStream
+
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import com.esotericsoftware.kryo.io.Input
@@ -12,7 +13,9 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
+import de.hpi.ingestion.textmining.nel.ArticleTrieSearch
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -80,10 +83,17 @@ object AliasTrieSearch extends SparkJob {
 	def matchEntry(
 		entry: ParsedWikipediaEntry,
 		trie: TrieNode,
-		tokenizer: IngestionTokenizer,
-		contextTokenizer: IngestionTokenizer,
-		settings: Map[String, String] = this.settings
+		tokenizer: IngestionTokenizer
 	): ParsedWikipediaEntry = {
+		val trieAliasArticle = TrieAliasArticle(entry.title, text = entry.text)
+		val trieAliases = ArticleTrieSearch
+			.findAliases(trieAliasArticle, tokenizer, trie)
+			.triealiases
+			.filterNot { alias =>
+				val isLink = entry.textlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias)
+				val isExLink = entry.extendedlinks().exists(_.offset == alias.offset)
+				isLink || isExLink
+			}
 		val resultList = ListBuffer[List[OffsetToken]]()
 		var contextAliases = List[TrieAlias]()
 		val tokens = tokenizer.processWithOffsets(entry.getText())
@@ -100,13 +110,6 @@ object AliasTrieSearch extends SparkJob {
 				}
 			}
 		}
-
-		contextAliases = contextAliases.filterNot { alias =>
-			val isLink = entry.textlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias)
-			val isExLink = entry.extendedlinks().exists(_.offset == alias.offset)
-			isLink || isExLink
-		}
-
 		val foundAliases = resultList
 			.filter(_.nonEmpty)
 			.map { offsetTokens =>
@@ -117,8 +120,7 @@ object AliasTrieSearch extends SparkJob {
 				case (begin, end) if begin.isDefined && end.isDefined =>
 					entry.getText().substring(begin.get, end.get)
 			}.toList
-
-		entry.copy(foundaliases = cleanFoundAliases(foundAliases), triealiases = contextAliases)
+		entry.copy(foundaliases = cleanFoundAliases(foundAliases), triealiases = trieAliases)
 	}
 
 	/**
@@ -181,16 +183,13 @@ object AliasTrieSearch extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val tokenizer = IngestionTokenizer(false, false)
-		val contextTokenizer = IngestionTokenizer(true, true)
-		val settingsBroadcast = sc.broadcast(settings)
 		input
 			.fromAnyRDD[ParsedWikipediaEntry]()
 			.map(articles =>
 				articles
 					.mapPartitions({ partition =>
-						val localSettings = settingsBroadcast.value
-						val trie = deserializeTrie(trieStreamFunction(localSettings("trieFile")))
-						partition.map(matchEntry(_, trie, tokenizer, contextTokenizer, localSettings))
+						val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
+						partition.map(matchEntry(_, trie, tokenizer))
 					}, true))
 			.toAnyRDD()
 	}

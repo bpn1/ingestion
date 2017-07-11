@@ -145,9 +145,11 @@ object ClassifierTraining extends SparkJob {
 
 		// gradient boost
 		val gbt = new GBTClassifier()
-			.setLabelCol("indexedLabel")
+			.setLabelCol("indqexedLabel")
 			.setFeaturesCol("indexedFeatures")
 			.setMaxIter(iter)
+			.setMaxBins(40)
+			.setMaxDepth(6)
 
 		val labelConverter = new IndexToString()
 			.setInputCol("prediction")
@@ -314,15 +316,16 @@ object ClassifierTraining extends SparkJob {
 		val (training, test) = trainingSplit(entries, session)
 
 		val statistics = (1 to 20).map { i =>
+			val iter = i * 5
 			val classifier = randomForestClassifier(maxDepth = 6, maxBins = 40, numTrees = 20)
-			val model = trainRandomForestDF(training, classifier, i)
+			val model = trainRandomForestDF(training, classifier, iter)
 			val predictions = model.transform(test)
 			val predictionAndLabels = predictions.rdd.map { row =>
 				val prediction = row.getDouble(row.fieldIndex("prediction"))
 				val label = row.getDouble(row.fieldIndex("indexedLabel"))
 				(prediction, label)
 			}
-			calculateStatistics(predictionAndLabels).copy(threshold = i)
+			calculateStatistics(predictionAndLabels).copy(threshold = iter)
 		}.toList
 //		val statistics = List(calculateStatistics(predictionAndLabels))
 		val comment = "GBT variable maxIterations"

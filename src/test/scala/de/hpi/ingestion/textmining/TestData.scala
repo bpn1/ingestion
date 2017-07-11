@@ -1,6 +1,5 @@
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
@@ -2756,6 +2755,64 @@ object TestData {
 					Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
 					Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 			))
+	}
+
+	def articlesWithoutTrieAliases(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				title = "1",
+				text = Option("Dieser Artikel schreibt über Audi.")
+			),
+			ParsedWikipediaEntry(
+				title = "2",
+				text = Option("Die Audi AG ist ein Tochterunternehmen der Volkswagen AG.")
+			),
+			ParsedWikipediaEntry(
+				title = "3",
+				text = Option("Die Volkswagen Aktiengesellschaft ist nicht sehr umweltfreundlich."),
+				textlinks = List(Link("Volkswagen", "Volkswagen", Option(4)))
+			),
+			ParsedWikipediaEntry(
+				title = "4",
+				text = Option("Dieser Satz enthält Audi. Dieser Satz enthält Audi AG. Dieser Satz enthält Volkswagen.")
+			)
+		)
+	}
+
+	def articlesWithTrieAliases(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				title = "1",
+				text = Option("Dieser Artikel schreibt über Audi."),
+				triealiases = List(TrieAlias("Audi", Option(29))),
+				foundaliases = List("Audi")
+			),
+			ParsedWikipediaEntry(
+				title = "2",
+				text = Option("Die Audi AG ist ein Tochterunternehmen der Volkswagen AG."),
+				triealiases = List(
+					TrieAlias("Audi AG", Option(4)),
+					TrieAlias("Volkswagen AG", Option(43))
+				),
+				foundaliases = List("Audi", "Audi AG", "AG", "Volkswagen", "Volkswagen AG", "AG")
+			),
+			ParsedWikipediaEntry(
+				title = "3",
+				text = Option("Die Volkswagen Aktiengesellschaft ist nicht sehr umweltfreundlich."),
+				foundaliases = List("Volkswagen"),
+				textlinks = List(Link("Volkswagen", "Volkswagen", Option(4)))
+			),
+			ParsedWikipediaEntry(
+				title = "4",
+				text = Option("Dieser Satz enthält Audi. Dieser Satz enthält Audi AG. Dieser Satz enthält Volkswagen."),
+				triealiases = List(
+					TrieAlias("Audi", Option(20)),
+					TrieAlias("Audi AG", Option(46)),
+					TrieAlias("Volkswagen", Option(75))
+				),
+				foundaliases = List("Audi", "Audi", "Audi AG", "AG", "Volkswagen")
+			)
+		)
 	}
 }
 

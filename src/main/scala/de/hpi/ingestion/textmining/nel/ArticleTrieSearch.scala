@@ -74,8 +74,8 @@ object ArticleTrieSearch extends SparkJob {
 						}
 					}
 			}.collect {
-			case (index: Int, alias: TrieAlias) if !invalidIndices.contains(index) => alias
-		}.toList
+				case (index: Int, alias: TrieAlias) if !invalidIndices.contains(index) => alias
+			}.toList
 		article.copy(triealiases = foundAliases)
 	}
 
