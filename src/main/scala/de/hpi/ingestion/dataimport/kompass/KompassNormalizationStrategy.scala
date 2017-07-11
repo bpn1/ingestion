@@ -37,7 +37,7 @@ object KompassNormalizationStrategy extends Serializable {
 			case "gen_capital" => normalizeCapital
 			case "gen_turnover" => normalizeTurnover
 			case "gen_employees" => normalizeEmployees
-			case _ => _
+			case _ => identity
 		}
 	}
 
