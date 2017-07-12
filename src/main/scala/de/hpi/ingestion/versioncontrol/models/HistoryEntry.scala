@@ -14,10 +14,10 @@ import java.util.UUID
   */
 case class HistoryEntry(
 	id: UUID,
-	name: Option[(List[String], List[String])],
-	master: Option[(List[String], List[String])],
-	aliases: Option[(List[String], List[String])],
-	category: Option[(List[String], List[String])],
-	properties: Map[String, Option[(List[String], List[String])]],
-	relations: Map[UUID, Map[String, Option[(List[String], List[String])]]]
+	name: Option[(List[String], List[String])] = None,
+	master: Option[(List[String], List[String])] = None,
+	aliases: Option[(List[String], List[String])] = None,
+	category: Option[(List[String], List[String])] = None,
+	properties: Map[String, Option[(List[String], List[String])]] = Map(),
+	relations: Map[UUID, Map[String, Option[(List[String], List[String])]]] = Map()
 )

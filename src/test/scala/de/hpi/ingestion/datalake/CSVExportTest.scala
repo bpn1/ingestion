@@ -21,8 +21,8 @@ class CSVExportTest extends FlatSpec with Matchers with SharedSparkContext {
 	"Subjects" should "be parsed to nodes and edges" in {
 		val input = List(sc.parallelize(TestData.exportSubjects)).toAnyRDD()
 		val List(nodes, edges) = CSVExport.run(input, sc).fromAnyRDD[String]().map(_.collect.toSet)
-		val expectedNodeCSV = TestData.exportedNodeCSV.toSet
-		val expectedEdgeCSV = TestData.exportedEdgeCSV.toSet
+		val expectedNodeCSV = TestData.exportedMasterNodeCSV.toSet
+		val expectedEdgeCSV = TestData.exportedMasterEdgeCSV.toSet
 		nodes shouldEqual expectedNodeCSV
 		edges shouldEqual expectedEdgeCSV
 	}

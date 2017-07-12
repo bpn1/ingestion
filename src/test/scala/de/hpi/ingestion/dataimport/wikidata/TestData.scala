@@ -150,6 +150,24 @@ object TestData {
 			"Q4" -> List("Entry 4"))
 	}
 
+	def reducableClassMaps(): List[Map[String, List[String]]] = {
+		List(
+			Map(
+				"Q1" -> List("Entry 4", "Entry 3", "Entry 1"),
+				"Q4" -> List("Entry 4", "Entry 3")
+			),
+			Map(
+				"Q1" -> List("Entry 4", "Entry 3", "Entry 1", "Entry 0"),
+				"Q3" -> List("Entry 4", "Entry 3", "Entry 1"),
+				"Q4" -> List("Entry 4")
+			),
+			Map(
+				"Q3" -> List("Entry 4", "Entry 3"),
+				"Q4" -> List("Entry 4", "Entry 1")
+			)
+		)
+	}
+
 	def validInstanceOfProperties(): List[SubclassEntry] = {
 		List(SubclassEntry("Q2", "Entry 2", Map("instance of" -> List("Q1"))))
 	}

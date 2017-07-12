@@ -7,6 +7,7 @@ import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
 import play.api.libs.json.{JsValue, Json}
 import scala.io.Source
 
+// scalastyle:off line.size.limit
 object TestData {
 
 	val timeFormatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSSZZZZZ")
@@ -282,4 +283,24 @@ object TestData {
 				Map("test property" -> dataLists().head),
 				Map(UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> dataLists()(1)))))
 	}
+
+	def historyEntriesWithMaster(): List[HistoryEntry] = {
+		List(
+			HistoryEntry(
+				id = UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				master = Option((List("465b3a7a-c621-42ad-a4f2-34e229602989"), List("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252")))
+			)
+		)
+	}
+
+	def subjectDiffWithMaster(): List[SubjectDiff] = {
+		val (oldV, newV) = TestData.versionsToCompare()
+		List(
+			SubjectDiff(
+				oldV, newV, UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				master = Option("{\"+\":[\"0bb8d6e1-998d-4a8b-8516-c68a4cb4c252\"],\"-\":[\"465b3a7a-c621-42ad-a4f2-34e229602989\"]}")
+			)
+		)
+	}
 }
+// scalastyle:on line.size.limit

@@ -122,31 +122,6 @@ object AliasTrieSearch extends SparkJob {
 	}
 
 	/**
-	  * Extracts the context of a found alias from the tokenized text and returns a Bag of words of this context.
-	  *
-	  * @param alias tokenized alias
-	  * @param text  tokenized text
-	  * @param index offset of the tokenized alias in the tokenized text
-	  * @return Bag of words of the context of the alias
-	  */
-	def extractAliasContext(
-		alias: List[OffsetToken],
-		text: List[OffsetToken],
-		index: Int,
-		contextTokenizer: IngestionTokenizer,
-		settings: Map[String, String] = this.settings
-	): Bag[String, Int] = {
-		val contextSize = settings("contextSize").toInt
-		val contextStart = Math.max(index - contextSize, 0)
-		val preAliasContext = text.slice(contextStart, index)
-		val aliasEndIndex = index + alias.length
-		val contextEnd = Math.min(aliasEndIndex + contextSize, text.length)
-		val postAliasContext = text.slice(aliasEndIndex, contextEnd)
-		val context = (preAliasContext ++ postAliasContext).map(_.token)
-		Bag.extract(contextTokenizer.process(context))
-	}
-
-	/**
 	  * Removes empty aliases from the given list of aliases.
 	  *
 	  * @param aliases List of aliases found in an article

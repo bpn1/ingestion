@@ -19,6 +19,12 @@ class TagEntitiesTest extends FlatSpec with SharedSparkContext with Matchers {
 		classMap shouldEqual expectedMap
 	}
 
+	it should "be properly reduced" in {
+		val reducedSubclasses = TestData.reducableClassMaps().reduce(TagEntities.mergeSubclassMaps)
+		val expectedSubclasses = TestData.classMap()
+		reducedSubclasses shouldEqual expectedSubclasses
+	}
+
 	"Wikidata entity" should "be properly translated into SubclassEntry" in {
 		val entries = TestData.classWikidataEntities()
 		    .map(TagEntities.translateToSubclassEntry)
