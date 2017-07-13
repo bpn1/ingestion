@@ -56,7 +56,7 @@ object ClassifierTraining extends SparkJob {
 //		model
 //			.asInstanceOf[RDD[Option[PipelineModel]]]
 //			.first
-//			.foreach(_.save(s"wikipedia_tuned_df_gbt_${System.currentTimeMillis()}"))
+//			.foreach(_.save(s"wikipedia_tuned_df_randomforest_${System.currentTimeMillis()}"))
 	}
 	// $COVERAGE-ON$
 
@@ -144,12 +144,12 @@ object ClassifierTraining extends SparkJob {
 			.fit(training)
 
 		// gradient boost
-		val gbt = new GBTClassifier()
-			.setLabelCol("indqexedLabel")
-			.setFeaturesCol("indexedFeatures")
-			.setMaxIter(iter)
-			.setMaxBins(40)
-			.setMaxDepth(6)
+//		val gbt = new GBTClassifier()
+//			.setLabelCol("indqexedLabel")
+//			.setFeaturesCol("indexedFeatures")
+//			.setMaxIter(iter)
+//			.setMaxBins(40)
+//			.setMaxDepth(6)
 
 		val labelConverter = new IndexToString()
 			.setInputCol("prediction")
@@ -157,8 +157,8 @@ object ClassifierTraining extends SparkJob {
 			.setLabels(labelIndexer.labels)
 
 		val pipeline = new Pipeline()
-//			.setStages(Array(labelIndexer, featureIndexer, classifier, labelConverter))
-			.setStages(Array(labelIndexer, featureIndexer, gbt, labelConverter))
+			.setStages(Array(labelIndexer, featureIndexer, classifier, labelConverter))
+//			.setStages(Array(labelIndexer, featureIndexer, gbt, labelConverter))
 		pipeline.fit(training)
 	}
 
@@ -194,7 +194,7 @@ object ClassifierTraining extends SparkJob {
 			}.reduceByKey(_ + _)
 			.collect
 			.toMap
-//		println(s"\npn count:\n${pnCount.mkString("\n")}")
+		println(s"\npn count:\n${pnCount.mkString("\n")}")
 		val tp = pnCount.getOrElse("tp", 0)
 		val fp = pnCount.getOrElse("fp", 0)
 		val fn = pnCount.getOrElse("fn", 0)
@@ -315,21 +315,33 @@ object ClassifierTraining extends SparkJob {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
 		val (training, test) = trainingSplit(entries, session)
 
-		val statistics = (1 to 20).map { i =>
-			val iter = i * 5
-			val classifier = randomForestClassifier(maxDepth = 6, maxBins = 40, numTrees = 20)
-			val model = trainRandomForestDF(training, classifier, iter)
+		val statistics = (1 to 30).map { i =>
+			val thresh = i.toDouble / 2.0
+			val classifier = randomForestClassifier(
+				maxDepth = 6,
+				maxBins = 40,
+				numTrees = 20,
+				thresholds = Array(thresh, 1.0))
+			val model = trainRandomForestDF(training, classifier)
 			val predictions = model.transform(test)
 			val predictionAndLabels = predictions.rdd.map { row =>
 				val prediction = row.getDouble(row.fieldIndex("prediction"))
 				val label = row.getDouble(row.fieldIndex("indexedLabel"))
 				(prediction, label)
 			}
-			calculateStatistics(predictionAndLabels).copy(threshold = iter)
+			calculateStatistics(predictionAndLabels).copy(threshold = thresh)
 		}.toList
+//		val classifier = randomForestClassifier(maxDepth = 6, maxBins = 40, numTrees = 20)
+//		val model = trainRandomForestDF(training, classifier)
+//		val predictions = model.transform(test)
+//		val predictionAndLabels = predictions.rdd.map { row =>
+//			val prediction = row.getDouble(row.fieldIndex("prediction"))
+//			val label = row.getDouble(row.fieldIndex("indexedLabel"))
+//			(prediction, label)
+//		}
 //		val statistics = List(calculateStatistics(predictionAndLabels))
-		val comment = "GBT variable maxIterations"
-		val results = SimilarityMeasureStats(data = statistics, comment = Option(comment), xaxis = Option("max Iter"))
+		val comment = "RF w/ filtered company triehits and variable threshold"
+		val results = SimilarityMeasureStats(data = statistics, comment = Option(comment), xaxis = Option("threshold"))
 //		val modelOption = sc.parallelize(List(Option(model)))
 		val modelOption = sc.parallelize(List(None))
 		List(sc.parallelize(List(results))).toAnyRDD() ++ List(modelOption).toAnyRDD()

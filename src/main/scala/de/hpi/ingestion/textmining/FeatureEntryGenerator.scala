@@ -42,8 +42,7 @@ object FeatureEntryGenerator extends SparkJob {
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
 			.fromAnyRDD[FeatureEntry]()
-			.head
-			.saveToCassandra(settings("keyspace"), "featureentries_testing2")
+		    .foreach(_.saveToCassandra(settings("keyspace"), "featureentries_testing2"))
 	}
 	// $COVERAGE-ON$
 
@@ -64,7 +63,9 @@ object FeatureEntryGenerator extends SparkJob {
 				.join(leanArticles)
 				.values
 				.values
-		val companyInput = List(tfidf, aliases) ++ List(companyArticles).toAnyRDD() ++ List(articleCount)
-		CosineContextComparator.run(companyInput, sc, args)
+		companyArticles.randomSplit(Array(1.0, 1.0)).flatMap { split =>
+			val companyInput = List(tfidf, aliases) ++ List(split).toAnyRDD() ++ List(articleCount)
+			CosineContextComparator.run(companyInput, sc, args)
+		}.toList
 	}
 }

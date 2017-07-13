@@ -90,9 +90,11 @@ object AliasTrieSearch extends SparkJob {
 			.findAliases(trieAliasArticle, tokenizer, trie)
 			.triealiases
 			.filterNot { alias =>
-				val isLink = entry.textlinks.exists(link => link.offset == alias.offset && link.alias == alias.alias)
+				val isLink = entry.textlinks.exists(_.offset == alias.offset)
 				val isExLink = entry.extendedlinks().exists(_.offset == alias.offset)
-				isLink || isExLink
+				val isStopword = tokenizer.stopwords.contains(alias.alias)
+				val isSymbol = Set(".", "!", "?", ",", ";", ":", "(", ")", "*", "#", "+").contains(alias.alias)
+				isLink || isExLink || isStopword || isSymbol
 			}
 		val resultList = ListBuffer[List[OffsetToken]]()
 		var contextAliases = List[TrieAlias]()
@@ -121,31 +123,6 @@ object AliasTrieSearch extends SparkJob {
 					entry.getText().substring(begin.get, end.get)
 			}.toList
 		entry.copy(foundaliases = cleanFoundAliases(foundAliases), triealiases = trieAliases)
-	}
-
-	/**
-	  * Extracts the context of a found alias from the tokenized text and returns a Bag of words of this context.
-	  *
-	  * @param alias tokenized alias
-	  * @param text  tokenized text
-	  * @param index offset of the tokenized alias in the tokenized text
-	  * @return Bag of words of the context of the alias
-	  */
-	def extractAliasContext(
-		alias: List[OffsetToken],
-		text: List[OffsetToken],
-		index: Int,
-		contextTokenizer: IngestionTokenizer,
-		settings: Map[String, String] = this.settings
-	): Bag[String, Int] = {
-		val contextSize = settings("contextSize").toInt
-		val contextStart = Math.max(index - contextSize, 0)
-		val preAliasContext = text.slice(contextStart, index)
-		val aliasEndIndex = index + alias.length
-		val contextEnd = Math.min(aliasEndIndex + contextSize, text.length)
-		val postAliasContext = text.slice(aliasEndIndex, contextEnd)
-		val context = (preAliasContext ++ postAliasContext).map(_.token)
-		Bag.extract(contextTokenizer.process(context))
 	}
 
 	/**
