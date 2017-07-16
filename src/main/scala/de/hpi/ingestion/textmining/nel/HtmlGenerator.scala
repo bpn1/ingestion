@@ -13,6 +13,7 @@ import com.datastax.spark.connector._
 object HtmlGenerator extends SparkJob {
 	appName = "HTML Generator"
 	configFile = "textmining.xml"
+	val defaultTitle = "*** No title ***"
 
 	// $COVERAGE-OFF$
 	/**
@@ -47,7 +48,9 @@ object HtmlGenerator extends SparkJob {
 	  * @return HTML containing links
 	  */
 	def generateArticleWithLinks(article: TrieAliasArticle): Article = {
-		val title = article.title.getOrElse("*** No title ***")
+		val title = article.title
+			.filter(_.nonEmpty)
+			.getOrElse(defaultTitle)
 		var html = s"<h1>$title</h1>\n"
 		val text = article.getText
 		var processedCharacters = 0

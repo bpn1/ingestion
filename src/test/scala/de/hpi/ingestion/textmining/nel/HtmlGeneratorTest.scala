@@ -36,7 +36,7 @@ class HtmlGeneratorTest extends FlatSpec with SharedSparkContext with Matchers {
 		val articles = sc.parallelize(TestData.articlesWithFoundLinks().toList)
 		val input = List(articles).toAnyRDD()
 		val originalTexts = articles
-			.map(article => article.title.getOrElse("*** No title ***") + "\n" + article.getText)
+			.map(article => article.title.getOrElse(HtmlGenerator.defaultTitle) + "\n" + article.getText)
 			.collect
 			.toSet
 		val texts = HtmlGenerator.run(input, sc)
