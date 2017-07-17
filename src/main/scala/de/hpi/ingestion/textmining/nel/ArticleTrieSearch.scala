@@ -59,7 +59,7 @@ object ArticleTrieSearch extends SparkJob {
 		val tokens = tokenizer.processWithOffsets(text)
 		var invalidIndices = Set.empty[Int]
 		val stopwords = IngestionTokenizer(true, false).stopwords
-		val invalidAliases = stopwords ++ List("(", ")", ".", ":", "*")
+		val invalidAliases = stopwords ++ Set(".", "!", "?", ",", ";", ":", "(", ")", "*", "#", "+")
 		val foundAliases = tokens
 			.indices
 			.flatMap { i =>
