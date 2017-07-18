@@ -63,7 +63,7 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 		strategies: Map[String, List[String]],
 		classifier: AClassifier[Tag]
 	): Subject = {
-		val subject = Subject()
+		val subject = Subject.empty(datasource = "kompass")
 		val sm = new SubjectManager(subject, version)
 
 		sm.setCategory(entity.instancetype)
