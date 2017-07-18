@@ -31,7 +31,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		"health maintenance organization" -> "business",
 		"non-governmental organization" -> "business",
 		"company" -> "business",
-		"state" -> "business",
+		"state" -> "country",
 		"environmental organization" -> "business",
 		"association" -> "business",
 		"enterprise" -> "business",
@@ -41,7 +41,10 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		"media company" -> "business",
 		"chamber of commerce" -> "business",
 		"copyright collective" -> "business",
-		"business enterprise" -> "business"
+		"business enterprise" -> "business",
+		"local government in Germany" -> "city",
+		"statutory corporation" -> "organization",
+		"municipality of Germany" -> "city"
 	)
 
 	// $COVERAGE-OFF$
@@ -71,7 +74,7 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		strategies: Map[String, List[String]],
 		classifier: AClassifier[Tag]
 	): Subject = {
-		val subject = Subject()
+		val subject = Subject.empty(datasource = "wikidata")
 		val sm = new SubjectManager(subject, version)
 
 		sm.setName(entity.label)

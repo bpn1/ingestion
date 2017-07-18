@@ -70,7 +70,7 @@ object VersionRestore extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val version = UUID.fromString(args(0))
-		val templateVersion = Version(appName, List("history"), sc, timestampName = false)
+		val templateVersion = Version(appName, List("history"), sc, false, Option(outputTablename))
 		input
 			.fromAnyRDD[Subject]()
 			.map(_.map(restoreSubjects(_, version, templateVersion)))
