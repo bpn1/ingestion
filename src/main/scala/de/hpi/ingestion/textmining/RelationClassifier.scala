@@ -7,14 +7,18 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.ClassifierTraining.{averageStatistics, calculateStatistics}
 import de.hpi.ingestion.textmining.models.{Cooccurrence, RelationPrediction, Sentence}
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkContext, sql}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.mllib.feature.{HashingTF, IDF}
-import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel, SVMWithSGD}
+import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
+import org.apache.spark.mllib.classification.{LogisticRegressionWithLBFGS, NaiveBayes, NaiveBayesModel, SVMWithSGD}
+import org.apache.spark.ml.classification.{LogisticRegression, RandomForestClassifier}
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.RandomForest
 import org.apache.spark.mllib.tree.model.RandomForestModel
 import de.hpi.ingestion.implicits.TupleImplicits._
+import org.apache.spark.ml.linalg.DenseVector
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.functions.udf
 
 import scala.collection.mutable.ListBuffer
 
@@ -70,21 +74,25 @@ object RelationClassifier extends SparkJob {
 	def parseBagOfWordsForRelations(
 		relations: RDD[Relation],
 		sentences: RDD[Sentence],
+		cooccurrences: RDD[Set[String]],
 		rel: Set[String]
 	): RDD[(Double, List[String])] = {
+		val blacklist = cooccurrences.collect.toSet
 		relations
 			.map(rel => (Set(rel.subjectentity, rel.objectentity), rel.relationtype))
 			.collect {
 				case (entities, relation) if rel.contains(relation) => (entities, 1.0)
 			}
-			.distinct
+
+	    	.distinct
 			.join(
 				sentences
+//					.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
 					.map(sentence => (sentence.entities.map(_.entity).toSet, sentence.bagofwords))
 			)
 			.map { case (entities, (label, bagOfWords)) => (entities, bagOfWords)}
-	    	.reduceByKey(_ ++ _)
-	    	.map{ case (entities, bagsOfWords) => (1.0, bagsOfWords) }
+			.reduceByKey(_ ++ _)
+			.map{ case (entities, bagsOfWords) => (1.0, bagsOfWords) }
 	}
 
 	/**
@@ -98,8 +106,10 @@ object RelationClassifier extends SparkJob {
 	def parseBagOfWordsWithNORelations(
 		relations: RDD[Relation],
 		sentences: RDD[Sentence],
+		cooccurrences: RDD[Set[String]],
 		rel: Set[String]
 	): RDD[(Double, List[String])] = {
+		val blacklist = cooccurrences.collect.toSet
 		sentences.subtract(
 			relations
 				.map(rel => (Set(rel.subjectentity, rel.objectentity), rel.relationtype))
@@ -110,8 +120,9 @@ object RelationClassifier extends SparkJob {
 					sentences
 						.map(sentence => (sentence.entities.map(_.entity).toSet, sentence))
 				)
-				.map { case (key, (relation, sentence)) => sentence }
-		)
+				.map { case (key, (relation, sentence)) => sentence}
+			)
+	    	.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
 			.map(sentence => (sentence.entities.map(_.entity), sentence.bagofwords))
 			.reduceByKey(_ ++ _)
 			.map{ case (entities, bagsOfWords) => (0.0, bagsOfWords) }
@@ -145,11 +156,20 @@ object RelationClassifier extends SparkJob {
 	  * @return list of average statistics for model
 	  */
 	def crossValidate(
-		data: RDD[LabeledPoint],
+		data: sql.DataFrame,
 		numFolds: Int
 	): List[PrecisionRecallDataTuple] = {
+		val numNegatives = data.filter(data("label") === 0).count
+		val datasetSize = data.count
+		val balancingRatio = (datasetSize - numNegatives).toDouble / datasetSize
+		val calculateWeights = udf { d: Double =>
+			if (d == 0.0) {1 * balancingRatio}
+			else {(1 * (1.0 - balancingRatio))}
+		}
+
+		val weightedDataset = data.withColumn("classWeightCol", calculateWeights(data("label")))
 		val weights = (0 until numFolds).map(t => 1.0 / numFolds).toArray
-		val folds = data.randomSplit(weights)
+		val folds = weightedDataset .randomSplit(weights)
 		val segments = folds.indices.map { index =>
 			val test = folds(index)
 			val training = folds.slice(0, index) ++ folds.slice(index + 1, folds.length)
@@ -158,13 +178,28 @@ object RelationClassifier extends SparkJob {
 		segments
 			.map { case (test, trainingList) =>
 				val training = trainingList.reduce(_.union(_))
-				val model = trainNaiveBayes(training)
+//				val model = trainNaiveBayes(training)
 				//				val model = trainRandomForest(training.map(_._2))
 				//				val model = SVMWithSGD.train(training.map(_._2), 100)
-				val entitiesPredictionAndLabels = test.map { case LabeledPoint(label, features) =>
-					val prediction = model.predict(features)
-					(prediction, label)
-				}
+//				val model = new LogisticRegression()
+//					.setWeightCol("classWeightCol")
+//					.setLabelCol("label")
+//					.setFeaturesCol("features")
+				val model = new RandomForestClassifier()
+					.setLabelCol("label")
+					.setFeaturesCol("features")
+					.setNumTrees(20)
+					.setImpurity("gini")
+					.setMaxBins(40)
+					.setMaxDepth(6)
+					.setThresholds(Array(1 * (1.0 - balancingRatio), 1 * balancingRatio))
+					.setFeatureSubsetStrategy("auto")
+				var trained = model.fit(training)
+				val predictions = trained.transform(test)
+				val entitiesPredictionAndLabels  = predictions
+					.select("prediction", "label")
+					.rdd
+					.map(x => (x(0).asInstanceOf[Double], x(1).asInstanceOf[Double]))
 				calculateStatistics(entitiesPredictionAndLabels)
 			}
 			.toList
@@ -209,23 +244,17 @@ object RelationClassifier extends SparkJob {
 	}
 
 	def calculateLabeledHashTFIDF(
-		relationsWithBagOfWords: RDD[(Double, List[String])],
-		noRelationsBagOfWords: RDD[(Double, List[String])]
-	): RDD[LabeledPoint] = {
-		val hashingTF = new HashingTF(100000)
-		val tf = (relationsWithBagOfWords ++ noRelationsBagOfWords).map { case (label, bagsOfWords) =>
-			val tf = hashingTF.transform(bagsOfWords)
-			(label, tf)
-		}
-
+		relationsWithBagOfWords: sql.DataFrame
+	): sql.DataFrame = {
+		val hashingTF = new HashingTF()
+			.setInputCol("words").setOutputCol("rawFeatures").setNumFeatures(10000)
+		val featurizedData = hashingTF.transform(relationsWithBagOfWords)
 		// While applying HashingTF only needs a single pass to the data, applying IDF needs two passes:
 		// First to compute the IDF vector and second to scale the term frequencies by IDF.
-		tf.cache()
-		val idf = new IDF().fit(tf.map(_._2))
-		tf.map { case (label, tf) =>
-			val tfidf = idf.transform(tf)
-			LabeledPoint(label, tfidf)
-		}
+		val idf = new IDF().setInputCol("rawFeatures").setOutputCol("features")
+		val idfModel = idf.fit(featurizedData)
+
+		idfModel.transform(featurizedData)
 	}
 
 	/**
@@ -242,19 +271,25 @@ object RelationClassifier extends SparkJob {
 		val relations = input.fromAnyRDD[Relation]()(1)
 			.filter(relation => relation.subjectentity != relation.objectentity)
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]()(2)
-		var comment = "naive base, aggregated relations, undirected, bag of words stemmed, 10 folds"
+			.map(cooc => (cooc.entitylist.toSet, cooc.count))
+			.reduceByKey(_ + _)
+		var comment = "BA Testing random forest, aggregated, undirected, bag of words stemmed, 10 folds, minCooc really 1, real"
 		val rels = Set(
 			Set("parentCompany", "owningCompany", "subsidiary", "division")
 			//			, Set("successor", "predecessor")
 		)
 		val stats = rels.map { rel =>
-			val relationsWithBagOfWords = parseBagOfWordsForRelations(relations, sentences, rel)
-			val noRelationsBagOfWords = parseBagOfWordsWithNORelations(relations, sentences, rel)
-
-			val labeledTfidf = calculateLabeledHashTFIDF(relationsWithBagOfWords, noRelationsBagOfWords)
+			val minCooc = cooccurrences.filter(_._2 <= 1).map(_._1)
+			val relationsWithBagOfWords = parseBagOfWordsForRelations(relations, sentences, minCooc, rel)
+			val noRelationsBagOfWords = parseBagOfWordsWithNORelations(relations, sentences, minCooc, rel)
+			val sqlContext = new SQLContext(sc)
+			import sqlContext.implicits._
+			val labeledTfidf = calculateLabeledHashTFIDF(
+				(relationsWithBagOfWords ++ noRelationsBagOfWords).toDF("label", "words")
+			)
 
 			val data = crossValidate(labeledTfidf, 10)
-				RelationClassifierStats(
+  				RelationClassifierStats(
 					rel = "owns",
 					sentenceswithrelation = relationsWithBagOfWords.count.toInt,
 					sentenceswithnorelation = noRelationsBagOfWords.count.toInt,

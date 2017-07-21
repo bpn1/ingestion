@@ -52,7 +52,6 @@ object ClassifierTraining extends SparkJob {
 			.first
 			.foreach(_.save(sc, s"wikipedia_randomforest_model_${System.currentTimeMillis()}"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
@@ -102,20 +101,21 @@ object ClassifierTraining extends SparkJob {
 		predictionAndLabels: RDD[(Double, Double)],
 		beta: Double = 1.0
 	): PrecisionRecallDataTuple = {
-		val metrics = new BinaryClassificationMetrics(predictionAndLabels)
-		val precision = metrics.precisionByThreshold()
-			.filter(_._1 == 1.0)
-			.values
-			.first
-		val recall = metrics.recallByThreshold()
-			.filter(_._1 == 1.0)
-			.values
-			.first
-		val f1score = metrics.fMeasureByThreshold(beta)
-			.filter(_._1 == 1.0)
-			.values
-			.first
-		PrecisionRecallDataTuple(1.0, precision, recall, f1score)
+		val pnCount = predictionAndLabels
+			.map { case (prediction, label) =>
+				val trueOrFalse = if(prediction == label) "t" else "f"
+				val positiveOrNegative = if(prediction == 1.0) "p" else "n"
+				(s"$trueOrFalse$positiveOrNegative", 1)
+			}.reduceByKey(_ + _)
+			.collect
+			.toMap
+		val tp = pnCount.getOrElse("tp", 0)
+		val fp = pnCount.getOrElse("fp", 0)
+		val fn = pnCount.getOrElse("fn", 0)
+		val precision = tp.toDouble / (tp + fp).toDouble
+		val recall = tp.toDouble / (tp + fn).toDouble
+		val fMeasure = ((1.0 + beta * beta) * precision * recall) / ((beta * beta * precision) + recall)
+		PrecisionRecallDataTuple(1.0, precision, recall, fMeasure)
 	}
 
 	/**
@@ -164,7 +164,7 @@ object ClassifierTraining extends SparkJob {
 	def averageStatistics(stats: List[PrecisionRecallDataTuple]): PrecisionRecallDataTuple = {
 		val n = stats.length
 		val threshold = stats.headOption.map(_.threshold).getOrElse(1.0)
-		stats.map { case PrecisionRecallDataTuple(threshold, precision, recall, fscore) =>
+		stats.map { case PrecisionRecallDataTuple(statThreshold, precision, recall, fscore) =>
 			(precision, recall, fscore)
 		}.unzip3 match {
 			case (precision, recall, fscore) =>

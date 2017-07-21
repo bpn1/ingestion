@@ -13,7 +13,9 @@ import org.apache.spark.rdd.RDD
 // scalastyle:off line.size.limit
 // scalastyle:off number.of.methods
 object TestData {
+	val datasource = "testSource"
 	val idList = List.fill(8)(UUID.randomUUID())
+	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false, None)
 
 	def bucketsList: Map[Int, List[Double]] = Map(
 		10 -> List(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0),
@@ -52,12 +54,12 @@ object TestData {
 		))
 	}
 
-	def trainingCandidates(sc: SparkContext): RDD[DuplicateCandidates] = {
+	def trainingCandidates(sc: SparkContext): RDD[Duplicates] = {
 		sc.parallelize(Seq(
-			DuplicateCandidates(idList.head, List((idList(1), "test", 0.7))),
-			DuplicateCandidates(idList(2), List((idList(3), "test", 0.8))),
-			DuplicateCandidates(idList(4), List((idList(7), "test", 0.5))),
-			DuplicateCandidates(idList(6), List((idList(5), "test", 0.6)))
+			Duplicates(idList.head, Option("test0"), "Source", List(Candidate(idList(1), Option("test1"), 0.7))),
+			Duplicates(idList(2), Option("test2"), "Source", List(Candidate(idList(3), Option("test3"), 0.8))),
+			Duplicates(idList(4), Option("test4"), "Source", List(Candidate(idList(7), Option("test7"), 0.5))),
+			Duplicates(idList(6), Option("test6"), "Source", List(Candidate(idList(5), Option("test5"), 0.6)))
 		))
 	}
 
@@ -105,34 +107,54 @@ object TestData {
 
 	val dbpediaList = List(
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("dbpedia_1"),
 			properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List("Q1"))
 		),
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("dbpedia_2"),
 			properties = Map("id_dbpedia" -> List("dbpedia_2"), "id_wikidata" -> List("Q2"))
 		),
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("dbpedia_3"),
 			properties = Map("id_wikidata" -> List("Q3"))
 		),
-		Subject(name = Option("dbpedia_4"))
+		Subject(
+			master = null,
+			datasource = datasource,
+			name = Option("dbpedia_4")
+		)
 	)
 
 	val wikidataList = List(
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("wikidata_1"),
 			properties = Map("id_dbpedia" -> List("dbpedia_1"), "id_wikidata" -> List(""))
 		),
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("wikidata_2"),
 			properties = Map("id_dbpedia" -> List("dbpedia_2"), "id_wikidata" -> List("Q2"))
 		),
 		Subject(
+			master = null,
+			datasource = datasource,
 			name = Option("wikidata_3"),
 			properties = Map("id_dbpedia" -> List("dbpedia_3"), "id_wikidata" -> List("Q3"))
 		),
-		Subject(name = Option("wikidata_4"))
+		Subject(
+			master = null,
+			datasource = datasource,
+			name = Option("wikidata_4")
+		)
 	)
 
 	def propertyKeyDBpedia(sc: SparkContext): RDD[(String, Subject)] = {
@@ -165,10 +187,6 @@ object TestData {
 		))
 	}
 
-	def emptySubject: Subject = Subject()
-
-	def testVersion(sc: SparkContext): Version = Version("SomeTestApp", Nil, sc, false)
-
 	def filteredDuplicates(sc: SparkContext): RDD[(Subject, Subject, Double)] = {
 		sc.parallelize(Seq(
 			(subjects.head, stagings.head, 0.9769230769230769),
@@ -200,17 +218,20 @@ object TestData {
 		)
 	}
 
-
-	def createdDuplicateCandidates(subjects: List[Subject], stagings: List[Subject]): List[DuplicateCandidates] = {
+	def createdDuplicateCandidates(subjects: List[Subject], stagings: List[Subject]): List[Duplicates] = {
 		val stagingTable = "subject_wikidata"
 		List(
-			DuplicateCandidates(
+			Duplicates(
 				subjects.head.id,
-				List((stagings.head.id, stagingTable, 0.9769230769230769))
+				subjects.head.name,
+				stagingTable,
+				List(Candidate(stagings.head.id, stagings.head.name, 0.9769230769230769))
 			),
-			DuplicateCandidates(
+			Duplicates(
 				subjects(1).id,
-				List((stagings(1).id, stagingTable, 1.0), (stagings.head.id, stagingTable, 0.5))
+				subjects(1).name,
+				stagingTable,
+				List(Candidate(stagings(1).id, stagings(1).name, 1.0), Candidate(stagings.head.id, stagings.head.name, 0.5))
 			)
 		)
 	}
@@ -276,32 +297,22 @@ object TestData {
 		))
 	}
 
-	def trueDuplicateCandidates(subjects: List[Subject], stagings: List[Subject]): List[DuplicateCandidates] = {
+	def trueDuplicates(subjects: List[Subject], stagings: List[Subject]): List[Duplicates] = {
 		val stagingTable = "subject_wikidata"
 		List(
-			DuplicateCandidates(
+			Duplicates(
 				subjects.head.id,
-				List((stagings.head.id, stagingTable, 0.9769230769230769))
+				subjects.head.name,
+				stagingTable,
+				List(Candidate(stagings.head.id, stagings.head.name, 0.9769230769230769))
 			),
-			DuplicateCandidates(
+			Duplicates(
 				subjects(1).id,
-				List((stagings(1).id, stagingTable, 1.0))
+				subjects(1).name,
+				stagingTable,
+				List(Candidate(stagings(1).id, stagings(1).name, 1.0))
 			)
 		)
-	}
-
-	def duplicateCandidates(subjects: List[Subject]): List[DuplicateCandidates] = {
-		val stagingTable = "subject_wikidata"
-		List(
-			DuplicateCandidates(
-				subjects.head.id,
-				List((subjects(1).id, stagingTable, 0.9784615384615384), (subjects(4).id, stagingTable, 0.5761904761904763))),
-			DuplicateCandidates(
-				subjects(1).id,
-				List((subjects(4).id, stagingTable, 0.5654212454212454))),
-			DuplicateCandidates(
-				subjects(2).id,
-				List((subjects(3).id, stagingTable, 0.9446913580246914))))
 	}
 
 	def testConfig(attribute: String = "name"): List[AttributeConfig] = List(
@@ -327,19 +338,14 @@ object TestData {
 		MongeElkan.compare("Volkswagen", "Volkswagen AG")
 	}
 
-	def complexTestConfigScore: Double = {
-		val name = (MongeElkan.compare("Volkswagen", "Volkswagen AG") * 0.5 + JaroWinkler.compare("Volkswagen", "Volkswagen AG") * 0.5) * 0.7
-		val city = Jaccard.compare("Berlin", "Berlin") * 0.1
-		val income = RelativeNumbersSimilarity.compare("1234", "12") * 0.1
-		name + city + income
-	}
+	def complexTestConfigScore: Double = 0.7439095102628327
 
-	def testCompareScore(subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String], scoreConfig: SimilarityMeasureConfig[String, SimilarityMeasure[String]]): Double = {
-		simMeasure.compare(subject1.name.get, subject2.name.get, scoreConfig.scale) * scoreConfig.weight
+	def testCompareScore(attribute: String, subject1: Subject, subject2: Subject, simMeasure: SimilarityMeasure[String], scoreConfig: SimilarityMeasureConfig[String, SimilarityMeasure[String]]): Double = {
+		simMeasure.compare(subject1.get(attribute).head, subject2.get(attribute).head, scoreConfig.scale) * scoreConfig.weight
 	}
 
 	def expectedCompareStrategies: List[(List[String], List[String], SimilarityMeasureConfig[String, SimilarityMeasure[String]]) => Double] = List(
-			CompareStrategy.singleStringCompare, CompareStrategy.defaultCompare
+		CompareStrategy.caseInsensitiveCompare, CompareStrategy.singleStringCompare, CompareStrategy.defaultCompare
 	)
 
 	def testCompareInput: (List[String], List[String], SimilarityMeasureConfig[String, SimilarityMeasure[String]]) = {
@@ -358,15 +364,21 @@ object TestData {
 	}
 
 	def subjects: List[Subject] = List(
-		Subject(id = UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52;11"), "gen_income" -> List("1234"))),
-		Subject(id = UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52;13"), "gen_income" -> List("33"))),
-		Subject(id = UUID.fromString("c9621786-1cce-45bf-968a-3e8d06e16fda"), name = Some("Porsche"), properties = Map("geo_coords" -> List("52;13"), "gen_sectors" -> List("cars", "music", "games"))),
-		Subject(id = UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), name = Some("Ferrari"), properties = Map("geo_coords" -> List("53;14"), "gen_sectors" -> List("games", "cars", "music")))
+		Subject(id = UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), master = null, datasource = datasource, name = Some("Volkswagen"), properties = Map("geo_city" -> List("Berlin", "Hamburg"), "geo_coords" -> List("52.1234;11.5677"), "geo_postal" -> List("1234"), "gen_income" -> List("1234"))),
+		Subject(id = UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"), master = null, datasource = datasource, name = Some("Audi GmbH"), properties = Map("geo_city" -> List("Berlin"), "geo_coords" -> List("52.1234;13.1234"), "geo_postal" -> List("1256"), "gen_income" -> List("33"))),
+		Subject(id = UUID.fromString("c9621786-1cce-45bf-968a-3e8d06e16fda"), master = null, datasource = datasource, name = Some("Porsche"), properties = Map("geo_coords" -> List("52.2345;13.6789"), "geo_postal" -> List("1904"), "gen_sectors" -> List("cars", "music", "games"))),
+		Subject(id = UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), master = null, datasource = datasource, name = Some("Ferrari"), properties = Map("gen_sectors" -> List("games", "cars", "music"), "geo_postal" -> List("2222")))
+	)
+
+	def subjectsStartingWithThe: List[Subject] = List(
+		Subject(master = null, datasource = datasource, name = Some("The HPI")),
+		Subject(master = null, datasource = datasource, name = Some("The University")),
+		Subject(master = null, datasource = datasource, name = Some("Volkswagen"))
 	)
 
 	def stagings: List[Subject] = List(
-		Subject(id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"), name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "gen_income" -> List("12"))),
-		Subject(id = UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"), name = Some("Audi GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53;14"), "gen_income" -> List("600")))
+		Subject(id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"), master = null, datasource = datasource, name = Some("Volkswagen AG"), properties = Map("geo_city" -> List("Berlin", "New York"), "geo_postal" -> List("1414"), "gen_income" -> List("12"))),
+		Subject(id = UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"), master = null, datasource = datasource, name = Some("Audi GmbH"), properties = Map("geo_city" -> List("New York", "Hamburg"), "geo_coords" -> List("53;14"), "geo_postal" -> List("8888"), "gen_income" -> List("600")))
 	)
 
 	def goldStandard(subjects: List[Subject], stagings: List[Subject]): Set[(UUID, UUID)] = Set(
@@ -387,10 +399,10 @@ object TestData {
 			(("Hamburg", "GeoBlocking"), subjects.head),
 			(("undefined", "GeoBlocking"), subjects(2)),
 			(("undefined", "GeoBlocking"), subjects(3)),
-			(("Volks", "SimpleBlocking"), subjects.head),
-			(("Audi ", "SimpleBlocking"), subjects(1)),
-			(("Porsc", "SimpleBlocking"), subjects(2)),
-			(("Ferra", "SimpleBlocking"), subjects(3))
+			(("volks", "SimpleBlocking"), subjects.head),
+			(("audi ", "SimpleBlocking"), subjects(1)),
+			(("porsc", "SimpleBlocking"), subjects(2)),
+			(("ferra", "SimpleBlocking"), subjects(3))
 		))
 	}
 
@@ -400,8 +412,8 @@ object TestData {
 			(("Hamburg", "GeoBlocking"), staging.last),
 			(("New York", "GeoBlocking"), staging.head),
 			(("New York", "GeoBlocking"), staging.last),
-			(("Volks", "SimpleBlocking"), staging.head),
-			(("Audi ", "SimpleBlocking"), staging.last)
+			(("volks", "SimpleBlocking"), staging.head),
+			(("audi ", "SimpleBlocking"), staging.last)
 		))
 	}
 
@@ -431,10 +443,10 @@ object TestData {
 			("GeoBlocking", Block(id = null, key = "Hamburg", subjects = subjects.take(1), staging = List(stagings.last))),
 			("GeoBlocking", Block(id = null, key = "New York", staging = stagings)),
 			("GeoBlocking", Block(id = null, key = "undefined", subjects = subjects.slice(2, 4))),
-			("SimpleBlocking", Block(id = null, key = "Volks", subjects = subjects.take(1), staging = stagings.take(1))),
-			("SimpleBlocking", Block(id = null, key = "Audi ", subjects = List(subjects(1)), staging = List(stagings.last))),
-			("SimpleBlocking", Block(id = null, key = "Porsc", subjects = List(subjects(2)))),
-			("SimpleBlocking", Block(id = null, key = "Ferra", subjects = List(subjects(3))))
+			("SimpleBlocking", Block(id = null, key = "volks", subjects = subjects.take(1), staging = stagings.take(1))),
+			("SimpleBlocking", Block(id = null, key = "audi ", subjects = List(subjects(1)), staging = List(stagings.last))),
+			("SimpleBlocking", Block(id = null, key = "porsc", subjects = List(subjects(2)))),
+			("SimpleBlocking", Block(id = null, key = "ferra", subjects = List(subjects(3))))
 		))
 	}
 
@@ -443,10 +455,10 @@ object TestData {
 			("GeoBlocking", Block(id = null, key = "Berlin", subjects = subjects.take(2), staging = stagings.take(1))),
 			("GeoBlocking", Block(id = null, key = "Hamburg", subjects = subjects.take(1), staging = List(stagings.last))),
 			("GeoBlocking", Block(id = null, key = "New York", staging = stagings)),
-			("SimpleBlocking", Block(id = null, key = "Volks", subjects = subjects.take(1), staging = stagings.take(1))),
-			("SimpleBlocking", Block(id = null, key = "Audi ", subjects = List(subjects(1)), staging = List(stagings.last))),
-			("SimpleBlocking", Block(id = null, key = "Porsc", subjects = List(subjects(2)))),
-			("SimpleBlocking", Block(id = null, key = "Ferra", subjects = List(subjects(3))))
+			("SimpleBlocking", Block(id = null, key = "volks", subjects = subjects.take(1), staging = stagings.take(1))),
+			("SimpleBlocking", Block(id = null, key = "audi ", subjects = List(subjects(1)), staging = List(stagings.last))),
+			("SimpleBlocking", Block(id = null, key = "porsc", subjects = List(subjects(2)))),
+			("SimpleBlocking", Block(id = null, key = "ferra", subjects = List(subjects(3))))
 		))
 	}
 
@@ -482,10 +494,10 @@ object TestData {
 								BlockStats("Hamburg",1,1,0.0),
 								BlockStats("Berlin",2,1,0.5),
 								BlockStats("New York",0,2,0.0),
-								BlockStats("Audi ",1,1,1.0),
-								BlockStats("Volks",1,1,1.0),
-								BlockStats("Porsc",1,0,0.0),
-								BlockStats("Ferra",1,0,0.0)
+								BlockStats("audi ",1,1,1.0),
+								BlockStats("volks",1,1,1.0),
+								BlockStats("porsc",1,0,0.0),
+								BlockStats("ferra",1,0,0.0)
 							), Some("Blocking"), 1.0, 7, 4),
 			BlockEvaluation(null, "GeoBlocking", Set(
 								BlockStats("New York",0,2,0.0),
@@ -493,26 +505,26 @@ object TestData {
 								BlockStats("Berlin",2,1,0.5)
 							), Some("Blocking"), 0.5, 3, 3),
 			BlockEvaluation(null, "SimpleBlocking", Set(
-								BlockStats("Audi ",1,1,1.0),
-								BlockStats("Ferra",1,0,0.0),
-								BlockStats("Porsc",1,0,0.0),
-								BlockStats("Volks",1,1,1.0)
+								BlockStats("audi ",1,1,1.0),
+								BlockStats("ferra",1,0,0.0),
+								BlockStats("porsc",1,0,0.0),
+								BlockStats("volks",1,1,1.0)
 							), Some("Blocking"), 1.0, 4, 2)))
 	}
 
 	def blockEvaluationTestSubjects(sc: SparkContext): (RDD[Subject], RDD[Subject]) = {
 		val subjectRDD = sc.parallelize(
 			List.fill(101)(
-				Subject(id = UUID.randomUUID, name = Option("Haushund"))
+				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Haushund"))
 			) ++ List.fill(5)(
-				Subject(id = UUID.randomUUID, name = Option("Nicht Haushund"))
+				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Nicht Haushund"))
 			)
 		)
 		val stagingRDD = sc.parallelize(
 			List.fill(101)(
-				Subject(id = UUID.randomUUID, name = Option("Haushund"))
+				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Haushund"))
 			) ++ List.fill(10)(
-				Subject(id = UUID.randomUUID, name = Option("Nicht Haushund"))
+				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Nicht Haushund"))
 			)
 		)
 		(subjectRDD, stagingRDD)
@@ -520,8 +532,8 @@ object TestData {
 
 	def filteredSmallBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
 		sc.parallelize(List(
-			BlockEvaluation(null,"sum SimpleBlocking",Set(BlockStats("Haush",101,101,0.0)),Some("Blocking"),0.0,2,10251),
-			BlockEvaluation(null,"SimpleBlocking",Set(BlockStats("Haush",101,101,0.0)),Some("Blocking"),0.0,2,10251))
+			BlockEvaluation(null,"sum SimpleBlocking",Set(BlockStats("haush",101,101,0.0)),Some("Blocking"),0.0,2,10251),
+			BlockEvaluation(null,"SimpleBlocking",Set(BlockStats("haush",101,101,0.0)),Some("Blocking"),0.0,2,10251))
 		)
 	}
 
@@ -532,10 +544,10 @@ object TestData {
 								BlockStats("undefined", 2, 0, 0.0),
 								BlockStats("Berlin", 2, 1, 0.5),
 								BlockStats("New York", 0, 2, 0.0),
-								BlockStats("Audi ", 1, 1, 1.0),
-								BlockStats("Volks", 1, 1, 1.0),
-								BlockStats("Porsc", 1, 0, 0.0),
-								BlockStats("Ferra", 1, 0, 0.0)
+								BlockStats("audi ", 1, 1, 1.0),
+								BlockStats("volks", 1, 1, 1.0),
+								BlockStats("porsc", 1, 0, 0.0),
+								BlockStats("ferra", 1, 0, 0.0)
 							), Some("Test comment"), 1.0, 8, 4),
 			BlockEvaluation(null, "GeoBlocking", Set(
 								BlockStats("New York", 0, 2, 0.0),
@@ -544,11 +556,12 @@ object TestData {
 								BlockStats("undefined", 2, 0, 0.0)
 							), Some("Test comment"), 0.5, 4, 3),
 			BlockEvaluation(null, "SimpleBlocking", Set(
-								BlockStats("Audi ", 1, 1, 1.0),
-								BlockStats("Ferra", 1, 0, 0.0),
-								BlockStats("Porsc", 1, 0, 0.0),
-								BlockStats("Volks", 1, 1, 1.0)
-							), Some("Test comment"), 1.0, 4, 2)))
+								BlockStats("audi ", 1, 1, 1.0),
+								BlockStats("ferra", 1, 0, 0.0),
+								BlockStats("porsc", 1, 0, 0.0),
+								BlockStats("volks", 1, 1, 1.0)
+							), Some("Test comment"), 1.0, 4, 2)
+		))
 	}
 
 	def emptyBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
@@ -567,17 +580,29 @@ object TestData {
 		))
 	}
 
-	def simpleBlockingScheme: List[List[String]] = List(List("Audi "), List("Volks"), List("Ferra"), List("Porsc"))
-	def lastLettersBlockingScheme: List[List[String]] = List(List(" GmbH"), List("wagen"), List("rrari"), List("rsche"))
+	def simpleBlockingScheme: List[List[String]] = List(List("audi "), List("volks"), List("ferra"), List("porsc"))
+	def simpleBlockingSchemeWithThe: List[List[String]] = List(List("hpi"), List("unive"), List("volks"))
+	def lastLettersBlockingScheme: List[List[String]] = List(List(" gmbh"), List("wagen"), List("rrari"), List("rsche"), List("undefined"))
 	def listBlockingScheme: List[List[String]] = List(List("Berlin", "Hamburg", "1234"), List("Berlin", "33"), List("undefined"))
-	def geoCoordsBlockingScheme: List[List[String]] = List(List("52;11"), List("52;13"), List("53;14"), List("undefined"))
+	def geoCoordsBlockingSchemeDefault: List[List[String]] = List(
+		List("52.1;11.5", "52.1;11.6", "52.2;11.5", "52.2;11.6"),
+		List("52.1;13.1", "52.1;13.2", "52.2;13.1", "52.2;13.2"),
+		List("52.2;13.6", "52.2;13.7", "52.3;13.6", "52.3;13.7"),
+		List("undefined")
+	)
+	def geoCoordsBlockingSchemeDecimals: List[List[String]] = List(
+		List("52.12;11.56", "52.12;11.57", "52.13;11.56", "52.13;11.57"),
+		List("52.12;13.12", "52.12;13.13", "52.13;13.12", "52.13;13.13"),
+		List("52.23;13.67", "52.23;13.68", "52.24;13.67", "52.24;13.68"),
+		List("undefined")
+	)
 	def randomBlockingScheme: List[List[String]] = List(List("-235"), List("754"), List("446"), List("-7"))
 	def mapBlockingScheme: List[List[String]] = List(List("Vol"), List("Vol"), List("Aud"), List("Aud"), List("Por"), List("Fer"))
 
 	def features(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
-		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1))),
-		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3))),
-		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5)))
+		FeatureEntry(subject = Subject(id = idList.head, master = null, datasource = datasource), staging = Subject(id = idList(1), master = null, datasource = datasource)),
+		FeatureEntry(subject = Subject(id = idList(2), master = null, datasource = datasource), staging = Subject(id = idList(3), master = null, datasource = datasource)),
+		FeatureEntry(subject = Subject(id = idList(4), master = null, datasource = datasource), staging = Subject(id = idList(5), master = null, datasource = datasource))
 	))
 
 	def goldStandard(sc: SparkContext): RDD[(UUID, UUID)] = sc.parallelize(List(
@@ -585,9 +610,9 @@ object TestData {
 	))
 
 	def labeledFeatures(sc: SparkContext): RDD[FeatureEntry] = sc.parallelize(List(
-		FeatureEntry(subject = Subject(id = idList.head), staging = Subject(id = idList(1), name = Option("Audi AG")), correct = true),
-		FeatureEntry(subject = Subject(id = idList(2)), staging = Subject(id = idList(3), name = Option("Volkswagen AG")), correct = true),
-		FeatureEntry(subject = Subject(id = idList(4)), staging = Subject(id = idList(5), name = Option("Porsche AG")))
+		FeatureEntry(subject = Subject(id = idList.head, master = null, datasource = datasource), staging = Subject(id = idList(1), name = Option("Audi AG"), master = null, datasource = datasource), correct = true),
+		FeatureEntry(subject = Subject(id = idList(2), master = null, datasource = datasource), staging = Subject(id = idList(3), master = null, datasource = datasource, name = Option("Volkswagen AG")), correct = true),
+		FeatureEntry(subject = Subject(id = idList(4), master = null, datasource = datasource), staging = Subject(id = idList(5), master = null, datasource = datasource, name = Option("Porsche AG")))
 	))
 
 	def requiredSettings: List[String] = {
@@ -621,16 +646,16 @@ object TestData {
 
 	def dbpediaEntries: List[Subject] = {
 		List(
-			Subject(id = idList.head, name = Option("Audi ")),
-			Subject(id = idList(2), name = Option("Volkswagen")),
-			Subject(id = idList(4), name = Option("Porsche")))
+			Subject(id = idList.head, master = null, datasource = datasource, name = Option("Audi ")),
+			Subject(id = idList(2), master = null, datasource = datasource, name = Option("Volkswagen")),
+			Subject(id = idList(4), master = null, datasource = datasource, name = Option("Porsche")))
 	}
 
 	def wikidataEntries: List[Subject] = {
 		List(
-			Subject(id = idList(1), name = Option("Audi AG")),
-			Subject(id = idList(3), name = Option("Volkswagen AG")),
-			Subject(id = idList(5), name = Option("Porsche AG")))
+			Subject(id = idList(1), master = null, datasource = datasource, name = Option("Audi AG")),
+			Subject(id = idList(3), master = null, datasource = datasource, name = Option("Volkswagen AG")),
+			Subject(id = idList(5), master = null, datasource = datasource, name = Option("Porsche AG")))
 	}
 }
 // scalastyle:on line.size.limit

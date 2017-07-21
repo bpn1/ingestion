@@ -7,7 +7,7 @@ import de.hpi.ingestion.textmining.models._
 import com.datastax.spark.connector._
 
 object ReducedLinkAnalysis extends SparkJob {
-	appName = "Link Analysis"
+	appName = "Reduced Link Analysis"
 	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$

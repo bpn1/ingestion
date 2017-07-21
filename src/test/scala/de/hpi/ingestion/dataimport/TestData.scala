@@ -12,6 +12,35 @@ object TestData {
 		List("www.youtube.de", "isbn://1337", "NotAURL", "about:black", "youtube.com")
 	}
 
+	def unnormalizedLegalForms: List[String] = {
+		List(
+			"e. K.",
+			"e. V.",
+			"Verein",
+			"gesellschaft mbH & Co. KG",
+			"Gesellschaft GmbH & Co. KG",
+			"GmbH Co KG",
+			"Gesellschaft mit beschränkter Haftung",
+			"Gemeinschaft m.b.H.",
+			"Gesellschaft mbh",
+			"Gesellschaft bürgerlichen Rechts",
+			"Kommanditgesellschaft auf Aktien",
+			"aktienGEsellschaft"
+		)
+	}
+
+	def normalizedLegalForms: List[String] = {
+		List(
+			"e.K.",
+			"e.V.",
+			"GmbH & Co. KG",
+			"GmbH",
+			"GbR",
+			"KGaA",
+			"AG"
+		)
+	}
+
 	def parsedJSON(): JsValue = {
 		Json.parse(Source.fromURL(getClass.getResource("/parsing.json")).getLines().mkString("\n"))
 	}

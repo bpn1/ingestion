@@ -14,14 +14,23 @@
         <featureTable>featureentries</featureTable>
         <secondOrderFeatureTable>featureentrieswithsof</secondOrderFeatureTable>
         <trieFile>wikipedia/trie_full.bin</trieFile>
+        <smallerTrieFile>wikipedia/trie_full_smaller.bin</smallerTrieFile>
         <dfFile>wikipedia/wikipedia_docfreq</dfFile>
         <sentenceTable>wikipediasentences</sentenceTable>
         <cooccurrenceTable>wikipediacooccurrences</cooccurrenceTable>
         <contextSize>20</contextSize>
+        <classifierModel>wikipedia_randomforest_model_1494495223381</classifierModel>
+        <wikipediaNELTable>wikipedianel</wikipediaNELTable>
+        <NELTable>wikipedianel</NELTable>
+        <linkedArticlesTable>linkedarticles</linkedArticlesTable>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
-        <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
         <relClassifierStatsTable>relationclassifierstats</relClassifierStatsTable>
         <relPredictionsTable>relationpredictions</relPredictionsTable>
+        <numberArticlePartitions>10</numberArticlePartitions>
+        <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
+        <tfidfTable>articletfidf</tfidfTable>
+        <articleCountTable>wikipediaarticlecount</articleCountTable>
+        <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
     </settings>
 </config>

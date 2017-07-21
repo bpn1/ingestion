@@ -9,7 +9,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	"buildDuplicatesSCC" should "should add isDuplicate relation with a confidence for a list of tuples" in {
 		val subjects = TestData.subjects
 		val duplicates = List((subjects.head, subjects(2), 0.8), (subjects(1), subjects(3), 0.8))
-		val expectedRelation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
+		val expectedRelation = Map("isDuplicate" -> "0.8")
 		val expectedRelationNode1 = Map(subjects(2).id -> expectedRelation)
 		val expectedRelationNode2 = Map(subjects(3).id -> expectedRelation)
 		val version = TestData.version(sc)
@@ -21,7 +21,7 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 
 	"addSymRelation" should "add a symmetric relation between two given nodes" in {
 		val subjects = TestData.subjects
-		val relation = Map("type" -> "isDuplicate", "confidence" -> "0.8")
+		val relation = Map("isDuplicate" -> "0.8")
 		val version = TestData.version(sc)
 		val expectedRelations = List(
 			Map(subjects(1).id -> relation),
@@ -33,8 +33,8 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"Aliases" should "be added and removed" in {
-		val subject = Subject()
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val subject = TestData.subject
+		val version = Version.apply("SM Test", Nil, sc, false, None)
 		val sm = new SubjectManager(subject, version)
 		sm.addAliases(List("alias 1", "alias 2"))
 		subject.aliases shouldEqual List("alias 1", "alias 2")
@@ -53,8 +53,8 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"Name" should "be set" in {
-		val subject = Subject()
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val subject = TestData.subject
+		val version = Version.apply("SM Test", Nil, sc, false, None)
 		val sm = new SubjectManager(subject, version)
 		sm.setName("test name")
 		subject.name should contain ("test name")
@@ -73,8 +73,8 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"Category" should "be set" in {
-		val subject = Subject()
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val subject = TestData.subject
+		val version = Version.apply("SM Test", Nil, sc, false, None)
 		val sm = new SubjectManager(subject, version)
 		sm.setCategory("test category")
 		subject.category should contain ("test category")
@@ -93,59 +93,51 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 	}
 
 	"Master node" should "be set" in {
-		val subject = Subject()
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val subject = TestData.subject
+		val version = Version("Subject Manager Test", Nil, sc, false, None)
 		val List(masterId, masterId2) = TestData.masterIds()
 		val sm = new SubjectManager(subject, version)
+
 		sm.setMaster(masterId, 0.5)
-		subject.master should contain (masterId)
+		subject.master shouldEqual masterId
+		subject.masterScore should contain(0.5)
 		subject.master_history should have length 1
 		subject.master_history.head.value shouldEqual List(masterId.toString)
-		subject.relations.get(masterId) should contain (SubjectManager.slaveRelation(0.5))
+		subject.relations(masterId) shouldEqual SubjectManager.slaveRelation(0.5)
 		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 1
 		subject.relations_history(masterId)(SubjectManager.slaveKey).head.value shouldEqual List("0.5")
 
-		sm.setMaster(masterId, 0.5)
+		sm.setMaster(masterId, 0.3)
 		subject.master_history should have length 1
-		subject.masterScore should contain (0.5)
+		subject.masterScore should contain(0.5)
 		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 1
-		sm.setMaster(Option(masterId), 0.5)
-		subject.master_history should have length 1
-		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 1
+		subject.relations_history(masterId)(SubjectManager.slaveKey).last.value shouldEqual List("0.5")
 
-		sm.setMaster(Option(masterId), 1.0)
+		sm.setMaster(masterId, 1.0)
 		subject.master_history should have length 1
-		subject.masterScore should contain (1.0)
-		subject.relations.get(masterId) should contain (SubjectManager.slaveRelation(1.0))
+		subject.masterScore should contain(1.0)
+		subject.relations(masterId) shouldEqual SubjectManager.slaveRelation(1.0)
 		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 2
 		subject.relations_history(masterId)(SubjectManager.slaveKey).last.value shouldEqual List("1.0")
 
-		sm.setMaster(Option(masterId2), 0.5)
-		subject.master should contain (masterId2)
-		subject.masterScore should contain (0.5)
+		sm.setMaster(masterId2, 0.5)
+		subject.master shouldEqual masterId2
+		subject.masterScore should contain(0.5)
 		subject.master_history should have length 2
 		subject.master_history.last.value shouldEqual List(masterId2.toString)
+		subject.relations.get(masterId) shouldBe empty
+		subject.relations(masterId2) shouldEqual SubjectManager.slaveRelation(0.5)
 		subject.relations_history(masterId)(SubjectManager.slaveKey) should have length 3
 		subject.relations_history(masterId)(SubjectManager.slaveKey).last.value shouldBe empty
 		subject.relations_history(masterId2)(SubjectManager.slaveKey) should have length 1
 		subject.relations_history(masterId2)(SubjectManager.slaveKey).last.value shouldEqual List("0.5")
-		subject.relations.get(masterId) shouldBe empty
-		subject.relations.get(masterId2) should contain (SubjectManager.slaveRelation(0.5))
-
-		sm.setMaster(None)
-		subject.master shouldBe empty
-		subject.masterScore shouldBe empty
-		subject.master_history should have length 3
-		subject.master_history.last.value shouldBe empty
-		subject.relations_history(masterId2)(SubjectManager.slaveKey) should have length 2
-		subject.relations_history(masterId2)(SubjectManager.slaveKey).last.value shouldBe empty
-		subject.relations.get(masterId2) shouldBe empty
 	}
 
 	"Properties" should "be added and removed" in {
-		val subject = Subject()
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val subject = TestData.subject
+		val version = Version.apply("SM Test", Nil, sc, false, None)
 		val sm = new SubjectManager(subject, version)
+
 		sm.addProperties(Map("key 1" -> List("value 1", "value 2")))
 		subject.properties("key 1") shouldEqual List("value 1", "value 2")
 		subject.properties_history("key 1") should have length 1
@@ -156,23 +148,51 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 		subject.properties_history("key 2") should have length 1
 		subject.properties_history("key 2").last.value shouldEqual List("value 3")
 
+		sm.addProperties(Map("key 2" -> List("value 4")))
+		subject.properties("key 2") shouldEqual List("value 3", "value 4")
+		subject.properties_history("key 2") should have length 2
+		subject.properties_history("key 2").last.value shouldEqual List("value 3", "value 4")
+
+		sm.addProperties(Map("key 3" -> List("value 5", "value 6"), "key 4" -> Nil))
+		subject.properties("key 3") shouldEqual List("value 5", "value 6")
+		subject.properties_history("key 3") should have length 1
+		subject.properties_history("key 3").last.value shouldEqual List("value 5", "value 6")
+		subject.properties.get("key 4") shouldBe empty
+		subject.properties_history.get("key 4") shouldBe empty
+
+		sm.overwriteProperties(Map("key 2" -> List("value 3")))
+		subject.properties("key 2") shouldEqual List("value 3")
+		subject.properties_history("key 2") should have length 3
+		subject.properties_history("key 2").last.value shouldEqual List("value 3")
+
+		sm.overwriteProperties(Map("key 2" -> Nil))
+		subject.properties.get("key 2") shouldEqual None
+		subject.properties_history("key 2") should have length 4
+		subject.properties_history("key 2").last.value shouldBe empty
+
 		sm.removeProperties(List("key 1"))
 		subject.properties.get("key 1") shouldBe empty
 		subject.properties_history("key 1") should have length 2
 		subject.properties_history("key 1").last.value shouldBe empty
 
 		sm.clearProperties()
+		subject.properties.get("key 1") shouldBe empty
 		subject.properties.get("key 2") shouldBe empty
+		subject.properties.get("key 3") shouldBe empty
 		subject.properties_history("key 1") should have length 2
-		subject.properties_history("key 2") should have length 2
+		subject.properties_history("key 2") should have length 4
+		subject.properties_history("key 3") should have length 2
+		subject.properties_history("key 1").last.value shouldBe empty
 		subject.properties_history("key 2").last.value shouldBe empty
+		subject.properties_history("key 3").last.value shouldBe empty
 	}
 
 	"Relations" should "be added and removed" in {
-		val subject = Subject()
-		val version = Version.apply("SM Test", Nil, sc, false)
+		val subject = TestData.subject
+		val version = Version.apply("SM Test", Nil, sc, false, None)
 		val List(sub1, sub2) = TestData.masterIds()
 		val sm = new SubjectManager(subject, version)
+
 		sm.addRelations(Map(sub1 -> Map("key 1" -> "value 1", "key 2" -> "value 2")))
 		subject.relations(sub1) shouldEqual Map("key 1" -> "value 1", "key 2" -> "value 2")
 		subject.relations_history(sub1)("key 1") should have length 1
@@ -208,5 +228,12 @@ class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext 
 		subject.relations_history(sub1)("key 2").last.value shouldBe empty
 		subject.relations_history(sub2)("key 3") should have length 2
 		subject.relations_history(sub2)("key 4") should have length 2
+	}
+
+	"The correct version" should "be found" in {
+		val sm = new SubjectManager(Subject.empty(datasource = "testSource"), Version(program = ""))
+		val foundVersions = TestData.versionQueries().map((sm.findVersion _).tupled).map(_.map(_.version))
+		val expectedVersions = TestData.versionQueryResults()
+		foundVersions shouldEqual expectedVersions
 	}
 }

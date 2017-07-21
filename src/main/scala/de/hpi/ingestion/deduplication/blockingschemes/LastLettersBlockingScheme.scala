@@ -10,7 +10,7 @@ class LastLettersBlockingScheme extends BlockingScheme {
 	override def generateKey(subject: Subject): List[String] = {
 		subject.name.map { name =>
 			val start = Math.max(0, name.length - 5)
-			List(name.substring(start, name.length))
+			List(name.substring(start, name.length).toLowerCase)
 		}.getOrElse(List(undefinedValue))
 	}
 }

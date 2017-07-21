@@ -3,8 +3,7 @@ package de.hpi.ingestion.textmining
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.models.{Cooccurrence, EntityLink, ParsedWikipediaEntry, Sentence}
-import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import de.hpi.ingestion.textmining.models.{Cooccurrence, Sentence}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -42,7 +41,6 @@ object CooccurrenceCounter extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("cooccurrenceTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
@@ -52,7 +50,7 @@ object CooccurrenceCounter extends SparkJob {
 	  * @return List of unique entities in order of entity link offset
 	  */
 	def sentenceToEntityList(sentence: Sentence): List[String] = {
-		sentence.entities.sortBy(_.offset).map(_.entity).distinct
+		sentence.entities.map(_.entity).distinct
 	}
 
 	/**
