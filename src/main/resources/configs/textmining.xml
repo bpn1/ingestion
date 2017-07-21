@@ -25,16 +25,12 @@
         <linkedArticlesTable>linkedarticles</linkedArticlesTable>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
-<<<<<<< HEAD
-        <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
         <relClassifierStatsTable>relationclassifierstats</relClassifierStatsTable>
         <relPredictionsTable>relationpredictions</relPredictionsTable>
-=======
         <numberArticlePartitions>10</numberArticlePartitions>
         <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
         <tfidfTable>articletfidf</tfidfTable>
         <articleCountTable>wikipediaarticlecount</articleCountTable>
         <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
->>>>>>> master
     </settings>
 </config>

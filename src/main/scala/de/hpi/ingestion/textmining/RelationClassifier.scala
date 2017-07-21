@@ -74,8 +74,10 @@ object RelationClassifier extends SparkJob {
 	def parseBagOfWordsForRelations(
 		relations: RDD[Relation],
 		sentences: RDD[Sentence],
+		cooccurrences: RDD[Set[String]],
 		rel: Set[String]
 	): RDD[(Double, Sentence)] = {
+		val blacklist = cooccurrences.collect.toSet
 		relations
 			.map(rel => (Set(rel.subjectentity, rel.objectentity), rel.relationtype))
 			.collect {
@@ -84,6 +86,7 @@ object RelationClassifier extends SparkJob {
 	    	.distinct
 			.join(
 				sentences
+					.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
 					.map(sentence => (sentence.entities.map(_.entity).toSet, sentence))
 			).values
 	}
@@ -99,8 +102,10 @@ object RelationClassifier extends SparkJob {
 	def parseBagOfWordsWithNORelations(
 		relations: RDD[Relation],
 		sentences: RDD[Sentence],
+		cooccurrences: RDD[Set[String]],
 		rel: Set[String]
 	): RDD[(Double, Sentence)] = {
+		val blacklist = cooccurrences.collect.toSet
 		sentences.subtract(
 			relations
 				.map(rel => (Set(rel.subjectentity, rel.objectentity), rel.relationtype))
@@ -113,6 +118,7 @@ object RelationClassifier extends SparkJob {
 				)
 				.map { case (key, (relation, sentence)) => sentence}
 			)
+	    	.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
 			.map(sentence => (0.0, sentence))
 	}
 
@@ -157,8 +163,8 @@ object RelationClassifier extends SparkJob {
 		segments
 			.map { case (test, trainingList) =>
 				val training = trainingList.reduce(_.union(_))
-//				val model = trainNaiveBayes(training.map(_._2))
-				val model = trainRandomForest(training.map(_._2))
+				val model = trainNaiveBayes(training.map(_._2))
+//				val model = trainRandomForest(training.map(_._2))
 //				val model = SVMWithSGD.train(training.map(_._2), 100)
 				val entitiesPredictionAndLabels = test.map { case (sentence, LabeledPoint(label, features)) =>
 					val prediction = model.predict(features)
@@ -206,7 +212,7 @@ object RelationClassifier extends SparkJob {
 	def trainNaiveBayes(
 		trainingData: RDD[LabeledPoint]
 	): NaiveBayesModel = {
-		NaiveBayes.train(trainingData, lambda = 1.0, modelType = "multinomial")
+		NaiveBayes.train(trainingData, lambda = 0.0, modelType = "multinomial")
 	}
 
 	def calculateLabeledHashTFIDF(
@@ -245,14 +251,15 @@ object RelationClassifier extends SparkJob {
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]()(2)
 			.map(cooc => (cooc.entitylist.toSet, cooc.count))
 			.reduceByKey(_ + _)
-		var comment = "random forest, sentences, undirected, bag of words stemmed, 10 folds"
+		var comment = "BA Testing naive bayes, sentences, undirected, bag of words stemmed, 10 folds, minCooc = 2, lambda = 0.0"
 		val rels = Set(
 			Set("parentCompany", "owningCompany", "subsidiary", "division")
 //			, Set("successor", "predecessor")
 		)
 		val (stats, preds) = rels.map { rel =>
-			val relationsWithBagOfWords = parseBagOfWordsForRelations(relations, sentences, rel)
-			val noRelationsBagOfWords = parseBagOfWordsWithNORelations(relations, sentences, rel)
+			val minCooc = cooccurrences.filter(_._2 <= 2).map(_._1)
+			val relationsWithBagOfWords = parseBagOfWordsForRelations(relations, sentences, minCooc, rel)
+			val noRelationsBagOfWords = parseBagOfWordsWithNORelations(relations, sentences, minCooc, rel)
 
 			val labeledTfidf = calculateLabeledHashTFIDF(relationsWithBagOfWords, noRelationsBagOfWords)
 

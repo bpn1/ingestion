@@ -112,15 +112,9 @@ object ClassifierTraining extends SparkJob {
 		val tp = pnCount.getOrElse("tp", 0)
 		val fp = pnCount.getOrElse("fp", 0)
 		val fn = pnCount.getOrElse("fn", 0)
-		val precision = Option(tp.toDouble / (tp + fp).toDouble)
-		    .filterNot(_.isNaN)
-		    .getOrElse(0.0)
-		val recall = Option(tp.toDouble / (tp + fn).toDouble)
-			.filterNot(_.isNaN)
-			.getOrElse(0.0)
-		val fMeasure = Option(((1.0 + beta * beta) * precision * recall) / ((beta * beta * precision) + recall))
-			.filterNot(_.isNaN)
-			.getOrElse(0.0)
+		val precision = tp.toDouble / (tp + fp).toDouble
+		val recall = tp.toDouble / (tp + fn).toDouble
+		val fMeasure = ((1.0 + beta * beta) * precision * recall) / ((beta * beta * precision) + recall)
 		PrecisionRecallDataTuple(1.0, precision, recall, fMeasure)
 	}
 

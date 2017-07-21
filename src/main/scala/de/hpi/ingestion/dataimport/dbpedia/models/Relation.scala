@@ -1,9 +1,5 @@
 package de.hpi.ingestion.dataimport.dbpedia.models
 
-<<<<<<< HEAD
-// TODO scaladocs
-case class Relation(subjectentity: String, relationtype: String, objectentity: String)
-=======
 /**
   * Case class for a directed relation from subject to object of value relation
   *
@@ -12,4 +8,3 @@ case class Relation(subjectentity: String, relationtype: String, objectentity: S
   * @param objectentity  object of the relation
   */
 case class Relation(subjectentity: String, relationtype: String, objectentity: String)
->>>>>>> master
