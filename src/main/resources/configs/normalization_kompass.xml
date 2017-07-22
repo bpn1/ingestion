@@ -138,87 +138,131 @@
         </category>
         <category>                                      // specified
             <key>Unternehmensdienstleistungen</key>
-            <mapping>G45</mapping>
+            <mapping>N</mapping>
+            <mapping>N82</mapping>
+            <mapping>N82.9</mapping>
         </category>
         <category>
             <key>Baugewerbe</key>
-            <mapping>G45</mapping>
+            <mapping>F</mapping>
         </category>
         <category>
             <key>Transportwesen und Logistik</key>
-            <mapping>G45</mapping>
+            <mapping>H</mapping>
+            <mapping>H52</mapping>
+            <mapping>H52.1</mapping>
         </category>
         <category>
             <key>Technische Büros, Beratende Ingenieure und Architekten</key>
-            <mapping>G45</mapping>
+            <mapping>K</mapping>
+            <mapping>K71</mapping>
+            <mapping>K71.1</mapping>
         </category>
         <category>
             <key>Informationstechnologie (IT) und Internet</key>
-            <mapping>G45</mapping>
+            <mapping>J</mapping>
+            <mapping>J62</mapping>
         </category>
         <category>
             <key>Industrielle Zulieferer</key>
-            <mapping>G45</mapping>
+            <mapping>H</mapping>
         </category>
         <category>
             <key>Handelsfirmen, Kaufhäuser und Einzelhandelsgeschäfte</key>
-            <mapping>G45</mapping>
+            <mapping>G</mapping>
+            <mapping>G47</mapping>
         </category>
         <category>
             <key>Nahrungsmittel</key>
-            <mapping>G45</mapping>
+            <mapping>C</mapping>
+            <mapping>C10</mapping>
         </category>
         <category>
             <key>Transportmittel</key>
+            <mapping>G</mapping>
             <mapping>G45</mapping>
         </category>
         <category>
             <key>Druck und Verlagswesen</key>
-            <mapping>G45</mapping>
+            <mapping>C</mapping>
+            <mapping>C18</mapping>
         </category>
         <category>
             <key>Glas, Zement und Keramik</key>
-            <mapping>G45</mapping>
+            <mapping>C</mapping>
+            <mapping>C23</mapping>
         </category>
         <category>
             <key>Tiefbau und Wasserbau</key>
-            <mapping>G45</mapping>
+            <mapping>F</mapping>
+            <mapping>F42</mapping>
+            <mapping>F42.9</mapping>
+            <mapping>F42.91</mapping>
+            <mapping>F42.91.0</mapping>
         </category>
         <category>
             <key>Finanzwesen und Versicherungswesen</key>
-            <mapping>G45</mapping>
+            <mapping>K</mapping>
         </category>
         <category>
             <key>Fördermittel und Lagereinrichtungen</key>
-            <mapping>G45</mapping>
+            <mapping>C</mapping>
+            <mapping>C28</mapping>
+            <mapping>C28.22</mapping>
+            <mapping>C28.22.0</mapping>
+            <mapping>H</mapping>
+            <mapping>H52</mapping>
+            <mapping>H52.1</mapping>
         </category>
         <category>
             <key>Gesundheit, Pharmazeutika und Medikamente</key>
-            <mapping>G45</mapping>
+            <mapping>C</mapping>
+            <mapping>C21</mapping>
+            <mapping>Q</mapping>
+            <mapping>Q86</mapping>
         </category>
         <category>
             <key>Umweltdienste, erneuerbare Energien</key>
-            <mapping>G45</mapping>
+            <mapping>E</mapping>
+            <mapping>E39</mapping>
+            <mapping>E39.0</mapping>
+            <mapping>E39.00</mapping>
+            <mapping>E39.00.0</mapping>
         </category>
         <category>
             <key>Gastgewerbe, Tourismus, Hotelgewerbe und Catering</key>
-            <mapping>G45</mapping>
+            <mapping>I</mapping>
+            <mapping>I55</mapping>
+            <mapping>I55.1</mapping>
         </category>
         <category>
             <key>Motoren und mechanische Teile</key>
-            <mapping>G45</mapping>
+            <mapping>C</mapping>
+            <mapping>C27</mapping>
+            <mapping>C27.1</mapping>
+            <mapping>C28</mapping>
+            <mapping>C28.1</mapping>
+            <mapping>C28.11</mapping>
         </category>
         <category>
             <key>Holz, Holzerzeugnisse und Maschinen und Anlagen für die Holzbearbeitung</key>
-            <mapping>G45</mapping>
+            <mapping>C</mapping>
+            <mapping>C16</mapping>
         </category>
         <category>
             <key>Maschinen und Anlagen für die Metallbearbeitung</key>
-            <mapping>G45</mapping>
+            <mapping>C</mapping>
+            <mapping>C28</mapping>
+            <mapping>C28.4</mapping>
+            <mapping>C28.41</mapping>
+            <mapping>C28.41.0</mapping>
         </category>
         <category>
             <key>Gesundheitswesen und soziale Dienstleistungen</key>
-            <mapping>G45</mapping>
+            <mapping>Q</mapping>
+            <mapping>Q86</mapping>
+            <mapping>Q87</mapping>
+            <mapping>Q88</mapping>
         </category>
         <category>
             <key>Forschung und Prüfung</key>

@@ -50,7 +50,7 @@ object KompassNormalizationStrategy extends Serializable {
 
 	def apply(attribute: String): (List[String]) => List[String] = {
 		attribute match {
-			case "gen_legal_form" => SharedNormalizations.normalizeLegalForm
+			//case "gen_legal_form" => normalizeLegalForm
 			case "gen_capital" => normalizeCapital
 			case "gen_turnover" => normalizeTurnover
 			case "gen_employees" => normalizeEmployees
