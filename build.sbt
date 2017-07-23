@@ -17,13 +17,13 @@ resolvers ++= Seq(
 // dependencies used for testing are also excluded from assembly jar
 // exclude flag is used to exclude conflicting transitive dependencies
 libraryDependencies ++= Seq(
-	"org.apache.spark" % "spark-core_2.11" % "2.1.0" % "provided" exclude("org.scalatest", "scalatest_2.11"),
-	"org.apache.spark" % "spark-sql_2.11" % "2.1.0" % "provided",
-	"org.apache.spark" % "spark-mllib_2.11" % "2.1.0" % "provided",
+	"org.apache.spark" % "spark-core_2.11" % "2.1.0" exclude("org.scalatest", "scalatest_2.11"),
+	"org.apache.spark" % "spark-sql_2.11" % "2.1.0",
+	"org.apache.spark" % "spark-mllib_2.11" % "2.1.0",
 	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.2",
-	"org.scalactic" % "scalactic_2.11" % "3.0.3" % "provided",
-	"org.scalatest" % "scalatest_2.11" % "3.0.3" % "provided",
-	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0" % "provided",
+	"org.scalactic" % "scalactic_2.11" % "3.0.3",
+	"org.scalatest" % "scalatest_2.11" % "3.0.3",
+	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0",
 	"com.databricks" % "spark-xml_2.11" % "0.4.1",
 	"info.bliki.wiki" % "bliki-core" % "3.1.0" exclude("ch.qos.logback", "logback-classic"),
 	"org.jsoup" % "jsoup" % "1.10.3",
