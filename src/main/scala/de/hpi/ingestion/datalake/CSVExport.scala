@@ -1,6 +1,6 @@
 package de.hpi.ingestion.datalake
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.framework.SparkJob
@@ -8,12 +8,63 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 object CSVExport extends SparkJob {
-	appName = "CSVExport_v1.0"
+	appName = "CSVExport v1.0"
 	val keyspace = "datalake"
 	val tablename = "subject"
 	val quote = "\""
 	val separator = ","
 	val arraySeparator = ";"
+	val categoryColors = Map(
+		"business" -> "2471A3",
+		"organization" -> "A6ACAF",
+		"country" -> "27AE60",
+		"city" -> "A04000",
+		"sector" -> "D68910"
+	)
+	val relationNormalization = Map(
+		"country" -> "located in",
+		"located in the administrative territorial entity" -> "located in",
+		"headquarters location" -> "headquarters located in",
+		"contains administrative territorial entity" -> "contains location",
+		"owned by" -> "owned by",
+		"stock exchange" -> "stock exchange",
+		"parent organization" -> "owns",
+		"subsidiary" -> "owns",
+		"industry" -> "has industry",
+		"country of origin" -> "founded in location",
+		"followed by" -> "followed by",
+		"follows" -> "follows",
+		"parentCompany" -> "owned by",
+		"location of formation" -> "founded in location",
+		"owningCompany" -> "owned by",
+		"owner" -> "owned by",
+		"successor" -> "followed by",
+		"predecessor" -> "follows",
+		"distributingCompany" -> "distributes for",
+		"distributingLabel" -> "distributes for",
+		"gen_founder" -> "founded by",
+		"owner of" -> "owns",
+		"manufacturer" -> "manufactured by",
+		"division" -> "owned by",
+		"business division" -> "owned by",
+		"foundedBy" -> "founded by",
+		"location" -> "located in",
+		"investor" -> "invests in",
+		"keyPerson" -> "is key person",
+		"central bank" -> "has central bank",
+		"parentOrganisation" -> "owned by",
+		"airline alliance" -> "owns",
+		"locationCity" -> "located in",
+		"said to be the same as" -> "same as",
+		"foundationPlace" -> "founded in",
+		"production company" -> "production company",
+		"employer" -> "employed by",
+		"founder" -> "founded by",
+		"producer" -> "produced by",
+		"replaces" -> "follows",
+		"replaced by" -> "followed by",
+		"childOrganisation" -> "owns"
+	)
 
 	// $COVERAGE-OFF$
 	/**
@@ -43,7 +94,7 @@ object CSVExport extends SparkJob {
 
 	/**
 	  * Parses a Subject into a csv node in the following format:
-	  * :ID(Subject),name,aliases:string[],category:LABEL
+	  * :ID(Subject),name,aliases:string[],category:LABEL,color
 	  * @param subject Subject to parse
 	  * @return a comma separated line containing the id, name, aliases and category of the Subject
 	  */
@@ -52,8 +103,13 @@ object CSVExport extends SparkJob {
 			.mkString(arraySeparator)
 			.replace("\\", "")
 			.replace("\"", "\\\"")
-		val name = subject.name.getOrElse("").replace("\"", "'")
-		val output = List(subject.id.toString, name, aliasString, subject.category.getOrElse(""))
+		val name = subject.name
+			.getOrElse("")
+			.replace("\"", "'")
+			.replaceAll("\\\\", "")
+		val category = subject.category
+		val color = category.flatMap(categoryColors.get).getOrElse("")
+		val output = List(subject.id.toString, name, aliasString, category.getOrElse(""), color)
 			.mkString(quote + separator + quote)
 		// TODO serialize properties to JSON string
 		quote + output + quote
@@ -66,12 +122,17 @@ object CSVExport extends SparkJob {
 	  * @return List of comma separated lines of subject id, target id, relation type
 	  */
 	def edgesToCSV(subject: Subject): List[String] = {
-		subject.relations.map { case (id, props) =>
-			val relType = props.getOrElse("type", "")
-			subject.id + separator + id + separator + relType
-		}.map(_.trim)
-		.filter(_.nonEmpty)
-		.toList
+		subject
+		    .masterRelations
+			.flatMap { case (id, props) =>
+				props.keySet
+					.flatMap(relationNormalization.get)
+					.toList
+					.distinct
+					.map(subject.id + separator + id + separator + _)
+			}.map(_.trim)
+			.filter(_.nonEmpty)
+			.toList
 	}
 
 	/**
@@ -83,8 +144,9 @@ object CSVExport extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val subjects = input.fromAnyRDD[Subject]().head
-		val nodes = subjects.map(nodeToCSV)
-		val edges = subjects.flatMap(edgesToCSV)
+		val masters = subjects.filter(_.isMaster)
+		val nodes = masters.map(nodeToCSV)
+		val edges = masters.flatMap(edgesToCSV)
 		List(nodes, edges).toAnyRDD()
 	}
 }
