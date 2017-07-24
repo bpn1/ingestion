@@ -81,9 +81,9 @@ object ClassifierTraining extends SparkJob {
 	  */
 	def trainRandomForest(
 		trainingData: RDD[LabeledPoint],
-		numTrees: Int,
-		maxDepth: Int,
-		maxBins: Int
+		maxDepth: Int = 6,
+		maxBins: Int = 40,
+		numTrees: Int = 20
 	): RandomForestModel = {
 		RandomForest.trainClassifier(
 			trainingData,
@@ -217,11 +217,9 @@ object ClassifierTraining extends SparkJob {
 				val negativeCount = negatives.map { case (prediction, label) =>
 					(trueOrFalsePrediction(prediction, label, "n"), 1)
 				}
-				val positiveCount = positives.collect {
-					case (prediction, label) if multipleMatches && label == 1.0 =>
-						("fn", 1)
-					case (prediction, label) if !multipleMatches =>
-						(trueOrFalsePrediction(prediction, label, "p"), 1)
+				val positiveCount = positives.map {
+					case (prediction, label) if multipleMatches => ("fn", 1)
+					case (prediction, label) if !multipleMatches => (trueOrFalsePrediction(prediction, label, "p"), 1)
 				}
 				positiveCount ++ negativeCount
 			}.reduceByKey(_ + _)
@@ -268,11 +266,7 @@ object ClassifierTraining extends SparkJob {
 					.filter(entry => !(entry.entity_score.rank > 9 || entry.cosine_sim.rank > 9))
 				val trainingDF = labeledPointDF(filteredTraining, session)
 				val testDF = labeledPointDF(test, session)
-				val classifier = randomForestClassifier(
-					maxDepth = 6,
-					maxBins = 40,
-					numTrees = 20,
-					thresholds = Array(0.5, 1.0))
+				val classifier = randomForestClassifier(thresholds = Array(0.5, 1.0))
 				val model = trainRandomForestDF(trainingDF, classifier)
 				val predictions = model.transform(testDF)
 				val predictionAndLabels = predictions.rdd.map { row =>
@@ -330,9 +324,9 @@ object ClassifierTraining extends SparkJob {
 	  * @param session Spark Session used to access Dataframe API
 	  * @return Tuple of training and test Datasets
 	  */
-	def trainingSplit(entries: RDD[FeatureEntry], session: SparkSession): (Dataset[Row], Dataset[Row]) = {
+	def trainingSplit(entries: RDD[FeatureEntry], session: SparkSession)/*: (Dataset[Row], Dataset[Row])*/ = {
 		val Array(training, test) = entries
-			.map(entry => ((entry.article, entry.offset), List(entry)))
+		    .map(entry => ((entry.article, entry.offset), List(entry)))
 			.reduceByKey(_ ++ _)
 			.randomSplit(Array(0.7, 0.3))
 			.map(_.values.flatMap(identity))
@@ -359,45 +353,45 @@ object ClassifierTraining extends SparkJob {
 //		val data = entries
 //			.map(entry => ((entry.article, entry.offset), List(entry)))
 //			.reduceByKey(_ ++ _)
-		val statistics = (1 to 100 by 10).map { i =>
-			val thresh = i / 10.0
-//			val classifier = randomForestClassifier(maxDepth = 6, maxBins = 40, numTrees = 20)
-//			val model = trainRandomForestDF(training, classifier)
-			val model = new DFNaiveBayes().setThresholds(Array(i, 1.0)).fit(training)
-			val predictions = model.transform(test)
-			val predictionAndLabels = predictions.rdd.map { row =>
-				val article = row.getString(row.fieldIndex("article"))
-				val offset = row.getInt(row.fieldIndex("offset"))
-				val prediction = row.getDouble(row.fieldIndex("prediction"))
+//		val statistics = (5 to 20 by 5).map { i =>
+//			val classifier = randomForestClassifier()
+//			val model = trainRandomForestDF(training, classifier, i)
+//			val predictions = model.transform(test)
+//			val predictionAndLabels = predictions.rdd.map { row =>
+////				val article = row.getString(row.fieldIndex("article"))
+////				val offset = row.getInt(row.fieldIndex("offset"))
+//				val prediction = row.getDouble(row.fieldIndex("prediction"))
 //				val label = row.getDouble(row.fieldIndex("indexedLabel"))
-				val label = row.getDouble(row.fieldIndex("label"))
-				((article, offset), List((prediction, label)))
-			}
-			calculateAdvancedStatistics(predictionAndLabels).copy(threshold = thresh)
-		}.toList
-//		val classifier = randomForestClassifier(maxDepth = 6, maxBins = 40, numTrees = 20, thresholds = Array(1.0, 1.0))
-////		val model = trainRandomForestDF(training, classifier)
+////				val label = row.getDouble(row.fieldIndex("label"))
+////				((article, offset), List((prediction, label)))
+//				(prediction, label)
+//			}
+////			calculateAdvancedStatistics(predictionAndLabels).copy(threshold = thresh)
+//			calculateStatistics(predictionAndLabels).copy(threshold = i)
+//		}.toList
+		val classifier = randomForestClassifier(thresholds = Array(1.0, 1.0))
+		val model = trainRandomForestDF(training, classifier)
 //		val model = new LogisticRegression()
 //			.setMaxIter(10)
 //			.setRegParam(0.3)
 //			.setElasticNetParam(0.8)
 //			.setThreshold(0.1)
 //			.fit(training)
-//		val predictions = model.transform(test)
-//		val predictionAndLabels = predictions.rdd.map { row =>
-//			val article = row.getString(row.fieldIndex("article"))
-//			val offset = row.getInt(row.fieldIndex("offset"))
-//			val prediction = row.getDouble(row.fieldIndex("prediction"))
-////			val label = row.getDouble(row.fieldIndex("indexedLabel"))
+		val predictions = model.transform(test)
+		val predictionAndLabels = predictions.rdsd.map { row =>
+			val article = row.getString(row.fieldIndex("article"))
+			val offset = row.getInt(row.fieldIndex("offset"))
+			val prediction = row.getDouble(row.fieldIndex("prediction"))
+			val label = row.getDouble(row.fieldIndex("indexedLabel"))
 //			val label = row.getDouble(row.fieldIndex("label"))
-//			((article, offset), List((prediction, label)))
-//		}
-//		val statistics = List(calculateAdvancedStatistics(predictionAndLabels))
-		val comment = "Naive Bayes PR variable threshold"
-		val results = SimilarityMeasureStats(data = statistics, comment = Option(comment), xaxis = Option("threshold"), yaxis = Option("P/R/F1"))
+			((article, offset), List((prediction, label)))
+		}
+		val statistics = List(calculateAdvancedStatistics(predictionAndLabels))
+		val comment = "RF new PR"
+		val results = SimilarityMeasureStats(data = statistics, comment = Option(comment), yaxis = Option("P/R/F1"))
 //		val (results, model) = crossValidateAndEvaluate(data, 3, session)
-//		val modelOption = sc.parallelize(List(Option(model)))
-		val modelOption = sc.parallelize(List(None))
+		val modelOption = sc.parallelize(List(Option(model)))
+//		val modelOption = sc.parallelize(List(None))
 		List(sc.parallelize(List(results))).toAnyRDD() ++ List(modelOption).toAnyRDD()
 	}
 }
