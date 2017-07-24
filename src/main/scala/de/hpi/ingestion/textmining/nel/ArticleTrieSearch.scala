@@ -76,7 +76,12 @@ object ArticleTrieSearch extends SparkJob {
 			}.collect {
 				case (index: Int, alias: TrieAlias) if !invalidIndices.contains(index) => alias
 			}.toList
-		article.copy(triealiases = foundAliases)
+		val triealiases = foundAliases.filterNot { alias =>
+			val isStopword = tokenizer.stopwords.contains(alias.alias)
+			val isSymbol = Set(".", "!", "?", ",", ";", ":", "(", ")", "*", "#", "+").contains(alias.alias)
+			isStopword || isSymbol
+		}
+		article.copy(triealiases = triealiases)
 	}
 
 	/**
