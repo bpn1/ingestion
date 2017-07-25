@@ -34,9 +34,9 @@ object Commit extends SparkJob with JSONParser[(List[Subject], List[Subject], Li
 	val commit =
 		"""
 			|{
-			|	"created": {},
+			|	"deleted": {},
 			|	"updated": {},
-			|	"deleted": {
+			|	"created": {
 			|		"1e8183f0-49c3-4da6-92e9-b6f54982a19a": {
 			|			"master": "1e8183f0-49c3-4da6-92e9-b6f54982a19a",
 			|			"id": "1e8183f0-49c3-4da6-92e9-b6f54982a19a",
@@ -92,7 +92,7 @@ object Commit extends SparkJob with JSONParser[(List[Subject], List[Subject], Li
 		val created = extractMap(json, List("created"))
 		val updated = extractMap(json, List("updated"))
 		val deleted = extractMap(json, List("deleted"))
-		deleted.map(sub => createSubject(sub._2, sc))
+		val createdSubjects = created.map(sub => createSubject(sub._2, sc))
 		val subjects = input.take(1).fromAnyRDD[Subject]()
 		subjects.toAnyRDD()
 	}
@@ -120,6 +120,23 @@ object Commit extends SparkJob with JSONParser[(List[Subject], List[Subject], Li
 	}
 
 	def createSubject(json: JsValue, sc: SparkContext): Subject = {
+		val id = UUID.fromString(extractString(json, List("id")).get)
+		val subject = Subject.empty(id = id, datasource = "human")
+		val version = Version(appName, List(), sc, false, Option("subject"))
+		val sm = new SubjectManager(subject, version)
+		sm.setMaster(UUID.fromString(extractString(json, List("master")).get))
+		sm.setName(extractString(json, List("name")))
+		sm.setAliases(getValue(json, List("aliases")).get match {
+			case arr: JsArray => arr.as[List[String]]
+			case _  => Nil
+		})
+		sm.setCategory(extractString(json, List("category")))
+		sm.setProperties(extractMap(json, List("properties")).map{case (key, value) => (key, value.as[List[String]])})
+		sm.setRelations(Map())
+		subject
+	}
+
+	def updateSubject(oldSubject: Subject, json: JsValue, sc: SparkContext): Subject = {
 		val id = UUID.fromString(extractString(json, List("id")).get)
 		val subject = Subject.empty(id = id, datasource = "human")
 		val version = Version(appName, List(), sc, false, Option("subject"))
