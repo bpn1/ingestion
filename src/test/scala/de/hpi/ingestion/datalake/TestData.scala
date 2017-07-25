@@ -27,6 +27,7 @@ object TestData {
 			)
 		)
 	}
+
 	def testEntities: List[Entity] = {
 		List (
 			Entity("entity1"),

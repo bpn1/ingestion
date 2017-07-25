@@ -1141,6 +1141,20 @@ object TestData {
 		).sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
 	}
 
+	def featuresCsvString(): String = {
+		"article,offset,alias,entity,link_score,entity_score,entity_score_rank,entity_score_dtop,entity_score_dsuc,cosine_sim,cosine_sim_rank,cosine_sim_dtop,cosine_sim_dsuc,correct\n" +
+		"Autohersteller,9,Audi,Audi,0.6666666666666666,1.0,1,Infinity,Infinity,0.608944778982726,1,Infinity,Infinity,true\n" +
+		"Autohersteller,9,Audi,Audi,0.6666666666666666,1.0,1,Infinity,Infinity,0.6951672143063198,1,Infinity,Infinity,true\n" +
+		"Reiseziel,24,historisches Jahr,1377,1.0,1.0,1,Infinity,Infinity,0.828283413127963,1,Infinity,Infinity,true\n" +
+		"Reiseziel,225,1377,1377,1.0,1.0,1,Infinity,Infinity,0.828283413127963,1,Infinity,Infinity,true\n" +
+		"Reiseziel,546,Büdinger Wald,Audi,0.5,0.2,1,Infinity,Infinity,0.0,1,Infinity,Infinity,false\n" +
+		"Reiseziel,546,Büdinger Wald,Büdinger Wald,0.5,0.8,1,Infinity,Infinity,1.0,1,Infinity,Infinity,true\n" +
+		"Tal,13,Brachttal,Brachttal,1.0,1.0,1,Infinity,Infinity,0.0,1,Infinity,Infinity,true\n" +
+		"Tal,55,Brachttal,Brachttal,1.0,1.0,1,Infinity,Infinity,0.6107163643669525,1,Infinity,Infinity,true\n" +
+		"Tal,66,Main-Kinzig-Kreis,Main-Kinzig-Kreis,0.5,1.0,1,Infinity,Infinity,0.6611213869640233,1,Infinity,Infinity,true\n" +
+		"Tal,87,Hessen,Hessen,0.5,1.0,1,Infinity,Infinity,0.4531255411026077,1,Infinity,Infinity,true"
+	}
+
 	def featureEntriesWitSOFSet(): Set[FeatureEntry] = {
 		val default = Double.PositiveInfinity
 

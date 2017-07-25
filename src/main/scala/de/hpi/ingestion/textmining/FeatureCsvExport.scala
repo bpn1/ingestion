@@ -12,8 +12,8 @@ import scala.tools.nsc.io.File
   * Exports a sample of features as csv file for eventual evaluation.
   */
 object FeatureCsvExport extends SparkJob {
-	appName = "TagEntities"
-	configFile = "wikidata_import.xml"
+	appName = "FeatureCsvExport"
+	configFile = "textmining.xml"
 
 	// $COVERAGE-OFF$
 	/**
@@ -29,13 +29,17 @@ object FeatureCsvExport extends SparkJob {
 	}
 
 	/**
-	  * Save nothing.
+	  * Saves the feature csv string to the HDFS.
 	  *
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {}
+	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
+		val featuresCsvString = output.fromAnyRDD[String]().head
+		val timestamp = System.currentTimeMillis / 1000
+		featuresCsvString.saveAsTextFile(s"features_$timestamp.csv")
+	}
 	// $COVERAGE-ON$
 
 	/**
@@ -58,8 +62,7 @@ object FeatureCsvExport extends SparkJob {
 			.mkString("\n")
 		val csvHeader = "article,offset,alias,entity,link_score,entity_score,entity_score_rank,entity_score_dtop," +
 			"entity_score_dsuc,cosine_sim,cosine_sim_rank,cosine_sim_dtop,cosine_sim_dsuc,correct\n"
-		val featuresCsv = csvHeader + featuresString
-		File("features.csv").writeAll(featuresCsv)
-		Nil
+		val featuresCsvString = csvHeader + featuresString
+		List(sc.parallelize(List(featuresCsvString))).toAnyRDD()
 	}
 }
