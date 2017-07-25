@@ -30,5 +30,6 @@
         <tfidfTable>articletfidf</tfidfTable>
         <articleCountTable>wikipediaarticlecount</articleCountTable>
         <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
+        <featuresSampleSize>100000</featuresSampleSize>
     </settings>
 </config>
