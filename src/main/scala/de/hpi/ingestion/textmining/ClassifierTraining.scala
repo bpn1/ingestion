@@ -9,7 +9,7 @@ import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.ml.classification.{GBTClassifier, LogisticRegression, RandomForestClassifier, NaiveBayes => DFNaiveBayes}
+import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}
 import org.apache.spark.mllib.tree.RandomForest
 import org.apache.spark.mllib.tree.model.RandomForestModel
@@ -25,8 +25,6 @@ object ClassifierTraining extends SparkJob {
 	sparkOptions("spark.yarn.executor.memoryOverhead") = "8192"
 
 	// $COVERAGE-OFF$
-	var trainingFunction = crossValidateAndEvaluate _
-
 	/**
 	  * Loads Feature entries from the Cassandra.
 	  *
@@ -35,8 +33,7 @@ object ClassifierTraining extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val entries = sc.cassandraTable[FeatureEntry](settings("keyspace"), "featureentries_testing2")
-		//settings("secondOrderFeatureTable"))
+		val entries = sc.cassandraTable[FeatureEntry](settings("keyspace"), settings("companyFeatureEntries"))
 		List(entries).toAnyRDD()
 	}
 
@@ -50,7 +47,6 @@ object ClassifierTraining extends SparkJob {
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		val List(stats, model) = output
 		stats
-//		output.head
 			.asInstanceOf[RDD[SimilarityMeasureStats]]
 			.saveToCassandra(settings("keyspace"), settings("simMeasureStatsTable"))
 		model
@@ -71,44 +67,18 @@ object ClassifierTraining extends SparkJob {
 	}
 
 	/**
-	  * Uses the provided data to train a Random Forest model and returns the model.
-	  *
-	  * @param trainingData RDD of labeled points used to train the model
-	  * @param numTrees     number of trees used
-	  * @param maxDepth     maximum depth used
-	  * @param maxBins      maximum number of bins used
-	  * @return the trained model
-	  */
-	def trainRandomForest(
-		trainingData: RDD[LabeledPoint],
-		maxDepth: Int = 6,
-		maxBins: Int = 40,
-		numTrees: Int = 20
-	): RandomForestModel = {
-		RandomForest.trainClassifier(
-			trainingData,
-			numClasses = 2,
-			categoricalFeaturesInfo = Map[Int, Int](),
-			numTrees = numTrees,
-			featureSubsetStrategy = "auto",
-			impurity = "gini",
-			maxDepth = maxDepth,
-			maxBins = maxDepth)
-	}
-
-	/**
 	  * Sets the parameters for a Dataframe based Random Forest Classifier.
-	  * @param thresholds Array of the thresholds (weights) used
 	  * @param maxDepth maximum depth of the trees
 	  * @param maxBins maximum bins used
 	  * @param numTrees number of trees used
+	  * @param thresholds Array of the thresholds (weights) used
 	  * @return Random Forest Classifier with the set parameters
 	  */
-	def randomForestClassifier(
-		thresholds: Array[Double] = Array(1.0, 1.0),
+	def randomForestDFModel(
 		maxDepth: Int = 6,
 		maxBins: Int = 40,
-		numTrees: Int = 20
+		numTrees: Int = 20,
+		thresholds: Array[Double] = Array(1.0, 1.0)
 	): RandomForestClassifier = {
 		new RandomForestClassifier()
 			.setLabelCol("indexedLabel")
@@ -129,8 +99,7 @@ object ClassifierTraining extends SparkJob {
 	  */
 	def trainRandomForestDF(
 		training: Dataset[Row],
-		classifier: RandomForestClassifier,
-		iter: Int = 10
+		classifier: RandomForestClassifier
 	): PipelineModel = {
 		val labelIndexer = new StringIndexer()
 			.setInputCol("label")
@@ -143,14 +112,6 @@ object ClassifierTraining extends SparkJob {
 			.setMaxCategories(4)
 			.fit(training)
 
-		// gradient boost
-//		val gbt = new GBTClassifier()
-//			.setLabelCol("indexedLabel")
-//			.setFeaturesCol("indexedFeatures")
-//			.setMaxIter(iter)
-//			.setMaxBins(40)
-//			.setMaxDepth(6)
-
 		val labelConverter = new IndexToString()
 			.setInputCol("prediction")
 			.setOutputCol("predictedLabel")
@@ -158,7 +119,6 @@ object ClassifierTraining extends SparkJob {
 
 		val pipeline = new Pipeline()
 			.setStages(Array(labelIndexer, featureIndexer, classifier, labelConverter))
-//			.setStages(Array(labelIndexer, featureIndexer, gbt, labelConverter))
 		pipeline.fit(training)
 	}
 
@@ -177,17 +137,23 @@ object ClassifierTraining extends SparkJob {
 			}.toDF("features", "label", "article", "offset")
 	}
 
+	/**
+	  * Parses a prediction and its label to a key used for the precision and recall calculation.
+	  * @param prediction prediction of the entry
+	  * @param label label of the entry
+	  * @param statisticLabel label used for the entry (either p for positive or n for negative)
+	  * @return key used for this entry
+	  */
 	def trueOrFalsePrediction(prediction: Double, label: Double, statisticLabel: String): String = {
 		val trueOrFalse = if(prediction == label) "t" else "f"
 		s"$trueOrFalse$statisticLabel"
 	}
 
 	/**
-	  * Calculates Precision, Recall and F1-Score of the given prediction results.
-	  *
-	  * @param predictionAndLabels RDD containing Tuples of the prediction and the given label in the format
-	  *                            (prediction, label)
-	  * @return List of statistic data as three-tuples in the format (statistic, threshold, value)
+	  * Calculates Precision, Recall and F-Score of the given prediction results.
+	  * @param predictionAndLabels RDD containing the prediction results in the format of (prediction, label) tuples.
+	  * @param beta beta value used for the F-Score.
+	  * @return Precision, Recall and F-Score
 	  */
 	def calculateStatistics(
 		predictionAndLabels: RDD[(Double, Double)],
@@ -204,6 +170,14 @@ object ClassifierTraining extends SparkJob {
 		calculatePrecisionRecall(pnCount, beta)
 	}
 
+	/**
+	  * Calculates Precision, Recall and F-Score of the given prediction results. The Precision and Recall are adjusted
+	  * for collisions of predicted entities (multiple entities at the same offset in the same articles that were
+	  * predicted to be true).
+	  * @param predictionAndLabels RDD containing the prediction results in the format of (prediction, label) tuples.
+	  * @param beta beta value used for the F-Score.
+	  * @return Precision, Recall and F-Score
+	  */
 	def calculateAdvancedStatistics(
 		predictionAndLabels: RDD[((String, Int), List[(Double, Double)])],
 		beta: Double = 1.0
@@ -228,8 +202,13 @@ object ClassifierTraining extends SparkJob {
 		calculatePrecisionRecall(pnCount, beta)
 	}
 
+	/**
+	  * Calculates Precision, Recall and F-Score of the given prediction results.
+	  * @param pnCount Map containing the counts of tp, fp, tn and fn.
+	  * @param beta beta value used for the F-Score.
+	  * @return Precision, Recall and F-Score
+	  */
 	def calculatePrecisionRecall(pnCount: Map[String, Int], beta: Double = 1.0): PrecisionRecallDataTuple = {
-		println(s"\npn count:\n${pnCount.mkString("\n")}")
 		val tp = pnCount.getOrElse("tp", 0)
 		val fp = pnCount.getOrElse("fp", 0)
 		val fn = pnCount.getOrElse("fn", 0)
@@ -244,18 +223,24 @@ object ClassifierTraining extends SparkJob {
 	  *
 	  * @param data     input data used to train the classifier
 	  * @param numFolds number of folds used for the cross validation
+	  * @param classifier Random Forest Classifier containing the used parameters
 	  * @param session  current Spark Session
 	  * @return statistical data for each fold
 	  */
 	def crossValidate(
-		data: RDD[List[FeatureEntry]],
+		data: RDD[FeatureEntry],
 		numFolds: Int,
+		classifier: RandomForestClassifier,
 		session: SparkSession
 	): (List[PrecisionRecallDataTuple], List[PipelineModel]) = {
-		val weights = (0 until numFolds).map(t => 1.0 / numFolds).toArray
-		val folds = data.randomSplit(weights).map(_.flatMap(identity))
-		val segments = folds.indices.map { index =>
-			val test = folds(index)
+		val weights = Array.fill(numFolds)(1.0)
+		val folds = data
+			.map(entry => ((entry.article, entry.offset), List(entry)))
+			.reduceByKey(_ ++ _)
+			.values
+			.randomSplit(weights)
+			.map(_.flatMap(identity))
+		val segments = folds.zipWithIndex.map { case (test, index) =>
 			val training = folds.slice(0, index) ++ folds.slice(index + 1, folds.length)
 			(test, training)
 		}
@@ -266,7 +251,6 @@ object ClassifierTraining extends SparkJob {
 					.filter(entry => !(entry.entity_score.rank > 9 || entry.cosine_sim.rank > 9))
 				val trainingDF = labeledPointDF(filteredTraining, session)
 				val testDF = labeledPointDF(test, session)
-				val classifier = randomForestClassifier(thresholds = Array(0.5, 1.0))
 				val model = trainRandomForestDF(trainingDF, classifier)
 				val predictions = model.transform(testDF)
 				val predictionAndLabels = predictions.rdd.map { row =>
@@ -301,45 +285,30 @@ object ClassifierTraining extends SparkJob {
 	/**
 	  * Trains and cross validates a Random Forest Model.
 	  *
-	  * @param data     data used to train and test the model
+	  * @param data data used to train and test the model
 	  * @param numFolds number of folds used for the cross validation
-	  * @param session  current Spark Session
+	  * @param classifier Random Forest Classifier containing the used parameters
+	  * @param session current Spark Session
 	  * @return statistics of the cross validation and a Random Forest Model
 	  */
 	def crossValidateAndEvaluate(
-		data: RDD[List[FeatureEntry]],
+		data: RDD[FeatureEntry],
 		numFolds: Int = 3,
+		classifier: RandomForestClassifier,
 		session: SparkSession
 	): (SimilarityMeasureStats, Option[PipelineModel]) = {
-		val (cvResult, models) = crossValidate(data, numFolds, session)
+		val (cvResult, models) = crossValidate(data, numFolds, classifier, session)
 		val statistic = averageStatistics(cvResult)
 		val model = models.headOption
-		val results = SimilarityMeasureStats(data = List(statistic), comment = Option(s"RF CV $numFolds folds"))
+		val results = SimilarityMeasureStats(
+			data = List(statistic),
+			comment = Option(s"RF CV $numFolds folds"),
+			yaxis = Option("P/R/F1"))
 		(results, model)
 	}
 
 	/**
-	  * Splits the input Feature Entry RDD into 70% training data and 30% test data as Dataframe.
-	  * @param entries RDD of Feature Entries
-	  * @param session Spark Session used to access Dataframe API
-	  * @return Tuple of training and test Datasets
-	  */
-	def trainingSplit(entries: RDD[FeatureEntry], session: SparkSession)/*: (Dataset[Row], Dataset[Row])*/ = {
-		val Array(training, test) = entries
-		    .map(entry => ((entry.article, entry.offset), List(entry)))
-			.reduceByKey(_ ++ _)
-			.randomSplit(Array(0.7, 0.3))
-			.map(_.values.flatMap(identity))
-		val filteredTraining = training
-			.filter(entry => !(entry.entity_score.rank > 9 || entry.cosine_sim.rank > 9))
-		val trainingDF = labeledPointDF(filteredTraining, session).cache()
-		val testDF = labeledPointDF(test, session).cache()
-		(trainingDF, testDF)
-	}
-
-	/**
 	  * Partitions the entries to train and test a Classification model.
-	  * Example code: https://spark.apache.org/docs/latest/mllib-naive-bayes.html
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
@@ -349,49 +318,8 @@ object ClassifierTraining extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val session = SparkSession.builder().getOrCreate()
 		val entries = input.fromAnyRDD[FeatureEntry]().head
-		val (training, test) = trainingSplit(entries, session)
-//		val data = entries
-//			.map(entry => ((entry.article, entry.offset), List(entry)))
-//			.reduceByKey(_ ++ _)
-//		val statistics = (5 to 20 by 5).map { i =>
-//			val classifier = randomForestClassifier()
-//			val model = trainRandomForestDF(training, classifier, i)
-//			val predictions = model.transform(test)
-//			val predictionAndLabels = predictions.rdd.map { row =>
-////				val article = row.getString(row.fieldIndex("article"))
-////				val offset = row.getInt(row.fieldIndex("offset"))
-//				val prediction = row.getDouble(row.fieldIndex("prediction"))
-//				val label = row.getDouble(row.fieldIndex("indexedLabel"))
-////				val label = row.getDouble(row.fieldIndex("label"))
-////				((article, offset), List((prediction, label)))
-//				(prediction, label)
-//			}
-////			calculateAdvancedStatistics(predictionAndLabels).copy(threshold = thresh)
-//			calculateStatistics(predictionAndLabels).copy(threshold = i)
-//		}.toList
-		val classifier = randomForestClassifier(thresholds = Array(1.0, 1.0))
-		val model = trainRandomForestDF(training, classifier)
-//		val model = new LogisticRegression()
-//			.setMaxIter(10)
-//			.setRegParam(0.3)
-//			.setElasticNetParam(0.8)
-//			.setThreshold(0.1)
-//			.fit(training)
-		val predictions = model.transform(test)
-		val predictionAndLabels = predictions.rdsd.map { row =>
-			val article = row.getString(row.fieldIndex("article"))
-			val offset = row.getInt(row.fieldIndex("offset"))
-			val prediction = row.getDouble(row.fieldIndex("prediction"))
-			val label = row.getDouble(row.fieldIndex("indexedLabel"))
-//			val label = row.getDouble(row.fieldIndex("label"))
-			((article, offset), List((prediction, label)))
-		}
-		val statistics = List(calculateAdvancedStatistics(predictionAndLabels))
-		val comment = "RF new PR"
-		val results = SimilarityMeasureStats(data = statistics, comment = Option(comment), yaxis = Option("P/R/F1"))
-//		val (results, model) = crossValidateAndEvaluate(data, 3, session)
+		val (results, model) = crossValidateAndEvaluate(entries, 3, randomForestDFModel(), session)
 		val modelOption = sc.parallelize(List(Option(model)))
-//		val modelOption = sc.parallelize(List(None))
 		List(sc.parallelize(List(results))).toAnyRDD() ++ List(modelOption).toAnyRDD()
 	}
 }

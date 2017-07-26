@@ -32,5 +32,6 @@
         <NELTable>spiegel</NELTable>
         <articleCountTable>wikipediaarticlecount</articleCountTable>
         <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
+        <companyFeatureEntries>featureentries_testing2</companyFeatureEntries>
     </settings>
 </config>

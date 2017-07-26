@@ -14,9 +14,15 @@ import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
+
 import scala.collection.JavaConversions._
 import scala.io.{BufferedSource, Source}
 import java.io._
+
+import org.apache.spark.ml.classification.RandomForestClassifier
+import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.ml.feature.{IndexToString, StringIndexer}
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -24,6 +30,9 @@ import java.io._
 // scalastyle:off file.size.limit
 
 object TestData {
+
+	var rfModel: Option[PipelineModel] = None
+
 	def profilerTfidfVectors(): Vector[SparseVector] = {
 		Vector(
 			Vectors.sparse(1048576, Array(243877, 626966, 787968), Array(0.0, 0.0, 0.0)),
@@ -2547,18 +2556,34 @@ object TestData {
 
 	def classifierFeatureEntries(offset: Int = 0): List[FeatureEntry] = {
 		List(
-			FeatureEntry("Audi", offset, "alias1", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
-			FeatureEntry("Audi", offset, "alias2", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
-			FeatureEntry("Audi", offset, "alias3", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
-			FeatureEntry("Audi", offset, "alias4", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
-			FeatureEntry("Audi", offset, "alias5", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
-			FeatureEntry("Audi", offset, "alias6", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
-			FeatureEntry("Audi", offset, "alias7", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
+			FeatureEntry("Audi1", offset, "alias1", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
+			FeatureEntry("Audi2", offset + 1, "alias2", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
+			FeatureEntry("Audi3", offset + 2, "alias3", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry("Audi4", offset + 3, "alias4", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
+			FeatureEntry("Audi5", offset + 4, "alias5", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
+			FeatureEntry("Audi6", offset + 5, "alias6", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
+			FeatureEntry("Audi7", offset + 6, "alias7", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
+		)
+	}
+
+	def classifierFeatureEntriesWithGrouping(offset: Int = 0): List[FeatureEntry] = {
+		List(
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
 		)
 	}
 
 	def extendedClassifierFeatureEntries(n: Int = 5): List[FeatureEntry] = {
 		(0 until n).flatMap(classifierFeatureEntries).toList
+	}
+
+	def extendedClassifierFeatureEntriesWithGrouping(n: Int = 5): List[FeatureEntry] = {
+		(0 until n).flatMap(classifierFeatureEntriesWithGrouping).toList
 	}
 
 	def labeledPredictions(): List[(Double, Double)] = {
@@ -2604,28 +2629,13 @@ object TestData {
 		SimilarityMeasureStats(null, List(PrecisionRecallDataTuple(1.0, 1.0, 1.0, 1.0)))
 	}
 
-	def randomForestModel(prediction: Double = 0.0): RandomForestModel = {
-		val node = new Node(0, new Predict(prediction, 1.0), 0.0, true, None, None, None, None)
-		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
-		new RandomForestModel(Algo.Classification, Array(dtmodel))
-	}
-
-	def hdfsRandomForestModel(prediction: Double = 0.0)(sc: SparkContext) = {
-		randomForestModel(prediction)
-	}
-
 	def crossValidationMethod(
-		data: RDD[LabeledPoint],
+		data: RDD[FeatureEntry],
 		numFolds: Int = 3,
-		numTrees: Int = 5,
-		maxDepth: Int = 4,
-		maxBins: Int = 32
-	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
-		(simMeasureStats(), Option(randomForestModel()))
-	}
-
-	def loadRandomForestModel(sc: SparkContext): RandomForestModel = {
-		randomForestModel()
+		classifier: RandomForestClassifier,
+		session: SparkSession
+	): (SimilarityMeasureStats, Option[PipelineModel]) = {
+		(simMeasureStats(), None)
 	}
 
 	def formattedPredictionStatistics(): String = {
@@ -2812,6 +2822,24 @@ object TestData {
 				),
 				foundaliases = List("Audi", "Audi", "Audi AG", "AG", "Volkswagen")
 			)
+		)
+	}
+
+	def predictionData(): List[(Double, Double, String)] = {
+		List(
+			(1.0, 0.0, "p"),
+			(1.0, 1.0, "p"),
+			(0.0, 0.0, "n"),
+			(0.0, 1.0, "n")
+		)
+	}
+
+	def predictionKeys(): List[String] = {
+		List(
+			"fp",
+			"tp",
+			"tn",
+			"fn"
 		)
 	}
 }
