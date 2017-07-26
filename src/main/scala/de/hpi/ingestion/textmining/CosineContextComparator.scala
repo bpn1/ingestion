@@ -33,11 +33,11 @@ object CosineContextComparator extends SplitSparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
 		val articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
+		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
+		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		val articleCount = sc.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
-		List(tfArticles, aliases, articleTfidf, articleCount).flatMap(List(_).toAnyRDD())
+		List(articleTfidf, aliases, tfArticles, articleCount).flatMap(List(_).toAnyRDD())
 	}
 
 	/**
@@ -326,6 +326,6 @@ object CosineContextComparator extends SplitSparkJob {
 		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf(numDocuments))
 
 		val featureEntries = compareLinksWithArticles(contextTfidf, sc.broadcast(aliasPageScores), articleTfidf)
-		SecondOrderFeatureGenerator.run(List(featureEntries).toAnyRDD(), sc, args)
+		List(featureEntries).toAnyRDD()
 	}
 }
