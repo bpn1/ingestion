@@ -30,8 +30,8 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 
 /**
-  * Classifies the trie aliases found in Articles by the ArticleTrieSearch and writes the positives as found entities
-  * to the same table.
+  * Classifies the `TrieAliases` found in `TrieAliasArticles` by the `ArticleTrieSearch` and writes the positives into
+  * the `foundentities` column back to the same table.
   */
 object TextNEL extends SplitSparkJob {
 	appName = "Text NEL"

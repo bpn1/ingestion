@@ -28,8 +28,7 @@ import scala.collection.mutable
 
 
 /**
-  * Extends Wikipedia articles with links of occurrences of aliases that were previously
-  * linked in the same article.
+  * Extends Wikipedia articles with `Links` of occurrences of aliases that were previously linked in the same article.
   */
 object LinkExtender extends SparkJob {
 	appName = "Link Extender"

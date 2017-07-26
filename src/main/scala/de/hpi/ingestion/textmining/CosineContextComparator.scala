@@ -29,8 +29,8 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.broadcast.Broadcast
 
 /**
-  * Calculates cosine similarity (context score) for every pair of link alias and page it may refer to.
-  * It combines it with the links score and entity score, which leads to a FeatureEntry.
+  * Calculates the cosine similarity (context score) for each pair of `Link` alias and page it may refer to. It combines it
+  * with the links score and entity score, which leads to the respective `FeatureEntry`.
   */
 object CosineContextComparator extends SplitSparkJob {
 	appName = "Cosine Context Comparator"

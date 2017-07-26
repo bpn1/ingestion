@@ -25,7 +25,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 
 /**
-  * Exports the Cooccurrences to Neo4j CSV.
+  * Exports the cooccurrences to Neo4j CSV. (This is just for debugging and no necessary part of the pipeline.)
   */
 object CooccurrenceExport extends SparkJob {
 	appName = "Co-Occurrence Export"
@@ -64,9 +64,11 @@ object CooccurrenceExport extends SparkJob {
 
 	/**
 	  * Exports the Co-Occurrence nodes and edges to CSV.
+	  * (This is just for debugging and no necessary part of thepipeline.)
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {

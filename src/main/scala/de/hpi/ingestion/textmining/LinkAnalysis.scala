@@ -24,7 +24,7 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
-  * Groups link Aliases by page names and vice versa.
+  * Groups `Aliases` of `Links` by page names and vice versa.
   */
 object LinkAnalysis extends SparkJob {
 	appName = "Link Analysis"

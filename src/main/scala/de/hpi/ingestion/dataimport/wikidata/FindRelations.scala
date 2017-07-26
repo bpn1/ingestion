@@ -16,18 +16,18 @@ limitations under the License.
 
 package de.hpi.ingestion.dataimport.wikidata
 
-import org.apache.spark.SparkContext
-import java.util.UUID
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import scala.util.matching.Regex
-import com.datastax.spark.connector._
-import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.framework.SparkJob
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import com.datastax.spark.connector._
+import scala.util.matching.Regex
+import java.util.UUID
 
 /**
-  * Finds Wikidata relations between subjects, translates the Wikidata ID relations into Subject UUID relations and
+  * Finds Wikidata relations between `Subjects`, translates the Wikidata ID relations intoa `Subject` UUID relations and
   * replaces the Wikidata IDs with their names.
   */
 object FindRelations extends SparkJob {

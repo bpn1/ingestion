@@ -25,8 +25,8 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.TupleImplicits._
 
 /**
-  * Resolves all redirects for each ParsedWikipediaEntry by replacing them with the pages they point to and writing the
-  * redirects to a cassandra table.
+  * Resolves all redirects for each `ParsedWikipediaEntry` by replacing them with the pages they point to and writing
+  * the redirects to a cassandra table.
   */
 object RedirectResolver extends SparkJob {
 	appName = "Redirect Resolver"

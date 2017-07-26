@@ -25,7 +25,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 
 /**
-  * Removes all Wikipedia links with an alias that never points to a company.
+  * Removes all Wikipedia `Links` with an alias that never points to a company.
   */
 object CompanyLinkFilter extends SparkJob {
 	appName = "Company Link Filter"

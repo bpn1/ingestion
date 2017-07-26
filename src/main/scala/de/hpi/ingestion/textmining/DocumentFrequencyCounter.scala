@@ -26,7 +26,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 /**
-  * Counts document frequencies over all articles.
+  * Ccunts `DocumentFrequencies` over all articles.
   */
 object DocumentFrequencyCounter extends SparkJob {
 	appName = "Document Frequency Counter"
@@ -100,7 +100,8 @@ object DocumentFrequencyCounter extends SparkJob {
 	}
 
 	/**
-	  * Calculates the document frequencies.
+	  * Counts `DocumentFrequencies` over all articles.
+	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program

@@ -33,7 +33,7 @@ import org.apache.spark.rdd.RDD
 import scala.io.Source
 
 /**
-  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links.
+  * Parses all Wikipedia articles from wikitext to raw text and extracts its links.
   */
 object TextParser extends SparkJob {
 	appName = "Text Parser"
@@ -73,14 +73,14 @@ object TextParser extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Cleans Wikimarkup and converts it to html.
+	  * Cleans wikitext and converts it to html.
 	  *
-	  * @param wikiMarkup Wikimarkup to clean and convert
+	  * @param wikitext wikitext to clean and convert
 	  * @return cleaned html
 	  */
-	def wikipediaToHtml(wikiMarkup: String): String = {
-		val html = wikiMarkup.replaceAll("\\\\n", "\n")
-		WikiModel.toHtml(removeWikiMarkup(html))
+	def wikipediaToHtml(wikitext: String): String = {
+		val html = wikitext.replaceAll("\\\\n", "\n")
+		WikiModel.toHtml(removeWikitextMarkup(html))
 	}
 
 	/**
@@ -128,7 +128,7 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Parse Wikipedia article, remove the Wikimarkup, extract text and all links.
+	  * Parse Wikipedia article, remove the wikitext markup, extract text and all links.
 	  *
 	  * @param title title of Wikipedia article
 	  * @param html  html of Wikipedia article
@@ -156,7 +156,7 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Removes any unwanted HTML tags and inline Wikimarkup tags.
+	  * Removes any unwanted HTML tags and inline wikitext tags.
 	  *
 	  * @param document Jsoup Document to clean
 	  * @return cleaned Document containing only text and anchor tags
@@ -212,8 +212,8 @@ object TextParser extends SparkJob {
 	  * @return true if article is disambiguation page
 	  */
 	def isDisambiguationPage(entry: WikipediaEntry): Boolean = {
-		val disambiguationWikiMarkupSuffix = "{{Begriffsklärung}}"
-		entry.getText().endsWith(disambiguationWikiMarkupSuffix)
+		val disambiguationWikitextSuffix = "{{Begriffsklärung}}"
+		entry.getText().endsWith(disambiguationWikitextSuffix)
 	}
 
 	/**
@@ -282,12 +282,12 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Removes text of Wikimarkup.
+	  * Removes text of wikitext.
 	  *
-	  * @param wikitext Wikimarkup text to be cleaned
+	  * @param wikitext wikitext text to be cleaned
 	  * @return cleaned text
 	  */
-	def removeWikiMarkup(wikitext: String): String = {
+	def removeWikitextMarkup(wikitext: String): String = {
 		var cleanText = ""
 		var depth = 0
 		var escaped = false
@@ -307,7 +307,7 @@ object TextParser extends SparkJob {
 	/**
 	  * Extracts and checks if Wikipedia template is correct.
 	  *
-	  * @param wikitext   Wikimarkup text to be extracted from
+	  * @param wikitext   wikitext text to be extracted from
 	  * @param startIndex startIndex of template
 	  * @return full template text
 	  */
@@ -334,7 +334,7 @@ object TextParser extends SparkJob {
 	/**
 	  * Extract all templates in Wikipedia article.
 	  *
-	  * @param wikitext Wikimarkup text to be extracted from
+	  * @param wikitext wikitext text to be extracted from
 	  * @return template text containing all the templates concatenated
 	  */
 	def extractAllTemplates(wikitext: String): String = {
@@ -378,7 +378,7 @@ object TextParser extends SparkJob {
 	/**
 	  * Extract all links from Wikipedia template.
 	  *
-	  * @param wikitext Wikimarkup text to be extracted from
+	  * @param wikitext wikitext text to be extracted from
 	  * @return list of all links in the template
 	  */
 	def extractTemplateLinks(wikitext: String): List[Link] = {
@@ -396,7 +396,7 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Parses a Wikipedia entry meanwhile removing Wikimarkup and extracting all links.
+	  * Parses a Wikipedia entry meanwhile removing wikitext and extracting all links.
 	  *
 	  * @param entry raw Wikipedia entry
 	  * @return parsed Wikipedia entry thats been processed
@@ -506,7 +506,7 @@ object TextParser extends SparkJob {
 	}
 
 	/**
-	  * Parses all Wikipedia articles from Wikimarkup to raw text and extracts its links. Also removes all metapages
+	  * Parses all Wikipedia articles from wikitext to raw text and extracts its links. Also removes all metapages
 	  * except {@categoryNamespace} pages.
 	  *
 	  * @param input List of RDDs containing the input data

@@ -24,7 +24,7 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
-  * Counts Alias occurrences and merges them into previously extracted Aliases with their corresponding pages.
+  * Counts `Alias` occurrences and merges them into previously extracted `Aliases` with their corresponding pages.
   */
 object AliasCounter extends SparkJob {
 	appName = "Alias Counter"

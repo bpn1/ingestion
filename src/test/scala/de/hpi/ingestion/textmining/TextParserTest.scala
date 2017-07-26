@@ -34,22 +34,22 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 			.foreach(entry => entry._1 shouldEqual entry._2)
 	}
 
-	"Wikipedia article text" should "not contain Wikimarkup" in {
+	"Wikipedia article text" should "not contain wikitext" in {
 		// matches [[...]] and {{...}} but not escaped '{', i.e. "\{"
-		val wikimarkupRegex = new Regex("(\\[\\[.*?\\]\\])" + "|" + "([^\\\\]\\{\\{.*?\\}\\})")
+		val wikitextRegex = new Regex("(\\[\\[.*?\\]\\])" + "|" + "([^\\\\]\\{\\{.*?\\}\\})")
 		TestData.wikipediaEntries()
 			.map(entry => TextParser.wikipediaToHtml(entry.getText()))
-			.foreach(element => wikimarkupRegex.findFirstIn(element) shouldBe empty)
+			.foreach(element => wikitextRegex.findFirstIn(element) shouldBe empty)
 	}
 
 	it should "not contain escaped HTML characters" in {
-		val wikimarkupRegex = new Regex("&\\S*?;")
+		val wikitextRegex = new Regex("&\\S*?;")
 		TestData.wikipediaEntries()
 			.map { entry =>
 				val html = TextParser.wikipediaToHtml(entry.getText())
 				TextParser.parseHtml(entry.title, html)
 			}
-			.foreach(element => wikimarkupRegex.findFirstIn(element.getText()) shouldBe empty)
+			.foreach(element => wikitextRegex.findFirstIn(element.getText()) shouldBe empty)
 	}
 
 	it should "contain none of the tags: table, h[0-9], small" in {

@@ -25,8 +25,8 @@ import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikidataEntit
 import de.hpi.ingestion.framework.SparkJob
 
 /**
-  * Builds the subclass hierarchy of selected Wikidata classes and tags every Wikidata entity, that is an instance of
-  * one of the subclasses, with the top level class.
+  * Builds the subclass hierarchy of selected Wikidata classes and tags every `WikidataEntity` that is an instance of
+  * one of the subclasses with the top level class.
   */
 object TagEntities extends SparkJob {
 	appName = "TagEntities"
@@ -210,7 +210,7 @@ object TagEntities extends SparkJob {
 	}
 
 	/**
-	  * Tags the Wikidata entities with their superclass.
+	  * Tags the WikidataEntities with their superclass.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program

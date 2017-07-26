@@ -24,7 +24,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
-  * Reduces ParsedWikipediaArticles to relevant attributes for NEL.
+  * Reduces each `ParsedWikipediaEntry` to its relevant attributes for NEL.
   */
 object WikipediaReduction extends SparkJob {
 	appName = "Wikipedia Reduction"
@@ -57,7 +57,7 @@ object WikipediaReduction extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Reduces ParsedWikipediaArticles to relevant attributes for NEL.
+	  * Reduces each `ParsedWikipediaEntry` to its relevant attributes for NEL.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context

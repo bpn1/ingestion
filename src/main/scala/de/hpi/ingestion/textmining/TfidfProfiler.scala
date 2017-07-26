@@ -31,7 +31,7 @@ import de.hpi.ingestion.textmining.TermFrequencyCounter.extractArticleContext
 
 /**
   * Compares the performance of the context extraction and tf-idf computation of the Ingestion project with the
-  * implementation in the Spark MLlib.
+  * implementation in the Spark MLlib. (This is just for evaluation and no necessary part of the pipeline.)
   */
 object TfidfProfiler extends SparkJob {
 	appName = "tf-idf Profiler"
@@ -143,7 +143,7 @@ object TfidfProfiler extends SparkJob {
 
 	/**
 	  * Compares the performance of the context extraction and tf-idf computation of the Ingestion project with the
-	  * implementation in the Spark MLlib.
+	  * implementation in the Spark MLlib. (This is just for evaluation and no necessary part of the pipeline.)
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context

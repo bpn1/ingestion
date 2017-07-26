@@ -33,7 +33,7 @@ import scala.collection.mutable.ListBuffer
 
 /**
   * Finds all occurrences of the aliases in the given trie in all Wikipedia articles and writes them to the
-  * foundaliases column.
+  * `foundaliases` column.
   * recommended spark-submit flags (needed for deserialization of Trie)
   * --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
   */

@@ -25,7 +25,7 @@ import com.datastax.spark.connector._
 import scala.collection.mutable
 
 /**
-  * Enriches page scores and cosine similarities of given FeatureEntries with their respective second order feature
+  * Enriches page scores and cosine similarities of given `FeatureEntries` with their respective second order feature
   * values.
   */
 object SecondOrderFeatureGenerator extends SparkJob {

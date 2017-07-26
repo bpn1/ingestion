@@ -26,7 +26,7 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 
 /**
-  * Parses all Sentences with at least two entities from every Wikipedia article and puts them into an RDD.
+  * Parses all `Sentences` with at least two entities from each Wikipedia article and writes them to the Cassandra.
   */
 object RelationSentenceParser extends SparkJob {
 	appName = "Relation Sentence Parser"
@@ -141,7 +141,7 @@ object RelationSentenceParser extends SparkJob {
 	}
 
 	/**
-	  * Parses all Sentences with at least two entities from every Wikipedia article and puts them into an RDD.
+	  * Parses all `Sentences` with at least two entities from each Wikipedia article.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

@@ -23,8 +23,7 @@ import de.hpi.ingestion.textmining.models._
 import com.datastax.spark.connector._
 
 /**
-  * Groups the links once on the aliases and once on the pages, removes dead links (no corresponding page) and saves
-  * them to the reduced links columns.
+  * Groups the `Links` once on the aliases and once on the pages and saves them to the columns for reduced links.
   */
 object ReducedLinkAnalysis extends SparkJob {
 	appName = "Reduced Link Analysis"
@@ -58,8 +57,7 @@ object ReducedLinkAnalysis extends SparkJob {
 	// $COVERAGE-ON$
 
 	/**
-	  * Groups the links once on the aliases and once on the pages, removes dead links (no corresponding page) and saves
-	  * them to the reduced links columns.
+	  * Groups the links once on the aliases and once on the pages.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
