@@ -21,7 +21,7 @@ import de.hpi.ingestion.dataimport.{CountryISO3166Mapping, SharedNormalizations}
 import de.hpi.ingestion.dataimport.SharedNormalizations
 
 /**
-  * Strategies for the normalization of DBPedia entities
+  * Strategies for the normalization of DBpedia entities
   */
 object DBpediaNormalizationStrategy extends Serializable {
 	/**
