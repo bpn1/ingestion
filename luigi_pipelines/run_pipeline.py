@@ -29,4 +29,3 @@ if __name__ == "__main__":
             luigi.run()
     except KeyboardInterrupt:
         print("Pipeline interrupted: You have to stop the spark job manually!")
-        # todo: send ctrl+c via ssh

@@ -35,6 +35,7 @@ case class IngestionTokenizer(
 	val stopwordsPath = "german_stopwords.txt"
 	val stopwords: Set[String] = Source.fromURL(getClass.getResource(s"/$stopwordsPath"), "UTF-8")
 		.getLines()
+		.filter(_.head != ';')
 		.toSet
 
 	/**

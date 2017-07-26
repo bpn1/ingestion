@@ -252,6 +252,11 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 		sentences shouldEqual expected
 	}
 
+	"Stopword file header" should "not be parsed" in {
+		val stopwords = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true).stopwords
+		stopwords.foreach(_.head should not equal ';')
+	}
+
 	def isSpecialCharacter(text: String, beginOffset: Int, endOffset: Int): Boolean = {
 		val length = endOffset - beginOffset
 		val character = text.charAt(beginOffset)
