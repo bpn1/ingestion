@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
-import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
+import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
@@ -2492,14 +2492,14 @@ object TestData {
 			("Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(0)))))
 	}
 
-	def wikidataEntities(): List[WikiDataEntity] = {
+	def wikidataEntities(): List[WikidataEntity] = {
 		List(
-			WikiDataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Page 1")),
-			WikiDataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Page 2")),
-			WikiDataEntity("Q3", instancetype = Option("comp"), wikiname = Option("Page 3")),
-			WikiDataEntity("Q4", instancetype = Option("comp")),
-			WikiDataEntity("Q5", wikiname = Option("Page 5")),
-			WikiDataEntity("Q6"))
+			WikidataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Page 1")),
+			WikidataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Page 2")),
+			WikidataEntity("Q3", instancetype = Option("comp"), wikiname = Option("Page 3")),
+			WikidataEntity("Q4", instancetype = Option("comp")),
+			WikidataEntity("Q5", wikiname = Option("Page 5")),
+			WikidataEntity("Q6"))
 	}
 
 	def wikidataCompanyPages(): List[String] = {

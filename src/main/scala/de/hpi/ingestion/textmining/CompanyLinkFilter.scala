@@ -22,7 +22,7 @@ import de.hpi.ingestion.textmining.models.{Page, ParsedWikipediaEntry}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
+import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 
 /**
   * Removes all Wikipedia links with an alias not having the possibility to point to a company.
@@ -39,7 +39,7 @@ object CompanyLinkFilter extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = List(sc.cassandraTable[WikiDataEntity](settings("keyspace"), settings("wikidataTable")))
+		val wikidata = List(sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable")))
 		val pages = List(sc.cassandraTable[Page](settings("keyspace"), settings("pageTable")))
 		val articles = List(sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable")))
 		wikidata.toAnyRDD() ++ pages.toAnyRDD() ++ articles.toAnyRDD()
@@ -64,7 +64,7 @@ object CompanyLinkFilter extends SparkJob {
 	  * @param wikidata RDD of Wikidata entities
 	  * @return RDD of Wikipedia article names
 	  */
-	def extractCompanyPages(wikidata: RDD[WikiDataEntity]): RDD[String] = {
+	def extractCompanyPages(wikidata: RDD[WikidataEntity]): RDD[String] = {
 		wikidata
 			.filter(entry => entry.instancetype.isDefined && entry.wikiname.isDefined)
 			.map(_.wikiname.get)
@@ -104,7 +104,7 @@ object CompanyLinkFilter extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = input.head.asInstanceOf[RDD[WikiDataEntity]]
+		val wikidata = input.head.asInstanceOf[RDD[WikidataEntity]]
 		val pages = input(1).asInstanceOf[RDD[Page]]
 		val articles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
 

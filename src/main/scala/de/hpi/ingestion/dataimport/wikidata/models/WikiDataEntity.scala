@@ -31,7 +31,7 @@ import scala.reflect.runtime.universe._
   * @param label the label of the entity
   * @param data Map containing the Wikidata claims with their target and value
   */
-case class WikiDataEntity(
+case class WikidataEntity(
 	id: String,
 	var aliases: List[String] = Nil,
 	var description: Option[String] = None,
@@ -43,7 +43,7 @@ case class WikiDataEntity(
 	var data: Map[String, List[String]] = Map[String, List[String]]()
 ) extends DLImportEntity {
 	def get(attribute: String): List[String] = {
-		if(this.fieldNames[WikiDataEntity].contains(attribute)) {
+		if(this.fieldNames[WikidataEntity].contains(attribute)) {
 			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {

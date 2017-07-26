@@ -21,7 +21,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd._
 import scala.language.postfixOps
-import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikiDataEntity}
+import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikidataEntity}
 import de.hpi.ingestion.framework.SparkJob
 
 /**
@@ -66,7 +66,7 @@ object TagEntities extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikiDataEntity](settings("keyspace"), settings("wikidataTable"))
+		val wikidata = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
 		List(wikidata).toAnyRDD()
 	}
 
@@ -168,7 +168,7 @@ object TagEntities extends SparkJob {
 	  * @param entity Wikidata entity to translate
 	  * @return SubclassEntry with only the id, label and subclass or instance property
 	  */
-	def translateToSubclassEntry(entity: WikiDataEntity): SubclassEntry = {
+	def translateToSubclassEntry(entity: WikidataEntity): SubclassEntry = {
 		val data = entity.data.filterKeys(key =>
 			key == instanceProperty || key == subclassProperty)
 		val label = entity.label.getOrElse(entity.id)
@@ -217,7 +217,7 @@ object TagEntities extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val wikiData = input.fromAnyRDD[WikiDataEntity]().head
+		val wikiData = input.fromAnyRDD[WikidataEntity]().head
 		val classData = wikiData.map(translateToSubclassEntry)
 		val subclassData = classData
 			.filter(_.data.contains(subclassProperty))

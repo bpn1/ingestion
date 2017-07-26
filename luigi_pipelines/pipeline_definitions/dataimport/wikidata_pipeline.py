@@ -18,11 +18,11 @@ from pipeline_definitions.abstract_pipeline import AbstractPipeline
 from models.task_definition import TaskDefinition
 
 # https://github.com/bpn1/ingestion/wiki/Wikidata-Pipeline
-task_definitions = [TaskDefinition("WikiDataImport"),
-                    TaskDefinition("TagEntities", ["WikiDataImport"]),
+task_definitions = [TaskDefinition("WikidataImport"),
+                    TaskDefinition("TagEntities", ["WikidataImport"]),
                     TaskDefinition("ResolveEntities", ["TagEntities"]),
-                    TaskDefinition("WikiDataDataLakeImport", ["ResolveEntities"]),
-                    TaskDefinition("FindRelations", ["WikiDataDataLakeImport"])]
+                    TaskDefinition("WikidataDataLakeImport", ["ResolveEntities"]),
+                    TaskDefinition("FindRelations", ["WikidataDataLakeImport"])]
 
 
 class WikidataPipeline(AbstractPipeline):

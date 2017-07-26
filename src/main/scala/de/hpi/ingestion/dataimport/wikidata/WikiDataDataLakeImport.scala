@@ -20,7 +20,7 @@ import com.datastax.spark.connector._
 import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.dataimport.SharedNormalizations
-import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
+import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.implicits.CollectionImplicits._
@@ -30,12 +30,12 @@ import org.apache.spark.rdd.RDD
 /**
   * This job translates Wikidata entities into Subjects and writes them into a staging table.
   */
-object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntity](
+object WikidataDataLakeImport extends DataLakeImportImplementation[WikidataEntity](
 	List("wikidata_20161117", "wikidata"),
 	"wikidumps",
 	"wikidata"
 ){
-	appName = "WikiDataDataLakeImport_v1.0"
+	appName = "WikidataDataLakeImport_v1.0"
 	configFile = "datalake_import_wikidata.xml"
 	importConfigFile = "normalization_wikidata.xml"
 	val categoryMap = Map(
@@ -65,12 +65,12 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikiDataEntity](inputKeyspace, inputTable)
+		val wikidata = sc.cassandraTable[WikidataEntity](inputKeyspace, inputTable)
 		List(wikidata).toAnyRDD()
 	}
 	// $COVERAGE-ON$
 
-	override def filterEntities(entity: WikiDataEntity): Boolean = {
+	override def filterEntities(entity: WikidataEntity): Boolean = {
 		entity.instancetype.isDefined
 	}
 
@@ -79,12 +79,12 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		values: List[String],
 		strategies: Map[String, List[String]]
 	): List[String] = {
-		val normalized = WikiDataNormalizationStrategy(attribute)(values)
+		val normalized = WikidataNormalizationStrategy(attribute)(values)
 		if (attribute == "gen_sectors") normalized.flatMap(x => strategies.getOrElse(x, List(x))) else normalized
 	}
 
 	override def translateToSubject(
-		entity: WikiDataEntity,
+		entity: WikidataEntity,
 		version: Version,
 		mapping: Map[String, List[String]],
 		strategies: Map[String, List[String]],

@@ -29,19 +29,19 @@ class GoldStandardTest extends FlatSpec with Matchers with SharedSparkContext wi
 		assertRDDEquals(expected, propertyKeyRDD)
 	}
 
-	"joinBySingleProperty" should "join DBpedia and WikiData on a given property" in {
+	"joinBySingleProperty" should "join DBpedia and Wikidata on a given property" in {
 		val dbpedia = sc.parallelize(TestData.dbpediaList)
 		val wikidata = sc.parallelize(TestData.wikidataList)
 		val joinedRDD = GoldStandard.joinBySingleProperty("id_wikidata", dbpedia, wikidata)
-		val expected = TestData.joinedWikiData(sc)
+		val expected = TestData.joinedWikidata(sc)
 		assertRDDEquals(expected, joinedRDD)
 	}
 
-	"join" should "join DBpedia and WikiData on different ids" in {
+	"join" should "join DBpedia and Wikidata on different ids" in {
 		val dbpedia = sc.parallelize(TestData.dbpediaList)
 		val wikidata = sc.parallelize(TestData.wikidataList)
 		val joinedRDD = GoldStandard.join(dbpedia, wikidata)
-		val expected = TestData.joinedDBpediaWikiData(sc)
+		val expected = TestData.joinedDBpediaWikidata(sc)
 		assertRDDEquals(expected, joinedRDD)
 	}
 
@@ -50,7 +50,7 @@ class GoldStandardTest extends FlatSpec with Matchers with SharedSparkContext wi
 		val wikidata = sc.parallelize(TestData.wikidataList)
 		val input = List(dbpedia).toAnyRDD() ++ List(wikidata).toAnyRDD()
 		val result = GoldStandard.run(input, sc).fromAnyRDD[(UUID, UUID)]().head
-		val expectedResult = TestData.joinedDBpediaWikiData(sc)
+		val expectedResult = TestData.joinedDBpediaWikidata(sc)
 		assertRDDEquals(expectedResult, result)
 	}
 }

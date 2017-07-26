@@ -121,7 +121,7 @@ object DBpediaImport extends SparkJob {
 	  * @param list owl:sameAs List
 	  * @return The wikidata id or None if the id could not be found
 	  */
-	def extractWikiDataId(list: List[String]): Option[String] = {
+	def extractWikidataId(list: List[String]): Option[String] = {
 		val prefix = "wikidata:"
 		val idOption = list.find(_.startsWith(prefix))
 		idOption.map(id => id.drop(prefix.length))
@@ -172,7 +172,7 @@ object DBpediaImport extends SparkJob {
 			.mapValues(_.map(_._2).toList)
 
 		entity.wikipageid = data.getOrElse(dbpediaPropertyName("wikipageid"), List()).headOption
-		entity.wikidataid = extractWikiDataId(
+		entity.wikidataid = extractWikidataId(
 			data.getOrElse(dbpediaPropertyName("wikidataid"), List())
 		)
 		entity.label = data.getOrElse(dbpediaPropertyName("label"), List()).headOption

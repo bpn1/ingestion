@@ -19,7 +19,7 @@ package de.hpi.ingestion.dataimport.wikidata
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
+import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
@@ -28,7 +28,7 @@ import play.api.libs.json._
 /**
   * This job parses a Wikidata JSON dump into Wikidata entities and imports them into the Cassandra.
   */
-object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
+object WikidataImport extends SparkJob with JSONParser[WikidataEntity] {
 	appName = "Wikidata Import"
 	configFile = "wikidata_import.xml"
 
@@ -52,7 +52,7 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[WikiDataEntity]()
+			.fromAnyRDD[WikidataEntity]()
 			.head
 			.saveToCassandra(settings("keyspace"), settings("wikidataTable"))
 	}
@@ -89,7 +89,7 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	}
 
 	/**
-	  * Extracts the label for a WikiDataEntity from a given JSON object. The first choice of the label language
+	  * Extracts the label for a WikidataEntity from a given JSON object. The first choice of the label language
 	  * (defined in the config) is used if the entity is not a property. The second choice of the language is defined in
 	  * the config as well. If both of these are not available then the first available language is taken.
 	  * @param json JSON object containing the data
@@ -106,12 +106,12 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	}
 
 	/**
-	  * Extracts every field other than the properties and aliases from the json object into a WikiDataEntity.
+	  * Extracts every field other than the properties and aliases from the json object into a WikidataEntity.
 	  * @param json JSON object of the Wikidata entry
-	  * @return WikiDataEntity with every field other than the properties and aliases filled with data
+	  * @return WikidataEntity with every field other than the properties and aliases filled with data
 	  */
-	def fillSimpleValues(json: JsValue): WikiDataEntity = {
-		val entity = WikiDataEntity(extractString(json, List("id")).getOrElse(""))
+	def fillSimpleValues(json: JsValue): WikidataEntity = {
+		val entity = WikidataEntity(extractString(json, List("id")).getOrElse(""))
 		entity.entitytype = extractString(json, List("type"))
 		entity.wikiname = extractString(json, List("sitelinks", settings("language") + "wiki", "title"))
 		entity.description = extractString(json, List("descriptions", settings("language"), "value"))
@@ -134,7 +134,7 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	}
 
 	/**
-	  * Extracts the aliases of a WikiDataEntity out of a given JSON object
+	  * Extracts the aliases of a WikidataEntity out of a given JSON object
 	  * @param json JSON object of the Wikidata entry containing the data
 	  * @return List of all aliases contained in the JSON object
 	  */
@@ -152,11 +152,11 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	}
 
 	/**
-	  * Parses a JSON object into a WikiDataEntity
+	  * Parses a JSON object into a WikidataEntity
 	  * @param json JSON-Object containing the data
-	  * @return WikiDataEntity containing the parsed data
+	  * @return WikidataEntity containing the parsed data
 	  */
-	override def fillEntityValues(json: JsValue): WikiDataEntity = {
+	override def fillEntityValues(json: JsValue): WikidataEntity = {
 		val entity = fillSimpleValues(json)
 		entity.aliases = extractAliases(json)
 
@@ -176,7 +176,7 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	  * @param properties Map of property id pointing to its label
 	  * @return Wikidata Entity with translated property ids
 	  */
-	def translatePropertyIDs(entity: WikiDataEntity, properties: Map[String, String]): WikiDataEntity = {
+	def translatePropertyIDs(entity: WikidataEntity, properties: Map[String, String]): WikidataEntity = {
 		entity.copy(data = entity.data.mapKeys(key => properties.getOrElse(key, key)))
 	}
 
@@ -185,7 +185,7 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 	  * @param wikidataEntities RDD of Wikidata Entities including the property entities
 	  * @return Map of property id pointing to its label
 	  */
-	def buildPropertyMap(wikidataEntities: RDD[WikiDataEntity]): Map[String, String] = {
+	def buildPropertyMap(wikidataEntities: RDD[WikidataEntity]): Map[String, String] = {
 		val propertyType = "property"
 		wikidataEntities
 			.filter(entity => entity.label.isDefined && entity.entitytype.contains(propertyType))
@@ -210,10 +210,10 @@ object WikiDataImport extends SparkJob with JSONParser[WikiDataEntity] {
 		val properties = buildPropertyMap(wikiData)
 		val propertyBroadcast = sc.broadcast(properties)
 
-		val resolvedWikiData = wikiData.mapPartitions({ partition =>
+		val resolvedWikidata = wikiData.mapPartitions({ partition =>
 			val localPropertyMap = propertyBroadcast.value
 			partition.map(translatePropertyIDs(_, localPropertyMap))
 		}, true)
-		List(resolvedWikiData).toAnyRDD()
+		List(resolvedWikidata).toAnyRDD()
 	}
 }

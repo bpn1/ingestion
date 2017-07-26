@@ -19,7 +19,7 @@ package de.hpi.ingestion.dataimport.wikidata
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import scala.util.matching.Regex
-import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
+import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd.RDD
@@ -40,7 +40,7 @@ object ResolveEntities extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikiDataEntity](settings("keyspace"), settings("wikidataTable"))
+		val wikidata = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
 		List(wikidata).toAnyRDD()
 	}
 
@@ -63,7 +63,7 @@ object ResolveEntities extends SparkJob {
 	  * @param entity Wikidata entity to flatten
 	  * @return triple of entity id, property key and property value
 	  */
-	def flattenWikidataEntity(entity: WikiDataEntity): List[(String, String, String)] = {
+	def flattenWikidataEntity(entity: WikidataEntity): List[(String, String, String)] = {
 		entity.data.flatMap { case (property, valueList) =>
 			valueList.map(element => (entity.id, property, element))
 		}.toList
@@ -105,7 +105,7 @@ object ResolveEntities extends SparkJob {
 	  * @param entity entity to resolve
 	  * @return true if the entity has a label and no instance type
 	  */
-	def shouldBeResolved(entity: WikiDataEntity): Boolean = {
+	def shouldBeResolved(entity: WikidataEntity): Boolean = {
 		entity.label.isDefined && entity.instancetype.isEmpty
 	}
 
@@ -114,7 +114,7 @@ object ResolveEntities extends SparkJob {
 	  * @param entity Wikidata entity to use
 	  * @return tuple of wikidata id and entity label
 	  */
-	def extractNameData(entity: WikiDataEntity): (String, String) = {
+	def extractNameData(entity: WikidataEntity): (String, String) = {
 		(entity.id, entity.label.get)
 	}
 
@@ -192,7 +192,7 @@ object ResolveEntities extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val wikidata = input.fromAnyRDD[WikiDataEntity]().head
+		val wikidata = input.fromAnyRDD[WikidataEntity]().head
 
 		val entityData = wikidata.flatMap(flattenWikidataEntity).cache
 		val noIdData = entityData.filter(!containsWikidataIdValue(_))

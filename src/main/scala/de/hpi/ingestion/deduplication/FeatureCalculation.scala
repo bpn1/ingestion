@@ -39,7 +39,7 @@ object FeatureCalculation extends SparkJob {
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val dbpedia = sc.cassandraTable[Subject](settings("keyspaceDBpediaTable"), settings("dBpediaTable"))
-		val wikidata = sc.cassandraTable[Subject](settings("keyspaceWikiDataTable"), settings("wikiDataTable"))
+		val wikidata = sc.cassandraTable[Subject](settings("keyspaceWikidataTable"), settings("wikiDataTable"))
 		val goldStandard = sc.cassandraTable[(UUID, UUID)](
 			settings("keyspaceGoldStandardTable"),
 			settings("goldStandardTable"))

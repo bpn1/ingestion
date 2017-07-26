@@ -180,14 +180,14 @@ object TestData {
 		))
 	}
 
-	def joinedWikiData(sc: SparkContext): RDD[(UUID, UUID)] = {
+	def joinedWikidata(sc: SparkContext): RDD[(UUID, UUID)] = {
 		sc.parallelize(Seq(
 			(dbpediaList(1).id, wikidataList(1).id),
 			(dbpediaList(2).id, wikidataList(2).id)
 		))
 	}
 
-	def joinedDBpediaWikiData(sc: SparkContext): RDD[(UUID, UUID)] = {
+	def joinedDBpediaWikidata(sc: SparkContext): RDD[(UUID, UUID)] = {
 		sc.parallelize(Seq(
 			(dbpediaList.head.id, wikidataList.head.id),
 			(dbpediaList(1).id, wikidataList(1).id),

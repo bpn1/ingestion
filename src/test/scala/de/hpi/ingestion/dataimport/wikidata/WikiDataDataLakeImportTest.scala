@@ -19,10 +19,10 @@ package de.hpi.ingestion.dataimport.wikidata
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
-class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with Matchers {
+class WikidataDataLakeImportTest extends FlatSpec with SharedSparkContext with Matchers {
 	"filterEntities" should "filter entities without an instance type" in {
 		val entities = TestData.unfilteredEntities
-		val filteredEntities = entities.filter(WikiDataDataLakeImport.filterEntities)
+		val filteredEntities = entities.filter(WikidataDataLakeImport.filterEntities)
 		val expected = TestData.filteredEntities
 		filteredEntities shouldEqual expected
 	}
@@ -31,7 +31,7 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val attributes = TestData.unnormalizedAttributes
 		val strategies = TestData.strategies
 		val normalizedAttributes = attributes.map { case (attribute, values) =>
-			attribute -> WikiDataDataLakeImport.normalizeAttribute(attribute, values, strategies)
+			attribute -> WikidataDataLakeImport.normalizeAttribute(attribute, values, strategies)
 		}
 		val expected = TestData.normalizedAttributes
 		normalizedAttributes shouldEqual expected
@@ -41,9 +41,9 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val classifier = WikiDataDataLakeImport.classifier
+		val classifier = WikidataDataLakeImport.classifier
 		val translatedSubjects = TestData.wikidataEntities.map { entity =>
-			entity -> WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+			entity -> WikidataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		}
 		translatedSubjects should not be empty
 		translatedSubjects.foreach { case (entity, subject) =>
@@ -61,8 +61,8 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val classifier = WikiDataDataLakeImport.classifier
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		val classifier = WikidataDataLakeImport.classifier
+		val subject = WikidataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("id_wikidata") shouldEqual List("Q21110253")
 		subject.properties("id_wikipedia") shouldEqual List("testwikiname")
 		subject.properties("id_dbpedia") shouldEqual List("testwikiname")
@@ -81,8 +81,8 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val classifier = WikiDataDataLakeImport.classifier
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		val classifier = WikidataDataLakeImport.classifier
+		val subject = WikidataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("testProperty") shouldEqual List("test")
 	}
 
@@ -91,8 +91,8 @@ class WikiDataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val classifier = WikiDataDataLakeImport.classifier
-		val subject = WikiDataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		val classifier = WikidataDataLakeImport.classifier
+		val subject = WikidataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("gen_legal_form") shouldEqual List("AG")
 	}
 }

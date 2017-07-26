@@ -20,9 +20,9 @@ import de.hpi.ingestion.implicits.RegexImplicits._
 import de.hpi.ingestion.dataimport.{CountryISO3166Mapping, SharedNormalizations}
 
 /**
-  * Strategies for the normalization of WikiData entities
+  * Strategies for the normalization of Wikidata entities
   */
-object WikiDataNormalizationStrategy extends Serializable {
+object WikidataNormalizationStrategy extends Serializable {
 	/**
 	  * Normalizes coordinates: e.g. "-1,1"
 	  * @param values coordinates list

@@ -37,7 +37,7 @@ object GoldStandard extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val dbpedia = sc.cassandraTable[Subject](settings("keyspaceDBpediaTable"), settings("dBpediaTable"))
-		val wikidata = sc.cassandraTable[Subject](settings("keyspaceWikiDataTable"), settings("wikiDataTable"))
+		val wikidata = sc.cassandraTable[Subject](settings("keyspaceWikidataTable"), settings("wikiDataTable"))
 		List(dbpedia, wikidata).toAnyRDD()
 	}
 
@@ -84,17 +84,17 @@ object GoldStandard extends SparkJob {
 	}
 
 	/**
-	  * Join DBpedia and WikiData together on a property.
+	  * Join DBpedia and Wikidata together on a property.
 	  * @param property The property to be joined on.
 	  * @param dbpedia Subjects from DBpedia
-	  * @param wikidata Subjects from WikiData
+	  * @param wikidata Subjects from Wikidata
 	  * @return RDD containing pairs of UUIDs
 	  */
 	def joinBySingleProperty(property: String, dbpedia: RDD[Subject], wikidata: RDD[Subject]): RDD[(UUID, UUID)] = {
 		val propertyKeyDBpedia = keyBySingleProperty(dbpedia, property)
-		val propertyKeyWikiData = keyBySingleProperty(wikidata, property)
+		val propertyKeyWikidata = keyBySingleProperty(wikidata, property)
 		propertyKeyDBpedia
-			.join(propertyKeyWikiData)
+			.join(propertyKeyWikidata)
 			.values
 			.map { case (dbpediaSubject, wikidataSubject) =>
 				(dbpediaSubject.id, wikidataSubject.id)
@@ -102,9 +102,9 @@ object GoldStandard extends SparkJob {
 	}
 
 	/**
-	  * Join DBpedia and WikiData together based on ids
+	  * Join DBpedia and Wikidata together based on ids
 	  * @param dbpedia Subjects from DBpedia
-	  * @param wikidata Subjects from WikiData
+	  * @param wikidata Subjects from Wikidata
 	  * @return RDD containing pairs of UUIDs
 	  */
 	def join(dbpedia: RDD[Subject], wikidata: RDD[Subject]): RDD[(UUID, UUID)] = {

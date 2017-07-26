@@ -18,12 +18,12 @@ package de.hpi.ingestion.dataimport.wikidata.models
 
 import org.scalatest.{FlatSpec, Matchers}
 
-class WikiDataEntityTest extends FlatSpec with Matchers {
+class WikidataEntityTest extends FlatSpec with Matchers {
 	"Attribute values" should "be returned" in {
 		val id = "Q1"
 		val name = "name"
 		val aliasList = List("alias")
-		val sub1 = WikiDataEntity(id = id, label = Option(name), aliases = aliasList)
+		val sub1 = WikidataEntity(id = id, label = Option(name), aliases = aliasList)
 		sub1.get("id") shouldBe List(id)
 		sub1.get("label") shouldEqual List(name)
 		sub1.get("description") shouldBe empty
