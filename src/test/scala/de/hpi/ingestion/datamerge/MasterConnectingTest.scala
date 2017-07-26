@@ -43,4 +43,20 @@ class MasterConnectingTest extends FlatSpec with Matchers with SharedSparkContex
 			relations shouldEqual expectedRelations
 		}
 	}
+
+	they should "be merged and connected" in {
+		val subjects = sc.parallelize(TestData.inputSubjects())
+		val input = List(subjects).toAnyRDD()
+		val connectedMasters = MasterConnecting.run(input, sc)
+			.fromAnyRDD[Subject]()
+			.head
+			.collect
+			.toList
+			.sortBy(_.id)
+		val expectedMasters = TestData.mergedMasters().sortBy(_.id)
+		connectedMasters.length shouldEqual expectedMasters.length
+		connectedMasters.zip(expectedMasters).foreach { case (connectedMaster, expectedMaster) =>
+			connectedMaster.relations shouldEqual expectedMaster.relations
+		}
+	}
 }

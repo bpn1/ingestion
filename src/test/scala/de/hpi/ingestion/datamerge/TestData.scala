@@ -426,5 +426,69 @@ object TestData {
 			)
 		)
 	)
+
+	def inputSubjects(): List[Subject] = {
+		List(
+			Subject(
+				id = idList.head,
+				master = idList.head,
+				datasource = "master",
+				relations = Map(
+					idList(4) -> Map("t1" -> "impli", "t3" -> "impli"),
+					idList(5) -> Map("t2" -> "wiki", "t3" -> "wiki")
+				)
+			),
+			Subject(
+				id = idList(1),
+				master = idList(1),
+				datasource = "master",
+				relations = Map(
+					idList(2) -> Map("t1" -> "impli", "t3" -> "impli"),
+					idList(3) -> Map("t2" -> "wiki", "t4" -> "wiki")
+				)
+			),
+			Subject(
+				id = idList(2),
+				master = idList.head,
+				datasource = "implisense"
+			),
+			Subject(
+				id = idList(3),
+				master = idList.head,
+				datasource = "wikidata"
+			),
+			Subject(
+				id = idList(4),
+				master = idList(1),
+				datasource = "implisense"
+			),
+			Subject(
+				id = idList(5),
+				master = idList(1),
+				datasource = "wikidata"
+			)
+		)
+	}
+
+	def mergedMasters(): List[Subject] = {
+		List(
+			Subject(
+				id = idList.head,
+				master = idList.head,
+				datasource = "master",
+				relations = Map(
+					idList(1) -> Map("t1" -> "impli", "t3" -> "impli", "t2" -> "wiki")
+				)
+			),
+			Subject(
+				id = idList(1),
+				master = idList(1),
+				datasource = "master",
+				relations = Map(
+					idList.head -> Map("t1" -> "impli", "t3" -> "impli", "t2" -> "wiki", "t4" -> "wiki")
+				)
+			)
+		)
+	}
 }
 // scalastyle:on
