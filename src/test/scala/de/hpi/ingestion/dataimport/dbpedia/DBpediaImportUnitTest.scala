@@ -17,7 +17,9 @@ limitations under the License.
 package de.hpi.ingestion.dataimport.dbpedia
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class DBpediaImportUnitTest extends FlatSpec with SharedSparkContext with Matchers {
 
@@ -99,5 +101,13 @@ class DBpediaImportUnitTest extends FlatSpec with SharedSparkContext with Matche
 		val entity = DBpediaImport.extractProperties(name, TestData.properties, TestData.organisations)
 		val expected = TestData.parsedEntity(name)
 		entity shouldEqual expected
+	}
+
+	"DBpedia entities" should "be extracted" in {
+		val rawTriples = sc.parallelize(TestData.rawTriples())
+		val input = List(rawTriples).toAnyRDD()
+		val entities = DBpediaImport.run(input, sc).fromAnyRDD[DBpediaEntity]().head.collect.toSet
+		val expectedEntitites = TestData.parsedDBpediaEntities()
+		entities shouldEqual expectedEntitites
 	}
 }

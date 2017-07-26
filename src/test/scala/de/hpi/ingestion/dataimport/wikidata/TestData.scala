@@ -234,7 +234,7 @@ object TestData {
 		Map("P1" -> "Property 1", "P2" -> "Property 2", "P3" -> "Property 3", "P4" -> "Property 4")
 	}
 
-	def rawWikidataEntries(): String = {
+	def rawTestEntries(): String = {
 		Source.fromURL(getClass.getResource(testEntriesPath))
 			.getLines()
 			.mkString("\n")

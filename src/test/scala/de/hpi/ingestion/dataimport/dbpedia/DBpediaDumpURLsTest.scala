@@ -31,7 +31,7 @@ class DBpediaDumpURLsTest extends FlatSpec with Matchers {
 	"Urls" should "be printed" in {
 		val output = new ByteArrayOutputStream()
 		Console.withOut(output) {
-			DBpediaDumpURLs.main(Array("src/test/resources/dbpedia.html"))
+			DBpediaDumpURLs.main(Array("src/test/resources/dbpedia/website.html"))
 		}
 		output.toString should not be empty
 	}
