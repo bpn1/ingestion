@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining
 
 import java.io.InputStream
-
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import com.esotericsoftware.kryo.io.Input
@@ -15,7 +14,6 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
 import de.hpi.ingestion.textmining.nel.ArticleTrieSearch
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
-
 import scala.collection.mutable.ListBuffer
 
 /**

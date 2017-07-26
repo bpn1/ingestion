@@ -14,11 +14,9 @@ import org.apache.spark.mllib.tree.configuration.Algo
 import org.apache.spark.mllib.tree.model.{DecisionTreeModel, Node, Predict, RandomForestModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, TextNode}
-
 import scala.collection.JavaConversions._
 import scala.io.{BufferedSource, Source}
 import java.io._
-
 import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer}
