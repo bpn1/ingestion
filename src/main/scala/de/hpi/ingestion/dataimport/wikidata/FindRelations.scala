@@ -27,8 +27,8 @@ import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.framework.SparkJob
 
 /**
-  * This job finds wikidata relations between subjects, translates the Wikidata Id relations into Subject UUID relations
-  * and replaces the Wikidata Ids with their names.
+  * Finds Wikidata relations between subjects, translates the Wikidata ID relations into Subject UUID relations and
+  * replaces the Wikidata IDs with their names.
   */
 object FindRelations extends SparkJob {
 	appName = "Find Relations v1.1"

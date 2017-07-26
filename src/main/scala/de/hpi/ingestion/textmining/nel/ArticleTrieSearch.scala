@@ -26,7 +26,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
-  * Finds Trie Aliases in NEL Articles with the Trie and writes them to the same table.
+  * Finds Trie Aliases in NEL Articles using the trie and writes them to the same table.
   */
 object ArticleTrieSearch extends SparkJob {
 	appName = "Article Trie Search"
@@ -96,7 +96,7 @@ object ArticleTrieSearch extends SparkJob {
 	}
 
 	/**
-	  * Finds Aliases in the Articles using the Trie.
+	  * Finds Aliases in the Articles using the trie.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

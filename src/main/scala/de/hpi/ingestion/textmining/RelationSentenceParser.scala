@@ -17,16 +17,16 @@ limitations under the License.
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.framework.SparkJob
-import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.textmining.models.{EntityLink, ParsedWikipediaEntry, Sentence}
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import com.datastax.spark.connector._
 
 /**
-  * Parses all Sentences with entities from Wikipedia.
+  * Parses all Sentences with at least two entities from every Wikipedia article and puts them into an RDD.
   */
 object RelationSentenceParser extends SparkJob {
 	appName = "Relation Sentence Parser"
@@ -141,7 +141,7 @@ object RelationSentenceParser extends SparkJob {
 	}
 
 	/**
-	  * Parses all Sentences with at least 2 entities from every Wikipedia article and puts them into an RDD.
+	  * Parses all Sentences with at least two entities from every Wikipedia article and puts them into an RDD.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

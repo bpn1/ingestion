@@ -29,7 +29,8 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.broadcast.Broadcast
 
 /**
-  * Generates feature entries for all occurring pairs of aliases and pages they may refer to.
+  * Calculates cosine similarity (context score) for every pair of link alias and page it may refer to.
+  * It combines it with the links score and entity score, which leads to a FeatureEntry.
   */
 object CosineContextComparator extends SplitSparkJob {
 	appName = "Cosine Context Comparator"
@@ -320,8 +321,8 @@ object CosineContextComparator extends SplitSparkJob {
 	}
 
 	/**
-	  * Calculates cosine similarities for every alias and creates feature entries containing the link and page scores
-	  * features as well.
+	  * Calculates cosine similarity (context score) for every pair of link alias and page it may refer to.
+	  * It combines it with the links score and entity score, which leads to a FeatureEntry.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

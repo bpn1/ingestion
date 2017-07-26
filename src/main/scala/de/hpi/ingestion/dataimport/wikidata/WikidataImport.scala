@@ -26,7 +26,7 @@ import org.apache.spark.SparkContext
 import play.api.libs.json._
 
 /**
-  * This job parses a Wikidata JSON dump into Wikidata entities and imports them into the Cassandra.
+  * Parses the Wikidata JSON dump into Wikidata entities and imports them into the Cassandra.
   */
 object WikidataImport extends SparkJob with JSONParser[WikidataEntity] {
 	appName = "Wikidata Import"
