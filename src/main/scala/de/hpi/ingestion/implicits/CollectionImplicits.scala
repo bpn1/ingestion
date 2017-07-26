@@ -21,6 +21,20 @@ object CollectionImplicits {
 		  * @return the cross product of xs and ys
 		  */
 		def cross[Y](ys: Traversable[Y]): Traversable[(X, Y)] = for { x <- xs; y <- ys } yield (x, y)
+
+		/**
+		  * Returns the cross product of this collection with itself without symmetrical (duplicate) tuples.
+		  * By default the reflexive pairs are also filtered.
+		  * @param reflexive whether or not the reflexive pairs are kept
+		  * @return filtered cross product of xs with itself
+		  */
+		def asymSquare(reflexive: Boolean = false): Traversable[(X, X)] = {
+			val data = xs.toList
+			val offset = if(reflexive) 0 else 1
+			data
+				.indices
+				.flatMap(i => xs.slice(i + offset, xs.size).map((data(i), _)))
+		}
 	}
 
 	/**
@@ -84,5 +98,21 @@ object CollectionImplicits {
 				.mapValues(_.size)
 				.map(identity)
 		}
+	}
+
+	/**
+	  * Adds functions to Maps.
+	  * @param xs the Map itself
+	  * @tparam X the type of the keys
+	  * @tparam Y the type of the values
+	  */
+	implicit class MapFunctions[X, Y](xs: Map[X, Y]) {
+		/**
+		  * Applies a function to all keys of this map. The resulting Map may be smaller if there are collisions.
+		  * @param f function applied to every key
+		  * @tparam Z return type of the function f
+		  * @return Map with the function f applied to each key
+		  */
+		def mapKeys[Z](f: (X) => Z): Map[Z, Y] = xs.map { case (key, value) => (f(key), value) }
 	}
 }

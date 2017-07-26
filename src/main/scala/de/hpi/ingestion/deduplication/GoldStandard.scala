@@ -1,7 +1,6 @@
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-
 import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
@@ -47,9 +46,9 @@ object GoldStandard extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val data = input.fromAnyRDD[Subject]()
-		val results = join(data.head, data(1))
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
+		val List(dbpedia, wikidata) = input.fromAnyRDD[Subject]()
+		val results = join(dbpedia, wikidata)
 		List(results).toAnyRDD()
 	}
 

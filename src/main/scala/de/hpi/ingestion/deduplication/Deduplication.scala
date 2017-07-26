@@ -4,21 +4,25 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
-import de.hpi.ingestion.deduplication.similarity._
+import de.hpi.ingestion.deduplication.models.config.AttributeConfig
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import scala.xml.Node
 
 /**
   * Compares two groups of Subjects by first blocking with multiple Blocking Schemes, then compares all Subjects
   * in every block and filters all pairs below a given threshold.
   */
 object Deduplication extends SparkJob {
+	sparkOptions("spark.yarn.executor.memoryOverhead") = "8192"
+
 	appName = "Deduplication"
 	configFile = "deduplication.xml"
-	val blockingSchemes = List[BlockingScheme](SimpleBlockingScheme("simple_scheme"))
+	val blockingSchemes = List[BlockingScheme](
+		SimpleBlockingScheme("simple_scheme"),
+		ListBlockingScheme("sectorBlocking_scheme", "gen_sectors")
+	)
 
 	// $COVERAGE-OFF$
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
@@ -29,7 +33,7 @@ object Deduplication extends SparkJob {
 
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
-			.fromAnyRDD[DuplicateCandidates]()
+			.fromAnyRDD[Duplicates]()
 			.head
 			.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
@@ -42,11 +46,12 @@ object Deduplication extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(subjects, staging) = input.fromAnyRDD[Subject]()
-		val blocks = Blocking.blocking(subjects, staging, blockingSchemes)
+		val slaves = subjects.filter(_.isSlave)
+		val blocks = Blocking.blocking(slaves, staging, blockingSchemes)
 		val subjectPairs = findDuplicates(blocks.values, sc)
-		val duplicates = createDuplicateCandidates(subjectPairs)
+		val duplicates = createDuplicates(subjectPairs)
 		List(duplicates).toAnyRDD()
 	}
 
@@ -59,18 +64,17 @@ object Deduplication extends SparkJob {
 	def compare(
 		subject1: Subject,
 		subject2: Subject,
-		scoreConfigMap: Map[String, List[ScoreConfig[String, SimilarityMeasure[String]]]],
+		attributeConfigs: List[AttributeConfig] = Nil,
 		scale: Int = 1
 	): Double = {
-		val (scores, weights) = scoreConfigMap.flatMap { case (attribute, configs) =>
-			val valueSubject1 = subject1.get(attribute)
-			val valueSubject2 = subject2.get(attribute)
-			configs.collect {
-				case scoreConfig if valueSubject1.nonEmpty && valueSubject2.nonEmpty =>
-					(CompareStrategy(attribute)(valueSubject1, valueSubject2, scoreConfig), scoreConfig.weight)
-			}
-		}.unzip
-		scores.sum / weights.sum
+		val scores = for {
+			AttributeConfig(attribute, weight, configs) <- attributeConfigs
+			subjectValues = subject1.get(attribute)
+			stagingValues = subject2.get(attribute)
+			if subjectValues.nonEmpty && stagingValues.nonEmpty
+			config <- configs
+		} yield CompareStrategy(attribute)(subjectValues, stagingValues, config) * weight
+		scores.sum
 	}
 
 	/**
@@ -79,13 +83,13 @@ object Deduplication extends SparkJob {
 	  * @param subjectPairs RDD of Subject pairs containing all found duplicates
 	  * @return RDD of grouped Duplicate Candidates
 	  */
-	def createDuplicateCandidates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[DuplicateCandidates] = {
+	def createDuplicates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[Duplicates] = {
 		val stagingTable = settings("stagingTable")
 		subjectPairs
-			.map { case (subject1, subject2, score) =>
-				(subject1.id, List((subject2.id, stagingTable, score)))
+			.map { case (subject, staging, score) =>
+				((subject.id, subject.name), List(Candidate(staging.id, staging.name, score)))
 			}.reduceByKey(_ ::: _)
-			.map(DuplicateCandidates.tupled)
+			.map { case ((id, name), candidates) => Duplicates(id, name, stagingTable, candidates.distinct) }
 	}
 
 	/**

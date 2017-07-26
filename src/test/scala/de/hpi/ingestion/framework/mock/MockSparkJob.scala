@@ -5,7 +5,6 @@ import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.scalatest.FlatSpec
-
 import scala.collection.mutable.ListBuffer
 
 class MockSparkJob extends FlatSpec with SparkJob with SharedSparkContext {
@@ -28,7 +27,7 @@ class MockSparkJob extends FlatSpec with SparkJob with SharedSparkContext {
 		Nil
 	}
 
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		methodCalls += "run"
 		Nil
 	}

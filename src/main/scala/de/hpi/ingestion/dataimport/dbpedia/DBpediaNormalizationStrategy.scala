@@ -1,6 +1,8 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.implicits.RegexImplicits._
+import de.hpi.ingestion.dataimport.{CountryISO3166Mapping, SharedNormalizations}
+import de.hpi.ingestion.dataimport.SharedNormalizations
 
 /**
   * Strategies for the normalization of DBPedia entities
@@ -17,7 +19,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case r"""([-+]?[0-9]+\.?[0-9]*)${employees}\^\^xsd:nonNegativeInteger""" => List(employees)
 			case r"""über (\d+)${employees}@de \.""" => List(employees)
 			case _ => None
-		}.distinct
+		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
 
 	/**
@@ -27,8 +29,10 @@ object DBpediaNormalizationStrategy extends Serializable {
 	  */
 	def normalizeCountry(values: List[String]): List[String] = {
 		values.flatMap {
-			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" => List(country)
-			case r"""([A-Za-zÄäÖöÜüß\-]{3,})${country}@de \.""" => List(country)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{3,})${country}""" => CountryISO3166Mapping.mapping.get(country)
+			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]{2})${country}""" => List(country)
+			case r"""([A-Za-zÄäÖöÜüß\-]{3,})${country}@de \.""" => CountryISO3166Mapping.mapping.get(country)
+			case r"""([A-Za-zÄäÖöÜüß\-]{2})${country}@de \.""" => List(country)
 			case _ => None
 		}.map(_.replaceAll("(_|-)", " ")).distinct
 	}
@@ -54,7 +58,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 		values.flatMap {
 			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${sector}""" => List(sector)
 			case _ => None
-		}
+		}.distinct
 	}
 
 	/**
@@ -68,6 +72,18 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case r"""(.+)${city}@de \.""" => List(city)
 			case other => List(other)
 		}.map(_.replaceAll("(_|-)", " ")).distinct
+	}
+
+	/**
+	  * Normalize urls
+	  * @param values list of urls
+	  * @return valid urls
+	  */
+	def normalizeURLs(values: List[String]): List[String] = {
+		values.flatMap {
+			case r"""(.+)${value}@de \.""" => List(value)
+			case other => List(other)
+		}.filter(SharedNormalizations.isValidUrl)
 	}
 
 	/**
@@ -96,6 +112,8 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case "geo_country" => this.normalizeCountry
 			case "geo_coords" => this.normalizeCoords
 			case "geo_city" => this.normalizeCity
+			case "gen_urls" => this.normalizeURLs
+			case "gen_legal_form" => SharedNormalizations.normalizeLegalForm
 			case _ => this.normalizeDefault
 		}
 	}

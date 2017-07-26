@@ -5,7 +5,7 @@ import scala.reflect.runtime.universe._
 
 case class Entity(
 	root_value: String,
-	data: Map[String, List[String]] = Map[String, List[String]]()
+	data: Map[String, List[String]] = Map()
 ) extends DLImportEntity {
 	def fieldNames(): List[String] = {
 		def classAccessors[T: TypeTag]: List[MethodSymbol] = typeOf[T].members.collect {
@@ -20,10 +20,10 @@ case class Entity(
 			field.setAccessible(true)
 			attribute match {
 				case "root_value" => List(this.root_value)
-				case _ => List[String]()
+				case _ => Nil
 			}
 		} else {
-			data.getOrElse(attribute, List[String]())
+			data.getOrElse(attribute, Nil)
 		}
 	}
 }

@@ -1,15 +1,22 @@
 package de.hpi.ingestion.dataimport.dbpedia
 
-import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
-import de.hpi.ingestion.datalake.models.Version
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
+import java.util.UUID
+
+import de.hpi.ingestion.dataimport.SharedNormalizations
 
 import scala.io.Source
 import scala.xml.XML
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.dataimport.dbpedia.models.{DBpediaEntity, Relation}
+import de.hpi.ingestion.datalake.models.{Subject, Version}
+
+// scalastyle:off number.of.methods
+// scalastyle:off line.size.limit
 
 object TestData {
-	// scalastyle:off line.size.limit
+	val datasource = "dbpedia"
+	val idList = List.fill(6)(UUID.randomUUID())
 
 	def prefixesList: List[(String,String)] = {
 		val prefixFile = Source.fromURL(getClass.getResource("/prefixes.txt"))
@@ -33,7 +40,8 @@ object TestData {
 	def shorterLineList: List[String] = List(
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> .""",
 			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> .""",
-			""
+			"",
+			"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://purl.org/dc/terms/subject> <"""
 	)
 
 	def longerLineList: List[String] = List(
@@ -104,11 +112,25 @@ object TestData {
 		))
 	}
 
-	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", datasources = List("dataSources"), sc)
+	def unfilteredEntities: List[DBpediaEntity] = List(
+		DBpediaEntity(dbpedianame = "D1", instancetype = Option("type 1")),
+		DBpediaEntity(dbpedianame = "D2", instancetype = Option("type 2")),
+		DBpediaEntity(dbpedianame = "D3", instancetype = Option("type 3")),
+		DBpediaEntity(dbpedianame = "D4", instancetype = Option(null)),
+		DBpediaEntity(dbpedianame = "D5")
+	)
+
+	def filteredEntities: List[DBpediaEntity] = List(
+		DBpediaEntity(dbpedianame = "D1", instancetype = Option("type 1")),
+		DBpediaEntity(dbpedianame = "D2", instancetype = Option("type 2")),
+		DBpediaEntity(dbpedianame = "D3", instancetype = Option("type 3"))
+	)
+
+	def version(sc: SparkContext): Version = Version("DBpediaDataLakeImport", List("dataSources"), sc, false, None)
 
 	def testEntity: DBpediaEntity = DBpediaEntity(
 		dbpedianame = "dbpedia-de:List_von_Autoren",
-		label = Option("Liste von Autoren"),
+		label = Option("Gesellschaft Liste von Autoren mbH@de ."),
 		data = Map(
 			"wikidata_id" -> List("Q123"),
 			"dbo:viafId" -> List("X123"),
@@ -116,11 +138,37 @@ object TestData {
 			"geo:lat" -> List("52"),
 			"property-de:latitude" -> List("53"),
 			"geo:long" -> List("100"),
-			"dbo:country" -> List("Koblenz@de ."),
+			"dbo:country" -> List("Schweiz@de ."),
 			"property-de:mitarbeiteranzahl" -> List("12^^xsd:integer", "13^^xsd:nonNegativeInteger"),
 			"dbo:industry" -> List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei"),
 			"testProperty" -> List("test")
 		)
+	)
+
+	def dbpediaEntities: List[DBpediaEntity] = List(
+		DBpediaEntity(
+			dbpedianame = "dbpedia-de:List_von_Autoren",
+			label = Option("Liste von Autoren GmbH@de ."),
+			instancetype = Option("Company"),
+			data = Map(
+				"wikidata_id" -> List("Q123"),
+				"dbo:viafId" -> List("X123"),
+				"property-de:viaf" -> List("Y123"),
+				"geo:lat" -> List("52"),
+				"property-de:latitude" -> List("53"),
+				"geo:long" -> List("100"),
+				"dbo:country" -> List("Koblenz@de ."),
+				"property-de:mitarbeiteranzahl" -> List("12^^xsd:integer", "13^^xsd:nonNegativeInteger"),
+				"dbo:industry" -> List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei"),
+				"testProperty" -> List("test")
+			)
+		),
+		DBpediaEntity(dbpedianame = "dbpedia-de:Liste_von_Wurst")
+	)
+
+	def translatedSubjects: List[Subject] = List(
+		Subject(master = null, datasource = "dbpedia", name = Option("Liste von Autoren GmbH"), category = Option("business")),
+		Subject(master = null, datasource = "dbpedia")
 	)
 
 	def mapping: Map[String, List[String]] = Map(
@@ -130,7 +178,7 @@ object TestData {
 		"id_viaf" -> List("dbo:viafId", "property-de:viaf"),
 		"geo_coords_lat" -> List("geo:lat", "property-de:latitude", "property-de:breitengrad"),
 		"geo_coords_long" -> List("geo:long", "property-de:longitude", "property-de:längengrad"),
-		"geo_country" -> List("dbo:country", "property-de:land"),
+		"geo_country" -> List("dbo:country"),
 		"gen_employees" -> List("dbo:numberOfEmployees", "property-de:mitarbeiteranzahl"),
 		"gen_sectors" -> List("dbo:industry")
 	)
@@ -144,13 +192,113 @@ object TestData {
 	def normalizedEmployees: List[String] = List("27000", "10", "1000")
 	def unnormalizedCoords: List[String] = List("48.34822^^xsd:float;10.905282^^xsd:float","48348220^^xsd:integer;10905282^^xsd:integer", "48.34822^^xsd:double;10.905282^^xsd:double")
 	def normalizedCoords: List[String] = List("48.34822;10.905282")
-	def unnormalizedCountries: List[String] = List("dbpedia-de:Japanisches_Kaiser-reich", "LI@de .", "Deutschland@de .", "dbpedia-de:Datei:Flag_of_Bavaria_(striped).svg", "15^^xsd:integer")
-	def normalizedCountries: List[String] = List("Japanisches Kaiser reich", "Deutschland")
+	def unnormalizedCountries: List[String] = List("dbpedia-de:Japanisches_Kaiser-reich", "LI@de .", "Deutschland@de .", "dbpedia-de:Datei:Flag_of_Bavaria_(striped).svg", "15^^xsd:integer", "dbpedia-de:AB")
+	def normalizedCountries: List[String] = List("LI", "DE", "AB")
 	def unnormalizedCities: List[String] = List("Frankfurt a.M.@de .", "Frankfurt/Main@de .", "London", "dbpedia-de:Berlin-Tegel")
 	def normalizedCities: List[String] = List("Frankfurt a.M.", "Frankfurt/Main", "London", "Berlin Tegel")
-	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Unknown")
-	def normalizedSectors: List[String] = List("Kraftfahrzeughersteller", "Brauerei")
+	def unnormalizedSectors: List[String] = List("dbpedia-de:Kraftfahrzeughersteller", "dbpedia-de:Brauerei", "Unknown", "dbpedia-de:TestSector")
+	def normalizedSectors: List[String] = List("Kraftfahrzeughersteller", "Brauerei", "TestSector")
+	def mappedSectors: List[String] = List("29", "45", "11", "TestSector")
+	def unnormalizedURLs: List[String] = List("https://youtube.de@de .", "http://facebook.de@de .", "http://www.google.de", "www.hans", "NotAURL@de .")
+	def normalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de")
 	def unnormalizedDefaults: List[String] = List("very^^xsd:nonNegativeInteger", "generic@de .", "dbpedia-de:values", "even", "dash-containing^^xsd:float", "123^^xsd:integer", "b4ckf1sh")
 	def normalizedDefaults: List[String] = List("very", "generic", "values", "even", "dash containing", "123", "b4ckf1sh")
-	// scalastyle:on line.size.limit
+
+	def applyInput: List[List[String]] = List(
+		this.unnormalizedCoords,
+		this.unnormalizedCities,
+		this.unnormalizedCountries,
+		this.unnormalizedSectors,
+		this.unnormalizedEmployees,
+		this.unnormalizedURLs,
+		List("default"),
+		List("GmbH", "&", "Co", ".", "KG")
+	)
+	def applyAttributes: List[String] = List("geo_coords", "geo_city", "geo_country", "gen_sectors", "gen_employees", "gen_urls", "default", "gen_legal_form")
+	def applyStrategies: List[(List[String] => List[String])] = List(
+		DBpediaNormalizationStrategy.normalizeCoords,
+		DBpediaNormalizationStrategy.normalizeCity,
+		DBpediaNormalizationStrategy.normalizeCountry,
+		DBpediaNormalizationStrategy.normalizeSector,
+		DBpediaNormalizationStrategy.normalizeEmployees,
+		DBpediaNormalizationStrategy.normalizeURLs,
+		identity,
+		SharedNormalizations.normalizeLegalForm
+	)
+	def unnormalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.unnormalizedSectors,
+		"geo_coords" -> this.unnormalizedCoords,
+		"geo_country" -> this.unnormalizedCountries,
+		"geo_city" -> this.unnormalizedCities,
+		"gen_employees" -> this.unnormalizedEmployees,
+		"gen_urls" -> this.unnormalizedURLs
+	)
+	def normalizedAttributes: Map[String, List[String]] = Map(
+		"gen_sectors" -> this.mappedSectors,
+		"geo_coords" -> this.normalizedCoords,
+		"geo_country" -> this.normalizedCountries,
+		"geo_city" -> this.normalizedCities,
+		"gen_employees" -> this.normalizedEmployees,
+		"gen_urls" -> this.normalizedURLs
+	)
+
+	def interlanguageLinksEn(): List[String] = List(
+		"""<http://dbpedia.org/resource/Audi_EN> <http://www.w3.org/2002/07/owl#sameas> <http://de.dbpedia.org/resource/Audi_DE> .""",
+		"""<http://dbpedia.org/resource/Volkswagen_EN> <http://www.w3.org/2002/07/owl#sameas> <http://de.dbpedia.org/resource/Volkswagen_DE> .""",
+		"""<http://de.dbpedia.org/resource/Anschluss_(Soziologie)> <http://purl.org/dc/terms/subject> <http://de.dbpedia.org/resource/Kategorie:Soziologische_Systemtheorie> ."""
+	)
+
+	def germanLabels(): Map[String, String] = {
+		Map("Audi_EN" -> "Audi_DE", "Volkswagen_EN" -> "Volkswagen_DE")
+	}
+
+	def dbpediaRawRelations(): List[String] = List(
+		"""<http://dbpedia.org/resource/Audi_EN> <http://dbpedia.org/ontology/parentCompany> <http://dbpedia.org/resource/Volkswagen_EN> ."""
+	)
+
+	def dbpediaParsedRelations(): List[Relation] = List(
+		Relation("Audi DE", "parentCompany", "Volkswagen DE")
+	)
+
+	def dbpediaRelations: List[Relation] = List(
+		Relation("Audi", "parentCompany", "Volkswagen"),
+		Relation("Audi", "subsidiary", "Lamborghini"),
+		Relation("Audi", "type", "Aktiengesellschaft"),
+		Relation("BMW", "division", "BMW Motorsport"),
+		Relation("BWM", "foaf:Hompage", "http://www.bmw.com/"),
+		Relation("BMW", "product", "Fahrrad")
+	)
+
+	def dbpedia: List[Subject] = List(
+		Subject(id = idList.head, master= idList.head, datasource = datasource, name = Option("Audi")),
+		Subject(id = idList(1), master= idList(1), datasource = datasource, name = Option("BMW")),
+		Subject(id = idList(2), master= idList(2), datasource = datasource, name = Option("Volkswagen")),
+		Subject(id = idList(3), master= idList(3), datasource = datasource, name = Option("BMW Motorsport")),
+		Subject(id = idList(4), master= idList(4), datasource = datasource, name = Option("Commerzbank")),
+		Subject(id = idList(5), master= idList(5), datasource = datasource, name = Option("Lamborghini"))
+	)
+
+	def dbpediaImportedRelations = List(
+		Subject(
+			id = idList.head,
+			master = idList.head,
+			datasource = datasource,
+			name = Option("Audi"),
+			relations = Map(
+				idList(2) -> Map("parentCompany" -> ""),
+				idList(5) -> Map("subsidiary" -> "")
+			)
+		),
+		Subject(
+			id = idList(1),
+			master = idList(1),
+			datasource = datasource,
+			name = Option("BMW"),
+			relations = Map(
+				idList(3) -> Map("division" -> "")
+			)
+		)
+	)
 }
+// scalastyle:on line.size.limit
+// scalastyle:on number.of.methods

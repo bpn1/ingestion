@@ -6,20 +6,44 @@ import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
+import de.hpi.companies.algo.Tag
+import de.hpi.companies.algo.classifier.AClassifier
+import de.hpi.ingestion.dataimport.SharedNormalizations
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import scala.collection.mutable
 
 /**
   * Import-Job to import DBpedia Subjects into the staging table of the datalake.
   */
 object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity](
-	List("dbpedia"),
-	"normalization_dbpedia.xml",
-	"categorization_dbpedia.xml",
+	List("dbpedia", "dbpedia_20161203"),
 	"wikidumps",
 	"dbpedia"
 ){
-	appName = s"DataLakeImportDBpedia_v1.0_${System.currentTimeMillis()}"
+	appName = "DBpediaDataLakeImport_v1.0"
+	configFile = "datalake_import_dbpedia.xml"
+	importConfigFile = "normalization_dbpedia.xml"
+	val categoryMap = Map(
+		"Broadcaster" -> "business",
+		"Company" -> "business",
+		"EducationalInstitution" -> "organization",
+		"EmployersOrganisation" -> "business",
+		"GeopoliticalOrganisation" -> "organization",
+		"GovernmentAgency" -> "business",
+		"InternationalOrganisation" -> "business",
+		"Legislature" -> "organization",
+		"MilitaryUnit" -> "organization",
+		"Non-ProfitOrganisation" -> "organization",
+		"Parliament" -> "organization",
+		"PoliticalParty" -> "organization",
+		"PublicTransitSystem" -> "business",
+		"ReligiousOrganisation" -> "organization",
+		"SambaSchool" -> "business",
+		"SportsClub" -> "business",
+		"SportsLeague" -> "business",
+		"SportsTeam" -> "business",
+		"TermOfOffice" -> "organization",
+		"TradeUnion" -> "business"
+	)
 
 	// $COVERAGE-OFF$
 	/**
@@ -44,32 +68,37 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		strategies: Map[String, List[String]]
 	): List[String] = {
 		val normalized = DBpediaNormalizationStrategy(attribute)(values)
-		if (attribute == "gen_sectors") normalized.flatMap(x => strategies.getOrElse(x, List(x))) else normalized
+		if(attribute == "gen_sectors") normalized.flatMap(x => strategies.getOrElse(x, List(x))) else normalized
 	}
 
 	override def translateToSubject(
 		entity: DBpediaEntity,
 		version: Version,
 		mapping: Map[String, List[String]],
-		strategies: Map[String, List[String]]
+		strategies: Map[String, List[String]],
+		classifier: AClassifier[Tag]
 	): Subject = {
-		val subject = Subject()
+		val subject = Subject.empty(datasource = "dbpedia")
 		val sm = new SubjectManager(subject, version)
 
-		entity.label.foreach(label => sm.setName(label.replaceAll("@de .$", "")))
-		entity.instancetype.foreach(instancetype => sm.setCategory(instancetype))
+		sm.setName(entity.label.map(_.replaceAll("""@de \.$""", "")))
+		sm.setCategory(entity.instancetype.flatMap(categoryMap.get))
+		sm.addProperties(entity.data)
+
+		val legalForm = subject.name.flatMap(extractLegalForm(_, classifier)).toList
+		val normalizedLegalForm = SharedNormalizations.normalizeLegalForm(legalForm)
+		sm.addProperties(Map("gen_legal_form" -> normalizedLegalForm))
 
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
-		val properties = mutable.Map[String, List[String]]()
-		properties ++= (entity.data ++ normalizedProperties)
+		sm.addProperties(normalizedProperties)
 
 		if (normalizedProperties.contains("geo_coords_lat") && normalizedProperties.contains("geo_coords_long")) {
-			properties("geo_coords") = normalizedProperties("geo_coords_lat")
+			val coords = normalizedProperties("geo_coords_lat")
 				.zip(normalizedProperties("geo_coords_long"))
-				.flatMap(x => List(x._1, x._2))
+				.map { case (lat, long) => s"$lat;$long" }
+			sm.addProperties(Map("geo_coords" -> coords))
 		}
 
-		sm.addProperties(properties.toMap)
 		subject
 	}
 }

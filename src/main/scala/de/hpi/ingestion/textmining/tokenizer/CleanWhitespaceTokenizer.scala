@@ -1,7 +1,6 @@
 package de.hpi.ingestion.textmining.tokenizer
 
 import java.util.StringTokenizer
-
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 

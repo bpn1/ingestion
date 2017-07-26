@@ -8,33 +8,33 @@
         <keyspaceGoldStandardTable>evaluation</keyspaceGoldStandardTable>
         <goldStandardTable>goldstandard</goldStandardTable>
         <keyspaceDuplicatesTable>evaluation</keyspaceDuplicatesTable>
-        <duplicatesTable>dbpedia_wikidata_deduplication_only_uuid</duplicatesTable>
+        <duplicatesTable>dbpedia_wikidata_duplicates</duplicatesTable>
         <keyspaceVersionTable>evaluation</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <keyspaceStatsTable>datalake</keyspaceStatsTable>
         <statsTable>blockingstats</statsTable>
         <filterUndefined>false</filterUndefined>
+        <filterSmall>true</filterSmall>
+        <maxBlockSize>500000</maxBlockSize>
+        <minBlockSize>10000</minBlockSize>
         <confidence>0.7</confidence>
     </settings>
     <simMeasurements>
         <attribute>
             <key>name</key>
+            <weight>0.8</weight>
             <feature>
                 <similarityMeasure>JaroWinkler</similarityMeasure>
-                <weight>1</weight>
+                <weight>1.0</weight>
                 <scale>1</scale>
             </feature>
         </attribute>
         <attribute>
             <key>geo_country</key>
-            <feature>
-                <similarityMeasure>ExactMatch</similarityMeasure>
-                <weight>0.5</weight>
-                <scale>1</scale>
-            </feature>
+            <weight>0.2</weight>
             <feature>
                 <similarityMeasure>Jaccard</similarityMeasure>
-                <weight>1</weight>
+                <weight>1.0</weight>
                 <scale>1</scale>
             </feature>
         </attribute>

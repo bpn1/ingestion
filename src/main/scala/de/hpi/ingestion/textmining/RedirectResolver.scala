@@ -25,7 +25,6 @@ object RedirectResolver extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-
 		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 		val redirects = sc.cassandraTable[Redirect](settings("keyspace"), settings("redirectTable"))
 		List(articles).toAnyRDD() ++ List(redirects).toAnyRDD()
@@ -47,7 +46,6 @@ object RedirectResolver extends SparkJob {
 		val redirects = output(1).asInstanceOf[RDD[Redirect]]
 		if(!redirects.isEmpty()) redirects.saveToCassandra(settings("keyspace"), settings("redirectTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
@@ -112,7 +110,7 @@ object RedirectResolver extends SparkJob {
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val articles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
 		var redirects = input(1).asInstanceOf[RDD[Redirect]]
 			.map(Redirect.unapply(_).get)

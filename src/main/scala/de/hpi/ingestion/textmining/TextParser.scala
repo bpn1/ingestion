@@ -3,20 +3,17 @@ package de.hpi.ingestion.textmining
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
-
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 import info.bliki.wiki.model.WikiModel
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Comment, Document, Element, TextNode}
 import java.net.URLDecoder
-
 import scala.collection.mutable.ListBuffer
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
-
 import scala.io.Source
 
 /**
@@ -105,7 +102,8 @@ object TextParser extends SparkJob {
 			.map { anchor =>
 				val target = parseUrl(anchor.attr("href"))
 				val source = if(anchor.text.isEmpty) target else anchor.text
-				val redirectLink = Link(title, target)
+				val offset = Option(text.indexOf(source)).filter(_ >= 0)
+				val redirectLink = Link(title, target, offset)
 				val defaultLink = Link(source, target)
 				if(isCategoryLink(defaultLink)) defaultLink else redirectLink
 			}
@@ -500,7 +498,7 @@ object TextParser extends SparkJob {
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val rawArticles = input.fromAnyRDD[WikipediaEntry]().head
 		val parsedArticles = rawArticles
 			.filter(!isMetaPage(_))

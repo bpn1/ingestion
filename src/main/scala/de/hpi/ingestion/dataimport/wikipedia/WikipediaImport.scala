@@ -4,7 +4,6 @@ import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import com.databricks.spark.xml.XmlInputFormat
 import org.apache.hadoop.io.{LongWritable, Text}
-
 import scala.xml.XML
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.framework.SparkJob
@@ -66,7 +65,7 @@ object WikipediaImport extends SparkJob {
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		input
 			.fromAnyRDD[String]()
 			.map(_.map(parseXML))

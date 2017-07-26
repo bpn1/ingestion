@@ -22,6 +22,7 @@ object ClassifierTraining extends SparkJob {
 
 	// $COVERAGE-OFF$
 	var trainingFunction = crossValidateAndEvaluate _
+
 	/**
 	  * Loads Feature entries from the Cassandra.
 	  *
@@ -30,7 +31,7 @@ object ClassifierTraining extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val entries = sc.cassandraTable[FeatureEntry](settings("keyspace"), settings("featureentries"))
+		val entries = sc.cassandraTable[FeatureEntry](settings("keyspace"), settings("secondOrderFeatureTable"))
 		List(entries).toAnyRDD()
 	}
 
@@ -55,6 +56,7 @@ object ClassifierTraining extends SparkJob {
 
 	/**
 	  * Uses the input data to train a Naive Bayes model.
+	  *
 	  * @param trainingData RDD of labeled points
 	  * @return the trained model
 	  */
@@ -64,10 +66,11 @@ object ClassifierTraining extends SparkJob {
 
 	/**
 	  * Uses the provided data to train a Random Forest model and returns the model.
+	  *
 	  * @param trainingData RDD of labeled points used to train the model
-	  * @param numTrees number of trees used
-	  * @param maxDepth maximum depth used
-	  * @param maxBins maximum number of bins used
+	  * @param numTrees     number of trees used
+	  * @param maxDepth     maximum depth used
+	  * @param maxBins      maximum number of bins used
 	  * @return the trained model
 	  */
 	def trainRandomForest(
@@ -98,29 +101,37 @@ object ClassifierTraining extends SparkJob {
 		predictionAndLabels: RDD[(Double, Double)],
 		beta: Double = 1.0
 	): PrecisionRecallDataTuple = {
-		val metrics = new BinaryClassificationMetrics(predictionAndLabels)
-		val precision = metrics.precisionByThreshold()
-			.filter(_._1 == 1.0)
-			.values
-			.first
-		val recall = metrics.recallByThreshold()
-			.filter(_._1 == 1.0)
-			.values
-			.first
-		val f1score = metrics.fMeasureByThreshold(beta)
-			.filter(_._1 == 1.0)
-			.values
-			.first
-		PrecisionRecallDataTuple(1.0, precision, recall, f1score)
+		val pnCount = predictionAndLabels
+			.map { case (prediction, label) =>
+				val trueOrFalse = if(prediction == label) "t" else "f"
+				val positiveOrNegative = if(prediction == 1.0) "p" else "n"
+				(s"$trueOrFalse$positiveOrNegative", 1)
+			}.reduceByKey(_ + _)
+			.collect
+			.toMap
+		val tp = pnCount.getOrElse("tp", 0)
+		val fp = pnCount.getOrElse("fp", 0)
+		val fn = pnCount.getOrElse("fn", 0)
+		val precision = Option(tp.toDouble / (tp + fp).toDouble)
+		    .filterNot(_.isNaN)
+		    .getOrElse(0.0)
+		val recall = Option(tp.toDouble / (tp + fn).toDouble)
+			.filterNot(_.isNaN)
+			.getOrElse(0.0)
+		val fMeasure = Option(((1.0 + beta * beta) * precision * recall) / ((beta * beta * precision) + recall))
+			.filterNot(_.isNaN)
+			.getOrElse(0.0)
+		PrecisionRecallDataTuple(1.0, precision, recall, fMeasure)
 	}
 
 	/**
 	  * Cross validates a Random Forest model with the input data and the given number of folds.
-	  * @param data input data used to train the classifier
+	  *
+	  * @param data     input data used to train the classifier
 	  * @param numFolds number of folds used for the cross validation
 	  * @param numTrees number of trees used
 	  * @param maxDepth maximum depth
-	  * @param maxBins number of bins used
+	  * @param maxBins  number of bins used
 	  * @return statistical data for each fold
 	  */
 	def crossValidate(
@@ -137,27 +148,29 @@ object ClassifierTraining extends SparkJob {
 			val training = folds.slice(0, index) ++ folds.slice(index + 1, folds.length)
 			(test, training)
 		}
-		segments.map { case (test, trainingList) =>
-			val training = trainingList.reduce(_.union(_))
-			val model = trainRandomForest(training, numTrees, maxDepth, maxBins)
-			val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
-				val prediction = model.predict(features)
-				(prediction, label)
-			}
-			(calculateStatistics(predictionAndLabels), model)
-		}.toList
-		.unzip
+		segments
+			.map { case (test, trainingList) =>
+				val training = trainingList.reduce(_.union(_))
+				val model = trainRandomForest(training, numTrees, maxDepth, maxBins)
+				val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
+					val prediction = model.predict(features)
+					(prediction, label)
+				}
+				(calculateStatistics(predictionAndLabels), model)
+			}.toList
+			.unzip
 	}
 
 	/**
 	  * Averages a List of Precision Recall Data Tuples. Uses the Threshold of the first element or 1.0 as default.
+	  *
 	  * @param stats List of input statistics to average
 	  * @return Precision Recall Data Tuples with the mean precision, recall & fscore
 	  */
 	def averageStatistics(stats: List[PrecisionRecallDataTuple]): PrecisionRecallDataTuple = {
 		val n = stats.length
 		val threshold = stats.headOption.map(_.threshold).getOrElse(1.0)
-		stats.map { case PrecisionRecallDataTuple(threshold, precision, recall, fscore) =>
+		stats.map { case PrecisionRecallDataTuple(statThreshold, precision, recall, fscore) =>
 			(precision, recall, fscore)
 		}.unzip3 match {
 			case (precision, recall, fscore) =>
@@ -167,11 +180,12 @@ object ClassifierTraining extends SparkJob {
 
 	/**
 	  * Trains and cross validates a Random Forest Model.
-	  * @param data data used to train and test the model
+	  *
+	  * @param data     data used to train and test the model
 	  * @param numFolds number of folds used for the cross validation
 	  * @param numTrees number of trees used
 	  * @param maxDepth maximum depth
-	  * @param maxBins number of bins used
+	  * @param maxBins  number of bins used
 	  * @return statistics of the cross validation and a Random Forest Model
 	  */
 	def crossValidateAndEvaluate(
@@ -197,12 +211,25 @@ object ClassifierTraining extends SparkJob {
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val entries = input.fromAnyRDD[FeatureEntry]().head
 		val data = entries.map(_.labeledPoint()).cache
 		val (stats, model) = trainingFunction(data, 5, 5, 4, 32)
 		val statsList = List(sc.parallelize(List(stats))).toAnyRDD()
 		val modelList = List(sc.parallelize(List(model))).toAnyRDD()
 		statsList ++ modelList
+
+		//		Code outcommented due to missing tests
+		//		val Array(train, test) = data.randomSplit(Array(0.7, 0.3))
+		//		val model = trainRandomForest(train, 100, 4, 32)
+		//		val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
+		//			val prediction = model.predict(features)
+		//			(prediction, label)
+		//		}
+		//		val stats = calculateStatistics(predictionAndLabels)
+		//		val results = SimilarityMeasureStats(data = List(stats),
+		//			comment = Option("Random Forest Split Validation"))
+		//		val modelOption = sc.parallelize(List(Option(model)))
+		//		List(sc.parallelize(List(results))).toAnyRDD() ++ List(modelOption).toAnyRDD()
 	}
 }

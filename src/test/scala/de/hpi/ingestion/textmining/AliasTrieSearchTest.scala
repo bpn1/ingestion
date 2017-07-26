@@ -5,18 +5,17 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import de.hpi.ingestion.textmining.tokenizer.{IngestionTokenizer, WhitespaceTokenizer}
 import org.scalatest.{FlatSpec, Matchers}
-
 import scala.io.Source
 
 class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Alias matches" should "be found" in {
-		val oldSettings = AliasTrieSearch.settings
+		val oldSettings = AliasTrieSearch.settings(false)
 		AliasTrieSearch.parseConfig()
 
 		val tokenizer = IngestionTokenizer()
 		val contextTokenizer = IngestionTokenizer(true, true)
-		val trie = TestData.testDataTrie(tokenizer)
+		val trie = TestData.dataTrie(tokenizer)
 		val entry = TestData.parsedEntry()
 		val resultEntry = AliasTrieSearch.matchEntry(entry, trie, tokenizer, contextTokenizer)
 		resultEntry.foundaliases should not be empty
@@ -24,7 +23,7 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 		AliasTrieSearch.settings = oldSettings
 	}
 
-	they should "be cleaned from duplicates and empty strings" in {
+	they should "be cleaned of empty strings" in {
 		val cleanedAliaes = AliasTrieSearch.cleanFoundAliases(TestData.uncleanedFoundAliases())
 		val expectedAliases = TestData.cleanedFoundAliases()
 		cleanedAliaes shouldEqual expectedAliases
@@ -39,10 +38,10 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 
 	"Wikipedia entries" should "be enriched with found aliases" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = AliasTrieSearch.settings
+		val oldSettings = AliasTrieSearch.settings(false)
 		AliasTrieSearch.parseConfig()
 
-		val testTrieStreamFunction = TestData.fullTrieStream _
+		val testTrieStreamFunction = TestData.fullTrieStream() _
 		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
 		val inputEntry = sc.parallelize(Seq(TestData.parsedEntry()))
 		val searchResult = AliasTrieSearch.run(List(inputEntry).toAnyRDD(), sc)
@@ -55,31 +54,16 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 	}
 
 	"Trie aliases" should "be extracted" in {
-		val oldSettings = AliasTrieSearch.settings
+		val oldSettings = AliasTrieSearch.settings(false)
 		AliasTrieSearch.parseConfig()
 
 		val tokenizer = IngestionTokenizer()
 		val contextTokenizer = IngestionTokenizer(true, true)
-		val trie = TestData.testDataTrie(tokenizer)
+		val trie = TestData.dataTrie(tokenizer)
 		val entries = TestData.parsedEntriesWithLessText()
 		val trieAliases = entries.map(AliasTrieSearch.matchEntry(_, trie, tokenizer, contextTokenizer).triealiases)
 		val expected = TestData.foundTrieAliases()
 		trieAliases shouldEqual expected
-
-		AliasTrieSearch.settings = oldSettings
-	}
-
-	"Alias contexts" should "be extracted" in {
-		val oldSettings = AliasTrieSearch.settings
-		AliasTrieSearch.parseConfig()
-
-		val tokenizer = IngestionTokenizer()
-		val contextTokenizer = IngestionTokenizer(true, true)
-		val text = tokenizer.processWithOffsets(TestData.parsedEntriesWithLessText().head.getText())
-		val trieAlias = TestData.foundTrieAliases().head.head
-		val alias = tokenizer.processWithOffsets(trieAlias.alias)
-		val context = AliasTrieSearch.extractAliasContext(alias, text, 0, contextTokenizer).getCounts()
-		context shouldEqual trieAlias.context
 
 		AliasTrieSearch.settings = oldSettings
 	}
