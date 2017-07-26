@@ -39,21 +39,21 @@ class WikidataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 	}
 
 	"Labels" should "be extracted" in {
-		val testEntities = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
+		val testEntities = Json.parse(TestData.rawTestEntries()).as[List[JsValue]]
 			.map(value => WikidataImport.extractLabels(value, WikidataImport.extractString(value, List("type"))))
 		val expectedLabels = TestData.entityLabels()
 		testEntities shouldEqual expectedLabels
 	}
 
 	"Aliases" should "be extracted" in {
-		val testAliases = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
+		val testAliases = Json.parse(TestData.rawTestEntries()).as[List[JsValue]]
 			.map(WikidataImport.extractAliases)
 		val expectedAliases = TestData.entityAliases()
 		testAliases shouldEqual expectedAliases
 	}
 
 	"Entity values" should "be filled in" in {
-		val testEntities = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
+		val testEntities = Json.parse(TestData.rawTestEntries()).as[List[JsValue]]
 			.map(WikidataImport.fillSimpleValues)
 		val expectedEntities = TestData.filledWikidataEntities()
 		testEntities shouldEqual expectedEntities
@@ -69,7 +69,7 @@ class WikidataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 	}
 
 	"Wikidata entities" should "be parsed" in {
-		val testEntities = Json.parse(TestData.rawWikidataEntries()).as[List[JsValue]]
+		val testEntities = Json.parse(TestData.rawTestEntries()).as[List[JsValue]]
 			.map(WikidataImport.fillEntityValues)
 		val expectedEntities = TestData.parsedWikidataEntities()
 		testEntities shouldEqual expectedEntities
