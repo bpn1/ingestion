@@ -19,14 +19,14 @@ package de.hpi.ingestion.textmining.nel
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, trieStreamFunction}
+import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch.{deserializeTrie, trieStreamFunction}
 import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, TrieNode}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
-  * Finds Trie Aliases in NEL Articles using the trie and writes them to the same table.
+  * Finds `TrieAliases` in `TrieAliasArticles` and writes them back to the same table.
   */
 object ArticleTrieSearch extends SparkJob {
 	appName = "Article Trie Search"
@@ -96,7 +96,7 @@ object ArticleTrieSearch extends SparkJob {
 	}
 
 	/**
-	  * Finds Aliases in the Articles using the trie.
+	  * Finds `TrieAliases` in `Articles`.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

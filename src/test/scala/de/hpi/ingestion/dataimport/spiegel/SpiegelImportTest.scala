@@ -20,7 +20,8 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.TrieAliasArticle
-import de.hpi.ingestion.textmining.{AliasTrieSearch, TestData => TextTestData}
+import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch
+import de.hpi.ingestion.textmining.{TestData => TextTestData}
 
 class SpiegelImportTest extends FlatSpec with Matchers with SharedSparkContext {
 

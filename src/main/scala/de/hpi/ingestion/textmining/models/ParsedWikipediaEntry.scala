@@ -24,7 +24,7 @@ import scala.collection.mutable.ListBuffer
   * @param title               title of the page
   * @param text                plain text of the page
   * @param textlinks           all links appearing in the text
-  * @param templatelinks       all links appearing in Wikimarkup templates (e.g. infoboxes)
+  * @param templatelinks       all links appearing in wikitext templates (e.g. infoboxes)
   * @param foundaliases        all aliases (of all links) found in the plain text
   * @param categorylinks       all links of category pages on the page
   * @param listlinks           all links appearing in lists
@@ -34,7 +34,7 @@ import scala.collection.mutable.ListBuffer
   * @param triealiases         the longest aliases found by the trie with their offset and context
   * @param rawextendedlinks    all occurrences of aliases of other links in this article
   * @param textlinksreduced    all links appearing in the text with aliases of companies
-  * @param templatelinksreduced all links appearing in Wikimarkup templates (e.g. infoboxes) with aliases of companies
+  * @param templatelinksreduced all links appearing in wikitext templates (e.g. infoboxes) with aliases of companies
   * @param categorylinksreduced all links of category pages on the page with aliases of companies
   * @param listlinksreduced    all links appearing in lists with aliases of companies
   * @param disambiguationlinksreduced all links on this page if this page is a disambiguation page with aliases of

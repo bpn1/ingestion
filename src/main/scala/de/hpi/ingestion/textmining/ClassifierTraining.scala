@@ -29,7 +29,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.SparkContext
 
 /**
-  * Trains a random forest classifier model with FeatureEntries and evaluates it using precision, recall and f-score.
+  * Trains a `RandomForestModel` with `FeatureEntries` and evaluates it in terms of precision, recall and f-score.
   */
 object ClassifierTraining extends SparkJob {
 	appName = "Classifier Training"

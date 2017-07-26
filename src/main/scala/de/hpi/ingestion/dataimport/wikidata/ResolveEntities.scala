@@ -25,8 +25,8 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd.RDD
 
 /**
-  * Resolves the Wikidata IDs in the properties of each Wikidata entity. Entities labeled with an instancetype in the
-  * TagEntities job are not resolved.
+  * Resolves the Wikidata IDs in the properties of each `WikidataEntity`. Entities labeled with an instancetype in the
+  * `TagEntities` job are not resolved.
   */
 object ResolveEntities extends SparkJob {
 	appName = "ResolveEntities"
