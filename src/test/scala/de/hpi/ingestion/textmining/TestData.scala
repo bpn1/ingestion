@@ -2795,7 +2795,7 @@ object TestData {
 				title = "1",
 				text = Option("Dieser Artikel schreibt über Audi."),
 				triealiases = List(TrieAlias("Audi", Option(29))),
-				foundaliases = List("Audi")
+				foundaliases = List("Audi", ".")
 			),
 			ParsedWikipediaEntry(
 				title = "2",
@@ -2804,12 +2804,12 @@ object TestData {
 					TrieAlias("Audi AG", Option(4)),
 					TrieAlias("Volkswagen AG", Option(43))
 				),
-				foundaliases = List("Audi", "Audi AG", "AG", "Volkswagen", "Volkswagen AG", "AG")
+				foundaliases = List("Audi", "Audi AG", "AG", "Volkswagen", "Volkswagen AG", "AG", ".")
 			),
 			ParsedWikipediaEntry(
 				title = "3",
 				text = Option("Die Volkswagen Aktiengesellschaft ist nicht sehr umweltfreundlich."),
-				foundaliases = List("Volkswagen"),
+				foundaliases = List("Volkswagen", "."),
 				textlinks = List(Link("Volkswagen", "Volkswagen", Option(4)))
 			),
 			ParsedWikipediaEntry(
@@ -2820,7 +2820,7 @@ object TestData {
 					TrieAlias("Audi AG", Option(46)),
 					TrieAlias("Volkswagen", Option(75))
 				),
-				foundaliases = List("Audi", "Audi", "Audi AG", "AG", "Volkswagen")
+				foundaliases = List("Audi", ".", "Audi", "Audi AG", "AG", ".", "Volkswagen", ".")
 			)
 		)
 	}

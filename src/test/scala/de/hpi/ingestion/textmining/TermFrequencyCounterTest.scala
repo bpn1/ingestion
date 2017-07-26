@@ -3,7 +3,6 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import de.hpi.ingestion.textmining.tokenizer.{CleanCoreNLPTokenizer, IngestionTokenizer}
 
@@ -43,61 +42,37 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	}
 
 	"Link contexts" should "be exactly these bag of words" in {
-		val oldSettings = TermFrequencyCounter.settings(false)
-		TermFrequencyCounter.parseConfig()
-
 		val linkContexts = TestData.parsedWikipediaWithTextsSet()
 			.map(TermFrequencyCounter.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
 			.flatMap(_.linkswithcontext)
 		val expectedContexts = TestData.linksWithContextsSet()
 		linkContexts shouldEqual expectedContexts
-
-		TermFrequencyCounter.settings = oldSettings
 	}
 
 	they should "be extracted for both text and extendedlinks" in {
-		val oldSettings = TermFrequencyCounter.settings
-		TermFrequencyCounter.parseConfig()
-
 		val linkContexts = TestData.parsedWikipediaExtendedLinksSet()
 			.map(TermFrequencyCounter.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
 			.flatMap(_.linkswithcontext)
 		val expectedContexts = TestData.linksWithContextsSet()
 		linkContexts shouldEqual expectedContexts
-
-		TermFrequencyCounter.settings = oldSettings
 	}
 
 	"Articles with link context" should "contain exactly these link contexts" in {
-		val oldSettings = TermFrequencyCounter.settings(false)
-		TermFrequencyCounter.parseConfig()
-
 		val expectedLinks = TestData.linksWithContextsSet()
 		val enrichedLinks = TestData.parsedWikipediaWithTextsSet()
 			.map(TermFrequencyCounter.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
 			.flatMap(_.linkswithcontext)
 		enrichedLinks shouldEqual expectedLinks
-
-		TermFrequencyCounter.settings = oldSettings
 	}
 
 	they should "be exactly these articles" in {
-		val oldSettings = TermFrequencyCounter.settings(false)
-		TermFrequencyCounter.parseConfig()
-
 		val enrichedLinkArticles = TestData.parsedWikipediaWithTextsSet()
 			.map(TermFrequencyCounter.extractLinkContexts(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
 		val expectedArticles = TestData.articlesWithLinkContextsSet()
 		enrichedLinkArticles shouldEqual expectedArticles
-
-		TermFrequencyCounter.settings = oldSettings
 	}
 
 	"Articles without any context" should "be fully enriched with article and link contexts" in {
-		val oldSettings = TermFrequencyCounter.settings(false)
-		TermFrequencyCounter.parseConfig()
-
-
 		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 		val enrichedArticles = TermFrequencyCounter
 			.run(List(articles).toAnyRDD(), sc, Array("CleanCoreNLPTokenizer", "true", "true"))
@@ -107,8 +82,6 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 			.toSet
 		val expectedArticles = TestData.articlesWithCompleteContexts()
 		enrichedArticles shouldEqual expectedArticles
-
-		TermFrequencyCounter.settings = oldSettings
 	}
 
 	"Extracted link contexts" should "be exactly these contexts" in {
