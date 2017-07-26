@@ -41,7 +41,10 @@ object WikiDataDataLakeImport extends DataLakeImportImplementation[WikiDataEntit
 		"media company" -> "business",
 		"chamber of commerce" -> "business",
 		"copyright collective" -> "business",
-		"business enterprise" -> "business"
+		"business enterprise" -> "business",
+		"local government in Germany" -> "city",
+		"statutory corporation" -> "organization",
+		"municipality of Germany" -> "city"
 	)
 
 	// $COVERAGE-OFF$

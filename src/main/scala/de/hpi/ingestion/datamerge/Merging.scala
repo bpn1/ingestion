@@ -176,9 +176,7 @@ object Merging extends SparkJob {
 		masterManager.setName(names.headOption)
 		masterManager.setAliases(aliases)
 		masterManager.setCategory(category.headOption)
-
-		masterManager.clearProperties()
-		masterManager.addProperties(properties)
+		masterManager.setProperties(properties)
 	}
 
 	/**

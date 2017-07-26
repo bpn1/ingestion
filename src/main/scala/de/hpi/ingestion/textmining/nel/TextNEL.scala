@@ -77,8 +77,10 @@ object TextNEL extends SplitSparkJob {
 	  */
 	override def splitInput(input: List[RDD[Any]], args: Array[String] = Array()): Traversable[List[RDD[Any]]] = {
 		val List(articles, numDocuments, aliases, wikipediaTfidf) = input
+		val splitMap = Map("wikipedianel" -> 100, "spiegel" -> 20)
+		val splitCount = splitMap.getOrElse(settings("NELTable"), 20)
 		articles
-			.randomSplit(Array.fill(20)(1.0))
+			.randomSplit(Array.fill(splitCount)(1.0))
 			.map(List(_, numDocuments, aliases, wikipediaTfidf))
 	}
 
@@ -149,6 +151,7 @@ object TextNEL extends SplitSparkJob {
 		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].collect.head.count.toLong
 		val aliases = input(2).asInstanceOf[RDD[Alias]]
 		val wikipediaTfidf = input(3).asInstanceOf[RDD[ArticleTfIdf]].flatMap(ArticleTfIdf.unapply)
+
 		if(aliasPageScores.isEmpty) {
 			aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
 		}
