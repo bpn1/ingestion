@@ -25,8 +25,8 @@ import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikidataEntit
 import de.hpi.ingestion.framework.SparkJob
 
 /**
-  * This job builds the subclass hierarchy of selected Wikidata classes and tags every Wikidata entity, that is an
-  * instance of one of the subclasses, with the top level class.
+  * Builds the subclass hierarchy of selected Wikidata classes and tags every Wikidata entity, that is an instance of
+  * one of the subclasses, with the top level class.
   */
 object TagEntities extends SparkJob {
 	appName = "TagEntities"

@@ -100,7 +100,7 @@ object DocumentFrequencyCounter extends SparkJob {
 	}
 
 	/**
-	  * Calculates the Document Frequencies.
+	  * Calculates the document frequencies.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program

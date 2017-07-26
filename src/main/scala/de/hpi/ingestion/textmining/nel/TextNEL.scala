@@ -30,7 +30,7 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 
 /**
-  * Classifies the Trie Aliases found in Articles by the Article Trie Search and writes the positives as found entities
+  * Classifies the trie aliases found in Articles by the ArticleTrieSearch and writes the positives as found entities
   * to the same table.
   */
 object TextNEL extends SplitSparkJob {
@@ -163,7 +163,7 @@ object TextNEL extends SplitSparkJob {
 	}
 
 	/**
-	  * Generates Feature Entries for the Aliases extracted from the Trie Alias Articles.
+	  * Generates FeatureEntries for the aliases extracted from the TrieAliasArticles.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

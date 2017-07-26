@@ -17,20 +17,19 @@ limitations under the License.
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models._
-import org.apache.spark.SparkContext
-import com.datastax.spark.connector._
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
 import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import com.datastax.spark.connector._
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.mllib.tree.RandomForest
 import org.apache.spark.mllib.tree.model.RandomForestModel
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.SparkContext
 
 /**
-  * Trains a Naive Bayes model with Feature Entries and evaluates it using precision, recall and f-score.
+  * Trains a random forest classifier model with FeatureEntries and evaluates it using precision, recall and f-score.
   */
 object ClassifierTraining extends SparkJob {
 	appName = "Classifier Training"
@@ -220,7 +219,7 @@ object ClassifierTraining extends SparkJob {
 
 	/**
 	  * Partitions the entries to train and test a Classification model.
-	  * Example code: https://spark.apache.org/docs/latest/mllib-naive-bayes.html
+	  * Example code: https://spark.apache.org/docs/latest/ml-classification-regression.html#random-forest-classifier
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

@@ -25,7 +25,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 
 /**
-  * Removes all Wikipedia links with an alias not having the possibility to point to a company.
+  * Removes all Wikipedia links with an alias that never points to a company.
   */
 object CompanyLinkFilter extends SparkJob {
 	appName = "Company Link Filter"
@@ -97,7 +97,7 @@ object CompanyLinkFilter extends SparkJob {
 	}
 
 	/**
-	  * Removes all non company links from the Parsed Wikipedia entries.
+	  * Removes all non company links from each ParsedWikipediaEntry.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program

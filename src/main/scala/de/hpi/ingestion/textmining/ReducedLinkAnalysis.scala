@@ -22,6 +22,10 @@ import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.textmining.models._
 import com.datastax.spark.connector._
 
+/**
+  * Groups the links once on the aliases and once on the pages, removes dead links (no corresponding page) and saves
+  * them to the reduced links columns.
+  */
 object ReducedLinkAnalysis extends SparkJob {
 	appName = "Reduced Link Analysis"
 	configFile = "textmining.xml"

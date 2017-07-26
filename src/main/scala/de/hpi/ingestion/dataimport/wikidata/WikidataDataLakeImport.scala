@@ -28,7 +28,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
-  * This job translates Wikidata entities into Subjects and writes them into a staging table.
+  * Translates Wikidata entities into Subjects and writes them into a staging table.
   */
 object WikidataDataLakeImport extends DataLakeImportImplementation[WikidataEntity](
 	List("wikidata_20161117", "wikidata"),

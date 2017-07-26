@@ -24,7 +24,7 @@ import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
-  * Groups link Aliases by page names and vice versa without counting dead links.
+  * Groups link Aliases by page names and vice versa.
   */
 object LinkAnalysis extends SparkJob {
 	appName = "Link Analysis"
@@ -116,7 +116,7 @@ object LinkAnalysis extends SparkJob {
 	}
 
 	/**
-	  * Groups the links once on the aliases and once on the pages. Also removes dead links (no corresponding page).
+	  * Groups the links once on the aliases and once on the pages.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

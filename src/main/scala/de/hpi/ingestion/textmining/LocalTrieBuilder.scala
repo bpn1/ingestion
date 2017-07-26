@@ -25,7 +25,7 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import scala.io.{BufferedSource, Source}
 
 /**
-  * Creates a Trie of a given list of aliases and serializes it to the filesystem.
+  * Creates a token based trie of a given list of aliases and serializes it to the filesystem.
   */
 object LocalTrieBuilder {
 	val aliasFileName = "aliaslist"

@@ -25,7 +25,8 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 
 /**
-  * Calculates term frequency per article and link.
+  * Enriches articles with the term frequencies of the whole article (called context) and the term frequencies
+  * for all link contexts (called link contexts).
   */
 object TermFrequencyCounter extends SparkJob {
 	appName = "Term Frequency Counter"
