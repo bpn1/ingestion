@@ -19,7 +19,7 @@ package de.hpi.ingestion.textmining.nel
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, trieStreamFunction}
+import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch.{deserializeTrie, trieStreamFunction}
 import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, TrieNode}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
