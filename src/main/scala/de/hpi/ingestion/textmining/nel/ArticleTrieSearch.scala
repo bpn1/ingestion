@@ -43,6 +43,7 @@ object ArticleTrieSearch extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("NELTable"), SomeColumns("id", "triealiases"))
 	}
+
 	// $COVERAGE-ON$
 
 	/**
@@ -57,7 +58,10 @@ object ArticleTrieSearch extends SparkJob {
 		val text = article.text.getOrElse("")
 		val tokens = tokenizer.processWithOffsets(text)
 		var invalidIndices = Set.empty[Int]
-		val foundAliases = tokens.indices
+		val stopwords = IngestionTokenizer(true, false).stopwords
+		val invalidAliases = stopwords ++ Set(".", "!", "?", ",", ";", ":", "(", ")", "*", "#", "+")
+		val foundAliases = tokens
+			.indices
 			.flatMap { i =>
 				val testTokens = tokens.slice(i, tokens.length)
 				val aliasMatches = trie.matchTokens(testTokens.map(_.token))
@@ -74,8 +78,9 @@ object ArticleTrieSearch extends SparkJob {
 						}
 					}
 			}.collect {
-			case (index: Int, alias: TrieAlias) if !invalidIndices.contains(index) => alias
-		}.toList
+				case (index: Int, trieAlias: TrieAlias)
+					if !invalidIndices.contains(index) && !invalidAliases.contains(trieAlias.alias) => trieAlias
+			}.toList
 		article.copy(triealiases = foundAliases)
 	}
 
