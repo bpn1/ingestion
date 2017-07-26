@@ -60,7 +60,6 @@ object RelationSentenceParser extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("sentenceTable"))
 	}
-
 	// $COVERAGE-ON$
 
 	/**
