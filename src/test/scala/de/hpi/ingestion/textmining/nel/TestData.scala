@@ -378,7 +378,6 @@ object TestData {
 			FeatureEntry("4", 46, "Audi AG", "Audi", 1.0, MultiFeature(1.0, 1, Double.PositiveInfinity, Double.PositiveInfinity), MultiFeature(0.0, 1, Double.PositiveInfinity, Double.PositiveInfinity), false),
 			FeatureEntry("4", 75, "Volkswagen", "Volkswagen", 1.0, MultiFeature(1.0, 1, Double.PositiveInfinity, Double.PositiveInfinity), MultiFeature(0.0, 1, Double.PositiveInfinity, Double.PositiveInfinity), false),
 			FeatureEntry("5", 15, "Der Audio Verlag", "Der Audio Verlag", 1.0, MultiFeature(1.0, 1, Double.PositiveInfinity, Double.PositiveInfinity), MultiFeature(0.0, 1, Double.PositiveInfinity, Double.PositiveInfinity), false)
-
 		)
 	}
 
@@ -396,6 +395,24 @@ object TestData {
 				Link("Volkswagen", "Volkswagen", Option(75))
 			)),
 			("5", List(Link("Der Audio Verlag", "Der Audio Verlag", Option(15))))
+		)
+	}
+
+	def linkedEntitiesForAllArticles(): Set[(String, List[Link])] = {
+		Set(
+			("1", List(Link("Audi", "Audi", Option(29)))),
+			("2", List(
+				Link("Audi AG", "Audi", Option(4)),
+				Link("Volkswagen AG", "Volkswagen", Option(43))
+			)),
+			("3", List(Link("Volkswagen", "Volkswagen", Option(4)))),
+			("4", List(
+				Link("Audi", "Audi", Option(20)),
+				Link("Audi AG", "Audi", Option(46)),
+				Link("Volkswagen", "Volkswagen", Option(75))
+			)),
+			("5", List(Link("Der Audio Verlag", "Der Audio Verlag", Option(15)))),
+			("6", List())
 		)
 	}
 
