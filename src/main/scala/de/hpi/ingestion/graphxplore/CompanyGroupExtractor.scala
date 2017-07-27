@@ -20,12 +20,12 @@ object CompanyGroupExtractor extends GraphExtractor {
 		"owningCompany"
 	)
 
-	// when operating on normalized edges
-	/* val ownershipRelations = List(
-		"owns",
-		"owned by"
-	) */
-
+	/**
+	  * Extract company group structures from the graph by searching for connected components
+	  * @param graph Graph that is to be searched
+	  * @param outputGraphType Type that is assigned to all returned ResultGraphs
+	  * @return RDD of ResultGraph that contain the extracted company group nodes
+	  */
 	def findCompanyGroups(graph: GraphFrame, outputGraphType: String): RDD[ResultGraph] = {
 		graph.connectedComponents.run()
 			.join(graph.degrees, List("id"))
@@ -37,9 +37,9 @@ object CompanyGroupExtractor extends GraphExtractor {
 				row.getAs[String]("name"),
 				row.getAs[Int]("degree")))
 			.groupBy(_._1) // component
-			.map(_._2.map(t => (t._2, t._3, t._4)).toList) // extract id, name and degree
+			.map(_._2.map { case (component, id, name, degree) => (id, name, degree) }.toList)
 			.filter(_.length >= minComponentSize)
-			.map(group => group.sortBy(_._3)(Ordering[Int].reverse)) // sort results by degree (descending)
+			.map(group => group.sortBy(_._3)(Ordering[Int].reverse))
 			.map(idNameTuples => ResultGraph(
 				outputGraphType,
 				idNameTuples.map(_._1),
