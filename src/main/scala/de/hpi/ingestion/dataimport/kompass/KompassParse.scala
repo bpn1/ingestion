@@ -88,9 +88,7 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 		val doc = Jsoup.parse((json \ "html").as[String])
 		attributeSelectors.foreach { case (attribute, selector) =>
 			val elem = doc.select(selector).first
-			if (elem == null) {
-				println("Could not find attribute " + attribute + " with selector " + selector)
-			} else {
+			if (elem != null) {
 				extractedData += attribute -> List(elem.text.trim)
 			}
 		}
