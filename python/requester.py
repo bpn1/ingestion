@@ -69,7 +69,10 @@ def process_api_response(response):
 		place_name = response.json()['features'][0]['place_name'] or ""
 
 		if isinstance(coordinates, list):
+			print(coordinates[0])
+			print(coordinates[1])
 			coordinates = ";".join(str(x) for x in coordinates)
+			print(coordinates)
 		else:
 			coordinates = ""
 
@@ -106,6 +109,7 @@ def fire_single_request_to_obtain_coordinates(request_string):
 		else:
 
 			response = process_api_response(response)
+			print("---- API ----")
 			print(response)
 		return response
 	else:
@@ -114,7 +118,7 @@ def fire_single_request_to_obtain_coordinates(request_string):
 
 def evaluate_geocoding_response_status(response):
 	if response.status_code == 200:
-		#print(response.json())
+		print(response.json())
 		return {
 			"response": response,
 		}
@@ -164,7 +168,7 @@ def execute_geocoding(wait_list_geocoding):
 
 def main():
 
-	auth_provider = PlainTextAuthProvider(username='bp2016n1', password='') 
+	auth_provider = PlainTextAuthProvider(username='bp2016n1', password='N6J#*b9kkU^EfVany7fVscP@mWM6&6B2taJhZ*x^$gTck*@dWR&qYW9yWz5s#2eZ') 
 	cluster = Cluster(['172.16.64.61'], auth_provider=auth_provider)
 	session = cluster.connect('datalake')
 
@@ -179,14 +183,15 @@ def main():
 
 		if response:
 			try:
+				print(response['coordinates'])
 				subject.add_geocode(repr(response['coordinates']))
-				session.execute(
-					"""
-					INSERT INTO geocodes (id, geo_coords, name, place_name)
-					VALUES (%s, %s, %s, %s)
-					""",
-					(subject.uuid, subject.coordinates, subject.name, subject.place_name)
-					)
+				#session.execute(
+					#"""
+					#INSERT INTO geocodes (id, geo_coords, name, place_name)
+					#VALUES (%s, %s, %s, %s)
+					#""",
+					#(subject.uuid, subject.coordinates, subject.name, subject.place_name)
+					#)
 			except OSError as err:
 				print("OS error: {0}".format(err))
 			except ValueError:
