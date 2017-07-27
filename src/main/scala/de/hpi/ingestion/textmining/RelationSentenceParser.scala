@@ -9,7 +9,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.CompanyLinkFilter.{extractCompanyPages, settings}
-import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
+import de.hpi.ingestion.textmining.tokenizer.{CleanWhitespaceTokenizer, IngestionTokenizer, SentenceTokenizer}
 
 /**
   * Parses all Sentences with entities from Wikipedia.
@@ -137,13 +137,11 @@ object RelationSentenceParser extends SparkJob {
 			entryPartition.map { sentence =>
 				val filteredEntities = sentence
 					.entities
-					.filter{ entity =>
+					.filter { entity =>
 						!localBlacklist.contains(entity.entity) &&
 						!handmadeBlacklist.contains(entity.entity) &&
-							localWhitelist.contains(entity.entity)
-					}
-					.sortBy(_.offset)
-				println(sentence.copy(entities = filteredEntities))
+						localWhitelist.contains(entity.entity)
+					}.sortBy(_.offset)
 				sentence.copy(entities = filteredEntities)
 			}
 		}).filter(_.entities.length > 1)
@@ -163,8 +161,8 @@ object RelationSentenceParser extends SparkJob {
 		val wikidata = input(2).asInstanceOf[RDD[WikiDataEntity]]
 
 		val companies = extractCompanyPages(wikidata).collect.toSet
-		val sentenceTokenizer = IngestionTokenizer(Array("SentenceTokenizer", "false", "false"))
-		val tokenizer = IngestionTokenizer(Array("CleanWhitespaceTokenizer", "false", "false"))
+		val sentenceTokenizer = IngestionTokenizer( new SentenceTokenizer, false, false)
+		val tokenizer = IngestionTokenizer( new CleanWhitespaceTokenizer, false, false)
 		val sentences = articles.flatMap(entryToSentencesWithEntities(_, sentenceTokenizer, tokenizer))
 
 		val filteredSentences = filterSentences(sentences, relations, companies, sc)
