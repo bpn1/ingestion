@@ -17,10 +17,9 @@ limitations under the License.
 package de.hpi.ingestion.graphxplore
 
 import java.util.UUID
-
-import de.hpi.ingestion.graphxplore.models.ResultGraph
 import org.apache.spark.rdd.RDD
 import org.graphframes.GraphFrame
+import de.hpi.ingestion.graphxplore.models.ResultGraph
 
 /**
   * Extracts company groups in a graph by finding connected components in its ownership relations

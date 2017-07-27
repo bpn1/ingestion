@@ -15,11 +15,11 @@ limitations under the License.
 */
 
 package de.hpi.ingestion.graphxplore
-import java.util.UUID
 
-import de.hpi.ingestion.graphxplore.models.ResultGraph
+import java.util.UUID
 import org.apache.spark.rdd.RDD
 import org.graphframes.GraphFrame
+import de.hpi.ingestion.graphxplore.models.ResultGraph
 
 object ConnectedComponents extends GraphExtractor {
 	appName = "ConnectedComponents"
