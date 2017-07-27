@@ -2296,11 +2296,11 @@ object TestData {
 		)
 	}
 
-	def wikiDataCompanies(): List[WikiDataEntity] = {
+	def wikiDataCompanies(): List[WikidataEntity] = {
 		List(
-			WikiDataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Postbank")),
-			WikiDataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Audi")),
-			WikiDataEntity("Q3", instancetype = Option("comp"), wikiname = Option("VW"))
+			WikidataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Postbank")),
+			WikidataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Audi")),
+			WikidataEntity("Q3", instancetype = Option("comp"), wikiname = Option("VW"))
 		)
 	}
 
