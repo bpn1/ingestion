@@ -8,9 +8,17 @@ import de.hpi.ingestion.graphxplore.models.ResultGraph
 
 object MotifExtractor extends GraphExtractor {
 	appName = "MotifExtractor"
-	val minStarSize = 4 // 3
-	val maxStarSize = 4 // can't be > 26
+	val minStarSize = 3
+	val maxStarSize = 10 // can't be > 26
 
+	/**
+	  * Searches for a given motif query in the provided graph
+	  * @param graph Graph thas is to be searched
+	  * @param query String for the graph query (relations that should exist between returned nodes)
+	  * @param nodeNames Names of the nodes contained in the query
+	  * @param graphType Type that should be given to the returned ResultGraph
+	  * @return ResultGraph instance containing the found nodes
+	  */
 	def findMotifs(graph: GraphFrame, query: String, nodeNames: List[String], graphType: String): RDD[ResultGraph] = {
 		val motifs = graph.find(query)
 
