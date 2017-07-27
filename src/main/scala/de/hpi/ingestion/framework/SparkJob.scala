@@ -58,7 +58,7 @@ trait SparkJob extends Configurable {
 
 	/**
 	  * Called before running the job. Used to assert specifics of the input arguments. Returns false if the program
-	  * should be terminated. Parses the xml config if a path is given in args or {@configFile} is set.
+	  * should be terminated. Parses the xml config if a path is given in args or configFile is set.
 	  * @param args arguments of the program
 	  * @return true if the program can continue, false if it should be terminated
 	  */
@@ -72,7 +72,7 @@ trait SparkJob extends Configurable {
 	}
 
 	/**
-	  * Creates the Spark Conf and sets extra options. {@appName} is used as name and {@sparkOptions} is used as
+	  * Creates the Spark Conf and sets extra options. appName is used as name and sparkOptions is used as
 	  * extra Spark options.
 	  * @return Spark Conf with the extra values set.
 	  */

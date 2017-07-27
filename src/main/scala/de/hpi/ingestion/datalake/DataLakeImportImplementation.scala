@@ -47,7 +47,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 
 	// $COVERAGE-OFF$
 	/**
-	  * Writes the Subjects to the {@outputTable} table in keyspace {@outputKeyspace}.
+	  * Writes the Subjects to the outputTable table in keyspace outputKeyspace.
 	  *
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS

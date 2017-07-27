@@ -110,7 +110,7 @@ object Deduplication extends SparkJob {
 
 	/**
 	  * Finds the duplicates of each block by comparing the Subjects and filtering all Subjects pairs below the
-	  * threshold {@confidence}.
+	  * threshold confidence.
 	  * @param blocks RDD of BLocks containing the Subjects that are compared
 	  * @return tuple of Subjects with their score, which is greater or equal the given threshold.
 	  */

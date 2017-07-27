@@ -18,6 +18,8 @@ package de.hpi.ingestion.textmining.models
 
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.ml.feature.{LabeledPoint => LabeledPointDF}
+import org.apache.spark.ml.linalg.{DenseVector => DenseVectorDF}
 
 /**
   * Contains the data of a single entry for the classifier.
@@ -53,5 +55,11 @@ case class FeatureEntry(
 			cosine_sim.value, cosine_sim.rank, cosine_sim.delta_top, cosine_sim.delta_successor))
 		val label = if(correct) 1.0 else 0.0
 		LabeledPoint(label, features)
+	}
+
+	def labeledPointDF(): LabeledPointDF = {
+		val point = this.labeledPoint()
+		val vector = new DenseVectorDF(point.features.toArray)
+		LabeledPointDF(point.label, vector)
 	}
 }

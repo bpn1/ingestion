@@ -215,7 +215,7 @@ trait Configurable {
 	}
 
 	/**
-	  * Parses the normalization config in the normalization tag in the {@importConfigFile}.
+	  * Parses the normalization config in the normalization tag in the importConfigFile.
 	  * @param node the XML node containing the normalization tag as child.
 	  * @return Map containing normalized attribute names with the corresponding source attributes
 	  */
@@ -228,7 +228,7 @@ trait Configurable {
 	}
 
 	/**
-	  * Parses the sector config in the categorization tag in the {@importConfigFile}.
+	  * Parses the sector config in the categorization tag in the importConfigFile.
 	  * @param node the XML node containing the categorization tag as child.
 	  * @return Map containing sector names with the corresponding normalized sector names
 	  */

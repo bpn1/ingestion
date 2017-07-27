@@ -125,7 +125,7 @@ object TagEntities extends SparkJob {
 
 	/**
 	  * Builds a map of subclass paths given a list of subclass entries containing
-	  * the {@subclassProperty} property.
+	  * the subclassProperty property.
 	  * @param categoryData RDD of Subclass Entries containing the subclass information.
 	  * @param searchClasses Map of superclasses with id and name for which the subclass
 	  * information is gathered.
@@ -163,8 +163,8 @@ object TagEntities extends SparkJob {
 
 	/**
 	  * Translates a Wikidata entity into a Subclass entry. This entry contains the id, the label
-	  * or the id if there is no label and the data entries with either the {@instanceProperty} or
-	  * {@subclassProperty} key.
+	  * or the id if there is no label and the data entries with either the instanceProperty or
+	  * subclassProperty key.
 	  * @param entity Wikidata entity to translate
 	  * @return SubclassEntry with only the id, label and subclass or instance property
 	  */

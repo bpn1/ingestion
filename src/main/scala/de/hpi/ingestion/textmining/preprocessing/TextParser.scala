@@ -509,7 +509,7 @@ object TextParser extends SparkJob {
 
 	/**
 	  * Parses all Wikipedia articles from wikitext to raw text and extracts its links. Also removes all metapages
-	  * except {@categoryNamespace} pages.
+	  * except categoryNamespace pages.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
