@@ -6,6 +6,9 @@ import org.apache.spark.sql.functions.col
 import org.graphframes.GraphFrame
 import de.hpi.ingestion.graphxplore.models.ResultGraph
 
+/**
+  * Extracts star and chain structures from subject graph
+  */
 object MotifExtractor extends GraphExtractor {
 	appName = "MotifExtractor"
 	/**
