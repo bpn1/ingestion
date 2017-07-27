@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <outputKeyspace>datalake</outputKeyspace>
+        <outputTable>subject_kompass</outputTable>
+        <versionTable>version</versionTable>
+    </settings>
+</config>

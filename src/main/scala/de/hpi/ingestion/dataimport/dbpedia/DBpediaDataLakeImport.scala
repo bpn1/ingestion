@@ -69,8 +69,8 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[DBpediaEntity](inputKeyspace, inputTable)
-		List(wikidata).toAnyRDD()
+		val dbpedia = sc.cassandraTable[DBpediaEntity](inputKeyspace, inputTable)
+		List(dbpedia).toAnyRDD()
 	}
 	// $COVERAGE-ON$
 
@@ -98,6 +98,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		val sm = new SubjectManager(subject, version)
 
 		sm.setName(entity.label.map(_.replaceAll("""@de \.$""", "")))
+		entity.data.get("foaf:name").foreach(aliases => sm.setAliases(aliases))
 		sm.setCategory(entity.instancetype.flatMap(categoryMap.get))
 		sm.addProperties(entity.data)
 
