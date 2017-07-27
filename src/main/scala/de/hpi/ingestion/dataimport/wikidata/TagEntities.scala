@@ -1,29 +1,62 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.dataimport.wikidata
 
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd._
-
 import scala.language.postfixOps
-import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikiDataEntity}
+import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikidataEntity}
 import de.hpi.ingestion.framework.SparkJob
 
 /**
-  * This job builds the subclass hierarchy of selected Wikidata classes and tags every Wikidata entity, that is an
-  * instance of one of the subclasses, with the top level class.
+  * Builds the subclass hierarchy of selected Wikidata classes and tags every `WikidataEntity` that is an instance of
+  * one of the subclasses with the top level class.
   */
 object TagEntities extends SparkJob {
 	appName = "TagEntities"
-	val keyspace = "wikidumps"
-	val tablename = "wikidata"
-	val tagClasses = Map(
-		"Q43229" -> "organization",
-		"Q4830453" -> "business",
-		"Q268592" -> "economic branch")
+	configFile = "wikidata_import.xml"
 	val instanceProperty = "instance of"
 	val subclassProperty = "subclass of"
-	val wikidataPathProperty = "wikidata_path"
+	val tagClasses = Map(
+		"Q268592" -> "economic branch",
+		"Q362482" -> "operation",
+		"Q179076" -> "exchange",
+		"Q650241" -> "financial institutions",
+		"Q1664720" -> "institute",
+		"Q563787" -> "health maintenance organization",
+		"Q79913" -> "non-governmental organization",
+		"Q783794" -> "company",
+		"Q7275" -> "state",
+		"Q1785733" -> "environmental organization",
+		"Q15911314" -> "association",
+		"Q6881511" -> "enterprise",
+		"Q4287745" -> "medical organization",
+		"Q2222986" -> "lobbying organization",
+		"Q672386" -> "collection agency",
+		"Q1331793" -> "media company",
+		"Q1123526" -> "chamber of commerce",
+		"Q1047437" -> "copyright collective",
+		"Q4830453" -> "business enterprise",
+		"Q1418640" -> "local government in Germany",
+		"Q699386" -> "statutory corporation",
+		"Q262166" -> "municipality of Germany"
+	)
 
 	// $COVERAGE-OFF$
 	/**
@@ -33,7 +66,7 @@ object TagEntities extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikiDataEntity](keyspace, tablename)
+		val wikidata = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
 		List(wikidata).toAnyRDD()
 	}
 
@@ -47,7 +80,10 @@ object TagEntities extends SparkJob {
 		output
 			.fromAnyRDD[(String, String, Map[String, List[String]])]()
 			.head
-			.saveToCassandra(keyspace, tablename, SomeColumns("id", "instancetype", "data" append))
+			.saveToCassandra(
+				settings("keyspace"),
+				settings("wikidataTable"),
+				SomeColumns("id", "instancetype", "data" append))
 	}
 	// $COVERAGE-ON$
 
@@ -62,15 +98,34 @@ object TagEntities extends SparkJob {
 		subclasses: Map[String, List[String]],
 		oldClasses: Map[String, List[String]]
 	): Map[String, List[String]] = {
-		subclasses ++ oldClasses.filter { case (key, path) =>
-			val oldPathLength = subclasses.get(key).map(_.size)
-			oldPathLength.isEmpty || path.size < oldPathLength.get
+		subclasses ++ oldClasses.filterNot { case (key, path) =>
+			subclasses.get(key).exists(_.size <= path.size)
 		}
 	}
 
 	/**
+	  * Merges two subclass Maps by choosing the shortest Path to the target classes.
+	  * @param left first subclass Map
+	  * @param right second subclass Map
+	  * @return merged subclass Map
+	  */
+	def mergeSubclassMaps(
+		left: Map[String, List[String]],
+		right: Map[String, List[String]]
+	): Map[String, List[String]] = {
+		(left.keySet ++ right.keySet).flatMap { classId =>
+			val leftPath = left.get(classId)
+			val rightPath = right.get(classId)
+			val shorterPath = leftPath
+				.filter(l => !rightPath.exists(_.length < l.length))
+				.orElse(rightPath)
+			shorterPath.map((classId, _))
+		}.toMap
+	}
+
+	/**
 	  * Builds a map of subclass paths given a list of subclass entries containing
-	  * the {@subclassProperty} property.
+	  * the subclassProperty property.
 	  * @param categoryData RDD of Subclass Entries containing the subclass information.
 	  * @param searchClasses Map of superclasses with id and name for which the subclass
 	  * information is gathered.
@@ -90,12 +145,12 @@ object TagEntities extends SparkJob {
 
 				// iteratively append next layer of subclass tree
 				val newClasses = categoryData
-					.map { entry =>
-						entry.classList = entry.data(subclassProperty).filter(oldClasses.contains)
-						entry
-					}.filter(_.classList.nonEmpty)
-					.map(entry => (entry.id, oldClasses(entry.classList.head) ++ List(entry.label)))
-					.collect
+					.map(entry => entry.copy(classList = entry.data(subclassProperty).filter(oldClasses.contains)))
+					.flatMap { case SubclassEntry(id, label, data, classList) =>
+						classList.headOption
+							.flatMap(oldClasses.get)
+							.map(newClassList => (id, newClassList :+ label))
+					}.collect
 					.toMap
 
 				// check if new elements were added and not stuck in a loop
@@ -103,33 +158,21 @@ object TagEntities extends SparkJob {
 				oldClasses = newClasses
 			}
 			subclasses
-		}.reduce(_ ++ _)
+		}.reduce(mergeSubclassMaps)
 	}
 
 	/**
 	  * Translates a Wikidata entity into a Subclass entry. This entry contains the id, the label
-	  * or the id if there is no label and the data entries with either the {@instanceProperty} or
-	  * {@subclassProperty} key.
+	  * or the id if there is no label and the data entries with either the instanceProperty or
+	  * subclassProperty key.
 	  * @param entity Wikidata entity to translate
 	  * @return SubclassEntry with only the id, label and subclass or instance property
 	  */
-	def translateToSubclassEntry(entity: WikiDataEntity): SubclassEntry = {
+	def translateToSubclassEntry(entity: WikidataEntity): SubclassEntry = {
 		val data = entity.data.filterKeys(key =>
 			key == instanceProperty || key == subclassProperty)
 		val label = entity.label.getOrElse(entity.id)
 		SubclassEntry(entity.id, label, data)
-	}
-
-	/**
-	  * Returns true of the entry is an instance of one of the given classes.
-	  * @param entry Subclass entry to test
-	  * @param classes map of class data used to test the entry
-	  * @return true if one of the values of the instance of property of the entry exists as key
-	  * in the class map
-	  */
-	def isInstanceOf(entry: SubclassEntry, classes: Map[String, List[String]]): Boolean = {
-		entry.data.contains(instanceProperty) &&
-			entry.data(instanceProperty).exists(classes.contains)
 	}
 
 	/**
@@ -147,26 +190,40 @@ object TagEntities extends SparkJob {
 			.filter(classes.contains)
 			.head
 		val path = classes(classKey)
-		(entry.id, path.head, Map(wikidataPathProperty -> path))
+		(entry.id, path.head, Map(settings("wikidataPathProperty") -> path))
 	}
 
 	/**
-	  * Tags the Wikidata entities with their superclass.
+	  * Updates the instancetype and wikidata path for all entries which are an instance of a class listed in the
+	  * subclasses Map.
+	  * @param entries RDD of Subclass Entries to update
+	  * @param subclasses Map containing the subclasses and their path
+	  * @return RDD of triples containing wikidata id, instancetype and the path property
+	  */
+	def updateEntities(
+		entries: RDD[SubclassEntry],
+		subclasses: Map[String, List[String]]
+	): RDD[(String, String, Map[String, List[String]])] = {
+		entries
+		    .filter(_.data.get(instanceProperty).exists(_.exists(subclasses.contains)))
+			.map(updateInstanceOfProperty(_, subclasses))
+	}
+
+	/**
+	  * Tags the WikidataEntities with their superclass.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val wikiData = input.fromAnyRDD[WikiDataEntity]().head
+	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
+		val wikiData = input.fromAnyRDD[WikidataEntity]().head
 		val classData = wikiData.map(translateToSubclassEntry)
 		val subclassData = classData
 			.filter(_.data.contains(subclassProperty))
 			.cache
 		val subclasses = buildSubclassMap(subclassData, tagClasses)
-		val updatedEntities = classData
-			.filter(isInstanceOf(_, subclasses))
-			.map(updateInstanceOfProperty(_, subclasses))
+		val updatedEntities = updateEntities(classData, subclasses)
 		List(updatedEntities).toAnyRDD()
 	}
 }

@@ -1,24 +1,33 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.deduplication.similarity
 
-import de.hpi.ingestion.deduplication.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 	"computeDistance" should "compute the distnace between two points in terms of kilometers" in {
-		val subjects = TestData.testSubjects
-		val distance = EuclidianDistance.computeDistance(
-			subjects(4).properties("geo_coords").head.toDouble,
-			subjects(4).properties("geo_coords")(1).toDouble,
-			subjects(5).properties("geo_coords").head.toDouble,
-			subjects(5).properties("geo_coords")(1).toDouble
-		)
+		val distance = EuclidianDistance.computeDistance(52, 13, 53, 14)
 		val expected = 111.70485139435159
 
 		distance shouldEqual expected
 	}
 
 	"turnDistanceIntoScore" should "compute the right score for given distances and scale factors" in {
-		val distances = List(0.0,1.0,5.1,21.0,312.0)
+		val distances = List(0.0, 1.0, 5.1, 21.0, 312.0)
 		val testScale1 = 1
 		val testScale2 = 2
 		val scores = distances.map { value =>
@@ -41,12 +50,7 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
 	}
 
 	"compare" should "compute correct score for two given points" in {
-		val subjects = TestData.testSubjects
-		val geoPoints = List(
-			subjects.head.properties("geo_coords").take(2).mkString(","),
-			subjects(2).properties("geo_coords").take(2).mkString(","),
-			subjects(3).properties("geo_coords").take(2).mkString(",")
-		)
+		val geoPoints = List("52;11", "52;13", "53;14")
 		val scores = List(
 			EuclidianDistance.compare(geoPoints.head, geoPoints.head),
 			EuclidianDistance.compare(geoPoints.head, geoPoints(1)),

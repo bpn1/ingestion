@@ -1,22 +1,41 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.datalake.models
 
 import java.util.UUID
-import scala.collection.mutable
+import de.hpi.ingestion.datalake.SubjectManager
+import scala.io.Source
 
 case class Subject(
 	var id: UUID = UUID.randomUUID(),
+	var master: UUID,
+	var datasource: String,
 	var name: Option[String] = None,
-	var aliases: List[String] = List[String](),
+	var aliases: List[String] = Nil,
 	var category: Option[String] = None,
-	var properties: Map[String, List[String]] = Map[String, List[String]](),
-	var relations: Map[UUID, Map[String, String]]  = Map[UUID, Map[String, String]](),
+	var properties: Map[String, List[String]] = Map(),
+	var relations: Map[UUID, Map[String, String]] = Map(),
 
-	var name_history: List[Version] = List[Version](),
-	var aliases_history: List[Version] = List[Version](),
-	var category_history: List[Version] = List[Version](),
-	var properties_history: Map[String, List[Version]] = Map[String, List[Version]](),
-	var relations_history:
-		Map[UUID, Map[String, List[Version]]] = Map[UUID, Map[String, List[Version]]]()
+	var master_history: List[Version] = Nil,
+	var name_history: List[Version] = Nil,
+	var aliases_history: List[Version] = Nil,
+	var category_history: List[Version] = Nil,
+	var properties_history: Map[String, List[Version]] = Map(),
+	var relations_history: Map[UUID, Map[String, List[Version]]] = Map()
 ) extends DLImportEntity {
 	/**
 	  * Compares the subject using its uuid
@@ -44,10 +63,9 @@ case class Subject(
 			val field = this.getClass.getDeclaredField(attribute)
 			field.setAccessible(true)
 			attribute match {
-				case "name" | "category" => {
-					val value = field.get(this).asInstanceOf[Option[String]]
-					value.map(List(_)).getOrElse(Nil)
-				}
+				case "master" => List(field.get(this).asInstanceOf[UUID].toString)
+				case "datasource" => List(field.get(this).asInstanceOf[String])
+				case "name" | "category" => field.get(this).asInstanceOf[Option[String]].toList
 				case "aliases" => field.get(this).asInstanceOf[List[String]]
 				case _ => Nil
 			}
@@ -56,16 +74,87 @@ case class Subject(
 		}
 	}
 
-	def toProperties(prefix: String): Map[String, List[String]] = {
-		val mappedProperties = mutable.Map[String, List[String]]()
+	/**
+	  * Returns only the normalized properties of this Subject.
+	  * @return subset of the properties Map containing only the normalized properties
+	  */
+	def normalizedProperties: Map[String, List[String]] = {
+		properties.filterKeys(Subject.normalizedPropertyKeys)
+	}
 
-		this.name.foreach(name => mappedProperties(s"$prefix.name") = List(name))
-		this.category.foreach(category => mappedProperties(s"$prefix.category") = List(category))
-		if (this.aliases.nonEmpty) mappedProperties(s"$prefix.aliases") = this.aliases
+	/**
+	  * Returns the score of the slave relation to this Subjects master node if it has one.
+	  * @return score of the master node relation
+	  */
+	def masterScore: Option[Double] = {
+		this
+			.relations
+			.get(this.master)
+			.map(_(SubjectManager.slaveKey).toDouble)
+	}
 
-		val prefixedProperties = this.properties.map { case (key, value) => s"$prefix.$key" -> value }
+	/**
+	  * Returns the relation relevant for relation aggregation for merging.
+	  * @return Map containing all relevant relations
+	  */
+	def masterRelations: Map[UUID, Map[String, String]] = {
+		this
+			.relations
+			.mapValues(_.filterKeys(!Subject.relationBlackList(_)))
+			.filter(_._2.nonEmpty)
+	}
 
-		mappedProperties ++= prefixedProperties
-		mappedProperties.toMap
+	/**
+	  * Returns a list of UUIDs of slaves
+	  * @return List of UUIDs of slaves
+	  */
+	def slaves: List[UUID] = {
+		this
+			.relations
+			.filter(_._2.contains(SubjectManager.masterKey))
+			.keys
+			.toList
+	}
+
+	/**
+	  * Returns whether the subject is a master node
+	  * @return Boolean if subject is master
+	  */
+	def isMaster: Boolean = this.id == this.master
+
+	/**
+	  * Returns whether the subject is a slave node
+	  * @return Boolean if subject is slave
+	  */
+	def isSlave: Boolean = !isMaster
+}
+
+/**
+  * Companion-Object to the Subject case class containing the keys for all normalized properties.
+  */
+object Subject {
+	val relationBlackList = Set(SubjectManager.masterKey, SubjectManager.slaveKey, SubjectManager.duplicateKey)
+	val normalizedPropertyKeys : Set[String] = Source
+		.fromURL(this.getClass.getResource("/normalized_properties.txt"))
+		.getLines
+		.toSet
+
+	/**
+	  * Creates a default empty Subject with equal id and master
+	  * @param id uuid for master and id
+	  * @param datasource datasource of the Subject
+	  * @return Subject with equal id and master and the given datasource
+	  */
+	def empty(id: UUID = UUID.randomUUID(), datasource: String): Subject = {
+		Subject(id = id, master = id, datasource = datasource)
+	}
+
+	/**
+	  * Creates a default master Subject
+	  * @param id uuid for master and id
+	  * @return Subject with equal id and master and master as its datasource
+	  */
+	def master(id: UUID = UUID.randomUUID()): Subject = {
+		Subject(id = id, master = id, datasource = "master")
 	}
 }

@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.implicits
 
 import com.holdenkarau.spark.testing.SharedSparkContext
@@ -12,6 +28,17 @@ class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkCon
 		val crossProduct = list1.cross(list2).toSet
 		val expected = TestData.crossProduct
 		crossProduct shouldEqual expected
+	}
+
+	"Asym Square" should "return this cross product" in {
+		val (list1, list2) = TestData.crossableLists
+		val square1 = list1.asymSquare(true)
+		val expectedSquare1 = TestData.asymSquareWithReflexive
+		square1.toSet shouldEqual expectedSquare1
+
+		val square2 = list2.asymSquare()
+		val expectedSquare2 = TestData.asymSquare
+		square2.toSet shouldEqual expectedSquare2
 	}
 
 	"Printable set difference" should "return a diff string" in {
@@ -43,5 +70,14 @@ class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkCon
 		val countedData = TestData.countableData.countElements()
 		val expectedCounts = TestData.countedData
 		countedData shouldEqual expectedCounts
+	}
+
+	"Map keys" should "be mapped" in {
+		val testMap = Map(1 -> 2, 2 -> 3, 3 -> 4)
+		val mappedKeysMap = testMap.mapKeys(_ + 1)
+		mappedKeysMap should not be empty
+		mappedKeysMap.foreach { case (key, value) =>
+			key shouldEqual value
+		}
 	}
 }

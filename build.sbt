@@ -20,21 +20,20 @@ libraryDependencies ++= Seq(
 	"org.apache.spark" % "spark-core_2.11" % "2.1.0" % "provided" exclude("org.scalatest", "scalatest_2.11"),
 	"org.apache.spark" % "spark-sql_2.11" % "2.1.0" % "provided",
 	"org.apache.spark" % "spark-mllib_2.11" % "2.1.0" % "provided",
-	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.1",
-	"org.scalactic" % "scalactic_2.11" % "3.0.1" % "provided",
-	"org.scalatest" % "scalatest_2.11" % "3.0.1" % "provided",
+	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.2",
+	"org.scalactic" % "scalactic_2.11" % "3.0.3" % "provided",
+	"org.scalatest" % "scalatest_2.11" % "3.0.3" % "provided",
 	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.6.0" % "provided",
 	"com.databricks" % "spark-xml_2.11" % "0.4.1",
 	"info.bliki.wiki" % "bliki-core" % "3.1.0" exclude("ch.qos.logback", "logback-classic"),
-	"org.jsoup" % "jsoup" % "1.10.2",
+	"org.jsoup" % "jsoup" % "1.10.3",
 	"com.esotericsoftware" % "kryo" % "4.0.0",
 	"com.google.protobuf" % "protobuf-java" % "2.6.1",
-	"org.apache.lucene" % "lucene-analyzers-common" % "6.5.0",
+	"org.apache.lucene" % "lucene-analyzers-common" % "6.6.0",
 	"com.typesafe.play" %% "play-json" % "2.4.11",
 	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4",
-	"com.mapbox.mapboxsdk" % "mapbox-java-services" % "2.1.0",
-	"com.typesafe.play" %% "play-ws" % "2.4.11",
-	"com.ning" % "async-http-client" % "1.7.0-RC1"
+	"graphframes" % "graphframes" % "0.5.0-spark2.1-s_2.11"
+
 )
 
 // exclude scala libraries from assembly jar as they are provided by the spark environment
@@ -42,9 +41,9 @@ assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeSca
 
 // scala compiler flags for warnings
 // also sets source path for correct scala doc source links
-scalacOptions in ThisBuild ++= (baseDirectory.map {
-	bd => Seq("-deprecation", "-feature", "-sourcepath", bd.getAbsolutePath, "-unchecked")
-}).value
+scalacOptions in ThisBuild ++= baseDirectory.map { bd =>
+	Seq("-deprecation", "-feature", "-sourcepath", bd.getAbsolutePath, "-unchecked")
+}.value
 
 // testing settings
 logBuffered in Test := false
@@ -81,3 +80,9 @@ unmanagedSourceDirectories in Test += baseDirectory.value / "implisense_files" /
 
 // scoverage settings, since scoverage cannot handle unmanagedSources
 coverageExcludedPackages := "de.hpi.ingestion.dataimport.implisense.*"
+
+// exclude companies.jar from ingestion-assembly.jar
+assemblyExcludedJars in assembly := {
+	val cp = (fullClasspath in assembly).value
+	cp.filter(_.data.getName == "companies.jar")
+}

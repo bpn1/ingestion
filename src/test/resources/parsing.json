@@ -1,0 +1,21 @@
+{
+	"key 1": "string 1",
+	"key 2": 123.0,
+	"key 3": false,
+	"key 4": [ "value 1", "value 2", "value 3"],
+	"key 5": "2017-12-24",
+	"key 6": {
+		"nestedkey 1": "subvalue 1",
+		"nestedkey 2": "subvalue 2"
+	},
+	"key 7": {
+		"nestedkey 1": {
+			"nested2key 1": "subvalue 1",
+			"nested2key 2": "subvalue 2"
+		},
+		"nestedkey 2": {
+			"nested2key 1": "subvalue 1"
+		},
+		"nestedkey 3": {}
+	}
+}

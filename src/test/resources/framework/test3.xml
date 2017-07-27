@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <simMeasurements>
+        <attribute>
+            <key>name</key>
+            <feature>
+                <similarityMeasure>MongeElkan</similarityMeasure>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>JaroWinkler</similarityMeasure>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+        <attribute>
+            <key>category</key>
+            <feature>
+                <similarityMeasure>ExactMatchString</similarityMeasure>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+    </simMeasurements>
+</config>

@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.deduplication.similarity
 
 import java.lang.Math.sqrt
@@ -47,14 +63,9 @@ object EuclidianDistance extends SimilarityMeasure[String] {
 	  * 0.0 as default value if one of the input strings is empty
 	  */
 	override def compare(s: String, t: String, u: Int = 1) : Double = {
-		val geoPoint1 = s.split(",").toList.map(_.toDouble)
-		val geoPoint2 = t.split(",").toList.map(_.toDouble)
-		val distance = computeDistance(
-			geoPoint1(0),
-			geoPoint1(1),
-			geoPoint2(0),
-			geoPoint2(1)
-		)
+		val Array(lat1, lng1) = s.split(";").map(_.toDouble)
+		val Array(lat2, lng2) = t.split(";").map(_.toDouble)
+		val distance = computeDistance(lat1, lng1, lat2, lng2)
 		turnDistanceIntoScore(distance,u)
 	}
 }

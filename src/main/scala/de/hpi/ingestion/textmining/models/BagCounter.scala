@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.textmining.models
 
 import scala.math.BigDecimal
@@ -23,20 +39,6 @@ trait BagCounter[T] extends Ordered[T] {
 	def -(that: T): T
 
 	/**
-	  * Multiplies this BagCounter with another BagCounter of the same type.
-	  * @param that other BagCounter of the same type
-	  * @return product of the two BagCounters
-	  */
-	def *(that: T): T
-
-	/**
-	  * Divides this BagCounter by another BagCounter of the same type.
-	  * @param that other BagCounter of the same type
-	  * @return result of the division
-	  */
-	def /(that: T): T
-
-	/**
 	  * Returns true if this BagCounter equals 0.
 	  * @return true if this BagCounter equals 0.
 	  */
@@ -47,6 +49,12 @@ trait BagCounter[T] extends Ordered[T] {
 	  * @return true if this BagCounter is less than 0.
 	  */
 	def lessThanZero(): Boolean
+
+	/**
+	  * Returns true if this BagCounter is greater than 0.
+	  * @return true if this BagCounter is greater than 0.
+	  */
+	def greaterThanZero(): Boolean
 
 	/**
 	  * Inverts this BagCounter.
@@ -82,13 +90,11 @@ object BagCounter {
 
 		def -(y: Int): Int = x - y
 
-		def *(y: Int): Int = x * y
-
-		def /(y: Int): Int = x / y
-
 		def equalsZero(): Boolean = x == 0
 
 		def lessThanZero(): Boolean = x < 0
+
+		def greaterThanZero(): Boolean = x > 0
 
 		def invert(): Int = x * -1
 
@@ -107,13 +113,11 @@ object BagCounter {
 
 		def -(y: Double): Double = x - y
 
-		def *(y: Double): Double = x * y
-
-		def /(y: Double): Double = x / y
-
 		def equalsZero(): Boolean = x == 0.0
 
 		def lessThanZero(): Boolean = x < 0.0
+
+		def greaterThanZero(): Boolean = x > 0.0
 
 		def invert(): Double = x * -1.0
 

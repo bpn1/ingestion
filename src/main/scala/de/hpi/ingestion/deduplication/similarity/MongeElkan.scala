@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.deduplication.similarity
 
 import com.rockymadden.stringmetric.similarity.JaroWinklerMetric
@@ -7,17 +23,10 @@ import com.rockymadden.stringmetric.similarity.JaroWinklerMetric
   */
 object MongeElkan extends SimilarityMeasure[String] {
 
-	/**
-	  * Finds the highest similarity score using the JaroWinkler comparison
-	  * for a token with a list of tokens
-	  * @param token token to find the highest score for
-	  * @param list list of tokens the token is compared to
-	  * @return only the highest of the scores for all combinations of token x list of tokens
-	  */
-	def maxSim(token: String, list: List[String]) : Double = {
-		list
-			.map(x => JaroWinklerMetric.compare(token, x).getOrElse(0.0))
-			.max
+	def score(sToken: Array[String], tToken: Array[String]): Double = {
+		sToken.map { token =>
+			tToken.map(JaroWinklerMetric.compare(token, _).getOrElse(0.0)).max
+		}.sum / sToken.length.toDouble
 	}
 
 	/**
@@ -28,11 +37,8 @@ object MongeElkan extends SimilarityMeasure[String] {
 	  * @return a normalized similarity score between 1.0 and 0.0
 	  */
 	override def compare(s: String, t: String, u: Int = 1) : Double = {
-		val x = s.split(" ").toList
-		val y = t.split(" ").toList
-		val sum = x
-			.map(maxSim(_, y))
-			.foldLeft(0.0)((b, a) => b + a)
-		sum / y.length
+		val token = (s.split(" "), t.split(" "))
+		val tupledScore = (score _).tupled
+		List(tupledScore(token), tupledScore(token.swap)).max
 	}
 }
