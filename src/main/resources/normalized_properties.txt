@@ -46,4 +46,7 @@ gen_phones
 gen_emails
 gen_legal_form
 gen_founder
+gen_management
 gen_description
+gen_revenue
+gen_sales

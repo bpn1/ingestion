@@ -73,6 +73,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 	def normalizeSector(values: List[String]): List[String] = {
 		values.flatMap {
 			case r"""dbpedia-de:([A-Za-zÄäÖöÜüß\-_]+)${sector}""" => List(sector)
+			case r"""([A-Za-zÄäÖöÜüß\-_]+)${sector}@de \.""" => List(sector)
 			case _ => None
 		}.distinct
 	}
@@ -103,6 +104,20 @@ object DBpediaNormalizationStrategy extends Serializable {
 	}
 
 	/**
+	  * Normalize legal form
+	  * @param values list of legal forms
+	  * @return normalized legal form
+	  */
+	def normalizeLegalForm(values: List[String]): List[String] = {
+		val legalForm = values.flatMap {
+			case r"""dbpedia-de:(.+)${legalForm}""" => List(legalForm)
+			case r"""(.+)${legalForm}@de \.""" => List(legalForm)
+			case legalForm => List(legalForm)
+		}.map(_.replaceAll("(_|-)", " ")).distinct
+		SharedNormalizations.normalizeLegalForm(legalForm)
+	}
+
+	/**
 	  * Normalizes all other values by default (removing pre- and suffixes and dashes)
 	  * @param values Strings to be normalized
 	  * @return normalized strings
@@ -129,7 +144,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 			case "geo_coords" => this.normalizeCoords
 			case "geo_city" => this.normalizeCity
 			case "gen_urls" => this.normalizeURLs
-			case "gen_legal_form" => SharedNormalizations.normalizeLegalForm
+			case "gen_legal_form" => this.normalizeLegalForm
 			case _ => this.normalizeDefault
 		}
 	}

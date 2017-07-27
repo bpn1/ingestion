@@ -98,6 +98,7 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 		val sm = new SubjectManager(subject, version)
 
 		sm.setName(entity.label.map(_.replaceAll("""@de \.$""", "")))
+		entity.data.get("foaf:name").foreach(aliases => sm.setAliases(aliases))
 		sm.setCategory(entity.instancetype.flatMap(categoryMap.get))
 		sm.addProperties(entity.data)
 
