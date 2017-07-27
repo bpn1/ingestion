@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.datamerge
 
 import java.util.UUID
@@ -24,7 +40,7 @@ object TestData {
 			),
 			relations = Map(
 				idList(1) -> SubjectManager.masterRelation(1.0),
-				idList(10) -> Map("country" -> "0.5", "county" -> "0.6")
+				idList(12) -> Map("country" -> "0.5", "county" -> "0.6")
 			)
 		),
 		Subject(
@@ -38,7 +54,7 @@ object TestData {
 			),
 			relations = Map(
 				idList.head -> SubjectManager.slaveRelation(1.0),
-				idList(10) -> Map("country" -> "0.5", "county" -> "0.6")
+				idList(12) -> Map("country" -> "0.5", "county" -> "0.6")
 			)
 		),
 		Subject(
@@ -55,9 +71,9 @@ object TestData {
 			relations = Map(
 				idList(3) -> SubjectManager.masterRelation(1.0),
 				idList(4) -> SubjectManager.masterRelation(1.0),
-				idList(11) -> Map("county" -> ""),
-				idList(12) -> Map("city" -> "0.9"),
-				idList(13) -> Map("successor" -> "01.01.2212")
+				idList(13) -> Map("county" -> ""),
+				idList(14) -> Map("city" -> "0.9"),
+				idList(15) -> Map("successor" -> "01.01.2212")
 			)
 		),
 		Subject(
@@ -71,8 +87,8 @@ object TestData {
 			),
 			relations = Map(
 				idList(2) -> SubjectManager.slaveRelation(1.0),
-				idList(11) -> Map("county" -> ""),
-				idList(12) -> Map("city" -> "0.9")
+				idList(13) -> Map("county" -> ""),
+				idList(14) -> Map("city" -> "0.9")
 			)
 		),
 		Subject(
@@ -89,7 +105,7 @@ object TestData {
 			),
 			relations = Map(
 				idList(2) -> SubjectManager.slaveRelation(1.0),
-				idList(13) -> Map("successor" -> "01.01.2212")
+				idList(15) -> Map("successor" -> "01.01.2212")
 			)
 		)
 	)
@@ -195,7 +211,7 @@ object TestData {
 				idList(1) -> SubjectManager.masterRelation(1.0),
 				idList(5) -> SubjectManager.masterRelation(1.0),
 				idList(6) -> SubjectManager.masterRelation(0.8),
-				idList(10) -> Map("country" -> "0.5", "county" -> "0.6"),
+				idList(12) -> Map("country" -> "0.5", "county" -> "0.6"),
 				idList(7) -> Map("successor" -> "")
 			)
 		),
@@ -210,7 +226,7 @@ object TestData {
 			),
 			relations = Map(
 				idList.head -> SubjectManager.slaveRelation(1.0),
-				idList(10) -> Map("country" -> "0.5", "county" -> "0.6"),
+				idList(12) -> Map("country" -> "0.5", "county" -> "0.6"),
 				idList(5) -> SubjectManager.isDuplicateRelation(1.0),
 				idList(6) -> SubjectManager.isDuplicateRelation(0.8)
 			)
@@ -231,9 +247,9 @@ object TestData {
 			relations = Map(
 				idList(3) -> SubjectManager.masterRelation(1.0),
 				idList(7) -> SubjectManager.masterRelation(0.9),
-				idList(11) -> Map("county" -> ""),
-				idList(12) -> Map("city" -> "0.9"),
-				idList(13) -> Map("successor" -> "01.01.2212")
+				idList(13) -> Map("county" -> ""),
+				idList(14) -> Map("city" -> "0.9"),
+				idList(15) -> Map("successor" -> "01.01.2212")
 			)
 		),
 		Subject(
@@ -247,8 +263,8 @@ object TestData {
 			),
 			relations = Map(
 				idList(2) -> SubjectManager.slaveRelation(1.0),
-				idList(11) -> Map("county" -> ""),
-				idList(12) -> Map("city" -> "0.9"),
+				idList(13) -> Map("county" -> ""),
+				idList(14) -> Map("city" -> "0.9"),
 				idList(7) -> SubjectManager.isDuplicateRelation(0.9)
 			)
 		),
@@ -266,7 +282,7 @@ object TestData {
 			),
 			relations = Map(
 				idList(2) -> SubjectManager.slaveRelation(1.0),
-				idList(13) -> Map("successor" -> "01.01.2212")
+				idList(15) -> Map("successor" -> "01.01.2212")
 			)
 		),
 		Subject(
@@ -364,5 +380,115 @@ object TestData {
 			)
 		)
 	)
+
+	def connectedMasters: List[Subject] = List(
+		Subject(
+			id = idList.head,
+			master = idList.head,
+			datasource = "master",
+			name = Option("Firma A"),
+			aliases = List("Firma AA", "AA"),
+			category = Option("Kategorie A"),
+			properties = Map(
+				"id_implisense" -> List("1"),
+				"geo_postal" -> List("10777"),
+				"geo_city" -> List("Potsdam", "Berlin"),
+				"geo_county" -> List("Landkreis Neu-Brandenburg")
+			),
+			relations = Map(
+				idList(1) -> SubjectManager.masterRelation(1.0),
+				idList(5) -> SubjectManager.masterRelation(1.0),
+				idList(6) -> SubjectManager.masterRelation(0.8),
+				idList(12) -> Map("country" -> "0.5", "county" -> "0.6"),
+				idList(2) -> Map("successor" -> "")
+			)
+		),
+		Subject(
+			id = idList(10),
+			master = idList(10),
+			datasource = "master",
+			name = Option("Firma C"),
+			aliases = List("Firma Berlin C"),
+			properties = Map("geo_city" -> List("Berlin")),
+			relations = Map(
+				idList(8) -> SubjectManager.masterRelation(1.0),
+				idList(11) -> Map("ownerOf" -> "")
+			)
+		),
+		Subject(
+			id = idList(11),
+			master = idList(11),
+			datasource = "master",
+			name = Option("Firma D"),
+			relations = Map(
+				idList(9) -> SubjectManager.masterRelation(1.0),
+				idList(10) -> Map("subsidiary" -> "")
+			)
+		)
+	)
+
+	def inputSubjects(): List[Subject] = {
+		List(
+			Subject(
+				id = idList.head,
+				master = idList.head,
+				datasource = "master",
+				relations = Map(
+					idList(4) -> Map("t1" -> "impli", "t3" -> "impli"),
+					idList(5) -> Map("t2" -> "wiki", "t3" -> "wiki")
+				)
+			),
+			Subject(
+				id = idList(1),
+				master = idList(1),
+				datasource = "master",
+				relations = Map(
+					idList(2) -> Map("t1" -> "impli", "t3" -> "impli"),
+					idList(3) -> Map("t2" -> "wiki", "t4" -> "wiki")
+				)
+			),
+			Subject(
+				id = idList(2),
+				master = idList.head,
+				datasource = "implisense"
+			),
+			Subject(
+				id = idList(3),
+				master = idList.head,
+				datasource = "wikidata"
+			),
+			Subject(
+				id = idList(4),
+				master = idList(1),
+				datasource = "implisense"
+			),
+			Subject(
+				id = idList(5),
+				master = idList(1),
+				datasource = "wikidata"
+			)
+		)
+	}
+
+	def mergedMasters(): List[Subject] = {
+		List(
+			Subject(
+				id = idList.head,
+				master = idList.head,
+				datasource = "master",
+				relations = Map(
+					idList(1) -> Map("t1" -> "impli", "t3" -> "impli", "t2" -> "wiki")
+				)
+			),
+			Subject(
+				id = idList(1),
+				master = idList(1),
+				datasource = "master",
+				relations = Map(
+					idList.head -> Map("t1" -> "impli", "t3" -> "impli", "t2" -> "wiki", "t4" -> "wiki")
+				)
+			)
+		)
+	}
 }
 // scalastyle:on

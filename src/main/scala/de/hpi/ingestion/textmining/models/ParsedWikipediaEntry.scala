@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.textmining.models
 
 import scala.collection.mutable.ListBuffer
@@ -8,7 +24,7 @@ import scala.collection.mutable.ListBuffer
   * @param title               title of the page
   * @param text                plain text of the page
   * @param textlinks           all links appearing in the text
-  * @param templatelinks       all links appearing in Wikimarkup templates (e.g. infoboxes)
+  * @param templatelinks       all links appearing in wikitext templates (e.g. infoboxes)
   * @param foundaliases        all aliases (of all links) found in the plain text
   * @param categorylinks       all links of category pages on the page
   * @param listlinks           all links appearing in lists
@@ -18,7 +34,7 @@ import scala.collection.mutable.ListBuffer
   * @param triealiases         the longest aliases found by the trie with their offset and context
   * @param rawextendedlinks    all occurrences of aliases of other links in this article
   * @param textlinksreduced    all links appearing in the text with aliases of companies
-  * @param templatelinksreduced all links appearing in Wikimarkup templates (e.g. infoboxes) with aliases of companies
+  * @param templatelinksreduced all links appearing in wikitext templates (e.g. infoboxes) with aliases of companies
   * @param categorylinksreduced all links of category pages on the page with aliases of companies
   * @param listlinksreduced    all links appearing in lists with aliases of companies
   * @param disambiguationlinksreduced all links on this page if this page is a disambiguation page with aliases of
