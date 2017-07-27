@@ -1,11 +1,28 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.textmining.nel
 
 import de.hpi.ingestion.textmining.models.{Link, WikipediaArticleCount}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
-import de.hpi.ingestion.textmining.{CosineContextComparator, TestData => TextTestData}
+import de.hpi.ingestion.textmining.{TestData => TextTestData}
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.textmining.preprocessing.CosineContextComparator
 
 class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 	"Entities" should "be tagged in articles" in {
@@ -31,7 +48,7 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 			.head
 			.collect
 			.toSet
-		val expectedEntities = TestData.linkedEntities()
+		val expectedEntities = TestData.linkedEntitiesForAllArticles()
 		linkedEntities shouldEqual expectedEntities
 
 		TextNEL.loadModelFunction = oldModelFunction
@@ -93,8 +110,8 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 		val wikipediaTfIdf = sc.parallelize(TestData.tfidfArticles())
 		val input = List(articles, numDocuments, aliases, wikipediaTfIdf).flatMap(List(_).toAnyRDD())
 		val linkedEntities = TextNEL.run(input, sc).fromAnyRDD[(String, List[Link])]().head.collect.toSet
-		val expectedEntties = TestData.linkedEntities()
-		linkedEntities shouldEqual expectedEntties
+		val expectedEntities = TestData.linkedEntitiesForAllArticles()
+		linkedEntities shouldEqual expectedEntities
 
 		CosineContextComparator.settings = oldSettings
 		TextNEL.loadModelFunction = oldModelFunction
@@ -113,17 +130,26 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 		val featureEntries = sc.parallelize(TestData.featureEntries())
 		val model = sc.broadcast(TextTestData.randomForestModel(1.0))
 		val linkedEntities = TextNEL.classifyFeatureEntries(featureEntries, model).collect.toSet
-		val expectedEntties = TestData.linkedEntities()
-		linkedEntities shouldEqual expectedEntties
+		val expectedEntities = TestData.linkedEntities()
+		linkedEntities shouldEqual expectedEntities
 	}
 
 	"Input articles" should "be split" in {
+		val oldSettings = TextNEL.settings(false)
+
 		val articles = sc.parallelize(TestData.foundAliasArticles())
 		val numDocuments = sc.parallelize(List(WikipediaArticleCount("parsedwikipedia", 3)))
 		val aliases = sc.parallelize(TestData.rawAliases())
 		val wikipediaTfIdf = sc.parallelize(TestData.tfidfArticles())
 		val input = List(articles, numDocuments, aliases, wikipediaTfIdf).flatMap(List(_).toAnyRDD())
-		val splitInput = TextNEL.splitInput(input)
-		splitInput should have size 20
+
+		TextNEL.settings = Map("NELTable" -> "wikipedianel")
+		val splitInputWikipedia = TextNEL.splitInput(input)
+		splitInputWikipedia should have size 100
+		TextNEL.settings = Map("NELTable" -> "spiegel")
+		val splitInputSpiegel = TextNEL.splitInput(input)
+		splitInputSpiegel should have size 20
+
+		TextNEL.settings = oldSettings
 	}
 }
