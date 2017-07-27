@@ -5,22 +5,18 @@ import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, RelationClassifierStats}
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.ClassifierTraining.{averageStatistics, calculateStatistics}
-import de.hpi.ingestion.textmining.models.{Cooccurrence, RelationPrediction, Sentence}
+import de.hpi.ingestion.textmining.ClassifierTraining.{
+	averageStatistics,
+	calculateStatistics,
+	weightedLinearRegressionDFModel,
+	trainWeightedLogisticRegressionDF
+}
+import de.hpi.ingestion.textmining.models.{Cooccurrence, Sentence}
 import org.apache.spark.{SparkContext, sql}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
-import org.apache.spark.mllib.classification.{LogisticRegressionWithLBFGS, NaiveBayes, NaiveBayesModel, SVMWithSGD}
-import org.apache.spark.ml.classification.{LogisticRegression, RandomForestClassifier}
-import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.mllib.tree.RandomForest
-import org.apache.spark.mllib.tree.model.RandomForestModel
-import de.hpi.ingestion.implicits.TupleImplicits._
-import org.apache.spark.ml.linalg.DenseVector
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.ml.feature.{HashingTF, IDF}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.udf
-
-import scala.collection.mutable.ListBuffer
 
 /**
   * Parses all Sentences with entities from Wikipedia.
@@ -28,8 +24,7 @@ import scala.collection.mutable.ListBuffer
 object RelationClassifier extends SparkJob {
 	appName = "Relation Classifier"
 	configFile = "textmining.xml"
-	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.relationpredictions"
-
+	val aggregated = true
 
 	// $COVERAGE-OFF$
 	/**
@@ -71,14 +66,14 @@ object RelationClassifier extends SparkJob {
 	  * @param rel       relation to be checked
 	  * @return list of tuples of 0.0 as label and bag of words for each sentence
 	  */
-	def parseBagOfWordsForRelations(
+	def parseBagOfWordsWithRelations(
 		relations: RDD[Relation],
 		sentences: RDD[Sentence],
 		cooccurrences: RDD[Set[String]],
 		rel: Set[String]
 	): RDD[(Double, List[String])] = {
 		val blacklist = cooccurrences.collect.toSet
-		relations
+		var entitiesWithBagOfWords = relations
 			.map(rel => (Set(rel.subjectentity, rel.objectentity), rel.relationtype))
 			.collect {
 				case (entities, relation) if rel.contains(relation) => (entities, 1.0)
@@ -91,8 +86,8 @@ object RelationClassifier extends SparkJob {
 					.map(sentence => (sentence.entities.map(_.entity).toSet, sentence.bagofwords))
 			)
 			.map { case (entities, (label, bagOfWords)) => (entities, bagOfWords)}
-			.reduceByKey(_ ++ _)
-			.map{ case (entities, bagsOfWords) => (1.0, bagsOfWords) }
+		if (aggregated) entitiesWithBagOfWords = entitiesWithBagOfWords.reduceByKey(_ ++ _)
+		entitiesWithBagOfWords.map{ case (entities, bagsOfWords) => (1.0, bagsOfWords) }
 	}
 
 	/**
@@ -103,14 +98,14 @@ object RelationClassifier extends SparkJob {
 	  * @param rel       relation to be checked
 	  * @return list of tuples of 0.0 as label and bag of words for each sentence
 	  */
-	def parseBagOfWordsWithNORelations(
+	def parseBagOfWordsWithNoRelations(
 		relations: RDD[Relation],
 		sentences: RDD[Sentence],
 		cooccurrences: RDD[Set[String]],
 		rel: Set[String]
 	): RDD[(Double, List[String])] = {
 		val blacklist = cooccurrences.collect.toSet
-		sentences.subtract(
+		var entitiesWithBagOfWords = sentences.subtract(
 			relations
 				.map(rel => (Set(rel.subjectentity, rel.objectentity), rel.relationtype))
 				.collect { case (entities, relation) if rel.contains(relation) => (entities, 0.0)
@@ -124,29 +119,9 @@ object RelationClassifier extends SparkJob {
 			)
 	    	.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
 			.map(sentence => (sentence.entities.map(_.entity), sentence.bagofwords))
-			.reduceByKey(_ ++ _)
-			.map{ case (entities, bagsOfWords) => (0.0, bagsOfWords) }
+		if (aggregated) entitiesWithBagOfWords = entitiesWithBagOfWords.reduceByKey(_ ++ _)
+		entitiesWithBagOfWords.map{ case (entities, bagsOfWords) => (0.0, bagsOfWords) }
 	}
-
-	//	/**
-	//	  * Calculates Precision, Recall and F1-Score of the given prediction results.
-	//	  *
-	//	  * @param predictionAndLabels RDD containing Tuples of the prediction and the given label in the format
-	//	  *                            (prediction, label)
-	//	  * @return List of statistic data as three-tuples in the format (statistic, threshold, value)
-	//	  */
-	//	def calculateStatistics(
-	//		predictionAndLabels: RDD[(Double, Double)],
-	//		beta: Double = 1.0
-	//	): List[PrecisionRecallDataTuple] = {
-	//		val metrics = new MulticlassMetrics(predictionAndLabels)
-	//		metrics.labels.map { label =>
-	//			val precision = metrics.precision(label)
-	//			val recall = metrics.recall(label)
-	//			val f1score = metrics.fMeasure(label)
-	//			PrecisionRecallDataTuple(label, precision, recall, f1score)
-	//		}.toList
-	//	}
 
 	/**
 	  * Uses cross validation to learn and test a model.
@@ -155,7 +130,7 @@ object RelationClassifier extends SparkJob {
 	  * @param numFolds number of folds for cross validation
 	  * @return list of average statistics for model
 	  */
-	def crossValidate(
+	def crossValidateWithWeights(
 		data: sql.DataFrame,
 		numFolds: Int
 	): List[PrecisionRecallDataTuple] = {
@@ -164,12 +139,11 @@ object RelationClassifier extends SparkJob {
 		val balancingRatio = (datasetSize - numNegatives).toDouble / datasetSize
 		val calculateWeights = udf { d: Double =>
 			if (d == 0.0) {1 * balancingRatio}
-			else {(1 * (1.0 - balancingRatio))}
+			else {1 * (1.0 - balancingRatio)}
 		}
-
 		val weightedDataset = data.withColumn("classWeightCol", calculateWeights(data("label")))
 		val weights = (0 until numFolds).map(t => 1.0 / numFolds).toArray
-		val folds = weightedDataset .randomSplit(weights)
+		val folds = weightedDataset.randomSplit(weights)
 		val segments = folds.indices.map { index =>
 			val test = folds(index)
 			val training = folds.slice(0, index) ++ folds.slice(index + 1, folds.length)
@@ -178,69 +152,16 @@ object RelationClassifier extends SparkJob {
 		segments
 			.map { case (test, trainingList) =>
 				val training = trainingList.reduce(_.union(_))
-//				val model = trainNaiveBayes(training)
-				//				val model = trainRandomForest(training.map(_._2))
-				//				val model = SVMWithSGD.train(training.map(_._2), 100)
-//				val model = new LogisticRegression()
-//					.setWeightCol("classWeightCol")
-//					.setLabelCol("label")
-//					.setFeaturesCol("features")
-				val model = new RandomForestClassifier()
-					.setLabelCol("label")
-					.setFeaturesCol("features")
-					.setNumTrees(20)
-					.setImpurity("gini")
-					.setMaxBins(40)
-					.setMaxDepth(6)
-					.setThresholds(Array(1 * (1.0 - balancingRatio), 1 * balancingRatio))
-					.setFeatureSubsetStrategy("auto")
-				var trained = model.fit(training)
+				val model = weightedLinearRegressionDFModel()
+				val trained = trainWeightedLogisticRegressionDF(training, model)
 				val predictions = trained.transform(test)
 				val entitiesPredictionAndLabels  = predictions
-					.select("prediction", "label")
+					.select("prediction", "indexedLabel")
 					.rdd
 					.map(x => (x(0).asInstanceOf[Double], x(1).asInstanceOf[Double]))
 				calculateStatistics(entitiesPredictionAndLabels)
 			}
 			.toList
-	}
-
-	/**
-	  * Trains random forrest model
-	  *
-	  * @param trainingData labeled training data
-	  * @param numTrees     number of trees used
-	  * @param maxDepth     maximum depth
-	  * @param maxBins      number of bins used
-	  * @return random forest model
-	  */
-	def trainRandomForest(
-		trainingData: RDD[LabeledPoint],
-		numTrees: Int = 5,
-		maxDepth: Int = 4,
-		maxBins: Int = 32
-	): RandomForestModel = {
-		RandomForest.trainClassifier(
-			trainingData,
-			numClasses = 2,
-			categoricalFeaturesInfo = Map[Int, Int](),
-			numTrees = numTrees,
-			featureSubsetStrategy = "auto",
-			impurity = "gini",
-			maxDepth = maxDepth,
-			maxBins = maxDepth)
-	}
-
-	/**
-	  * Trains a naive bayes model.
-	  *
-	  * @param trainingData labeled training data
-	  * @return naive bayes model
-	  */
-	def trainNaiveBayes(
-		trainingData: RDD[LabeledPoint]
-	): NaiveBayesModel = {
-		NaiveBayes.train(trainingData, lambda = 1.0, modelType = "multinomial")
 	}
 
 	def calculateLabeledHashTFIDF(
@@ -273,22 +194,21 @@ object RelationClassifier extends SparkJob {
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]()(2)
 			.map(cooc => (cooc.entitylist.toSet, cooc.count))
 			.reduceByKey(_ + _)
-		var comment = "BA Testing random forest, aggregated, undirected, bag of words stemmed, 10 folds, minCooc really 1, real"
+		var comment = "Linear Regression, aggregated, undirected, stemmed, 10 folds, minCooc 1"
 		val rels = Set(
 			Set("parentCompany", "owningCompany", "subsidiary", "division")
 			//			, Set("successor", "predecessor")
 		)
 		val stats = rels.map { rel =>
 			val minCooc = cooccurrences.filter(_._2 <= 1).map(_._1)
-			val relationsWithBagOfWords = parseBagOfWordsForRelations(relations, sentences, minCooc, rel)
-			val noRelationsBagOfWords = parseBagOfWordsWithNORelations(relations, sentences, minCooc, rel)
-			val sqlContext = new SQLContext(sc)
-			import sqlContext.implicits._
+			val relationsWithBagOfWords = parseBagOfWordsWithRelations(relations, sentences, minCooc, rel)
+			val noRelationsBagOfWords = parseBagOfWordsWithNoRelations(relations, sentences, minCooc, rel)
+			val session = SparkSession.builder().getOrCreate()
+			import session.implicits._
 			val labeledTfidf = calculateLabeledHashTFIDF(
 				(relationsWithBagOfWords ++ noRelationsBagOfWords).toDF("label", "words")
 			)
-
-			val data = crossValidate(labeledTfidf, 10)
+			val data = crossValidateWithWeights(labeledTfidf, 10)
   				RelationClassifierStats(
 					rel = "owns",
 					sentenceswithrelation = relationsWithBagOfWords.count.toInt,

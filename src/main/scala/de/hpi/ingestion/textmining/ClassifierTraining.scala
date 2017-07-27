@@ -8,10 +8,14 @@ import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.ml.feature.{IndexToString, StringIndexer}
 import org.apache.spark.mllib.tree.RandomForest
 import org.apache.spark.mllib.tree.model.RandomForestModel
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.sql.{Dataset, Row}
 
 /**
   * Trains a Naive Bayes model with Feature Entries and evaluates it using precision, recall and f-score.
@@ -88,6 +92,35 @@ object ClassifierTraining extends SparkJob {
 			impurity = "gini",
 			maxDepth = maxDepth,
 			maxBins = maxDepth)
+	}
+
+	def weightedLinearRegressionDFModel(): LogisticRegression = {
+		new LogisticRegression()
+			.setWeightCol("classWeightCol")
+			.setLabelCol("indexedLabel")
+			.setFeaturesCol("features")
+//			.setMaxIter(10)
+//			.setRegParam(0.3)
+//			.setElasticNetParam(0.8)
+	}
+
+	def trainWeightedLogisticRegressionDF(
+		training: Dataset[Row],
+		classifier: LogisticRegression
+	): PipelineModel = {
+		val labelIndexer = new StringIndexer()
+			.setInputCol("label")
+			.setOutputCol("indexedLabel")
+			.fit(training)
+
+		val labelConverter = new IndexToString()
+			.setInputCol("prediction")
+			.setOutputCol("predictedLabel")
+			.setLabels(labelIndexer.labels)
+
+		val pipeline = new Pipeline()
+			.setStages(Array(labelIndexer, classifier, labelConverter))
+		pipeline.fit(training)
 	}
 
 	/**

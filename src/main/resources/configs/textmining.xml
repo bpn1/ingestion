@@ -26,7 +26,6 @@
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
         <relClassifierStatsTable>relationclassifierstats</relClassifierStatsTable>
-        <relPredictionsTable>relationpredictions</relPredictionsTable>
         <numberArticlePartitions>10</numberArticlePartitions>
         <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
         <tfidfTable>articletfidf</tfidfTable>
