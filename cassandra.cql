@@ -532,3 +532,11 @@ CREATE TABLE evaluation.featureentries (
 	score map<text, frozen<list<double>>>,
 	correct boolean
 );
+
+CREATE TABLE datalake.graphs (
+    id uuid PRIMARY KEY,
+    graphtype text,
+    nodes list<uuid>,
+    nodenames list<text>,
+    size int
+);
