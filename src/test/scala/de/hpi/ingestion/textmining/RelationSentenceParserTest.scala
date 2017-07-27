@@ -18,7 +18,12 @@ class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with M
 	"Sentences" should "not contain these countries and cities as entities" in {
 		val sentences = sc.parallelize(TestData.alternativeSentenceList())
 		val relations = sc.parallelize(TestData.relationList())
-		val filteredSentences = RelationSentenceParser.filterSentences(sentences, relations, sc).collect.toSet
+		val companies = TestData.companySet()
+		val filteredSentences = RelationSentenceParser.filterSentences(
+			sentences,
+			relations,
+			companies,
+			sc).collect.toSet
 		filteredSentences shouldEqual TestData.alternativeSentenceListFiltered().toSet
 	}
 
@@ -27,13 +32,14 @@ class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with M
 			(Set(TestData.bigLinkExtenderParsedEntry()) ++ TestData.linkExtenderExtendedParsedEntry()).toList
 		)
 		val relations = sc.parallelize(TestData.relationList())
-		val input = List(entries).toAnyRDD() ++ List(relations).toAnyRDD()
+		val wikidata = sc.parallelize(TestData.wikiDataCompanies())
+		val input = List(entries).toAnyRDD() ++ List(relations).toAnyRDD() ++ List(wikidata).toAnyRDD()
 		val sentences = RelationSentenceParser.run(input, sc)
 			.fromAnyRDD[Sentence]()
 			.head
 			.collect
 			.toList
-		val expectedSentences = TestData.sentenceList() ++ TestData.alternativeSentenceListFiltered()
+		val expectedSentences =  TestData.alternativeSentenceListFiltered()
 		sentences shouldEqual expectedSentences
 	}
 }

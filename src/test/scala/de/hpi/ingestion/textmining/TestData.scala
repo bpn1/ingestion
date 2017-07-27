@@ -2224,6 +2224,14 @@ object TestData {
 		)
 	}
 
+	def wikiDataCompanies(): List[WikiDataEntity] = {
+		List(
+			WikiDataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Postbank")),
+			WikiDataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Audi")),
+			WikiDataEntity("Q3", instancetype = Option("comp"), wikiname = Option("VW"))
+		)
+	}
+
 	def sentenceList(): List[Sentence] = {
 		List(
 			Sentence(
@@ -2291,6 +2299,10 @@ object TestData {
 			Relation("Audi", "country", "Deutschland"),
 			Relation("Volkswagen", "city", "Wolfsburg")
 		)
+	}
+
+	def companySet(): Set[String] = {
+		Set("Audi", "VW")
 	}
 
 	def sentencesWithCooccurrences(): List[Sentence] = {
