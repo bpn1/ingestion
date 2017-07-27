@@ -112,6 +112,7 @@ object DBpediaNormalizationStrategy extends Serializable {
 		val legalForm = values.flatMap {
 			case r"""dbpedia-de:(.+)${legalForm}""" => List(legalForm)
 			case r"""(.+)${legalForm}@de \.""" => List(legalForm)
+			case legalForm => List(legalForm)
 		}.map(_.replaceAll("(_|-)", " ")).distinct
 		SharedNormalizations.normalizeLegalForm(legalForm)
 	}
