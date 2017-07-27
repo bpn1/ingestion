@@ -30,8 +30,8 @@ import org.apache.spark.rdd.RDD
 import scala.collection.mutable
 
 /**
-  * Calculates the cosine similarity (context score) for each pair of `Link` alias and page it may refer to. It combines it
-  * with the links score and entity score, which leads to the respective `FeatureEntry`.
+  * Calculates the cosine similarity (context score) for each pair of `Link` alias and page it may refer to. It combines
+  * it with the links score and entity score, which leads to the respective `FeatureEntry`.
   */
 object CosineContextComparator extends SplitSparkJob {
 	appName = "Cosine Context Comparator"
