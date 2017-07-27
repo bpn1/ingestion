@@ -92,14 +92,13 @@ trait GraphExtractor extends SparkJob {
 
 	/**
 	  * Extract a graph from the master nodes in the subject table and process it.
-	  * Checkpoint directory is needed for GraphFrames algorithms like connectedComponents to work
+	  * Checkpoint directory (local on executors) is needed for GraphFrames algorithms like connectedComponents to work
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		// this path is local (on executors), not in the HDFS
 		sc.setCheckpointDir(appName + "Checkpoints")
 
 		val subjects = input
