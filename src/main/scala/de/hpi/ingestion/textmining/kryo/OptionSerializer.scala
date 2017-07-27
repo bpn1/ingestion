@@ -27,7 +27,8 @@ import scala.collection.mutable.ListBuffer
 class OptionSerializer() extends Serializer[Option[_]] {
 
 	/**
-	  * Deserializes an Object given an input buffer to read from.
+	  * Deserializes an Option given an input buffer to read from.
+	  * Only Options of Strings and Lists can be deserialized.
 	  *
 	  * @param kryo  current Kryo instance
 	  * @param input input input buffer to read from
@@ -52,7 +53,7 @@ class OptionSerializer() extends Serializer[Option[_]] {
 	}
 
 	/**
-	  * Serializes a mutable Map to a given output buffer.
+	  * Serializes an Option to a given output buffer.
 	  * Only Options of Strings and Lists can be serialized.
 	  *
 	  * @param kryo   current Kryo instance

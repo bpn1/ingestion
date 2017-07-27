@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import java.io.{BufferedReader, InputStream, InputStreamReader}
-
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SplitSparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
@@ -26,7 +25,6 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-
 import scala.collection.mutable
 
 /**

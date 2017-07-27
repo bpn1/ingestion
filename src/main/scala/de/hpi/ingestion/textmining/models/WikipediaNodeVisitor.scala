@@ -35,7 +35,7 @@ class WikipediaNodeVisitor(validTags: List[String] = List("a")) extends NodeVisi
 	/**
 	  * This method is called when a node is first visited. It filters any HTML-tag which is not an anchor and also
 	  * filters the text nodes which are children of anchor tags. If a node is not filtered, its HTML is appended to
-	  * {@cleanedDocument }.
+	  * cleanedDocument .
 	  *
 	  * @param node  the node which is visited
 	  * @param depth the depth of the node
