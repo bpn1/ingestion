@@ -14,7 +14,7 @@ import play.api.libs.json.{JsArray, JsValue, Json}
 
 object Commit extends SparkJob with JSONParser[Boolean] {
 	appName = "Commit"
-	configFile = ""
+	configFile = "commit.xml"
 
 	/**
 		* Loads a number of input RDDs used in the job.
@@ -24,7 +24,7 @@ object Commit extends SparkJob with JSONParser[Boolean] {
 		* @return List of RDDs containing the data processed in the job.
 		*/
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject]("datalake", "subject")
+		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
 		List(subjects).toAnyRDD()
 	}
 
@@ -80,7 +80,7 @@ object Commit extends SparkJob with JSONParser[Boolean] {
 		output
 	    	.fromAnyRDD[Subject]()
 			.head
-			.saveToCassandra("datalake", "subject")
+			.saveToCassandra(settings("keyspaceSubjectTable"), settings("subjectTable"))
 	}
 
 	/**

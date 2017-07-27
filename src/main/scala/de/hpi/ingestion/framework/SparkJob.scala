@@ -11,8 +11,7 @@ import scala.collection.mutable.ListBuffer
   */
 trait SparkJob extends Configurable {
 	var appName = "Ingestion Spark Job"
-	val sparkOptions = mutable.Map[String, String]("spark.master" -> "local[*]",
-		"spark.cassandra.connection.host" -> "localhost")
+	val sparkOptions = mutable.Map[String, String]()
 	val cassandraLoadQueries = ListBuffer[String]()
 	val cassandraSaveQueries = ListBuffer[String]()
 
