@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.dataimport.wikidata
 
 import org.apache.spark.SparkContext
@@ -5,12 +21,12 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd._
 import scala.language.postfixOps
-import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikiDataEntity}
+import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikidataEntity}
 import de.hpi.ingestion.framework.SparkJob
 
 /**
-  * This job builds the subclass hierarchy of selected Wikidata classes and tags every Wikidata entity, that is an
-  * instance of one of the subclasses, with the top level class.
+  * Builds the subclass hierarchy of selected Wikidata classes and tags every `WikidataEntity` that is an instance of
+  * one of the subclasses with the top level class.
   */
 object TagEntities extends SparkJob {
 	appName = "TagEntities"
@@ -50,7 +66,7 @@ object TagEntities extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikiDataEntity](settings("keyspace"), settings("wikidataTable"))
+		val wikidata = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
 		List(wikidata).toAnyRDD()
 	}
 
@@ -152,7 +168,7 @@ object TagEntities extends SparkJob {
 	  * @param entity Wikidata entity to translate
 	  * @return SubclassEntry with only the id, label and subclass or instance property
 	  */
-	def translateToSubclassEntry(entity: WikiDataEntity): SubclassEntry = {
+	def translateToSubclassEntry(entity: WikidataEntity): SubclassEntry = {
 		val data = entity.data.filterKeys(key =>
 			key == instanceProperty || key == subclassProperty)
 		val label = entity.label.getOrElse(entity.id)
@@ -194,14 +210,14 @@ object TagEntities extends SparkJob {
 	}
 
 	/**
-	  * Tags the Wikidata entities with their superclass.
+	  * Tags the WikidataEntities with their superclass.
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val wikiData = input.fromAnyRDD[WikiDataEntity]().head
+		val wikiData = input.fromAnyRDD[WikidataEntity]().head
 		val classData = wikiData.map(translateToSubclassEntry)
 		val subclassData = classData
 			.filter(_.data.contains(subclassProperty))

@@ -3,7 +3,7 @@
     <settings>
         <keyspaceDBpediaTable>evaluation</keyspaceDBpediaTable>
         <dBpediaTable>subject_dbpedia</dBpediaTable>
-        <keyspaceWikiDataTable>evaluation</keyspaceWikiDataTable>
+        <keyspaceWikidataTable>evaluation</keyspaceWikidataTable>
         <wikiDataTable>subject_wikidata</wikiDataTable>
         <keyspaceGoldStandardTable>evaluation</keyspaceGoldStandardTable>
         <goldStandardTable>goldstandard</goldStandardTable>

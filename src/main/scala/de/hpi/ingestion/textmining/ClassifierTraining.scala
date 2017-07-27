@@ -1,20 +1,35 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models._
-import org.apache.spark.SparkContext
-import com.datastax.spark.connector._
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
 import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.implicits.CollectionImplicits._
+import com.datastax.spark.connector._
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.mllib.tree.RandomForest
 import org.apache.spark.mllib.tree.model.RandomForestModel
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.SparkContext
 
 /**
-  * Trains a Naive Bayes model with Feature Entries and evaluates it using precision, recall and f-score.
+  * Trains a `RandomForestModel` with `FeatureEntries` and evaluates it in terms of precision, recall and f-score.
   */
 object ClassifierTraining extends SparkJob {
 	appName = "Classifier Training"
@@ -204,7 +219,7 @@ object ClassifierTraining extends SparkJob {
 
 	/**
 	  * Partitions the entries to train and test a Classification model.
-	  * Example code: https://spark.apache.org/docs/latest/mllib-naive-bayes.html
+	  * Example code: https://spark.apache.org/docs/latest/ml-classification-regression.html#random-forest-classifier
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
