@@ -10,6 +10,9 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.graphxplore.models.ResultGraph
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
+/**
+  * Base trait for graph extraction jobs; converts the subject table into a GraphFrames instance
+  */
 trait GraphExtractor extends SparkJob {
 	appName = "GraphExtractor"
 	val keyspace = "datalake"
@@ -25,7 +28,7 @@ trait GraphExtractor extends SparkJob {
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
 		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
-		List(subjects.asInstanceOf[RDD[Any]])
+		List(subjects).toAnyRDD()
 	}
 
 	/**
@@ -44,15 +47,10 @@ trait GraphExtractor extends SparkJob {
 	/**
 	  * Constructs a GraphFrame from the given subjects
 	  * @param subjects Input data containing relations
-	  * @param sc Spark context reference that is used to create a SparkSession
 	  * @return GraphFrame containing all the subjects as nodes and the master relations as edges
 	  */
-	def extractGraph(subjects: RDD[Subject], sc: SparkContext): GraphFrame = {
-		val spark = SparkSession
-			.builder()
-			.appName(appName)
-			.config(sc.getConf)
-			.getOrCreate()
+	def extractGraph(subjects: RDD[Subject]): GraphFrame = {
+		val spark = SparkSession.builder().getOrCreate()
 		import spark.implicits._
 
 		val subjectVertices = subjects
@@ -77,7 +75,8 @@ trait GraphExtractor extends SparkJob {
 	def processGraph(graph: GraphFrame): List[RDD[ResultGraph]]
 
 	/**
-	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
+	  * Extract a graph from the master nodes in the subject table and process it.
+	  * Checkpoint directory is needed for GraphFrames algorithms like connectedComponents to work
 	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @param args arguments of the program
@@ -91,7 +90,7 @@ trait GraphExtractor extends SparkJob {
 			.fromAnyRDD[Subject]().head
 			.filter(_.datasource == "master")
 
-		val graph = extractGraph(subjects, sc)
+		val graph = extractGraph(subjects)
 		val output = processGraph(graph)
 		output.toAnyRDD()
 	}

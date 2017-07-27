@@ -8,8 +8,14 @@ import de.hpi.ingestion.graphxplore.models.ResultGraph
 
 object MotifExtractor extends GraphExtractor {
 	appName = "MotifExtractor"
+	/**
+	  * Minimal size for star motifs
+	  */
 	val minStarSize = 3
-	val maxStarSize = 10 // can't be > 26
+	/**
+	  * Maximal size for star motifs. Can't be > 26, because single chars are used for node identification
+	  */
+	val maxStarSize = 10
 
 	/**
 	  * Searches for a given motif query in the provided graph
