@@ -1,7 +1,24 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.framework
 
 import de.hpi.ingestion.deduplication.models.config.{AttributeConfig, SimilarityMeasureConfig}
-import de.hpi.ingestion.deduplication.similarity.{JaroWinkler, MongeElkan}
+import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler, MongeElkan}
+
 import scala.xml.{Node, XML}
 
 object TestData {
@@ -13,6 +30,24 @@ object TestData {
 			List(
 				SimilarityMeasureConfig(similarityMeasure = MongeElkan, weight = 0.5333),
 				SimilarityMeasureConfig(similarityMeasure = JaroWinkler, weight = 0.4667)
+			)
+		)
+	)
+
+	def parsedScoreConfigWithoutWeights: List[AttributeConfig] = List(
+		AttributeConfig(
+			"name",
+			0.5,
+			List(
+				SimilarityMeasureConfig(similarityMeasure = MongeElkan, weight = 0.5),
+				SimilarityMeasureConfig(similarityMeasure = JaroWinkler, weight = 0.5)
+			)
+		),
+		AttributeConfig(
+			"category",
+			0.5,
+			List(
+				SimilarityMeasureConfig(similarityMeasure = ExactMatchString, weight = 1.0)
 			)
 		)
 	)
@@ -31,6 +66,10 @@ object TestData {
 
 	def configWithoutSettingsXML: Node = {
 		XML.load(getClass.getResource("/framework/test2.xml"))
+	}
+
+	def configsWithoutWeightsXML: Node = {
+		XML.load(getClass.getResource("/framework/test3.xml"))
 	}
 
 	def importConfigXML: Node = {

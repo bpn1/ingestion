@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
@@ -58,21 +74,6 @@ class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDCompari
 		val expectedCandidates = sc.parallelize(TestData.createdDuplicateCandidates(subjects, stagings))
 		assertRDDEquals(candidates, expectedCandidates)
 
-		Deduplication.settings = originalSettings
-	}
-
-	they should "not be compared twice" in {
-		val originalSettings = Deduplication.settings
-		val originalConfig = Deduplication.scoreConfigSettings
-
-		Deduplication.scoreConfigSettings = TestData.simpleTestConfig
-		Deduplication.settings = Map("confidence" -> "0.0")
-		val blocks = TestData.testBlocks(sc)
-		val duplicates = Deduplication.findDuplicates(blocks, sc).map(_.copy(_3 = 0.0))
-		val expected = TestData.distinctDuplicateCandidates(sc)
-		assertRDDEquals(duplicates, expected)
-
-		Deduplication.scoreConfigSettings = originalConfig
 		Deduplication.settings = originalSettings
 	}
 

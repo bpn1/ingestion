@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
+        <subjectTable>subject</subjectTable>
+        <keyspaceStagingTable>datalake</keyspaceStagingTable>
+        <stagingTable>subject_dbpedia</stagingTable>
+        <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
+        <duplicatesTable>duplicates</duplicatesTable>
+        <keyspaceVersionTable>datalake</keyspaceVersionTable>
+        <versionTable>version</versionTable>
+    </settings>
+</config>

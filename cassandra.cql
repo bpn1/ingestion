@@ -4,12 +4,15 @@ CREATE KEYSPACE wikidumps WITH REPLICATION = {
     'replication_factor' : 3
 };
 
+
+
 -- Wikidumps.Wikipedia
 CREATE TYPE wikidumps.link (
     alias text,
     page text,
     offset int,
-    context map<text, int>
+    context map<text, int>,
+    article text
 );
 
 CREATE TYPE wikidumps.entitylink (
@@ -138,6 +141,11 @@ CREATE TYPE wikidumps.triealias (
 	context map<text, int>
 );
 
+CREATE TABLE wikidumps.linkedarticles (
+  title text PRIMARY KEY,
+  text text
+);
+
 CREATE TABLE wikidumps.wikipediacooccurrences (
       entityList frozen<list<text>> PRIMARY KEY,
       count int
@@ -145,9 +153,18 @@ CREATE TABLE wikidumps.wikipediacooccurrences (
 
 CREATE TABLE wikidumps.spiegel (
     id text PRIMARY KEY,
+    title text,
     foundentities frozen<list<frozen<link>>>,
     text text,
     triealiases frozen<list<frozen<triealias>>>
+);
+
+CREATE TABLE wikidumps.wikipedianel (
+    id text PRIMARY KEY,
+    title text,
+    text text,
+    triealiases frozen<list<triealias>>,
+    foundentities frozen<list<frozen<link>>>
 );
 
 CREATE TABLE wikidumps.redirects (
@@ -160,21 +177,10 @@ CREATE TABLE wikidumps.wikipediaarticlecount (
     count bigint
 );
 
-CREATE TABLE wikidumps.spiegelfeatureentries (
-    article text,
-    offset int,
-    alias text,
-    entity text,
-    correct boolean,
-    cosine_sim multifeature,
-    entity_score multifeature,
-    link_score double,
-    PRIMARY KEY (article, offset, alias, entity)
-);
-
 CREATE TABLE wikidumps.articletfidf (
     article text PRIMARY KEY,
     tfidf map<text, double>
+);
 
 CREATE TABLE wikidumps.dbpediarelations (
 	subjectentity text,
@@ -182,6 +188,8 @@ CREATE TABLE wikidumps.dbpediarelations (
 	objectentity text,
 	PRIMARY KEY (subjectentity, relationtype, objectentity)
 );
+
+
 
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
@@ -195,6 +203,8 @@ CREATE TABLE wikidumps.wikidata (
     label text,
     wikiname text
 );
+
+
 
 -- Wikidumps.DBpedia
 CREATE TABLE wikidumps.dbpedia (
@@ -212,6 +222,8 @@ CREATE TYPE wikidumps.extendedlink (
     page map<text, int>,
     offset int
 );
+
+
 
 -- Datalake
 CREATE KEYSPACE datalake WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
@@ -369,7 +381,7 @@ CREATE TABLE datalake.blockingstats (
     blockcount int,
     comment text,
     comparisoncount bigint,
-    data frozen<set<frozen<blockstats>>>,
+    data frozen<SET<frozen<blockstats>>>,
     pairscompleteness double,
     xaxis text,
     yaxis text,
@@ -383,11 +395,29 @@ CREATE TABLE datalake.duplicates (
     candidates list<frozen<candidate>>
 );
 
+CREATE TABLE datalake.versiondiff (
+    oldversion timeuuid,
+    newversion timeuuid,
+    id uuid,
+    aliases text,
+    category text,
+    datasource text,
+    master text,
+    name text,
+    properties text,
+    relations text,
+    PRIMARY KEY ((oldversion, newversion), id)
+);
+
+
+
 -- Evaluation
 CREATE KEYSPACE evaluation WITH REPLICATION = {
     'class' : 'SimpleStrategy',
     'replication_factor' : 3
 };
+
+
 
 -- Types
 CREATE TYPE evaluation.version (
@@ -427,6 +457,8 @@ CREATE TYPE evaluation.candidate (
     name text,
     score double
 );
+
+
 
 -- Tables
 CREATE TABLE evaluation.goldstandard (
@@ -499,4 +531,12 @@ CREATE TABLE evaluation.featureentries (
 	staging frozen<subject>,
 	score map<text, frozen<list<double>>>,
 	correct boolean
+);
+
+CREATE TABLE datalake.graphs (
+    id uuid PRIMARY KEY,
+    graphtype text,
+    nodes list<uuid>,
+    nodenames list<text>,
+    size int
 );

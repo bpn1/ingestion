@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.deduplication
 
 import com.datastax.spark.connector._
@@ -15,6 +31,8 @@ import org.apache.spark.rdd.RDD
   * in every block and filters all pairs below a given threshold.
   */
 object Deduplication extends SparkJob {
+	sparkOptions("spark.yarn.executor.memoryOverhead") = "8192"
+
 	appName = "Deduplication"
 	configFile = "deduplication.xml"
 	val blockingSchemes = List[BlockingScheme](
@@ -46,7 +64,8 @@ object Deduplication extends SparkJob {
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(subjects, staging) = input.fromAnyRDD[Subject]()
-		val blocks = Blocking.blocking(subjects, staging, blockingSchemes)
+		val slaves = subjects.filter(_.isSlave)
+		val blocks = Blocking.blocking(slaves, staging, blockingSchemes)
 		val subjectPairs = findDuplicates(blocks.values, sc)
 		val duplicates = createDuplicates(subjectPairs)
 		List(duplicates).toAnyRDD()
@@ -86,12 +105,12 @@ object Deduplication extends SparkJob {
 			.map { case (subject, staging, score) =>
 				((subject.id, subject.name), List(Candidate(staging.id, staging.name, score)))
 			}.reduceByKey(_ ::: _)
-			.map { case ((id, name), candidates) => Duplicates(id, name, stagingTable, candidates) }
+			.map { case ((id, name), candidates) => Duplicates(id, name, stagingTable, candidates.distinct) }
 	}
 
 	/**
 	  * Finds the duplicates of each block by comparing the Subjects and filtering all Subjects pairs below the
-	  * threshold {@confidence}.
+	  * threshold confidence.
 	  * @param blocks RDD of BLocks containing the Subjects that are compared
 	  * @return tuple of Subjects with their score, which is greater or equal the given threshold.
 	  */
@@ -100,7 +119,6 @@ object Deduplication extends SparkJob {
 		val confBroad = sc.broadcast(scoreConfigSettings)
 		blocks
 			.flatMap(_.crossProduct())
-			.distinct
 			.map { case (subject1, subject2) =>
 				(subject1, subject2, compare(subject1, subject2, confBroad.value))
 			}.filter(_._3 >= threshold)
