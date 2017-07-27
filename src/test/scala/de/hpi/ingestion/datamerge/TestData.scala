@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.datamerge
 
 import java.util.UUID
@@ -410,5 +426,69 @@ object TestData {
 			)
 		)
 	)
+
+	def inputSubjects(): List[Subject] = {
+		List(
+			Subject(
+				id = idList.head,
+				master = idList.head,
+				datasource = "master",
+				relations = Map(
+					idList(4) -> Map("t1" -> "impli", "t3" -> "impli"),
+					idList(5) -> Map("t2" -> "wiki", "t3" -> "wiki")
+				)
+			),
+			Subject(
+				id = idList(1),
+				master = idList(1),
+				datasource = "master",
+				relations = Map(
+					idList(2) -> Map("t1" -> "impli", "t3" -> "impli"),
+					idList(3) -> Map("t2" -> "wiki", "t4" -> "wiki")
+				)
+			),
+			Subject(
+				id = idList(2),
+				master = idList.head,
+				datasource = "implisense"
+			),
+			Subject(
+				id = idList(3),
+				master = idList.head,
+				datasource = "wikidata"
+			),
+			Subject(
+				id = idList(4),
+				master = idList(1),
+				datasource = "implisense"
+			),
+			Subject(
+				id = idList(5),
+				master = idList(1),
+				datasource = "wikidata"
+			)
+		)
+	}
+
+	def mergedMasters(): List[Subject] = {
+		List(
+			Subject(
+				id = idList.head,
+				master = idList.head,
+				datasource = "master",
+				relations = Map(
+					idList(1) -> Map("t1" -> "impli", "t3" -> "impli", "t2" -> "wiki")
+				)
+			),
+			Subject(
+				id = idList(1),
+				master = idList(1),
+				datasource = "master",
+				relations = Map(
+					idList.head -> Map("t1" -> "impli", "t3" -> "impli", "t2" -> "wiki", "t4" -> "wiki")
+				)
+			)
+		)
+	}
 }
 // scalastyle:on

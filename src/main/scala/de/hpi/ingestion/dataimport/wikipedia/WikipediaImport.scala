@@ -1,15 +1,34 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.dataimport.wikipedia
 
-import org.apache.spark.SparkContext
-import com.datastax.spark.connector._
-import com.databricks.spark.xml.XmlInputFormat
-import org.apache.hadoop.io.{LongWritable, Text}
-import scala.xml.XML
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.apache.spark.SparkContext
+import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.spark.rdd.RDD
+import com.datastax.spark.connector._
+import com.databricks.spark.xml.XmlInputFormat
+import scala.xml.XML
 
+/**
+  * Parses Wikipedia XML dump to Wikipedia Entries.
+  */
 object WikipediaImport extends SparkJob {
 	appName = "WikipediaImport"
 	val inputFile = "dewiki.xml"
@@ -20,7 +39,8 @@ object WikipediaImport extends SparkJob {
 	/**
 	  * Reads Wikipedia XML dump from HDFS.
 	  * Config source: https://git.io/v9q24
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
@@ -35,9 +55,10 @@ object WikipediaImport extends SparkJob {
 
 	/**
 	  * Saves Wikipedia Entries to Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
@@ -46,8 +67,10 @@ object WikipediaImport extends SparkJob {
 			.saveToCassandra(keyspace, tablename)
 	}
 	// $COVERAGE-ON$
+
 	/**
 	  * Parses Wikipedia XML to Wikipedia entries.
+	  *
 	  * @param xmlString XML data as String
 	  * @return Wikipedia Entry containing the title and text
 	  */
@@ -60,9 +83,10 @@ object WikipediaImport extends SparkJob {
 
 	/**
 	  * Parses Wikipedia XML dump to Wikipedia Entries.
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {

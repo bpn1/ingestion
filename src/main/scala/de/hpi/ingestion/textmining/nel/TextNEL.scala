@@ -1,12 +1,30 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.textmining.nel
 
 import de.hpi.ingestion.framework.SplitSparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
-import de.hpi.ingestion.textmining.CosineContextComparator.{calculateTfidf, compareLinksWithArticles, defaultIdf}
+import de.hpi.ingestion.textmining.preprocessing.CosineContextComparator.{calculateTfidf, compareLinksWithArticles,
+defaultIdf}
+import de.hpi.ingestion.textmining.preprocessing.{CosineContextComparator, SecondOrderFeatureGenerator,
+TermFrequencyCounter}
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
-import de.hpi.ingestion.textmining.{CosineContextComparator, SecondOrderFeatureGenerator, TermFrequencyCounter}
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.tree.model.RandomForestModel
@@ -14,8 +32,8 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 
 /**
-  * Classifies the Trie Aliases found in Articles by the Article Trie Search and writes the positives as found entities
-  * to the same table.
+  * Classifies the `TrieAliases` found in `TrieAliasArticles` by the `ArticleTrieSearch` and writes the positives into
+  * the `foundentities` column back to the same table.
   */
 object TextNEL extends SplitSparkJob {
 	appName = "Text NEL"
@@ -147,7 +165,7 @@ object TextNEL extends SplitSparkJob {
 	}
 
 	/**
-	  * Generates Feature Entries for the Aliases extracted from the Trie Alias Articles.
+	  * Generates FeatureEntries for the aliases extracted from the TrieAliasArticles.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables

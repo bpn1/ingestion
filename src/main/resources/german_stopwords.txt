@@ -1,3 +1,12 @@
+; GERMAN STOPWORDS
+; Zusammmengetragen von Marco Götze, Steffen Geyer
+; LAST UPDATE 12/2016
+; Web Stopwords, more information at Source Link below!
+; www.solariz.de
+; Source and more Information: https://solariz.de/de/downloads/6/german-enhanced-stopwords.htm
+; ####
+; Link-Ware; If you use this List somehow please give me a Link to URL mentioned above! Thanks
+; ####
 ab
 aber
 abermaliges

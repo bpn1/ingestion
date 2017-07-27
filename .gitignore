@@ -24,3 +24,6 @@ __pycache__
 
 # External library
 companies.jar
+
+# Jupyter notebook
+.ipynb_checkpoints/

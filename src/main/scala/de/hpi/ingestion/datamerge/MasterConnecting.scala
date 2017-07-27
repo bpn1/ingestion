@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.datamerge
 
 import java.util.UUID
@@ -51,27 +67,38 @@ object MasterConnecting extends SparkJob {
 	  * @return List of RDDs containing the updated master subjects
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = input.head.asInstanceOf[RDD[Subject]]
+		val subjects = input.fromAnyRDD[Subject]().head
 		val masters = subjects.filter(master => master.isMaster && master.masterRelations.nonEmpty)
-		val slaves = subjects.filter(_.isSlave).map(slave => (slave.id, slave.master))
+		val slaves = subjects.filter(_.isSlave).map(slave => (slave.id, (slave.id, slave.master, slave.datasource)))
 		val version = Version("Master Connecting", List("subject"), sc, true, settings.get("subjectTable"))
-
 
 		val updatedMasters = masters
 			.flatMap(extractRelations)
 			.reduceByKey(_ ::: _)
 			.join(slaves)
-			.flatMap(Function.tupled(groupByMaster _))
+		    .values
+			.flatMap((groupByMaster _).tupled)
 			.reduceByKey(_ ::: _)
-			.map { case (master, list) =>
+			.map { case (master, relationsAndIds) =>
 				val masterManager = new SubjectManager(master, version)
-				val (relations, ids) = list.unzip
-
-				masterManager.removeRelations(ids)
-				masterManager.addRelations(relations.reduceLeft(_ ++ _))
+				val oldIds = relationsAndIds.map(_._2)
+				val updatedRelations = relationsAndIds
+					.flatMap { case (relationMap, oldId, datasource) =>
+						relationMap.toList.map { case (id, relationProperties) => (id, relationProperties, datasource) }
+					}.groupBy(_._1)
+					.mapValues { valueList =>
+						Merging.sourcePriority.map { datasource =>
+							valueList
+								.filter(_._3 == datasource)
+								.map { case (id, relationProperties, datasource) => relationProperties }
+								.foldLeft(Map.empty[String, String])(_ ++ _)
+						}.foldLeft(Map.empty[String, String])(
+							(higherPriorityRels, lowerPriorityRels) => lowerPriorityRels ++ higherPriorityRels)
+					}.map(identity)
+				masterManager.removeRelations(oldIds)
+				masterManager.addRelations(updatedRelations)
 				master
 			}
-
 		List(updatedMasters).toAnyRDD()
 	}
 
@@ -89,18 +116,18 @@ object MasterConnecting extends SparkJob {
 	}
 
 	/**
-	  * Group relations by masters
-	  * @param oldId id of slave the relation points to
-	  * @param relationsTuple list of relations to be updated and the id of the master node
-	  * @return list of masters with their updated relations
+	  * Groups the relations by the masters in which they are stored
+	  * @param relations relations pointing to the slaves as List of tuples
+	  * @param slaveTuple Tuple of (slaveId, masterId, datasource)
+	  * @return List of Tuples (master, updated relations with slave id and slave datasource)
 	  */
 	def groupByMaster(
-		oldId: UUID,
-		relationsTuple: (List[(Subject, Map[String, String])], UUID)
-	): List[(Subject, List[(Map[UUID, Map[String, String]], UUID)])] = {
-		val (list, newId) = relationsTuple
-		list.map { case (master, relations) =>
-			(master, List((Map(newId -> relations), oldId)))
+		relations: List[(Subject, Map[String, String])],
+		slaveTuple: (UUID, UUID, String)
+	): List[(Subject, List[(Map[UUID, Map[String, String]], UUID, String)])] = {
+		val (oldId, relationMasterId, datasource) = slaveTuple
+		relations.map { case (master, relationProps) =>
+			(master, List((Map(relationMasterId -> relationProps), oldId, datasource)))
 		}
 	}
 }

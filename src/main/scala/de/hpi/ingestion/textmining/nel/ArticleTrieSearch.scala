@@ -1,16 +1,32 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.textmining.nel
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.AliasTrieSearch.{deserializeTrie, trieStreamFunction}
+import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch.{deserializeTrie, trieStreamFunction}
 import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, TrieNode}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
-  * Finds Trie Aliases in NEL Articles with the Trie and writes them to the same table.
+  * Finds `TrieAliases` in `TrieAliasArticles` and writes them back to the same table.
   */
 object ArticleTrieSearch extends SparkJob {
 	appName = "Article Trie Search"
@@ -85,7 +101,7 @@ object ArticleTrieSearch extends SparkJob {
 	}
 
 	/**
-	  * Finds Aliases in the Articles using the Trie.
+	  * Finds `TrieAliases` in `Articles`.
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
