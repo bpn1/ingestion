@@ -92,6 +92,7 @@ object RelationSentenceParser extends SparkJob {
 
 	/**
 	  * Filters Entities of Sentences from countries or cities (non companies)
+	  * or which contain an entity in our blacklist
 	  * and removes the sentences with less than 1 entity afterwards
 	  *
 	  * @param sentences sentences to be filtered
