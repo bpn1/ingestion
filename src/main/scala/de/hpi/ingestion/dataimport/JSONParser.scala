@@ -27,7 +27,7 @@ import play.api.libs.json._
 trait JSONParser[T] {
 
 	/**
-	  * Parses a String containing a JSON-Object into an Entity of type {@T}.
+	  * Parses a String containing a JSON-Object into an Entity of type T.
 	  * @param line String containing the JSON data
 	  * @return Entity containing the parsed data
 	  */

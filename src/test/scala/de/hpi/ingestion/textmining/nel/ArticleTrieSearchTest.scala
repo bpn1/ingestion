@@ -27,8 +27,6 @@ import org.scalatest.{FlatSpec, Matchers}
 class ArticleTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext {
 	"Found aliases" should "be exactly these aliases" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = AliasTrieSearch.settings(false)
-		AliasTrieSearch.parseConfig()
 		val testTrieStreamFunction = TextTestData.fullTrieStream("/spiegel/triealiases") _
 		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
 
@@ -50,7 +48,6 @@ class ArticleTrieSearchTest extends FlatSpec with Matchers with SharedSparkConte
 		foundAliases2 shouldEqual TestData.realFoundTrieAliases()
 
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
-		AliasTrieSearch.settings = oldSettings
 	}
 
 	"Enriched articles" should "be exactly these articles" in {
