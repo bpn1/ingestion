@@ -27,8 +27,6 @@ class SpiegelImportTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Spiegel articles" should "be parsed" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = AliasTrieSearch.settings(false)
-		AliasTrieSearch.parseConfig()
 
 		val testTrieStreamFunction = TextTestData.fullTrieStream("/spiegel/triealiases") _
 		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
@@ -43,7 +41,6 @@ class SpiegelImportTest extends FlatSpec with Matchers with SharedSparkContext {
 		articles shouldEqual expectedArticles
 
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
-		AliasTrieSearch.settings = oldSettings
 	}
 
 	"Article values" should "be extracted" in {

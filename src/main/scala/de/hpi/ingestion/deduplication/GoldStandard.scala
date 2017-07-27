@@ -42,7 +42,7 @@ object GoldStandard extends SparkJob {
 	}
 
 	/**
-	  * Saves joined DBpedia and Wikidata to {@output} table in keyspace {@keyspace}.
+	  * Saves joined DBpedia and Wikidata to output table in keyspace keyspace.
 	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  * @param args arguments of the program

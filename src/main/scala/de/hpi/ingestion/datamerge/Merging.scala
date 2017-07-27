@@ -106,7 +106,7 @@ object Merging extends SparkJob {
 
 	/**
 	  * Merges the properties of the duplicates and uses the non empty properties of the best data source defined by
-	  * {@sourcePriority}.
+	  * sourcePriority.
 	  * @param slaves List of slave Subjects
 	  * @return Map containing the properties and the values
 	  */
@@ -131,7 +131,7 @@ object Merging extends SparkJob {
 
 	/**
 	  * Merges the relations of the duplicates and uses the non empty relation property of the best data source defined
-	  * by {@sourcePriority}.
+	  * by sourcePriority.
 	  * @param slaves List of slave Subject
 	  * @return Map containing the relations and their properties
 	  */

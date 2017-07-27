@@ -199,13 +199,13 @@ case class ParsedWikipediaEntry(
 	}
 
 	/**
-	  * checks if two links are colliding by checking their start and end offsets.
+	  * Checks if two links are colliding by checking their start and end offsets.
 	  *
 	  * @param startEL start offset of extended link
 	  * @param endEL   end offset of extended link
 	  * @param startTL start offset of text link
 	  * @param endTL   end offset of text link
-	  * @return false if they are colliding if not false
+	  * @return true if they are colliding
 	  */
 	def checkIfColliding(startEL: Int, endEL: Int, startTL: Int, endTL: Int): Boolean = {
 		// startTL---startEL----endTL or

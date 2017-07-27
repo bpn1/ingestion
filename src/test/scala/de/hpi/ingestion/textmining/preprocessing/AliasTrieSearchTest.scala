@@ -26,17 +26,11 @@ import org.scalatest.{FlatSpec, Matchers}
 class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Alias matches" should "be found" in {
-		val oldSettings = AliasTrieSearch.settings(false)
-		AliasTrieSearch.parseConfig()
-
 		val tokenizer = IngestionTokenizer()
-		val contextTokenizer = IngestionTokenizer(true, true)
 		val trie = TestData.dataTrie(tokenizer)
 		val entry = TestData.parsedEntry()
-		val resultEntry = AliasTrieSearch.matchEntry(entry, trie, tokenizer, contextTokenizer)
+		val resultEntry = AliasTrieSearch.matchEntry(entry, trie, tokenizer)
 		resultEntry.foundaliases should not be empty
-
-		AliasTrieSearch.settings = oldSettings
 	}
 
 	they should "be cleaned of empty strings" in {
@@ -54,8 +48,6 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 
 	"Wikipedia entries" should "be enriched with found aliases" in {
 		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val oldSettings = AliasTrieSearch.settings(false)
-		AliasTrieSearch.parseConfig()
 
 		val testTrieStreamFunction = TestData.fullTrieStream() _
 		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
@@ -66,21 +58,23 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 		enrichedEntry.foundaliases.toSet shouldEqual expectedAliases
 
 		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
-		AliasTrieSearch.settings = oldSettings
 	}
 
 	"Trie aliases" should "be extracted" in {
-		val oldSettings = AliasTrieSearch.settings(false)
-		AliasTrieSearch.parseConfig()
-
 		val tokenizer = IngestionTokenizer()
-		val contextTokenizer = IngestionTokenizer(true, true)
 		val trie = TestData.dataTrie(tokenizer)
 		val entries = TestData.parsedEntriesWithLessText()
-		val trieAliases = entries.map(AliasTrieSearch.matchEntry(_, trie, tokenizer, contextTokenizer).triealiases)
+		val trieAliases = entries.map(AliasTrieSearch.matchEntry(_, trie, tokenizer).triealiases)
 		val expected = TestData.foundTrieAliases()
 		trieAliases shouldEqual expected
+	}
 
-		AliasTrieSearch.settings = oldSettings
+	they should "not be overlapped by other trie aliases or links" in {
+		val tokenizer = IngestionTokenizer()
+		val trie = TestData.dataTrie(tokenizer, "/spiegel/triealiases")
+		val entries = TestData.articlesWithoutTrieAliases()
+		val trieAliases = entries.map(AliasTrieSearch.matchEntry(_, trie, tokenizer))
+		val expected = TestData.articlesWithTrieAliases()
+		trieAliases shouldEqual expected
 	}
 }
