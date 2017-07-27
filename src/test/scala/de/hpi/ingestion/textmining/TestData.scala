@@ -1,6 +1,22 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
+import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
@@ -21,6 +37,7 @@ import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer}
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import de.hpi.ingestion.textmining.preprocessing.LocalTrieBuilder
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -2482,14 +2499,14 @@ object TestData {
 			("Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(0)))))
 	}
 
-	def wikidataEntities(): List[WikiDataEntity] = {
+	def wikidataEntities(): List[WikidataEntity] = {
 		List(
-			WikiDataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Page 1")),
-			WikiDataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Page 2")),
-			WikiDataEntity("Q3", instancetype = Option("comp"), wikiname = Option("Page 3")),
-			WikiDataEntity("Q4", instancetype = Option("comp")),
-			WikiDataEntity("Q5", wikiname = Option("Page 5")),
-			WikiDataEntity("Q6"))
+			WikidataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Page 1")),
+			WikidataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Page 2")),
+			WikidataEntity("Q3", instancetype = Option("comp"), wikiname = Option("Page 3")),
+			WikidataEntity("Q4", instancetype = Option("comp")),
+			WikidataEntity("Q5", wikiname = Option("Page 5")),
+			WikidataEntity("Q6"))
 	}
 
 	def wikidataCompanyPages(): List[String] = {
