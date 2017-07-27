@@ -117,29 +117,6 @@ object TestData {
 			Map()
 		)
 	}
-
-	def unnormalizedAttributes: Map[String, List[String]] = Map(
-		"gen_sectors" -> (this.unnormalizedSectors :+ "Test_Sector"),
-		"geo_coords" -> this.unnormalizedCoords,
-		"geo_country" -> this.unnormalizedCountries,
-		"geo_city" -> this.unnormalizedCities,
-		"gen_employees" -> this.unnormalizedEmployees,
-		"gen_urls" -> this.unnormalizedURLs
-	)
-
-	def unnormalizedSectors: List[String] = List("Bauwesen", "Q126793", "Baugewerbe")
-	def normalizedSectors: List[String] = List("Automobilindustrie", "Einzelhandel")
-	def mappedSectors: List[String] = List("29", "45", "47")
-	def unnormalizedCoords: List[String] = List("-1;1", "55;48.88", "0.133;-1", "xxx;-1.0")
-	def normalizedCoords: List[String] = List("-1;1", "55;48.88", "0.133;-1")
-	def unnormalizedCountries: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
-	def normalizedCountries: List[String] = List("RU")
-	def unnormalizedCities: List[String] = List("Q159", "Q631750", "Russland", "Igrinski rajon")
-	def normalizedCities: List[String] = List("Russland", "Igrinski rajon")
-	def unnormalizedEmployees: List[String] = List("+500;1", "+1337;1", "WRONG")
-	def normalizedEmployees: List[String] = List("500", "1337")
-	def unnormalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de", "www.hans", "NotAURL")
-	def normalizedURLs: List[String] = List("https://youtube.de", "http://facebook.de", "http://www.google.de")
 }
 
 // scalastyle:on
