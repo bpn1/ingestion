@@ -18,7 +18,8 @@ object TermFrequencyCounter extends SparkJob {
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
+	  *
+	  * @param sc   Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
@@ -29,9 +30,10 @@ object TermFrequencyCounter extends SparkJob {
 
 	/**
 	  * Saves enriched Parsed Wikipedia entries to the Cassandra.
+	  *
 	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+	  * @param args   arguments of the program
 	  */
 	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
 		output
@@ -72,7 +74,7 @@ object TermFrequencyCounter extends SparkJob {
 	  * @return list of tuples containing the link and its context
 	  */
 	def extractLinkContexts(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): ParsedWikipediaEntry = {
-		val tokens = tokenizer.onlyTokenizeWithOffst(entry.getText())
+		val tokens = tokenizer.onlyTokenizeWithOffset(entry.getText())
 		val contextLinks = (entry.textlinksreduced ++ entry.extendedlinks()).map { link =>
 			val context = extractContext(tokens, link, tokenizer).getCounts()
 			link.copy(context = context)
@@ -89,7 +91,7 @@ object TermFrequencyCounter extends SparkJob {
 	  */
 	def extractContext(tokens: List[OffsetToken], link: Link, tokenizer: IngestionTokenizer): Bag[String, Int] = {
 		val contextSize = settings("contextSize").toInt
-		val aliasTokens = tokenizer.onlyTokenizeWithOffst(link.alias)
+		val aliasTokens = tokenizer.onlyTokenizeWithOffset(link.alias)
 		tokens.find(token => link.offset.contains(token.beginOffset)).map { firstAliasToken =>
 			val aliasIndex = tokens.indexOf(firstAliasToken)
 			val aliasTokenLength = aliasTokens.length
@@ -105,9 +107,10 @@ object TermFrequencyCounter extends SparkJob {
 	/**
 	  * Enriches articles with the term frequencies of the whole article (called context) and the term frequencies
 	  * for all link contexts (called link contexts).
+	  *
 	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
