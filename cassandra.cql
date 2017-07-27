@@ -4,6 +4,8 @@ CREATE KEYSPACE wikidumps WITH REPLICATION = {
     'replication_factor' : 3
 };
 
+
+
 -- Wikidumps.Wikipedia
 CREATE TYPE wikidumps.link (
     alias text,
@@ -175,18 +177,6 @@ CREATE TABLE wikidumps.wikipediaarticlecount (
     count bigint
 );
 
-CREATE TABLE wikidumps.spiegelfeatureentries (
-    article text,
-    offset int,
-    alias text,
-    entity text,
-    correct boolean,
-    cosine_sim multifeature,
-    entity_score multifeature,
-    link_score double,
-    PRIMARY KEY (article, offset, alias, entity)
-);
-
 CREATE TABLE wikidumps.articletfidf (
     article text PRIMARY KEY,
     tfidf map<text, double>
@@ -198,6 +188,8 @@ CREATE TABLE wikidumps.dbpediarelations (
 	objectentity text,
 	PRIMARY KEY (subjectentity, relationtype, objectentity)
 );
+
+
 
 -- Wikidumps.Wikidata
 CREATE TABLE wikidumps.wikidata (
@@ -211,6 +203,8 @@ CREATE TABLE wikidumps.wikidata (
     label text,
     wikiname text
 );
+
+
 
 -- Wikidumps.DBpedia
 CREATE TABLE wikidumps.dbpedia (
@@ -228,6 +222,8 @@ CREATE TYPE wikidumps.extendedlink (
     page map<text, int>,
     offset int
 );
+
+
 
 -- Datalake
 CREATE KEYSPACE datalake WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
@@ -417,11 +413,29 @@ CREATE TABLE datalake.duplicates (
     candidates list<frozen<candidate>>
 );
 
+CREATE TABLE datalake.versiondiff (
+    oldversion timeuuid,
+    newversion timeuuid,
+    id uuid,
+    aliases text,
+    category text,
+    datasource text,
+    master text,
+    name text,
+    properties text,
+    relations text,
+    PRIMARY KEY ((oldversion, newversion), id)
+);
+
+
+
 -- Evaluation
 CREATE KEYSPACE evaluation WITH REPLICATION = {
     'class' : 'SimpleStrategy',
     'replication_factor' : 3
 };
+
+
 
 -- Types
 CREATE TYPE evaluation.version (
@@ -461,6 +475,8 @@ CREATE TYPE evaluation.candidate (
     name text,
     score double
 );
+
+
 
 -- Tables
 CREATE TABLE evaluation.goldstandard (
@@ -535,7 +551,6 @@ CREATE TABLE evaluation.featureentries (
 	correct boolean
 );
 
-
 CREATE TABLE datalake.kompass_entities (
     id UUID PRIMARY KEY,
     name text,
@@ -554,4 +569,12 @@ CREATE TABLE datalake.versiondiff (
     properties text,
     relations text,
     PRIMARY KEY ((oldversion, newversion), id)
+);
+
+CREATE TABLE datalake.graphs (
+    id uuid PRIMARY KEY,
+    graphtype text,
+    nodes list<uuid>,
+    nodenames list<text>,
+    size int
 );

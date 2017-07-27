@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.deduplication
 
 import com.datastax.spark.connector._
@@ -96,7 +112,7 @@ object Deduplication extends SparkJob {
 
 	/**
 	  * Finds the duplicates of each block by comparing the Subjects and filtering all Subjects pairs below the
-	  * threshold {@confidence}.
+	  * threshold confidence.
 	  * @param blocks RDD of BLocks containing the Subjects that are compared
 	  * @return tuple of Subjects with their score, which is greater or equal the given threshold.
 	  */
