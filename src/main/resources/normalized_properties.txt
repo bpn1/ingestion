@@ -18,7 +18,7 @@ id_wikimeda_commons
 id_geonames
 id_viaf
 id_lccn
-id_umsatzsteuer
+id_tax
 sm_youtube
 sm_googleplus
 sm_xing
