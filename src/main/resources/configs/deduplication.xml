@@ -2,9 +2,9 @@
 <config>
     <settings>
         <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
-        <subjectTable>subject</subjectTable>
+        <subjectTable>subject_implisense</subjectTable>
         <keyspaceStagingTable>datalake</keyspaceStagingTable>
-        <stagingTable>subject_temp</stagingTable>
+        <stagingTable>subject_kompass</stagingTable>
         <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>
         <duplicatesTable>duplicates</duplicatesTable>
         <keyspaceVersionTable>datalake</keyspaceVersionTable>

@@ -69,8 +69,8 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[DBpediaEntity](inputKeyspace, inputTable)
-		List(wikidata).toAnyRDD()
+		val dbpedia = sc.cassandraTable[DBpediaEntity](inputKeyspace, inputTable)
+		List(dbpedia).toAnyRDD()
 	}
 	// $COVERAGE-ON$
 
