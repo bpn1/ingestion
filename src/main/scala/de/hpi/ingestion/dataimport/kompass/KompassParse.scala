@@ -48,6 +48,7 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 	)
 
 	// $COVERAGE-OFF$
+
 	/**
 	  * Loads JSON from the HDFS.
 	  * @param sc Spark Context used to load the RDDs
@@ -71,7 +72,9 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 			.head
 			.saveToCassandra(keyspace, outputTablename)
 	}
+
 	// $COVERAGE-ON$
+
 	/**
 	  * Extracts data from the input json and maps them to a Kompass entity.
 	  * @param json JSON-Object containing the data
