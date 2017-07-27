@@ -4,22 +4,22 @@ import de.hpi.ingestion.implicits.RegexImplicits._
 import de.hpi.ingestion.dataimport.SharedNormalizations
 
 object KompassNormalizationStrategy extends Serializable {
-	/*def kgMatch(value: String): List[String] = {
+	def kgMatch(value: String): List[String] = {
 		val patternCoKg = "& Co\\. KG".r
 		if (patternCoKg.findFirstIn(value).isDefined) List("GmbH & Co. KG") else List("GmbH")
 	}
 
 	def normalizeLegalForm(values: List[String]): List[String] = {
 		SharedNormalizations.normalizeLegalForm(values).flatMap {
-			case r"""(?i)(.* \((OHG)${value}\))""" => List(value)
-			case r"""(?i)(.*gesellschaft.*haftungsbeschränkt(.*)${value})""" => kgMatch(value)
-			case r"""(?i)(.*gesellschaft.*mbh(.*)${value})""" => kgMatch(value)
-			case r"""(?i)(.*gesellschaft.*mit beschränkter haftung(.*)${value})""" => kgMatch(value)
+			case r""".*?\((.{0,4})${value}\)""" => List(value)
+			case r"""(?i).*?gesellschaft.*?haftungsbeschränkt(.*?)${value}""" => kgMatch(value)
+			case r"""(?i).*gesellschaft.*mbh(.*)${value}""" => kgMatch(value)
+			case r"""(?i).*gesellschaft.*mit beschränkter haftung(.*)${value}""" => kgMatch(value)
 			case r""".*GbR.*""" => List("GbR")
-			case r"""(i?)(.*ohg.*)""" => List("OHG")
+			case r"""(?i).*ohg.*""" => List("OHG")
 			case value => List(value)
-		}//.distinct
-	}*/
+		}.distinct
+	}
 
 	def normalizeCapital(values: List[String]): List[String] = {
 		values.flatMap {
@@ -50,7 +50,7 @@ object KompassNormalizationStrategy extends Serializable {
 
 	def apply(attribute: String): (List[String]) => List[String] = {
 		attribute match {
-			//case "gen_legal_form" => normalizeLegalForm
+			case "gen_legal_form" => normalizeLegalForm
 			case "gen_capital" => normalizeCapital
 			case "gen_turnover" => normalizeTurnover
 			case "gen_employees" => normalizeEmployees
