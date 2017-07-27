@@ -2,7 +2,7 @@
 <config>
     <settings>
         <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
-        <subjectTable>subject_implisense</subjectTable>
+        <subjectTable>subject</subjectTable>
         <keyspaceStagingTable>datalake</keyspaceStagingTable>
         <stagingTable>subject_wikidata</stagingTable>
         <keyspaceDuplicatesTable>datalake</keyspaceDuplicatesTable>

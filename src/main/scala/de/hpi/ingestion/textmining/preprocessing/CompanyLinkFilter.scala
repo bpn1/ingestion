@@ -39,10 +39,10 @@ object CompanyLinkFilter extends SparkJob {
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = List(sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable")))
-		val pages = List(sc.cassandraTable[Page](settings("keyspace"), settings("pageTable")))
-		val articles = List(sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable")))
-		wikidata.toAnyRDD() ++ pages.toAnyRDD() ++ articles.toAnyRDD()
+		val wikidata = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
+		val pages = sc.cassandraTable[Page](settings("keyspace"), settings("pageTable"))
+		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+		List(wikidata).toAnyRDD() ++ List(pages).toAnyRDD() ++ List(articles).toAnyRDD()
 	}
 
 	/**
@@ -109,8 +109,8 @@ object CompanyLinkFilter extends SparkJob {
 		val articles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
 
 		val companyPages = extractCompanyPages(wikidata)
-		val companyAliases = extractCompanyAliases(pages, companyPages)
-		val aliasBroadcast = sc.broadcast(companyAliases.collect.toSet)
+		val companyAliases = extractCompanyAliases(pages, companyPages).collect.toSet
+		val aliasBroadcast = sc.broadcast(companyAliases)
 
 		val filteredArticles = articles.mapPartitions({ rdd =>
 			val localCompAliases = aliasBroadcast.value
