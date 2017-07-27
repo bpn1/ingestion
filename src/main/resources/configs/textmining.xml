@@ -28,7 +28,10 @@
         <numberArticlePartitions>10</numberArticlePartitions>
         <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
         <tfidfTable>articletfidf</tfidfTable>
+        <classifierModel>wikipedia_tuned_df_randomforest_1499086701630</classifierModel>
+        <NELTable>spiegel</NELTable>
         <articleCountTable>wikipediaarticlecount</articleCountTable>
         <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
+        <companyFeatureEntries>featureentries_testing2</companyFeatureEntries>
     </settings>
 </config>
