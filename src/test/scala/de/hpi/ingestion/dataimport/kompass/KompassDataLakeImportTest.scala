@@ -14,21 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.dataimport.wikidata.models
+package de.hpi.ingestion.dataimport.kompass
 
 import org.scalatest.{FlatSpec, Matchers}
+import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
-class WikidataEntityTest extends FlatSpec with Matchers {
-	"Attribute values" should "be returned" in {
-		val id = "Q1"
-		val name = "name"
-		val aliasList = List("alias")
-		val sub1 = WikidataEntity(id = id, label = Option(name), aliases = aliasList)
-		sub1.get("id") shouldBe List(id)
-		sub1.get("label") shouldEqual List(name)
-		sub1.get("description") shouldBe empty
-		sub1.get("aliases") shouldEqual aliasList
-		sub1.get("data") shouldBe empty
-		sub1.get("category") shouldBe empty
+class KompassDataLakeImportTest extends FlatSpec with Matchers with SharedSparkContext {
+	"extractAddress" should "extract and normalize street, postal, city and country from the address" in {
+		val addresses = TestData.unnormalizedAddresses
+		val normalizedAddresses = addresses.map(KompassDataLakeImport.extractAddress)
+		val expected = TestData.normalizedAddresses
+		normalizedAddresses shouldEqual expected
 	}
 }

@@ -18,7 +18,6 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import de.hpi.ingestion.implicits.RegexImplicits._
 import de.hpi.ingestion.dataimport.{CountryISO3166Mapping, SharedNormalizations}
-import de.hpi.ingestion.dataimport.SharedNormalizations
 
 /**
   * Strategies for the normalization of DBpedia entities

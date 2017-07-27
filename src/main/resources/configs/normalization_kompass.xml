@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <normalization>
+        <attributeMapping>
+            <attribute>
+                <key>gen_ceo</key>
+                <mapping>executives</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_sectors</key>
+                <mapping>specified_sector</mapping>
+                <mapping>sector</mapping>
+            </attribute>
+            <attribute>
+                <key>geo_district</key>
+                <mapping>district</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_activities</key>
+                <mapping>activities</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_employees</key>
+                <mapping>employees</mapping>
+            </attribute>
+            <attribute>
+                <key>geo_county</key>
+                <mapping>county</mapping>
+            </attribute>
+            <attribute>
+                <key>id_kompass</key>
+                <mapping>url</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_fax</key>
+                <mapping>Fax</mapping>
+            </attribute>
+            <attribute>
+                <key>geo_city</key>
+                <mapping>city</mapping>
+            </attribute>
+            <attribute>
+                <key>date_founding</key>
+                <mapping>Gründungsjahr</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_urls</key>
+                <mapping>Webseite</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_legal_form</key>
+                <mapping>Rechtliche Hinweise</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_turnover</key>
+                <mapping>turnover</mapping>
+            </attribute>
+            <attribute>
+                <key>gen_capital</key>
+                <mapping>Kapital</mapping>
+            </attribute>
+            <attribute>
+                <key>id_tax</key>
+                <mapping>MwSt.</mapping>
+                <mapping>Handelsregister</mapping>
+            </attribute>
+        </attributeMapping>
+    </normalization>
+    <categorization>
+        <category>
+            <key>Bauwesen</key>
+            <mapping>F</mapping>
+            <mapping>F41</mapping>
+            <mapping>F41.2</mapping>
+            <mapping>F41.20</mapping>
+        </category>
+        <category>
+            <key>Business-Service</key>
+            <mapping>M</mapping>
+            <mapping>M70</mapping>
+            <mapping>M70.1</mapping>
+            <mapping>M70.10</mapping>
+            <mapping>M70.10.1</mapping>
+            <mapping>M70.22</mapping>
+        </category>
+        <category>
+            <key>IT, Internet, Forschung  &amp; Entwicklung</key>
+            <mapping>M</mapping>
+            <mapping>M72</mapping>
+        </category>
+        <category>
+            <key>Transport &amp; Logistik</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Metalle, Maschinen &amp; Ingenieurwesen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Landwirtschaft &amp; Nahrungsmittel</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Papier, Druck, Verlagswesen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Chemikalien, Arzneimittel &amp; Kunststoffe</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Einzelhandel &amp; Handel</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Freizeit &amp; Tourismus</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Mineralien</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Erziehung, Ausbildung &amp; Organisationen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Textilien, Bekleidung, Leder, Uhren, Schmuck</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Energie, Umwelt</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Elektrik, Elektronik &amp; Optik</key>
+            <mapping></mapping>
+        </category>
+        <category>                                      // specified
+            <key>Unternehmensdienstleistungen</key>
+            <mapping>N</mapping>
+            <mapping>N82</mapping>
+            <mapping>N82.9</mapping>
+        </category>
+        <category>
+            <key>Baugewerbe</key>
+            <mapping>F</mapping>
+        </category>
+        <category>
+            <key>Transportwesen und Logistik</key>
+            <mapping>H</mapping>
+            <mapping>H52</mapping>
+            <mapping>H52.1</mapping>
+        </category>
+        <category>
+            <key>Technische Büros, Beratende Ingenieure und Architekten</key>
+            <mapping>K</mapping>
+            <mapping>K71</mapping>
+            <mapping>K71.1</mapping>
+        </category>
+        <category>
+            <key>Informationstechnologie (IT) und Internet</key>
+            <mapping>J</mapping>
+            <mapping>J62</mapping>
+        </category>
+        <category>
+            <key>Industrielle Zulieferer</key>
+            <mapping>H</mapping>
+        </category>
+        <category>
+            <key>Handelsfirmen, Kaufhäuser und Einzelhandelsgeschäfte</key>
+            <mapping>G</mapping>
+            <mapping>G47</mapping>
+        </category>
+        <category>
+            <key>Nahrungsmittel</key>
+            <mapping>C</mapping>
+            <mapping>C10</mapping>
+        </category>
+        <category>
+            <key>Transportmittel</key>
+            <mapping>G</mapping>
+            <mapping>G45</mapping>
+        </category>
+        <category>
+            <key>Druck und Verlagswesen</key>
+            <mapping>C</mapping>
+            <mapping>C18</mapping>
+        </category>
+        <category>
+            <key>Glas, Zement und Keramik</key>
+            <mapping>C</mapping>
+            <mapping>C23</mapping>
+        </category>
+        <category>
+            <key>Tiefbau und Wasserbau</key>
+            <mapping>F</mapping>
+            <mapping>F42</mapping>
+            <mapping>F42.9</mapping>
+            <mapping>F42.91</mapping>
+            <mapping>F42.91.0</mapping>
+        </category>
+        <category>
+            <key>Finanzwesen und Versicherungswesen</key>
+            <mapping>K</mapping>
+        </category>
+        <category>
+            <key>Fördermittel und Lagereinrichtungen</key>
+            <mapping>C</mapping>
+            <mapping>C28</mapping>
+            <mapping>C28.22</mapping>
+            <mapping>C28.22.0</mapping>
+            <mapping>H</mapping>
+            <mapping>H52</mapping>
+            <mapping>H52.1</mapping>
+        </category>
+        <category>
+            <key>Gesundheit, Pharmazeutika und Medikamente</key>
+            <mapping>C</mapping>
+            <mapping>C21</mapping>
+            <mapping>Q</mapping>
+            <mapping>Q86</mapping>
+        </category>
+        <category>
+            <key>Umweltdienste, erneuerbare Energien</key>
+            <mapping>E</mapping>
+            <mapping>E39</mapping>
+            <mapping>E39.0</mapping>
+            <mapping>E39.00</mapping>
+            <mapping>E39.00.0</mapping>
+        </category>
+        <category>
+            <key>Gastgewerbe, Tourismus, Hotelgewerbe und Catering</key>
+            <mapping>I</mapping>
+            <mapping>I55</mapping>
+            <mapping>I55.1</mapping>
+        </category>
+        <category>
+            <key>Motoren und mechanische Teile</key>
+            <mapping>C</mapping>
+            <mapping>C27</mapping>
+            <mapping>C27.1</mapping>
+            <mapping>C28</mapping>
+            <mapping>C28.1</mapping>
+            <mapping>C28.11</mapping>
+        </category>
+        <category>
+            <key>Holz, Holzerzeugnisse und Maschinen und Anlagen für die Holzbearbeitung</key>
+            <mapping>C</mapping>
+            <mapping>C16</mapping>
+        </category>
+        <category>
+            <key>Maschinen und Anlagen für die Metallbearbeitung</key>
+            <mapping>C</mapping>
+            <mapping>C28</mapping>
+            <mapping>C28.4</mapping>
+            <mapping>C28.41</mapping>
+            <mapping>C28.41.0</mapping>
+        </category>
+        <category>
+            <key>Gesundheitswesen und soziale Dienstleistungen</key>
+            <mapping>Q</mapping>
+            <mapping>Q86</mapping>
+            <mapping>Q87</mapping>
+            <mapping>Q88</mapping>
+        </category>
+        <category>
+            <key>Forschung und Prüfung</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Metallgrundprodukte</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Metallkonstruktionen für die Bauindustrie</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Papier und Pappen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Erzeugnisse aus Kunststoff</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Textilien</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Landwirtschaft und Forstwirtschaft</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Bekleidung und Schuhwaren</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Möbel und Wäsche</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Maschinen und Anlagen für die Druckindustrie. Büromaschinen und Ladeneinrichtungen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Freizeit, Kultur und Unterhaltung</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Elektrotechnische und kerntechnische Ausrüstungen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Ausbildung und Fortbildung</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Hygiene und Reinigung</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Internationale Organisationen, Verwaltungen und Verbände</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Getränke</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Verpackungsanlagen, Verpackungsmaschinen und Verpackungsdienste</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Messgeräte und Prüfgeräte</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Postdienste, Telekommunikation, Rundfunk und Fernsehen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Metallwaren, Eisenwaren, Bestecke und Werkzeuge</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Maschinen und Anlagen für das Catering, die Tabakindustrie sowie die Nahrungsmittel- und Getränkeindustrie</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Energie, Brennstoffe und Wasser</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Elektronische Ausrüstungen. Ausrüstungen für die Telekommunikation</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Steinbrucherzeugnisse</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Edelsteinbearbeitung, Herstellung von Uhren und Schmuck</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Maschinen und Ausrüstungen für die Landwirtschaft und Forstwirtschaft</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Chemikalien</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Ausrüstungen für Sport und Freizeit</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Rohrleitungen, Ventile und Behälter aus Metall</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Maschinen und Anlagen für den Hoch- und Tiefbau</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Chemische Grundstoffe</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Vermietung</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Heizungsanlagen, Lüftungsanlagen, Klimaanlagen und Kühlanlagen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Sicherheitsausrüstungen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Optische, fotografische und kinematografische Ausrüstungen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Vieh und Fisch</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Kautschukwaren und Gummiwaren</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Erze und Mineralien</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Maschinen und Anlagen für die Textilindustrie, Bekleidungsindustrie, Lederindustrie und Schuhindustrie</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Leder, Felle und deren Erzeugnisse</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Anlagen und Ausrüstungen für den Bergbau und die Naturstein- und Naturwerksteinindustrie</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Maschinen und Anlagen für die Herstellung von Papier und Pappen</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Anlagen und Ausrüstungen für die chemische Industrie</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Maschinen und Anlagen für die Gummiindustrie und Kunststoffindustrie</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Maschinen und Anlagen für die Erdölindustrie und Erdgasindustrie</key>
+            <mapping></mapping>
+        </category>
+        <category>
+            <key>Bio-Produkte</key>
+            <mapping></mapping>
+        </category>
+    </categorization>
+</config>

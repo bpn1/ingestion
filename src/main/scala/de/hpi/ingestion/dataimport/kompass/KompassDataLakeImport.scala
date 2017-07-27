@@ -1,12 +1,9 @@
 /*
 Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
 http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,11 +11,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.dataimport.dbpedia
+package de.hpi.ingestion.dataimport.kompass
 
-import de.hpi.ingestion.datalake.models._
+import de.hpi.ingestion.dataimport.kompass.models.KompassEntity
+import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
-import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -26,81 +23,69 @@ import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.dataimport.SharedNormalizations
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits.RegexImplicits._
 
-/**
-  * Import-Job to import DBpedia Subjects into the staging table of the datalake.
-  */
-object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity](
-	List("dbpedia", "dbpedia_20161203"),
-	"wikidumps",
-	"dbpedia"
+object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity](
+	List("kompass", "kompass_20170206"),
+	"datalake",
+	"kompass_entities"
 ){
-	appName = "DBpediaDataLakeImport_v1.0"
-	configFile = "datalake_import_dbpedia.xml"
-	importConfigFile = "normalization_dbpedia.xml"
-	val categoryMap = Map(
-		"Broadcaster" -> "business",
-		"Company" -> "business",
-		"EducationalInstitution" -> "organization",
-		"EmployersOrganisation" -> "business",
-		"GeopoliticalOrganisation" -> "organization",
-		"GovernmentAgency" -> "business",
-		"InternationalOrganisation" -> "business",
-		"Legislature" -> "organization",
-		"MilitaryUnit" -> "organization",
-		"Non-ProfitOrganisation" -> "organization",
-		"Parliament" -> "organization",
-		"PoliticalParty" -> "organization",
-		"PublicTransitSystem" -> "business",
-		"ReligiousOrganisation" -> "organization",
-		"SambaSchool" -> "business",
-		"SportsClub" -> "business",
-		"SportsLeague" -> "business",
-		"SportsTeam" -> "business",
-		"TermOfOffice" -> "organization",
-		"TradeUnion" -> "business"
-	)
+	appName = "KompassDataLakeImport_v1.0"
+	configFile = "datalake_import_kompass.xml"
+	importConfigFile = "normalization_kompass.xml"
 
 	// $COVERAGE-OFF$
 	/**
-	  * Loads the DBpedia entities from the Cassandra.
+	  * Loads the Kompass entities from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
 	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
 	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.cassandraTable[DBpediaEntity](inputKeyspace, inputTable)
-		List(dbpedia).toAnyRDD()
+		val kompass = sc.cassandraTable[KompassEntity](inputKeyspace, inputTable)
+		List(kompass).toAnyRDD()
 	}
 	// $COVERAGE-ON$
-
-	override def filterEntities(entity: DBpediaEntity): Boolean = {
-		entity.instancetype.isDefined
-	}
 
 	override def normalizeAttribute(
 		attribute: String,
 		values: List[String],
 		strategies: Map[String, List[String]]
 	): List[String] = {
-		val normalized = DBpediaNormalizationStrategy(attribute)(values)
+		val normalized = KompassNormalizationStrategy(attribute)(values)
 		if(attribute == "gen_sectors") normalized.flatMap(x => strategies.getOrElse(x, List(x))) else normalized
 	}
 
+	def extractAddress(address: String): Map[String, List[String]] = {
+		address match {
+			case r"""(.+)${street} (\d{5})${postal} (.+)${city} Deutschland""" =>
+				Map(
+					"geo_street" -> List(street.replaceFirst("str\\.", "straße")),
+					"geo_postal" -> List(postal),
+					"geo_city" -> List(city),
+					"geo_country" -> List("DE")
+				)
+			case _ => Map()
+		}
+	}
+
 	override def translateToSubject(
-		entity: DBpediaEntity,
+		entity: KompassEntity,
 		version: Version,
 		mapping: Map[String, List[String]],
 		strategies: Map[String, List[String]],
 		classifier: AClassifier[Tag]
 	): Subject = {
-		val subject = Subject.empty(datasource = "dbpedia")
+		val subject = Subject.empty(datasource = "kompass")
 		val sm = new SubjectManager(subject, version)
 
-		sm.setName(entity.label.map(_.replaceAll("""@de \.$""", "")))
-		entity.data.get("foaf:name").foreach(aliases => sm.setAliases(aliases))
-		sm.setCategory(entity.instancetype.flatMap(categoryMap.get))
+		sm.setCategory(entity.instancetype)
 		sm.addProperties(entity.data)
+
+		val addresses = subject
+			.properties
+			.collect { case (key, value) if key == "address" => extractAddress(value.head) }
+		addresses.foreach(address => sm.addProperties(address))
 
 		val legalForm = subject.name.flatMap(extractLegalForm(_, classifier)).toList
 		val normalizedLegalForm = SharedNormalizations.normalizeLegalForm(legalForm)

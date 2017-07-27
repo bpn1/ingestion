@@ -349,6 +349,24 @@ CREATE TABLE datalake.subject_implisense (
     PRIMARY KEY ((master), id, datasource)
 );
 
+CREATE TABLE datalake.subject_kompass (
+    id uuid,
+    master uuid,
+    master_history list<frozen<version>>,
+    datasource text,
+    aliases list<text>,
+    aliases_history list<frozen<version>>,
+    category text,
+    category_history list<frozen<version>>,
+    name text,
+    name_history list<frozen<version>>,
+    properties map<text, frozen<list<text>>>,
+    properties_history map<text, frozen<list<frozen<version>>>>,
+    relations map<uuid, frozen<map<text, text>>>,
+    relations_history map<uuid, frozen<map<text, frozen<list<frozen<version>>>>>>,
+    PRIMARY KEY ((master), id, datasource)
+);
+
 CREATE TABLE datalake.version (
     version timeuuid PRIMARY KEY,
     datasources list<text>,
@@ -531,6 +549,26 @@ CREATE TABLE evaluation.featureentries (
 	staging frozen<subject>,
 	score map<text, frozen<list<double>>>,
 	correct boolean
+);
+
+CREATE TABLE datalake.kompass_entities (
+    id UUID PRIMARY KEY,
+    name text,
+    data map<text, frozen<list<text>>>
+);
+
+CREATE TABLE datalake.versiondiff (
+    oldversion timeuuid,
+    newversion timeuuid,
+    id uuid,
+    aliases text,
+    category text,
+    datasource text,
+    master text,
+    name text,
+    properties text,
+    relations text,
+    PRIMARY KEY ((oldversion, newversion), id)
 );
 
 CREATE TABLE datalake.graphs (

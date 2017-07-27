@@ -83,7 +83,6 @@ object DBpediaRelationParser extends SparkJob {
 	  * @param args  arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(dbpedia, labels) = input.fromAnyRDD[String]()
 		val prefixes = getPrefixesFromFile()
