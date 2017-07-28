@@ -172,6 +172,33 @@ CREATE TABLE wikidumps.redirects (
 	page text
 );
 
+CREATE TABLE wikidumps.dbpediarelations (
+	subjectentity text,
+	relationtype text,
+	objectentity text,
+	PRIMARY KEY (subjectentity, relationtype, objectentity)
+);
+
+CREATE TABLE wikidumps.relationpredictions (
+	subjectentity text,
+	relationtype text,
+	objectentity text,
+	dbpedia boolean,
+	sentences frozen<list<sentence>>,
+	count int,
+	normalizedcount double,
+	PRIMARY KEY (subjectentity, relationtype, objectentity)
+);
+
+CREATE TYPE wikidumps.sentence (
+   articletitle text,
+   articleoffset int,
+   text text,
+   entities frozen<list<frozen<entitylink>>>,
+   bagofwords frozen<list<text>>,
+   PRIMARY KEY (articletitle, articleoffset)
+);
+
 CREATE TABLE wikidumps.wikipediaarticlecount (
     countedtable text PRIMARY KEY,
     count bigint
@@ -221,6 +248,16 @@ CREATE TYPE wikidumps.extendedlink (
     alias text,
     page map<text, int>,
     offset int
+);
+
+CREATE TABLE wikidumps.relationclassifierstats (
+    id timeuuid PRIMARY KEY,
+    rel text,
+    sentenceswithrelation int,
+    sentenceswithnorelation int,
+    average precisionrecalldatatuple,
+    data list<frozen<precisionrecalldatatuple>>,
+    comment text
 );
 
 

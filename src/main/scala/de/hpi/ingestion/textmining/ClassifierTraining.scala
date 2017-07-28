@@ -24,6 +24,7 @@ import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
@@ -103,6 +104,42 @@ object ClassifierTraining extends SparkJob {
 			.setMaxDepth(maxDepth)
 			.setThresholds(thresholds)
 			.setFeatureSubsetStrategy("auto")
+	}
+
+	/**
+	  * Sets the parameters for a Logistic Regression classifier.
+	  * @return Logistic Regression classifier with set parameters
+	  */
+	def weightedLogisticRegressionDFModel(): LogisticRegression = {
+		new LogisticRegression()
+			.setWeightCol("classWeightCol")
+			.setLabelCol("indexedLabel")
+			.setFeaturesCol("features")
+	}
+
+	/**
+	  * Trains a Logistic Regression classifier with the given data and parameters.
+	  * @param training training data
+	  * @param classifier Logistic Regression classifier with set parameters
+	  * @return trained Pipeline Model
+	  */
+	def trainWeightedLogisticRegressionDF(
+		training: Dataset[Row],
+		classifier: LogisticRegression
+	): PipelineModel = {
+		val labelIndexer = new StringIndexer()
+			.setInputCol("label")
+			.setOutputCol("indexedLabel")
+			.fit(training)
+
+		val labelConverter = new IndexToString()
+			.setInputCol("prediction")
+			.setOutputCol("predictedLabel")
+			.setLabels(labelIndexer.labels)
+
+		val pipeline = new Pipeline()
+			.setStages(Array(labelIndexer, classifier, labelConverter))
+		pipeline.fit(training)
 	}
 
 	/**
