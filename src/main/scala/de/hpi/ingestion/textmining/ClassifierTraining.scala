@@ -323,10 +323,6 @@ object ClassifierTraining extends SparkJob {
 
 	/**
 	  * Partitions the entries to train and test a Classification model.
-<<<<<<< HEAD
-=======
-	  * Example code: https://spark.apache.org/docs/latest/ml-classification-regression.html#random-forest-classifier
->>>>>>> master
 	  *
 	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
