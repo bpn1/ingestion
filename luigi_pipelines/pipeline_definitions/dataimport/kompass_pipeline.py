@@ -36,5 +36,5 @@ task_definitions = [TaskDefinition("KompassParse", [implisense_last_task], packa
 
 class KompassPipeline(AbstractPipeline):
     name = "Kompass Pipeline"
-    package = "de.hpi.ingestion.dataimport.kompass"
+    package = default_package
     task_definitions = task_definitions

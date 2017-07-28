@@ -30,5 +30,5 @@ task_definitions = [TaskDefinition("ImplisenseParser", package=default_package),
 
 class ImplisensePipeline(AbstractPipeline):
     name = "Implisense Pipeline"
-    package = "de.hpi.ingestion.dataimport.implisense"
+    package = default_package
     task_definitions = task_definitions

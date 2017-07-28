@@ -18,5 +18,3 @@ import pipeline_definitions.dataimport.implisense_pipeline
 import pipeline_definitions.dataimport.wikidata_pipeline
 import pipeline_definitions.dataimport.dbpedia_pipeline
 import pipeline_definitions.dataimport.kompass_pipeline
-import pipeline_definitions.dataimport.wikipedia_pipeline
-import pipeline_definitions.dataimport.spiegel_pipeline

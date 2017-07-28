@@ -39,5 +39,5 @@ task_definitions = [TaskDefinition("WikidataImport", [implisense_last_task], pac
 
 class WikidataPipeline(AbstractPipeline):
     name = "Wikidata Pipeline"
-    package = "de.hpi.ingestion.dataimport.wikidata"
+    package = default_package
     task_definitions = task_definitions

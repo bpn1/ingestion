@@ -14,5 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import pipeline_definitions.textmining_pipeline
+import pipeline_definitions.structured_data_import_pipeline
+import pipeline_definitions.text_mining_pipeline
 import pipeline_definitions.dataimport
