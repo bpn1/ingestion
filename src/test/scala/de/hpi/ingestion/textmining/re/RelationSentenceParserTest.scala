@@ -27,7 +27,7 @@ class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with M
 	"Wikipedia text" should "be split into exactly these Sentences with these entities" in {
 		val parsedEntry = TestData.bigLinkExtenderParsedEntry()
 		val sentenceTokenizer = IngestionTokenizer(new SentenceTokenizer, false, false)
-		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, false)
+		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, true)
 		val sentences = RelationSentenceParser.entryToSentencesWithEntities(parsedEntry, sentenceTokenizer, tokenizer)
 		sentences shouldEqual TestData.sentenceList()
 	}

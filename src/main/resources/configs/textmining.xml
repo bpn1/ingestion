@@ -25,6 +25,7 @@
         <linkedArticlesTable>linkedarticles</linkedArticlesTable>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
+        <relClassifierStatsTable>relationclassifierstats</relClassifierStatsTable>
         <numberArticlePartitions>10</numberArticlePartitions>
         <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
         <tfidfTable>articletfidf</tfidfTable>
