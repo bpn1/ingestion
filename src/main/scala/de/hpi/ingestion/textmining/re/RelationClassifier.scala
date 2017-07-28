@@ -1,4 +1,4 @@
-package de.hpi.ingestion.textmining
+package de.hpi.ingestion.textmining.re
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
@@ -7,14 +7,14 @@ import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.ClassifierTraining._
 import de.hpi.ingestion.textmining.models.{Cooccurrence, RelationClassifierStats, Sentence}
-import org.apache.spark.{SparkContext, sql}
-import org.apache.spark.rdd.RDD
 import org.apache.spark.ml.feature.{HashingTF, IDF}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.udf
+import org.apache.spark.{SparkContext, sql}
 
 /**
-  * Parses all Sentences with entities from Wikipedia.
+  * Trains a classifier on the relations from DBpedia.
   */
 object RelationClassifier extends SparkJob {
 	appName = "Relation Classifier"
@@ -142,7 +142,7 @@ object RelationClassifier extends SparkJob {
 		segments
 			.map { case (test, trainingList) =>
 				val training = trainingList.reduce(_.union(_))
-				val model = weightedLinearRegressionDFModel()
+				val model = weightedLogisticRegressionDFModel()
 				val trained = trainWeightedLogisticRegressionDF(training, model)
 				val predictions = trained.transform(test)
 				val entitiesPredictionAndLabels  = predictions
@@ -154,6 +154,11 @@ object RelationClassifier extends SparkJob {
 			.toList
 	}
 
+	/**
+	  * Calculates the tf-idf of the bag of words using the Spark-ML lib hashing tf-idf algorithm.
+	  * @param relationsWithBagOfWords Data Frame containing the relations and their bag of words
+	  * @return Data Frame containing the relatins and the tf-idf vectors of their bag of words
+	  */
 	def calculateLabeledHashTFIDF(
 		relationsWithBagOfWords: sql.DataFrame
 	): sql.DataFrame = {
@@ -184,7 +189,7 @@ object RelationClassifier extends SparkJob {
 		val cooccurrences = input.fromAnyRDD[Cooccurrence]()(2)
 			.map(cooc => (cooc.entitylist.toSet, cooc.count))
 			.reduceByKey(_ + _)
-		var comment = "Linear Regression, aggregated, undirected, stemmed, 10 folds, minCooc 1"
+		val comment = "Linear Regression, aggregated, undirected, stemmed, 10 folds, minCooc 1"
 		val rels = Set(
 			Set("parentCompany", "owningCompany", "subsidiary", "division")
 			//, Set("successor", "predecessor")

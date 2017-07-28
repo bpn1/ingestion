@@ -31,7 +31,6 @@ import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.SparkContext
 
-
 /**
   * Trains a `RandomForestModel` with `FeatureEntries` and evaluates it in terms of precision, recall and f-score.
   */
@@ -107,16 +106,23 @@ object ClassifierTraining extends SparkJob {
 			.setFeatureSubsetStrategy("auto")
 	}
 
-	def weightedLinearRegressionDFModel(): LogisticRegression = {
+	/**
+	  * Sets the parameters for a Logistic Regression classifier.
+	  * @return Logistic Regression classifier with set parameters
+	  */
+	def weightedLogisticRegressionDFModel(): LogisticRegression = {
 		new LogisticRegression()
 			.setWeightCol("classWeightCol")
 			.setLabelCol("indexedLabel")
 			.setFeaturesCol("features")
-//			.setMaxIter(10)
-//			.setRegParam(0.3)
-//			.setElasticNetParam(0.8)
 	}
 
+	/**
+	  * Trains a Logistic Regression classifier with the given data and parameters.
+	  * @param training training data
+	  * @param classifier Logistic Regression classifier with set parameters
+	  * @return trained Pipeline Model
+	  */
 	def trainWeightedLogisticRegressionDF(
 		training: Dataset[Row],
 		classifier: LogisticRegression
