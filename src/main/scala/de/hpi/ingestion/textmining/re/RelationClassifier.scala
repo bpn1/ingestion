@@ -49,8 +49,6 @@ object RelationClassifier extends SparkJob {
 			.head
 			.saveToCassandra(settings("keyspace"), settings("relClassifierStatsTable"))
 	}
-
-
 	// $COVERAGE-ON$
 
 	/**
@@ -75,7 +73,7 @@ object RelationClassifier extends SparkJob {
 			}.distinct
 			.join(
 				sentences
-//					.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
+					.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
 					.map(sentence => Tuple2(sentence.entities.map(_.entity).toSet, sentence.bagofwords))
 			)
 			.map { case (entities, (label, bagOfWords)) => (entities, bagOfWords)}
@@ -192,7 +190,6 @@ object RelationClassifier extends SparkJob {
 		val comment = "Linear Regression, aggregated, undirected, stemmed, 10 folds, minCooc 1"
 		val rels = Set(
 			Set("parentCompany", "owningCompany", "subsidiary", "division")
-			//, Set("successor", "predecessor")
 		)
 		val stats = rels.map { rel =>
 			val minCooc = cooccurrences.filter(_._2 <= 1).map(_._1)

@@ -231,6 +231,8 @@ CREATE TABLE wikidumps.wikidata (
     wikiname text
 );
 
+
+
 -- Wikidumps.DBpedia
 CREATE TABLE wikidumps.dbpedia (
     dbpedianame text PRIMARY KEY,
