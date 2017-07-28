@@ -1,6 +1,27 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.textmining.nel
 
+import de.hpi.ingestion.textmining.ClassifierTraining
+import de.hpi.ingestion.textmining.TestData.{extendedClassifierFeatureEntries, rfModel}
 import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, _}
+import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.ml.feature.{IndexToString, StringIndexer}
+import org.apache.spark.sql.SparkSession
 
 // scalastyle:off line.size.limit
 // scalastyle:off method.length
@@ -411,8 +432,7 @@ object TestData {
 				Link("Audi AG", "Audi", Option(46)),
 				Link("Volkswagen", "Volkswagen", Option(75))
 			)),
-			("5", List(Link("Der Audio Verlag", "Der Audio Verlag", Option(15)))),
-			("6", List())
+			("5", List(Link("Der Audio Verlag", "Der Audio Verlag", Option(15))))
 		)
 	}
 
@@ -432,22 +452,29 @@ object TestData {
 			)),
 			("Toan Anh", Set(
 				Link("Van", "Van (Automobil)", Option(9)),
-				Link("Van", "Vansee", Option(9)),
-				Link("Van", "Van (Provinz)", Option(9)),
-				Link("Van", "Chevrolet", Option(9)),
-				Link("Van", "Van (Türkei)", Option(9)),
-				Link("Van", "Flughafen Ferit Melen", Option(9)),
-				Link("Van", "Tušpa", Option(9)),
-				Link("Van", "Reliant Van", Option(9)),
-				Link("Van", "Vilâyet Van", Option(9)),
-				Link("Van", "Van", Option(9)),
-				Link("Van", "Chevrolet Van", Option(9)),
-				Link("Van", "Türkisch Van", Option(9)),
-				Link("Van", "Toyota", Option(9)),
-				Link("Van", "Kastenwagen", Option(9)),
-				Link("Van", "Reliant", Option(9))
+				Link("Van", "Van (Türkei)", Option(9))
 			))
 		)
+	}
+
+	def randomForestModel(session: SparkSession): () => PipelineModel = {
+		if(rfModel.isEmpty) {
+			val featureEntries = session.sparkContext.parallelize(extendedClassifierFeatureEntries(10))
+			val training = ClassifierTraining.labeledPointDF(featureEntries, session)
+			val classifier = ClassifierTraining.randomForestDFModel(1, 2, 1)
+				.setFeaturesCol("features")
+			val labelIndexer = new StringIndexer()
+				.setInputCol("label")
+				.setOutputCol("indexedLabel")
+				.fit(training)
+			val labelConverter = new IndexToString()
+				.setInputCol("prediction")
+				.setOutputCol("predictedLabel")
+				.setLabels(labelIndexer.labels)
+			val pipeline = new Pipeline().setStages(Array(labelIndexer, classifier, labelConverter))
+			rfModel = Option(pipeline.fit(training))
+		}
+		() => rfModel.get
 	}
 }
 
