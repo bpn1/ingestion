@@ -37,7 +37,6 @@ object Commit extends SparkJob with JSONParser[Boolean] {
 		* @return List of RDDs containing the output data
 		*/
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		// TODO: parsing from args removes double quotes which are needed for parsing
 		val commitJson = args(0)
 		val subjects = input.take(1).fromAnyRDD[Subject]().head
 		val templateVersion = Version(appName, List("human"), sc, false, Option("subject"))
