@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.textmining.re
 
 import com.datastax.spark.connector._
@@ -75,10 +91,9 @@ object RelationClassifier extends SparkJob {
 				sentences
 					.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
 					.map(sentence => Tuple2(sentence.entities.map(_.entity).toSet, sentence.bagofwords))
-			)
-			.map { case (entities, (label, bagOfWords)) => (entities, bagOfWords)}
-		if (aggregated) entitiesWithBagOfWords = entitiesWithBagOfWords.reduceByKey(_ ++ _)
-		entitiesWithBagOfWords.map{ case (entities, bagsOfWords) => (1.0, bagsOfWords) }
+			).map { case (entities, (label, bagOfWords)) => (entities, bagOfWords) }
+		if(aggregated) entitiesWithBagOfWords = entitiesWithBagOfWords.reduceByKey(_ ++ _)
+		entitiesWithBagOfWords.map { case (entities, bagsOfWords) => (1.0, bagsOfWords) }
 	}
 
 	/**
@@ -99,16 +114,15 @@ object RelationClassifier extends SparkJob {
 		var entitiesWithBagOfWords = sentences.subtract(
 			relations
 				.map(rel => (Set(rel.subjectentity, rel.objectentity), rel.relationtype))
-				.collect { case (entities, relation) if rel.contains(relation) => (entities, 0.0)
-				}
+				.collect { case (entities, relation) if rel.contains(relation) => (entities, 0.0) }
 				.distinct
 				.join(sentences.map(sentence => Tuple2(sentence.entities.map(_.entity).toSet, sentence)))
-				.map { case (key, (relation, sentence)) => sentence}
-			)
-	    	.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
+				.map { case (key, (relation, sentence)) => sentence }
+		)
+			.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
 			.map(sentence => (sentence.entities.map(_.entity), sentence.bagofwords))
-		if (aggregated) entitiesWithBagOfWords = entitiesWithBagOfWords.reduceByKey(_ ++ _)
-		entitiesWithBagOfWords.map{ case (entities, bagsOfWords) => (0.0, bagsOfWords) }
+		if(aggregated) entitiesWithBagOfWords = entitiesWithBagOfWords.reduceByKey(_ ++ _)
+		entitiesWithBagOfWords.map { case (entities, bagsOfWords) => (0.0, bagsOfWords) }
 	}
 
 	/**
@@ -126,8 +140,12 @@ object RelationClassifier extends SparkJob {
 		val datasetSize = data.count
 		val balancingRatio = (datasetSize - numNegatives).toDouble / datasetSize
 		val calculateWeights = udf { d: Double =>
-			if (d == 0.0) {1 * balancingRatio}
-			else {1 * (1.0 - balancingRatio)}
+			if(d == 0.0) {
+				1 * balancingRatio
+			}
+			else {
+				1 * (1.0 - balancingRatio)
+			}
 		}
 		val weightedDataset = data.withColumn("classWeightCol", calculateWeights(data("label")))
 		val weights = (0 until numFolds).map(t => 1.0 / numFolds).toArray
@@ -143,17 +161,17 @@ object RelationClassifier extends SparkJob {
 				val model = weightedLogisticRegressionDFModel()
 				val trained = trainWeightedLogisticRegressionDF(training, model)
 				val predictions = trained.transform(test)
-				val entitiesPredictionAndLabels  = predictions
+				val entitiesPredictionAndLabels = predictions
 					.select("prediction", "indexedLabel")
 					.rdd
 					.map(x => (x(0).asInstanceOf[Double], x(1).asInstanceOf[Double]))
 				calculateStatistics(entitiesPredictionAndLabels)
-			}
-			.toList
+			}.toList
 	}
 
 	/**
 	  * Calculates the tf-idf of the bag of words using the Spark-ML lib hashing tf-idf algorithm.
+	  *
 	  * @param relationsWithBagOfWords Data Frame containing the relations and their bag of words
 	  * @return Data Frame containing the relatins and the tf-idf vectors of their bag of words
 	  */
@@ -201,14 +219,14 @@ object RelationClassifier extends SparkJob {
 				(relationsWithBagOfWords ++ noRelationsBagOfWords).toDF("label", "words")
 			)
 			val data = crossValidateWithWeights(labeledTfidf, 10)
-  				RelationClassifierStats(
-					rel = "owns",
-					sentenceswithrelation = relationsWithBagOfWords.count.toInt,
-					sentenceswithnorelation = noRelationsBagOfWords.count.toInt,
-					average = averageStatistics(data),
-					data = data,
-					comment = Option(comment)
-				)
+			RelationClassifierStats(
+				rel = "owns",
+				sentenceswithrelation = relationsWithBagOfWords.count.toInt,
+				sentenceswithnorelation = noRelationsBagOfWords.count.toInt,
+				average = averageStatistics(data),
+				data = data,
+				comment = Option(comment)
+			)
 		}.toList
 		List(sc.parallelize(stats)).toAnyRDD()
 	}
