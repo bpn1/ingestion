@@ -32,6 +32,7 @@
         <NELTable>spiegel</NELTable>
         <articleCountTable>wikipediaarticlecount</articleCountTable>
         <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
+        <featuresSampleSize>100000</featuresSampleSize>
         <companyFeatureEntries>featureentries_testing2</companyFeatureEntries>
     </settings>
 </config>
