@@ -33,7 +33,6 @@ libraryDependencies ++= Seq(
 	"com.typesafe.play" %% "play-json" % "2.4.11",
 	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4",
 	"graphframes" % "graphframes" % "0.5.0-spark2.1-s_2.11"
-
 )
 
 // exclude scala libraries from assembly jar as they are provided by the spark environment
