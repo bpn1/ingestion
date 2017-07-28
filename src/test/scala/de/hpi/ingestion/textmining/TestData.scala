@@ -2330,7 +2330,7 @@ object TestData {
 					EntityLink("Berliner", "Berlin", Option(190)),
 					EntityLink("Kreuzberg", "Berlin-Kreuzberg", Option(208))
 				),
-				List("Das", "heutige", "Postbank-Hochhaus", "früher", "Postscheckamt", "Berlin", "West", "Bln", "W", "seit", "1985", "Postgiroamt", "Berlin", "ist", "ein", "der", "am", "Halleschen", "Ufer", "40–60", "und", "der", "Großbeerenstraße", "2", "im", "Ortsteil")
+				List("das", "heutig", "postbank-hochhaus", "fruh", "postscheckam", "berli", "west", "bln", "w", "seit", "1985", "postgiroam", "berli", "ist", "ein", "der", "am", "hallesch", "ufer", "40–60", "und", "der", "grossbeerenstrass", "2", "im", "ortsteil")
 			),
 			Sentence(
 				"Postbank-Hochhaus (Berlin)",
@@ -2342,7 +2342,7 @@ object TestData {
 					EntityLink("Magdeburg", "Magdeburg", Option(273)),
 					EntityLink("Stettin", "Stettin", Option(287))
 				),
-				List("Das", "Postscheckamt", "von", "Berlin", "war", "ab", "1909", "in", "einem", "Neubau", "in", "der", "Dorotheenstraße", "29", "heute", "84", "der", "einen", "Teil", "der", "ehemaligen", "Markthalle", "IV", "integrierte", "untergebracht", "und", "war", "bis", "zum", "Ende", "des", "Zweiten", "Weltkriegs", "für", "den", "Bereich", "der", "Städte", "Berlin", "und", "zuständig")
+				List("das", "postscheckam", "von", "berli", "war", "ab", "1909", "in", "ein", "neubau", "in", "der", "dorotheenstrass", "29", "heu", "84", "der", "eine", "teil", "der", "ehemalig", "markthall", "iv", "integrier", "untergebrach", "und", "war", "bis", "zum", "end", "des", "zwei", "weltkrieg", "fur", "den", "bereich", "der", "stad", "berli", "und", "zustandig")
 			),
 			Sentence(
 				"Postbank-Hochhaus (Berlin)",
@@ -2352,7 +2352,7 @@ object TestData {
 					EntityLink("Deutsche Funkturm", "Deutsche Funkturm", Option(4)),
 					EntityLink("Deutschen Telekom AG", "Deutsche Telekom", Option(59))
 				),
-				List("Die", "DFMG", "eine", "Tochtergesellschaft", "der", "stellt", "dafür", "Standorte", "wie", "das", "Berliner", "Postbank-Hochhaus", "bereit")
+				List("die", "dfmg", "eine", "tochtergesellschaf", "der", "stell", "dafur", "standor", "wie", "das", "berli", "postbank-hochhaus", "berei")
 			)
 		)
 	}
