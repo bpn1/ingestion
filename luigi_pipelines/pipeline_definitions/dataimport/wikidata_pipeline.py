@@ -16,13 +16,25 @@ limitations under the License.
 
 from pipeline_definitions.abstract_pipeline import AbstractPipeline
 from models.task_definition import TaskDefinition
+from implisense_pipeline import ImplisensePipeline
+
+default_package = "de.hpi.ingestion.dataimport.wikidata"
 
 # https://github.com/bpn1/ingestion/wiki/Wikidata-Pipeline
-task_definitions = [TaskDefinition("WikidataImport"),
-                    TaskDefinition("TagEntities", ["WikidataImport"]),
-                    TaskDefinition("ResolveEntities", ["TagEntities"]),
-                    TaskDefinition("WikidataDataLakeImport", ["ResolveEntities"]),
-                    TaskDefinition("FindRelations", ["WikidataDataLakeImport"])]
+implisense_last_task = ImplisensePipeline.task_definitions[-1].name
+task_definitions = [TaskDefinition("WikidataImport", [implisense_last_task], package=default_package),
+                    TaskDefinition("TagEntities", ["WikidataImport"], package=default_package),
+                    TaskDefinition("ResolveEntities", ["TagEntities"], package=default_package),
+                    TaskDefinition("WikidataDataLakeImport", ["ResolveEntities"], package=default_package,
+                                   jar_attribute="companies.jar"),
+                    TaskDefinition("FindRelations", ["WikidataDataLakeImport"], package=default_package),
+
+                    TaskDefinition("WikidataDeduplication", ["FindRelations"], "Deduplication",
+                                   package="de.hpi.ingestion.deduplication"),
+                    TaskDefinition("WikidataMerging", ["WikidataDeduplication"], "Merging",
+                                   package="de.hpi.ingestion.datamerge"),
+                    TaskDefinition("WikidataMasterConnecting", ["WikidataMerging"], "MasterConnecting",
+                                   package="de.hpi.ingestion.datamerge")]
 
 
 class WikidataPipeline(AbstractPipeline):

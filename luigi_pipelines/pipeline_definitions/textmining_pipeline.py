@@ -19,7 +19,7 @@ from models.task_definition import TaskDefinition
 
 hdfs_jar = "/home/bp2016n1/jars/jenkins/ingestion_323_textmining_feature.jar"
 
-# https://docs.google.com/presentation/d/1KhNmbFrYCKe223mJjRMIJJ_CJPJX4Gk8sWdWcUwPlT4/edit?usp=sharing
+# https://github.com/bpn1/ingestion/wiki/Text-Mining
 task_definitions = [TaskDefinition("TextParser"),
                     TaskDefinition("LinkCleaner", ["TextParser"],),
                     TaskDefinition("RedirectResolver", ["LinkCleaner"]),

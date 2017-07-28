@@ -16,13 +16,27 @@ limitations under the License.
 
 from pipeline_definitions.abstract_pipeline import AbstractPipeline
 from models.task_definition import TaskDefinition
+from implisense_pipeline import ImplisensePipeline
+
+default_package = "de.hpi.ingestion.dataimport.dbpedia"
 
 # https://github.com/bpn1/ingestion/wiki/DBpedia-Pipeline
-task_definitions = [TaskDefinition("DBpediaImport"),
-                    TaskDefinition("DBpediaDataLakeImport", ["DBpediaImport"])]
+implisense_last_task = ImplisensePipeline.task_definitions[-1].name
+task_definitions = [TaskDefinition("DBpediaImport", [implisense_last_task], package=default_package),
+                    TaskDefinition("DBpediaDataLakeImport", ["DBpediaImport"], package=default_package,
+                                   jar_attribute="companies.jar"),
+                    TaskDefinition("DBpediaRelationParser", ["DBpediaDataLakeImport"], package=default_package),
+                    TaskDefinition("DBpediaRelationImport", ["DBpediaRelationParser"], package=default_package),
+
+                    TaskDefinition("DBpediaDeduplication", ["DBpediaRelationImport"], "Deduplication",
+                                   package="de.hpi.ingestion.deduplication"),
+                    TaskDefinition("DBpediaMerging", ["DBpediaDeduplication"], "Merging",
+                                   package="de.hpi.ingestion.datamerge"),
+                    TaskDefinition("DBpediaMasterConnecting", ["DBpediaMerging"], "MasterConnecting",
+                                   package="de.hpi.ingestion.datamerge")]
 
 
 class DBpediaPipeline(AbstractPipeline):
     name = "DBpedia Pipeline"
-    package = "de.hpi.ingestion.dataimport.dbpedia"
+    package = default_package
     task_definitions = task_definitions
