@@ -25,10 +25,15 @@
         <linkedArticlesTable>linkedarticles</linkedArticlesTable>
         <spiegelFile>spiegel.json</spiegelFile>
         <spiegelTable>spiegel</spiegelTable>
+        <relClassifierStatsTable>relationclassifierstats</relClassifierStatsTable>
         <numberArticlePartitions>10</numberArticlePartitions>
         <spiegelFeatureEntryTable>spiegelfeatureentries</spiegelFeatureEntryTable>
         <tfidfTable>articletfidf</tfidfTable>
+        <classifierModel>wikipedia_tuned_df_randomforest_1499086701630</classifierModel>
+        <NELTable>spiegel</NELTable>
         <articleCountTable>wikipediaarticlecount</articleCountTable>
         <DBpediaRelationTable>dbpediarelations</DBpediaRelationTable>
+        <featuresSampleSize>100000</featuresSampleSize>
+        <companyFeatureEntries>featureentries_testing2</companyFeatureEntries>
     </settings>
 </config>

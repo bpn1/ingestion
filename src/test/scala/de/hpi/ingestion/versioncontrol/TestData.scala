@@ -1,3 +1,19 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.versioncontrol
 
 import java.text.SimpleDateFormat
@@ -7,6 +23,7 @@ import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
 import play.api.libs.json.{JsValue, Json}
 import scala.io.Source
 
+// scalastyle:off line.size.limit
 object TestData {
 
 	val timeFormatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSSZZZZZ")
@@ -282,4 +299,24 @@ object TestData {
 				Map("test property" -> dataLists().head),
 				Map(UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989") -> Map("test relation" -> dataLists()(1)))))
 	}
+
+	def historyEntriesWithMaster(): List[HistoryEntry] = {
+		List(
+			HistoryEntry(
+				id = UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				master = Option((List("465b3a7a-c621-42ad-a4f2-34e229602989"), List("0bb8d6e1-998d-4a8b-8516-c68a4cb4c252")))
+			)
+		)
+	}
+
+	def subjectDiffWithMaster(): List[SubjectDiff] = {
+		val (oldV, newV) = TestData.versionsToCompare()
+		List(
+			SubjectDiff(
+				oldV, newV, UUID.fromString("465b3a7a-c621-42ad-a4f2-34e229602989"),
+				master = Option("{\"+\":[\"0bb8d6e1-998d-4a8b-8516-c68a4cb4c252\"],\"-\":[\"465b3a7a-c621-42ad-a4f2-34e229602989\"]}")
+			)
+		)
+	}
 }
+// scalastyle:on line.size.limit

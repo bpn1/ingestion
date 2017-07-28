@@ -1,7 +1,22 @@
+/*
+Copyright 2016-17, Hasso-Plattner-Institut fuer Softwaresystemtechnik GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package de.hpi.ingestion.textmining
 
-import de.hpi.ingestion.dataimport.dbpedia.models.Relation
-import de.hpi.ingestion.dataimport.wikidata.models.WikiDataEntity
+import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
@@ -18,6 +33,11 @@ import org.jsoup.nodes.{Element, TextNode}
 import scala.collection.JavaConversions._
 import scala.io.{BufferedSource, Source}
 import java.io._
+import org.apache.spark.ml.classification.RandomForestClassifier
+import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.ml.feature.{IndexToString, StringIndexer}
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import de.hpi.ingestion.textmining.preprocessing.LocalTrieBuilder
 
 // scalastyle:off number.of.methods
 // scalastyle:off line.size.limit
@@ -25,6 +45,9 @@ import java.io._
 // scalastyle:off file.size.limit
 
 object TestData {
+
+	var rfModel: Option[PipelineModel] = None
+
 	def profilerTfidfVectors(): Vector[SparseVector] = {
 		Vector(
 			Vectors.sparse(1048576, Array(243877, 626966, 787968), Array(0.0, 0.0, 0.0)),
@@ -1139,6 +1162,20 @@ object TestData {
 			FeatureEntry("Reiseziel", 225, "1377", "1377", 1.0, mfPage_1, mfCos_0828, true),
 			FeatureEntry("Reiseziel", 24, "historisches Jahr", "1377", 1.0, mfPage_1, mfCos_0828, true)
 		).sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
+	}
+
+	def featuresCsvString(): String = {
+		"article,offset,alias,entity,correct,link_score,entity_score,entity_score_rank,entity_score_dtop,entity_score_dsucc,cosine_sim,cosine_sim_rank,cosine_sim_dtop,cosine_sim_dsucc\n" +
+		"Autohersteller,9,Audi,Audi,true,0.6666666666666666,1.0,1,Infinity,Infinity,0.608944778982726,1,Infinity,Infinity\n" +
+		"Autohersteller,9,Audi,Audi,true,0.6666666666666666,1.0,1,Infinity,Infinity,0.6951672143063198,1,Infinity,Infinity\n" +
+		"Reiseziel,24,historisches Jahr,1377,true,1.0,1.0,1,Infinity,Infinity,0.828283413127963,1,Infinity,Infinity\n" +
+		"Reiseziel,225,1377,1377,true,1.0,1.0,1,Infinity,Infinity,0.828283413127963,1,Infinity,Infinity\n" +
+		"Reiseziel,546,Büdinger Wald,Audi,false,0.5,0.2,1,Infinity,Infinity,0.0,1,Infinity,Infinity\n" +
+		"Reiseziel,546,Büdinger Wald,Büdinger Wald,true,0.5,0.8,1,Infinity,Infinity,1.0,1,Infinity,Infinity\n" +
+		"Tal,13,Brachttal,Brachttal,true,1.0,1.0,1,Infinity,Infinity,0.0,1,Infinity,Infinity\n" +
+		"Tal,55,Brachttal,Brachttal,true,1.0,1.0,1,Infinity,Infinity,0.6107163643669525,1,Infinity,Infinity\n" +
+		"Tal,66,Main-Kinzig-Kreis,Main-Kinzig-Kreis,true,0.5,1.0,1,Infinity,Infinity,0.6611213869640233,1,Infinity,Infinity\n" +
+		"Tal,87,Hessen,Hessen,true,0.5,1.0,1,Infinity,Infinity,0.4531255411026077,1,Infinity,Infinity"
 	}
 
 	def featureEntriesWitSOFSet(): Set[FeatureEntry] = {
@@ -2273,6 +2310,14 @@ object TestData {
 		)
 	}
 
+	def wikiDataCompanies(): List[WikidataEntity] = {
+		List(
+			WikidataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Postbank")),
+			WikidataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Audi")),
+			WikidataEntity("Q3", instancetype = Option("comp"), wikiname = Option("VW"))
+		)
+	}
+
 	def sentenceList(): List[Sentence] = {
 		List(
 			Sentence(
@@ -2285,7 +2330,7 @@ object TestData {
 					EntityLink("Berliner", "Berlin", Option(190)),
 					EntityLink("Kreuzberg", "Berlin-Kreuzberg", Option(208))
 				),
-				List("Das", "heutige", "Postbank-Hochhaus", "früher", "Postscheckamt", "Berlin", "West", "Bln", "W", "seit", "1985", "Postgiroamt", "Berlin", "ist", "ein", "der", "am", "Halleschen", "Ufer", "40–60", "und", "der", "Großbeerenstraße", "2", "im", "Ortsteil")
+				List("das", "heutig", "postbank-hochhaus", "fruh", "postscheckam", "berli", "west", "bln", "w", "seit", "1985", "postgiroam", "berli", "ist", "ein", "der", "am", "hallesch", "ufer", "40–60", "und", "der", "grossbeerenstrass", "2", "im", "ortsteil")
 			),
 			Sentence(
 				"Postbank-Hochhaus (Berlin)",
@@ -2297,7 +2342,7 @@ object TestData {
 					EntityLink("Magdeburg", "Magdeburg", Option(273)),
 					EntityLink("Stettin", "Stettin", Option(287))
 				),
-				List("Das", "Postscheckamt", "von", "Berlin", "war", "ab", "1909", "in", "einem", "Neubau", "in", "der", "Dorotheenstraße", "29", "heute", "84", "der", "einen", "Teil", "der", "ehemaligen", "Markthalle", "IV", "integrierte", "untergebracht", "und", "war", "bis", "zum", "Ende", "des", "Zweiten", "Weltkriegs", "für", "den", "Bereich", "der", "Städte", "Berlin", "und", "zuständig")
+				List("das", "postscheckam", "von", "berli", "war", "ab", "1909", "in", "ein", "neubau", "in", "der", "dorotheenstrass", "29", "heu", "84", "der", "eine", "teil", "der", "ehemalig", "markthall", "iv", "integrier", "untergebrach", "und", "war", "bis", "zum", "end", "des", "zwei", "weltkrieg", "fur", "den", "bereich", "der", "stad", "berli", "und", "zustandig")
 			),
 			Sentence(
 				"Postbank-Hochhaus (Berlin)",
@@ -2307,7 +2352,7 @@ object TestData {
 					EntityLink("Deutsche Funkturm", "Deutsche Funkturm", Option(4)),
 					EntityLink("Deutschen Telekom AG", "Deutsche Telekom", Option(59))
 				),
-				List("Die", "DFMG", "eine", "Tochtergesellschaft", "der", "stellt", "dafür", "Standorte", "wie", "das", "Berliner", "Postbank-Hochhaus", "bereit")
+				List("die", "dfmg", "eine", "tochtergesellschaf", "der", "stell", "dafur", "standor", "wie", "das", "berli", "postbank-hochhaus", "berei")
 			)
 		)
 	}
@@ -2340,6 +2385,10 @@ object TestData {
 			Relation("Audi", "country", "Deutschland"),
 			Relation("Volkswagen", "city", "Wolfsburg")
 		)
+	}
+
+	def companySet(): Set[String] = {
+		Set("Audi", "VW")
 	}
 
 	def sentencesWithCooccurrences(): List[Sentence] = {
@@ -2476,14 +2525,14 @@ object TestData {
 			("Zwillinge", List(Link("Zwillinge", "Zwillinge", Option(0)))))
 	}
 
-	def wikidataEntities(): List[WikiDataEntity] = {
+	def wikidataEntities(): List[WikidataEntity] = {
 		List(
-			WikiDataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Page 1")),
-			WikiDataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Page 2")),
-			WikiDataEntity("Q3", instancetype = Option("comp"), wikiname = Option("Page 3")),
-			WikiDataEntity("Q4", instancetype = Option("comp")),
-			WikiDataEntity("Q5", wikiname = Option("Page 5")),
-			WikiDataEntity("Q6"))
+			WikidataEntity("Q1", instancetype = Option("comp"), wikiname = Option("Page 1")),
+			WikidataEntity("Q2", instancetype = Option("comp"), wikiname = Option("Page 2")),
+			WikidataEntity("Q3", instancetype = Option("comp"), wikiname = Option("Page 3")),
+			WikidataEntity("Q4", instancetype = Option("comp")),
+			WikidataEntity("Q5", wikiname = Option("Page 5")),
+			WikidataEntity("Q6"))
 	}
 
 	def wikidataCompanyPages(): List[String] = {
@@ -2546,20 +2595,36 @@ object TestData {
 		)
 	}
 
-	def classifierFeatureEntries(): List[FeatureEntry] = {
+	def classifierFeatureEntries(offset: Int = 0): List[FeatureEntry] = {
 		List(
-			FeatureEntry("Audi", 0, "alias1", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
-			FeatureEntry("Audi", 0, "alias2", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
-			FeatureEntry("Audi", 0, "alias3", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
-			FeatureEntry("Audi", 0, "alias4", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
-			FeatureEntry("Audi", 0, "alias5", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
-			FeatureEntry("Audi", 0, "alias6", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
-			FeatureEntry("Audi", 0, "alias7", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
+			FeatureEntry("Audi1", offset, "alias1", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
+			FeatureEntry("Audi2", offset + 1, "alias2", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
+			FeatureEntry("Audi3", offset + 2, "alias3", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry("Audi4", offset + 3, "alias4", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
+			FeatureEntry("Audi5", offset + 4, "alias5", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
+			FeatureEntry("Audi6", offset + 5, "alias6", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
+			FeatureEntry("Audi7", offset + 6, "alias7", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
 		)
 	}
 
-	def extendedClassifierFeatureEntries(n: Int): List[FeatureEntry] = {
-		(0 until n).flatMap(t => classifierFeatureEntries()).toList
+	def classifierFeatureEntriesWithGrouping(offset: Int = 0): List[FeatureEntry] = {
+		List(
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page1", 0.01, MultiFeature(0.01), MultiFeature(0.1), false),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page2", 0.3, MultiFeature(0.7), MultiFeature(0.9), true),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page3", 0.1, MultiFeature(0.2), MultiFeature(0.3), false),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page4", 0.2, MultiFeature(0.1), MultiFeature(0.2), false),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page5", 0.05, MultiFeature(0.6), MultiFeature(0.7), true),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page6", 0.03, MultiFeature(0.1), MultiFeature(0.3), false),
+			FeatureEntry(s"Audi$offset", offset, s"alias$offset", "page7", 0.2, MultiFeature(0.7), MultiFeature(0.6), true)
+		)
+	}
+
+	def extendedClassifierFeatureEntries(n: Int = 5): List[FeatureEntry] = {
+		(0 until n).flatMap(classifierFeatureEntries).toList
+	}
+
+	def extendedClassifierFeatureEntriesWithGrouping(n: Int = 5): List[FeatureEntry] = {
+		(0 until n).flatMap(classifierFeatureEntriesWithGrouping).toList
 	}
 
 	def labeledPredictions(): List[(Double, Double)] = {
@@ -2588,10 +2653,6 @@ object TestData {
 		PrecisionRecallDataTuple(1.0, 5.0 / 7.0, 5.0 / 6.0, 25.0 / 34.0)
 	}
 
-	def badPredictionStatistics(): PrecisionRecallDataTuple = {
-		PrecisionRecallDataTuple(1.0, 0.0, 0.0, 0.0)
-	}
-
 	def statisticTuples(): List[PrecisionRecallDataTuple] = {
 		List(
 			PrecisionRecallDataTuple(1.0, 0.4, 1.0, 1.0),
@@ -2606,31 +2667,16 @@ object TestData {
 	}
 
 	def simMeasureStats(): SimilarityMeasureStats = {
-		SimilarityMeasureStats(null, List(averagedStatisticTuples()), Option("Test comment"))
-	}
-
-	def randomForestModel(prediction: Double = 0.0): RandomForestModel = {
-		val node = new Node(0, new Predict(prediction, 1.0), 0.0, true, None, None, None, None)
-		val dtmodel = new DecisionTreeModel(node, Algo.Classification)
-		new RandomForestModel(Algo.Classification, Array(dtmodel))
-	}
-
-	def hdfsRandomForestModel(prediction: Double = 0.0)(sc: SparkContext) = {
-		randomForestModel(prediction)
+		SimilarityMeasureStats(null, List(PrecisionRecallDataTuple(1.0, 1.0, 1.0, 1.0)))
 	}
 
 	def crossValidationMethod(
-		data: RDD[LabeledPoint],
+		data: RDD[FeatureEntry],
 		numFolds: Int = 3,
-		numTrees: Int = 5,
-		maxDepth: Int = 4,
-		maxBins: Int = 32
-	): (SimilarityMeasureStats, Option[RandomForestModel]) = {
-		(simMeasureStats(), Option(randomForestModel()))
-	}
-
-	def loadRandomForestModel(sc: SparkContext): RandomForestModel = {
-		randomForestModel()
+		classifier: RandomForestClassifier,
+		session: SparkSession
+	): (SimilarityMeasureStats, Option[PipelineModel]) = {
+		(simMeasureStats(), None)
 	}
 
 	def formattedPredictionStatistics(): String = {
@@ -2760,6 +2806,82 @@ object TestData {
 					Link("Brachttal", "Brachttal", Option(13), Map("audi" -> 1, "historisch" -> 1, "jahr" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)),
 					Link("historisches Jahr", "1377", Option(24), Map("audi" -> 1, "brachttal" -> 1, "hess" -> 2, "main-kinzig-kreis" -> 1, "buding" -> 1, "wald" -> 1, "backfisch" -> 1, "nochmal" -> 1)))
 			))
+	}
+
+	def articlesWithoutTrieAliases(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				title = "1",
+				text = Option("Dieser Artikel schreibt über Audi.")
+			),
+			ParsedWikipediaEntry(
+				title = "2",
+				text = Option("Die Audi AG ist ein Tochterunternehmen der Volkswagen AG.")
+			),
+			ParsedWikipediaEntry(
+				title = "3",
+				text = Option("Die Volkswagen Aktiengesellschaft ist nicht sehr umweltfreundlich."),
+				textlinks = List(Link("Volkswagen", "Volkswagen", Option(4)))
+			),
+			ParsedWikipediaEntry(
+				title = "4",
+				text = Option("Dieser Satz enthält Audi. Dieser Satz enthält Audi AG. Dieser Satz enthält Volkswagen.")
+			)
+		)
+	}
+
+	def articlesWithTrieAliases(): List[ParsedWikipediaEntry] = {
+		List(
+			ParsedWikipediaEntry(
+				title = "1",
+				text = Option("Dieser Artikel schreibt über Audi."),
+				triealiases = List(TrieAlias("Audi", Option(29))),
+				foundaliases = List("Audi", ".")
+			),
+			ParsedWikipediaEntry(
+				title = "2",
+				text = Option("Die Audi AG ist ein Tochterunternehmen der Volkswagen AG."),
+				triealiases = List(
+					TrieAlias("Audi AG", Option(4)),
+					TrieAlias("Volkswagen AG", Option(43))
+				),
+				foundaliases = List("Audi", "Audi AG", "AG", "Volkswagen", "Volkswagen AG", "AG", ".")
+			),
+			ParsedWikipediaEntry(
+				title = "3",
+				text = Option("Die Volkswagen Aktiengesellschaft ist nicht sehr umweltfreundlich."),
+				foundaliases = List("Volkswagen", "."),
+				textlinks = List(Link("Volkswagen", "Volkswagen", Option(4)))
+			),
+			ParsedWikipediaEntry(
+				title = "4",
+				text = Option("Dieser Satz enthält Audi. Dieser Satz enthält Audi AG. Dieser Satz enthält Volkswagen."),
+				triealiases = List(
+					TrieAlias("Audi", Option(20)),
+					TrieAlias("Audi AG", Option(46)),
+					TrieAlias("Volkswagen", Option(75))
+				),
+				foundaliases = List("Audi", ".", "Audi", "Audi AG", "AG", ".", "Volkswagen", ".")
+			)
+		)
+	}
+
+	def predictionData(): List[(Double, Double, String)] = {
+		List(
+			(1.0, 0.0, "p"),
+			(1.0, 1.0, "p"),
+			(0.0, 0.0, "n"),
+			(0.0, 1.0, "n")
+		)
+	}
+
+	def predictionKeys(): List[String] = {
+		List(
+			"fp",
+			"tp",
+			"tn",
+			"fn"
+		)
 	}
 }
 
