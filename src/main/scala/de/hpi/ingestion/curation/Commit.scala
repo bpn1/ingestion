@@ -56,7 +56,7 @@ object Commit extends SparkJob with JSONParser[Boolean] {
 			updated.map(subJson => UUID.fromString(extractString(subJson, List("master")).get)).toList
 
 		val updatedMasterSubjects =
-			subjects.filter(subject => updatedMasterIds.contains(subject.master) && subject.datasource == "dbpedia")
+			subjects.filter(subject => updatedMasterIds.contains(subject.master) && subject.datasource == "master")
 
 		val updatedSubjects = updated
 			.map(sub => (updatedMasterSubjects.filter(subject =>
@@ -107,9 +107,10 @@ object Commit extends SparkJob with JSONParser[Boolean] {
 		sm.setCategory(extractString(json, List("category")))
 		sm.setProperties(extractMap(json, List("properties")).map{case (key, value) => (key, value.as[List[String]])})
 
-		val relations: Map[UUID, Map[String, String]] = extractMap(json, List("realtions"))
+		val relations: Map[UUID, Map[String, String]] = extractMap(json, List("relations"))
 			.map{ case (relationId, relationsJson) =>
 				UUID.fromString(relationId) -> relationsJson.as[Map[String, String]]
+			 // TODO handle case when score is null, fails otherwise
 			}
 
 		sm.setRelations(relations)
@@ -140,10 +141,11 @@ object Commit extends SparkJob with JSONParser[Boolean] {
 		val category: Option[String] = extractString(json, List("category"))
 		val properties: Map[String, List[String]] =
 			extractMap(json, List("properties")).map{case (key, value) => (key, value.as[List[String]])}
-		val relations: Map[UUID, Map[String, String]] = extractMap(json, List("realtions"))
+		val relations: Map[UUID, Map[String, String]] = extractMap(json, List("relations"))
 			.map{ case (relationId, relationsJson) =>
 				UUID.fromString(relationId) -> relationsJson.as[Map[String, String]]
-			}.toMap[UUID, Map[String, String]]
+			// TODO handle case when score is null, fails otherwise
+			}
 
 		sm.setMaster(oldSubject.master)
 
