@@ -72,6 +72,7 @@ object RelationSentenceParser extends SparkJob {
 	  * and recalculating relative offsets of entities.
 	  *
 	  * @param entry     Parsed Wikipedia Entry to be processed into sentences
+	  * @param sentenceTokenizer tokenizer that splits a text into sentences
 	  * @param tokenizer tokenizer to be used
 	  * @return List of Sentences with at least two entities
 	  */
@@ -179,7 +180,7 @@ object RelationSentenceParser extends SparkJob {
 
 		val companies = extractCompanyPages(wikidata).collect.toSet
 		val sentenceTokenizer = IngestionTokenizer(new SentenceTokenizer, false, false)
-		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, false)
+		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, true)
 		val sentences = articles.flatMap(entryToSentencesWithEntities(_, sentenceTokenizer, tokenizer))
 
 		val filteredSentences = filterSentences(sentences, relations, companies, sc)
