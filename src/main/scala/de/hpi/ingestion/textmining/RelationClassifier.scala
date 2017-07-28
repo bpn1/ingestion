@@ -2,16 +2,11 @@ package de.hpi.ingestion.textmining
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
-import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, RelationClassifierStats}
+import de.hpi.ingestion.deduplication.models.PrecisionRecallDataTuple
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.ClassifierTraining.{
-	averageStatistics,
-	calculateStatistics,
-	weightedLinearRegressionDFModel,
-	trainWeightedLogisticRegressionDF
-}
-import de.hpi.ingestion.textmining.models.{Cooccurrence, Sentence}
+import de.hpi.ingestion.textmining.ClassifierTraining._
+import de.hpi.ingestion.textmining.models.{Cooccurrence, RelationClassifierStats, Sentence}
 import org.apache.spark.{SparkContext, sql}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.ml.feature.{HashingTF, IDF}
@@ -77,13 +72,11 @@ object RelationClassifier extends SparkJob {
 			.map(rel => (Set(rel.subjectentity, rel.objectentity), rel.relationtype))
 			.collect {
 				case (entities, relation) if rel.contains(relation) => (entities, 1.0)
-			}
-
-	    	.distinct
+			}.distinct
 			.join(
 				sentences
 //					.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
-					.map(sentence => (sentence.entities.map(_.entity).toSet, sentence.bagofwords))
+					.map(sentence => Tuple2(sentence.entities.map(_.entity).toSet, sentence.bagofwords))
 			)
 			.map { case (entities, (label, bagOfWords)) => (entities, bagOfWords)}
 		if (aggregated) entitiesWithBagOfWords = entitiesWithBagOfWords.reduceByKey(_ ++ _)
@@ -111,10 +104,7 @@ object RelationClassifier extends SparkJob {
 				.collect { case (entities, relation) if rel.contains(relation) => (entities, 0.0)
 				}
 				.distinct
-				.join(
-					sentences
-						.map(sentence => (sentence.entities.map(_.entity).toSet, sentence))
-				)
+				.join(sentences.map(sentence => Tuple2(sentence.entities.map(_.entity).toSet, sentence)))
 				.map { case (key, (relation, sentence)) => sentence}
 			)
 	    	.filter(sentence => !blacklist.contains(sentence.entities.map(_.entity).toSet))
@@ -197,7 +187,7 @@ object RelationClassifier extends SparkJob {
 		var comment = "Linear Regression, aggregated, undirected, stemmed, 10 folds, minCooc 1"
 		val rels = Set(
 			Set("parentCompany", "owningCompany", "subsidiary", "division")
-			//			, Set("successor", "predecessor")
+			//, Set("successor", "predecessor")
 		)
 		val stats = rels.map { rel =>
 			val minCooc = cooccurrences.filter(_._2 <= 1).map(_._1)

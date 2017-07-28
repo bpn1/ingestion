@@ -2315,8 +2315,6 @@ object TestData {
 	def alternativeSentenceList(): List[Sentence] = {
 		List(
 			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9))), List("ist")),
-<<<<<<< HEAD
-=======
 			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))), List("ist")),
 			Sentence("Audi", 40, "Audi ist Deutschland.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Deutschland", "Deutschland", Some(9))), List("ist")),
 			Sentence("Audi", 60, "VW ist in Wolfsburg", List(EntityLink("VW", "VW", Some(0)), EntityLink("Wolfsburg", "Wolfsburg", Some(10))), List("ist"))
@@ -2325,7 +2323,6 @@ object TestData {
 	def alternativeSentenceListFiltered(): List[Sentence] = {
 		List(
 			Sentence("Audi", 0, "Audi ist Audi AG.", List(EntityLink("Audi", "Audi", Some(0)), EntityLink("Audi AG", "Audi", Some(9))), List("ist")),
->>>>>>> master
 			Sentence("Audi", 18, "VW ist Volkswagen AG", List(EntityLink("VW", "VW", Some(0)), EntityLink("Volkswagen AG", "VW", Some(7))), List("ist"))
 		)
 	}
