@@ -14,7 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import pipeline_definitions.dataimport.implisense_pipeline
-import pipeline_definitions.dataimport.wikidata_pipeline
-import pipeline_definitions.dataimport.dbpedia_pipeline
-import pipeline_definitions.dataimport.kompass_pipeline
+from pipeline_definitions.abstract_pipeline import AbstractPipeline
+from pipeline_definitions.dataimport import *
+
+# https://github.com/bpn1/ingestion/wiki/Structured-Data-Import
+task_definitions = ImplisensePipeline.task_definitions + WikidataPipeline.task_definitions + \
+                   DBpediaPipeline.task_definitions + KompassPipeline.task_definitions
+
+
+class StructuredDataImportPipeline(AbstractPipeline):
+    name = "StructuredDataImportPipeline"
+    package = "de.hpi.ingestion.datamerge"
+    task_definitions = task_definitions

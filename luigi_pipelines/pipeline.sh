@@ -3,7 +3,7 @@
 BASEDIR=$(dirname "$0")
 
 USAGE="Usage: pipeline.sh <pipeline name> [--force]"
-PIPELINES="Valid pipeline names are: TextminingPipeline, DBpediaPipeline, WikidataPipeline, WikipediaPipeline"
+PIPELINES="Valid pipeline names are: StructuredDataImportPipeline, TextMiningPipeline"
 if [ "$#" -lt 1 ]; then
         echo $USAGE
         echo $PIPELINES

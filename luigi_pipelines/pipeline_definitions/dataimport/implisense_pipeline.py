@@ -17,10 +17,18 @@ limitations under the License.
 from pipeline_definitions.abstract_pipeline import AbstractPipeline
 from models.task_definition import TaskDefinition
 
-task_definitions = [TaskDefinition("WikipediaImport")]
+default_package = "de.hpi.ingestion.dataimport.implisense"
+
+# https://github.com/bpn1/ingestion/wiki/Implisense-Pipeline
+task_definitions = [TaskDefinition("ImplisenseParser", package=default_package),
+                    TaskDefinition("ImplisenseDataLakeImport", ["ImplisenseParser"], package=default_package,
+                                   jar_attribute="companies.jar"),
+
+                    TaskDefinition("ImplisenseMerging", ["ImplisenseDataLakeImport"], "Merging",
+                                   package="de.hpi.ingestion.datamerge")]
 
 
-class WikipediaPipeline(AbstractPipeline):
-    name = "Wikipedia Pipeline"
-    package = "de.hpi.ingestion.dataimport.wikipedia"
+class ImplisensePipeline(AbstractPipeline):
+    name = "Implisense Pipeline"
+    package = default_package
     task_definitions = task_definitions

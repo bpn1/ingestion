@@ -18,26 +18,23 @@ from pipeline_definitions.abstract_pipeline import AbstractPipeline
 from models.task_definition import TaskDefinition
 from implisense_pipeline import ImplisensePipeline
 
-default_package = "de.hpi.ingestion.dataimport.wikidata"
+default_package = "de.hpi.ingestion.dataimport.kompass"
 
-# https://github.com/bpn1/ingestion/wiki/Wikidata-Pipeline
+# https://github.com/bpn1/ingestion/wiki/Kompass-Pipeline
 implisense_last_task = ImplisensePipeline.task_definitions[-1].name
-task_definitions = [TaskDefinition("WikidataImport", [implisense_last_task], package=default_package),
-                    TaskDefinition("TagEntities", ["WikidataImport"], package=default_package),
-                    TaskDefinition("ResolveEntities", ["TagEntities"], package=default_package),
-                    TaskDefinition("WikidataDataLakeImport", ["ResolveEntities"], package=default_package,
-                                   jar_attribute="companies.jar"),
-                    TaskDefinition("FindRelations", ["WikidataDataLakeImport"], package=default_package),
+task_definitions = [TaskDefinition("KompassParse", [implisense_last_task], package=default_package),
+                    TaskDefinition("KompassDataLakeImport", ["DBpediaImport"], jar_attribute="companies.jar",
+                                   package=default_package),
 
-                    TaskDefinition("WikidataDeduplication", ["FindRelations"], "Deduplication",
+                    TaskDefinition("KompassDeduplication", ["KompassDataLakeImport"], "Deduplication",
                                    package="de.hpi.ingestion.deduplication"),
-                    TaskDefinition("WikidataMerging", ["WikidataDeduplication"], "Merging",
+                    TaskDefinition("KompassMerging", ["KompassDeduplication"], "Merging",
                                    package="de.hpi.ingestion.datamerge"),
-                    TaskDefinition("WikidataMasterConnecting", ["WikidataMerging"], "MasterConnecting",
+                    TaskDefinition("KompassMasterConnecting", ["KompassMerging"], "MasterConnecting",
                                    package="de.hpi.ingestion.datamerge")]
 
 
-class WikidataPipeline(AbstractPipeline):
-    name = "Wikidata Pipeline"
+class KompassPipeline(AbstractPipeline):
+    name = "Kompass Pipeline"
     package = default_package
     task_definitions = task_definitions
