@@ -408,6 +408,7 @@ CREATE TABLE datalake.version (
     version timeuuid PRIMARY KEY,
     datasources list<text>,
     program text,
+    subjecttable text,
     timestamp timestamp
 );
 
