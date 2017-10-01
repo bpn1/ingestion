@@ -17,10 +17,17 @@ limitations under the License.
 package de.hpi.ingestion.dataimport.kompass
 
 import java.util.UUID
-import de.hpi.ingestion.dataimport.kompass.models.KompassEntity
 
-// scalastyle:off
+import de.hpi.ingestion.dataimport.kompass.models.KompassEntity
+import de.hpi.ingestion.datalake.models.{Subject, Version}
+import org.apache.spark.SparkContext
+
+// scalastyle:off line.size.limit
+// scalastyle:off method.length
 object TestData {
+
+	def version(sc: SparkContext): Version = Version("KompassDataLakeImport", List("dataSources"), sc, false, None)
+
 	def expectedKompassEntities: List[KompassEntity] = {
 		List(
 			KompassEntity(
@@ -80,59 +87,58 @@ object TestData {
 		)
 	}
 
-	def unnormalizedAddresses: List[String] = {
-		List(
-			"Graf-Adolf-Platz 15 40213 Düsseldorf Deutschland",
-			"ThyssenKrupp Allee 1 45143 Essen Deutschland",
-			"Altrottstr. 31 69190 Walldorf Deutschland",
-			"Am TÜV 1 30519 Hannover Deutschland",
-			"An der Universität 2 30823 Garbsen Deutschland",
-			"Äußere Spitalhofstr. 19 94036 Passau Deutschland",
-			"Nö!"
+	def kompassEntity: KompassEntity = {
+		KompassEntity(
+			name = Option("Kompass business"),
+			instancetype = Option("business"),
+			data = Map(
+				"specified_sector" -> List("Transportmittel"),
+				"city" -> List("Berlin"),
+				"MwSt." -> List("DE123456789"),
+				"url" -> List("http://de.kompass.com/c/kompass-business/"),
+				"activities" -> List("Kraftfahrzeughandel / Kfz-Handel"),
+				"Webseite" -> List("http://www.kompass-business.de"),
+				"Fax" -> List("+49 123 1337666"),
+				"Gründungsjahr" -> List("1337"),
+				"employees" -> List("Von 13 bis 37 Beschäftigte"),
+				"sector" -> List("Transport & Logistik"),
+				"Art des Unternehmens" -> List("Hauptsitz"),
+				"county" -> List("Berlin"),
+				"Rechtliche Hinweise" -> List("Gesellschaft mit beschränkter Haftung"),
+				"address" -> List("Leetstrase. 63 12345 Berlin Deutschland"),
+				"district" -> List("Mitte"),
+				"executives" -> List("Herr Max Mustermann"),
+				"turnover" -> List("10 - 25 Millionen EUR")
+			),
+			id = UUID.fromString("e8b3749c-59e5-44b9-9597-3713888c451c")
 		)
 	}
 
-	def normalizedAddresses: List[Map[String, List[String]]] = {
-		List(
-			Map(
-				"geo_street" -> List("Graf-Adolf-Platz 15"),
-				"geo_postal" -> List("40213"),
-				"geo_city" -> List("Düsseldorf"),
-				"geo_country" -> List("DE")
-			),
-			Map(
-				"geo_street" -> List("ThyssenKrupp Allee 1"),
-				"geo_postal" -> List("45143"),
-				"geo_city" -> List("Essen"),
-				"geo_country" -> List("DE")
-			),
-			Map(
-				"geo_street" -> List("Altrottstraße 31"),
-				"geo_postal" -> List("69190"),
-				"geo_city" -> List("Walldorf"),
-				"geo_country" -> List("DE")
-			),
-			Map(
-				"geo_street" -> List("Am TÜV 1"),
-				"geo_postal" -> List("30519"),
-				"geo_city" -> List("Hannover"),
-				"geo_country" -> List("DE")
-			),
-			Map(
-				"geo_street" -> List("An der Universität 2"),
-				"geo_postal" -> List("30823"),
-				"geo_city" -> List("Garbsen"),
-				"geo_country" -> List("DE")
-			),
-			Map(
-				"geo_street" -> List("Äußere Spitalhofstraße 19"),
-				"geo_postal" -> List("94036"),
-				"geo_city" -> List("Passau"),
-				"geo_country" -> List("DE")
-			),
-			Map()
+	def translatedSubject: Subject = {
+		Subject(
+			master = UUID.randomUUID(),
+			datasource = "kompass",
+			category = Option("business"),
+			properties = kompassEntity.data ++ Map(
+				"geo_city" -> List("Berlin"),
+				"id_tax" -> List("DE123456789"),
+				"id_kompass" -> List("http://de.kompass.com/c/kompass-business/"),
+				"gen_urls" -> List("http://www.kompass-business.de"),
+				"gen_phones" -> List("+49 123 1337666"),
+				"date_founding" -> List("1337"),
+				"gen_employees" -> List("13", "37"),
+				"gen_sectors" -> List("Transportmittel", "Transport & Logistik"),
+				"geo_county" -> List("Berlin"),
+				"gen_legal_form" -> List("GmbH"),
+				"geo_street" -> List("Leetstrase. 63"),
+				"geo_postal" -> List("12345"),
+				"geo_country" -> List("DE"),
+				"geo_county" -> List("Berlin", "Mitte"),
+				"gen_ceo" -> List("Herr Max Mustermann"),
+				"gen_turnover" -> List("10000000","25000000")
+			)
 		)
 	}
 }
-
-// scalastyle:on
+// scalastyle:on method.length
+// scalastyle:on line.size.limit

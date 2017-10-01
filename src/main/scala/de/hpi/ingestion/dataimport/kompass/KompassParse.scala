@@ -85,7 +85,7 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 		providedAttributes.foreach(attribute => extractedData += attribute -> List((json \ attribute).as[String]))
 		val name = getValue(json, List("name")).map(_.as[String])
 
-		val doc = Jsoup.parse((json \ "html").as[String])
+		val doc = Jsoup.parse((json \ "html").as[String].replaceAll("&nbsp;", " "))
 		attributeSelectors.foreach { case (attribute, selector) =>
 			val elem = doc.select(selector).first
 			if (elem != null) {

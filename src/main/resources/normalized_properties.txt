@@ -45,14 +45,12 @@ gen_employees
 gen_sectors
 gen_urls
 gen_phones
-gen_fax
 gen_emails
 gen_legal_form
 gen_founder
 gen_description
 gen_turnover
 gen_ceo
-gen_activities
 gen_capital
 gen_management
 gen_description
