@@ -48,11 +48,11 @@ case class WikidataEntity(
 			field.setAccessible(true)
 			attribute match {
 				case "id" => List(this.id)
+				case "aliases" => this.aliases
 				case "description" | "entititype" | "wikiname" | "enwikiname" | "instancetype" | "label" => {
 					val value = field.get(this).asInstanceOf[Option[String]]
-					value.map(List(_)).getOrElse(Nil)
+					value.toList
 				}
-				case "aliases" => field.get(this).asInstanceOf[List[String]]
 				case _ => Nil
 			}
 		} else {

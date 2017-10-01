@@ -44,7 +44,7 @@ case class DBpediaEntity(
 				case "dbpedianame" => List(this.dbpedianame)
 				case "wikipageid" | "wikidataid" | "label" | "description" | "instancetype" => {
 					val value = field.get(this).asInstanceOf[Option[String]]
-					value.map(List(_)).getOrElse(Nil)
+					value.toList
 				}
 				case _ => Nil
 			}
