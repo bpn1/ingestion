@@ -35,7 +35,7 @@ case class KompassEntity(
 			attribute match {
 				case "id" | "name" => {
 					val value = field.get(this).asInstanceOf[Option[String]]
-					value.map(List(_)).getOrElse(Nil)
+					value.toList
 				}
 				case _ => Nil
 			}
