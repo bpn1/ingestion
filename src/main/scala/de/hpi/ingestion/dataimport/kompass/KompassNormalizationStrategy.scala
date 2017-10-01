@@ -28,7 +28,7 @@ object KompassNormalizationStrategy extends Serializable {
 	  */
 	def kgMatch(value: String): List[String] = {
 		val patternCoKg = "& Co\\. KG".r
-		if (patternCoKg.findFirstIn(value).isDefined) List("GmbH & Co. KG") else List("GmbH")
+		if(patternCoKg.findFirstIn(value).isDefined) List("GmbH & Co. KG") else List("GmbH")
 	}
 
 	/**

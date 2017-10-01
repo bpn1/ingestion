@@ -52,8 +52,11 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 		values: List[String],
 		strategies: Map[String, List[String]]
 	): List[String] = {
-		val normalized = KompassNormalizationStrategy(attribute)(values)
-		if(attribute == "gen_sectors") normalized.flatMap(x => strategies.getOrElse(x, List(x))) else normalized
+		var normalized = KompassNormalizationStrategy(attribute)(values)
+		if(attribute == "gen_sectors") {
+			normalized = normalized.flatMap(x => strategies.getOrElse(x, List(x)))
+		}
+		normalized.filter(_.nonEmpty)
 	}
 
 	def extractAddress(address: String): Map[String, List[String]] = {
@@ -79,6 +82,7 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 		val subject = Subject.empty(datasource = "kompass")
 		val sm = new SubjectManager(subject, version)
 
+		sm.setName(entity.name)
 		sm.setCategory(entity.instancetype)
 		sm.addProperties(entity.data)
 
