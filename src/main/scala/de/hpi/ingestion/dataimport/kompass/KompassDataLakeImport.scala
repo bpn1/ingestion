@@ -30,9 +30,9 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 	"datalake",
 	"kompass_entities"
 ){
-	appName = "KompassDataLakeImport_v1.0"
 	configFile = "datalake_import_kompass.xml"
 	importConfigFile = "normalization_kompass.xml"
+	appName = "KompassDataLakeImport_v1.0"
 
 	// $COVERAGE-OFF$
 	/**
@@ -59,19 +59,6 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 		normalized.filter(_.nonEmpty)
 	}
 
-	def extractAddress(address: String): Map[String, List[String]] = {
-		address match {
-			case r"""(.+)${street} (\d{5})${postal} (.+)${city} Deutschland""" =>
-				Map(
-					"geo_street" -> List(street.replaceFirst("str\\.", "straße")),
-					"geo_postal" -> List(postal),
-					"geo_city" -> List(city),
-					"geo_country" -> List("DE")
-				)
-			case _ => Map()
-		}
-	}
-
 	override def translateToSubject(
 		entity: KompassEntity,
 		version: Version,
@@ -86,24 +73,12 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 		sm.setCategory(entity.instancetype)
 		sm.addProperties(entity.data)
 
-		val addresses = subject
-			.properties
-			.collect { case (key, value) if key == "address" => extractAddress(value.head) }
-		addresses.foreach(address => sm.addProperties(address))
-
 		val legalForm = subject.name.flatMap(extractLegalForm(_, classifier)).toList
 		val normalizedLegalForm = SharedNormalizations.normalizeLegalForm(legalForm)
 		sm.addProperties(Map("gen_legal_form" -> normalizedLegalForm))
 
 		val normalizedProperties = normalizeProperties(entity, mapping, strategies)
 		sm.addProperties(normalizedProperties)
-
-		if (normalizedProperties.contains("geo_coords_lat") && normalizedProperties.contains("geo_coords_long")) {
-			val coords = normalizedProperties("geo_coords_lat")
-				.zip(normalizedProperties("geo_coords_long"))
-				.map { case (lat, long) => s"$lat;$long" }
-			sm.addProperties(Map("geo_coords" -> coords))
-		}
 
 		subject
 	}

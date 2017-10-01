@@ -12,32 +12,21 @@
                 <mapping>sector</mapping>
             </attribute>
             <attribute>
-                <key>geo_district</key>
-                <mapping>district</mapping>
-            </attribute>
-            <attribute>
-                <key>gen_activities</key>
-                <mapping>activities</mapping>
-            </attribute>
-            <attribute>
                 <key>gen_employees</key>
                 <mapping>employees</mapping>
             </attribute>
             <attribute>
                 <key>geo_county</key>
                 <mapping>county</mapping>
+                <mapping>district</mapping>
             </attribute>
             <attribute>
                 <key>id_kompass</key>
                 <mapping>url</mapping>
             </attribute>
             <attribute>
-                <key>gen_fax</key>
+                <key>gen_phones</key>
                 <mapping>Fax</mapping>
-            </attribute>
-            <attribute>
-                <key>geo_city</key>
-                <mapping>city</mapping>
             </attribute>
             <attribute>
                 <key>date_founding</key>
@@ -62,7 +51,27 @@
             <attribute>
                 <key>id_tax</key>
                 <mapping>MwSt.</mapping>
+            </attribute>
+            <attribute>
+                <key>cr_ids</key>
                 <mapping>Handelsregister</mapping>
+            </attribute>
+            <attribute>
+                <key>geo_postal</key>
+                <mapping>address</mapping>
+            </attribute>
+            <attribute>
+                <key>geo_street</key>
+                <mapping>address</mapping>
+            </attribute>
+            <attribute>
+                <key>geo_city</key>
+                <mapping>city</mapping>
+                <mapping>address</mapping>
+            </attribute>
+            <attribute>
+                <key>geo_country</key>
+                <mapping>address</mapping>
             </attribute>
         </attributeMapping>
     </normalization>
