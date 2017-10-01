@@ -52,11 +52,8 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 		values: List[String],
 		strategies: Map[String, List[String]]
 	): List[String] = {
-		var normalized = KompassNormalizationStrategy(attribute)(values)
-		if(attribute == "gen_sectors") {
-			normalized = normalized.flatMap(x => strategies.getOrElse(x, List(x)))
-		}
-		normalized.filter(_.nonEmpty)
+		val normalized = KompassNormalizationStrategy(attribute)(values)
+		if(attribute == "gen_sectors") normalized.flatMap(x => strategies.getOrElse(x, List(x))) else normalized
 	}
 
 	override def translateToSubject(
