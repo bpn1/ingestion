@@ -22,7 +22,8 @@ import de.hpi.ingestion.dataimport.kompass.models.KompassEntity
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
 
-// scalastyle:off
+// scalastyle:off line.size.limit
+// scalastyle:off method.length
 object TestData {
 
 	def version(sc: SparkContext): Version = Version("KompassDataLakeImport", List("dataSources"), sc, false, None)
@@ -138,7 +139,6 @@ object TestData {
 			)
 		)
 	}
-
 }
-
-// scalastyle:on
+// scalastyle:on method.length
+// scalastyle:on line.size.limit
