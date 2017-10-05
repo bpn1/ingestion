@@ -16,7 +16,7 @@ limitations under the License.
 
 package de.hpi.ingestion.dataimport.spiegel
 
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
@@ -29,50 +29,37 @@ import de.hpi.ingestion.textmining.models.TrieAliasArticle
 /**
   * Parses the Spiegel JSON dump to Articles, parses the HTML to raw text and saves them to the Cassandra.
   */
-object SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
+class SpiegelImport extends SparkJobClass with JSONParser[TrieAliasArticle] {
 	appName = "Spiegel Import"
 	configFile = "textmining.xml"
+
+	var spiegelDump: RDD[String] = _
+	var parsedArticles: RDD[TrieAliasArticle] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads the Spiegel JSON dump from the HDFS.
-	  *
 	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val spiegel = sc.textFile(settings("spiegelFile"))
-		List(spiegel).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		spiegelDump = sc.textFile(settings("spiegelFile"))
 	}
 
 	/**
 	  * Saves the parsed Spiegel Articles to the cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[TrieAliasArticle]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("spiegelTable"))
+	override def save(sc: SparkContext): Unit = {
+		parsedArticles.saveToCassandra(settings("keyspace"), settings("spiegelTable"))
 	}
 	// $COVERAGE-ON$
 
 	/**
 	  * Parses the Spiegel JSON dump into Spiegel Articles.
-	  *
-	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val spiegelDump = input.fromAnyRDD[String]().head
-		val parsedArticles = spiegelDump.map(parseJSON)
-		List(parsedArticles).toAnyRDD()
+	override def run(sc: SparkContext): Unit = {
+		parsedArticles = spiegelDump.map(parseJSON)
 	}
 
 	/**

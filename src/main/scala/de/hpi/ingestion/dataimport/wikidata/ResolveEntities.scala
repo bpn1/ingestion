@@ -20,7 +20,7 @@ import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import scala.util.matching.Regex
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd.RDD
 
@@ -28,33 +28,28 @@ import org.apache.spark.rdd.RDD
   * Resolves the Wikidata IDs in the properties of each `WikidataEntity`. Entities labeled with an instancetype in the
   * `TagEntities` job are not resolved.
   */
-object ResolveEntities extends SparkJob {
+class ResolveEntities extends SparkJobClass {
 	appName = "ResolveEntities"
 	configFile = "wikidata_import.xml"
+
+	var wikidataEntities: RDD[WikidataEntity] = _
+	var resolvedIds: RDD[(String, Map[String, List[String]])] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads the Wikidata entities from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
-		List(wikidata).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		wikidataEntities = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
 	}
 
 	/**
 	  * Saves the Wikidata entities with resolved ids to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[(String, Map[String, List[String]])]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("wikidataTable"), SomeColumns("id", "data"))
+	override def save(sc: SparkContext): Unit = {
+		resolvedIds.saveToCassandra(settings("keyspace"), settings("wikidataTable"), SomeColumns("id", "data"))
 	}
 	// $COVERAGE-ON$
 
@@ -186,21 +181,18 @@ object ResolveEntities extends SparkJob {
 
 	/**
 	  * Resolves the Wikidata id of untagged entities in the properties of every Wikidata Entity.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val wikidata = input.fromAnyRDD[WikidataEntity]().head
+	override def run(sc: SparkContext): Unit = {
 
-		val entityData = wikidata.flatMap(flattenWikidataEntity).cache
+		val entityData = wikidataEntities.flatMap(flattenWikidataEntity).cache
 		val noIdData = entityData.filter(!containsWikidataIdValue(_))
 		val noEntityData = noIdData.filter(!hasUnitValue(_))
 		val unitData = noIdData
 			.filter(hasUnitValue)
 			.map(splitUnitValue)
-		val resolvableNames = wikidata
+		val resolvableNames = wikidataEntities
 			.filter(shouldBeResolved)
 			.map(extractNameData)
 
@@ -216,7 +208,6 @@ object ResolveEntities extends SparkJob {
 			.union(unitJoin)
 			.union(noEntityData)
 
-		val resolvedTuples = rebuildProperties(resolvedData)
-		List(resolvedTuples).toAnyRDD()
+		resolvedIds = rebuildProperties(resolvedData)
 	}
 }

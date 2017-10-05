@@ -19,7 +19,7 @@ package de.hpi.ingestion.dataimport.wikidata
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -30,34 +30,29 @@ import java.util.UUID
   * Finds Wikidata relations between `Subjects`, translates the Wikidata ID relations intoa `Subject` UUID relations and
   * replaces the Wikidata IDs with their names.
   */
-object FindRelations extends SparkJob {
+class FindRelations extends SparkJobClass {
 	appName = "Find Relations v1.1"
 	configFile = "wikidata_import.xml"
 	val datasources = List("wikidata_20161117", "wikidata")
+
+	var subjects: RDD[Subject] = _
+	var subjectsWithRelations: RDD[Subject] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads the Subjects from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](settings("subjectKeyspace"), settings("subjectTable"))
-		List(subjects).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		subjects = sc.cassandraTable[Subject](settings("subjectKeyspace"), settings("subjectTable"))
 	}
 
 	/**
 	  * Saves the Subjects with the new relations to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Subject]()
-			.head
-			.saveToCassandra(settings("subjectKeyspace"), settings("subjectTable"))
+	override def save(sc: SparkContext): Unit = {
+		subjectsWithRelations.saveToCassandra(settings("subjectKeyspace"), settings("subjectTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -120,16 +115,11 @@ object FindRelations extends SparkJob {
 
 	/**
 	  * Transforms the Wikidata relations to Subject relations.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val subjects = input.fromAnyRDD[Subject]().head
+	override def run(sc: SparkContext): Unit = {
 		val nameResolveMap = resolvableNamesMap(subjects)
 		val version = Version(appName, datasources, sc, false, settings.get("subjectTable"))
-		val subjectsWithRelations = subjects.map(findRelations(_, nameResolveMap, version))
-		List(subjectsWithRelations).toAnyRDD()
+		subjectsWithRelations = subjects.map(findRelations(_, nameResolveMap, version))
 	}
 }

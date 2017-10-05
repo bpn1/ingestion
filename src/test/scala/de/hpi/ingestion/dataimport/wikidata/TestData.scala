@@ -77,12 +77,17 @@ object TestData {
 		List(("Q433465", "mass", "+65;Kilogramm"))
 	}
 
+	def wikidataIdKey: String = {
+		val job = new FindRelations
+		job.settings("wikidataIdKey")
+	}
+
 	def unresolvedSubjects(): List[Subject] = {
-		List(Subject(id = UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), master = null, datasource = "wikidata", name = Option("Entry 1"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q1"), "test" -> List("Q2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("key 1" -> "value 1"))),
-			Subject(id = UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), master = null, datasource = "wikidata", name = Option("Entry 2"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q2"), "test" -> List("Q3"))),
-			Subject(id = UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), master = null, datasource = "wikidata", name = Option("Entry 3"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q3"), "test" -> List("Q4"))),
-			Subject(id = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), master = null, datasource = "wikidata", name = Option("Entry 4"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q4"))),
-			Subject(id = UUID.fromString("7bfd2ffe-154b-486a-b30d-581d785940c6"), master = null, datasource = "wikidata", name = Option("Entry 5"), properties = Map(FindRelations.settings("wikidataIdKey") -> Nil, "test" -> List("Q1"))),
+		List(Subject(id = UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), master = null, datasource = "wikidata", name = Option("Entry 1"), properties = Map(wikidataIdKey -> List("Q1"), "test" -> List("Q2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("key 1" -> "value 1"))),
+			Subject(id = UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), master = null, datasource = "wikidata", name = Option("Entry 2"), properties = Map(wikidataIdKey -> List("Q2"), "test" -> List("Q3"))),
+			Subject(id = UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), master = null, datasource = "wikidata", name = Option("Entry 3"), properties = Map(wikidataIdKey -> List("Q3"), "test" -> List("Q4"))),
+			Subject(id = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), master = null, datasource = "wikidata", name = Option("Entry 4"), properties = Map(wikidataIdKey -> List("Q4"))),
+			Subject(id = UUID.fromString("7bfd2ffe-154b-486a-b30d-581d785940c6"), master = null, datasource = "wikidata", name = Option("Entry 5"), properties = Map(wikidataIdKey -> Nil, "test" -> List("Q1"))),
 			Subject(id = UUID.fromString("bbd8f942-1663-4fea-9e70-3cf27896bc57"), master = null, datasource = "wikidata", name = Option("Entry 6"), properties = Map("test" -> List("Q5"))))
 	}
 
@@ -94,10 +99,10 @@ object TestData {
 	}
 
 	def resolvedSubjects(): List[Subject] = {
-		List(Subject(id = UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), master = null, datasource = "wikidata", name = Option("Entry 1"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q1"), "test" -> List("Entry 2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("test" -> "", "key 1" -> "value 1"))),
-			Subject(id = UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), master = null, datasource = "wikidata", name = Option("Entry 2"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q2"), "test" -> List("Entry 3")), relations = Map(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d") -> Map("test" -> ""))),
-			Subject(id = UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), master = null, datasource = "wikidata", name = Option("Entry 3"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q3"), "test" -> List("Entry 4")), relations = Map(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("test" -> ""))),
-			Subject(id = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), master = null, datasource = "wikidata", name = Option("Entry 4"), properties = Map(FindRelations.settings("wikidataIdKey") -> List("Q4"))),
+		List(Subject(id = UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58"), master = null, datasource = "wikidata", name = Option("Entry 1"), properties = Map(wikidataIdKey -> List("Q1"), "test" -> List("Entry 2")), relations = Map(UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f") -> Map("test" -> "", "key 1" -> "value 1"))),
+			Subject(id = UUID.fromString("7f6891ef-c72a-4af5-a4af-f134f846413f"), master = null, datasource = "wikidata", name = Option("Entry 2"), properties = Map(wikidataIdKey -> List("Q2"), "test" -> List("Entry 3")), relations = Map(UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d") -> Map("test" -> ""))),
+			Subject(id = UUID.fromString("5788c6f5-9696-4d67-a592-fd9b8c4e5a9d"), master = null, datasource = "wikidata", name = Option("Entry 3"), properties = Map(wikidataIdKey -> List("Q3"), "test" -> List("Entry 4")), relations = Map(UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("test" -> ""))),
+			Subject(id = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"), master = null, datasource = "wikidata", name = Option("Entry 4"), properties = Map(wikidataIdKey -> List("Q4"))),
 			Subject(id = UUID.fromString("7bfd2ffe-154b-486a-b30d-581d785940c6"), master = null, datasource = "wikidata", name = Option("Entry 5"), properties = Map("test" -> List("Entry 1")), relations = Map(UUID.fromString("41e7b945-0f73-430a-be7c-580fc7a09f58") -> Map("test" -> ""))),
 			Subject(id = UUID.fromString("bbd8f942-1663-4fea-9e70-3cf27896bc57"), master = null, datasource = "wikidata", name = Option("Entry 6"), properties = Map("test" -> List("Q5"))))
 	}

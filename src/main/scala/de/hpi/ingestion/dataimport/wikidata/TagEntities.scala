@@ -22,13 +22,13 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd._
 import scala.language.postfixOps
 import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikidataEntity}
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 
 /**
   * Builds the subclass hierarchy of selected Wikidata classes and tags every `WikidataEntity` that is an instance of
   * one of the subclasses with the top level class.
   */
-object TagEntities extends SparkJob {
+class TagEntities extends SparkJobClass {
 	appName = "TagEntities"
 	configFile = "wikidata_import.xml"
 	val instanceProperty = "instance of"
@@ -58,32 +58,27 @@ object TagEntities extends SparkJob {
 		"Q262166" -> "municipality of Germany"
 	)
 
+	var wikidataEntities: RDD[WikidataEntity] = _
+	var subclassEntries: RDD[(String, String, Map[String, List[String]])] = _
+
 	// $COVERAGE-OFF$
 	/**
 	  * Reads the Wikidata entities from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
-		List(wikidata).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		wikidataEntities = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
 	}
 
 	/**
 	  * Saves the tagged Wikidata entities to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[(String, String, Map[String, List[String]])]()
-			.head
-			.saveToCassandra(
-				settings("keyspace"),
-				settings("wikidataTable"),
-				SomeColumns("id", "instancetype", "data" append))
+	override def save(sc: SparkContext): Unit = {
+		subclassEntries.saveToCassandra(
+			settings("keyspace"),
+			settings("wikidataTable"),
+			SomeColumns("id", "instancetype", "data" append))
 	}
 	// $COVERAGE-ON$
 
@@ -211,19 +206,15 @@ object TagEntities extends SparkJob {
 
 	/**
 	  * Tags the WikidataEntities with their superclass.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val wikiData = input.fromAnyRDD[WikidataEntity]().head
-		val classData = wikiData.map(translateToSubclassEntry)
+	override def run(sc: SparkContext): Unit = {
+		val classData = wikidataEntities.map(translateToSubclassEntry)
 		val subclassData = classData
 			.filter(_.data.contains(subclassProperty))
 			.cache
 		val subclasses = buildSubclassMap(subclassData, tagClasses)
-		val updatedEntities = updateEntities(classData, subclasses)
-		List(updatedEntities).toAnyRDD()
+		subclassEntries = updateEntities(classData, subclasses)
 	}
 }

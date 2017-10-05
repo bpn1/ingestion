@@ -21,99 +21,38 @@ import com.datastax.spark.connector._
 import scala.util.matching.Regex
 import scala.io.Source
 import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
-import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.rdd.RDD
 import scala.xml.XML
 
 /**
   * Import-Job for importing DBpedia Triples to the dbpedia table.
   */
-object DBpediaImport extends SparkJob {
+class DBpediaImport extends SparkJobClass {
 	appName = "DBpediaImport_v1.0"
 	val keyspace = "wikidumps"
 	val tablename = "dbpedia"
 
+	var dbpediaDump: RDD[String] = _
+	var dbpediaEntities: RDD[DBpediaEntity] = _
+
 	// $COVERAGE-OFF$
 	/**
 	  * Loads DBpedia turtle dump from the HDFS.
-	  *
 	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.textFile("dbpedia_de_clean.ttl")
-		List(dbpedia).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		dbpediaDump = sc.textFile("dbpedia_de_clean.ttl")
 	}
 
 	/**
 	  * Saves the DBpedia entities to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[DBpediaEntity]()
-			.head
-			.saveToCassandra(keyspace, tablename)
+	override def save(sc: SparkContext): Unit = {
+		dbpediaEntities.saveToCassandra(keyspace, tablename)
 	}
 	// $COVERAGE-ON$
-
-	def getPrefixesFromFile(): List[(String, String)] = {
-		Source.fromURL(getClass.getResource("/prefixes.txt"))
-			.getLines
-			.toList
-			.map(_.trim.replaceAll("""[()]""", "").split(","))
-			.map(pair => (pair(0), pair(1)))
-	}
-
-	/**
-	  * Splits a triple into its components. The triple is split by the closing chevron. If the resulting list of
-	  * elements contains more then three elements only the first three are taken. If the resulting list contains less
-	  * than three elements it is filled up with empty Strings.
-	  *
-	  * @param tripleString Turtle Triple
-	  * @return List of the tripe components (three elements)
-	  */
-	def tokenize(tripleString: String): List[String] = {
-		val elementList = tripleString
-			.split("> ")
-			.map(_.trim)
-			.filter(_ != ".")
-			.map(_.replaceAll("\\A<", ""))
-			.toList
-		val filteredList = elementList.filter(_.nonEmpty)
-		(elementList.size, filteredList.size) match {
-			case (3, x) => elementList
-			case (x, 3) => filteredList
-			case _ => elementList.slice(0, 3) ++ (0 until (3 - elementList.length)).map(t => "")
-		}
-	}
-
-	/**
-	  * Replaces a url by a prefix.
-	  *
-	  * @param str      String containing the url
-	  * @param prefixes List of the url/prefix-Mapping as tuples (url, prefix)
-	  * @return Cleaned String
-	  */
-	def dbpediaToCleanedTriples(
-		dbpedia: RDD[String],
-		prefixes: List[(String, String)],
-		regexStr: String = ""
-	): RDD[List[String]] = {
-		dbpedia
-			.map(tokenize)
-			.map(_.map { listEntry =>
-				val dataString = listEntry.replaceAll("""[<>\"]""", "")
-				prefixes.foldRight(dataString)((pair, data) => data.replace(pair._1, pair._2))
-					.replaceAll(regexStr, "")
-			})
-
-	}
 
 	/**
 	  * Extracts the wikidata Id if present
@@ -191,16 +130,10 @@ object DBpediaImport extends SparkJob {
 
 	/**
 	  * Parses the DBpedia turtle dump to DBpedia Entities.
-	  *
-	  * @param input List of RDDs containing the input data
 	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val dbpedia = input.fromAnyRDD[String]().head
-
-		val prefixes = getPrefixesFromFile()
+	override def run(sc: SparkContext): Unit = {
+		val prefixes = DBpediaImport.loadPrefixes()
 
 		val rdfTypFile = Source.fromURL(this.getClass.getResource("/rdf_types.xml"))
 		val rdfTypes = XML.loadString(rdfTypFile.getLines.mkString("\n"))
@@ -209,8 +142,7 @@ object DBpediaImport extends SparkJob {
 			label = (organisation \ "label").text
 		} yield label
 
-
-		val entities = dbpediaToCleanedTriples(dbpedia, prefixes)
+		dbpediaEntities = DBpediaImport.dbpediaToCleanedTriples(dbpediaDump, prefixes)
 			.map { case List(a, b, c) => (a, List((b, c))) }
 			.filter { case (subject, propertyData) =>
 				val resourceRegex = new Regex("(dbr|dbpedia-de):")
@@ -219,6 +151,66 @@ object DBpediaImport extends SparkJob {
 			.map { case (subject, propertyData) =>
 				extractProperties(subject, propertyData, organisations)
 			}
-		List(entities).toAnyRDD()
+	}
+}
+
+object DBpediaImport {
+	/**
+	  * Loads DBpedia prefixe tuples from a file.
+	  * @return List of DBpedia prefix tuples used to shorten the DBpedia URLs
+	  */
+	def loadPrefixes(): List[(String, String)] = {
+		Source.fromURL(getClass.getResource("/prefixes.txt"))
+			.getLines
+			.toList
+			.map(_.trim.replaceAll("""[()]""", "").split(","))
+			.map(pair => (pair(0), pair(1)))
+	}
+
+	/**
+	  * Parses DBpedia triples into cleaned triples
+	  *
+	  * @param dbpedia RDD of Strings containing the url triples
+	  * @param prefixes List of the url/prefix-Mapping as tuples (url, prefix)
+	  * @param regexStr Regex which is removed from the resulting triple elements
+	  * @return RDD of the cleaned triples
+	  */
+	def dbpediaToCleanedTriples(
+		dbpedia: RDD[String],
+		prefixes: List[(String, String)],
+		regexStr: String = ""
+	): RDD[List[String]] = {
+		dbpedia
+			.map(tokenize)
+			.map(_.map { listEntry =>
+				val dataString = listEntry.replaceAll("""[<>\"]""", "")
+				prefixes
+					.foldRight(dataString)((pair, data) => data.replace(pair._1, pair._2))
+					.replaceAll(regexStr, "")
+			})
+
+	}
+
+	/**
+	  * Splits a triple into its components. The triple is split by the closing chevron. If the resulting list of
+	  * elements contains more then three elements only the first three are taken. If the resulting list contains less
+	  * than three elements it is filled up with empty Strings.
+	  *
+	  * @param tripleString Turtle Triple
+	  * @return List of the tripe components (three elements)
+	  */
+	def tokenize(tripleString: String): List[String] = {
+		val elementList = tripleString
+			.split("> ")
+			.map(_.trim)
+			.filter(_ != ".")
+			.map(_.replaceAll("\\A<", ""))
+			.toList
+		val filteredList = elementList.filter(_.nonEmpty)
+		(elementList.size, filteredList.size) match {
+			case (3, x) => elementList
+			case (x, 3) => filteredList
+			case _ => elementList.slice(0, 3) ++ (0 until (3 - elementList.length)).map(t => "")
+		}
 	}
 }

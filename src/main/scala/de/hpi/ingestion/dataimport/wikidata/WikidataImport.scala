@@ -20,7 +20,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import play.api.libs.json._
@@ -28,33 +28,27 @@ import play.api.libs.json._
 /**
   * Parses each article from the Wikidata JSON dump into a `WikidataEntity` and imports it into the Cassandra.
   */
-object WikidataImport extends SparkJob with JSONParser[WikidataEntity] {
+class WikidataImport extends SparkJobClass with JSONParser[WikidataEntity] {
 	appName = "Wikidata Import"
 	configFile = "wikidata_import.xml"
 
+	var wikidataDump: RDD[String] = _
+	var wikidataEntities: RDD[WikidataEntity] = _
 	// $COVERAGE-OFF$
 	/**
 	  * Reads the Wikidata JSON dump from the HDFS.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val inputFile = args.headOption.getOrElse(settings("inputFile"))
-		List(sc.textFile(inputFile)).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		wikidataDump = sc.textFile(settings("inputFile"))
 	}
 
 	/**
 	  * Saves the parsed Wikidata Entities to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[WikidataEntity]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("wikidataTable"))
+	override def save(sc: SparkContext): Unit = {
+		wikidataEntities.saveToCassandra(settings("keyspace"), settings("wikidataTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -196,23 +190,18 @@ object WikidataImport extends SparkJob with JSONParser[WikidataEntity] {
 
 	/**
 	  * Parses each article from the Wikidata JSON dump into a WikidataEntity.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val jsonFile = input.fromAnyRDD[String]().head
-		val wikiData = jsonFile
+	override def run(sc: SparkContext): Unit = {
+		val wikiData = wikidataDump
 			.map(cleanJSON)
 			.collect { case line: String if line.nonEmpty => parseJSON(line) }
 		val properties = buildPropertyMap(wikiData)
 		val propertyBroadcast = sc.broadcast(properties)
 
-		val resolvedWikidata = wikiData.mapPartitions({ partition =>
+		wikidataEntities = wikiData.mapPartitions({ partition =>
 			val localPropertyMap = propertyBroadcast.value
 			partition.map(translatePropertyIDs(_, localPropertyMap))
 		}, true)
-		List(resolvedWikidata).toAnyRDD()
 	}
 }

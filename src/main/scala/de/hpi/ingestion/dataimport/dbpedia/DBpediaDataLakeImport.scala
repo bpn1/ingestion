@@ -30,7 +30,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 /**
   * Import-Job to import DBpedia Subjects into the staging table of the datalake.
   */
-object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity](
+class DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity](
 	List("dbpedia", "dbpedia_20161203"),
 	"wikidumps",
 	"dbpedia"
@@ -65,12 +65,9 @@ object DBpediaDataLakeImport extends DataLakeImportImplementation[DBpediaEntity]
 	/**
 	  * Loads the DBpedia entities from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.cassandraTable[DBpediaEntity](inputKeyspace, inputTable)
-		List(dbpedia).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		inputEntities = sc.cassandraTable[DBpediaEntity](inputKeyspace, inputTable)
 	}
 	// $COVERAGE-ON$
 

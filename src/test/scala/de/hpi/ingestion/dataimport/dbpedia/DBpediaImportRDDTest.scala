@@ -41,19 +41,21 @@ class DBpediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContex
 	}
 
 	"DBpediaEntities" should "not be empty" in {
+		val job = new DBpediaImport
 		val organisations = TestData.organisations
 		val entities = TestData.tripleRDD(sc)
 			.groupByKey
-			.map(tuple => DBpediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
+			.map(tuple => job.extractProperties(tuple._1, tuple._2.toList, organisations))
 			.map(identity)
 		entities should not be empty
 	}
 
 	they should "contain the same information as the triples" in {
+		val job = new DBpediaImport
 		val organisations = TestData.organisations
 		val entities = TestData.tripleRDD(sc)
 			.groupByKey
-			.map(tuple => DBpediaImport.extractProperties(tuple._1, tuple._2.toList, organisations))
+			.map(tuple => job.extractProperties(tuple._1, tuple._2.toList, organisations))
 			.map(identity)
 		val expected = TestData.entityRDD(sc)
 		assertRDDEquals(expected, entities)
