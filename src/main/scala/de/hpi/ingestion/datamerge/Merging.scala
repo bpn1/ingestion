@@ -20,47 +20,40 @@ import java.util.UUID
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.Duplicates
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Merging-Job for merging duplicates into the subject table
   */
-object Merging extends SparkJob {
+class Merging extends SparkJobClass {
 	appName = "Merging"
 	configFile = "merging.xml"
-	val sourcePriority = List("human", "implisense", "dbpedia", "wikidata")
+
+	var subjects: RDD[Subject] = _
+	var stagedSubjects: RDD[Subject] = _
+	var duplicates: RDD[Duplicates] = _
+	var mergedSubjects: RDD[Subject] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads the Subjects, the staged Subjects and the Duplicate Candidates from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
-		val stagings = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
-		val duplicates = sc.cassandraTable[Duplicates](
-			settings("keyspaceDuplicatesTable"),
-			settings("duplicatesTable"))
-		List(subjects, stagings).toAnyRDD() ::: List(duplicates).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
+		stagedSubjects = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
+		duplicates = sc.cassandraTable[Duplicates](settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 
 	/**
 	  * Saves the merged Subjects to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Subject]()
-			.head
-			.saveToCassandra(settings("keyspaceSubjectTable"), settings("subjectTable"))
+	override def save(sc: SparkContext): Unit = {
+		mergedSubjects.saveToCassandra(settings("keyspaceSubjectTable"), settings("subjectTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -136,7 +129,7 @@ object Merging extends SparkJob {
 	  * @return Map containing the relations and their properties
 	  */
 	def mergeRelations(slaves: List[Subject]): Map[UUID, Map[String, String]] = {
-		sourcePriority
+		Merging.sourcePriority
 			.reverse
 			.flatMap { datasource =>
 				slaves
@@ -156,7 +149,7 @@ object Merging extends SparkJob {
 	  * @return values of the attribute
 	  */
 	def getPrioritized(key: String, slaves: List[Subject]): List[String] = {
-		sourcePriority.flatMap { datasource =>
+		Merging.sourcePriority.flatMap { datasource =>
 			slaves
 				.filter(_.datasource == datasource)
 				.flatMap(_.get(key))
@@ -170,7 +163,7 @@ object Merging extends SparkJob {
 	  * @return values of the attribute
 	  */
 	def getPrioritizedSingle(key: String, slaves: List[Subject]): List[String] = {
-		sourcePriority.map { datasource =>
+		Merging.sourcePriority.map { datasource =>
 			slaves
 				.filter(_.datasource == datasource)
 				.flatMap(_.get(key))
@@ -225,21 +218,16 @@ object Merging extends SparkJob {
 
 	/**
 	  * Merges the staged Subjects into the current Subjects using the Duplicate Candidates.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val List(subjects, stagings) = input.take(2).fromAnyRDD[Subject]()
-		val duplicates = input(2).asInstanceOf[RDD[Duplicates]]
+	override def run(sc: SparkContext): Unit = {
 		val version = Version("Merging", List("merging"), sc, true, settings.get("subjectTable"))
 
 		// TODO merge multiple duplicate candidates with the same subject #430
 
 		val subjectIdTuple = subjects.map(subject => (subject.id, subject))
 		val subjectMasterTuple = subjects.map(subject => (subject.master, subject))
-		val stagingTuple = stagings.map(staging => (staging.id, staging))
+		val stagingTuple = stagedSubjects.map(staging => (staging.id, staging))
 
 		val subjectJoinedDuplicates : RDD[(Duplicates, Subject)] = duplicates
 			.keyBy(_.subject_id)
@@ -265,7 +253,7 @@ object Merging extends SparkJob {
 				case (subject, _) => subject
 			}
 
-		val mergedSubjects = taggedSubjects
+		mergedSubjects = taggedSubjects
 			.map(subject => (subject.master, subject))
 			.cogroup(subjectMasterTuple)
 			.map { case (id, (newDuplicates, oldDuplicates)) =>
@@ -273,7 +261,9 @@ object Merging extends SparkJob {
 				val (master, slaves) = duplicates.partition(_.id == id)
 				(master.head, slaves)
 			}.flatMap { case (master, slaves) => mergeIntoMaster(master, slaves, version) }
-
-		List(mergedSubjects).toAnyRDD()
 	}
+}
+
+object Merging {
+	val sourcePriority = List("human", "implisense", "dbpedia", "wikidata")
 }
