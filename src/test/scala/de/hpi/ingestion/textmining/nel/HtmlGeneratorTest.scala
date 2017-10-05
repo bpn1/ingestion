@@ -25,21 +25,19 @@ import scala.util.matching.Regex
 
 class HtmlGeneratorTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Articles with links" should "not be empty" in {
-		val articles = sc.parallelize(TestData.articlesWithFoundLinks().toList)
-		val input = List(articles).toAnyRDD()
-		val articlesWithLinks = HtmlGenerator.run(input, sc)
-			.fromAnyRDD[Article]()
-			.head
-		articlesWithLinks should not be empty
+		val job = new HtmlGenerator
+		job.nelArticles = sc.parallelize(TestData.articlesWithFoundLinks().toList)
+		job.run(sc)
+		job.htmlArticles should not be empty
 	}
 
 	they should "contain html links" in {
+		val job = new HtmlGenerator
 		val anchorRegex = new Regex("(?s)<a href=\".+?\">.+?<\\/a>")
-		val articles = sc.parallelize(TestData.articlesWithFoundLinks().toList)
-		val input = List(articles).toAnyRDD()
-		HtmlGenerator.run(input, sc)
-			.fromAnyRDD[Article]()
-			.head
+		job.nelArticles = sc.parallelize(TestData.articlesWithFoundLinks().toList)
+		job.run(sc)
+		job
+			.htmlArticles
 			.collect
 			.foreach { article =>
 				if(article.title != "Audi Test ohne Link") {
@@ -49,22 +47,22 @@ class HtmlGeneratorTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	they should "have a default title if it is empty" in {
+		val job = new HtmlGenerator
 		val articles = TestData.articlesWithFoundLinks().map(_.copy(title = None))
-		val parsedArticles = articles.map(HtmlGenerator.generateArticleWithLinks)
+		val parsedArticles = articles.map(job.generateArticleWithLinks)
 		parsedArticles.foreach { article =>
-			article.title shouldEqual HtmlGenerator.defaultTitle }
+			article.title shouldEqual job.defaultTitle }
 	}
 
 	they should "only contain the title and the original text" in {
-		val articles = sc.parallelize(TestData.articlesWithFoundLinks().toList)
-		val input = List(articles).toAnyRDD()
-		val originalTexts = articles
-			.map(article => article.title.getOrElse(HtmlGenerator.defaultTitle) + "\n" + article.getText)
+		val job = new HtmlGenerator
+		job.nelArticles = sc.parallelize(TestData.articlesWithFoundLinks().toList)
+		job.run(sc)
+		val originalTexts = job.nelArticles
+			.map(article => article.title.getOrElse(job.defaultTitle) + "\n" + article.getText)
 			.collect
 			.toSet
-		val texts = HtmlGenerator.run(input, sc)
-			.fromAnyRDD[Article]()
-			.head
+		val texts = job.htmlArticles
 			.map { article =>
 				// Escape newlines with an improbable string. Otherwise jsoup will replace them with spaces.
 				val escapedNewlines = Jsoup.parse(article.text.replaceAll("\n", "#EscapedNewline")).body.text
