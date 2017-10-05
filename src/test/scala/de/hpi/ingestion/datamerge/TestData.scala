@@ -24,6 +24,7 @@ import de.hpi.ingestion.deduplication.models.{Candidate, Duplicates}
 
 // scalastyle:off line.size.limit
 // scalastyle:off method.length
+// scalastyle:off file.size.limit
 object TestData {
 	val idList = List.fill(20)(UUID.randomUUID()).sorted
 	val stagingSource = "wikidata"
@@ -583,7 +584,7 @@ object TestData {
 			)
 		)
 	}
-  
+
 	def updatedMasters(): List[Subject] = {
 		List(
 			Subject(
@@ -828,3 +829,4 @@ object TestData {
 }
 // scalastyle:on method.length
 // scalastyle:on line.size.limit
+// scalastyle:on file.size.limit
