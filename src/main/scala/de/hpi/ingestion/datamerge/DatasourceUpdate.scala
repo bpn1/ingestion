@@ -1,12 +1,12 @@
-package de.hpi.ingestion.datalake
+package de.hpi.ingestion.datamerge
 
+import com.datastax.spark.connector._
+import de.hpi.ingestion.datalake.SubjectManager
+import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import com.datastax.spark.connector._
-import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.datamerge.Merging
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Updates the current Subjects with the data of an already integrated datasource. The new data is added to the

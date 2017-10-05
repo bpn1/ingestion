@@ -1,16 +1,16 @@
-package de.hpi.ingestion.datalake
+package de.hpi.ingestion.datamerge
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.datalake.models.Subject
-import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.scalatest.{FlatSpec, Matchers}
 
 class DatasourceUpdateTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Subjects" should "be updated" in {
 		val oldSubjects = TestData.subjectsToUpdate()
 		val newSubjects = TestData.updateSubjects()
-		val version = TestData.version(sc)
+		val version = TestData.version
 		val updatedSubjects = oldSubjects.zip(newSubjects).map {
 			case (oldSubject, newSubject) => DatasourceUpdate.updateSubject(oldSubject, newSubject, version)
 		}
