@@ -21,7 +21,6 @@ import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 
 class DBpediaImportRDDTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
-
 	"Triples" should "be tokenized into three elements" in {
 		TestData.turtleRDD(sc)
 			.map(DBpediaImport.tokenize)

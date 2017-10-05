@@ -67,7 +67,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 		val mapping = sc.broadcast(normalizationSettings)
 		val strategies = sc.broadcast(sectorSettings)
 		val classifier = this.classifier
-		inputEntities
+		subjects = inputEntities
 			.filter(filterEntities)
 			.map((entity: T) => translateToSubject(entity, version, mapping.value, strategies.value, classifier))
 	}

@@ -22,7 +22,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class DBpediaImportUnitTest extends FlatSpec with SharedSparkContext with Matchers {
-
 	"tokenize" should "return a three element long list" in {
 		val tokens = DBpediaImport.tokenize(TestData.line)
 		tokens should have length 3

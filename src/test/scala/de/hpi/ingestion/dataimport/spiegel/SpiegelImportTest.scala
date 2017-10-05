@@ -24,7 +24,6 @@ import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch
 import de.hpi.ingestion.textmining.{TestData => TextTestData}
 
 class SpiegelImportTest extends FlatSpec with Matchers with SharedSparkContext {
-
 	"Spiegel articles" should "be parsed" in {
 		val job = new SpiegelImport
 		job.spiegelDump = sc.parallelize(TestData.spiegelFile())

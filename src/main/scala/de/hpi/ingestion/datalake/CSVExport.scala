@@ -19,11 +19,11 @@ package de.hpi.ingestion.datalake
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
-object CSVExport extends SparkJob {
+class CSVExport extends SparkJobClass {
 	appName = "CSVExport v1.0"
 	val keyspace = "datalake"
 	val tablename = "subject"
@@ -82,26 +82,24 @@ object CSVExport extends SparkJob {
 		"childOrganisation" -> "owns"
 	)
 
+	var subjects: RDD[Subject] = _
+	var nodes: RDD[String] = _
+	var edges: RDD[String] = _
+
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Subjects from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
-		List(subjects).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		subjects = sc.cassandraTable[Subject](keyspace, tablename)
 	}
 
 	/**
 	  * Saves nodes and edges to the HDFS.
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val List(nodes, edges) = output.fromAnyRDD[String]()
+	override def save(sc: SparkContext): Unit = {
 		val timestamp = System.currentTimeMillis / 1000
 		nodes.saveAsTextFile(s"export_nodes_$timestamp")
 		edges.saveAsTextFile(s"export_edges_$timestamp")
@@ -153,16 +151,11 @@ object CSVExport extends SparkJob {
 
 	/**
 	  * Creates Nodes and Edges from the Subjects.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val subjects = input.fromAnyRDD[Subject]().head
+	override def run(sc: SparkContext): Unit = {
 		val masters = subjects.filter(_.isMaster)
-		val nodes = masters.map(nodeToCSV)
-		val edges = masters.flatMap(edgesToCSV)
-		List(nodes, edges).toAnyRDD()
+		nodes = masters.map(nodeToCSV)
+		edges = masters.flatMap(edgesToCSV)
 	}
 }

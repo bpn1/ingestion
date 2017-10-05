@@ -23,7 +23,6 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 
 
 class DBpediaRelationParserTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
-
 	"Translation triple" should "be parsed into map from english to german wikipedia titles" in {
 		val job = new DBpediaRelationParser
 		val ttl = sc.parallelize(TestData.interlanguageLinksEn())
