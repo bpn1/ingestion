@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <inputKeyspace>datalake</inputKeyspace>
+        <inputTable>subject_implisense</inputTable>
+        <outputKeyspace>datalake</outputKeyspace>
+        <outputTable>subject</outputTable>
+        <versionTable>version</versionTable>
+        <datasourceKey>id_implisense</datasourceKey>
+    </settings>
+</config>
