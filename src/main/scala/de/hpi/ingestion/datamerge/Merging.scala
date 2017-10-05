@@ -32,7 +32,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 object Merging extends SparkJob {
 	appName = "Merging"
 	configFile = "merging.xml"
-	val sourcePriority = List("human", "implisense", "dbpedia", "wikidata")
+	val sourcePriority = List("human", "implisense", "kompass", "dbpedia", "wikidata")
 
 	// $COVERAGE-OFF$
 	/**
@@ -233,7 +233,7 @@ object Merging extends SparkJob {
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
 		val List(subjects, stagings) = input.take(2).fromAnyRDD[Subject]()
 		val duplicates = input(2).asInstanceOf[RDD[Duplicates]]
-		val version = Version("Merging", List("merging"), sc, true, settings.get("subjectTable"))
+		val version = Version(appName, List("merging"), sc, true, settings.get("subjectTable"))
 
 		// TODO merge multiple duplicate candidates with the same subject #430
 

@@ -30,7 +30,7 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
   * Updating relations of the master node to new master nodes
   */
 object MasterConnecting extends SparkJob {
-	appName = "MasterConnecting"
+	appName = "Master Connecting"
 	configFile = "merging_master_connecting.xml"
 
 	// $COVERAGE-OFF$
@@ -70,7 +70,7 @@ object MasterConnecting extends SparkJob {
 		val subjects = input.fromAnyRDD[Subject]().head
 		val masters = subjects.filter(master => master.isMaster && master.masterRelations.nonEmpty)
 		val slaves = subjects.filter(_.isSlave).map(slave => (slave.id, (slave.id, slave.master, slave.datasource)))
-		val version = Version("Master Connecting", List("subject"), sc, true, settings.get("subjectTable"))
+		val version = Version(appName, List("subject"), sc, true, settings.get("subjectTable"))
 
 		val updatedMasters = masters
 			.flatMap(extractRelations)
