@@ -23,7 +23,7 @@ import java.util.UUID
 import play.api.libs.json._
 import scala.collection.mutable
 import de.hpi.ingestion.datalake.models._
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
@@ -32,46 +32,33 @@ import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
   * Compares two versions of the Subject table given their TimeUUIDs as command line arguments and writes the
   * differences of each Subject as JSON file to the HDFS.
   */
-object VersionDiff extends SparkJob {
+class VersionDiff extends SparkJobClass {
 	appName = "VersionDiff"
 	val keyspace = "datalake"
 	val tablename = "subject"
 	val outputTablename = "versiondiff"
-	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
+
+	var subjects: RDD[Subject] = _
+	var subjectDiff: RDD[SubjectDiff] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads subjects from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
-		List(subjects.asInstanceOf[RDD[Any]])
+	override def load(sc: SparkContext): Unit = {
+		subjects = sc.cassandraTable[Subject](keyspace, tablename)
 	}
 
 	/**
 	  * Writes the JSON diffs to Cassandra.
-	  * @param output first element is the RDD of JSON diffs
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[SubjectDiff]()
-			.head
-			.saveToCassandra(keyspace, outputTablename)
+	override def save(sc: SparkContext): Unit = {
+		subjectDiff.saveToCassandra(keyspace, outputTablename)
 	}
 	// $COVERAGE-ON$
-
-	/**
-	  * Extracts the time component of a TimeUUID.
-	  * Source: https://git.io/vSxjU
-	  * @param uuid TimeUUID used to extract the time
-	  * @return time as long
-	  */
-	def timeFromUUID(uuid: UUID): Long = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000
 
 	/**
 	  * Returns list of values of the given version or a previous version that changed the given field.
@@ -81,9 +68,10 @@ object VersionDiff extends SparkJob {
 	  */
 	def findValues(queryVersion: UUID, versionList: List[Version]): List[String] = {
 		val queryValue = versionList.find(_.version == queryVersion).map(_.value)
-		val olderVersions = versionList.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersion))
+		val olderVersions = versionList
+			.filter(v => VersionDiff.timeFromUUID(v.version) < VersionDiff.timeFromUUID(queryVersion))
 		val olderValue = if(olderVersions.nonEmpty) {
-			val lastVersion = olderVersions.maxBy(v => timeFromUUID(v.version))
+			val lastVersion = olderVersions.maxBy(v => VersionDiff.timeFromUUID(v.version))
 			Option(lastVersion.value)
 		} else {
 			None
@@ -181,7 +169,7 @@ object VersionDiff extends SparkJob {
 	  * @return tuple of versions with the older version as first element
 	  */
 	def versionOrder(version1: UUID, version2: UUID): (UUID, UUID) = {
-		if(timeFromUUID(version1) > timeFromUUID(version2)) {
+		if(VersionDiff.timeFromUUID(version1) > VersionDiff.timeFromUUID(version2)) {
 			(version2, version1)
 		} else {
 			(version1, version2)
@@ -190,28 +178,33 @@ object VersionDiff extends SparkJob {
 
 	/**
 	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
+	override def run(sc: SparkContext): Unit = {
 		val (oldVersion, newVersion) = versionOrder(UUID.fromString(args(0)), UUID.fromString(args(1)))
-		input.fromAnyRDD[Subject]()
-			.map(rdd =>
-				rdd
-					.map(retrieveVersions(_, oldVersion, newVersion))
-					.map(historyToDiff(_, oldVersion, newVersion))
-					.filter(_.hasChanges))
-			.toAnyRDD()
+		subjectDiff = subjects
+			.map(retrieveVersions(_, oldVersion, newVersion))
+			.map(historyToDiff(_, oldVersion, newVersion))
+			.filter(_.hasChanges())
 	}
 
 	/**
 	  * Asserts that two versions are given as program arguments.
-	  * @param args arguments of the program
 	  * @return true if there are at least two arguments provided
 	  */
-	override def assertConditions(args: Array[String]): Boolean = {
+	override def assertConditions(): Boolean = {
 		args.length >= 2
 	}
+}
+
+object VersionDiff {
+	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
+	/**
+	  * Extracts the time component of a TimeUUID.
+	  * Source: https://git.io/vSxjU
+	  * @param uuid TimeUUID used to extract the time
+	  * @return time as long
+	  */
+	def timeFromUUID(uuid: UUID): Long = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000
 }

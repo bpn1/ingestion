@@ -28,78 +28,88 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
     val newVersion = UUID.fromString("7ce032b0-c567-11e6-8252-5f2c06e3b302")
 
 	"Version diff" should "be created" in {
-		val subjects = sc.parallelize(TestData.diffSubjects())
+		val job = new VersionDiff
+		job.subjects = sc.parallelize(TestData.diffSubjects())
 		val (oldV, newV) = TestData.versionsToCompare()
-		val versions = Array(oldV.toString, newV.toString)
-		val rddList = List(subjects).toAnyRDD()
-		val versionDiff = VersionDiff.run(rddList, sc, versions).fromAnyRDD[SubjectDiff]().head.collect
+		job.args = Array(oldV.toString, newV.toString)
+		job.run(sc)
+		val versionDiff = job.subjectDiff.collect.toList
 		val expectedDiff = TestData.subjectDiff()
 		versionDiff shouldEqual expectedDiff
 	}
 
 	"Versions" should "be ordered correctly" in {
+		val job = new VersionDiff
 		val orderedVersions = TestData.unorderedVersions()
-			.map((VersionDiff.versionOrder _).tupled)
+			.map((job.versionOrder _).tupled)
 		val expectedVersions = TestData.orderedVersions()
 		orderedVersions shouldEqual expectedVersions
 	}
 
 	"Value lists of a Subject" should "be retrieved from the version lists" in {
+		val job = new VersionDiff
 		val (oldV, newV) = TestData.versionsToCompare()
 		val retrievedData = TestData.diffSubjects()
-			.map(VersionDiff.retrieveVersions(_, oldV, newV))
+			.map(job.retrieveVersions(_, oldV, newV))
 		val expectedData = TestData.historyEntries()
 		retrievedData shouldEqual expectedData
 	}
 
 	"Correct values" should "be retrieved from version list" in {
+		val job = new VersionDiff
 		val (oldV, newV) = TestData.versionsToCompare()
 		val fieldValues = TestData.versions()
-			.map(versionList => (VersionDiff.findValues(oldV, versionList), VersionDiff.findValues(newV, versionList)))
+			.map(versionList => (job.findValues(oldV, versionList), job.findValues(newV, versionList)))
 		val expectedValues = TestData.foundValues()
 		fieldValues shouldEqual expectedValues
 	}
 
 	"History entry" should "be diffed and written into SubjectDiff" in {
+		val job = new VersionDiff
 		val (oldV, newV) = TestData.versionsToCompare()
 		val diff = TestData.historyEntries()
-			.map(VersionDiff.historyToDiff(_, oldV, newV))
+			.map(job.historyToDiff(_, oldV, newV))
 		val expectedDiff = TestData.subjectDiff()
 		diff shouldEqual expectedDiff
 	}
 
 	it should "contain the master diff" in {
+		val job = new VersionDiff
 		val (oldV, newV) = TestData.versionsToCompare()
 		val diff = TestData.historyEntriesWithMaster()
-			.map(VersionDiff.historyToDiff(_, oldV, newV))
+			.map(job.historyToDiff(_, oldV, newV))
 		val expectedDiff = TestData.subjectDiffWithMaster()
 		diff shouldEqual expectedDiff
 	}
 
 	"Value lists" should "be created from two versions" in {
+		val job = new VersionDiff
 		val (oldV, newV) = TestData.versionsToCompare()
 		val valueLists = TestData.versions()
-			.map(VersionDiff.createValueList(oldV, newV, _))
+			.map(job.createValueList(oldV, newV, _))
 		val expectedLists = TestData.dataLists()
 		valueLists shouldEqual expectedLists
 	}
 
 	"Value lists" should "be created when the versions are the same" in {
+		val job = new VersionDiff
 		val oldV = TestData.versionsToCompare()._1
 		val valueLists = TestData.versions()
-			.map(VersionDiff.createValueList(oldV, oldV, _))
+			.map(job.createValueList(oldV, oldV, _))
 		val expectedLists = TestData.sameVersionDataLists()
 		valueLists shouldEqual expectedLists
 	}
 
 	they should "be diffed and serialized as JSON" in {
+		val job = new VersionDiff
 		val valueDiffs = TestData.dataLists()
-			.map(VersionDiff.diffLists)
+			.map(job.diffLists)
 		val expectedDiffs = TestData.listDiffs()
 		valueDiffs shouldEqual expectedDiffs
 	}
 
 	"Time" should "be extracted from UUID" in {
+		val job = new VersionDiff
 		val uuidTimes = TestData.timeUUIDs()
 			.map(VersionDiff.timeFromUUID)
 		val expectedTimes = TestData.timeOfTimeUUIDs()
@@ -107,9 +117,10 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 	}
 
 	"Version Diff assertion" should "assert that there are two versions provided" in {
-		val successArgs = Array("v1", "v2")
-		val failArgs = Array("v1")
-		VersionDiff.assertConditions(successArgs) shouldBe true
-		VersionDiff.assertConditions(failArgs) shouldBe false
+		val job = new VersionDiff
+		job.args = Array("v1", "v2")
+		job.assertConditions() shouldBe true
+		job.args = Array("v1")
+		job.assertConditions() shouldBe false
 	}
 }
