@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -31,38 +31,50 @@ import de.hpi.ingestion.implicits.CollectionImplicits._
 /**
   * Job for calculation of feature entries
   */
-object FeatureCalculation extends SparkJob {
+class FeatureCalculation extends SparkJobClass {
 	appName = "Feature calculation"
 	configFile = "feature_calculation.xml"
 	val blockingSchemes = List[BlockingScheme](SimpleBlockingScheme("simple_scheme"))
 
+	var dbpediaSubjects: RDD[Subject] = _
+	var wikidataSubjects: RDD[Subject] = _
+	var goldStandard: RDD[(UUID, UUID)] = _
+	var featureEntries: RDD[FeatureEntry] = _
+
 	// $COVERAGE-OFF$
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.cassandraTable[Subject](settings("keyspaceDBpediaTable"), settings("dBpediaTable"))
-		val wikidata = sc.cassandraTable[Subject](settings("keyspaceWikidataTable"), settings("wikiDataTable"))
-		val goldStandard = sc.cassandraTable[(UUID, UUID)](
+	/**
+	  * Loads the DBpedia and Wikidata Subjects and the gold standard from the Cassandra.
+	  * @param sc SparkContext to be used for the job
+	  */
+	override def load(sc: SparkContext): Unit = {
+		dbpediaSubjects = sc.cassandraTable[Subject](settings("keyspaceDBpediaTable"), settings("dBpediaTable"))
+		wikidataSubjects = sc.cassandraTable[Subject](settings("keyspaceWikidataTable"), settings("wikiDataTable"))
+		goldStandard = sc.cassandraTable[(UUID, UUID)](
 			settings("keyspaceGoldStandardTable"),
 			settings("goldStandardTable"))
-		List(dbpedia, wikidata).toAnyRDD() ::: List(goldStandard).toAnyRDD()
 	}
 
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[FeatureEntry]()
-			.head
-			.saveToCassandra(settings("keyspaceFeatureTable"), settings("featureTable"))
+	/**
+	  * Saves the generated Feature Entries to the Cassandra.
+	  * @param sc SparkContext to be used for the job
+	  */
+	override def save(sc: SparkContext): Unit = {
+		featureEntries.saveToCassandra(settings("keyspaceFeatureTable"), settings("featureTable"))
 	}
 	// $COVERAGE-ON$
 
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = input.head.asInstanceOf[RDD[Subject]]
-		val wikidata = input(1).asInstanceOf[RDD[Subject]]
-		val goldStandard = input(2).asInstanceOf[RDD[(UUID, UUID)]]
-
-		val blocks = Blocking.blocking(dbpedia, wikidata, this.blockingSchemes)
+	/**
+	  * Generates Feature Entries using the DBpedia and Wikidata Subjects and the gold standard.
+	  * @param sc SparkContext to be used for the job
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val blocks = Blocking.blocking(
+			dbpediaSubjects,
+			wikidataSubjects,
+			this.blockingSchemes,
+			settings("maxBlockSize").toInt)
 		val features = findDuplicates(blocks.values, sc)
-		val labeledPoints = labelFeature(features, goldStandard)
-		List(labeledPoints).toAnyRDD()
+		featureEntries = labelFeature(features, goldStandard)
 	}
 
 	/**

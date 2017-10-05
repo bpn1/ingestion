@@ -22,7 +22,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 import org.apache.spark.SparkContext
@@ -32,69 +32,57 @@ import org.apache.spark.rdd.RDD
   * Blocks two groups of Subjects with multiple Blocking Schemes and evaluates the resulting blocks by counting their
   * sizes and writing the results to the Cassandra.
   */
-object Blocking extends SparkJob {
+class Blocking extends SparkJobClass {
 	appName = "Blocking"
 	configFile = "evaluation_deduplication.xml"
 	var blockingSchemes = List[BlockingScheme](
 		SimpleBlockingScheme("simple_scheme"),
 		LastLettersBlockingScheme("lastLetters_scheme")
 	)
+
+	var subjects: RDD[Subject] = _
+	var stagedSubjects: RDD[Subject] = _
+	var goldStandard: RDD[(UUID, UUID)] = _
+	var blockEvaluation: RDD[BlockEvaluation] = _
+
 	// $COVERAGE-OFF$
 	/**
 	  * Loads the Subjects, staged Subjects and the GoldStandard from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
-		val staging = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
-		val goldStandard = sc.cassandraTable[(UUID, UUID)](
+	override def load(sc: SparkContext): Unit = {
+		subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
+		stagedSubjects = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
+		goldStandard = sc.cassandraTable[(UUID, UUID)](
 			settings("keyspaceGoldStandardTable"),
-			settings("goldStandardTable")
-		)
-		List(subjects,staging).toAnyRDD() ::: List(goldStandard).toAnyRDD()
+			settings("goldStandardTable"))
 	}
 	/**
 	  * Saves the Blocking Evaluation to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[BlockEvaluation]()
-			.head
-			.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
+	override def save(sc: SparkContext): Unit = {
+		blockEvaluation.saveToCassandra(settings("keyspaceStatsTable"), settings("statsTable"))
 	}
 	// $COVERAGE-ON$
 
 	/**
 	  * Blocks the input Subjects and counts the block sizes.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val subjectInput = input.fromAnyRDD[Subject]()
-		val subjects = subjectInput.head
-		val staging = subjectInput(1)
-		val goldStandard = input.fromAnyRDD[(UUID, UUID)]().last
+	override def run(sc: SparkContext): Unit = {
 		val comment = args.headOption.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
-		val filterUndefined = settings(false).getOrElse("filterUndefined", "false") == "true"
-		val filterSmall = settings(false).getOrElse("filterSmall", "false") == "true"
-		val blockEvaluation = List(evaluationBlocking(
+		val filterUndefined = settings.getOrElse("filterUndefined", "false") == "true"
+		val filterSmall = settings.getOrElse("filterSmall", "false") == "true"
+		blockEvaluation = evaluationBlocking(
 			subjects,
-			staging,
+			stagedSubjects,
 			goldenBroadcast.value,
 			this.blockingSchemes,
 			filterUndefined,
 			filterSmall,
-			comment
-		))
-		blockEvaluation.toAnyRDD()
+			comment)
 	}
 
 	/**
@@ -206,53 +194,6 @@ object Blocking extends SparkJob {
 	}
 
 	/**
-	  * Uses input blocking schemes to generate blocks of subjects. Every subject generates an entry for every key
-	  * element for every blocking scheme.
-	  * @param subjects RDD to perform the blocking on
-	  * @param blockingSchemes List of blocking schemes used to generate keys
-	  * @return subjects keyed by a blocking key and the blocking schemes tag
-	  */
-	def blocking(
-		subjects: RDD[Subject],
-		blockingSchemes: List[BlockingScheme]
-	): RDD[((String, String), Subject)] = {
-		subjects
-			.flatMap { subject =>
-				blockingSchemes.flatMap { scheme =>
-					val blockingKeys = scheme.generateKey(subject).distinct
-					blockingKeys.map(key => ((key, scheme.tag), subject))
-				}
-			}
-	}
-
-	/**
-	  * Blocks the input Subjects using the provided blocking schemes.
-	  * @param subjects RDD to perform the blocking on
-	  * @param stagingSubjects RDD to perform the blocking on
-	  * @param blockingSchemes blocking schemes used to generate keys
-	  * @return RDD of blocks keyed by the tag of the blocking scheme used to genrate the blocking
-	  */
-	def blocking(
-		subjects: RDD[Subject],
-		stagingSubjects: RDD[Subject],
-		blockingSchemes: List[BlockingScheme],
-		filterUndefined: Boolean = true
-	): RDD[(String, Block)] = {
-		val subjectBlocks = blocking(subjects, blockingSchemes)
-		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
-		val maxBlockSize = settings("maxBlockSize").toInt
-		subjectBlocks
-			.cogroup(stagingBlocks)
-			.map { case ((key, tag), (subjectList, stagingList)) =>
-				(tag, Block(key = key, subjects = subjectList.toList, staging = stagingList.toList))
-			}.filter { case (tag, block) =>
-				!(blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(block.key) && filterUndefined)
-			}.filter { case (tag, block) =>
-				(block.staging.size * block.subjects.size) < maxBlockSize // filter huge blocks
-			}
-	}
-
-	/**
 	  * Blocks the input Subjects using the provided blocking schemes and evaluates the blocks. This method reduces
 	  * the amount of data shuffled across the network for better performance.
 	  * @param subjects RDD containing the Subjects
@@ -273,8 +214,10 @@ object Blocking extends SparkJob {
 		filterSmall: Boolean = true,
 		comment: String
 	): RDD[BlockEvaluation] = {
-		val subjectBlocks = blocking(subjects, blockingSchemes).map(_.map(identity, subject => subject.id))
-		val stagingBlocks = blocking(stagingSubjects, blockingSchemes).map(_.map(identity, subject => subject.id))
+		val subjectBlocks = Blocking.blocking(subjects, blockingSchemes)
+			.map(_.map(identity, subject => subject.id))
+		val stagingBlocks = Blocking.blocking(stagingSubjects, blockingSchemes)
+			.map(_.map(identity, subject => subject.id))
 		val maxBlockSize = settings("maxBlockSize").toInt
 		val jobid = UUIDs.timeBased()
 		val blocks = subjectBlocks
@@ -308,5 +251,54 @@ object Blocking extends SparkJob {
 					.get(tag)
 					.map(BlockEvaluation(jobid, tag, filteredStats, blockComment, tagCompleteness, tagBlockCount, _))
 			}
+	}
+}
+
+object Blocking {
+	/**
+	  * Uses input blocking schemes to generate blocks of subjects. Every subject generates an entry for every key
+	  * element for every blocking scheme.
+	  * @param subjects RDD to perform the blocking on
+	  * @param blockingSchemes List of blocking schemes used to generate keys
+	  * @return subjects keyed by a blocking key and the blocking schemes tag
+	  */
+	def blocking(
+		subjects: RDD[Subject],
+		blockingSchemes: List[BlockingScheme]
+	): RDD[((String, String), Subject)] = {
+		subjects
+			.flatMap { subject =>
+				blockingSchemes.flatMap { scheme =>
+					val blockingKeys = scheme.generateKey(subject).distinct
+					blockingKeys.map(key => ((key, scheme.tag), subject))
+				}
+			}
+	}
+
+	/**
+	  * Blocks the input Subjects using the provided blocking schemes.
+	  * @param subjects RDD to perform the blocking on
+	  * @param stagingSubjects RDD to perform the blocking on
+	  * @param blockingSchemes blocking schemes used to generate keys
+	  * @return RDD of blocks keyed by the tag of the blocking scheme used to genrate the blocking
+	  */
+	def blocking(
+		subjects: RDD[Subject],
+		stagingSubjects: RDD[Subject],
+		blockingSchemes: List[BlockingScheme],
+		maxBlockSize: Int,
+		filterUndefined: Boolean = true
+	): RDD[(String, Block)] = {
+		val subjectBlocks = blocking(subjects, blockingSchemes)
+		val stagingBlocks = blocking(stagingSubjects, blockingSchemes)
+		subjectBlocks
+			.cogroup(stagingBlocks)
+			.map { case ((key, tag), (subjectList, stagingList)) =>
+				(tag, Block(key = key, subjects = subjectList.toList, staging = stagingList.toList))
+			}.filter { case (tag, block) =>
+			!(blockingSchemes.find(_.tag == tag).map(_.undefinedValue).contains(block.key) && filterUndefined)
+		}.filter { case (tag, block) =>
+			(block.staging.size * block.subjects.size) < maxBlockSize // filter huge blocks
+		}
 	}
 }

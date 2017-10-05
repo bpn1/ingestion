@@ -21,7 +21,7 @@ import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.models.config.AttributeConfig
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -30,7 +30,7 @@ import org.apache.spark.rdd.RDD
   * Compares two groups of Subjects by first blocking with multiple Blocking Schemes, then compares all Subjects
   * in every block and filters all pairs below a given threshold.
   */
-object Deduplication extends SparkJob {
+class Deduplication extends SparkJobClass {
 	sparkOptions("spark.yarn.executor.memoryOverhead") = "8192"
 
 	appName = "Deduplication"
@@ -42,35 +42,38 @@ object Deduplication extends SparkJob {
 		MappedListBlockingScheme("mappedPostal_scheme", x => x.slice(0, 3), "geo_postal")
 	)
 
+	var subjects: RDD[Subject] = _
+	var stagedSubjects: RDD[Subject] = _
+	var duplicates: RDD[Duplicates] = _
+
 	// $COVERAGE-OFF$
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = List(sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable")))
-		val staging = List(sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable")))
-		(subjects ++ staging).toAnyRDD()
+	/**
+	  * Loads the Subjects and the staged Subjects from the Cassandra.
+	  * @param sc SparkContext to be used for the job
+	  */
+	override def load(sc: SparkContext): Unit = {
+		subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
+		stagedSubjects = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
 	}
 
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Duplicates]()
-			.head
-			.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
+	/**
+	  * Saves the duplicates to the Cassandra.
+	  * @param sc SparkContext to be used for the job
+	  */
+	override def save(sc: SparkContext): Unit = {
+		duplicates.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
 	}
 	// $COVERAGE-ON$
 
 	/**
 	  * Blocks the Subjects and finds duplicates between them between the Subjects and staged Subjects.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val List(subjects, staging) = input.fromAnyRDD[Subject]()
+	override def run(sc: SparkContext): Unit = {
 		val slaves = subjects.filter(_.isSlave)
-		val blocks = Blocking.blocking(slaves, staging, blockingSchemes)
+		val blocks = Blocking.blocking(slaves, stagedSubjects, blockingSchemes, settings("maxBlockSize").toInt)
 		val subjectPairs = findDuplicates(blocks.values, sc)
-		val duplicates = createDuplicates(subjectPairs)
-		List(duplicates).toAnyRDD()
+		duplicates = createDuplicates(subjectPairs)
 	}
 
 	/**
