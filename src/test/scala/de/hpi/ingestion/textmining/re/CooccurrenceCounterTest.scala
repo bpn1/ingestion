@@ -24,18 +24,18 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class CooccurrenceCounterTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"All entity lists" should "be extracted" in {
+		val job = new CooccurrenceCounter
 		val sentences = TestData.sentenceList()
-		val entityList = sentences.map(CooccurrenceCounter.sentenceToEntityList)
+		val entityList = sentences.map(job.sentenceToEntityList)
 		entityList shouldEqual TestData.entityLists()
 	}
 
 
 	"Found cooccurrences" should "exactly these cooccurrences" in {
-		val sentences = sc.parallelize(TestData.sentencesWithCooccurrences())
-		val cooccurrences = CooccurrenceCounter.run(List(sentences).toAnyRDD(), sc)
-			.fromAnyRDD[Cooccurrence]()
-			.head
+		val job = new CooccurrenceCounter
+		job.sentences = sc.parallelize(TestData.sentencesWithCooccurrences())
+		job.run(sc)
 		val expectedCooccurrences = sc.parallelize(TestData.cooccurrences())
-		assertRDDEquals(cooccurrences, expectedCooccurrences)
+		assertRDDEquals(job.cooccurrences, expectedCooccurrences)
 	}
 }

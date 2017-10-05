@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.re
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.SparkJobClass
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.{Cooccurrence, Sentence}
 import org.apache.spark.SparkContext
@@ -26,36 +26,29 @@ import org.apache.spark.rdd.RDD
 /**
   * Counts the cooccurrences in all sentences.
   */
-object CooccurrenceCounter extends SparkJob {
+class CooccurrenceCounter extends SparkJobClass {
 	appName = "Cooccurrence Counter"
 	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipediacooccurrences"
 	configFile = "textmining.xml"
 
+	var sentences: RDD[Sentence] = _
+	var cooccurrences: RDD[Cooccurrence] = _
+
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  *
-	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * @param sc Spark Context used to load the RDDs
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val sentences = sc.cassandraTable[Sentence](settings("keyspace"), settings("sentenceTable"))
-		List(sentences).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		sentences = sc.cassandraTable[Sentence](settings("keyspace"), settings("sentenceTable"))
 	}
 
 	/**
 	  * Saves Sentences with entities to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Cooccurrence]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("cooccurrenceTable"))
+	override def save(sc: SparkContext): Unit = {
+		cooccurrences.saveToCassandra(settings("keyspace"), settings("cooccurrenceTable"))
 	}
 	// $COVERAGE-ON$
 
@@ -71,19 +64,13 @@ object CooccurrenceCounter extends SparkJob {
 
 	/**
 	  * Groups by entity list and counts cooccurrences.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
+	  * @param sc Spark Context used to e.g. broadcast variables
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		val sentences = input.fromAnyRDD[Sentence]().head
-		val entityLists = sentences
+	override def run(sc: SparkContext): Unit = {
+		cooccurrences = sentences
 			.map(sentence => (sentenceToEntityList(sentence), 1))
 			.filter(_._1.size > 1)
 			.reduceByKey(_ + _)
 			.map(Cooccurrence.tupled)
-		List(entityLists).toAnyRDD()
 	}
 }

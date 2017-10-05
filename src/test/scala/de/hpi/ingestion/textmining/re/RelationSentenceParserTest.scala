@@ -25,18 +25,20 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"Wikipedia text" should "be split into exactly these Sentences with these entities" in {
+		val job = new RelationSentenceParser
 		val parsedEntry = TestData.bigLinkExtenderParsedEntry()
 		val sentenceTokenizer = IngestionTokenizer(new SentenceTokenizer, false, false)
 		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, true)
-		val sentences = RelationSentenceParser.entryToSentencesWithEntities(parsedEntry, sentenceTokenizer, tokenizer)
+		val sentences = job.entryToSentencesWithEntities(parsedEntry, sentenceTokenizer, tokenizer)
 		sentences shouldEqual TestData.sentenceList()
 	}
 
 	"Sentences" should "not contain these countries and cities as entities" in {
+		val job = new RelationSentenceParser
 		val sentences = sc.parallelize(TestData.alternativeSentenceList())
 		val relations = sc.parallelize(TestData.relationList())
 		val companies = TestData.companySet()
-		val filteredSentences = RelationSentenceParser.filterSentences(
+		val filteredSentences = job.filterSentences(
 			sentences,
 			relations,
 			companies,
@@ -45,17 +47,14 @@ class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with M
 	}
 
 	"Wikipedia articles" should "be split into exactly these Sentences with these entities" in {
-		val entries = sc.parallelize(
+		val job = new RelationSentenceParser
+		job.parsedWikipedia = sc.parallelize(
 			(Set(TestData.bigLinkExtenderParsedEntry()) ++ TestData.linkExtenderExtendedParsedEntry()).toList
 		)
-		val relations = sc.parallelize(TestData.relationList())
-		val wikidata = sc.parallelize(TestData.wikiDataCompanies())
-		val input = List(entries).toAnyRDD() ++ List(relations).toAnyRDD() ++ List(wikidata).toAnyRDD()
-		val sentences = RelationSentenceParser.run(input, sc)
-			.fromAnyRDD[Sentence]()
-			.head
-			.collect
-			.toList
+		job.relations = sc.parallelize(TestData.relationList())
+		job.wikidataEntries = sc.parallelize(TestData.wikiDataCompanies())
+		job.run(sc)
+		val sentences = job.sentences.collect.toList
 		val expectedSentences =  TestData.alternativeSentenceListFiltered()
 		sentences shouldEqual expectedSentences
 	}
