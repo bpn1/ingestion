@@ -20,9 +20,10 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import java.util.UUID
+
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
-import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.framework.{CommandLineConf, SparkJob}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
@@ -85,7 +86,7 @@ object VersionRestore extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val version = UUID.fromString(args(0))
+		val version = UUID.fromString(conf.restoreVersion)
 		val templateVersion = Version(appName, List("history"), sc, false, Option(outputTablename))
 		input
 			.fromAnyRDD[Subject]()
@@ -95,10 +96,10 @@ object VersionRestore extends SparkJob {
 
 	/**
 	  * Asserts that two versions are given as program arguments.
-	  * @param args arguments of the program
+	  * @param conf command line config containing the command line options
 	  * @return true if there are at least two arguments provided
 	  */
-	override def assertConditions(args: Array[String]): Boolean = {
-		args.length == 1
+	override def assertConditions(conf: CommandLineConf): Boolean = {
+		conf.restoreVersion.isDefined
 	}
 }
