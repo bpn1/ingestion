@@ -29,6 +29,7 @@ import de.hpi.ingestion.framework.SparkJobClass
   * Updating relations of the master node to new master nodes
   */
 class MasterConnecting extends SparkJobClass {
+	import MasterConnecting._
 	appName = "MasterConnecting"
 	configFile = "merging_master_connecting.xml"
 
@@ -90,7 +91,9 @@ class MasterConnecting extends SparkJobClass {
 				master
 			}
 	}
+}
 
+object MasterConnecting {
 	/**
 	  * Extract relations and group by id.
 	  * @param master subject to extract relations from

@@ -30,35 +30,26 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 		job.duplicates = sc.parallelize(TestData.duplicates)
 		job.run(sc)
 		val output = job.mergedSubjects.collect.toList
-
 		val (existingMaster, newMaster) = output
 			.filter(_.isMaster)
 			.partition(master => TestData.idList.contains(master.id))
-
 		existingMaster
-			.map { master =>
-				(
-					master
-						.properties
-				    	.mapValues(_.sorted),
-					TestData
-						.mergedSubjects
-						.find(_ == master)
-						.get
-						.properties
-						.mapValues(_.sorted)
-				)
+			.foreach { master =>
+				val properties = master
+					.properties
+					.mapValues(_.sorted)
+				val expectedProperties = TestData
+					.mergedSubjects
+					.find(_ == master)
+					.get
+					.properties
+					.mapValues(_.sorted)
+				properties shouldEqual expectedProperties
 			}
-	    	.foreach { case (properties, expected) =>
-				properties shouldEqual expected
-			}
-
 		val newMasterAttributes = newMaster
 			.map(_.properties.mapValues(_.sorted))
 			.toSet
-
 		val expectedAttributes = Set(TestData.mergedSubjects(8).properties, TestData.mergedSubjects(10).properties)
-
 		newMasterAttributes shouldEqual expectedAttributes
 	}
 
@@ -69,25 +60,20 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 		job.duplicates = sc.parallelize(TestData.duplicates)
 		job.run(sc)
 		val output = job.mergedSubjects.collect.toList
-
 		val (existingMaster, newMaster) = output
 			.filter(_.isMaster)
 			.partition(master => TestData.idList.contains(master.id))
-
 		existingMaster
 			.map(master => (master.masterRelations, TestData.mergedSubjects.find(_ == master).get.masterRelations))
 			.foreach { case (relations, expected) =>
 				relations shouldEqual expected
 			}
-
 		val newMasterAttributes = newMaster
 			.map(_.masterRelations)
 	    	.toSet
-
 		val expectedAttributes = Set(
 			TestData.mergedSubjects(8).masterRelations,
-			TestData.mergedSubjects(10).masterRelations
-		)
+			TestData.mergedSubjects(10).masterRelations)
 
 		newMasterAttributes shouldEqual expectedAttributes
 	}
@@ -116,7 +102,6 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 		job.subjects = sc.parallelize(TestData.subjects)
 		job.duplicates = sc.parallelize(TestData.duplicates)
 		job.run(sc)
-
 		val relationsList = job
 			.mergedSubjects
 			.groupBy(_.master)
@@ -135,7 +120,6 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 		job.subjects = sc.parallelize(TestData.subjects)
 		job.duplicates = sc.parallelize(TestData.duplicates)
 		job.run(sc)
-
 		val duplicateRelations = job
 			.mergedSubjects
 			.flatMap(_.relations.filter(_._2.contains(SubjectManager.duplicateKey)))
