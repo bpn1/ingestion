@@ -93,8 +93,8 @@ object DatasourceUpdate {
 		sm.setName(newSubject.name)
 		sm.addAliases(newSubject.aliases)
 		sm.setCategory(newSubject.category)
-		sm.overwriteProperties(newSubject.properties)
-		sm.overwriteRelations(newSubject.relations)
+		sm.setProperties(newSubject.properties)
+		sm.setRelations(newSubject.relations)
 		oldSubject
 	}
 }

@@ -23,9 +23,47 @@ import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.rdd.RDD
 
 class CSVExport extends SparkJobClass {
+	import CSVExport._
 	appName = "CSVExport v1.0"
 	val keyspace = "datalake"
 	val tablename = "subject"
+
+	var subjects: RDD[Subject] = _
+	var nodes: RDD[String] = _
+	var edges: RDD[String] = _
+
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Subjects from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  */
+	override def load(sc: SparkContext): Unit = {
+		subjects = sc.cassandraTable[Subject](keyspace, tablename)
+	}
+
+	/**
+	  * Saves nodes and edges to the HDFS.
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  */
+	override def save(sc: SparkContext): Unit = {
+		val timestamp = System.currentTimeMillis / 1000
+		nodes.saveAsTextFile(s"export_nodes_$timestamp")
+		edges.saveAsTextFile(s"export_edges_$timestamp")
+	}
+	// $COVERAGE-ON$
+
+	/**
+	  * Creates Nodes and Edges from the Subjects.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val masters = subjects.filter(_.isMaster)
+		nodes = masters.map(nodeToCSV)
+		edges = masters.flatMap(edgesToCSV)
+	}
+}
+
+object CSVExport {
 	val quote = "\""
 	val separator = ","
 	val arraySeparator = ";"
@@ -81,30 +119,6 @@ class CSVExport extends SparkJobClass {
 		"childOrganisation" -> "owns"
 	)
 
-	var subjects: RDD[Subject] = _
-	var nodes: RDD[String] = _
-	var edges: RDD[String] = _
-
-	// $COVERAGE-OFF$
-	/**
-	  * Loads Subjects from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  */
-	override def load(sc: SparkContext): Unit = {
-		subjects = sc.cassandraTable[Subject](keyspace, tablename)
-	}
-
-	/**
-	  * Saves nodes and edges to the HDFS.
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  */
-	override def save(sc: SparkContext): Unit = {
-		val timestamp = System.currentTimeMillis / 1000
-		nodes.saveAsTextFile(s"export_nodes_$timestamp")
-		edges.saveAsTextFile(s"export_edges_$timestamp")
-	}
-	// $COVERAGE-ON$
-
 	/**
 	  * Parses a Subject into a csv node in the following format:
 	  * :ID(Subject),name,aliases:string[],category:LABEL,color
@@ -136,7 +150,7 @@ class CSVExport extends SparkJobClass {
 	  */
 	def edgesToCSV(subject: Subject): List[String] = {
 		subject
-		    .masterRelations
+			.masterRelations
 			.flatMap { case (id, props) =>
 				props.keySet
 					.flatMap(relationNormalization.get)
@@ -146,15 +160,5 @@ class CSVExport extends SparkJobClass {
 			}.map(_.trim)
 			.filter(_.nonEmpty)
 			.toList
-	}
-
-	/**
-	  * Creates Nodes and Edges from the Subjects.
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  */
-	override def run(sc: SparkContext): Unit = {
-		val masters = subjects.filter(_.isMaster)
-		nodes = masters.map(nodeToCSV)
-		edges = masters.flatMap(edgesToCSV)
 	}
 }

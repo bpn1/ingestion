@@ -21,15 +21,13 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class CSVExportTest extends FlatSpec with Matchers with SharedSparkContext {
 	"Subjects" should "be converted to csv nodes" in {
-		val job = new CSVExport
-		val subjectNodes = TestData.exportSubjects.map(job.nodeToCSV)
+		val subjectNodes = TestData.exportSubjects.map(CSVExport.nodeToCSV)
 		val expectedCSV = TestData.exportedNodeCSV
 		subjectNodes shouldEqual expectedCSV
 	}
 
 	"Relations" should "be converted to csv edges" in {
-		val job = new CSVExport
-		val subjectEdges = TestData.exportSubjects.flatMap(job.edgesToCSV)
+		val subjectEdges = TestData.exportSubjects.flatMap(CSVExport.edgesToCSV)
 		val expectedCSV = TestData.exportedEdgeCSV
 		subjectEdges shouldEqual expectedCSV
 	}
