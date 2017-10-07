@@ -24,7 +24,7 @@ import de.hpi.ingestion.graphframes.models.ResultGraph
 /**
   * Extracts company groups in a graph by finding connected components in its ownership relations
   */
-object CompanyGroupExtractor extends GraphExtractor {
+class CompanyGroupExtractor extends GraphExtractor {
 	appName = "CompanyGroupExtractor"
 	val graphType = "CompanyGroup"
 	val minComponentSize = 3

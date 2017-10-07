@@ -29,6 +29,7 @@ import de.hpi.ingestion.framework.SparkJobClass
   * that has a timestamp BEFORE the argument timestamp OR is equal to the argument TimeUUID
   */
 class VersionRestore extends SparkJobClass {
+	import VersionRestore._
 	appName = "VersionRestore"
 	val keyspace = "datalake"
 	val tablename = "subject"
@@ -57,21 +58,6 @@ class VersionRestore extends SparkJobClass {
 	// $COVERAGE-ON$
 
 	/**
-	  * Restores all subjects to the data in the specified Version
-	  * @param version TimeUUID of the version that will be reverted to
-	  * @return Modified subject with restored data
-	  */
-	def restoreSubjects(
-		subject: Subject,
-		version: UUID,
-		templateVersion: Version
-	): Subject = {
-		val sm = new SubjectManager(subject, templateVersion)
-		sm.restoreVersion(version)
-		subject
-	}
-
-	/**
 	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  * @return List of RDDs containing the output data
@@ -88,5 +74,22 @@ class VersionRestore extends SparkJobClass {
 	  */
 	override def assertConditions(): Boolean = {
 		args.length == 1
+	}
+}
+
+object VersionRestore {
+	/**
+	  * Restores all subjects to the data in the specified Version
+	  * @param version TimeUUID of the version that will be reverted to
+	  * @return Modified subject with restored data
+	  */
+	def restoreSubjects(
+		subject: Subject,
+		version: UUID,
+		templateVersion: Version
+	): Subject = {
+		val sm = new SubjectManager(subject, templateVersion)
+		sm.restoreVersion(version)
+		subject
 	}
 }

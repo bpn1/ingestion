@@ -32,6 +32,7 @@ import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
   * differences of each Subject as JSON file to the HDFS.
   */
 class VersionDiff extends SparkJobClass {
+	import VersionDiff._
 	appName = "VersionDiff"
 	val keyspace = "datalake"
 	val tablename = "subject"
@@ -60,6 +61,38 @@ class VersionDiff extends SparkJobClass {
 	// $COVERAGE-ON$
 
 	/**
+	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val (oldVersion, newVersion) = versionOrder(UUID.fromString(args(0)), UUID.fromString(args(1)))
+		subjectDiff = subjects
+			.map(retrieveVersions(_, oldVersion, newVersion))
+			.map(historyToDiff(_, oldVersion, newVersion))
+			.filter(_.hasChanges())
+	}
+
+	/**
+	  * Asserts that two versions are given as program arguments.
+	  * @return true if there are at least two arguments provided
+	  */
+	override def assertConditions(): Boolean = {
+		args.length >= 2
+	}
+}
+
+object VersionDiff {
+	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
+	/**
+	  * Extracts the time component of a TimeUUID.
+	  * Source: https://git.io/vSxjU
+	  * @param uuid TimeUUID used to extract the time
+	  * @return time as long
+	  */
+	def timeFromUUID(uuid: UUID): Long = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000
+
+	/**
 	  * Returns list of values of the given version or a previous version that changed the given field.
 	  * @param queryVersion TimeUUID of the wanted version of the attributes
 	  * @param versionList list of all existing versions of the field
@@ -67,10 +100,9 @@ class VersionDiff extends SparkJobClass {
 	  */
 	def findValues(queryVersion: UUID, versionList: List[Version]): List[String] = {
 		val queryValue = versionList.find(_.version == queryVersion).map(_.value)
-		val olderVersions = versionList
-			.filter(v => VersionDiff.timeFromUUID(v.version) < VersionDiff.timeFromUUID(queryVersion))
+		val olderVersions = versionList.filter(v => timeFromUUID(v.version) < timeFromUUID(queryVersion))
 		val olderValue = if(olderVersions.nonEmpty) {
-			val lastVersion = olderVersions.maxBy(v => VersionDiff.timeFromUUID(v.version))
+			val lastVersion = olderVersions.maxBy(v => timeFromUUID(v.version))
 			Option(lastVersion.value)
 		} else {
 			None
@@ -114,7 +146,7 @@ class VersionDiff extends SparkJobClass {
 			if(additions.nonEmpty) jsonObject("+") = Json.toJson(additions)
 			jsonObject.toMap
 		}.filter(_.nonEmpty)
-		.map(Json.toJson(_))
+			.map(Json.toJson(_))
 	}
 
 	/**
@@ -168,42 +200,10 @@ class VersionDiff extends SparkJobClass {
 	  * @return tuple of versions with the older version as first element
 	  */
 	def versionOrder(version1: UUID, version2: UUID): (UUID, UUID) = {
-		if(VersionDiff.timeFromUUID(version1) > VersionDiff.timeFromUUID(version2)) {
+		if(timeFromUUID(version1) > timeFromUUID(version2)) {
 			(version2, version1)
 		} else {
 			(version1, version2)
 		}
 	}
-
-	/**
-	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(sc: SparkContext): Unit = {
-		val (oldVersion, newVersion) = versionOrder(UUID.fromString(args(0)), UUID.fromString(args(1)))
-		subjectDiff = subjects
-			.map(retrieveVersions(_, oldVersion, newVersion))
-			.map(historyToDiff(_, oldVersion, newVersion))
-			.filter(_.hasChanges())
-	}
-
-	/**
-	  * Asserts that two versions are given as program arguments.
-	  * @return true if there are at least two arguments provided
-	  */
-	override def assertConditions(): Boolean = {
-		args.length >= 2
-	}
-}
-
-object VersionDiff {
-	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
-	/**
-	  * Extracts the time component of a TimeUUID.
-	  * Source: https://git.io/vSxjU
-	  * @param uuid TimeUUID used to extract the time
-	  * @return time as long
-	  */
-	def timeFromUUID(uuid: UUID): Long = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000
 }

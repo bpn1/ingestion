@@ -25,7 +25,7 @@ import de.hpi.ingestion.graphframes.models.ResultGraph
 /**
   * Extracts star and chain structures from subject graph
   */
-object MotifExtractor extends GraphExtractor {
+class MotifExtractor extends GraphExtractor {
 	appName = "MotifExtractor"
 	/**
 	  * Minimal size for star motifs

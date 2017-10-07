@@ -38,77 +38,68 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 	}
 
 	"Versions" should "be ordered correctly" in {
-		val job = new VersionDiff
 		val orderedVersions = TestData.unorderedVersions()
-			.map((job.versionOrder _).tupled)
+			.map((VersionDiff.versionOrder _).tupled)
 		val expectedVersions = TestData.orderedVersions()
 		orderedVersions shouldEqual expectedVersions
 	}
 
 	"Value lists of a Subject" should "be retrieved from the version lists" in {
-		val job = new VersionDiff
 		val (oldV, newV) = TestData.versionsToCompare()
 		val retrievedData = TestData.diffSubjects()
-			.map(job.retrieveVersions(_, oldV, newV))
+			.map(VersionDiff.retrieveVersions(_, oldV, newV))
 		val expectedData = TestData.historyEntries()
 		retrievedData shouldEqual expectedData
 	}
 
 	"Correct values" should "be retrieved from version list" in {
-		val job = new VersionDiff
 		val (oldV, newV) = TestData.versionsToCompare()
 		val fieldValues = TestData.versions()
-			.map(versionList => (job.findValues(oldV, versionList), job.findValues(newV, versionList)))
+			.map(versionList => (VersionDiff.findValues(oldV, versionList), VersionDiff.findValues(newV, versionList)))
 		val expectedValues = TestData.foundValues()
 		fieldValues shouldEqual expectedValues
 	}
 
 	"History entry" should "be diffed and written into SubjectDiff" in {
-		val job = new VersionDiff
 		val (oldV, newV) = TestData.versionsToCompare()
 		val diff = TestData.historyEntries()
-			.map(job.historyToDiff(_, oldV, newV))
+			.map(VersionDiff.historyToDiff(_, oldV, newV))
 		val expectedDiff = TestData.subjectDiff()
 		diff shouldEqual expectedDiff
 	}
 
 	it should "contain the master diff" in {
-		val job = new VersionDiff
 		val (oldV, newV) = TestData.versionsToCompare()
 		val diff = TestData.historyEntriesWithMaster()
-			.map(job.historyToDiff(_, oldV, newV))
+			.map(VersionDiff.historyToDiff(_, oldV, newV))
 		val expectedDiff = TestData.subjectDiffWithMaster()
 		diff shouldEqual expectedDiff
 	}
 
 	"Value lists" should "be created from two versions" in {
-		val job = new VersionDiff
 		val (oldV, newV) = TestData.versionsToCompare()
 		val valueLists = TestData.versions()
-			.map(job.createValueList(oldV, newV, _))
+			.map(VersionDiff.createValueList(oldV, newV, _))
 		val expectedLists = TestData.dataLists()
 		valueLists shouldEqual expectedLists
 	}
 
 	"Value lists" should "be created when the versions are the same" in {
-		val job = new VersionDiff
 		val oldV = TestData.versionsToCompare()._1
 		val valueLists = TestData.versions()
-			.map(job.createValueList(oldV, oldV, _))
+			.map(VersionDiff.createValueList(oldV, oldV, _))
 		val expectedLists = TestData.sameVersionDataLists()
 		valueLists shouldEqual expectedLists
 	}
 
 	they should "be diffed and serialized as JSON" in {
-		val job = new VersionDiff
 		val valueDiffs = TestData.dataLists()
-			.map(job.diffLists)
+			.map(VersionDiff.diffLists)
 		val expectedDiffs = TestData.listDiffs()
 		valueDiffs shouldEqual expectedDiffs
 	}
 
 	"Time" should "be extracted from UUID" in {
-		val job = new VersionDiff
 		val uuidTimes = TestData.timeUUIDs()
 			.map(VersionDiff.timeFromUUID)
 		val expectedTimes = TestData.timeOfTimeUUIDs()

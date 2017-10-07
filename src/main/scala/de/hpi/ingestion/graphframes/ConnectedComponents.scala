@@ -21,7 +21,7 @@ import org.apache.spark.rdd.RDD
 import org.graphframes.GraphFrame
 import de.hpi.ingestion.graphframes.models.ResultGraph
 
-object ConnectedComponents extends GraphExtractor {
+class ConnectedComponents extends GraphExtractor {
 	appName = "ConnectedComponents"
 	val graphType = "ConnectedComponent"
 	val minComponentSize = 3
