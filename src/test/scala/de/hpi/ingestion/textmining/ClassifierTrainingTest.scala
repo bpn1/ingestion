@@ -71,21 +71,19 @@ class ClassifierTrainingTest extends FlatSpec with Matchers with SharedSparkCont
 	}
 
 	"Cross validation" should "return statistics and models" in {
-		val job = new ClassifierTraining
 		val session = SparkSession.builder().getOrCreate()
 		val data = sc.parallelize(TestData.extendedClassifierFeatureEntriesWithGrouping(7))
 		val classifier = ClassifierTraining.randomForestDFModel(1, 8, 1)
-		val (stats, models) = job.crossValidate(data, 2, classifier, session)
+		val (stats, models) = ClassifierTraining.crossValidate(data, 2, classifier, session)
 		stats should not be empty
 		models should not be empty
 	}
 
 	it should "average the statistics and return only one model" in {
-		val job = new ClassifierTraining
 		val session = SparkSession.builder().getOrCreate()
 		val data = sc.parallelize(TestData.extendedClassifierFeatureEntries(7))
 		val classifier = ClassifierTraining.randomForestDFModel(1, 8, 1)
-		val (avgStats, model) = job.crossValidateAndEvaluate(data, 2, classifier, session)
+		val (avgStats, model) = ClassifierTraining.crossValidateAndEvaluate(data, 2, classifier, session)
 		avgStats.data should not be empty
 		model shouldBe defined
 	}

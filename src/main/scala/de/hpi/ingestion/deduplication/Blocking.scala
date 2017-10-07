@@ -24,6 +24,7 @@ import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.framework.SparkJobClass
 import de.hpi.ingestion.implicits.TupleImplicits._
+import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 

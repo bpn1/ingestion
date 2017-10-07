@@ -46,11 +46,10 @@ class HtmlGeneratorTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	they should "have a default title if it is empty" in {
-		val job = new HtmlGenerator
 		val articles = TestData.articlesWithFoundLinks().map(_.copy(title = None))
-		val parsedArticles = articles.map(job.generateArticleWithLinks)
+		val parsedArticles = articles.map(HtmlGenerator.generateArticleWithLinks)
 		parsedArticles.foreach { article =>
-			article.title shouldEqual job.defaultTitle }
+			article.title shouldEqual HtmlGenerator.defaultTitle }
 	}
 
 	they should "only contain the title and the original text" in {
@@ -58,7 +57,7 @@ class HtmlGeneratorTest extends FlatSpec with SharedSparkContext with Matchers {
 		job.nelArticles = sc.parallelize(TestData.articlesWithFoundLinks().toList)
 		job.run(sc)
 		val originalTexts = job.nelArticles
-			.map(article => article.title.getOrElse(job.defaultTitle) + "\n" + article.getText)
+			.map(article => article.title.getOrElse(HtmlGenerator.defaultTitle) + "\n" + article.getText)
 			.collect
 			.toSet
 		val texts = job.htmlArticles

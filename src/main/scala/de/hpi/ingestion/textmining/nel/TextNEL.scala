@@ -35,6 +35,7 @@ import org.apache.spark.sql.SparkSession
   * the `foundentities` column back to the same table.
   */
 class TextNEL extends SparkJobClass {
+	import TextNEL._
 	appName = "Text NEL"
 	configFile = "textmining.xml"
 	sparkOptions("spark.yarn.executor.memoryOverhead") = "4096"
@@ -96,19 +97,54 @@ class TextNEL extends SparkJobClass {
 	}
 
 	/**
+	  * Generates FeatureEntries for the aliases extracted from the TrieAliasArticles.
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val session = SparkSession.builder().getOrCreate()
+		val articlesPartitions = splitInput()
+		val articleTfidfTuples = articleTfidf.flatMap(ArticleTfIdf.unapply)
+
+		if(aliasPageScores.isEmpty) {
+			aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
+		}
+		val tokenizer = IngestionTokenizer()
+		entityLinks = articlesPartitions.map { partition =>
+			val contextSize = settings("contextSize").toInt
+			val articleAliases = partition.flatMap(extractTrieAliasContexts(_, tokenizer, contextSize))
+			val aliasTfIdf = CCC.calculateTfidf(
+				articleAliases,
+				numDocuments,
+				CCC.defaultIdf(numDocuments),
+				docFreqStreamFunction,
+				settings("dfFile"))
+			val job = new SecondOrderFeatureGenerator
+			job.featureEntries = CCC.compareLinksWithArticles(
+				aliasTfIdf,
+				sc.broadcast(aliasPageScores),
+				articleTfidfTuples)
+			job.run(sc)
+			classifyFeatureEntries(job.featureEntriesWithSOF, loadModelFunction(), session)
+		}
+	}
+}
+
+object TextNEL {
+	/**
 	  * Extracts the contexts of an article's Trie Aliases.
 	  *
 	  * @param article   article containing the text and the Trie Aliases.
 	  * @param tokenizer Tokenizer used to create the contexts
+	  * @param contextSize number of tokens before and after a match considered as the context
 	  * @return List of the Trie Aliases as Links and their contexts as Bags as tuples
 	  */
 	def extractTrieAliasContexts(
 		article: TrieAliasArticle,
-		tokenizer: IngestionTokenizer
+		tokenizer: IngestionTokenizer,
+		contextSize: Int
 	): List[(Link, Bag[String, Int])] = {
 		val articleTokens = article.text.map(tokenizer.onlyTokenizeWithOffset).getOrElse(Nil)
 		article.triealiases.map { triealias =>
-			val contextSize = settings("contextSize").toInt
 			val context = TermFrequencyCounter.extractContext(articleTokens, triealias.toLink(), tokenizer, contextSize)
 			(triealias.toLink().copy(article = Option(article.id)), context)
 		}
@@ -143,40 +179,9 @@ class TextNEL extends SparkJobClass {
 				val link = Link(alias, entity, Option(offset))
 				(article, link, prediction)
 			}.collect {
-				case (article, link, prediction) if prediction == 1.0 =>
-					(article, List(link))
-			}.reduceByKey(_ ++ _)
+			case (article, link, prediction) if prediction == 1.0 =>
+				(article, List(link))
+		}.reduceByKey(_ ++ _)
 			.map(_.map(identity, _.sortBy(_.offset)))
-	}
-
-	/**
-	  * Generates FeatureEntries for the aliases extracted from the TrieAliasArticles.
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  */
-	override def run(sc: SparkContext): Unit = {
-		val session = SparkSession.builder().getOrCreate()
-		val articlesPartitions = splitInput()
-		val articleTfidfTuples = articleTfidf.flatMap(ArticleTfIdf.unapply)
-
-		if(aliasPageScores.isEmpty) {
-			aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
-		}
-		val tokenizer = IngestionTokenizer()
-		entityLinks = articlesPartitions.map { partition =>
-			val articleAliases = partition.flatMap(extractTrieAliasContexts(_, tokenizer))
-			val aliasTfIdf = CCC.calculateTfidf(
-				articleAliases,
-				numDocuments,
-				CCC.defaultIdf(numDocuments),
-				docFreqStreamFunction,
-				settings("dfFile"))
-			val job = new SecondOrderFeatureGenerator
-			job.featureEntries = CCC.compareLinksWithArticles(
-				aliasTfIdf,
-				sc.broadcast(aliasPageScores),
-				articleTfidfTuples)
-			job.run(sc)
-			classifyFeatureEntries(job.featureEntriesWithSOF, loadModelFunction(), session)
-		}
 	}
 }

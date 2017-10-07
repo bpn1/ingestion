@@ -32,9 +32,9 @@ import org.apache.spark.{SparkContext, sql}
   * Trains a classifier on the relations from DBpedia.
   */
 class RelationClassifier extends SparkJobClass {
+	import RelationClassifier._
 	appName = "Relation Classifier"
 	configFile = "textmining.xml"
-	val aggregated = true
 
 	var sentences: RDD[Sentence] = _
 	var relations: RDD[Relation] = _
@@ -60,6 +60,55 @@ class RelationClassifier extends SparkJobClass {
 		classifierStatistics.saveToCassandra(settings("keyspace"), settings("relClassifierStatsTable"))
 	}
 	// $COVERAGE-ON$
+
+	/**
+	  * Calculates statistics for multiple relation scenarios
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val filteredSentences = sentences
+			.filter(sentence => sentence.entities.map(_.entity).toSet.size > 1 && sentence.entities.size == 2)
+		val filteredRelations = relations.filter(relation => relation.subjectentity != relation.objectentity)
+		val groupedCooccurrences = cooccurrences
+			.map(cooc => (cooc.entitylist.toSet, cooc.count))
+			.reduceByKey(_ + _)
+		val comment = "Linear Regression, aggregated, undirected, stemmed, 10 folds, minCooc 1"
+		val rels = Set(
+			Set("parentCompany", "owningCompany", "subsidiary", "division")
+		)
+		val stats = rels.map { rel =>
+			val minCooc = groupedCooccurrences.filter(_._2 <= 1).map(_._1)
+			val relationsWithBagOfWords = parseBagOfWordsWithRelations(
+				filteredRelations,
+				filteredSentences,
+				minCooc,
+				rel)
+			val noRelationsBagOfWords = parseBagOfWordsWithNoRelations(
+				filteredRelations,
+				filteredSentences,
+				minCooc,
+				rel)
+			val session = SparkSession.builder().getOrCreate()
+			import session.implicits._
+			val labeledTfidf = calculateLabeledHashTFIDF(
+				(relationsWithBagOfWords ++ noRelationsBagOfWords).toDF("label", "words")
+			)
+			val data = crossValidateWithWeights(labeledTfidf, 10)
+			RelationClassifierStats(
+				rel = "owns",
+				sentenceswithrelation = relationsWithBagOfWords.count.toInt,
+				sentenceswithnorelation = noRelationsBagOfWords.count.toInt,
+				average = averageStatistics(data),
+				data = data,
+				comment = Option(comment)
+			)
+		}.toList
+		classifierStatistics = sc.parallelize(stats)
+	}
+}
+
+object RelationClassifier {
+	val aggregated = true
 
 	/**
 	  * Parses Bag of Words for all sentences with the given relation.
@@ -181,50 +230,5 @@ class RelationClassifier extends SparkJobClass {
 		val idfModel = idf.fit(featurizedData)
 
 		idfModel.transform(featurizedData)
-	}
-
-	/**
-	  * Calculates statistics for multiple relation scenarios
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  */
-	override def run(sc: SparkContext): Unit = {
-		val filteredSentences = sentences
-			.filter(sentence => sentence.entities.map(_.entity).toSet.size > 1 && sentence.entities.size == 2)
-		val filteredRelations = relations.filter(relation => relation.subjectentity != relation.objectentity)
-		val groupedCooccurrences = cooccurrences
-			.map(cooc => (cooc.entitylist.toSet, cooc.count))
-			.reduceByKey(_ + _)
-		val comment = "Linear Regression, aggregated, undirected, stemmed, 10 folds, minCooc 1"
-		val rels = Set(
-			Set("parentCompany", "owningCompany", "subsidiary", "division")
-		)
-		val stats = rels.map { rel =>
-			val minCooc = groupedCooccurrences.filter(_._2 <= 1).map(_._1)
-			val relationsWithBagOfWords = parseBagOfWordsWithRelations(
-				filteredRelations,
-				filteredSentences,
-				minCooc,
-				rel)
-			val noRelationsBagOfWords = parseBagOfWordsWithNoRelations(
-				filteredRelations,
-				filteredSentences,
-				minCooc,
-				rel)
-			val session = SparkSession.builder().getOrCreate()
-			import session.implicits._
-			val labeledTfidf = calculateLabeledHashTFIDF(
-				(relationsWithBagOfWords ++ noRelationsBagOfWords).toDF("label", "words")
-			)
-			val data = crossValidateWithWeights(labeledTfidf, 10)
-			RelationClassifierStats(
-				rel = "owns",
-				sentenceswithrelation = relationsWithBagOfWords.count.toInt,
-				sentenceswithnorelation = noRelationsBagOfWords.count.toInt,
-				average = averageStatistics(data),
-				data = data,
-				comment = Option(comment)
-			)
-		}.toList
-		classifierStatistics = sc.parallelize(stats)
 	}
 }

@@ -24,20 +24,18 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"Wikipedia text" should "be split into exactly these Sentences with these entities" in {
-		val job = new RelationSentenceParser
 		val parsedEntry = TestData.bigLinkExtenderParsedEntry()
 		val sentenceTokenizer = IngestionTokenizer(new SentenceTokenizer, false, false)
 		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, true)
-		val sentences = job.entryToSentencesWithEntities(parsedEntry, sentenceTokenizer, tokenizer)
+		val sentences = RelationSentenceParser.entryToSentencesWithEntities(parsedEntry, sentenceTokenizer, tokenizer)
 		sentences shouldEqual TestData.sentenceList()
 	}
 
 	"Sentences" should "not contain these countries and cities as entities" in {
-		val job = new RelationSentenceParser
 		val sentences = sc.parallelize(TestData.alternativeSentenceList())
 		val relations = sc.parallelize(TestData.relationList())
 		val companies = TestData.companySet()
-		val filteredSentences = job.filterSentences(
+		val filteredSentences = RelationSentenceParser.filterSentences(
 			sentences,
 			relations,
 			companies,

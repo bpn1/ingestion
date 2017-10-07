@@ -18,6 +18,7 @@ package de.hpi.ingestion.deduplication.models
 
 import java.util.UUID
 import de.hpi.ingestion.datalake.models.Subject
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Represents the a block resulting from a Blocking Scheme.

@@ -31,6 +31,7 @@ import de.hpi.ingestion.textmining.tokenizer.{CleanWhitespaceTokenizer, Ingestio
   * Parses all `Sentences` with at least two entities from each Wikipedia article and writes them to the Cassandra.
   */
 class RelationSentenceParser extends SparkJobClass {
+	import RelationSentenceParser._
 	appName = "Relation Sentence Parser"
 	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipediasentences"
 	configFile = "textmining.xml"
@@ -60,6 +61,20 @@ class RelationSentenceParser extends SparkJobClass {
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Parses all `Sentences` with at least two entities from each Wikipedia article.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val companies = extractCompanyPages(wikidataEntries).collect.toSet
+		val sentenceTokenizer = IngestionTokenizer(new SentenceTokenizer, false, false)
+		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, true)
+		val parsedSentences = parsedWikipedia.flatMap(entryToSentencesWithEntities(_, sentenceTokenizer, tokenizer))
+		sentences = filterSentences(parsedSentences, relations, companies, sc)
+	}
+}
+
+object RelationSentenceParser {
 	/**
 	  * Parses all Sentences from a parsed Wikipedia entry with at least 2 entities
 	  * and recalculating relative offsets of entities.
@@ -150,23 +165,11 @@ class RelationSentenceParser extends SparkJobClass {
 					.entities
 					.filter { entity =>
 						!localBlacklist.contains(entity.entity) &&
-						!handmadeBlacklist.contains(entity.entity) &&
-						localWhitelist.contains(entity.entity)
+							!handmadeBlacklist.contains(entity.entity) &&
+							localWhitelist.contains(entity.entity)
 					}.sortBy(_.offset)
 				sentence.copy(entities = filteredEntities)
 			}
 		}).filter(_.entities.length > 1)
-	}
-
-	/**
-	  * Parses all `Sentences` with at least two entities from each Wikipedia article.
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  */
-	override def run(sc: SparkContext): Unit = {
-		val companies = extractCompanyPages(wikidataEntries).collect.toSet
-		val sentenceTokenizer = IngestionTokenizer(new SentenceTokenizer, false, false)
-		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, true)
-		val parsedSentences = parsedWikipedia.flatMap(entryToSentencesWithEntities(_, sentenceTokenizer, tokenizer))
-		sentences = filterSentences(parsedSentences, relations, companies, sc)
 	}
 }

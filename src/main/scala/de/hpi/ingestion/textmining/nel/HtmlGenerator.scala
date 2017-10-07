@@ -26,9 +26,9 @@ import org.apache.spark.rdd.RDD
   * Generates HTML from found links to named entities and their corresponding raw articles.
   */
 class HtmlGenerator extends SparkJobClass {
+	import HtmlGenerator._
 	appName = "HTML Generator"
 	configFile = "textmining.xml"
-	val defaultTitle = "*** No title ***"
 
 	var nelArticles: RDD[TrieAliasArticle] = _
 	var htmlArticles: RDD[Article] = _
@@ -52,6 +52,18 @@ class HtmlGenerator extends SparkJobClass {
 	// $COVERAGE-ON$
 
 	/**
+	  * Generates HTML from found links to named entities and their corresponding raw articles.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		htmlArticles = nelArticles.map(generateArticleWithLinks)
+	}
+}
+
+object HtmlGenerator {
+	val defaultTitle = "*** No title ***"
+
+	/**
 	  * Inserts HTML links into an article text where named entities were found.
 	  *
 	  * @param article article with its found links to named entities
@@ -70,7 +82,7 @@ class HtmlGenerator extends SparkJobClass {
 			.sortBy(_._1)
 			.foreach { case (offset, groupedLinks) =>
 				val distinctLinks = groupedLinks.distinct // hotfix against duplicates
-				val mainLink = distinctLinks.head
+			val mainLink = distinctLinks.head
 				html += text.substring(processedCharacters, offset.get)
 				processedCharacters = offset.get
 				val pages = distinctLinks
@@ -85,13 +97,5 @@ class HtmlGenerator extends SparkJobClass {
 			}
 		html += text.substring(processedCharacters, text.length)
 		Article(title, html)
-	}
-
-	/**
-	  * Generates HTML from found links to named entities and their corresponding raw articles.
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  */
-	override def run(sc: SparkContext): Unit = {
-		htmlArticles = nelArticles.map(generateArticleWithLinks)
 	}
 }

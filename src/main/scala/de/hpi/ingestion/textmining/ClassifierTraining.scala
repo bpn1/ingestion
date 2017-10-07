@@ -34,6 +34,7 @@ import org.apache.spark.SparkContext
   * Trains a `RandomForestModel` with `FeatureEntries` and evaluates it in terms of precision, recall and f-score.
   */
 class ClassifierTraining extends SparkJobClass {
+	import ClassifierTraining._
 	appName = "Classifier Training"
 	configFile = "textmining.xml"
 	sparkOptions("spark.yarn.executor.memoryOverhead") = "8192"
@@ -62,78 +63,6 @@ class ClassifierTraining extends SparkJobClass {
 	// $COVERAGE-ON$
 
 	/**
-	  * Cross validates a Random Forest model with the input data and the given number of folds.
-	  *
-	  * @param data     input data used to train the classifier
-	  * @param numFolds number of folds used for the cross validation
-	  * @param classifier Random Forest Classifier containing the used parameters
-	  * @param session  current Spark Session
-	  * @return statistical data for each fold
-	  */
-	def crossValidate(
-		data: RDD[FeatureEntry],
-		numFolds: Int,
-		classifier: RandomForestClassifier,
-		session: SparkSession
-	): (List[PrecisionRecallDataTuple], List[PipelineModel]) = {
-		val weights = Array.fill(numFolds)(1.0)
-		val folds = data
-			.map(entry => ((entry.article, entry.offset), List(entry)))
-			.reduceByKey(_ ++ _)
-			.values
-			.randomSplit(weights)
-			.map(_.flatMap(identity))
-		val segments = folds.zipWithIndex.map { case (test, index) =>
-			val training = folds.slice(0, index) ++ folds.slice(index + 1, folds.length)
-			(test, training)
-		}
-		segments
-			.map { case (test, trainingList) =>
-				val training = trainingList.reduce(_.union(_))
-				val filteredTraining = training
-					.filter(entry => !(entry.entity_score.rank > 9 || entry.cosine_sim.rank > 9))
-				val trainingDF = ClassifierTraining.labeledPointDF(filteredTraining, session)
-				val testDF = ClassifierTraining.labeledPointDF(test, session)
-				val model = ClassifierTraining.trainRandomForestDF(trainingDF, classifier)
-				val predictions = model.transform(testDF)
-				val predictionAndLabels = predictions.rdd.map { row =>
-					val prediction = row.getDouble(row.fieldIndex("prediction"))
-					val label = row.getDouble(row.fieldIndex("indexedLabel"))
-					val article = row.getString(row.fieldIndex("article"))
-					val offset = row.getInt(row.fieldIndex("offset"))
-					((article, offset), List((prediction, label)))
-				}
-				(ClassifierTraining.calculateAdvancedStatistics(predictionAndLabels), model)
-			}.toList
-			.unzip
-	}
-
-	/**
-	  * Trains and cross validates a Random Forest Model.
-	  *
-	  * @param data data used to train and test the model
-	  * @param numFolds number of folds used for the cross validation
-	  * @param classifier Random Forest Classifier containing the used parameters
-	  * @param session current Spark Session
-	  * @return statistics of the cross validation and a Random Forest Model
-	  */
-	def crossValidateAndEvaluate(
-		data: RDD[FeatureEntry],
-		numFolds: Int = 3,
-		classifier: RandomForestClassifier,
-		session: SparkSession
-	): (SimilarityMeasureStats, Option[PipelineModel]) = {
-		val (cvResult, models) = crossValidate(data, numFolds, classifier, session)
-		val statistic = ClassifierTraining.averageStatistics(cvResult)
-		val model = models.headOption
-		val results = SimilarityMeasureStats(
-			data = List(statistic),
-			comment = Option(s"RF CV $numFolds folds"),
-			yaxis = Option("P/R/F1"))
-		(results, model)
-	}
-
-	/**
 	  * Partitions the entries to train and test a Classification model.
 	  * @param sc    Spark Context used to e.g. broadcast variables
 	  */
@@ -142,7 +71,7 @@ class ClassifierTraining extends SparkJobClass {
 		val (simStats, pipelineModel) = crossValidateAndEvaluate(
 			featureEntries,
 			3,
-			ClassifierTraining.randomForestDFModel(),
+			randomForestDFModel(),
 			session)
 		model = pipelineModel
 		similarityMeasureStats = sc.parallelize(List(simStats))
@@ -363,5 +292,77 @@ object ClassifierTraining {
 				val labeledPoint = entry.labeledPointDF()
 				(labeledPoint.features, labeledPoint.label, entry.article, entry.offset)
 			}.toDF("features", "label", "article", "offset")
+	}
+
+	/**
+	  * Cross validates a Random Forest model with the input data and the given number of folds.
+	  *
+	  * @param data     input data used to train the classifier
+	  * @param numFolds number of folds used for the cross validation
+	  * @param classifier Random Forest Classifier containing the used parameters
+	  * @param session  current Spark Session
+	  * @return statistical data for each fold
+	  */
+	def crossValidate(
+		data: RDD[FeatureEntry],
+		numFolds: Int,
+		classifier: RandomForestClassifier,
+		session: SparkSession
+	): (List[PrecisionRecallDataTuple], List[PipelineModel]) = {
+		val weights = Array.fill(numFolds)(1.0)
+		val folds = data
+			.map(entry => ((entry.article, entry.offset), List(entry)))
+			.reduceByKey(_ ++ _)
+			.values
+			.randomSplit(weights)
+			.map(_.flatMap(identity))
+		val segments = folds.zipWithIndex.map { case (test, index) =>
+			val training = folds.slice(0, index) ++ folds.slice(index + 1, folds.length)
+			(test, training)
+		}
+		segments
+			.map { case (test, trainingList) =>
+				val training = trainingList.reduce(_.union(_))
+				val filteredTraining = training
+					.filter(entry => !(entry.entity_score.rank > 9 || entry.cosine_sim.rank > 9))
+				val trainingDF = labeledPointDF(filteredTraining, session)
+				val testDF = labeledPointDF(test, session)
+				val model = trainRandomForestDF(trainingDF, classifier)
+				val predictions = model.transform(testDF)
+				val predictionAndLabels = predictions.rdd.map { row =>
+					val prediction = row.getDouble(row.fieldIndex("prediction"))
+					val label = row.getDouble(row.fieldIndex("indexedLabel"))
+					val article = row.getString(row.fieldIndex("article"))
+					val offset = row.getInt(row.fieldIndex("offset"))
+					((article, offset), List((prediction, label)))
+				}
+				(calculateAdvancedStatistics(predictionAndLabels), model)
+			}.toList
+			.unzip
+	}
+
+	/**
+	  * Trains and cross validates a Random Forest Model.
+	  *
+	  * @param data data used to train and test the model
+	  * @param numFolds number of folds used for the cross validation
+	  * @param classifier Random Forest Classifier containing the used parameters
+	  * @param session current Spark Session
+	  * @return statistics of the cross validation and a Random Forest Model
+	  */
+	def crossValidateAndEvaluate(
+		data: RDD[FeatureEntry],
+		numFolds: Int = 3,
+		classifier: RandomForestClassifier,
+		session: SparkSession
+	): (SimilarityMeasureStats, Option[PipelineModel]) = {
+		val (cvResult, models) = crossValidate(data, numFolds, classifier, session)
+		val statistic = averageStatistics(cvResult)
+		val model = models.headOption
+		val results = SimilarityMeasureStats(
+			data = List(statistic),
+			comment = Option(s"RF CV $numFolds folds"),
+			yaxis = Option("P/R/F1"))
+		(results, model)
 	}
 }

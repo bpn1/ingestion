@@ -89,18 +89,18 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Extracted TrieAlias contexts" should "be exactly these contexts" in {
 		val job = new TextNEL
+		val contextSize = job.settings("contextSize").toInt
 		val enrichedAliases = TestData.foundAliasArticles()
-			.flatMap(job.extractTrieAliasContexts(_, IngestionTokenizer(true, true)))
+			.flatMap(TextNEL.extractTrieAliasContexts(_, IngestionTokenizer(true, true), contextSize))
 		val expectedAliases = TestData.aliasContexts()
 		enrichedAliases shouldEqual expectedAliases
 	}
 
 	"Classified Feature Entries" should "be exactly these entries" in {
-		val job = new TextNEL
 		val session = SparkSession.builder().getOrCreate()
 		val featureEntries = sc.parallelize(TestData.featureEntries())
 		val model = TestData.randomForestModel(session)()
-		val linkedEntities = job.classifyFeatureEntries(featureEntries, model, session).collect.toSet
+		val linkedEntities = TextNEL.classifyFeatureEntries(featureEntries, model, session).collect.toSet
 		val expectedEntities = TestData.linkedEntities()
 		linkedEntities shouldEqual expectedEntities
 	}

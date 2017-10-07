@@ -30,6 +30,7 @@ import org.apache.spark.rdd.RDD
   * Finds `TrieAliases` in `TrieAliasArticles` and writes them back to the same table.
   */
 class ArticleTrieSearch extends SparkJobClass {
+	import ArticleTrieSearch._
 	appName = "Article Trie Search"
 	configFile = "textmining.xml"
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
@@ -66,7 +67,7 @@ class ArticleTrieSearch extends SparkJobClass {
 		val aliasArticles = nelArticles
 			.mapPartitions({ partition =>
 				val trie = deserializeTrie(trieStreamFunction(settings("smallerTrieFile")))
-				partition.map(ArticleTrieSearch.findAliases(_, tokenizer, trie))
+				partition.map(findAliases(_, tokenizer, trie))
 			}, true)
 		foundAliases = aliasArticles.map(article => (article.id, article.triealiases))
 	}
