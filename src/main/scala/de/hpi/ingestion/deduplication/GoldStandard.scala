@@ -24,6 +24,7 @@ import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.rdd.RDD
 
 class GoldStandard extends SparkJobClass {
+	import GoldStandard._
 	appName = "GoldStandard_v1.0"
 	configFile = "goldstandard.xml"
 
@@ -57,7 +58,9 @@ class GoldStandard extends SparkJobClass {
 	override def run(sc: SparkContext): Unit = {
 		goldStandard = join(dbpediaSubjects, wikidataSubjects)
 	}
+}
 
+object GoldStandard {
 	/**
 	  * Keys Subjects by a property value
 	  * @param rdd Subjects

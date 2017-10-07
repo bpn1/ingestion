@@ -68,21 +68,14 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 	"Block evaluation" should "create evaluation blocks" in {
 		val job = new Blocking
 		val subjects = TestData.subjects
-		val subjectRDD = sc.parallelize(subjects)
+		job.subjects = sc.parallelize(subjects)
 		val staging = TestData.stagings
-		val stagingRDD = sc.parallelize(staging)
+		job.stagedSubjects = sc.parallelize(staging)
 		val goldStandard = TestData.goldStandard(subjects, staging)
 		val comment = "Test comment"
-		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = job.evaluationBlocking(
-			subjectRDD,
-			stagingRDD,
-			goldStandard,
-			blockingSchemes,
-			false,
-			false,
-			comment
-		).map(_.copy(jobid = null))
+		job.blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
+		job.evaluationBlocking(goldStandard, false, false, comment)
+		val evaluationBlocks = job.blockEvaluation.map(_.copy(jobid = null))
 		val expected = TestData.blockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -90,21 +83,14 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 	it should "filter undefined blocks" in {
 		val job = new Blocking
 		val subjects = TestData.subjects
-		val subjectRDD = sc.parallelize(subjects)
+		job.subjects = sc.parallelize(subjects)
 		val staging = TestData.stagings
-		val stagingRDD = sc.parallelize(staging)
+		job.stagedSubjects = sc.parallelize(staging)
 		val goldStandard = TestData.goldStandard(subjects, staging)
 		val comment = "Blocking"
-		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = job.evaluationBlocking(
-			subjectRDD,
-			stagingRDD,
-			goldStandard,
-			blockingSchemes,
-			true,
-			false,
-			comment
-		).map(_.copy(jobid = null))
+		job.blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
+		job.evaluationBlocking(goldStandard, true, false, comment)
+		val evaluationBlocks = job.blockEvaluation.map(_.copy(jobid = null))
 		val expected = TestData.filteredUndefinedBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -112,18 +98,13 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 	it should "filter small, but not filter medium blocks" in {
 		val job = new Blocking
 		val (subjectRDD, stagingRDD) = TestData.blockEvaluationTestSubjects(sc)
+		job.subjects = subjectRDD
+		job. stagedSubjects = stagingRDD
 		val goldStandard = TestData.goldStandard(TestData.subjects, TestData.stagings)
 		val comment = "Blocking"
-		val blockingSchemes = List(SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = job.evaluationBlocking(
-			subjectRDD,
-			stagingRDD,
-			goldStandard,
-			blockingSchemes,
-			true,
-			true,
-			comment
-		).map(_.copy(jobid = null))
+		job.blockingSchemes = List(SimpleBlockingScheme("SimpleBlocking"))
+		job.evaluationBlocking(goldStandard, true, true, comment)
+		val evaluationBlocks = job.blockEvaluation.map(_.copy(jobid = null))
 		val expected = TestData.filteredSmallBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
@@ -168,56 +149,40 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 		job.blockingSchemes.head.isInstanceOf[SimpleBlockingScheme] shouldBe true
 	}
 
-//	"Config" should "be read" in {
-//		val job = new Blocking
-//		job.configFile = "test.xml"
-//		job.settings should not be empty
-//	}
-// TODO: check if duplicate test
-//	it should "be read before run is executed" in {
-//		val job = new Blocking
-//		job.assertConditions()
-//		job.settings should not be empty
-//	}
-
 	"calculatePairwiseCompleteness" should "calculate all pairwise completenesses (PCs) as well as the total PC" in {
-		val job = new Blocking
 		val subjects = TestData.subjects
 		val stagings = TestData.stagings
 		val duplicates = TestData.testDuplicateStatsRDD(sc)
 		val goldStandard = TestData.goldStandard(subjects, stagings)
 		val sumTag = "sum"
-		val pairwiseCompleteness = job.calculatePairsCompleteness(duplicates, goldStandard, sumTag)
+		val pairwiseCompleteness = Blocking.calculatePairsCompleteness(duplicates, goldStandard, sumTag)
 		val expected = TestData.expectedPairwiseCompleteness
 		pairwiseCompleteness shouldEqual expected
 	}
 
 	"calculateBlockCount" should "count all blocks for all blocking schemes as well as the total blocks" in {
-		val job = new Blocking
 		val blocks = TestData.blocks(sc)
 		val sumTag = "sum"
-		val blockCount = job.calculateBlockCount(blocks, sumTag)
+		val blockCount = Blocking.calculateBlockCount(blocks, sumTag)
 		val expected = TestData.expectedBlockCount
 		blockCount shouldEqual expected
 	}
 
 	"calculateCompareCount" should "count all compares in each blocking scheme as well as the total compares" in {
-		val job = new Blocking
 		val blocks = TestData.blocks(sc)
 		val sumTag = "sum"
-		val compareCount = job.calculateCompareCount(blocks, sumTag)
+		val compareCount = Blocking.calculateCompareCount(blocks, sumTag)
 		val expected = TestData.expectedCompareCount
 		compareCount shouldEqual expected
 	}
 
 	"createDuplicateStats" should "find all actual duplicates in a block" in {
-		val job = new Blocking
 		val subjects = TestData.subjects
 		val stagings = TestData.stagings
 		val UUIDSubjects = subjects.map(_.id)
 		val UUIDStagings = stagings.map(_.id)
 		val goldStandard = TestData.goldStandard(subjects, stagings)
-		val duplicateStats = job.createDuplicateStats((("tag", "key"),(UUIDSubjects, UUIDStagings)), goldStandard)
+		val duplicateStats = Blocking.createDuplicateStats((("tag", "key"),(UUIDSubjects, UUIDStagings)), goldStandard)
 		val expected = TestData.testDuplicateStats
 		duplicateStats shouldEqual expected
 	}

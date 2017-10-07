@@ -22,31 +22,28 @@ import de.hpi.ingestion.deduplication.models.SimilarityMeasureStats
 
 class SimilarityMeasureEvaluationTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 	"generateBuckets" should "generate a list of buckets from a given number" in {
-		val job = new SimilarityMeasureEvaluation
 		val bucketsList = TestData.bucketsList
 		bucketsList.foreach { case (size, buckets) =>
-			val generatedBuckets = job.generateBuckets(size)
+			val generatedBuckets = SimilarityMeasureEvaluation.generateBuckets(size)
 			generatedBuckets shouldEqual buckets
 		}
 	}
 
 	"bucket" should "return the correct bucket for a given score and buckets" in {
-		val job = new SimilarityMeasureEvaluation
 		val bucketList = TestData.bucketsList.values
 		val scoresList = TestData.testScores
 		(bucketList, scoresList).zipped.foreach { case (buckets, scores) =>
 			scores.foreach { case (score, expected) =>
-				val bucket = job.bucket(score)(buckets)
+				val bucket = SimilarityMeasureEvaluation.bucket(score)(buckets)
 				bucket shouldEqual expected
 			}
 		}
 	}
 
 	"generatePredictionAndLabels" should "find all true positives" in {
-		val job = new SimilarityMeasureEvaluation
 		val test = TestData.testData(sc)
 		val training = TestData.trainingData(sc)
-		val truePositives = job
+		val truePositives = SimilarityMeasureEvaluation
 			.generatePredictionAndLabels(training, test)
 			.filter { case (prediction, label) =>
 				prediction > 0 && label == 1
@@ -56,10 +53,9 @@ class SimilarityMeasureEvaluationTest extends FlatSpec with Matchers with Shared
 	}
 
 	it should "find all false positives" in {
-		val job = new SimilarityMeasureEvaluation
 		val test = TestData.testData(sc)
 		val training = TestData.trainingData(sc)
-		val falsePositives = job
+		val falsePositives = SimilarityMeasureEvaluation
 			.generatePredictionAndLabels(training, test)
 			.filter { case (prediction, label) =>
 				prediction > 0 && label == 0
@@ -69,10 +65,9 @@ class SimilarityMeasureEvaluationTest extends FlatSpec with Matchers with Shared
 	}
 
 	it should "find all false negatives" in {
-		val job = new SimilarityMeasureEvaluation
 		val test = TestData.testData(sc)
 		val training = TestData.trainingData(sc)
-		val falseNegatives = job
+		val falseNegatives = SimilarityMeasureEvaluation
 			.generatePredictionAndLabels(training, test)
 			.filter { case (prediction, label) =>
 				prediction == 0 && label == 1
@@ -82,10 +77,9 @@ class SimilarityMeasureEvaluationTest extends FlatSpec with Matchers with Shared
 	}
 
 	"generatePrecisionRecallData" should "calculate Precision, Recall and F-Score" in {
-		val job = new SimilarityMeasureEvaluation
 		val labeledPoints = TestData.labeledPoints(sc)
 		implicit val buckets = TestData.bucketsList.values.head
-		val data = job.generatePrecisionRecallData(labeledPoints)
+		val data = SimilarityMeasureEvaluation.generatePrecisionRecallData(labeledPoints)
 		val expected = TestData.precisionRecallResults
 		data shouldEqual expected
 	}

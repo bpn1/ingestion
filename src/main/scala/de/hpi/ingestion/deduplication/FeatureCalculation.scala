@@ -17,6 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
+
 import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -26,11 +27,13 @@ import de.hpi.ingestion.deduplication.blockingschemes.{BlockingScheme, SimpleBlo
 import de.hpi.ingestion.deduplication.models.config.{AttributeConfig, SimilarityMeasureConfig}
 import de.hpi.ingestion.deduplication.models.{Block, FeatureEntry}
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
+import org.apache.spark.broadcast.Broadcast
 
 /**
   * Job for calculation of feature entries
   */
 class FeatureCalculation extends SparkJobClass {
+	import FeatureCalculation._
 	appName = "Feature calculation"
 	configFile = "feature_calculation.xml"
 	val blockingSchemes = List[BlockingScheme](SimpleBlockingScheme("simple_scheme"))
@@ -72,10 +75,12 @@ class FeatureCalculation extends SparkJobClass {
 			wikidataSubjects,
 			this.blockingSchemes,
 			settings("maxBlockSize").toInt)
-		val features = findDuplicates(blocks.values, sc)
+		val scoreConfigBroadcast = sc.broadcast(scoreConfigSettings)
+		val features = findDuplicates(blocks.values, scoreConfigBroadcast)
 		featureEntries = labelFeature(features, goldStandard)
 	}
-
+}
+object FeatureCalculation {
 	/**
 	  * Labels the feature corresponding to a gold standard
 	  * @param features Features to be labeled
@@ -137,12 +142,15 @@ class FeatureCalculation extends SparkJobClass {
 	/**
 	  * Finds the duplicates of each block by comparing the Subjects
 	  * @param blocks RDD of BLocks containing the Subjects that are compared
+	  * @param scoreConfigBroadcast Broadcast of the used score config
 	  * @return tuple of Subjects with their score
 	  */
-	def findDuplicates(blocks: RDD[Block], sc: SparkContext): RDD[FeatureEntry] = {
-		val confBroad = sc.broadcast(scoreConfigSettings)
+	def findDuplicates(
+		blocks: RDD[Block],
+		scoreConfigBroadcast: Broadcast[List[AttributeConfig]]
+	): RDD[FeatureEntry] = {
 		blocks
 			.flatMap(_.crossProduct())
-			.map { case (subject1, subject2) => createFeature(subject1, subject2, confBroad.value) }
+			.map { case (subject1, subject2) => createFeature(subject1, subject2, scoreConfigBroadcast.value) }
 	}
 }

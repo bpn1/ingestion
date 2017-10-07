@@ -25,6 +25,7 @@ import de.hpi.ingestion.framework.SparkJobClass
 import de.hpi.ingestion.textmining.models.Bag
 
 class SimilarityMeasureEvaluation extends SparkJobClass {
+	import SimilarityMeasureEvaluation._
 	appName = "SimilarityMeasureEvaluation"
 	configFile = "similarity_measure_evaluation.xml"
 
@@ -72,7 +73,9 @@ class SimilarityMeasureEvaluation extends SparkJobClass {
 			xaxis = Option("threshold"))
 		simMeasureStats = sc.parallelize(List(stats))
 	}
+}
 
+object SimilarityMeasureEvaluation {
 	/**
 	  * Generates a List of Buckets regarding the Config
 	  * @return List of Doubles defining the buckets

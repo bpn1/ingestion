@@ -23,6 +23,7 @@ import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.models.config.AttributeConfig
 import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.SparkContext
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
 /**
@@ -30,6 +31,7 @@ import org.apache.spark.rdd.RDD
   * in every block and filters all pairs below a given threshold.
   */
 class Deduplication extends SparkJobClass {
+	import Deduplication._
 	sparkOptions("spark.yarn.executor.memoryOverhead") = "8192"
 
 	appName = "Deduplication"
@@ -71,10 +73,13 @@ class Deduplication extends SparkJobClass {
 	override def run(sc: SparkContext): Unit = {
 		val slaves = subjects.filter(_.isSlave)
 		val blocks = Blocking.blocking(slaves, stagedSubjects, blockingSchemes, settings("maxBlockSize").toInt)
-		val subjectPairs = findDuplicates(blocks.values, sc)
-		duplicates = createDuplicates(subjectPairs)
+		val scoreConfigBroadcast = sc.broadcast(scoreConfigSettings)
+		val subjectPairs = findDuplicates(blocks.values, settings("confidence").toDouble, scoreConfigBroadcast)
+		duplicates = createDuplicates(subjectPairs, settings("stagingTable"))
 	}
+}
 
+object Deduplication {
 	/**
 	  * Compares to subjects regarding the configuration.
 	  * @param subject1 subjects to be compared to subject2
@@ -101,10 +106,13 @@ class Deduplication extends SparkJobClass {
 	  * Groups all found duplicates by the Subject whose duplicate they are and creates the corresponding
 	  * DuplicateCandidates.
 	  * @param subjectPairs RDD of Subject pairs containing all found duplicates
+	  * @param stagingTable source table of the staged Subjects
 	  * @return RDD of grouped Duplicate Candidates
 	  */
-	def createDuplicates(subjectPairs: RDD[(Subject, Subject, Double)]): RDD[Duplicates] = {
-		val stagingTable = settings("stagingTable")
+	def createDuplicates(
+		subjectPairs: RDD[(Subject, Subject, Double)],
+		stagingTable: String
+	): RDD[Duplicates] = {
 		subjectPairs
 			.map { case (subject, staging, score) =>
 				((subject.id, subject.name), List(Candidate(staging.id, staging.name, score)))
@@ -116,15 +124,19 @@ class Deduplication extends SparkJobClass {
 	  * Finds the duplicates of each block by comparing the Subjects and filtering all Subjects pairs below the
 	  * threshold confidence.
 	  * @param blocks RDD of BLocks containing the Subjects that are compared
+	  * @param confidence threshold used to filter duplicate candidates
+	  * @param scoreConfigBroadcast Broadcast of the used score config
 	  * @return tuple of Subjects with their score, which is greater or equal the given threshold.
 	  */
-	def findDuplicates(blocks: RDD[Block], sc: SparkContext): RDD[(Subject, Subject, Double)] = {
-		val threshold = settings("confidence").toDouble
-		val confBroad = sc.broadcast(scoreConfigSettings)
+	def findDuplicates(
+		blocks: RDD[Block],
+		confidence: Double,
+		scoreConfigBroadcast: Broadcast[List[AttributeConfig]]
+	): RDD[(Subject, Subject, Double)] = {
 		blocks
 			.flatMap(_.crossProduct())
 			.map { case (subject1, subject2) =>
-				(subject1, subject2, compare(subject1, subject2, confBroad.value))
-			}.filter(_._3 >= threshold)
+				(subject1, subject2, compare(subject1, subject2, scoreConfigBroadcast.value))
+			}.filter(_._3 >= confidence)
 	}
 }

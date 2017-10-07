@@ -16,33 +16,29 @@ limitations under the License.
 
 package de.hpi.ingestion.deduplication
 
-import java.util.UUID
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import org.scalatest.{FlatSpec, Matchers}
 
 class GoldStandardTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 	"keyBySingleProperty" should "key a Subject RDD by value of a given property" in {
-		val job = new GoldStandard
 		val rdd = sc.parallelize(TestData.dbpediaList)
-		val propertyKeyRDD = job.keyBySingleProperty(rdd, "id_dbpedia")
+		val propertyKeyRDD = GoldStandard.keyBySingleProperty(rdd, "id_dbpedia")
 		val expected = TestData.propertyKeyDBpedia(sc)
 		assertRDDEquals(expected, propertyKeyRDD)
 	}
 
 	"joinBySingleProperty" should "join DBpedia and Wikidata on a given property" in {
-		val job = new GoldStandard
 		val dbpedia = sc.parallelize(TestData.dbpediaList)
 		val wikidata = sc.parallelize(TestData.wikidataList)
-		val joinedRDD = job.joinBySingleProperty("id_wikidata", dbpedia, wikidata)
+		val joinedRDD = GoldStandard.joinBySingleProperty("id_wikidata", dbpedia, wikidata)
 		val expected = TestData.joinedWikidata(sc)
 		assertRDDEquals(expected, joinedRDD)
 	}
 
 	"join" should "join DBpedia and Wikidata on different ids" in {
-		val job = new GoldStandard
 		val dbpedia = sc.parallelize(TestData.dbpediaList)
 		val wikidata = sc.parallelize(TestData.wikidataList)
-		val joinedRDD = job.join(dbpedia, wikidata)
+		val joinedRDD = GoldStandard.join(dbpedia, wikidata)
 		val expected = TestData.joinedDBpediaWikidata(sc)
 		assertRDDEquals(expected, joinedRDD)
 	}
