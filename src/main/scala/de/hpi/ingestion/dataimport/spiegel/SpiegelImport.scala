@@ -19,7 +19,6 @@ package de.hpi.ingestion.dataimport.spiegel
 import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.jsoup.Jsoup
 import play.api.libs.json.JsValue
 import com.datastax.spark.connector._

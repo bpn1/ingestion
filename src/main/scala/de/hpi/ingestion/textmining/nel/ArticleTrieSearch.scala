@@ -20,7 +20,6 @@ import java.io.InputStream
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch.{deserializeTrie, hdfsFileStream}
 import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, TrieNode}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer

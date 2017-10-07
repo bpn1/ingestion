@@ -20,7 +20,6 @@ import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.models.FeatureEntry
 import de.hpi.ingestion.deduplication.models.config.SimilarityMeasureConfig
 import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, SimilarityMeasure}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.scalatest.{FlatSpec, Matchers}
 
 class FeatureCalculationTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {

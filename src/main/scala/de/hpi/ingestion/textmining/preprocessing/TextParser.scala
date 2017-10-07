@@ -21,7 +21,6 @@ import java.net.URLDecoder
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models._
 import info.bliki.wiki.model.WikiModel
 import org.apache.spark.SparkContext

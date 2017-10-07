@@ -19,7 +19,6 @@ package de.hpi.ingestion.versioncontrol
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import java.util.UUID
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.versioncontrol.models.SubjectDiff
 
 class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {

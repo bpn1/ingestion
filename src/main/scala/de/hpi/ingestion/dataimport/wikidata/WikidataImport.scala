@@ -18,7 +18,6 @@ package de.hpi.ingestion.dataimport.wikidata
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.JSONParser
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.rdd.RDD

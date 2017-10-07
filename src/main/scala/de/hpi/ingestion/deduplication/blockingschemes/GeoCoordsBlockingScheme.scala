@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.deduplication.blockingschemes
 
 import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import scala.math.pow
 
 /**

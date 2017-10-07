@@ -18,7 +18,6 @@ package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.{DocumentFrequency, ParsedWikipediaEntry, WikipediaArticleCount}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext

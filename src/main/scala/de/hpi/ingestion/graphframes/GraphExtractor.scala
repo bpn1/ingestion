@@ -24,7 +24,6 @@ import org.apache.spark.sql.SparkSession
 import org.graphframes.GraphFrame
 import de.hpi.ingestion.framework.SparkJobClass
 import de.hpi.ingestion.graphframes.models.ResultGraph
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Base trait for graph extraction jobs; converts the subject table into a GraphFrames instance

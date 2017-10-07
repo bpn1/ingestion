@@ -19,7 +19,6 @@ package de.hpi.ingestion.textmining.preprocessing
 import java.io.{BufferedReader, InputStream, InputStreamReader}
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext

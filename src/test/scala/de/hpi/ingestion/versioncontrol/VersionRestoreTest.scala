@@ -18,7 +18,6 @@ package de.hpi.ingestion.versioncontrol
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.scalatest.{FlatSpec, Matchers}
 
 class VersionRestoreTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {

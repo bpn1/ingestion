@@ -22,7 +22,6 @@ import de.hpi.ingestion.framework.SparkJobClass
 import com.datastax.spark.connector._
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.classification.RandomForestClassifier

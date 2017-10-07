@@ -19,7 +19,6 @@ package de.hpi.ingestion.datamerge
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd.RDD
 import org.scalatest.{FlatSpec, Matchers}
 

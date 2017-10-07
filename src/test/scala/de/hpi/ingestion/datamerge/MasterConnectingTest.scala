@@ -19,7 +19,6 @@ package de.hpi.ingestion.datamerge
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class MasterConnectingTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 	"Master nodes" should "be connected" in {

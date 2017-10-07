@@ -19,7 +19,6 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.deduplication.models.SimilarityMeasureStats
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD

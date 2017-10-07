@@ -16,7 +16,6 @@ limitations under the License.
 
 package de.hpi.ingestion.dataimport.wikidata
 
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.framework.SparkJobClass

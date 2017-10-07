@@ -26,7 +26,6 @@ import de.hpi.ingestion.deduplication.blockingschemes.{BlockingScheme, SimpleBlo
 import de.hpi.ingestion.deduplication.models.config.{AttributeConfig, SimilarityMeasureConfig}
 import de.hpi.ingestion.deduplication.models.{Block, FeatureEntry}
 import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Job for calculation of feature entries

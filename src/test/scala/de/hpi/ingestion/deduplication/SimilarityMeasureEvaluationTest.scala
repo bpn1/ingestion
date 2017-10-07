@@ -19,7 +19,6 @@ package de.hpi.ingestion.deduplication
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.models.SimilarityMeasureStats
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class SimilarityMeasureEvaluationTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 	"generateBuckets" should "generate a list of buckets from a given number" in {

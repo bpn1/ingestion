@@ -19,7 +19,6 @@ package de.hpi.ingestion.dataimport.dbpedia
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class DBpediaImportUnitTest extends FlatSpec with SharedSparkContext with Matchers {
 	"tokenize" should "return a three element long list" in {

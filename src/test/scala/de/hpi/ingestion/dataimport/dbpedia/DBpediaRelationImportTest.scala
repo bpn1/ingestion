@@ -19,7 +19,6 @@ package de.hpi.ingestion.dataimport.dbpedia
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.datalake.models.Subject
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class DBpediaRelationImportTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"Relations" should "be added" in {

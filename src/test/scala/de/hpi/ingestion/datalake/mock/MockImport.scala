@@ -22,7 +22,6 @@ import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.datalake.DataLakeImportImplementation
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class MockImport extends DataLakeImportImplementation[Entity](
 	List("TestSource"),

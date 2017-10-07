@@ -18,7 +18,6 @@ package de.hpi.ingestion.dataimport.wikidata
 
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd._
 import scala.language.postfixOps
 import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikidataEntity}

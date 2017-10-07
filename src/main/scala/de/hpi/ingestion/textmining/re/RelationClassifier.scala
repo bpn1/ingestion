@@ -20,7 +20,6 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.deduplication.models.PrecisionRecallDataTuple
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.ClassifierTraining._
 import de.hpi.ingestion.textmining.models.{Cooccurrence, RelationClassifierStats, Sentence}
 import org.apache.spark.ml.feature.{HashingTF, IDF}

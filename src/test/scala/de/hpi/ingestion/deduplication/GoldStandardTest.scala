@@ -19,7 +19,6 @@ package de.hpi.ingestion.deduplication
 import java.util.UUID
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class GoldStandardTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 	"keyBySingleProperty" should "key a Subject RDD by value of a given property" in {

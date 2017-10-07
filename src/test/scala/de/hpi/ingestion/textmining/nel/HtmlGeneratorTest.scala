@@ -16,7 +16,6 @@ limitations under the License.
 
 package de.hpi.ingestion.textmining.nel
 
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.Article
 import org.scalatest.{FlatSpec, Matchers}
 import org.jsoup.Jsoup

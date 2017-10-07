@@ -20,7 +20,6 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.dataimport.dbpedia.DBpediaImport.{dbpediaToCleanedTriples, loadPrefixes}
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 

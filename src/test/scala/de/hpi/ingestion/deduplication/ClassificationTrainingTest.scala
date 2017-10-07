@@ -18,7 +18,6 @@ package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.mllib.classification.NaiveBayesModel
 
 class ClassificationTrainingTest extends FlatSpec with Matchers with SharedSparkContext {

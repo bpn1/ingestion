@@ -24,7 +24,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Updating relations of the master node to new master nodes

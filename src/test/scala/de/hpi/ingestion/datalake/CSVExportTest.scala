@@ -18,7 +18,6 @@ package de.hpi.ingestion.datalake
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class CSVExportTest extends FlatSpec with Matchers with SharedSparkContext {
 	"Subjects" should "be converted to csv nodes" in {

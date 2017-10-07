@@ -22,7 +22,6 @@ import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.rdd.RDD
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class GoldStandard extends SparkJobClass {
 	appName = "GoldStandard_v1.0"

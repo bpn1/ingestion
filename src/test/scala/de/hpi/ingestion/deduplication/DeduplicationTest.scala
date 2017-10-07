@@ -19,7 +19,6 @@ package de.hpi.ingestion.deduplication
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.models.Duplicates
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 	"Compare" should "calculate a score regarding the configuration" in {

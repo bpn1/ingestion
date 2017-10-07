@@ -25,7 +25,6 @@ import com.datastax.spark.connector._
 import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.dataimport.SharedNormalizations
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Import-Job to import DBpedia Subjects into the staging table of the datalake.

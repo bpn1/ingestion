@@ -21,7 +21,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.deduplication.models.FeatureEntry
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.ClassifierTraining.calculateStatistics
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 

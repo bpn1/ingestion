@@ -21,7 +21,6 @@ import com.datastax.spark.connector._
 import scala.util.matching.Regex
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd.RDD
 
 /**

@@ -24,7 +24,6 @@ import play.api.libs.json._
 import scala.collection.mutable
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
 

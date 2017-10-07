@@ -23,7 +23,6 @@ import java.util.UUID
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Resets all subject data (normal attributes, properties entries and relations) to the last version

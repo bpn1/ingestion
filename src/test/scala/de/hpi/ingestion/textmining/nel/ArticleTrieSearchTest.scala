@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.nel
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.TrieAlias
 import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch
 import de.hpi.ingestion.textmining.{TestData => TextTestData}

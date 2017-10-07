@@ -21,7 +21,6 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.framework.SparkJobClass
 import org.apache.spark.rdd.RDD
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class CSVExport extends SparkJobClass {
 	appName = "CSVExport v1.0"

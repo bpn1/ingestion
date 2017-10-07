@@ -20,7 +20,6 @@ import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.blockingschemes.SimpleBlockingScheme
 import de.hpi.ingestion.deduplication.models.BlockEvaluation
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 

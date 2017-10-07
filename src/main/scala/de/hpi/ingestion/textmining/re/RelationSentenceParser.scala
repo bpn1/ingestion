@@ -20,12 +20,10 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.framework.SparkJobClass
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.{EntityLink, ParsedWikipediaEntry, Sentence}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.preprocessing.CompanyLinkFilter.extractCompanyPages
 import de.hpi.ingestion.textmining.tokenizer.{CleanWhitespaceTokenizer, IngestionTokenizer, SentenceTokenizer}
 

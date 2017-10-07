@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.re
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import de.hpi.ingestion.textmining.models.Cooccurrence
 import org.scalatest.{FlatSpec, Matchers}
