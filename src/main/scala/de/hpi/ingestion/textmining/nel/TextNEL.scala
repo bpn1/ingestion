@@ -16,13 +16,13 @@ limitations under the License.
 
 package de.hpi.ingestion.textmining.nel
 
+import java.io.InputStream
+
 import de.hpi.ingestion.framework.SparkJobClass
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
-import de.hpi.ingestion.textmining.preprocessing.CosineContextComparator.{calculateTfidf, compareLinksWithArticles,
-defaultIdf}
-import de.hpi.ingestion.textmining.preprocessing.{CosineContextComparator, SecondOrderFeatureGenerator,
-TermFrequencyCounter}
+import de.hpi.ingestion.textmining.preprocessing.{CosineContextComparator => CCC}
+import de.hpi.ingestion.textmining.preprocessing._
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -48,8 +48,8 @@ class TextNEL extends SparkJobClass {
 	var entityLinks: List[RDD[(String, List[Link])]] = Nil
 
 	// $COVERAGE-OFF$
-	var loadModelFunction: () => PipelineModel = loadModel _
-
+	var loadModelFunction: () => PipelineModel = loadModel
+	var docFreqStreamFunction: String => InputStream = AliasTrieSearch.hdfsFileStream
 	/**
 	  * Loads the Trie Alias Articles from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
@@ -109,7 +109,8 @@ class TextNEL extends SparkJobClass {
 	): List[(Link, Bag[String, Int])] = {
 		val articleTokens = article.text.map(tokenizer.onlyTokenizeWithOffset).getOrElse(Nil)
 		article.triealiases.map { triealias =>
-			val context = TermFrequencyCounter.extractContext(articleTokens, triealias.toLink(), tokenizer)
+			val contextSize = settings("contextSize").toInt
+			val context = TermFrequencyCounter.extractContext(articleTokens, triealias.toLink(), tokenizer, contextSize)
 			(triealias.toLink().copy(article = Option(article.id)), context)
 		}
 	}
@@ -164,13 +165,19 @@ class TextNEL extends SparkJobClass {
 		val tokenizer = IngestionTokenizer()
 		entityLinks = articlesPartitions.map { partition =>
 			val articleAliases = partition.flatMap(extractTrieAliasContexts(_, tokenizer))
-			val aliasTfIdf = calculateTfidf(articleAliases, numDocuments, defaultIdf(numDocuments))
-			val featureEntries = compareLinksWithArticles(aliasTfIdf, sc.broadcast(aliasPageScores), articleTfidfTuples)
-			val extendedFeatureEntries = SecondOrderFeatureGenerator
-				.run(List(featureEntries).toAnyRDD(), sc)
-				.fromAnyRDD[FeatureEntry]()
-				.head
-			classifyFeatureEntries(extendedFeatureEntries, loadModelFunction(), session)
+			val aliasTfIdf = CCC.calculateTfidf(
+				articleAliases,
+				numDocuments,
+				CCC.defaultIdf(numDocuments),
+				docFreqStreamFunction,
+				settings("dfFile"))
+			val job = new SecondOrderFeatureGenerator
+			job.featureEntries = CCC.compareLinksWithArticles(
+				aliasTfIdf,
+				sc.broadcast(aliasPageScores),
+				articleTfidfTuples)
+			job.run(sc)
+			classifyFeatureEntries(job.featureEntriesWithSOF, loadModelFunction(), session)
 		}
 	}
 }

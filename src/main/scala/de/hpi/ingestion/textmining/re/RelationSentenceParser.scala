@@ -26,7 +26,7 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.preprocessing.CompanyLinkFilter.{extractCompanyPages, settings}
+import de.hpi.ingestion.textmining.preprocessing.CompanyLinkFilter.extractCompanyPages
 import de.hpi.ingestion.textmining.tokenizer.{CleanWhitespaceTokenizer, IngestionTokenizer, SentenceTokenizer}
 
 /**

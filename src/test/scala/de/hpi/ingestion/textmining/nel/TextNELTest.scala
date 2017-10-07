@@ -28,15 +28,11 @@ import de.hpi.ingestion.textmining.preprocessing.CosineContextComparator
 class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Entities" should "be tagged in articles" in {
-		val oldDocFreqFunction = CosineContextComparator.docFreqStreamFunction
-
 		val job = new TextNEL
 		val session = SparkSession.builder().getOrCreate()
 		job.aliasPageScores = Map()
 		job.loadModelFunction = TestData.randomForestModel(session)
-		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
-
+		job.docFreqStreamFunction = TextTestData.docfreqStream("docfreq")
 		job.trieArticles = sc.parallelize(TestData.foundAliasArticles())
 		job.articleTfidf = sc.parallelize(TestData.tfidfArticles())
 		job.numDocuments = job.articleTfidf.count
@@ -48,19 +44,14 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 			.toSet
 		val expectedEntities = TestData.linkedEntitiesForAllArticles()
 		linkedEntities shouldEqual expectedEntities
-
-		CosineContextComparator.docFreqStreamFunction = oldDocFreqFunction
 	}
 
 	"Found named entities for incomplete articles" should "be exactly these named entities" in {
-		val oldDocFreqFunction = CosineContextComparator.docFreqStreamFunction
-
 		val job = new TextNEL
 		val session = SparkSession.builder().getOrCreate()
 		job.loadModelFunction = TestData.randomForestModel(session)
-		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
 		job.aliasPageScores = Map()
-		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
+		job.docFreqStreamFunction = TextTestData.docfreqStream("docfreq")
 
 		job.trieArticles = sc.parallelize(TestData.incompleteFoundAliasArticles())
 		job.articleTfidf = sc.parallelize(TestData.contextArticles())
@@ -75,18 +66,13 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 			.toSet
 		val expectedEntities = TestData.linkedEntitiesForIncompleteArticles()
 		linkedEntities shouldEqual expectedEntities
-
-		CosineContextComparator.docFreqStreamFunction = oldDocFreqFunction
 	}
 
 	"Alias page scores" should "not be recalculated" in {
-		val oldDocFreqFunction = CosineContextComparator.docFreqStreamFunction
-
 		val job = new TextNEL
 		val session = SparkSession.builder().getOrCreate()
 		job.loadModelFunction = TestData.randomForestModel(session)
-		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
+		job.docFreqStreamFunction = TextTestData.docfreqStream("docfreq")
 		job.aliasPageScores = TestData.aliasMap()
 
 		job.trieArticles = sc.parallelize(TestData.foundAliasArticles())
@@ -100,8 +86,6 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 			.toSet
 		val expectedEntities = TestData.linkedEntitiesForAllArticles()
 		linkedEntities shouldEqual expectedEntities
-
-		CosineContextComparator.docFreqStreamFunction = oldDocFreqFunction
 	}
 
 	"Extracted TrieAlias contexts" should "be exactly these contexts" in {

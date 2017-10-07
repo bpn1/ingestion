@@ -107,20 +107,22 @@ class AliasCounterTest extends FlatSpec with SharedSparkContext with Matchers wi
 	}
 
 	"Alias counts" should "be exactly these tuples" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
-		val mergedLinks = AliasCounter.run(List(articles).toAnyRDD(), sc)
-			.fromAnyRDD[(String, Option[Int], Option[Int])]()
-			.head
+		val job = new AliasCounter
+		job.parsedWikipedia = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+		job.run(sc)
+		val mergedLinks = job
+			.aliasCounts
 			.collect
 			.toSet
 		mergedLinks shouldEqual TestData.aliasCountsSet()
 	}
 
 	they should "count all links and found aliases" in {
-		val articles = sc.parallelize(TestData.aliasCounterArticles())
-		val aliasCounts = AliasCounter.run(List(articles).toAnyRDD(), sc)
-			.fromAnyRDD[(String, Option[Int], Option[Int])]()
-			.head
+		val job = new AliasCounter
+		job.parsedWikipedia = sc.parallelize(TestData.aliasCounterArticles())
+		job.run(sc)
+		val aliasCounts = job
+			.aliasCounts
 			.collect
 			.toSet
 		val expectedCounts = TestData.multipleAliasCounts()
@@ -128,13 +130,14 @@ class AliasCounterTest extends FlatSpec with SharedSparkContext with Matchers wi
 	}
 
 	"Counted number of link occurrences" should "equal number of page references" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+		val job = new AliasCounter
+		job.parsedWikipedia = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+		job.run(sc)
 		val expectedOccurrences = TestData.linksSet()
 			.map(link => (link.alias, link.pages.foldLeft(0)(_ + _._2)))
 			.toMap
-		AliasCounter.run(List(articles).toAnyRDD(), sc)
-			.fromAnyRDD[(String, Option[Int], Option[Int])]()
-			.head
+		job
+			.aliasCounts
 			.collect
 			.foreach(link => link._2.get should be <= expectedOccurrences.getOrElse(link._1, 0))
 	}

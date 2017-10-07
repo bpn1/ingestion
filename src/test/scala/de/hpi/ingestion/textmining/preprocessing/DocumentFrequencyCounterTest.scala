@@ -90,16 +90,19 @@ class DocumentFrequencyCounterTest extends FlatSpec with SharedSparkContext with
 
 	they should "be exactly these document frequencies" in {
 		val oldThresh = DocumentFrequencyCounter.leastSignificantDocumentFrequency
-
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = 3
-		val input = List(sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)).toAnyRDD()
-		val df = DocumentFrequencyCounter.run(input, sc).fromAnyRDD[DocumentFrequency]().head.collect.toList
+
+		val job = new DocumentFrequencyCounter
+		job.parsedWikipedia = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+		job.run(sc)
+		val df = job.documentFrequencies.collect.toList
 		val expectedDf = TestData.filteredDocumentFrequenciesWithSymbols()
 		df shouldEqual expectedDf
 
 		DocumentFrequencyCounter.leastSignificantDocumentFrequency = oldThresh
 
-		val df2 = DocumentFrequencyCounter.run(input, sc).fromAnyRDD[DocumentFrequency]().head.collect.toList
+		job.run(sc)
+		val df2 = job.documentFrequencies.collect.toList
 		df2 shouldBe empty
 	}
 }
