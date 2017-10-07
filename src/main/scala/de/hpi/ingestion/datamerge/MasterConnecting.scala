@@ -60,7 +60,7 @@ class MasterConnecting extends SparkJobClass {
 	override def run(sc: SparkContext): Unit = {
 		val masters = subjects.filter(master => master.isMaster && master.masterRelations.nonEmpty)
 		val slaves = subjects.filter(_.isSlave).map(slave => (slave.id, (slave.id, slave.master, slave.datasource)))
-		val version = Version("Master Connecting", List("subject"), sc, true, settings.get("subjectTable"))
+		val version = Version(appName, List("subject"), sc, true, settings.get("subjectTable"))
 
 		connectedMasters = masters
 			.flatMap(extractRelations)

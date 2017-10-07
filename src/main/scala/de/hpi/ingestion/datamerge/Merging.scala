@@ -31,7 +31,6 @@ import de.hpi.ingestion.deduplication.models.Duplicates
 class Merging extends SparkJobClass {
 	appName = "Merging"
 	configFile = "merging.xml"
-
 	var subjects: RDD[Subject] = _
 	var stagedSubjects: RDD[Subject] = _
 	var duplicates: RDD[Duplicates] = _
@@ -222,7 +221,6 @@ class Merging extends SparkJobClass {
 	  */
 	override def run(sc: SparkContext): Unit = {
 		val version = Version("Merging", List("merging"), sc, true, settings.get("subjectTable"))
-
 		// TODO merge multiple duplicate candidates with the same subject #430
 
 		val subjectIdTuple = subjects.map(subject => (subject.id, subject))
@@ -265,5 +263,5 @@ class Merging extends SparkJobClass {
 }
 
 object Merging {
-	val sourcePriority = List("human", "implisense", "dbpedia", "wikidata")
+	val sourcePriority = List("human", "implisense", "kompass", "dbpedia", "wikidata")
 }
