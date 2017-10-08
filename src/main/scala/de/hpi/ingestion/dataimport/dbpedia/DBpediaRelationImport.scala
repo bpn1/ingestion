@@ -21,14 +21,14 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
   * Import and add the dbpedia relations to the dbpedia subjects.
   */
-class DBpediaRelationImport extends SparkJobClass {
+class DBpediaRelationImport extends SparkJob {
 	import DBpediaRelationImport._
 	appName = "DBpediaRelationImport"
 	configFile = "relation_import_dbpedia.xml"

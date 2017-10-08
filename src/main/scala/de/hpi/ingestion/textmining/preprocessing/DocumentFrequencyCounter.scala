@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models.{DocumentFrequency, ParsedWikipediaEntry, WikipediaArticleCount}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -26,7 +26,7 @@ import org.apache.spark.rdd.RDD
 /**
   * Ccunts `DocumentFrequencies` over all articles.
   */
-class DocumentFrequencyCounter extends SparkJobClass {
+class DocumentFrequencyCounter extends SparkJob {
 	import DocumentFrequencyCounter._
 	appName = "Document Frequency Counter"
 	configFile = "textmining.xml"

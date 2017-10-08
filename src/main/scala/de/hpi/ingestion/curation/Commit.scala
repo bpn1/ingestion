@@ -21,12 +21,12 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import play.api.libs.json.{JsArray, JsValue, Json}
 
-class Commit extends SparkJobClass with JSONParser[Boolean] {
+class Commit extends SparkJob with JSONParser[Boolean] {
 	appName = "Commit"
 	configFile = "commit.xml"
 

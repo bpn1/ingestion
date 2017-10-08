@@ -18,7 +18,7 @@ package de.hpi.ingestion.deduplication
 
 import java.util.UUID
 
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -32,7 +32,7 @@ import org.apache.spark.broadcast.Broadcast
 /**
   * Job for calculation of feature entries
   */
-class FeatureCalculation extends SparkJobClass {
+class FeatureCalculation extends SparkJob {
 	import FeatureCalculation._
 	appName = "Feature calculation"
 	configFile = "feature_calculation.xml"

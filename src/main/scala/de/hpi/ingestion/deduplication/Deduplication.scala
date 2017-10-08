@@ -21,7 +21,7 @@ import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.models.config.AttributeConfig
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
@@ -30,7 +30,7 @@ import org.apache.spark.rdd.RDD
   * Compares two groups of Subjects by first blocking with multiple Blocking Schemes, then compares all Subjects
   * in every block and filters all pairs below a given threshold.
   */
-class Deduplication extends SparkJobClass {
+class Deduplication extends SparkJob {
 	import Deduplication._
 	sparkOptions("spark.yarn.executor.memoryOverhead") = "8192"
 

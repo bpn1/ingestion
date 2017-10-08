@@ -21,13 +21,13 @@ import com.datastax.spark.connector._
 import org.apache.spark.rdd._
 import scala.language.postfixOps
 import de.hpi.ingestion.dataimport.wikidata.models.{SubclassEntry, WikidataEntity}
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 
 /**
   * Builds the subclass hierarchy of selected Wikidata classes and tags every `WikidataEntity` that is an instance of
   * one of the subclasses with the top level class.
   */
-class TagEntities extends SparkJobClass {
+class TagEntities extends SparkJob {
 	import TagEntities._
 	appName = "TagEntities"
 	configFile = "wikidata_import.xml"

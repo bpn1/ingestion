@@ -16,7 +16,7 @@ limitations under the License.
 
 package de.hpi.ingestion.textmining.nel
 
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models.{Article, TrieAliasArticle}
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
@@ -25,7 +25,7 @@ import org.apache.spark.rdd.RDD
 /**
   * Generates HTML from found links to named entities and their corresponding raw articles.
   */
-class HtmlGenerator extends SparkJobClass {
+class HtmlGenerator extends SparkJob {
 	import HtmlGenerator._
 	appName = "HTML Generator"
 	configFile = "textmining.xml"

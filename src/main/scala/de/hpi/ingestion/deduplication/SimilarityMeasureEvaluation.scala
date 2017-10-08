@@ -21,10 +21,10 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.deduplication.models.{Duplicates, Candidate, PrecisionRecallDataTuple, SimilarityMeasureStats}
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models.Bag
 
-class SimilarityMeasureEvaluation extends SparkJobClass {
+class SimilarityMeasureEvaluation extends SparkJob {
 	import SimilarityMeasureEvaluation._
 	appName = "SimilarityMeasureEvaluation"
 	configFile = "similarity_measure_evaluation.xml"

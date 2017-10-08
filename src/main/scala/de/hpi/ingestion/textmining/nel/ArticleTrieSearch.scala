@@ -19,7 +19,7 @@ package de.hpi.ingestion.textmining.nel
 import java.io.InputStream
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch.{deserializeTrie, hdfsFileStream}
 import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, TrieNode}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
@@ -29,7 +29,7 @@ import org.apache.spark.rdd.RDD
 /**
   * Finds `TrieAliases` in `TrieAliasArticles` and writes them back to the same table.
   */
-class ArticleTrieSearch extends SparkJobClass {
+class ArticleTrieSearch extends SparkJob {
 	import ArticleTrieSearch._
 	appName = "Article Trie Search"
 	configFile = "textmining.xml"

@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
@@ -26,7 +26,7 @@ import org.apache.spark.rdd.RDD
 /**
   * Groups `Aliases` of `Links` by page names and vice versa.
   */
-class LinkAnalysis extends SparkJobClass {
+class LinkAnalysis extends SparkJob {
 	import LinkAnalysis._
 	appName = "Link Analysis"
 	configFile = "textmining.xml"

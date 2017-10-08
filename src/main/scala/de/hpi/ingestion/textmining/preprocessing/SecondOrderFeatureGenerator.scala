@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
@@ -29,7 +29,7 @@ import scala.collection.mutable
   * Enriches page scores and cosine similarities of given `FeatureEntries` with their respective second order feature
   * values.
   */
-class SecondOrderFeatureGenerator extends SparkJobClass {
+class SecondOrderFeatureGenerator extends SparkJob {
 	import SecondOrderFeatureGenerator._
 	appName = "Second Order Feature Generator"
 	configFile = "textmining.xml"

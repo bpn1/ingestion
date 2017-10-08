@@ -18,7 +18,7 @@ package de.hpi.ingestion.textmining.re
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
@@ -27,12 +27,12 @@ import org.apache.spark.rdd.RDD
 /**
   * Exports the cooccurrences to Neo4j CSV. (This is just for debugging and no necessary part of the pipeline.)
   */
-class CooccurrenceExport extends SparkJobClass {
+class CooccurrenceExport extends SparkJob {
 	appName = "Co-Occurrence Export"
 	configFile = "textmining.xml"
 	val separator = ","
 	val quote = "\""
-	sparkOptions("spark.yarn.executor.memoryOverhead") = "5G"
+	sparkOptions("spark.yarn.executor.memoryOverhead") = "4096"
 
 	var cooccurrences: RDD[Cooccurrence] = _
 	var relations: RDD[Relation] = _

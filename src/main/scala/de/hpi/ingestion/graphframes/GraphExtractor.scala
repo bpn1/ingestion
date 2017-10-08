@@ -22,13 +22,13 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.sql.SparkSession
 import org.graphframes.GraphFrame
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.graphframes.models.ResultGraph
 
 /**
   * Base trait for graph extraction jobs; converts the subject table into a GraphFrames instance
   */
-trait GraphExtractor extends SparkJobClass {
+trait GraphExtractor extends SparkJob {
 	appName = "GraphExtractor"
 	val keyspace = "datalake"
 	val tablename = "subject"

@@ -24,7 +24,7 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import com.github.powerlibraries.io.In
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.companies.algo.Tag
 
@@ -42,7 +42,7 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 	dataSources: List[String],
 	inputKeyspace: String,
 	inputTable: String
-) extends DataLakeImport[T] with SparkJobClass {
+) extends DataLakeImport[T] with SparkJob {
 	configFile = "datalake_import.xml"
 
 	var inputEntities: RDD[T] = _

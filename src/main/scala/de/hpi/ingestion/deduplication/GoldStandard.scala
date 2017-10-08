@@ -20,10 +20,10 @@ import java.util.UUID
 import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 
-class GoldStandard extends SparkJobClass {
+class GoldStandard extends SparkJob {
 	import GoldStandard._
 	appName = "GoldStandard_v1.0"
 	configFile = "goldstandard.xml"

@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -25,7 +25,7 @@ import org.apache.spark.rdd.RDD
 /**
   * Removes dead links that do not point to an existing page.
   */
-class LinkCleaner extends SparkJobClass {
+class LinkCleaner extends SparkJob {
 	import LinkCleaner._
 	appName = "Link Cleaner"
 	configFile = "textmining.xml"

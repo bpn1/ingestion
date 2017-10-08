@@ -20,7 +20,7 @@ import java.io.InputStream
 import com.datastax.spark.connector._
 import com.esotericsoftware.kryo.io.Input
 import com.twitter.chill.Kryo
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
@@ -37,7 +37,7 @@ import scala.collection.mutable.ListBuffer
   * recommended spark-submit flags (needed for deserialization of Trie)
   * --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
   */
-class AliasTrieSearch extends SparkJobClass {
+class AliasTrieSearch extends SparkJob {
 	import AliasTrieSearch._
 	appName = "Alias Trie Search"
 	configFile = "textmining.xml"

@@ -16,13 +16,13 @@ limitations under the License.
 
 package de.hpi.ingestion.datamerge
 
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-class MasterUpdate extends SparkJobClass {
+class MasterUpdate extends SparkJob {
 	appName = "Master Update"
 	configFile = "master_update.xml"
 

@@ -23,7 +23,7 @@ import java.util.UUID
 import play.api.libs.json._
 import scala.collection.mutable
 import de.hpi.ingestion.datalake.models._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
 
@@ -31,7 +31,7 @@ import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
   * Compares two versions of the Subject table given their TimeUUIDs as command line arguments and writes the
   * differences of each Subject as JSON file to the HDFS.
   */
-class VersionDiff extends SparkJobClass {
+class VersionDiff extends SparkJob {
 	import VersionDiff._
 	appName = "VersionDiff"
 	val keyspace = "datalake"

@@ -19,7 +19,7 @@ package de.hpi.ingestion.textmining.re
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models.{EntityLink, ParsedWikipediaEntry, Sentence}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -30,7 +30,7 @@ import de.hpi.ingestion.textmining.tokenizer.{CleanWhitespaceTokenizer, Ingestio
 /**
   * Parses all `Sentences` with at least two entities from each Wikipedia article and writes them to the Cassandra.
   */
-class RelationSentenceParser extends SparkJobClass {
+class RelationSentenceParser extends SparkJob {
 	import RelationSentenceParser._
 	appName = "Relation Sentence Parser"
 	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipediasentences"

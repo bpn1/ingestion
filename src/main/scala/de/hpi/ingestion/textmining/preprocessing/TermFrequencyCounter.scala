@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -27,7 +27,7 @@ import org.apache.spark.rdd.RDD
   * Enriches each `ParsedWikipediaEntry` with the term frequencies of the whole article (called context) and the term
   * frequencies for all link contexts (called link contexts).
   */
-class TermFrequencyCounter extends SparkJobClass {
+class TermFrequencyCounter extends SparkJob {
 	import TermFrequencyCounter._
 	appName = "Term Frequency Counter"
 	configFile = "textmining.xml"

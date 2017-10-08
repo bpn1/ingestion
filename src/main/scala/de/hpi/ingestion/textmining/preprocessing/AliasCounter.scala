@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -25,7 +25,7 @@ import org.apache.spark.rdd.RDD
 /**
   * Counts `Alias` occurrences and merges them into previously extracted `Aliases` with their corresponding pages.
   */
-class AliasCounter extends SparkJobClass {
+class AliasCounter extends SparkJob {
 	import AliasCounter._
 	appName = "Alias Counter"
 	configFile = "textmining.xml"

@@ -22,13 +22,13 @@ import com.datastax.spark.connector._
 import java.util.UUID
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 
 /**
   * Resets all subject data (normal attributes, properties entries and relations) to the last version
   * that has a timestamp BEFORE the argument timestamp OR is equal to the argument TimeUUID
   */
-class VersionRestore extends SparkJobClass {
+class VersionRestore extends SparkJob {
 	import VersionRestore._
 	appName = "VersionRestore"
 	val keyspace = "datalake"

@@ -18,7 +18,7 @@ package de.hpi.ingestion.textmining.preprocessing
 
 import java.io.{BufferedReader, InputStream, InputStreamReader}
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -30,7 +30,7 @@ import scala.collection.mutable
   * Calculates the cosine similarity (context score) for each pair of `Link` alias and page it may refer to. It combines
   * it with the links score and entity score, which leads to the respective `FeatureEntry`.
   */
-class CosineContextComparator extends SparkJobClass {
+class CosineContextComparator extends SparkJob {
 	import CosineContextComparator._
 	appName = "Cosine Context Comparator"
 	configFile = "textmining.xml"

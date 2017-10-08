@@ -16,7 +16,7 @@ limitations under the License.
 
 package de.hpi.ingestion.dataimport.spiegel
 
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.jsoup.Jsoup
@@ -28,7 +28,7 @@ import de.hpi.ingestion.textmining.models.TrieAliasArticle
 /**
   * Parses the Spiegel JSON dump to Articles, parses the HTML to raw text and saves them to the Cassandra.
   */
-class SpiegelImport extends SparkJobClass with JSONParser[TrieAliasArticle] {
+class SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
 	import SpiegelImport._
 	appName = "Spiegel Import"
 	configFile = "textmining.xml"

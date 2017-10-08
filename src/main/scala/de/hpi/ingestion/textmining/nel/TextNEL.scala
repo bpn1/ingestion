@@ -18,7 +18,7 @@ package de.hpi.ingestion.textmining.nel
 
 import java.io.InputStream
 
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.textmining.preprocessing.{CosineContextComparator => CCC}
 import de.hpi.ingestion.textmining.preprocessing._
@@ -34,7 +34,7 @@ import org.apache.spark.sql.SparkSession
   * Classifies the `TrieAliases` found in `TrieAliasArticles` by the `ArticleTrieSearch` and writes the positives into
   * the `foundentities` column back to the same table.
   */
-class TextNEL extends SparkJobClass {
+class TextNEL extends SparkJob {
 	import TextNEL._
 	appName = "Text NEL"
 	configFile = "textmining.xml"

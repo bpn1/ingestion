@@ -16,7 +16,7 @@ limitations under the License.
 
 package de.hpi.ingestion.deduplication
 
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -27,7 +27,7 @@ import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 /**
   * Job for training the similarity measure classifier
   */
-class ClassificationTraining extends SparkJobClass {
+class ClassificationTraining extends SparkJob {
 	appName = "Similarity Measure Classifier Training"
 	configFile = "classification.xml"
 

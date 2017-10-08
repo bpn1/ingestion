@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -30,7 +30,7 @@ import scala.collection.mutable.ListBuffer
 /**
   * Extends Wikipedia articles with `Links` of occurrences of aliases that were previously linked in the same article.
   */
-class LinkExtender extends SparkJobClass {
+class LinkExtender extends SparkJob {
 	import LinkExtender._
 	appName = "Link Extender"
 	configFile = "textmining.xml"

@@ -21,14 +21,14 @@ import com.datastax.spark.connector._
 import scala.util.matching.Regex
 import scala.io.Source
 import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 import scala.xml.XML
 
 /**
   * Import-Job for importing DBpedia Triples to the dbpedia table.
   */
-class DBpediaImport extends SparkJobClass {
+class DBpediaImport extends SparkJob {
 	import DBpediaImport._
 	appName = "DBpediaImport_v1.0"
 	val keyspace = "wikidumps"

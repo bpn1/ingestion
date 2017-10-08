@@ -19,7 +19,7 @@ package de.hpi.ingestion.dataimport.wikidata
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
@@ -28,7 +28,7 @@ import play.api.libs.json._
 /**
   * Parses each article from the Wikidata JSON dump into a `WikidataEntity` and imports it into the Cassandra.
   */
-class WikidataImport extends SparkJobClass with JSONParser[WikidataEntity] {
+class WikidataImport extends SparkJob with JSONParser[WikidataEntity] {
 	import WikidataImport._
 	appName = "Wikidata Import"
 	configFile = "wikidata_import.xml"

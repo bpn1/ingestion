@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.re
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models.{Cooccurrence, Sentence}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -25,7 +25,7 @@ import org.apache.spark.rdd.RDD
 /**
   * Counts the cooccurrences in all sentences.
   */
-class CooccurrenceCounter extends SparkJobClass {
+class CooccurrenceCounter extends SparkJob {
 	import CooccurrenceCounter._
 	appName = "Cooccurrence Counter"
 	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipediacooccurrences"

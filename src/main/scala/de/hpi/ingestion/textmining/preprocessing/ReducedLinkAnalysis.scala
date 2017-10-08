@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -25,7 +25,7 @@ import org.apache.spark.rdd.RDD
 /**
   * Groups the `Links` once on the aliases and once on the pages and saves them to the columns for reduced links.
   */
-class ReducedLinkAnalysis extends SparkJobClass {
+class ReducedLinkAnalysis extends SparkJob {
 	appName = "Reduced Link Analysis"
 	configFile = "textmining.xml"
 

@@ -24,12 +24,12 @@ import org.apache.spark.rdd.RDD
 import org.jsoup.Jsoup
 import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.dataimport.kompass.models.KompassEntity
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 
 /**
   * Import-Job for Kompass data from json, extracted by parsing
   */
-class KompassParse extends SparkJobClass with JSONParser[KompassEntity]{
+class KompassParse extends SparkJob with JSONParser[KompassEntity]{
 	appName = "Kompass Parse"
 	configFile = "textmining.xml"
 	val inputFile = "kompass.json"

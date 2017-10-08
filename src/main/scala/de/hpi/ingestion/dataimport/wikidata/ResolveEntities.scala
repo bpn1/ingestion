@@ -20,14 +20,14 @@ import org.apache.spark.SparkContext
 import com.datastax.spark.connector._
 import scala.util.matching.Regex
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.rdd.RDD
 
 /**
   * Resolves the Wikidata IDs in the properties of each `WikidataEntity`. Entities labeled with an instancetype in the
   * `TagEntities` job are not resolved.
   */
-class ResolveEntities extends SparkJobClass {
+class ResolveEntities extends SparkJob {
 	import ResolveEntities._
 	appName = "ResolveEntities"
 	configFile = "wikidata_import.xml"

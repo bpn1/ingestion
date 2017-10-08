@@ -21,7 +21,7 @@ import de.hpi.ingestion.deduplication.blockingschemes.SimpleBlockingScheme
 import de.hpi.ingestion.deduplication.models.BlockEvaluation
 import org.scalatest.{FlatSpec, Matchers}
 
-class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
+class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 
 	"Blocking" should "partition subjects regarding the value of the given key" in {
 		val subjects = TestData.subjects

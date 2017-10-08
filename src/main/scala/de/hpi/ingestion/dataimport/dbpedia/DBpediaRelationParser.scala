@@ -19,14 +19,14 @@ package de.hpi.ingestion.dataimport.dbpedia
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.dataimport.dbpedia.DBpediaImport.{dbpediaToCleanedTriples, loadPrefixes}
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
   * Extracts all relations from english dbpedia and translates the english title to the german ones.
   */
-class DBpediaRelationParser extends SparkJobClass {
+class DBpediaRelationParser extends SparkJob {
 	import DBpediaRelationParser._
 	appName = "DBpediaRelationParser"
 	configFile = "textmining.xml"

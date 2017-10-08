@@ -18,7 +18,7 @@ package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models.{Page, ParsedWikipediaEntry}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -26,7 +26,7 @@ import org.apache.spark.rdd.RDD
 /**
   * Removes all Wikipedia `Links` with an alias that never points to a company.
   */
-class CompanyLinkFilter extends SparkJobClass {
+class CompanyLinkFilter extends SparkJob {
 	import CompanyLinkFilter._
 	appName = "Company Link Filter"
 	configFile = "textmining.xml"

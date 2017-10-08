@@ -18,7 +18,7 @@ package de.hpi.ingestion.dataimport.wikidata
 
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.datalake.SubjectManager
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -29,7 +29,7 @@ import java.util.UUID
   * Finds Wikidata relations between `Subjects`, translates the Wikidata ID relations intoa `Subject` UUID relations and
   * replaces the Wikidata IDs with their names.
   */
-class FindRelations extends SparkJobClass {
+class FindRelations extends SparkJob {
 	appName = "Find Relations v1.1"
 	configFile = "wikidata_import.xml"
 	val datasources = List("wikidata_20161117", "wikidata")

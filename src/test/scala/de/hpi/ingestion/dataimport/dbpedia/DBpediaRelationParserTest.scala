@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.dataimport.dbpedia
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import org.scalatest.{FlatSpec, Matchers}
 
 

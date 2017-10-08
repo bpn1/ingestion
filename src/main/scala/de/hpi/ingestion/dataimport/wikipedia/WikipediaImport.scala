@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.dataimport.wikipedia
 
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
@@ -29,7 +29,7 @@ import scala.xml.XML
 /**
   * Parses Wikipedia XML dump to Wikipedia Entries.
   */
-class WikipediaImport extends SparkJobClass {
+class WikipediaImport extends SparkJob {
 	import WikipediaImport._
 	appName = "WikipediaImport"
 	val inputFile = "dewiki.xml"

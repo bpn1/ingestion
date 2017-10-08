@@ -20,7 +20,7 @@ import java.net.URLDecoder
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import info.bliki.wiki.model.WikiModel
 import org.apache.spark.SparkContext
@@ -36,7 +36,7 @@ import scala.util.matching.Regex
 /**
   * Parses all Wikipedia articles from wikitext to raw text and extracts its links.
   */
-class TextParser extends SparkJobClass {
+class TextParser extends SparkJob {
 	import TextParser._
 	appName = "Text Parser"
 	configFile = "textmining.xml"

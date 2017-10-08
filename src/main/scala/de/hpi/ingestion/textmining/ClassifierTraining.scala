@@ -18,7 +18,7 @@ package de.hpi.ingestion.textmining
 
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.deduplication.models.{PrecisionRecallDataTuple, SimilarityMeasureStats}
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import com.datastax.spark.connector._
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
@@ -33,7 +33,7 @@ import org.apache.spark.SparkContext
 /**
   * Trains a `RandomForestModel` with `FeatureEntries` and evaluates it in terms of precision, recall and f-score.
   */
-class ClassifierTraining extends SparkJobClass {
+class ClassifierTraining extends SparkJob {
 	import ClassifierTraining._
 	appName = "Classifier Training"
 	configFile = "textmining.xml"

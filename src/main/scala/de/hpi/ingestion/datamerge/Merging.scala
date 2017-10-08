@@ -20,7 +20,7 @@ import java.util.UUID
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.Duplicates
@@ -28,7 +28,7 @@ import de.hpi.ingestion.deduplication.models.Duplicates
 /**
   * Merging-Job for merging duplicates into the subject table
   */
-class Merging extends SparkJobClass {
+class Merging extends SparkJob {
 	import Merging._
 	appName = "Merging"
 	configFile = "merging.xml"

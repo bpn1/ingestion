@@ -19,7 +19,7 @@ package de.hpi.ingestion.textmining.re
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.deduplication.models.PrecisionRecallDataTuple
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.ClassifierTraining._
 import de.hpi.ingestion.textmining.models.{Cooccurrence, RelationClassifierStats, Sentence}
 import org.apache.spark.ml.feature.{HashingTF, IDF}
@@ -31,7 +31,7 @@ import org.apache.spark.{SparkContext, sql}
 /**
   * Trains a classifier on the relations from DBpedia.
   */
-class RelationClassifier extends SparkJobClass {
+class RelationClassifier extends SparkJob {
 	import RelationClassifier._
 	appName = "Relation Classifier"
 	configFile = "textmining.xml"

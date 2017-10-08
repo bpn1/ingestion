@@ -19,7 +19,7 @@ package de.hpi.ingestion.datamerge
 import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -27,7 +27,7 @@ import org.apache.spark.rdd.RDD
   * Updates the current Subjects with the data of an already integrated datasource. The new data is added to the
   * already existing Subjects representing the same entity of the given datasource.
   */
-class DatasourceUpdate extends SparkJobClass {
+class DatasourceUpdate extends SparkJob {
 	import DatasourceUpdate._
 	appName = "Datasource Update"
 	configFile = "datasource_update.xml"

@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
@@ -27,7 +27,7 @@ import org.apache.spark.rdd.RDD
   * Resolves all redirects for each `ParsedWikipediaEntry` by replacing them with the pages they point to and writing
   * the redirects to a cassandra table.
   */
-class RedirectResolver extends SparkJobClass {
+class RedirectResolver extends SparkJob {
 	import RedirectResolver._
 	appName = "Redirect Resolver"
 	configFile = "textmining.xml"

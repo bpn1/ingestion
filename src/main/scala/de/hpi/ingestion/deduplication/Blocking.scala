@@ -22,7 +22,7 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
@@ -32,7 +32,7 @@ import org.apache.spark.rdd.RDD
   * Blocks two groups of Subjects with multiple Blocking Schemes and evaluates the resulting blocks by counting their
   * sizes and writing the results to the Cassandra.
   */
-class Blocking extends SparkJobClass {
+class Blocking extends SparkJob {
 	import Blocking._
 	appName = "Blocking"
 	configFile = "evaluation_deduplication.xml"

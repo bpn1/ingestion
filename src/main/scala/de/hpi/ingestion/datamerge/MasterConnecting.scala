@@ -23,12 +23,12 @@ import de.hpi.ingestion.datalake.SubjectManager
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.framework.SparkJobClass
+import de.hpi.ingestion.framework.SparkJob
 
 /**
   * Updating relations of the master node to new master nodes
   */
-class MasterConnecting extends SparkJobClass {
+class MasterConnecting extends SparkJob {
 	import MasterConnecting._
 	appName = "MasterConnecting"
 	configFile = "merging_master_connecting.xml"
