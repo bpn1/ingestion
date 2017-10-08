@@ -30,6 +30,7 @@ import scala.xml.XML
   * Parses Wikipedia XML dump to Wikipedia Entries.
   */
 class WikipediaImport extends SparkJobClass {
+	import WikipediaImport._
 	appName = "WikipediaImport"
 	val inputFile = "dewiki.xml"
 	val keyspace = "wikidumps"
@@ -60,6 +61,15 @@ class WikipediaImport extends SparkJobClass {
 	// $COVERAGE-ON$
 
 	/**
+	  * Parses Wikipedia XML dump to Wikipedia Entries.
+	  */
+	override def run(sc: SparkContext): Unit = {
+		wikipediaEntries = inputXML.map(parseXML)
+	}
+}
+
+object WikipediaImport {
+	/**
 	  * Parses Wikipedia XML to Wikipedia entries.
 	  *
 	  * @param xmlString XML data as String
@@ -70,12 +80,5 @@ class WikipediaImport extends SparkJobClass {
 		val title = (xmlDocument \ "title").text
 		val text = Option((xmlDocument \\ "text").text)
 		WikipediaEntry(title, text)
-	}
-
-	/**
-	  * Parses Wikipedia XML dump to Wikipedia Entries.
-	  */
-	override def run(sc: SparkContext): Unit = {
-		wikipediaEntries = inputXML.map(parseXML)
 	}
 }

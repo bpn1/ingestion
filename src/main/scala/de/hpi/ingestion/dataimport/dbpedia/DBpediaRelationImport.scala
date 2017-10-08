@@ -29,6 +29,7 @@ import org.apache.spark.rdd.RDD
   * Import and add the dbpedia relations to the dbpedia subjects.
   */
 class DBpediaRelationImport extends SparkJobClass {
+	import DBpediaRelationImport._
 	appName = "DBpediaRelationImport"
 	configFile = "relation_import_dbpedia.xml"
 
@@ -80,7 +81,9 @@ class DBpediaRelationImport extends SparkJobClass {
 				subject
 			}
 	}
+}
 
+object DBpediaRelationImport {
 	/**
 	  * Adds the relation defined in the relation object to the subject
 	  * @param subjectEntity subject to which the relation should be added

@@ -83,18 +83,16 @@ class WikidataImportTest extends FlatSpec with SharedSparkContext with Matchers 
 	}
 
 	"Property ids" should "be translated" in {
-		val job = new WikidataImport
 		val propertyMap = TestData.propertyMap()
 		val testEntities = TestData.parsedWikidataEntities()
-			.map(job.translatePropertyIDs(_, propertyMap))
+			.map(WikidataImport.translatePropertyIDs(_, propertyMap))
 		val expectedEntities = TestData.translatedWikidataEntities()
 		testEntities shouldEqual expectedEntities
 	}
 
 	"Property map" should "be built" in {
-		val job = new WikidataImport
 		val properties = sc.parallelize(TestData.propertyEntities())
-		val propertyMap = job.buildPropertyMap(properties)
+		val propertyMap = WikidataImport.buildPropertyMap(properties)
 		val expectedMap = TestData.propertyMap()
 		propertyMap shouldEqual expectedMap
 	}

@@ -21,49 +21,47 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class TagEntitiesTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Shorter paths" should "be added" in {
-		val job = new TagEntities
 		val oldClasses = TestData.oldClassMap()
 		val newClasses = TestData.newClassMap()
-		val classMap = job.addShorterPaths(newClasses, oldClasses)
+		val classMap = TagEntities.addShorterPaths(newClasses, oldClasses)
 		val expectedMap = TestData.classMap()
 		classMap shouldEqual expectedMap
 	}
 
 	"Subclass map" should "be built" in {
-		val job = new TagEntities
 		val entries = sc.parallelize(TestData.subclassOfProperties())
-		val classMap = job.buildSubclassMap(entries, TestData.classesToTag())
+		val classMap = TagEntities.buildSubclassMap(entries, TestData.classesToTag())
 		val expectedMap = TestData.classMap()
 		classMap shouldEqual expectedMap
 	}
 
 	it should "be properly reduced" in {
-		val job = new TagEntities
-		val reducedSubclasses = TestData.reducableClassMaps().reduce(job.mergeSubclassMaps)
+		val reducedSubclasses = TestData.reducableClassMaps().reduce(TagEntities.mergeSubclassMaps)
 		val expectedSubclasses = TestData.classMap()
 		reducedSubclasses shouldEqual expectedSubclasses
 	}
 
 	"Wikidata entity" should "be properly translated into SubclassEntry" in {
-		val job = new TagEntities
 		val entries = TestData.classWikidataEntities()
-		    .map(job.translateToSubclassEntry)
+		    .map(TagEntities.translateToSubclassEntry)
 		val expectedEntries = TestData.subclassEntries()
 		entries shouldEqual expectedEntries
 	}
 
 	"Instance-of entities" should "be updated" in {
 		val job = new TagEntities
+		val pathKey = job.settings("wikidataPathProperty")
 		val entries = sc.parallelize(TestData.subclassEntries())
-		val updatedEntries = job.updateEntities(entries, TestData.classMap()).collect.toSet
+		val updatedEntries = TagEntities.updateEntities(entries, TestData.classMap(), pathKey).collect.toSet
 		val expectedEntries = TestData.updatedInstanceOfProperties().toSet
 		updatedEntries shouldEqual expectedEntries
 	}
 
 	it should "be updated correctly" in {
 		val job = new TagEntities
+		val pathKey = job.settings("wikidataPathProperty")
 		val entries = TestData.validInstanceOfProperties()
-			.map(job.updateInstanceOfProperty(_, TestData.classMap()))
+			.map(TagEntities.updateInstanceOfProperty(_, TestData.classMap(), pathKey))
 		val expectedEntries = TestData.updatedInstanceOfProperties()
 		entries shouldEqual expectedEntries
 	}

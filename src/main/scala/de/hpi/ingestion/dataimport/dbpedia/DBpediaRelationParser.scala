@@ -27,6 +27,7 @@ import org.apache.spark.rdd.RDD
   * Extracts all relations from english dbpedia and translates the english title to the german ones.
   */
 class DBpediaRelationParser extends SparkJobClass {
+	import DBpediaRelationParser._
 	appName = "DBpediaRelationParser"
 	configFile = "textmining.xml"
 
@@ -54,21 +55,6 @@ class DBpediaRelationParser extends SparkJobClass {
 	// $COVERAGE-ON$
 
 	/**
-	  * Parses only English to German translations from DBpedia triples.
-	  *
-	  * @param labels RDD of triples containing the same as relation
-	  * @return Map from english wikipedia titles to their german counterparts
-	  */
-	def getGermanLabels(labels: RDD[String], prefixes: List[(String, String)]): Map[String, String] = {
-		dbpediaToCleanedTriples(labels, prefixes)
-			.filter { case List(subj, rel, obj) => rel.startsWith("owl:") && obj.startsWith("dbpedia-de:") }
-			.map(_.map(_.replaceAll("dbo:|dbpedia-de:|dbr:", "")))
-			.map { case List(subj, rel, obj) => subj -> obj }
-			.collect
-			.toMap
-	}
-
-	/**
 	  * Extracts all relations from English DBpedia and translates the English title to the German ones.
 	  * @param sc    Spark Context used to e.g. broadcast variables
 	  */
@@ -85,5 +71,22 @@ class DBpediaRelationParser extends SparkJobClass {
 					Relation(gerSubj.replaceAll("_", " "), rel, gerObj.replaceAll("_", " "))
 				}
 			})
+	}
+}
+
+object DBpediaRelationParser {
+	/**
+	  * Parses only English to German translations from DBpedia triples.
+	  *
+	  * @param labels RDD of triples containing the same as relation
+	  * @return Map from english wikipedia titles to their german counterparts
+	  */
+	def getGermanLabels(labels: RDD[String], prefixes: List[(String, String)]): Map[String, String] = {
+		dbpediaToCleanedTriples(labels, prefixes)
+			.filter { case List(subj, rel, obj) => rel.startsWith("owl:") && obj.startsWith("dbpedia-de:") }
+			.map(_.map(_.replaceAll("dbo:|dbpedia-de:|dbr:", "")))
+			.map { case List(subj, rel, obj) => subj -> obj }
+			.collect
+			.toMap
 	}
 }

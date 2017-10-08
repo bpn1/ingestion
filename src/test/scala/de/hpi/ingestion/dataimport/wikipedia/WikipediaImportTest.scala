@@ -22,8 +22,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class WikipediaImportTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 	"XML" should "be parsed" in {
-		val job = new WikipediaImport
-		val entries = TestData.pageXML.map(job.parseXML)
+		val entries = TestData.pageXML.map(WikipediaImport.parseXML)
 		val expected = TestData.wikipediaEntries
 		entries shouldEqual expected
 	}

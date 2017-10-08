@@ -56,54 +56,47 @@ class DBpediaImportUnitTest extends FlatSpec with SharedSparkContext with Matche
 	}
 
 	"extractWikidataId" should "extract the wikidata id from a list" in {
-		val job = new DBpediaImport
 		val owlSameAs = List("yago:X", "wikidata:123", "wikpedia:5")
-		val id = job.extractWikidataId(owlSameAs)
+		val id = DBpediaImport.extractWikidataId(owlSameAs)
 		val expected = Option("123")
 		id shouldEqual expected
 	}
 
 	it should "return None if list is empty" in {
-		val job = new DBpediaImport
-		val id = job.extractWikidataId(Nil)
+		val id = DBpediaImport.extractWikidataId(Nil)
 		id shouldEqual None
 	}
 
 	it should "return None if it could not be found" in {
-		val job = new DBpediaImport
 		val owlSameAs = List("yago:X", "wikipedia:5")
-		val id = job.extractWikidataId(owlSameAs)
+		val id = DBpediaImport.extractWikidataId(owlSameAs)
 		id shouldEqual None
 	}
 
 	"extractInstancetype" should "extract the right type from a list" in {
-		val job = new DBpediaImport
 		val rdfTypes = List("owl:Thing", "dbo:Agent", "dbo:Organisation", "dbo:Company")
 		val organisations = TestData.organisations
-		val instanceType = job.extractInstancetype(rdfTypes, organisations)
+		val instanceType = DBpediaImport.extractInstancetype(rdfTypes, organisations)
 		val expected = Option("Company")
 		instanceType shouldEqual expected
 	}
 
 	it should "return None if given list is empty" in {
-		val job = new DBpediaImport
 		val organisations = TestData.organisations
-		val instanceType = job.extractInstancetype(Nil, organisations)
+		val instanceType = DBpediaImport.extractInstancetype(Nil, organisations)
 		instanceType shouldEqual None
 	}
 
 	it should "return None if no sublass of organisation could be found" in {
-		val job = new DBpediaImport
 		val rdfTypes = List("owl:Thing", "dbo:Agent", "dbo:Family")
 		val organisations = TestData.organisations
-		val instanceType = job.extractInstancetype(rdfTypes, organisations)
+		val instanceType = DBpediaImport.extractInstancetype(rdfTypes, organisations)
 		instanceType shouldEqual None
 	}
 
 	"extractProperties" should "create a DBpediaEntity from properties" in {
-		val job = new DBpediaImport
 		val name = "Test Entity"
-		val entity = job.extractProperties(name, TestData.properties, TestData.organisations)
+		val entity = DBpediaImport.extractProperties(name, TestData.properties, TestData.organisations)
 		val expected = TestData.parsedEntity(name)
 		entity shouldEqual expected
 	}

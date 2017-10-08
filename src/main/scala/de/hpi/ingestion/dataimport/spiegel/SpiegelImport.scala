@@ -29,6 +29,7 @@ import de.hpi.ingestion.textmining.models.TrieAliasArticle
   * Parses the Spiegel JSON dump to Articles, parses the HTML to raw text and saves them to the Cassandra.
   */
 class SpiegelImport extends SparkJobClass with JSONParser[TrieAliasArticle] {
+	import SpiegelImport._
 	appName = "Spiegel Import"
 	configFile = "textmining.xml"
 
@@ -62,24 +63,6 @@ class SpiegelImport extends SparkJobClass with JSONParser[TrieAliasArticle] {
 	}
 
 	/**
-	  * Extracts the text contents of the HTML page.
-	  *
-	  * @param html HTML page as String
-	  * @return text contents of the page
-	  */
-	def extractArticleText(html: String): String = {
-		val contentTags = List("div.spArticleContent", "div.dig-artikel", "div.article-section")
-		val doc = Jsoup.parse(html)
-		val title = doc.head().text()
-		val content = contentTags
-			.map(doc.select)
-			.find(_.size == 1)
-			.map(_.text())
-			.getOrElse(doc.body.text())
-		s"$title $content".trim
-	}
-
-	/**
 	  * Extracts the article data from a given JSON object, parses the HTML content into text and finds the occurring
 	  * aliases in the text.
 	  *
@@ -95,5 +78,25 @@ class SpiegelImport extends SparkJobClass with JSONParser[TrieAliasArticle] {
 			.map(_.replaceAll("&nbsp;", " "))
 			.map(extractArticleText)
 		TrieAliasArticle(id, title, text)
+	}
+}
+
+object SpiegelImport {
+	/**
+	  * Extracts the text contents of the HTML page.
+	  *
+	  * @param html HTML page as String
+	  * @return text contents of the page
+	  */
+	def extractArticleText(html: String): String = {
+		val contentTags = List("div.spArticleContent", "div.dig-artikel", "div.article-section")
+		val doc = Jsoup.parse(html)
+		val title = doc.head().text()
+		val content = contentTags
+			.map(doc.select)
+			.find(_.size == 1)
+			.map(_.text())
+			.getOrElse(doc.body.text())
+		s"$title $content".trim
 	}
 }

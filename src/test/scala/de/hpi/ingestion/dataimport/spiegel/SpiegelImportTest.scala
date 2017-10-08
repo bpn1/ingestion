@@ -40,8 +40,7 @@ class SpiegelImportTest extends FlatSpec with Matchers with SharedSparkContext {
 	}
 
 	"Article text" should "be extracted" in {
-		val job = new SpiegelImport
-		val extractedContents = TestData.spiegelPages().map(job.extractArticleText)
+		val extractedContents = TestData.spiegelPages().map(SpiegelImport.extractArticleText)
 		val expectedContents = TestData.pageTexts()
 		extractedContents shouldEqual expectedContents
 	}

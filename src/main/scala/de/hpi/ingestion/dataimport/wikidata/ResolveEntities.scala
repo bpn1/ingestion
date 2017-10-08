@@ -28,6 +28,7 @@ import org.apache.spark.rdd.RDD
   * `TagEntities` job are not resolved.
   */
 class ResolveEntities extends SparkJobClass {
+	import ResolveEntities._
 	appName = "ResolveEntities"
 	configFile = "wikidata_import.xml"
 
@@ -52,6 +53,39 @@ class ResolveEntities extends SparkJobClass {
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Resolves the Wikidata id of untagged entities in the properties of every Wikidata Entity.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val entityData = wikidataEntities.flatMap(flattenWikidataEntity).cache
+		val noIdData = entityData.filter(!containsWikidataIdValue(_))
+		val noEntityData = noIdData.filter(!hasUnitValue(_))
+		val unitData = noIdData
+			.filter(hasUnitValue)
+			.map(splitUnitValue)
+		val resolvableNames = wikidataEntities
+			.filter(shouldBeResolved)
+			.map(extractNameData)
+
+		val idData = entityData
+			.filter(containsWikidataIdValue)
+			.map(makeJoinable)
+
+		val idJoin = joinIdRDD(idData, resolvableNames)
+		val unitJoin = joinUnitRDD(unitData, resolvableNames)
+
+		// concatenate all RDDs
+		val resolvedData = idJoin
+			.union(unitJoin)
+			.union(noEntityData)
+
+		resolvedIds = rebuildProperties(resolvedData)
+	}
+}
+
+object ResolveEntities {
 	/**
 	  * Flattens Wikidata entitiy into triples of entity id, property key and property value.
 	  * @param entity Wikidata entity to flatten
@@ -173,40 +207,8 @@ class ResolveEntities extends SparkJobClass {
 				val propertyMap = propertyList
 					.groupBy(_._1)
 					.mapValues(_.map(_._2))
-				    .map(identity)
+					.map(identity)
 				(id, propertyMap)
 			}
-	}
-
-	/**
-	  * Resolves the Wikidata id of untagged entities in the properties of every Wikidata Entity.
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(sc: SparkContext): Unit = {
-
-		val entityData = wikidataEntities.flatMap(flattenWikidataEntity).cache
-		val noIdData = entityData.filter(!containsWikidataIdValue(_))
-		val noEntityData = noIdData.filter(!hasUnitValue(_))
-		val unitData = noIdData
-			.filter(hasUnitValue)
-			.map(splitUnitValue)
-		val resolvableNames = wikidataEntities
-			.filter(shouldBeResolved)
-			.map(extractNameData)
-
-		val idData = entityData
-			.filter(containsWikidataIdValue)
-			.map(makeJoinable)
-
-		val idJoin = joinIdRDD(idData, resolvableNames)
-		val unitJoin = joinUnitRDD(unitData, resolvableNames)
-
-		// concatenate all RDDs
-		val resolvedData = idJoin
-			.union(unitJoin)
-			.union(noEntityData)
-
-		resolvedIds = rebuildProperties(resolvedData)
 	}
 }
