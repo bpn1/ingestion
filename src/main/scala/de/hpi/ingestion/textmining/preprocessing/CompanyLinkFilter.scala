@@ -19,7 +19,6 @@ package de.hpi.ingestion.textmining.preprocessing
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.{Page, ParsedWikipediaEntry}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -27,38 +26,53 @@ import org.apache.spark.rdd.RDD
 /**
   * Removes all Wikipedia `Links` with an alias that never points to a company.
   */
-object CompanyLinkFilter extends SparkJob {
+class CompanyLinkFilter extends SparkJob {
+	import CompanyLinkFilter._
 	appName = "Company Link Filter"
 	configFile = "textmining.xml"
+
+	var wikidataEntities: RDD[WikidataEntity] = _
+	var pages: RDD[Page] = _
+	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+	var cleanedParsedWikipedia: RDD[ParsedWikipediaEntry] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Wikidata entries, Parsed Wikipedia entries and Wikipedia pages from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
-		val pages = sc.cassandraTable[Page](settings("keyspace"), settings("pageTable"))
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(wikidata).toAnyRDD() ++ List(pages).toAnyRDD() ++ List(articles).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		wikidataEntities = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
+		pages = sc.cassandraTable[Page](settings("keyspace"), settings("pageTable"))
+		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 	}
 
 	/**
 	  * Saves cleaned Parsed Wikipedia entries to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
+	override def save(sc: SparkContext): Unit = {
+		cleanedParsedWikipedia.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Removes all non company links from each ParsedWikipediaEntry.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val companyPages = extractCompanyPages(wikidataEntities)
+		val companyAliases = extractCompanyAliases(pages, companyPages).collect.toSet
+		val aliasBroadcast = sc.broadcast(companyAliases)
+
+		cleanedParsedWikipedia = parsedWikipedia.mapPartitions({ partition =>
+			val localCompAliases = aliasBroadcast.value
+			partition.map(filterCompanyLinks(_, localCompAliases))
+		}, true)
+	}
+}
+
+object CompanyLinkFilter {
 	/**
 	  * Extracts Wikipedia page names of every tagged Wikidata entity.
 	  * @param wikidata RDD of Wikidata entities
@@ -94,28 +108,5 @@ object CompanyLinkFilter extends SparkJob {
 	def filterCompanyLinks(article: ParsedWikipediaEntry, companyAliases: Set[String]): ParsedWikipediaEntry = {
 		article.reduceLinks(link => companyAliases.contains(link.alias))
 		article
-	}
-
-	/**
-	  * Removes all non company links from each ParsedWikipediaEntry.
-	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = input.head.asInstanceOf[RDD[WikidataEntity]]
-		val pages = input(1).asInstanceOf[RDD[Page]]
-		val articles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
-
-		val companyPages = extractCompanyPages(wikidata)
-		val companyAliases = extractCompanyAliases(pages, companyPages).collect.toSet
-		val aliasBroadcast = sc.broadcast(companyAliases)
-
-		val filteredArticles = articles.mapPartitions({ rdd =>
-			val localCompAliases = aliasBroadcast.value
-			rdd.map(filterCompanyLinks(_, localCompAliases))
-		}, true)
-		List(filteredArticles).toAnyRDD()
 	}
 }

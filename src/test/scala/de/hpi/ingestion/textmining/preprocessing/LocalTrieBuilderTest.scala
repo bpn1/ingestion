@@ -22,7 +22,6 @@ import de.hpi.ingestion.textmining.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class LocalTrieBuilderTest extends FlatSpec with Matchers {
-
 	"Trie" should "be serialized" in {
 		val aliasStream = TestData.aliasFileStream()
 		val trieStream = new ByteArrayOutputStream(1024)

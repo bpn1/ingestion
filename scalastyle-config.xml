@@ -45,7 +45,7 @@
 			<parameter name="ignore"><![CDATA[-1,0,1,2,3]]></parameter>
 		</parameters>
 	</check>
-	<check level="error" class="org.scalastyle.scalariform.NoWhitespaceBeforeLeftBracketChecker" enabled="true"/>
+	<check level="error" class="org.scalastyle.scalariform.NoWhitespaceBeforeLeftBracketChecker" enabled="false"/>
 	<check level="error" class="org.scalastyle.scalariform.NoWhitespaceAfterLeftBracketChecker" enabled="true"/>
 	<check level="error" class="org.scalastyle.scalariform.ReturnChecker" enabled="false"/>
 	<check level="error" class="org.scalastyle.scalariform.NullChecker" enabled="false"/>

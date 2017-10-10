@@ -23,14 +23,13 @@ import de.hpi.ingestion.dataimport.SharedNormalizations
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.datalake.{DataLakeImportImplementation, SubjectManager}
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
   * Translates each `WikidataEntity` into a `Subject` and writes it into a staging table.
   */
-object WikidataDataLakeImport extends DataLakeImportImplementation[WikidataEntity](
+class WikidataDataLakeImport extends DataLakeImportImplementation[WikidataEntity](
 	List("wikidata_20161117", "wikidata"),
 	"wikidumps",
 	"wikidata"
@@ -64,9 +63,12 @@ object WikidataDataLakeImport extends DataLakeImportImplementation[WikidataEntit
 	)
 
 	// $COVERAGE-OFF$
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val wikidata = sc.cassandraTable[WikidataEntity](inputKeyspace, inputTable)
-		List(wikidata).toAnyRDD()
+	/**
+	  * Loads the Wikidata entities from the Cassandra.
+	  * @param sc SparkContext to be used for the job
+	  */
+	override def load(sc: SparkContext): Unit = {
+		inputEntities = sc.cassandraTable[WikidataEntity](inputKeyspace, inputTable)
 	}
 	// $COVERAGE-ON$
 

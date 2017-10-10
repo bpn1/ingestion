@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.graphxplore
+package de.hpi.ingestion.graphframes
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -23,8 +23,7 @@ import de.hpi.ingestion.datalake.models.Subject
 import org.apache.spark.sql.SparkSession
 import org.graphframes.GraphFrame
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.graphxplore.models.ResultGraph
-import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.graphframes.models.ResultGraph
 
 /**
   * Base trait for graph extraction jobs; converts the subject table into a GraphFrames instance
@@ -35,28 +34,24 @@ trait GraphExtractor extends SparkJob {
 	val tablename = "subject"
 	val outputTablename = "graphs"
 
+	var subjects: RDD[Subject] = _
+	var graphs: RDD[ResultGraph] = _
+
 	// $COVERAGE-OFF$
 	/**
 	  * Loads subjects from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
-		List(subjects).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		subjects = sc.cassandraTable[Subject](keyspace, tablename)
 	}
 
 	/**
 	  * Writes the generated subgraphs to Cassandra.
-	  * @param output first element is the RDD of JSON diffs
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[ResultGraph]()
-			.foreach(_.saveToCassandra(keyspace, outputTablename))
+	override def save(sc: SparkContext): Unit = {
+		graphs.saveToCassandra(keyspace, outputTablename)
 	}
 	// $COVERAGE-ON$
 
@@ -88,25 +83,18 @@ trait GraphExtractor extends SparkJob {
 	  * @param graph GraphFrame that is processed
 	  * @return RDD of ResultGraph objects that represent extracted subgraphs
 	  */
-	def processGraph(graph: GraphFrame): List[RDD[ResultGraph]]
+	def processGraph(graph: GraphFrame): RDD[ResultGraph]
 
 	/**
 	  * Extract a graph from the master nodes in the subject table and process it.
 	  * Checkpoint directory (local on executors) is needed for GraphFrames algorithms like connectedComponents to work
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
 	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
+	override def run(sc: SparkContext): Unit = {
 		sc.setCheckpointDir(appName + "Checkpoints")
-
-		val subjects = input
-			.fromAnyRDD[Subject]().head
-			.filter(_.datasource == "master")
-
-		val graph = extractGraph(subjects)
-		val output = processGraph(graph)
-		output.toAnyRDD()
+		val masters = subjects.filter(_.datasource == "master")
+		val graph = extractGraph(masters)
+		graphs = processGraph(graph)
 	}
 }

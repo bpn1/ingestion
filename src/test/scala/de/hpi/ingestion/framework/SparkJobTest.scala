@@ -21,24 +21,23 @@ import de.hpi.ingestion.framework.mock.{MockConditionSparkJob, MockSparkJob}
 import org.scalatest.{FlatSpec, Matchers}
 
 class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
-
-	"Main method" should "call the methods in the proper sequence" in {
+	"Execute" should "call the methods in the proper sequence" in {
 		val sparkJob = new MockSparkJob
-		sparkJob.main(Array())
-		val expectedSequence = List("assertConditions", "sparkContext", "execQ", "load", "run", "execQ", "save")
+		sparkJob.execute(sc)
+		val expectedSequence = List("assertConditions", "execQ", "load", "run", "execQ", "save")
 		sparkJob.methodCalls.toList shouldEqual expectedSequence
 	}
 
 	"Assert conditions" should "not stop the job if the conditions are true" in {
 		val sparkJob = new MockConditionSparkJob
-		sparkJob.main(Array())
-		val expectedSequence = List("assertConditions", "sparkContext", "execQ", "load", "run" , "execQ", "save")
+		sparkJob.execute(sc)
+		val expectedSequence = List("assertConditions", "execQ", "load", "run" , "execQ", "save")
 		sparkJob.methodCalls.toList shouldEqual expectedSequence
 	}
 
 	it should "stop the job if the conditions are false" in {
 		val sparkJob = new MockConditionSparkJob
-		sparkJob.main(Array("test"))
+		sparkJob.execute(sc, Array("test"))
 		val expectedSequence = List("assertConditions")
 		sparkJob.methodCalls.toList shouldEqual expectedSequence
 	}
@@ -58,14 +57,14 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 	"Config" should "be read before run is executed" in {
 		val sparkJob = new MockSparkJob
 		sparkJob.settings shouldBe empty
-		sparkJob.assertConditions(Array())
+		sparkJob.assertConditions()
 		sparkJob.settings shouldBe empty
 		sparkJob.configFile = "test.xml"
-		sparkJob.assertConditions(Array())
+		sparkJob.assertConditions()
 		sparkJob.settings should not be empty
 		sparkJob.scoreConfigSettings should not be empty
 		sparkJob.importConfigFile = "normalization_wikidata.xml"
-		sparkJob.assertConditions(Array())
+		sparkJob.assertConditions()
 		sparkJob.normalizationSettings should not be empty
 		sparkJob.sectorSettings should not be empty
 	}
@@ -73,9 +72,10 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 	it should "be the file passed as argument" in {
 		val sparkJob = new MockSparkJob
 		sparkJob.settings shouldBe empty
-		sparkJob.assertConditions(Array())
+		sparkJob.assertConditions()
 		sparkJob.settings shouldBe empty
-		sparkJob.assertConditions(Array("test.xml"))
+		sparkJob.args = Array("test.xml")
+		sparkJob.assertConditions()
 		sparkJob.settings should not be empty
 	}
 
@@ -85,7 +85,7 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 		val saveQueries = List("saveQuery1")
 		sparkJob.cassandraLoadQueries ++= loadQueries
 		sparkJob.cassandraSaveQueries ++= saveQueries
-		sparkJob.main(Array())
+		sparkJob.execute(sc)
 		val expectedSequence = List("loadQuery 1", "loadQuery 2", "saveQuery1")
 		sparkJob.queryCalls.toList shouldEqual expectedSequence
 	}

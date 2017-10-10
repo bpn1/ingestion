@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import de.hpi.ingestion.textmining.models.{Alias, Page}
 import org.apache.spark.rdd.RDD
@@ -147,19 +146,21 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Grouped aliases and page names from incomplete article set" should "be empty" in {
-		val articles = sc.parallelize(TestData.smallerParsedWikipediaList())
-		val List(groupedAliases, groupedPages) = LinkAnalysis.run(List(articles).toAnyRDD(), sc)
-		val groupedAliasesSet = groupedAliases.asInstanceOf[RDD[Alias]].collect
-		val groupedPagesSet = groupedPages.asInstanceOf[RDD[Page]].collect
+		val job = new LinkAnalysis
+		job.parsedWikipedia = sc.parallelize(TestData.smallerParsedWikipediaList())
+		job.run(sc)
+		val groupedAliasesSet = job.aliases.collect.toSet
+		val groupedPagesSet = job.pages.collect.toSet
 		groupedAliasesSet shouldBe empty
 		groupedPagesSet shouldBe empty
 	}
 
 	"Links" should "be analysed" in {
-		val articles = sc.parallelize(TestData.linkAnalysisArticles())
-		val List(groupedAliases, groupedPages) = LinkAnalysis.run(List(articles).toAnyRDD(), sc)
-		val groupedAliasesSet = groupedAliases.asInstanceOf[RDD[Alias]].collect.toSet
-		val groupedPagesSet = groupedPages.asInstanceOf[RDD[Page]].collect.toSet
+		val job = new LinkAnalysis
+		job.parsedWikipedia = sc.parallelize(TestData.linkAnalysisArticles())
+		job.run(sc)
+		val groupedAliasesSet = job.aliases.collect.toSet
+		val groupedPagesSet = job.pages.collect.toSet
 		val expectedAliases = TestData.groupedAliasesSet()
 		val expectedPages = TestData.groupedPagesSet()
 		groupedAliasesSet shouldEqual expectedAliases
@@ -167,11 +168,12 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Reduced links" should "be analysed" in {
-		val articles = sc.parallelize(TestData.linkAnalysisArticles())
-		val input = List(articles).toAnyRDD()
-		val List(groupedAliases, groupedPages) = LinkAnalysis.run(input, sc, Array(LinkAnalysis.reduceFlag))
-		val groupedAliasesSet = groupedAliases.asInstanceOf[RDD[Alias]].collect.toSet
-		val groupedPagesSet = groupedPages.asInstanceOf[RDD[Page]].collect.toSet
+		val job = new LinkAnalysis
+		job.parsedWikipedia = sc.parallelize(TestData.linkAnalysisArticles())
+		job.args = Array(job.reduceFlag)
+		job.run(sc)
+		val groupedAliasesSet = job.aliases.collect.toSet
+		val groupedPagesSet = job.pages.collect.toSet
 		val expectedAliases = TestData.reducedGroupedAliasesSet()
 		val expectedPages = TestData.reducedGroupedPagesSet()
 		groupedAliasesSet shouldEqual expectedAliases
@@ -179,11 +181,11 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	they should "be analysed by the reduced Link Analysis" in {
-		val articles = sc.parallelize(TestData.linkAnalysisArticles())
-		val input = List(articles).toAnyRDD()
-		val List(groupedAliases, groupedPages) = ReducedLinkAnalysis.run(input, sc)
-		val groupedAliasesSet = groupedAliases.asInstanceOf[RDD[Alias]].collect.toSet
-		val groupedPagesSet = groupedPages.asInstanceOf[RDD[Page]].collect.toSet
+		val job = new ReducedLinkAnalysis
+		job.linkAnalysis.parsedWikipedia = sc.parallelize(TestData.linkAnalysisArticles())
+		job.run(sc)
+		val groupedAliasesSet = job.linkAnalysis.aliases.collect.toSet
+		val groupedPagesSet = job.linkAnalysis.pages.collect.toSet
 		val expectedAliases = TestData.reducedGroupedAliasesSet()
 		val expectedPages = TestData.reducedGroupedPagesSet()
 		groupedAliasesSet shouldEqual expectedAliases

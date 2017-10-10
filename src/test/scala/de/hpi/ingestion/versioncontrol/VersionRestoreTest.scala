@@ -18,19 +18,15 @@ package de.hpi.ingestion.versioncontrol
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.scalatest.{FlatSpec, Matchers}
 
 class VersionRestoreTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"Subject data" should "be restored" in {
-		val subjects = sc.parallelize(TestData.diffSubjects() ++ TestData.additionalRestorationSubjects())
-		val versions = Array(TestData.versionsToCompare()._1.toString)
-		val rddList = List(subjects).toAnyRDD()
-		val restoredSubjects = VersionRestore.run(rddList, sc, versions)
-			.fromAnyRDD[Subject]()
-			.head
-			.collect
-			.sortBy(_.id)
+		val job = new VersionRestore
+		job.subjects = sc.parallelize(TestData.diffSubjects() ++ TestData.additionalRestorationSubjects())
+		job.args = Array(TestData.versionsToCompare()._1.toString)
+		job.run(sc)
+		val restoredSubjects = job.restoredSubjects.collect.sortBy(_.id)
 
 		val zippedSubjects = restoredSubjects.zip(TestData.restoredSubjects().sortBy(_.id))
 		restoredSubjects.length shouldEqual zippedSubjects.length
@@ -45,11 +41,12 @@ class VersionRestoreTest extends FlatSpec with SharedSparkContext with Matchers 
 	}
 
 	"Version Restore assertion" should "return false if there is not exactly one versions provided" in {
-		val successArgs = Array("v1")
-		val failArgsEmpty = Array[String]()
-		val failArgsTooMany = Array("v1", "v2")
-		VersionRestore.assertConditions(successArgs) shouldBe true
-		VersionRestore.assertConditions(failArgsEmpty) shouldBe false
-		VersionRestore.assertConditions(failArgsTooMany) shouldBe false
+		val job = new VersionRestore
+		job.args = Array("v1")
+		job.assertConditions() shouldBe true
+		job.args = Array[String]()
+		job.assertConditions() shouldBe false
+		job.args = Array("v1", "v2")
+		job.assertConditions() shouldBe false
 	}
 }

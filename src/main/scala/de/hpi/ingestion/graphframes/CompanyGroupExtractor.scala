@@ -14,17 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.graphxplore
+package de.hpi.ingestion.graphframes
 
 import java.util.UUID
 import org.apache.spark.rdd.RDD
 import org.graphframes.GraphFrame
-import de.hpi.ingestion.graphxplore.models.ResultGraph
+import de.hpi.ingestion.graphframes.models.ResultGraph
 
 /**
   * Extracts company groups in a graph by finding connected components in its ownership relations
   */
-object CompanyGroupExtractor extends GraphExtractor {
+class CompanyGroupExtractor extends GraphExtractor {
 	appName = "CompanyGroupExtractor"
 	val graphType = "CompanyGroup"
 	val minComponentSize = 3
@@ -72,11 +72,10 @@ object CompanyGroupExtractor extends GraphExtractor {
 	  * @param graph GraphFrame that is processed
 	  * @return RDD of ResultGraph objects that represent extracted company groups
 	  */
-	override def processGraph(graph: GraphFrame): List[RDD[ResultGraph]] = {
+	override def processGraph(graph: GraphFrame): RDD[ResultGraph] = {
 		val ownershipEdges = graph.edges.filter((edge) =>
 			ownershipRelations.contains(edge.getAs[String]("relationship")))
 		val ownershipGraph = GraphFrame(graph.vertices, ownershipEdges)
-
-		List(findCompanyGroups(ownershipGraph, graphType))
+		findCompanyGroups(ownershipGraph, graphType)
 	}
 }

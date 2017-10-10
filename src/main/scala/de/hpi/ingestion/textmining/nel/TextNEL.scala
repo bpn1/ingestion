@@ -16,13 +16,12 @@ limitations under the License.
 
 package de.hpi.ingestion.textmining.nel
 
-import de.hpi.ingestion.framework.SplitSparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
+import java.io.InputStream
+
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.TupleImplicits._
-import de.hpi.ingestion.textmining.preprocessing.CosineContextComparator.{calculateTfidf, compareLinksWithArticles,
-defaultIdf}
-import de.hpi.ingestion.textmining.preprocessing.{CosineContextComparator, SecondOrderFeatureGenerator,
-TermFrequencyCounter}
+import de.hpi.ingestion.textmining.preprocessing.{CosineContextComparator => CCC}
+import de.hpi.ingestion.textmining.preprocessing._
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -35,45 +34,44 @@ import org.apache.spark.sql.SparkSession
   * Classifies the `TrieAliases` found in `TrieAliasArticles` by the `ArticleTrieSearch` and writes the positives into
   * the `foundentities` column back to the same table.
   */
-object TextNEL extends SplitSparkJob {
+class TextNEL extends SparkJob {
+	import TextNEL._
 	appName = "Text NEL"
 	configFile = "textmining.xml"
 	sparkOptions("spark.yarn.executor.memoryOverhead") = "4096"
 	var aliasPageScores = Map.empty[String, List[(String, Double, Double)]]
 
-	// $COVERAGE-OFF$
-	var loadModelFunction: () => PipelineModel = loadModel _
+	var trieArticles: RDD[TrieAliasArticle] = _
+	var aliases: RDD[Alias] = _
+	var articleTfidf: RDD[ArticleTfIdf] = _
+	var numDocuments: Long = 0
+	var entityLinks: List[RDD[(String, List[Link])]] = Nil
 
+	// $COVERAGE-OFF$
+	var loadModelFunction: () => PipelineModel = loadModel
+	var docFreqStreamFunction: String => InputStream = AliasTrieSearch.hdfsFileStream
 	/**
 	  * Loads the Trie Alias Articles from the Cassandra.
-	  *
-	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * @param sc Spark Context used to load the RDDs
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[TrieAliasArticle](settings("keyspace"), settings("NELTable"))
-		val articleCount = sc.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
-		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
-		val articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
-		List(articles, articleCount, aliases, articleTfidf).flatMap(List(_).toAnyRDD())
+	override def load(sc: SparkContext): Unit = {
+		trieArticles = sc.cassandraTable[TrieAliasArticle](settings("keyspace"), settings("NELTable"))
+		numDocuments = sc
+			.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
+	    	.first
+	    	.count
+	    	.toLong
+		aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
+		articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
 	}
 
 	/**
 	  * Saves the found entities to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[(String, List[Link])]()
-			.head
-			.saveToCassandra(
-				settings("keyspace"),
-				"spiegel_test",//settings("NELTable"),
-				SomeColumns("id", "foundentities"))
+	override def save(sc: SparkContext): Unit = {
+		entityLinks
+			.foreach(_.saveToCassandra(settings("keyspace"), settings("NELTable"), SomeColumns("id", "foundentities")))
 	}
 
 	/**
@@ -88,34 +86,66 @@ object TextNEL extends SplitSparkJob {
 
 	/**
 	  * Splits the Articles into n parts.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param args  arguments of the program
-	  * @return Collection of input RDD Lists to be processed sequentially.
+	  * @return Collection of input RDDs to be processed sequentially.
 	  */
-	override def splitInput(input: List[RDD[Any]], args: Array[String] = Array()): Traversable[List[RDD[Any]]] = {
-		val List(articles, numDocuments, aliases, wikipediaTfidf) = input
+	def splitInput(): List[RDD[TrieAliasArticle]] = {
 		val splitMap = Map("wikipedianel" -> 100, "spiegel" -> 20)
 		val splitCount = splitMap(settings("NELTable"))
-		articles
+		trieArticles
 			.randomSplit(Array.fill(splitCount)(1.0))
-			.map(List(_, numDocuments, aliases, wikipediaTfidf))
+			.toList
 	}
 
+	/**
+	  * Generates FeatureEntries for the aliases extracted from the TrieAliasArticles.
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val session = SparkSession.builder().getOrCreate()
+		val articlesPartitions = splitInput()
+		val articleTfidfTuples = articleTfidf.flatMap(ArticleTfIdf.unapply)
+
+		if(aliasPageScores.isEmpty) {
+			aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
+		}
+		val tokenizer = IngestionTokenizer()
+		entityLinks = articlesPartitions.map { partition =>
+			val contextSize = settings("contextSize").toInt
+			val articleAliases = partition.flatMap(extractTrieAliasContexts(_, tokenizer, contextSize))
+			val aliasTfIdf = CCC.calculateTfidf(
+				articleAliases,
+				numDocuments,
+				CCC.defaultIdf(numDocuments),
+				docFreqStreamFunction,
+				settings("dfFile"))
+			val job = new SecondOrderFeatureGenerator
+			job.featureEntries = CCC.compareLinksWithArticles(
+				aliasTfIdf,
+				sc.broadcast(aliasPageScores),
+				articleTfidfTuples)
+			job.run(sc)
+			classifyFeatureEntries(job.featureEntriesWithSOF, loadModelFunction(), session)
+		}
+	}
+}
+
+object TextNEL {
 	/**
 	  * Extracts the contexts of an article's Trie Aliases.
 	  *
 	  * @param article   article containing the text and the Trie Aliases.
 	  * @param tokenizer Tokenizer used to create the contexts
+	  * @param contextSize number of tokens before and after a match considered as the context
 	  * @return List of the Trie Aliases as Links and their contexts as Bags as tuples
 	  */
 	def extractTrieAliasContexts(
 		article: TrieAliasArticle,
-		tokenizer: IngestionTokenizer
+		tokenizer: IngestionTokenizer,
+		contextSize: Int
 	): List[(Link, Bag[String, Int])] = {
 		val articleTokens = article.text.map(tokenizer.onlyTokenizeWithOffset).getOrElse(Nil)
 		article.triealiases.map { triealias =>
-			val context = TermFrequencyCounter.extractContext(articleTokens, triealias.toLink(), tokenizer)
+			val context = TermFrequencyCounter.extractContext(articleTokens, triealias.toLink(), tokenizer, contextSize)
 			(triealias.toLink().copy(article = Option(article.id)), context)
 		}
 	}
@@ -149,39 +179,9 @@ object TextNEL extends SplitSparkJob {
 				val link = Link(alias, entity, Option(offset))
 				(article, link, prediction)
 			}.collect {
-				case (article, link, prediction) if prediction == 1.0 =>
-					(article, List(link))
-			}.reduceByKey(_ ++ _)
+			case (article, link, prediction) if prediction == 1.0 =>
+				(article, List(link))
+		}.reduceByKey(_ ++ _)
 			.map(_.map(identity, _.sortBy(_.offset)))
-	}
-
-	/**
-	  * Generates FeatureEntries for the aliases extracted from the TrieAliasArticles.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val session = SparkSession.builder().getOrCreate()
-		val articlesPartition = input.head.asInstanceOf[RDD[TrieAliasArticle]]
-		val numDocuments = input(1).asInstanceOf[RDD[WikipediaArticleCount]].collect.head.count.toLong
-		val aliases = input(2).asInstanceOf[RDD[Alias]]
-		val wikipediaTfidf = input(3).asInstanceOf[RDD[ArticleTfIdf]].flatMap(ArticleTfIdf.unapply)
-
-		if(aliasPageScores.isEmpty) {
-			aliasPageScores = CosineContextComparator.collectAliasPageScores(aliases)
-		}
-		val tokenizer = IngestionTokenizer()
-		val articleAliases = articlesPartition.flatMap(extractTrieAliasContexts(_, tokenizer))
-		val aliasTfIdf = calculateTfidf(articleAliases, numDocuments, defaultIdf(numDocuments))
-		val featureEntries = compareLinksWithArticles(aliasTfIdf, sc.broadcast(aliasPageScores), wikipediaTfidf)
-		val extendedFeatureEntries = SecondOrderFeatureGenerator
-			.run(List(featureEntries).toAnyRDD(), sc)
-			.fromAnyRDD[FeatureEntry]()
-			.head
-		val foundEntities = classifyFeatureEntries(extendedFeatureEntries, loadModelFunction(), session)
-		List(foundEntities).toAnyRDD()
 	}
 }

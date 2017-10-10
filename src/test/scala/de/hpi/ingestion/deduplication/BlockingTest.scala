@@ -20,9 +20,8 @@ import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.blockingschemes.SimpleBlockingScheme
 import de.hpi.ingestion.deduplication.models.BlockEvaluation
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
-class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
+class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 
 	"Blocking" should "partition subjects regarding the value of the given key" in {
 		val subjects = TestData.subjects
@@ -39,149 +38,115 @@ class BlockingUnitTest extends FlatSpec with SharedSparkContext with RDDComparis
 	}
 
 	it should "group subjects by their key and blocking scheme" in {
+		val job = new Blocking
+		val maxBlockSize = job.settings("maxBlockSize").toInt
 		val subjects = TestData.subjects
 		val subjectRDD = sc.parallelize(subjects)
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
 		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val blocks = Blocking.blocking(subjectRDD, stagingRDD, blockingSchemes, false)
+		val blocks = Blocking.blocking(subjectRDD, stagingRDD, blockingSchemes, maxBlockSize, false)
 			.map { case (tag, block) => (tag, block.copy(id = null)) }
 		val expectedBlocks = TestData.groupedBlocks(sc, subjects, staging)
 		assertRDDEquals(blocks, expectedBlocks)
 	}
 
 	it should "filter undefined blocks" in {
+		val job = new Blocking
+		val maxBlockSize = job.settings("maxBlockSize").toInt
 		val subjects = TestData.subjects
 		val subjectRDD = sc.parallelize(subjects)
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
 		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val blocks = Blocking.blocking(subjectRDD, stagingRDD, blockingSchemes, true)
+		val blocks = Blocking.blocking(subjectRDD, stagingRDD, blockingSchemes, maxBlockSize, true)
 			.map { case (tag, block) => (tag, block.copy(id = null)) }
 		val expectedBlocks = TestData.groupedAndFilteredBlocks(sc, subjects, staging)
 		assertRDDEquals(blocks, expectedBlocks)
 	}
 
 	"Block evaluation" should "create evaluation blocks" in {
+		val job = new Blocking
 		val subjects = TestData.subjects
-		val subjectRDD = sc.parallelize(subjects)
+		job.subjects = sc.parallelize(subjects)
 		val staging = TestData.stagings
-		val stagingRDD = sc.parallelize(staging)
+		job.stagedSubjects = sc.parallelize(staging)
 		val goldStandard = TestData.goldStandard(subjects, staging)
 		val comment = "Test comment"
-		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = Blocking.evaluationBlocking(
-			subjectRDD,
-			stagingRDD,
-			goldStandard,
-			blockingSchemes,
-			false,
-			false,
-			comment
-		).map(_.copy(jobid = null))
+		job.blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
+		job.evaluationBlocking(goldStandard, false, false, comment)
+		val evaluationBlocks = job.blockEvaluation.map(_.copy(jobid = null))
 		val expected = TestData.blockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
 
 	it should "filter undefined blocks" in {
+		val job = new Blocking
 		val subjects = TestData.subjects
-		val subjectRDD = sc.parallelize(subjects)
+		job.subjects = sc.parallelize(subjects)
 		val staging = TestData.stagings
-		val stagingRDD = sc.parallelize(staging)
+		job.stagedSubjects = sc.parallelize(staging)
 		val goldStandard = TestData.goldStandard(subjects, staging)
 		val comment = "Blocking"
-		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = Blocking.evaluationBlocking(
-			subjectRDD,
-			stagingRDD,
-			goldStandard,
-			blockingSchemes,
-			true,
-			false,
-			comment
-		).map(_.copy(jobid = null))
+		job.blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
+		job.evaluationBlocking(goldStandard, true, false, comment)
+		val evaluationBlocks = job.blockEvaluation.map(_.copy(jobid = null))
 		val expected = TestData.filteredUndefinedBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
 
 	it should "filter small, but not filter medium blocks" in {
+		val job = new Blocking
 		val (subjectRDD, stagingRDD) = TestData.blockEvaluationTestSubjects(sc)
+		job.subjects = subjectRDD
+		job. stagedSubjects = stagingRDD
 		val goldStandard = TestData.goldStandard(TestData.subjects, TestData.stagings)
 		val comment = "Blocking"
-		val blockingSchemes = List(SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = Blocking.evaluationBlocking(
-			subjectRDD,
-			stagingRDD,
-			goldStandard,
-			blockingSchemes,
-			true,
-			true,
-			comment
-		).map(_.copy(jobid = null))
+		job.blockingSchemes = List(SimpleBlockingScheme("SimpleBlocking"))
+		job.evaluationBlocking(goldStandard, true, true, comment)
+		val evaluationBlocks = job.blockEvaluation.map(_.copy(jobid = null))
 		val expected = TestData.filteredSmallBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
 
 	"Blocking job" should "evaluate blocks" in {
+		val job = new Blocking
 		val subjects = TestData.subjects
-		val subjectRDD = sc.parallelize(subjects)
-		val staging = TestData.stagings
-		val stagingRDD = sc.parallelize(staging)
-		val goldStandard = TestData.goldStandard(subjects, staging)
-		val goldStandardRDD = sc.parallelize(goldStandard.toList)
-		val input = List(subjectRDD, stagingRDD).toAnyRDD() ::: List(goldStandardRDD).toAnyRDD()
-		Blocking.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = Blocking.run(input, sc).fromAnyRDD[BlockEvaluation]().head
-			.map(_.copy(jobid = null))
+		val stagedSubjects = TestData.stagings
+		job.subjects = sc.parallelize(subjects)
+		job.stagedSubjects = sc.parallelize(stagedSubjects)
+		val goldStandard = TestData.goldStandard(subjects, stagedSubjects)
+		job.goldStandard = sc.parallelize(goldStandard.toList)
+		job.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
+		job.run(sc)
+		val evaluationBlocks = job.blockEvaluation.map(_.copy(jobid = null))
 		val expected = TestData.emptyBlockEvaluation(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
 
 	it should "take the first program argument as comment" in {
+		val job = new Blocking
 		val subjects = TestData.subjects
-		val subjectRDD = sc.parallelize(subjects)
-		val staging = TestData.stagings
-		val stagingRDD = sc.parallelize(staging)
-		val goldStandard = TestData.goldStandard(subjects, staging)
-		val goldStandardRDD = sc.parallelize(goldStandard.toList)
-		val input = List(subjectRDD, stagingRDD).toAnyRDD() ::: List(goldStandardRDD).toAnyRDD()
-		Blocking.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val evaluationBlocks = Blocking
-			.run(input, sc, Array("Test comment"))
-			.fromAnyRDD[BlockEvaluation]().head
-			.map(_.copy(jobid = null))
+		val stagedSubjects = TestData.stagings
+		job.subjects = sc.parallelize(subjects)
+		job.stagedSubjects = sc.parallelize(stagedSubjects)
+		val goldStandard = TestData.goldStandard(subjects, stagedSubjects)
+		job.goldStandard = sc.parallelize(goldStandard.toList)
+		job.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
+		job.args = Array("Test comment")
+		job.run(sc)
+		val evaluationBlocks = job.blockEvaluation.map(_.copy(jobid = null))
 		val expected = TestData.emptyBlockEvaluationWithComment(sc)
 		assertRDDEquals(evaluationBlocks, expected)
 	}
 
 	it should "use the Simple Blocking Scheme if there is no other scheme defined" in {
-		val originalSchemes = Blocking.blockingSchemes
-
-		Blocking.blockingSchemes should not be empty
-		Blocking.setBlockingSchemes(Nil)
-		Blocking.blockingSchemes should not be empty
-		Blocking.blockingSchemes should have length 1
-		Blocking.blockingSchemes.head.isInstanceOf[SimpleBlockingScheme] shouldBe true
-
-		Blocking.setBlockingSchemes(originalSchemes)
-	}
-
-	"Config" should "be read" in {
-		val originalSettings = Blocking.settings(false)
-
-		Blocking.configFile = "test.xml"
-		Blocking.settings should not be empty
-
-		Blocking.settings = originalSettings
-	}
-
-	it should "be read before run is executed" in {
-		val originalSettings = Blocking.settings(false)
-
-		Blocking.assertConditions(Array[String]())
-		Blocking.settings should not be empty
-
-		Blocking.settings = originalSettings
+		val job = new Blocking
+		job.blockingSchemes should not be empty
+		job.setBlockingSchemes(Nil)
+		job.blockingSchemes should not be empty
+		job.blockingSchemes should have length 1
+		job.blockingSchemes.head.isInstanceOf[SimpleBlockingScheme] shouldBe true
 	}
 
 	"calculatePairwiseCompleteness" should "calculate all pairwise completenesses (PCs) as well as the total PC" in {

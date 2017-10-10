@@ -128,10 +128,6 @@ object TestData {
 		)
 	}
 
-	def input(sc: SparkContext): List[RDD[Any]] = {
-		List(sc.parallelize(testEntities))
-	}
-
 	def output: List[Subject] = {
 		List(
 			Subject(master = null, datasource = datasource, name = Option("entity1")),

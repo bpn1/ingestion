@@ -19,22 +19,18 @@ package de.hpi.ingestion.datamerge
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class MasterConnectingTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 	"Master nodes" should "be connected" in {
-		val subjects = sc.parallelize(TestData.mergedSubjects)
-		val input = List(subjects).toAnyRDD()
-		val output = MasterConnecting
-			.run(input, sc)
-			.fromAnyRDD[Subject]()
-			.head
+		val job = new MasterConnecting
+		job.subjects = sc.parallelize(TestData.mergedSubjects)
+		job.run(sc)
+		val output = job.connectedMasters
 			.collect
 			.sortBy(_.id)
 			.map(_.relations)
 
-		val expected = TestData
-			.connectedMasters
+		val expected = TestData.connectedMasters
 			.sortBy(_.id)
 			.map(_.relations)
 
@@ -45,11 +41,10 @@ class MasterConnectingTest extends FlatSpec with Matchers with SharedSparkContex
 	}
 
 	they should "be merged and connected" in {
-		val subjects = sc.parallelize(TestData.inputSubjects())
-		val input = List(subjects).toAnyRDD()
-		val connectedMasters = MasterConnecting.run(input, sc)
-			.fromAnyRDD[Subject]()
-			.head
+		val job = new MasterConnecting
+		job.subjects = sc.parallelize(TestData.inputSubjects())
+		job.run(sc)
+		val connectedMasters = job.connectedMasters
 			.collect
 			.toList
 			.sortBy(_.id)

@@ -22,52 +22,100 @@ import scala.util.matching.Regex
 import scala.io.Source
 import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd.RDD
 import scala.xml.XML
 
 /**
   * Import-Job for importing DBpedia Triples to the dbpedia table.
   */
-object DBpediaImport extends SparkJob {
+class DBpediaImport extends SparkJob {
+	import DBpediaImport._
 	appName = "DBpediaImport_v1.0"
 	val keyspace = "wikidumps"
 	val tablename = "dbpedia"
 
+	var dbpediaDump: RDD[String] = _
+	var dbpediaEntities: RDD[DBpediaEntity] = _
+
 	// $COVERAGE-OFF$
 	/**
 	  * Loads DBpedia turtle dump from the HDFS.
-	  *
 	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.textFile("dbpedia_de_clean.ttl")
-		List(dbpedia).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		dbpediaDump = sc.textFile("dbpedia_de_clean.ttl")
 	}
 
 	/**
 	  * Saves the DBpedia entities to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[DBpediaEntity]()
-			.head
-			.saveToCassandra(keyspace, tablename)
+	override def save(sc: SparkContext): Unit = {
+		dbpediaEntities.saveToCassandra(keyspace, tablename)
 	}
 	// $COVERAGE-ON$
 
-	def getPrefixesFromFile(): List[(String, String)] = {
+	/**
+	  * Parses the DBpedia turtle dump to DBpedia Entities.
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val prefixes = loadPrefixes()
+
+		val rdfTypFile = Source.fromURL(this.getClass.getResource("/rdf_types.xml"))
+		val rdfTypes = XML.loadString(rdfTypFile.getLines.mkString("\n"))
+		val organisations = for {
+			organisation <- (rdfTypes \\ "types" \ "organisation").toList
+			label = (organisation \ "label").text
+		} yield label
+
+		dbpediaEntities = dbpediaToCleanedTriples(dbpediaDump, prefixes)
+			.map { case List(a, b, c) => (a, List((b, c))) }
+			.filter { case (subject, propertyData) =>
+				val resourceRegex = new Regex("(dbr|dbpedia-de):")
+				resourceRegex.findFirstIn(subject).isDefined
+			}.reduceByKey(_ ++ _)
+			.map { case (subject, propertyData) =>
+				extractProperties(subject, propertyData, organisations)
+			}
+	}
+}
+
+object DBpediaImport {
+	/**
+	  * Loads DBpedia prefixe tuples from a file.
+	  * @return List of DBpedia prefix tuples used to shorten the DBpedia URLs
+	  */
+	def loadPrefixes(): List[(String, String)] = {
 		Source.fromURL(getClass.getResource("/prefixes.txt"))
 			.getLines
 			.toList
 			.map(_.trim.replaceAll("""[()]""", "").split(","))
 			.map(pair => (pair(0), pair(1)))
+	}
+
+	/**
+	  * Parses DBpedia triples into cleaned triples
+	  *
+	  * @param dbpedia RDD of Strings containing the url triples
+	  * @param prefixes List of the url/prefix-Mapping as tuples (url, prefix)
+	  * @param regexStr Regex which is removed from the resulting triple elements
+	  * @return RDD of the cleaned triples
+	  */
+	def dbpediaToCleanedTriples(
+		dbpedia: RDD[String],
+		prefixes: List[(String, String)],
+		regexStr: String = ""
+	): RDD[List[String]] = {
+		dbpedia
+			.map(tokenize)
+			.map(_.map { listEntry =>
+				val dataString = listEntry.replaceAll("""[<>\"]""", "")
+				prefixes
+					.foldRight(dataString)((pair, data) => data.replace(pair._1, pair._2))
+					.replaceAll(regexStr, "")
+			})
+
 	}
 
 	/**
@@ -91,28 +139,6 @@ object DBpediaImport extends SparkJob {
 			case (x, 3) => filteredList
 			case _ => elementList.slice(0, 3) ++ (0 until (3 - elementList.length)).map(t => "")
 		}
-	}
-
-	/**
-	  * Replaces a url by a prefix.
-	  *
-	  * @param str      String containing the url
-	  * @param prefixes List of the url/prefix-Mapping as tuples (url, prefix)
-	  * @return Cleaned String
-	  */
-	def dbpediaToCleanedTriples(
-		dbpedia: RDD[String],
-		prefixes: List[(String, String)],
-		regexStr: String = ""
-	): RDD[List[String]] = {
-		dbpedia
-			.map(tokenize)
-			.map(_.map { listEntry =>
-				val dataString = listEntry.replaceAll("""[<>\"]""", "")
-				prefixes.foldRight(dataString)((pair, data) => data.replace(pair._1, pair._2))
-					.replaceAll(regexStr, "")
-			})
-
 	}
 
 	/**
@@ -187,38 +213,5 @@ object DBpediaImport extends SparkJob {
 		entity.data = data -- redundant
 
 		entity
-	}
-
-	/**
-	  * Parses the DBpedia turtle dump to DBpedia Entities.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val dbpedia = input.fromAnyRDD[String]().head
-
-		val prefixes = getPrefixesFromFile()
-
-		val rdfTypFile = Source.fromURL(this.getClass.getResource("/rdf_types.xml"))
-		val rdfTypes = XML.loadString(rdfTypFile.getLines.mkString("\n"))
-		val organisations = for {
-			organisation <- (rdfTypes \\ "types" \ "organisation").toList
-			label = (organisation \ "label").text
-		} yield label
-
-
-		val entities = dbpediaToCleanedTriples(dbpedia, prefixes)
-			.map { case List(a, b, c) => (a, List((b, c))) }
-			.filter { case (subject, propertyData) =>
-				val resourceRegex = new Regex("(dbr|dbpedia-de):")
-				resourceRegex.findFirstIn(subject).isDefined
-			}.reduceByKey(_ ++ _)
-			.map { case (subject, propertyData) =>
-				extractProperties(subject, propertyData, organisations)
-			}
-		List(entities).toAnyRDD()
 	}
 }

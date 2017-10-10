@@ -25,10 +25,9 @@ import com.datastax.spark.connector._
 import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.dataimport.SharedNormalizations
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.RegexImplicits._
 
-object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity](
+class KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity](
 	List("kompass", "kompass_20170206"),
 	"datalake",
 	"kompass_entities"
@@ -41,12 +40,9 @@ object KompassDataLakeImport extends DataLakeImportImplementation[KompassEntity]
 	/**
 	  * Loads the Kompass entities from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val kompass = sc.cassandraTable[KompassEntity](inputKeyspace, inputTable)
-		List(kompass).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		inputEntities = sc.cassandraTable[KompassEntity](inputKeyspace, inputTable)
 	}
 	// $COVERAGE-ON$
 

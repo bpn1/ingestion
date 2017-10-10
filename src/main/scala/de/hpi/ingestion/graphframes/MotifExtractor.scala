@@ -14,18 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.graphxplore
+package de.hpi.ingestion.graphframes
 
 import java.util.UUID
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.col
 import org.graphframes.GraphFrame
-import de.hpi.ingestion.graphxplore.models.ResultGraph
+import de.hpi.ingestion.graphframes.models.ResultGraph
 
 /**
   * Extracts star and chain structures from subject graph
   */
-object MotifExtractor extends GraphExtractor {
+class MotifExtractor extends GraphExtractor {
 	appName = "MotifExtractor"
 	/**
 	  * Minimal size for star motifs
@@ -72,7 +72,7 @@ object MotifExtractor extends GraphExtractor {
 	  * @param graph GraphFrame that is processed
 	  * @return RDD of ResultGraph objects that represent extracted company groups
 	  */
-	override def processGraph(graph: GraphFrame): List[RDD[ResultGraph]] = {
+	override def processGraph(graph: GraphFrame): RDD[ResultGraph] = {
 		var resultGraphs = List[RDD[ResultGraph]]()
 
 		for(starSize <- minStarSize to maxStarSize) {
@@ -84,7 +84,6 @@ object MotifExtractor extends GraphExtractor {
 		val chainQuery = "(a)-[]->(b); (b)-[]->(c); (c)-[]->(d)"
 		val chainNames = List("a", "b", "c", "d")
 		resultGraphs :+= findMotifs(graph, chainQuery, chainNames, "Chain")
-
-		resultGraphs
+		resultGraphs.reduce(_.union(_))
 	}
 }

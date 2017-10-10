@@ -18,8 +18,8 @@ package de.hpi.ingestion.implicits
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.rdd.RDD
+import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkContext {
 

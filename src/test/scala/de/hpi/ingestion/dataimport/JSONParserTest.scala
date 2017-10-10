@@ -22,7 +22,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import play.api.libs.json.{JsBoolean, JsNumber, JsString}
 
 class JSONParserTest extends FlatSpec with Matchers {
-
 	"Values" should "be extracted" in {
 		val jsonObject = TestData.parsedJSON()
 		val parser = new MockJSONParser

@@ -17,52 +17,45 @@ limitations under the License.
 package de.hpi.ingestion.framework
 
 import com.datastax.spark.connector.cql.CassandraConnector
-import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
+
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 /**
   * Spark Job framework trait implementing the main method and defining the load, run and save methods.
   */
-trait SparkJob extends Configurable {
+trait SparkJob extends Configurable with Serializable {
 	var appName = "Ingestion Spark Job"
 	val sparkOptions = mutable.Map[String, String]()
 	val cassandraLoadQueries = ListBuffer[String]()
 	val cassandraSaveQueries = ListBuffer[String]()
+	var args = Array.empty[String]
 
 	/**
-	  * Loads a number of input RDDs used in the job.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * Loads a number of input RDDs and saves them in instance variables.
+	  * @param sc SparkContext to be used for the job
 	  */
-	def load(sc: SparkContext, args: Array[String]): List[RDD[Any]]
+	def load(sc: SparkContext): Unit
 
 	/**
 	  * Executes the data processing of this job and produces the output data.
-	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
+	  * @param sc SparkContext to be used for the job
 	  */
-	def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]]
+	def run(sc: SparkContext): Unit
 
 	/**
-	  * Saves the output data to e.g. the Cassandra or the HDFS.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
+	  * Saves the output data saved in instance variables to, e.g., the Cassandra or the HDFS.
+	  * @param sc SparkContext to be used for the job
 	  */
-	def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit
+	def save(sc: SparkContext): Unit
 
 	/**
 	  * Called before running the job. Used to assert specifics of the input arguments. Returns false if the program
 	  * should be terminated. Parses the xml config if a path is given in args or configFile is set.
-	  * @param args arguments of the program
 	  * @return true if the program can continue, false if it should be terminated
 	  */
-	def assertConditions(args: Array[String]): Boolean = {
+	def assertConditions(): Boolean = {
 		args
 			.headOption
 			.foreach(file => configFile = file)
@@ -84,36 +77,29 @@ trait SparkJob extends Configurable {
 
 	// $COVERAGE-OFF$
 	/**
-	  * Creates a Spark Context used for the rest of the program. Can be overwritten for e.g. tests.
-	  * @return Spark Context used for the rest of the job
-	  */
-	def sparkContext(): SparkContext = {
-		new SparkContext(createSparkConf())
-	}
-
-	/**
 	  * Executes multiple CQL queries on the Cassandra.
+	  * @param sc SparkContext to be used for the job
 	  * @param queries List of queries to execute
-	  * @param sc Spark Context containing the Cassandra connection
 	  */
-	def executeQueries(queries: List[String], sc: SparkContext): Unit = {
+	def executeQueries(sc: SparkContext, queries: List[String]): Unit = {
 		CassandraConnector(sc.getConf).withSessionDo(session => queries.foreach(session.execute))
 	}
 	// $COVERAGE-ON$
 
 	/**
-	  * Spark job main method which first asserts definable conditions and then loads, processes and saves the data.
-	  * @param args arguments of the program
+	  * Executes a Spark job which first asserts definable conditions and then loads, processes and saves the data.
+	  * @param sc SparkContext to be used for the job
+	  * @param args command line arguments to be used for the job
 	  */
-	def main(args: Array[String]): Unit = {
-		if(!assertConditions(args)) {
+	def execute(sc: SparkContext, args: Array[String] = Array()): Unit = {
+		this.args = args
+		if(!assertConditions()) {
 			return
 		}
-		val sc = sparkContext()
-		executeQueries(cassandraLoadQueries.toList, sc)
-		val data = load(sc, args)
-		val results = run(data, sc, args)
-		executeQueries(cassandraSaveQueries.toList, sc)
-		save(results, sc, args)
+		executeQueries(sc, cassandraLoadQueries.toList)
+		load(sc)
+		run(sc)
+		executeQueries(sc, cassandraSaveQueries.toList)
+		save(sc)
 	}
 }

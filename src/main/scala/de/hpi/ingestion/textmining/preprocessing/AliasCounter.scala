@@ -18,7 +18,6 @@ package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -26,40 +25,48 @@ import org.apache.spark.rdd.RDD
 /**
   * Counts `Alias` occurrences and merges them into previously extracted `Aliases` with their corresponding pages.
   */
-object AliasCounter extends SparkJob {
+class AliasCounter extends SparkJob {
+	import AliasCounter._
 	appName = "Alias Counter"
 	configFile = "textmining.xml"
 	val maximumAliasLength = 1000
+
+	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+	var aliasCounts: RDD[(String, Option[Int], Option[Int])] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia and Aliases from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(articles).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 	}
 
 	/**
 	  * Saves Alias occurrence counts to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[(String, Option[Int], Option[Int])]()
-			.head
-			.saveToCassandra(
-				settings("keyspace"),
-				settings("linkTable"),
-				SomeColumns("alias", "linkoccurrences", "totaloccurrences"))
+	override def save(sc: SparkContext): Unit = {
+		aliasCounts.saveToCassandra(
+			settings("keyspace"),
+			settings("linkTable"),
+			SomeColumns("alias", "linkoccurrences", "totaloccurrences"))
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		aliasCounts = countAliases(parsedWikipedia)
+			.filter(_.alias.length <= maximumAliasLength)
+			.map(entry => (entry.alias, entry.linkoccurrences, entry.totaloccurrences))
+	}
+}
+
+object AliasCounter {
 	/**
 	  * Extracts list of link and general Alias occurrences for an article.
 	  *
@@ -105,20 +112,5 @@ object AliasCounter extends SparkJob {
 			.reduceByKey(aliasReduction)
 			.map(_._2)
 			.filter(_.alias.nonEmpty)
-	}
-
-	/**
-	  * Counts alias occurrences and merges them into previously extracted aliases with their corresponding pages.
-	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val countTuples = countAliases(articles)
-			.filter(_.alias.length <= maximumAliasLength)
-			.map(entry => (entry.alias, entry.linkoccurrences, entry.totaloccurrences))
-		List(countTuples).toAnyRDD()
 	}
 }

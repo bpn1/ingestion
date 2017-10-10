@@ -16,10 +16,11 @@ limitations under the License.
 
 package de.hpi.ingestion.textmining.nel
 
+import java.io.InputStream
+
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch.{deserializeTrie, trieStreamFunction}
+import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch.{deserializeTrie, hdfsFileStream}
 import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, TrieNode}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -28,40 +29,51 @@ import org.apache.spark.rdd.RDD
 /**
   * Finds `TrieAliases` in `TrieAliasArticles` and writes them back to the same table.
   */
-object ArticleTrieSearch extends SparkJob {
+class ArticleTrieSearch extends SparkJob {
+	import ArticleTrieSearch._
 	appName = "Article Trie Search"
 	configFile = "textmining.xml"
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
 
+	var nelArticles: RDD[TrieAliasArticle] = _
+	var foundAliases: RDD[(String, List[TrieAlias])] = _
+
 	// $COVERAGE-OFF$
+	var trieStreamFunction: String => InputStream = hdfsFileStream
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  *
-	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * @param sc Spark Context used to load the RDDs
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val parsedWikipedia = sc.cassandraTable[TrieAliasArticle](settings("keyspace"), settings("NELTable"))
-		List(parsedWikipedia).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		nelArticles = sc.cassandraTable[TrieAliasArticle](settings("keyspace"), settings("NELTable"))
 	}
 
 	/**
 	  * Saves Parsed Wikipedia entries with the found aliases to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[(String, List[TrieAlias])]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("NELTable"), SomeColumns("id", "triealiases"))
+	override def save(sc: SparkContext): Unit = {
+		foundAliases.saveToCassandra(settings("keyspace"), settings("NELTable"), SomeColumns("id", "triealiases"))
 	}
 
 	// $COVERAGE-ON$
 
+	/**
+	  * Finds `TrieAliases` in `Articles`.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val tokenizer = IngestionTokenizer(false, false)
+		val aliasArticles = nelArticles
+			.mapPartitions({ partition =>
+				val trie = deserializeTrie(trieStreamFunction(settings("smallerTrieFile")))
+				partition.map(findAliases(_, tokenizer, trie))
+			}, true)
+		foundAliases = aliasArticles.map(article => (article.id, article.triealiases))
+	}
+}
+
+object ArticleTrieSearch {
 	/**
 	  * Finds Aliases in a given Article by applying the Trie to find occurrences of known token lists.
 	  *
@@ -94,29 +106,9 @@ object ArticleTrieSearch extends SparkJob {
 						}
 					}
 			}.collect {
-				case (index: Int, trieAlias: TrieAlias)
-					if !invalidIndices.contains(index) && !invalidAliases.contains(trieAlias.alias) => trieAlias
-			}.toList
+			case (index: Int, trieAlias: TrieAlias)
+				if !invalidIndices.contains(index) && !invalidAliases.contains(trieAlias.alias) => trieAlias
+		}.toList
 		article.copy(triealiases = foundAliases)
-	}
-
-	/**
-	  * Finds `TrieAliases` in `Articles`.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val articles = input.fromAnyRDD[TrieAliasArticle]().head
-		val tokenizer = IngestionTokenizer(false, false)
-		val aliasArticles = articles
-			.mapPartitions({ partition =>
-				val trie = deserializeTrie(trieStreamFunction(settings("smallerTrieFile")))
-				partition.map(findAliases(_, tokenizer, trie))
-			}, true)
-		val trieAliases = aliasArticles.map(article => (article.id, article.triealiases))
-		List(trieAliases).toAnyRDD()
 	}
 }

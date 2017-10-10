@@ -14,14 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.graphxplore
+package de.hpi.ingestion.graphframes
 
 import java.util.UUID
 import org.apache.spark.rdd.RDD
 import org.graphframes.GraphFrame
-import de.hpi.ingestion.graphxplore.models.ResultGraph
+import de.hpi.ingestion.graphframes.models.ResultGraph
 
-object ConnectedComponents extends GraphExtractor {
+class ConnectedComponents extends GraphExtractor {
 	appName = "ConnectedComponents"
 	val graphType = "ConnectedComponent"
 	val minComponentSize = 3
@@ -48,7 +48,7 @@ object ConnectedComponents extends GraphExtractor {
 				idNameTuples.filter(_._2 != null).map(_._2)))
 	}
 
-	override def processGraph(graph: GraphFrame): List[RDD[ResultGraph]] = {
-		List(findConnectedComponents(graph))
+	override def processGraph(graph: GraphFrame): RDD[ResultGraph] = {
+		findConnectedComponents(graph)
 	}
 }

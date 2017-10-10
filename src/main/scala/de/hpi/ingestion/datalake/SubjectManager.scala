@@ -404,19 +404,6 @@ class SubjectManager(subject: Subject, templateVersion: Version) {
 	}
 
 	/**
-	  * Adds a list of relations and their values to the Subject, overwrites existing values and writes the
-	  * corresponding Version fields.
-	  * @param value Map of relations and their values
-	  * @param validity validity of each relation
-	  */
-	def overwriteRelations(
-		value: Map[UUID, Map[String, String]],
-		validity: Map[UUID, Map[String, Map[String, String]]] = Map()
-	): Unit = {
-		setRelations((subject.relations ++ value).filter(_._2.nonEmpty), validity)
-	}
-
-	/**
 	  * Clears all relation fields of the Subject and adds the clearing of these to their history.
 	  * @param validity validity of the removal of the relations
 	  */

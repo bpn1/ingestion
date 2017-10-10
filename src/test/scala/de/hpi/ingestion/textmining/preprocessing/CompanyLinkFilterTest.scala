@@ -17,13 +17,11 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import org.scalatest.{FlatSpec, Matchers}
 
 class CompanyLinkFilterTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
-
 	"Company pages" should "be extracted" in {
 		val wikidataEntities = sc.parallelize(TestData.wikidataEntities())
 		val companyPages = CompanyLinkFilter.extractCompanyPages(wikidataEntities)
@@ -48,11 +46,12 @@ class CompanyLinkFilterTest extends FlatSpec with Matchers with SharedSparkConte
 	}
 
 	"Parsed Wikipedia Entries" should "be cleaned" in {
-		val wikidataEntities = List(sc.parallelize(TestData.wikidataEntities())).toAnyRDD()
-		val pages = List(sc.parallelize(TestData.companyPages())).toAnyRDD()
-		val articles = List(sc.parallelize(TestData.unfilteredCompanyLinksEntries())).toAnyRDD()
-		val input = wikidataEntities ++ pages ++ articles
-		val cleanedArticles = CompanyLinkFilter.run(input, sc).fromAnyRDD[ParsedWikipediaEntry]().head
+		val job = new CompanyLinkFilter
+		job.wikidataEntities = sc.parallelize(TestData.wikidataEntities())
+		job.pages = sc.parallelize(TestData.companyPages())
+		job.parsedWikipedia = sc.parallelize(TestData.unfilteredCompanyLinksEntries())
+		job.run(sc)
+		val cleanedArticles = job.cleanedParsedWikipedia
 		val expectedArticles = sc.parallelize(TestData.filteredCompanyLinksEntries())
 		assertRDDEquals(cleanedArticles, expectedArticles)
 	}

@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.nel
 
 import de.hpi.ingestion.textmining.models.{Link, WikipediaArticleCount}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import de.hpi.ingestion.textmining.{TestData => TextTestData}
 import org.scalatest.{FlatSpec, Matchers}
@@ -28,95 +27,71 @@ import de.hpi.ingestion.textmining.preprocessing.CosineContextComparator
 class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Entities" should "be tagged in articles" in {
-		val oldModelFunction = TextNEL.loadModelFunction
-		val oldAliasPageScores = TextNEL.aliasPageScores
-		val oldDocFreqFunction = CosineContextComparator.docFreqStreamFunction
-
+		val job = new TextNEL
 		val session = SparkSession.builder().getOrCreate()
-		TextNEL.aliasPageScores = Map()
-		TextNEL.loadModelFunction = TestData.randomForestModel(session)
-		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
-
-		val articles = sc.parallelize(TestData.foundAliasArticles())
-		val wikipediaTfIdf = sc.parallelize(TestData.tfidfArticles())
-		val numDocuments = sc.parallelize(List(WikipediaArticleCount("parsedwikipedia", wikipediaTfIdf.count())))
-		val aliases = sc.parallelize(TestData.rawAliases())
-		val input = List(articles, numDocuments, aliases, wikipediaTfIdf)
-			.flatMap(List(_).toAnyRDD())
-		val linkedEntities = TextNEL.run(input, sc)
-			.fromAnyRDD[(String, List[Link])]()
-			.head
+		job.aliasPageScores = Map()
+		job.loadModelFunction = TestData.randomForestModel(session)
+		job.docFreqStreamFunction = TextTestData.docfreqStream("docfreq")
+		job.trieArticles = sc.parallelize(TestData.foundAliasArticles())
+		job.articleTfidf = sc.parallelize(TestData.tfidfArticles())
+		job.numDocuments = job.articleTfidf.count
+		job.aliases = sc.parallelize(TestData.rawAliases())
+		job.run(sc)
+		val linkedEntities = job.entityLinks
+			.reduce(_.union(_))
 			.collect
 			.toSet
 		val expectedEntities = TestData.linkedEntitiesForAllArticles()
 		linkedEntities shouldEqual expectedEntities
-
-		TextNEL.loadModelFunction = oldModelFunction
-		TextNEL.aliasPageScores = oldAliasPageScores
-		CosineContextComparator.docFreqStreamFunction = oldDocFreqFunction
 	}
 
 	"Found named entities for incomplete articles" should "be exactly these named entities" in {
-		val oldModelFunction = TextNEL.loadModelFunction
-		val oldAliasPageScores = TextNEL.aliasPageScores
-		val oldDocFreqFunction = CosineContextComparator.docFreqStreamFunction
-
+		val job = new TextNEL
 		val session = SparkSession.builder().getOrCreate()
-		TextNEL.loadModelFunction = TestData.randomForestModel(session)
-		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
-		TextNEL.aliasPageScores = Map()
-		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
+		job.loadModelFunction = TestData.randomForestModel(session)
+		job.aliasPageScores = Map()
+		job.docFreqStreamFunction = TextTestData.docfreqStream("docfreq")
 
-		val articles = sc.parallelize(TestData.incompleteFoundAliasArticles())
-		val wikipediaTfidf = sc.parallelize(TestData.contextArticles())
+		job.trieArticles = sc.parallelize(TestData.incompleteFoundAliasArticles())
+		job.articleTfidf = sc.parallelize(TestData.contextArticles())
 		val concatenatedAliases = TextTestData.aliasesWithExistingPagesSet() + TestData.alias
-		val aliases = sc.parallelize(concatenatedAliases.toList)
-		val numDocuments = sc.parallelize(List(WikipediaArticleCount("parsedwikipedia", wikipediaTfidf.count())))
-		val input = List(articles, numDocuments, aliases, wikipediaTfidf)
-			.flatMap(List(_).toAnyRDD())
-		val linkedEntities = TextNEL.run(input, sc)
-			.fromAnyRDD[(String, List[Link])]()
-			.head
+		job.aliases = sc.parallelize(concatenatedAliases.toList)
+		job.numDocuments = job.articleTfidf.count()
+		job.run(sc)
+		val linkedEntities = job.entityLinks
+			.reduce(_.union(_))
 			.map(articleLinks => (articleLinks._1, articleLinks._2.toSet))
 			.collect
 			.toSet
 		val expectedEntities = TestData.linkedEntitiesForIncompleteArticles()
 		linkedEntities shouldEqual expectedEntities
-
-		TextNEL.loadModelFunction = oldModelFunction
-		TextNEL.aliasPageScores = oldAliasPageScores
-		CosineContextComparator.docFreqStreamFunction = oldDocFreqFunction
 	}
 
 	"Alias page scores" should "not be recalculated" in {
-		val oldModelFunction = TextNEL.loadModelFunction
-		val oldDocFreqFunction = CosineContextComparator.docFreqStreamFunction
-		val oldAliases = TextNEL.aliasPageScores
-
+		val job = new TextNEL
 		val session = SparkSession.builder().getOrCreate()
-		TextNEL.loadModelFunction = TestData.randomForestModel(session)
-		val testDocFreqFunction = TextTestData.docfreqStream("docfreq") _
-		CosineContextComparator.docFreqStreamFunction = testDocFreqFunction
-		TextNEL.aliasPageScores = TestData.aliasMap()
+		job.loadModelFunction = TestData.randomForestModel(session)
+		job.docFreqStreamFunction = TextTestData.docfreqStream("docfreq")
+		job.aliasPageScores = TestData.aliasMap()
 
-		val articles = sc.parallelize(TestData.foundAliasArticles())
-		val numDocuments = sc.parallelize(List(WikipediaArticleCount("parsedwikipedia", 3)))
-		val aliases = sc.parallelize(Nil)
-		val wikipediaTfIdf = sc.parallelize(TestData.tfidfArticles())
-		val input = List(articles, numDocuments, aliases, wikipediaTfIdf).flatMap(List(_).toAnyRDD())
-		val linkedEntities = TextNEL.run(input, sc).fromAnyRDD[(String, List[Link])]().head.collect.toSet
+		job.trieArticles = sc.parallelize(TestData.foundAliasArticles())
+		job.numDocuments = 3
+		job.aliases = sc.parallelize(Nil)
+		job.articleTfidf = sc.parallelize(TestData.tfidfArticles())
+		job.run(sc)
+		val linkedEntities = job.entityLinks
+			.reduce(_.union(_))
+			.collect
+			.toSet
 		val expectedEntities = TestData.linkedEntitiesForAllArticles()
 		linkedEntities shouldEqual expectedEntities
-
-		CosineContextComparator.docFreqStreamFunction = oldDocFreqFunction
-		TextNEL.loadModelFunction = oldModelFunction
-		TextNEL.aliasPageScores = oldAliases
 	}
 
 	"Extracted TrieAlias contexts" should "be exactly these contexts" in {
+		val job = new TextNEL
+		val contextSize = job.settings("contextSize").toInt
 		val enrichedAliases = TestData.foundAliasArticles()
-			.flatMap(TextNEL.extractTrieAliasContexts(_, IngestionTokenizer(true, true)))
+			.flatMap(TextNEL.extractTrieAliasContexts(_, IngestionTokenizer(true, true), contextSize))
 		val expectedAliases = TestData.aliasContexts()
 		enrichedAliases shouldEqual expectedAliases
 	}
@@ -131,21 +106,13 @@ class TextNELTest extends FlatSpec with Matchers with SharedSparkContext {
 	}
 
 	"Input articles" should "be split" in {
-		val oldSettings = TextNEL.settings(false)
-
-		val articles = sc.parallelize(TestData.foundAliasArticles())
-		val numDocuments = sc.parallelize(List(WikipediaArticleCount("parsedwikipedia", 3)))
-		val aliases = sc.parallelize(TestData.rawAliases())
-		val wikipediaTfIdf = sc.parallelize(TestData.tfidfArticles())
-		val input = List(articles, numDocuments, aliases, wikipediaTfIdf).flatMap(List(_).toAnyRDD())
-
-		TextNEL.settings = Map("NELTable" -> "wikipedianel")
-		val splitInputWikipedia = TextNEL.splitInput(input)
+		val job = new TextNEL
+		job.trieArticles = sc.parallelize(TestData.foundAliasArticles())
+		job.settings = Map("NELTable" -> "wikipedianel")
+		val splitInputWikipedia = job.splitInput()
 		splitInputWikipedia should have size 100
-		TextNEL.settings = Map("NELTable" -> "spiegel")
-		val splitInputSpiegel = TextNEL.splitInput(input)
+		job.settings = Map("NELTable" -> "spiegel")
+		val splitInputSpiegel = job.splitInput()
 		splitInputSpiegel should have size 20
-
-		TextNEL.settings = oldSettings
 	}
 }

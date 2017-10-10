@@ -16,7 +16,6 @@ limitations under the License.
 
 package de.hpi.ingestion.datalake
 
-import java.net.URL
 import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}

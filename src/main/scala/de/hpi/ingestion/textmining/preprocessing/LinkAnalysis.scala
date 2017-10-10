@@ -18,48 +18,61 @@ package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models._
+import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
   * Groups `Aliases` of `Links` by page names and vice versa.
   */
-object LinkAnalysis extends SparkJob {
+class LinkAnalysis extends SparkJob {
+	import LinkAnalysis._
 	appName = "Link Analysis"
 	configFile = "textmining.xml"
 	cassandraSaveQueries += s"TRUNCATE TABLE ${settings("keyspace")}.${settings("linkTable")}"
 	val reduceFlag = "toReduced"
 
+	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+	var pages: RDD[Page] = _
+	var aliases: RDD[Alias] = _
+
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  *
-	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * @param sc Spark Context used to load the RDDs
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(articles).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 	}
 
 	/**
 	  * Saves the grouped aliases and links to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val aliases = output.head.asInstanceOf[RDD[Alias]].map(alias => (alias.alias, alias.pages))
-		val pages = output(1).asInstanceOf[RDD[Page]].map(page => (page.page, page.aliases))
-		aliases.saveToCassandra(settings("keyspace"), settings("linkTable"), SomeColumns("alias", "pages"))
-		pages.saveToCassandra(settings("keyspace"), settings("pageTable"), SomeColumns("page", "aliases"))
+	override def save(sc: SparkContext): Unit = {
+		aliases
+			.map(alias => (alias.alias, alias.pages))
+			.saveToCassandra(settings("keyspace"), settings("linkTable"), SomeColumns("alias", "pages"))
+		pages
+			.map(page => (page.page, page.aliases))
+			.saveToCassandra(settings("keyspace"), settings("pageTable"), SomeColumns("page", "aliases"))
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Groups the links once on the aliases and once on the pages.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val toReduced = args.headOption.contains(reduceFlag)
+		val validLinks = extractValidLinks(parsedWikipedia, toReduced)
+		aliases = groupByAliases(validLinks)
+		pages = groupByPageNames(validLinks)
+	}
+}
+
+object LinkAnalysis {
 	/**
 	  * Extracts links from Wikipedia articles that point to an existing page.
 	  * @param articles all Wikipedia articles
@@ -113,22 +126,5 @@ object LinkAnalysis extends SparkJob {
 					.countElements()
 				(key, countedValues)
 			}.filter(t => t._1.nonEmpty && t._2.nonEmpty)
-	}
-
-	/**
-	  * Groups the links once on the aliases and once on the pages.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val toReduced = args.headOption.contains(reduceFlag)
-		val validLinks = extractValidLinks(articles, toReduced)
-		val aliases = groupByAliases(validLinks)
-		val pages = groupByPageNames(validLinks)
-		List(aliases).toAnyRDD() ++ List(pages).toAnyRDD()
 	}
 }

@@ -681,14 +681,12 @@ object TestData {
 				properties = Map(
 					"id_implisense" -> List("1"),
 					"geo_city" -> List("Berlin", "München"),
-					"geo_country" -> List("DE"),
-					"geo_county" -> List("Tempelhof")
+					"geo_country" -> List("DE")
 				),
 				category = Option("business"),
 				aliases = List("Name 2", "Name 3"),
 				relations = Map(
 					UUID.fromString("4195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owns" -> ""),
-					UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("follows" -> ""),
 					UUID.fromString("5195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owned by" -> "")
 				)
 			)
@@ -797,14 +795,12 @@ object TestData {
 				properties = Map(
 					"id_implisense" -> List("1"),
 					"geo_city" -> List("Berlin", "München"),
-					"geo_country" -> List("DE"),
-					"geo_county" -> List("Tempelhof")
+					"geo_country" -> List("DE")
 				),
 				category = Option("business"),
 				aliases = List("Name 2", "Name 3"),
 				relations = Map(
 					UUID.fromString("4195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owns" -> ""),
-					UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("follows" -> ""),
 					UUID.fromString("5195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owned by" -> "")
 				)
 			),

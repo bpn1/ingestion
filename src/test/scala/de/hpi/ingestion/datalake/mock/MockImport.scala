@@ -22,9 +22,8 @@ import de.hpi.companies.algo.Tag
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.ingestion.datalake.DataLakeImportImplementation
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
-object MockImport extends DataLakeImportImplementation[Entity](
+class MockImport extends DataLakeImportImplementation[Entity](
 	List("TestSource"),
 	"inputKeySpace",
 	"inputTable"
@@ -32,7 +31,7 @@ object MockImport extends DataLakeImportImplementation[Entity](
 	appName = "TestImport"
 	importConfigFile = "src/test/resources/datalake/normalization.xml"
 
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = Nil
+	override def load(sc: SparkContext): Unit = {}
 
 	override def filterEntities(entity: Entity): Boolean = true
 

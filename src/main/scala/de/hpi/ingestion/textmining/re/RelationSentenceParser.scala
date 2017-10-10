@@ -20,53 +20,61 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.dataimport.wikidata.models.WikidataEntity
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.{EntityLink, ParsedWikipediaEntry, Sentence}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import de.hpi.ingestion.implicits.CollectionImplicits._
-import de.hpi.ingestion.textmining.preprocessing.CompanyLinkFilter.{extractCompanyPages, settings}
+import de.hpi.ingestion.textmining.preprocessing.CompanyLinkFilter.extractCompanyPages
 import de.hpi.ingestion.textmining.tokenizer.{CleanWhitespaceTokenizer, IngestionTokenizer, SentenceTokenizer}
 
 /**
   * Parses all `Sentences` with at least two entities from each Wikipedia article and writes them to the Cassandra.
   */
-object RelationSentenceParser extends SparkJob {
+class RelationSentenceParser extends SparkJob {
+	import RelationSentenceParser._
 	appName = "Relation Sentence Parser"
 	cassandraSaveQueries += "TRUNCATE TABLE wikidumps.wikipediasentences"
 	configFile = "textmining.xml"
 
+	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+	var relations: RDD[Relation] = _
+	var wikidataEntries: RDD[WikidataEntity] = _
+	var sentences: RDD[Sentence] = _
+
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries and DBpedia Relations from the Cassandra.
-	  *
-	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * @param sc Spark Context used to load the RDDs
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		val relations = sc.cassandraTable[Relation](settings("keyspace"), settings("DBpediaRelationTable"))
-		val wikidata = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
-		List(articles).toAnyRDD() ++ List(relations).toAnyRDD() ++ List(wikidata).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+		relations = sc.cassandraTable[Relation](settings("keyspace"), settings("DBpediaRelationTable"))
+		wikidataEntries = sc.cassandraTable[WikidataEntity](settings("keyspace"), settings("wikidataTable"))
 	}
 
 	/**
 	  * Saves Sentences with entities to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Sentence]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("sentenceTable"))
+	override def save(sc: SparkContext): Unit = {
+		sentences.saveToCassandra(settings("keyspace"), settings("sentenceTable"))
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Parses all `Sentences` with at least two entities from each Wikipedia article.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val companies = extractCompanyPages(wikidataEntries).collect.toSet
+		val sentenceTokenizer = IngestionTokenizer(new SentenceTokenizer, false, false)
+		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, true)
+		val parsedSentences = parsedWikipedia.flatMap(entryToSentencesWithEntities(_, sentenceTokenizer, tokenizer))
+		sentences = filterSentences(parsedSentences, relations, companies, sc)
+	}
+}
+
+object RelationSentenceParser {
 	/**
 	  * Parses all Sentences from a parsed Wikipedia entry with at least 2 entities
 	  * and recalculating relative offsets of entities.
@@ -157,33 +165,11 @@ object RelationSentenceParser extends SparkJob {
 					.entities
 					.filter { entity =>
 						!localBlacklist.contains(entity.entity) &&
-						!handmadeBlacklist.contains(entity.entity) &&
-						localWhitelist.contains(entity.entity)
+							!handmadeBlacklist.contains(entity.entity) &&
+							localWhitelist.contains(entity.entity)
 					}.sortBy(_.offset)
 				sentence.copy(entities = filteredEntities)
 			}
 		}).filter(_.entities.length > 1)
-	}
-
-	/**
-	  * Parses all `Sentences` with at least two entities from each Wikipedia article.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val articles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
-		val relations = input(1).asInstanceOf[RDD[Relation]]
-		val wikidata = input(2).asInstanceOf[RDD[WikidataEntity]]
-
-		val companies = extractCompanyPages(wikidata).collect.toSet
-		val sentenceTokenizer = IngestionTokenizer(new SentenceTokenizer, false, false)
-		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, true)
-		val sentences = articles.flatMap(entryToSentencesWithEntities(_, sentenceTokenizer, tokenizer))
-
-		val filteredSentences = filterSentences(sentences, relations, companies, sc)
-		List(filteredSentences).toAnyRDD()
 	}
 }

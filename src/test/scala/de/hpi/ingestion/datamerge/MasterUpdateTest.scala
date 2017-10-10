@@ -22,11 +22,11 @@ import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class MasterUpdateTest extends FlatSpec with Matchers with SharedSparkContext {
-
 	"Master nodes" should "be updated" in {
-		val subjects = sc.parallelize(TestData.outdatedMasters())
-		val input = List(subjects).toAnyRDD()
-		val updatedMasters = MasterUpdate.run(input, sc).fromAnyRDD[Subject]().head.collect().toList.sortBy(_.id)
+		val job = new MasterUpdate
+		job.subjects = sc.parallelize(TestData.outdatedMasters())
+		job.run(sc)
+		val updatedMasters = job.updatedMasters.collect().toList.sortBy(_.id)
 		val expectedMasters = TestData.updatedMasters().sortBy(_.id)
 		updatedMasters should have length expectedMasters.length
 		updatedMasters.zip(expectedMasters).foreach { case (master, expectedMaster) =>

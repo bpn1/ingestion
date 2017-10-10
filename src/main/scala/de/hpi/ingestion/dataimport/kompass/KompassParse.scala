@@ -25,12 +25,11 @@ import org.jsoup.Jsoup
 import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.dataimport.kompass.models.KompassEntity
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 /**
   * Import-Job for Kompass data from json, extracted by parsing
   */
-object KompassParse extends SparkJob with JSONParser[KompassEntity]{
+class KompassParse extends SparkJob with JSONParser[KompassEntity]{
 	appName = "Kompass Parse"
 	configFile = "textmining.xml"
 	val inputFile = "kompass.json"
@@ -50,32 +49,25 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 		"employees" -> ".employees li:eq(1) p:eq(1)"
 	)
 
-	// $COVERAGE-OFF$
+	var kompassPages: RDD[String] = _
+	var kompassEntities: RDD[KompassEntity] = _
 
+	// $COVERAGE-OFF$
 	/**
 	  * Loads JSON from the HDFS.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val kompassPages = sc.textFile(inputFile)
-		List(kompassPages.asInstanceOf[RDD[Any]])
+	override def load(sc: SparkContext): Unit = {
+		kompassPages = sc.textFile(inputFile)
 	}
 
 	/**
 	  * Writes the JSON diff to the HDFS.
-	  * @param output first element is the RDD of JSON diffs
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[KompassEntity]()
-			.head
-			.saveToCassandra(keyspace, outputTablename)
+	override def save(sc: SparkContext): Unit = {
+		kompassEntities.saveToCassandra(keyspace, outputTablename)
 	}
-
 	// $COVERAGE-ON$
 
 	/**
@@ -123,16 +115,11 @@ object KompassParse extends SparkJob with JSONParser[KompassEntity]{
 
 	/**
 	  * Extracts the information from the json containing the kompass data.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
 	  */
-	def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array[String]()): List[RDD[Any]] = {
-		input
-			.fromAnyRDD[String]()
-			.map(_.map(cleanJSON))
-			.map(_.collect { case line: String if line.nonEmpty => parseJSON(line) })
-			.toAnyRDD()
+	def run(sc: SparkContext): Unit = {
+		kompassEntities = kompassPages
+			.map(cleanJSON)
+			.collect { case line: String if line.nonEmpty => parseJSON(line) }
 	}
 }

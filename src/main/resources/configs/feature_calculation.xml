@@ -9,5 +9,6 @@
         <goldStandardTable>goldstandard</goldStandardTable>
         <keyspaceFeatureTable>evaluation</keyspaceFeatureTable>
         <featureTable>featureentries</featureTable>
+        <maxBlockSize>500000</maxBlockSize>
     </settings>
 </config>

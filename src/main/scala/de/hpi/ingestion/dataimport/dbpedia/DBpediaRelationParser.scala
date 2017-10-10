@@ -18,48 +18,63 @@ package de.hpi.ingestion.dataimport.dbpedia
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
-import de.hpi.ingestion.dataimport.dbpedia.DBpediaImport.{dbpediaToCleanedTriples, getPrefixesFromFile}
+import de.hpi.ingestion.dataimport.dbpedia.DBpediaImport.{dbpediaToCleanedTriples, loadPrefixes}
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 /**
   * Extracts all relations from english dbpedia and translates the english title to the german ones.
   */
-object DBpediaRelationParser extends SparkJob {
+class DBpediaRelationParser extends SparkJob {
+	import DBpediaRelationParser._
 	appName = "DBpediaRelationParser"
 	configFile = "textmining.xml"
+
+	var dbpediaTtl: RDD[String] = _
+	var labelTtl: RDD[String] = _
+	var relations: RDD[Relation] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads triples of relations and english to german translation from ttl files.
-	  *
 	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val dbpedia = sc.textFile("mappingbased_objects_en.ttl")
-		val labels = sc.textFile("interlanguage_links_en.ttl")
-		List(dbpedia).toAnyRDD() ++ List(labels).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		dbpediaTtl = sc.textFile("mappingbased_objects_en.ttl")
+		labelTtl = sc.textFile("interlanguage_links_en.ttl")
 	}
 
 	/**
 	  * Saves relations to cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Relation]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("DBpediaRelationTable"))
+	override def save(sc: SparkContext): Unit = {
+		relations.saveToCassandra(settings("keyspace"), settings("DBpediaRelationTable"))
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Extracts all relations from English DBpedia and translates the English title to the German ones.
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val prefixes = loadPrefixes()
+		val germanLabels = getGermanLabels(labelTtl, prefixes)
+		val gerLabelsBroadcast = sc.broadcast(germanLabels)
+		relations = dbpediaToCleanedTriples(dbpediaTtl, prefixes, "dbo:|dbr:")
+			.mapPartitions({ entryPartition =>
+				val localGerLabels = gerLabelsBroadcast.value
+				entryPartition.map { case List(subj, rel, obj) =>
+					val gerSubj = localGerLabels.getOrElse(subj, subj)
+					val gerObj = localGerLabels.getOrElse(obj, obj)
+					Relation(gerSubj.replaceAll("_", " "), rel, gerObj.replaceAll("_", " "))
+				}
+			})
+	}
+}
+
+object DBpediaRelationParser {
 	/**
 	  * Parses only English to German translations from DBpedia triples.
 	  *
@@ -73,31 +88,5 @@ object DBpediaRelationParser extends SparkJob {
 			.map { case List(subj, rel, obj) => subj -> obj }
 			.collect
 			.toMap
-	}
-
-	/**
-	  * Extracts all relations from English DBpedia and translates the English title to the German ones.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val List(dbpedia, labels) = input.fromAnyRDD[String]()
-		val prefixes = getPrefixesFromFile()
-		val germanLabels = getGermanLabels(labels, prefixes)
-		val gerLabelsBroadcast = sc.broadcast(germanLabels)
-		val relations = dbpediaToCleanedTriples(dbpedia, prefixes, "dbo:|dbr:")
-			.mapPartitions({ entryPartition =>
-				val localGerLabels = gerLabelsBroadcast.value
-				entryPartition.map { case List(subj, rel, obj) =>
-					val gerSubj = localGerLabels.getOrElse(subj, subj)
-					val gerObj = localGerLabels.getOrElse(obj, obj)
-					Relation(gerSubj.replaceAll("_", " "), rel, gerObj.replaceAll("_", " "))
-				}
-			})
-
-		List(relations).toAnyRDD()
 	}
 }

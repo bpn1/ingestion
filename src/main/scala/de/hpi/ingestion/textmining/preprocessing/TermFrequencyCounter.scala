@@ -18,7 +18,6 @@ package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -28,37 +27,72 @@ import org.apache.spark.rdd.RDD
   * Enriches each `ParsedWikipediaEntry` with the term frequencies of the whole article (called context) and the term
   * frequencies for all link contexts (called link contexts).
   */
-object TermFrequencyCounter extends SparkJob {
+class TermFrequencyCounter extends SparkJob {
+	import TermFrequencyCounter._
 	appName = "Term Frequency Counter"
 	configFile = "textmining.xml"
+
+	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+	var parsedWikipediaWithTF: RDD[ParsedWikipediaEntry] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  *
-	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * @param sc Spark Context used to load the RDDs
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(articles).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 	}
 
 	/**
 	  * Saves enriched Parsed Wikipedia entries to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  * */
+	override def save(sc: SparkContext): Unit = {
+		parsedWikipediaWithTF.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
 	// $COVERAGE-ON$
+
+	/**
+	  * Enriches articles with the term frequencies of the whole article (called context) and the term frequencies
+	  * for all link contexts (called link contexts).
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val tokenizer = IngestionTokenizer(args)
+		parsedWikipediaWithTF = parsedWikipedia
+			.map(extractArticleContext(_, tokenizer))
+			.map(extractLinkContexts(_, tokenizer, settings("contextSize").toInt))
+	}
+}
+
+object TermFrequencyCounter {
+	/**
+	  * Extracts the context of a given link out of its article.
+	  * @param tokens Offset Tokens of the links article
+	  * @param link Link whose context will be extracted
+	  * @param tokenizer tokenizer used to tokenize the Links alias
+	  * @param contextSize number of tokens before and after a match considered as the context
+	  * @return Bag of words of the links context
+	  */
+	def extractContext(
+		tokens: List[OffsetToken],
+		link: Link,
+		tokenizer: IngestionTokenizer,
+		contextSize: Int
+	): Bag[String, Int] = {
+		val aliasTokens = tokenizer.onlyTokenizeWithOffset(link.alias)
+		tokens.find(token => link.offset.contains(token.beginOffset)).map { firstAliasToken =>
+			val aliasIndex = tokens.indexOf(firstAliasToken)
+			val aliasTokenLength = aliasTokens.length
+			val contextStart = Math.max(aliasIndex - contextSize, 0)
+			val preAliasContext = tokens.slice(contextStart, aliasIndex)
+			val contextEnd = Math.min(aliasIndex + aliasTokenLength + contextSize, tokens.length)
+			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
+			val context = (preAliasContext ++ postAliasContext).map(_.token)
+			Bag.extract(tokenizer.process(context))
+		}.getOrElse(Bag.extract(Nil))
+	}
 
 	/**
 	  * Extracts the stemmed terms of a Wikipedia article and their relative frequency (between 0.0 and 1.0).
@@ -88,54 +122,20 @@ object TermFrequencyCounter extends SparkJob {
 	  * extendedlinks column
 	  *
 	  * @param entry Wikipedia entry containing the used links
+	  * @param tokenizer tokenizer used to generate the contexts of the entry
+	  * @param contextSize number of tokens before and after a match considered as the context
 	  * @return list of tuples containing the link and its context
 	  */
-	def extractLinkContexts(entry: ParsedWikipediaEntry, tokenizer: IngestionTokenizer): ParsedWikipediaEntry = {
+	def extractLinkContexts(
+		entry: ParsedWikipediaEntry,
+		tokenizer: IngestionTokenizer,
+		contextSize: Int
+	): ParsedWikipediaEntry = {
 		val tokens = tokenizer.onlyTokenizeWithOffset(entry.getText())
 		val contextLinks = (entry.textlinksreduced ++ entry.extendedlinks()).map { link =>
-			val context = extractContext(tokens, link, tokenizer).getCounts()
+			val context = extractContext(tokens, link, tokenizer, contextSize).getCounts()
 			link.copy(context = context)
 		}
 		entry.copy(linkswithcontext = contextLinks)
-	}
-
-	/**
-	  * Extracts the context of a given link out of its article.
-	  * @param tokens Offset Tokens of the links article
-	  * @param link Link whose context will be extracted
-	  * @param tokenizer tokenizer used to tokenize the Links alias
-	  * @return Bag of words of the links context
-	  */
-	def extractContext(tokens: List[OffsetToken], link: Link, tokenizer: IngestionTokenizer): Bag[String, Int] = {
-		val contextSize = settings("contextSize").toInt
-		val aliasTokens = tokenizer.onlyTokenizeWithOffset(link.alias)
-		tokens.find(token => link.offset.contains(token.beginOffset)).map { firstAliasToken =>
-			val aliasIndex = tokens.indexOf(firstAliasToken)
-			val aliasTokenLength = aliasTokens.length
-			val contextStart = Math.max(aliasIndex - contextSize, 0)
-			val preAliasContext = tokens.slice(contextStart, aliasIndex)
-			val contextEnd = Math.min(aliasIndex + aliasTokenLength + contextSize, tokens.length)
-			val postAliasContext = tokens.slice(aliasIndex + aliasTokens.length, contextEnd)
-			val context = (preAliasContext ++ postAliasContext).map(_.token)
-			Bag.extract(tokenizer.process(context))
-		}.getOrElse(Bag.extract(Nil))
-	}
-
-	/**
-	  * Enriches articles with the term frequencies of the whole article (called context) and the term frequencies
-	  * for all link contexts (called link contexts).
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val tokenizer = IngestionTokenizer(args)
-		val enrichedArticles = articles
-			.map(extractArticleContext(_, tokenizer))
-			.map(extractLinkContexts(_, tokenizer))
-		List(enrichedArticles).toAnyRDD()
 	}
 }
