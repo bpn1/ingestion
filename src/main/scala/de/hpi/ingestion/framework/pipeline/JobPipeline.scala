@@ -40,8 +40,7 @@ trait JobPipeline {
 			.setAll(sparkOptions.toList)
 	}
 
-	def run(): Unit = {
-		val sc = new SparkContext(createSparkConf())
+	def run(sc: SparkContext): Unit = {
 		jobs.foreach { case (job, args) => job.execute(sc, args) }
 	}
 }

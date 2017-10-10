@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.framework
 
 import de.hpi.ingestion.framework.pipeline.JobPipeline
-import de.hpi.ingestion.implicits.RegexImplicits._
 import org.apache.spark.SparkContext
 
 object JobRunner {
@@ -25,24 +24,24 @@ object JobRunner {
 	var jobs = List.empty[SparkJob]
 
 	def main(args: Array[String]): Unit = {
-		val job = args.head
 		try {
+			val job = Class.forName(args.head).newInstance()
 			job match {
-				case r"""de\.hpi\.ingestion\.framework\.pipeline\..*""" =>
-					val pipeline = Class.forName(job).newInstance.asInstanceOf[JobPipeline]
-					pipeline.run()
-				case r"""de\.hpi\.ingestion\..*""" =>
-					val job = Class.forName(job).newInstance.asInstanceOf[SparkJob]
-					val sc = new SparkContext(job.createSparkConf())
-					job.execute(sc, args.slice(1, args.length))
+				case pipeline: JobPipeline =>
+					val sc = SparkContext.getOrCreate(pipeline.createSparkConf())
+					pipeline.run(sc)
+				case sparkJob: SparkJob =>
+					val sc = SparkContext.getOrCreate(sparkJob.createSparkConf())
+					sparkJob.execute(sc, args.slice(1, args.length))
 			}
 		} catch {
 			case ce: ClassNotFoundException =>
-				Console.err.println(s"There is no such pipeline or job.\n${ce.getMessage}")
-			case me: NoSuchMethodException =>
-				Console.err.println(s"The provided class is not a Spark Job or a Pipeline.\n${me.getMessage}")
-			case ce: ClassCastException =>
-				Console.err.println(s"The provided class is not a Spark Job or a Pipeline.\n${ce.getMessage}")
+				throw new IllegalArgumentException("There is no such pipeline or job.", ce)
+			case ie: InstantiationException =>
+				throw new IllegalArgumentException("The provided class is not a Spark Job or a Pipeline.", ie)
+			case me: MatchError =>
+				val message = "The provided class does not implement the trait SparkJob or JobPipeline."
+				throw new IllegalArgumentException(message, me)
 		}
 	}
 }

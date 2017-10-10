@@ -22,20 +22,20 @@ import de.hpi.ingestion.textmining.preprocessing._
 class TextminingPipeline extends JobPipeline {
 	pipelineName = "Textmining Pipeline"
 	jobs = List(
-		(new TextParser, Array.empty[String]),
-		(new LinkCleaner, Array.empty[String]),
-		(new RedirectResolver, Array.empty[String]),
-		(new LinkAnalysis, Array.empty[String]),
-		(new CompanyLinkFilter, Array.empty[String]),
-		(new ReducedLinkAnalysis, Array.empty[String]),
-		(new AliasTrieSearch, Array.empty[String]),
-		(new LinkExtender, Array.empty[String]),
-		(new TermFrequencyCounter, Array.empty[String]),
-		(new DocumentFrequencyCounter, Array.empty[String]),
-		(new LinkAnalysis, Array.empty[String]),
-		(new ReducedLinkAnalysis, Array.empty[String]),
-		(new AliasCounter, Array.empty[String]),
-		(new CosineContextComparator, Array.empty[String]),
-		(new SecondOrderFeatureGenerator, Array.empty[String]),
-		(new ClassifierTraining, Array.empty[String]))
+		(new TextParser, Array()),
+		(new LinkCleaner, Array()),
+		(new RedirectResolver, Array()),
+		(new LinkAnalysis, Array()),
+		(new CompanyLinkFilter, Array()),
+		(new ReducedLinkAnalysis, Array()),
+		(new AliasTrieSearch, Array()),
+		(new LinkExtender, Array()),
+		(new TermFrequencyCounter, Array()),
+		(new DocumentFrequencyCounter, Array()),
+		(new LinkAnalysis, Array()),
+		(new ReducedLinkAnalysis, Array()),
+		(new AliasCounter, Array()),
+		(new CosineContextComparator, Array()),
+		(new SecondOrderFeatureGenerator, Array()),
+		(new ClassifierTraining, Array()))
 }
