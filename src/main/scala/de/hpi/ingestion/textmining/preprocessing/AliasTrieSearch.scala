@@ -21,7 +21,6 @@ import com.datastax.spark.connector._
 import com.esotericsoftware.kryo.io.Input
 import com.twitter.chill.Kryo
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
@@ -38,51 +37,75 @@ import scala.collection.mutable.ListBuffer
   * recommended spark-submit flags (needed for deserialization of Trie)
   * --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
   */
-object AliasTrieSearch extends SparkJob {
+class AliasTrieSearch extends SparkJob {
+	import AliasTrieSearch._
 	appName = "Alias Trie Search"
 	configFile = "textmining.xml"
 	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
 
-	// $COVERAGE-OFF$
-	var trieStreamFunction: String => InputStream = hdfsFileStream _
+	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+	var parsedWikipediaWithAliases: RDD[ParsedWikipediaEntry] = _
 
+	// $COVERAGE-OFF$
+	var trieStreamFunction: String => InputStream = hdfsFileStream
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  *
-	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * @param sc Spark Context used to load the RDDs
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(parsedWikipedia).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
 	}
 
 	/**
 	  * Saves Parsed Wikipedia entries with the found aliases to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
+	override def save(sc: SparkContext): Unit = {
+		parsedWikipediaWithAliases.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
+	// $COVERAGE-ON$
 
+	/**
+	  * Uses a pre-built Trie to find aliases in the text of articles and writes them into the foundaliases field.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val tokenizer = IngestionTokenizer(false, false)
+		parsedWikipediaWithAliases = parsedWikipedia.mapPartitions({ partition =>
+			val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
+			partition.map(matchEntry(_, trie, tokenizer))
+		}, true)
+	}
+}
+
+object AliasTrieSearch {
+	// $COVERAGE-OFF$
 	/**
 	  * Opens a HDFS file stream pointing to the trie binary.
 	  *
 	  * @return Input Stream pointing to the file in the HDFS
 	  */
-	def hdfsFileStream(file: String = settings("trieFile")): InputStream = {
+	def hdfsFileStream(file: String): InputStream = {
 		val hadoopConf = new Configuration()
 		val fs = FileSystem.get(hadoopConf)
 		fs.open(new Path(file))
 	}
 	// $COVERAGE-ON$
+
+	/**
+	  * Deserializes Trie binary into a TrieNode.
+	  *
+	  * @param trieStream Input Stream pointing to the Trie binary data
+	  * @return deserialized Trie
+	  */
+	def deserializeTrie(trieStream: InputStream): TrieNode = {
+		val kryo = new Kryo()
+		TrieKryoRegistrator.register(kryo)
+		val inputStream = new Input(trieStream)
+		val trie = kryo.readObject(inputStream, classOf[TrieNode])
+		inputStream.close()
+		trie
+	}
 
 	/**
 	  * Finds all occurrences of aliases in the text of a Wikipedia entry. All found aliases are saved in the
@@ -133,9 +156,9 @@ object AliasTrieSearch extends SparkJob {
 				val end = offsetTokens.lastOption.map(_.endOffset)
 				(begin, end)
 			}.collect {
-				case (begin, end) if begin.isDefined && end.isDefined =>
-					entry.getText().substring(begin.get, end.get)
-			}.toList
+			case (begin, end) if begin.isDefined && end.isDefined =>
+				entry.getText().substring(begin.get, end.get)
+		}.toList
 		entry.copy(foundaliases = cleanFoundAliases(foundAliases), triealiases = trieAliases)
 	}
 
@@ -147,41 +170,5 @@ object AliasTrieSearch extends SparkJob {
 	  */
 	def cleanFoundAliases(aliases: List[String]): List[String] = {
 		aliases.filter(_.nonEmpty)
-	}
-
-	/**
-	  * Deserializes Trie binary into a TrieNode.
-	  *
-	  * @param trieStream Input Stream pointing to the Trie binary data
-	  * @return deserialized Trie
-	  */
-	def deserializeTrie(trieStream: InputStream): TrieNode = {
-		val kryo = new Kryo()
-		TrieKryoRegistrator.register(kryo)
-		val inputStream = new Input(trieStream)
-		val trie = kryo.readObject(inputStream, classOf[TrieNode])
-		inputStream.close()
-		trie
-	}
-
-	/**
-	  * Uses a pre-built Trie to find aliases in the text of articles and writes them into the foundaliases field.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to, e.g., broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val tokenizer = IngestionTokenizer(false, false)
-		input
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.map(articles =>
-				articles
-					.mapPartitions({ partition =>
-						val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
-						partition.map(matchEntry(_, trie, tokenizer))
-					}, true))
-			.toAnyRDD()
 	}
 }

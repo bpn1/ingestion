@@ -18,7 +18,6 @@ package de.hpi.ingestion.deduplication.blockingschemes
 
 import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.implicits.CollectionImplicits._
-import scala.math.pow
 
 /**
   * This class uses geo coordinates as key.
@@ -54,7 +53,7 @@ object GeoCoordsBlockingScheme {
 	  */
 	def apply(tag: String, decimals: Double = 1.0): GeoCoordsBlockingScheme = {
 		val scheme = new GeoCoordsBlockingScheme
-		scheme.decimalPower = pow(10.0, decimals).toInt
+		scheme.decimalPower = Math.pow(10.0, decimals).toInt
 		scheme.tag = tag
 		scheme
 	}

@@ -18,10 +18,8 @@ package de.hpi.ingestion.datalake
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class CSVExportTest extends FlatSpec with Matchers with SharedSparkContext {
-
 	"Subjects" should "be converted to csv nodes" in {
 		val subjectNodes = TestData.exportSubjects.map(CSVExport.nodeToCSV)
 		val expectedCSV = TestData.exportedNodeCSV
@@ -35,8 +33,11 @@ class CSVExportTest extends FlatSpec with Matchers with SharedSparkContext {
 	}
 
 	"Subjects" should "be parsed to nodes and edges" in {
-		val input = List(sc.parallelize(TestData.exportSubjects)).toAnyRDD()
-		val List(nodes, edges) = CSVExport.run(input, sc).fromAnyRDD[String]().map(_.collect.toSet)
+		val job = new CSVExport
+		job.subjects = sc.parallelize(TestData.exportSubjects)
+		job.run(sc)
+		val nodes = job.nodes.collect.toSet
+		val edges = job.edges.collect.toSet
 		val expectedNodeCSV = TestData.exportedMasterNodeCSV.toSet
 		val expectedEdgeCSV = TestData.exportedMasterEdgeCSV.toSet
 		nodes shouldEqual expectedNodeCSV

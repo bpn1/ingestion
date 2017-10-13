@@ -21,7 +21,6 @@ import de.hpi.ingestion.datalake.models._
 import org.scalatest.{FlatSpec, Matchers}
 
 class SubjectManagerTest extends FlatSpec with Matchers with SharedSparkContext {
-
 	"buildDuplicatesSCC" should "should add isDuplicate relation with a confidence for a list of tuples" in {
 		val subjects = TestData.subjects
 		val duplicates = List((subjects.head, subjects(2), 0.8), (subjects(1), subjects(3), 0.8))

@@ -23,7 +23,7 @@ import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-object MockSubjectImport extends DataLakeImportImplementation[Entity](
+class MockSubjectImport extends DataLakeImportImplementation[Entity](
 	List("TestSource"),
 	"inputKeySpace",
 	"inputTable"
@@ -31,9 +31,7 @@ object MockSubjectImport extends DataLakeImportImplementation[Entity](
 	appName = "TestImport"
 	importConfigFile = "src/test/resources/datalake/normalization.xml"
 
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		Nil
-	}
+	override def load(sc: SparkContext): Unit = {}
 
 	override def normalizeAttribute(
 		attribute: String,

@@ -18,7 +18,6 @@ package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -31,39 +30,64 @@ import scala.collection.mutable.ListBuffer
 /**
   * Extends Wikipedia articles with `Links` of occurrences of aliases that were previously linked in the same article.
   */
-object LinkExtender extends SparkJob {
+class LinkExtender extends SparkJob {
+	import LinkExtender._
 	appName = "Link Extender"
 	configFile = "textmining.xml"
+
+	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+	var pages: RDD[Page] = _
+	var extendedParsedWikipedia: RDD[ParsedWikipediaEntry] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads parsed Wikipedia entries from the Cassandra.
-	  *
-	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job
+	  * @param sc Spark Context used to load the RDDs
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		val pages = sc.cassandraTable[Page](settings("keyspace"), settings("pageTable"))
-		List(parsedWikipedia).toAnyRDD() ++ List(pages).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+		pages = sc.cassandraTable[Page](settings("keyspace"), settings("pageTable"))
 	}
 
 	/**
 	  * Saves parsed Wikipedia entries with extended links to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
+	override def save(sc: SparkContext): Unit = {
+		extendedParsedWikipedia.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Extends links of parsed Wikipedia entries by looking at existing Links and
+	  * adding additional not yet linked occurrences.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val pagesMap = pages
+			.map { page =>
+				val aliases = page.aliasesreduced
+				val totalAliasOccurrences = aliases.values.sum
+				val threshold = 0.005
+				(page.page, aliases.filter(_._2.toFloat / totalAliasOccurrences > threshold))
+			}.filter(_._2.nonEmpty)
+			.collect
+			.toMap
+		val pagesBroadcast = sc.broadcast(pagesMap)
+		val tokenizer = IngestionTokenizer(false, false)
+		extendedParsedWikipedia = parsedWikipedia.mapPartitions({ entryPartition =>
+			val localPages = pagesBroadcast.value
+			entryPartition.map { entry =>
+				val tempPages = findAllPages(entry, localPages)
+				val aliases = reversePages(tempPages, tokenizer)
+				val trie = buildTrieFromAliases(aliases, tokenizer)
+				findAliasOccurrences(entry, aliases, trie, tokenizer)
+			}
+		}, true)
+	}
+}
+
+object LinkExtender {
 	/**
 	  * Gets all Pages for the Links and title of an Wikipedia article.
 	  * Using get+map instead of filter for performance of O(n) instead of O(n*n).
@@ -163,39 +187,5 @@ object LinkExtender extends SparkJob {
 				}.toMap)
 			}
 			.filter(_._2.nonEmpty)
-	}
-
-	/**
-	  * Extends links of parsed Wikipedia entries by looking at existing Links and
-	  * adding additional not yet linked occurrences.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val parsedArticles = input.head.asInstanceOf[RDD[ParsedWikipediaEntry]]
-		val pages = input(1).asInstanceOf[RDD[Page]]
-			.map { page =>
-				val aliases = page.aliasesreduced
-				val totalAliasOccurrences = aliases.values.sum
-				val threshold = 0.005
-				(page.page, aliases.filter(_._2.toFloat / totalAliasOccurrences > threshold))
-			}.filter(_._2.nonEmpty)
-			.collect
-			.toMap
-		val pagesBroadcast = sc.broadcast(pages)
-		val tokenizer = IngestionTokenizer(false, false)
-		val parsedArticlesWithExtendedLinks = parsedArticles.mapPartitions({ entryPartition =>
-			val localPages = pagesBroadcast.value
-			entryPartition.map { entry =>
-				val tempPages = findAllPages(entry, localPages)
-				val aliases = reversePages(tempPages, tokenizer)
-				val trie = buildTrieFromAliases(aliases, tokenizer)
-				findAliasOccurrences(entry, aliases, trie, tokenizer)
-			}
-		}, true)
-		List(parsedArticlesWithExtendedLinks).toAnyRDD()
 	}
 }

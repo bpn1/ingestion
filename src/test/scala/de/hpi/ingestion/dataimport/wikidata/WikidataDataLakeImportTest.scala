@@ -21,29 +21,32 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class WikidataDataLakeImportTest extends FlatSpec with SharedSparkContext with Matchers {
 	"filterEntities" should "filter entities without an instance type" in {
+		val job = new WikidataDataLakeImport
 		val entities = TestData.unfilteredEntities
-		val filteredEntities = entities.filter(WikidataDataLakeImport.filterEntities)
+		val filteredEntities = entities.filter(job.filterEntities)
 		val expected = TestData.filteredEntities
 		filteredEntities shouldEqual expected
 	}
 
 	"normalizeAttribute" should "the values of a given attribute" in {
+		val job = new WikidataDataLakeImport
 		val attributes = TestData.unnormalizedAttributes
 		val strategies = TestData.strategies
 		val normalizedAttributes = attributes.map { case (attribute, values) =>
-			attribute -> WikidataDataLakeImport.normalizeAttribute(attribute, values, strategies)
+			attribute -> job.normalizeAttribute(attribute, values, strategies)
 		}
 		val expected = TestData.normalizedAttributes
 		normalizedAttributes shouldEqual expected
 	}
 
 	"translateToSubject" should "map label, aliases and category correctly" in {
+		val job = new WikidataDataLakeImport
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val classifier = WikidataDataLakeImport.classifier
+		val classifier = job.classifier
 		val translatedSubjects = TestData.wikidataEntities.map { entity =>
-			entity -> WikidataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+			entity -> job.translateToSubject(entity, version, mapping, strategies, classifier)
 		}
 		translatedSubjects should not be empty
 		translatedSubjects.foreach { case (entity, subject) =>
@@ -57,12 +60,13 @@ class WikidataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 	}
 
 	it should "normalize the data attributes" in {
+		val job = new WikidataDataLakeImport
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val classifier = WikidataDataLakeImport.classifier
-		val subject = WikidataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		val classifier = job.classifier
+		val subject = job.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("id_wikidata") shouldEqual List("Q21110253")
 		subject.properties("id_wikipedia") shouldEqual List("testwikiname")
 		subject.properties("id_dbpedia") shouldEqual List("testwikiname")
@@ -77,22 +81,24 @@ class WikidataDataLakeImportTest extends FlatSpec with SharedSparkContext with M
 	}
 
 	it should "copy all old data attributes" in {
+		val job = new WikidataDataLakeImport
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val classifier = WikidataDataLakeImport.classifier
-		val subject = WikidataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		val classifier = job.classifier
+		val subject = job.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("testProperty") shouldEqual List("test")
 	}
 
 	it should "extract the legal form" in {
+		val job = new WikidataDataLakeImport
 		val entity = TestData.testEntity
 		val version = TestData.version(sc)
 		val mapping = TestData.mapping
 		val strategies = TestData.strategies
-		val classifier = WikidataDataLakeImport.classifier
-		val subject = WikidataDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		val classifier = job.classifier
+		val subject = job.translateToSubject(entity, version, mapping, strategies, classifier)
 		subject.properties("gen_legal_form") shouldEqual List("AG")
 	}
 }

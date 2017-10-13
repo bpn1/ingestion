@@ -49,15 +49,19 @@ class TagEntitiesTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Instance-of entities" should "be updated" in {
+		val job = new TagEntities
+		val pathKey = job.settings("wikidataPathProperty")
 		val entries = sc.parallelize(TestData.subclassEntries())
-		val updatedEntries = TagEntities.updateEntities(entries, TestData.classMap()).collect.toSet
+		val updatedEntries = TagEntities.updateEntities(entries, TestData.classMap(), pathKey).collect.toSet
 		val expectedEntries = TestData.updatedInstanceOfProperties().toSet
 		updatedEntries shouldEqual expectedEntries
 	}
 
 	it should "be updated correctly" in {
+		val job = new TagEntities
+		val pathKey = job.settings("wikidataPathProperty")
 		val entries = TestData.validInstanceOfProperties()
-			.map(TagEntities.updateInstanceOfProperty(_, TestData.classMap()))
+			.map(TagEntities.updateInstanceOfProperty(_, TestData.classMap(), pathKey))
 		val expectedEntries = TestData.updatedInstanceOfProperties()
 		entries shouldEqual expectedEntries
 	}

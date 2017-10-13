@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import de.hpi.ingestion.textmining.models.{Link, ParsedWikipediaEntry}
 import de.hpi.ingestion.textmining.preprocessing.TextParser.disambiguationTitleSuffix
@@ -144,12 +143,12 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Wikipedia disambiguation links" should "be found" in {
-		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
+		val job = new TextParser
+		job.wikipedia = sc.parallelize(TestData.wikipediaEntries())
 			.filter(entry => TestData.wikipediaDisambiguationPagesSet().contains(entry.title))
-		TextParser
-			.run(List(wikipedia).toAnyRDD(), sc)
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
+		job.run(sc)
+		job
+			.parsedWikipedia
 			.collect
 			.foreach { entry =>
 				entry.disambiguationlinks should not be empty
@@ -158,12 +157,12 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	they should "direct from the page name itself (without '" +
 		TextParser.disambiguationTitleSuffix + "') to another page" in {
-		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
+		val job = new TextParser
+		job.wikipedia = sc.parallelize(TestData.wikipediaEntries())
 			.filter(entry => TestData.wikipediaDisambiguationPagesSet().contains(entry.title))
-		TextParser
-			.run(List(wikipedia).toAnyRDD(), sc)
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
+		job.run(sc)
+		job
+			.parsedWikipedia
 			.collect
 			.foreach { entry =>
 				entry.disambiguationlinks.foreach { link =>
@@ -175,13 +174,13 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Template links" should "not be empty" in {
+		val job = new TextParser
 		val templateArticlesTest = TestData.wikipediaTemplateArticles()
-		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
+		job.wikipedia = sc.parallelize(TestData.wikipediaEntries())
 			.filter(entry => templateArticlesTest.contains(entry.title))
-		TextParser
-			.run(List(wikipedia).toAnyRDD(), sc)
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
+		job.run(sc)
+		job
+			.parsedWikipedia
 			.map(_.templatelinks)
 			.collect
 			.foreach(templateLinks => templateLinks should not be empty)
@@ -197,12 +196,12 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	they should "be exactly these links" in {
-		val wikipedia = sc.parallelize(TestData.wikipediaEntries())
+		val job = new TextParser
+		job.wikipedia = sc.parallelize(TestData.wikipediaEntries())
+		job.run(sc)
 		val templateLinks = TestData.wikipediaTemplateLinks()
-		TextParser
-			.run(List(wikipedia).toAnyRDD(), sc)
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
+		job
+			.parsedWikipedia
 			.filter(entry => templateLinks.contains(entry.title))
 			.collect
 			.foreach(entry => entry.templatelinks shouldEqual templateLinks(entry.title))
@@ -291,11 +290,11 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Wikipedia articles" should "be parsed" in {
-		val rawArticles = sc.parallelize(TestData.wikipediaEntriesForParsing())
-		val parsedArticles = TextParser
-			.run(List(rawArticles).toAnyRDD(), sc)
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
+		val job = new TextParser
+		job.wikipedia = sc.parallelize(TestData.wikipediaEntriesForParsing())
+		job.run(sc)
+		val parsedArticles = job
+			.parsedWikipedia
 			.collect
 			.toList
 		val expectedArticles = TestData.parsedWikipediaEntries()
@@ -309,11 +308,11 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Parsed Wikipedia article" should "contain headlines" in {
-		val article = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
-		val parsedArticleText = TextParser
-			.run(List(article).toAnyRDD(), sc)
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
+		val job = new TextParser
+		job.wikipedia = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
+		job.run(sc)
+		val parsedArticleText = job
+			.parsedWikipedia
 			.collect
 			.head
 			.getText()
@@ -323,11 +322,11 @@ class TextParserTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	it should "have exactly this text" in {
-		val article = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
-		val parsedArticleText = TextParser
-			.run(List(article).toAnyRDD(), sc)
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
+		val job = new TextParser
+		job.wikipedia = sc.parallelize(List(TestData.wikipediaEntryWithHeadlines()))
+		job.run(sc)
+		val parsedArticleText = job
+			.parsedWikipedia
 			.collect
 			.head
 			.getText()

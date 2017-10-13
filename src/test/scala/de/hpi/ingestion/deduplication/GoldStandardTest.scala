@@ -16,10 +16,8 @@ limitations under the License.
 
 package de.hpi.ingestion.deduplication
 
-import java.util.UUID
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class GoldStandardTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 	"keyBySingleProperty" should "key a Subject RDD by value of a given property" in {
@@ -46,11 +44,11 @@ class GoldStandardTest extends FlatSpec with Matchers with SharedSparkContext wi
 	}
 
 	"Wikidata and DBpedia" should "be joined" in {
-		val dbpedia = sc.parallelize(TestData.dbpediaList)
-		val wikidata = sc.parallelize(TestData.wikidataList)
-		val input = List(dbpedia).toAnyRDD() ++ List(wikidata).toAnyRDD()
-		val result = GoldStandard.run(input, sc).fromAnyRDD[(UUID, UUID)]().head
+		val job = new GoldStandard
+		job.dbpediaSubjects = sc.parallelize(TestData.dbpediaList)
+		job.wikidataSubjects = sc.parallelize(TestData.wikidataList)
+		job.run(sc)
 		val expectedResult = TestData.joinedDBpediaWikidata(sc)
-		assertRDDEquals(expectedResult, result)
+		assertRDDEquals(expectedResult, job.goldStandard)
 	}
 }

@@ -23,6 +23,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 // scalastyle:off line.size.limit
+// scalastyle:off method.length
 object TestData {
 	val datasource = "testSource"
 	def subject: Subject = Subject.empty(datasource = datasource)
@@ -127,10 +128,6 @@ object TestData {
 		)
 	}
 
-	def input(sc: SparkContext): List[RDD[Any]] = {
-		List(sc.parallelize(testEntities))
-	}
-
 	def output: List[Subject] = {
 		List(
 			Subject(master = null, datasource = datasource, name = Option("entity1")),
@@ -228,3 +225,4 @@ object TestData {
 	}
 }
 // scalastyle:on line.size.limit
+// scalastyle:on method.length

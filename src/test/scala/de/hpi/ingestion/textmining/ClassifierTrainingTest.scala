@@ -19,7 +19,6 @@ package de.hpi.ingestion.textmining
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.deduplication.models.SimilarityMeasureStats
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
@@ -28,16 +27,13 @@ import org.apache.spark.sql.SparkSession
 class ClassifierTrainingTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Run" should "return statistics and a possible model" in {
-		val input = List(sc.parallelize(TestData.extendedClassifierFeatureEntries(10))).toAnyRDD()
-		val List(stats, model) = ClassifierTraining.run(input, sc)
-		val simStats = stats
-			.asInstanceOf[RDD[SimilarityMeasureStats]]
-			.first
-			.copy(id = null, comment = None, yaxis = None)
-		val modelOpt = model.asInstanceOf[RDD[Option[PipelineModel]]].first
+		val job = new ClassifierTraining
+		job.featureEntries = sc.parallelize(TestData.extendedClassifierFeatureEntries(10))
+		job.run(sc)
+		val simStats = job.similarityMeasureStats.first.copy(id = null, comment = None, yaxis = None)
 		val expectedStats = TestData.simMeasureStats()
 		simStats shouldEqual expectedStats
-		modelOpt should not be empty
+		job.model should not be empty
 	}
 
 	"Statistics" should "be calculated" in {

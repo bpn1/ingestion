@@ -17,19 +17,17 @@ limitations under the License.
 package de.hpi.ingestion.textmining.re
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class CooccurrenceExportTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Nodes and Edges" should "be extracted" in {
-		val cooccurrences = sc.parallelize(TestData.exportCooccurrences())
-		val dbpediaRelations = sc.parallelize(TestData.exportDBpediaRelations())
-		val input = List(cooccurrences).toAnyRDD() ++ List(dbpediaRelations).toAnyRDD()
-		val List(nodes, edges) = CooccurrenceExport.run(input, sc)
-			.fromAnyRDD[String]()
-			.map(_.collect.toSet)
+		val job = new CooccurrenceExport
+		job.cooccurrences = sc.parallelize(TestData.exportCooccurrences())
+		job.relations = sc.parallelize(TestData.exportDBpediaRelations())
+		job.run(sc)
+		val List(nodes, edges) = List(job.nodes, job.edges).map(_.collect.toSet)
 		val expectedNodes = TestData.nodes()
 		val expectedEdges = TestData.edges()
 		nodes shouldEqual expectedNodes

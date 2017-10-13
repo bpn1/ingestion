@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.re
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import de.hpi.ingestion.textmining.models.Sentence
 import de.hpi.ingestion.textmining.tokenizer.{CleanWhitespaceTokenizer, IngestionTokenizer, SentenceTokenizer}
@@ -45,17 +44,14 @@ class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with M
 	}
 
 	"Wikipedia articles" should "be split into exactly these Sentences with these entities" in {
-		val entries = sc.parallelize(
+		val job = new RelationSentenceParser
+		job.parsedWikipedia = sc.parallelize(
 			(Set(TestData.bigLinkExtenderParsedEntry()) ++ TestData.linkExtenderExtendedParsedEntry()).toList
 		)
-		val relations = sc.parallelize(TestData.relationList())
-		val wikidata = sc.parallelize(TestData.wikiDataCompanies())
-		val input = List(entries).toAnyRDD() ++ List(relations).toAnyRDD() ++ List(wikidata).toAnyRDD()
-		val sentences = RelationSentenceParser.run(input, sc)
-			.fromAnyRDD[Sentence]()
-			.head
-			.collect
-			.toList
+		job.relations = sc.parallelize(TestData.relationList())
+		job.wikidataEntries = sc.parallelize(TestData.wikiDataCompanies())
+		job.run(sc)
+		val sentences = job.sentences.collect.toList
 		val expectedSentences =  TestData.alternativeSentenceListFiltered()
 		sentences shouldEqual expectedSentences
 	}

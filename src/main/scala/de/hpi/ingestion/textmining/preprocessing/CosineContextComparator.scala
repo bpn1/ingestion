@@ -18,8 +18,7 @@ package de.hpi.ingestion.textmining.preprocessing
 
 import java.io.{BufferedReader, InputStream, InputStreamReader}
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SplitSparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -31,45 +30,119 @@ import scala.collection.mutable
   * Calculates the cosine similarity (context score) for each pair of `Link` alias and page it may refer to. It combines
   * it with the links score and entity score, which leads to the respective `FeatureEntry`.
   */
-object CosineContextComparator extends SplitSparkJob {
+class CosineContextComparator extends SparkJob {
+	import CosineContextComparator._
 	appName = "Cosine Context Comparator"
 	configFile = "textmining.xml"
 	var aliasPageScores = Map.empty[String, List[(String, Double, Double)]]
 
-	// $COVERAGE-OFF$
-	var docFreqStreamFunction: String => InputStream = AliasTrieSearch.hdfsFileStream _
+	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+	var aliases: RDD[Alias] = _
+	var articleTfidf: RDD[ArticleTfIdf] = _
+	var numDocuments: Long = 0
+	var featureEntryList: List[RDD[FeatureEntry]] = Nil
 
+
+	// $COVERAGE-OFF$
+	var docFreqStreamFunction: String => InputStream = AliasTrieSearch.hdfsFileStream
 	/**
 	  * Loads Parsed Wikipedia entries with their term frequencies, the aliases with their pages and occurrences,
 	  * the tfidf vectors for the Wikipedia articles and the total number of articles in the parsedwikipedia table
 	  * from the Cassandra.
-	  *
-	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * @param sc Spark Context used to load the RDDs
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
-		val aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
-		val tfArticles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		val articleCount = sc.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
-		List(articleTfidf, aliases, tfArticles, articleCount).flatMap(List(_).toAnyRDD())
+	override def load(sc: SparkContext): Unit = {
+		articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
+		aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
+		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+		numDocuments = sc
+			.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
+			.first
+			.count
+			.toLong
 	}
 
 	/**
 	  * Saves the Feature Entries to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[FeatureEntry]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("featureTable"))
+	override def save(sc: SparkContext): Unit = {
+		featureEntryList.foreach(_.saveToCassandra(settings("keyspace"), settings("featureTable")))
 	}
 	// $COVERAGE-ON$
+
+	/**
+	  * Splits the input articles into 10 partitions which will be processed sequentially. Also removes any not needed
+	  * data from the Parsed Wikipedia Entries.
+	  * @return Collection of Parsed Wikipedia Entry RDDs to be processed sequentially.
+	  */
+	def splitInput(): List[RDD[ParsedWikipediaEntry]] = {
+		parsedWikipedia
+			.map(entry =>
+				ParsedWikipediaEntry(
+					title = entry.title,
+					text = entry.text,
+					linkswithcontext = entry.linkswithcontext,
+					triealiases = entry.triealiases))
+			.randomSplit(Array.fill(settings("numberArticlePartitions").toInt)(1.0))
+			.toList
+	}
+
+	/**
+	  * Calculates cosine similarity (context score) for every pair of link alias and page it may refer to.
+	  * It combines it with the links score and entity score, which leads to a FeatureEntry.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		if(aliasPageScores.isEmpty) {
+			aliasPageScores = collectAliasPageScores(aliases)
+		}
+		val tfidfTuples = articleTfidf.flatMap(ArticleTfIdf.unapply)
+		val tokenizer = IngestionTokenizer(true, true)
+		val articlesPartitions = splitInput()
+		featureEntryList = articlesPartitions.map { articles =>
+			val contextTfs = transformLinkContextTfs(articles, tokenizer, settings("contextSize").toInt)
+			val contextTfidf = calculateTfidf(
+				contextTfs,
+				numDocuments,
+				defaultIdf(numDocuments),
+				docFreqStreamFunction,
+				settings("dfFile"))
+			compareLinksWithArticles(contextTfidf, sc.broadcast(aliasPageScores), tfidfTuples)
+		}
+	}
+}
+
+object CosineContextComparator {
+	/**
+	  * Computes scores for an alias being a link and referring to a specific page for all aliases.
+	  *
+	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
+	  * @return aliases with link score, pages and respective page scores
+	  */
+	def computeAliasPageScores(aliases: RDD[Alias]): RDD[(String, List[(String, Double, Double)])] = {
+		aliases
+			.filter(alias => alias.linkoccurrences.isDefined && alias.totaloccurrences.isDefined)
+			.flatMap { alias =>
+				val linkScore = alias.linkoccurrences.get.toDouble / alias.totaloccurrences.get.toDouble
+				val numPages = alias.pages.values.sum.toDouble
+				val pageScores = alias.pages.mapValues(_.toDouble / numPages)
+				// Although linkScore is the same in each list entry, it is stored multiple times for easier processing.
+				alias.pages.keySet.map(page => (alias.alias, List((page, linkScore, pageScores(page)))))
+			}.reduceByKey(_ ++ _)
+	}
+
+	/**
+	  * Computes scores for an Alias being a link and referring to a specific page for all aliases and collects the data
+	  * into a Map.
+	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
+	  * @return Map containing link score, pages and respective page scores for each alias
+	  */
+	def collectAliasPageScores(aliases: RDD[Alias]): Map[String, List[(String, Double, Double)]] = {
+		computeAliasPageScores(aliases)
+			.collect
+			.toMap
+	}
 
 	/**
 	  * Calculates the inverse document frequency (idf) for a given Document Frequency and the number of documents used
@@ -120,59 +193,26 @@ object CosineContextComparator extends SplitSparkJob {
 	}
 
 	/**
-	  * Transforms articles into a format needed to calculate the tfIdf for every article.
-	  *
-	  * @param articles RDD of parsed Wikipedia articles with known term frequencies
-	  * @return RDD of tuples containing the page name and the tfIdfs of every term on that page
-	  */
-	def transformArticleTfs(articles: RDD[ParsedWikipediaEntry]): RDD[(String, Bag[String, Int])] = {
-		articles.map(entry => (entry.title, Bag.extract(entry.context)))
-	}
-
-	/**
-	  * Transforms links into a format needed to calculate the tfIdf for every link.
-	  *
-	  * @param articles RDD of parsed Wikipedia articles containing the links and their contexts
-	  * @param tokenizer tokenizer used to generate the contexts of the Trie Aliases
-	  * @return RDD of tuples containing the link and the tfIdfs of every term in its context
-	  */
-	def transformLinkContextTfs(
-		articles: RDD[ParsedWikipediaEntry],
-		tokenizer: IngestionTokenizer
-	): RDD[(Link, Bag[String, Int])] = {
-		articles
-			.flatMap { entry =>
-				val articleTokens = tokenizer.onlyTokenizeWithOffset(entry.getText())
-				val trieAliasLinks = entry.triealiases.map { trieAlias =>
-					val trieLink = trieAlias.toLink().copy(article = Option(entry.title))
-					val context = TermFrequencyCounter.extractContext(articleTokens, trieAlias.toLink(), tokenizer)
-					(trieLink, context)
-				}
-				val links = entry.linkswithcontext.map { textLink =>
-					val context = Bag.extract(textLink.context)
-					(textLink.copy(article = Option(entry.title), context = Map()), context)
-				}
-				trieAliasLinks ++ links
-			}
-	}
-
-	/**
 	  * Calculates the tfIdf for every term.
 	  *
 	  * @param termFrequencies RDD of terms with their identifier and raw term frequency in the form
 	  *                        (term, (identifier, raw term frequency))
-	  * @param numDocuments    number of documents used to determine the Document Frequencies
-	  * @param defaultIdf      default idf value for terms without a document frequency above the threshold
+	  * @param numDocuments number of documents used to determine the Document Frequencies
+	  * @param defaultIdf default idf value for terms without a document frequency above the threshold
+	  * @param docFreqStreamFunction function opening a hdfs file stream to a given file
+	  * @param dfFile file containing the document frequencies
 	  * @tparam T type of the identifier for each term
 	  * @return RDD of tuples containing identifiers and a Map with the tfidf for each term
 	  */
 	def calculateTfidf[T](
 		termFrequencies: RDD[(T, Bag[String, Int])],
 		numDocuments: Long,
-		defaultIdf: Double
+		defaultIdf: Double,
+		docFreqStreamFunction: String => InputStream,
+		dfFile: String
 	): RDD[(T, Map[String, Double])] = {
 		termFrequencies.mapPartitions({ partition =>
-			val idfMap = inverseDocumentFrequencies(numDocuments)
+			val idfMap = inverseDocumentFrequencies(numDocuments, docFreqStreamFunction, dfFile)
 			partition.map { case (identifier, bagOfWords) =>
 				val tfidfMap = bagOfWords.getCounts().map { case (token, tf) =>
 					val idf = idfMap.getOrElse(token, defaultIdf)
@@ -185,33 +225,28 @@ object CosineContextComparator extends SplitSparkJob {
 	}
 
 	/**
-	  * Computes scores for an alias being a link and referring to a specific page for all aliases.
-	  *
-	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
-	  * @return aliases with link score, pages and respective page scores
+	  * Reads the document frequencies from the HDFS, calculates the inverse document frequencies and returns them
+	  * as Map.
+	  * @param numDocs number of documents used to create the document frequency data
+	  * @param docFreqStreamFunction function opening a hdfs file stream to a given file
+	  * @param dfFile file containing the document frequencies
+	  * @return Map of every term and its inverse document frequency
 	  */
-	def computeAliasPageScores(aliases: RDD[Alias]): RDD[(String, List[(String, Double, Double)])] = {
-		aliases
-			.filter(alias => alias.linkoccurrences.isDefined && alias.totaloccurrences.isDefined)
-			.flatMap { alias =>
-				val linkScore = alias.linkoccurrences.get.toDouble / alias.totaloccurrences.get.toDouble
-				val numPages = alias.pages.values.sum.toDouble
-				val pageScores = alias.pages.mapValues(_.toDouble / numPages)
-				// Although linkScore is the same in each list entry, it is stored multiple times for easier processing.
-				alias.pages.keySet.map(page => (alias.alias, List((page, linkScore, pageScores(page)))))
-			}.reduceByKey(_ ++ _)
-	}
-
-	/**
-	  * Computes scores for an Alias being a link and referring to a specific page for all aliases and collects the data
-	  * into a Map.
-	  * @param aliases aliases with their occurrence frequencies and pages they may refer to
-	  * @return Map containing link score, pages and respective page scores for each alias
-	  */
-	def collectAliasPageScores(aliases: RDD[Alias]): Map[String, List[(String, Double, Double)]] = {
-		computeAliasPageScores(aliases)
-			.collect
-			.toMap
+	def inverseDocumentFrequencies(
+		numDocs: Long,
+		docFreqStreamFunction: String => InputStream,
+		dfFile: String
+	): Map[String, Double] = {
+		val docfreqStream = docFreqStreamFunction(dfFile)
+		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
+		val idfMap = mutable.Map[String, Double]()
+		var line = reader.readLine()
+		while(line != null) {
+			val Array(count, token) = line.split("\t", 2)
+			idfMap(token) = calculateIdf(count.toInt, numDocs)
+			line = reader.readLine()
+		}
+		idfMap.toMap
 	}
 
 	/** Adds the cosine similarity feature value to the link and page score feature values.
@@ -277,71 +312,46 @@ object CosineContextComparator extends SplitSparkJob {
 	}
 
 	/**
-	  * Reads the document frequencies from the HDFS, calculates the inverse document frequencies and returns them
-	  * as Map.
+	  * Transforms articles into a format needed to calculate the tfIdf for every article.
 	  *
-	  * @param numDocs number of documents used to create the document frequency data
-	  * @return Map of every term and its inverse document frequency
+	  * @param articles RDD of parsed Wikipedia articles with known term frequencies
+	  * @return RDD of tuples containing the page name and the tfIdfs of every term on that page
 	  */
-	def inverseDocumentFrequencies(numDocs: Long): Map[String, Double] = {
-		val docfreqStream = docFreqStreamFunction(settings("dfFile"))
-		val reader = new BufferedReader(new InputStreamReader(docfreqStream, "UTF-8"))
-		val idfMap = mutable.Map[String, Double]()
-		var line = reader.readLine()
-		while(line != null) {
-			val Array(count, token) = line.split("\t", 2)
-			idfMap(token) = calculateIdf(count.toInt, numDocs)
-			line = reader.readLine()
-		}
-		idfMap.toMap
+	def transformArticleTfs(articles: RDD[ParsedWikipediaEntry]): RDD[(String, Bag[String, Int])] = {
+		articles.map(entry => (entry.title, Bag.extract(entry.context)))
 	}
 
 	/**
-	  * Splits the input articles into 10 partitions which will be processed sequentially. Also removes any not needed
-	  * data from the Parsed Wikipedia Entries.
+	  * Transforms links into a format needed to calculate the tfIdf for every link.
 	  *
-	  * @param input List of RDDs containing the input data
-	  * @param args  arguments of the program
-	  * @return Collection of input RDD Lists to be processed sequentially.
+	  * @param articles RDD of parsed Wikipedia articles containing the links and their contexts
+	  * @param tokenizer tokenizer used to generate the contexts of the Trie Aliases
+	  * @param contextSize number of tokens before and after a match considered as the context
+	  * @return RDD of tuples containing the link and the tfIdfs of every term in its context
 	  */
-	override def splitInput(input: List[RDD[Any]], args: Array[String] = Array()): Traversable[List[RDD[Any]]] = {
-		val List(articlesWithTermFrequencies, aliases, tfidf, articleCount) = input
-		articlesWithTermFrequencies.asInstanceOf[RDD[ParsedWikipediaEntry]]
-			.map(entry =>
-				ParsedWikipediaEntry(
-					title = entry.title,
-					text = entry.text,
-					linkswithcontext = entry.linkswithcontext,
-					triealiases = entry.triealiases))
-			.randomSplit(Array.fill(settings("numberArticlePartitions").toInt)(1.0))
-			.map { articlePartition =>
-				List(tfidf, aliases) ++ List(articlePartition).toAnyRDD() ++ List(articleCount)
+	def transformLinkContextTfs(
+		articles: RDD[ParsedWikipediaEntry],
+		tokenizer: IngestionTokenizer,
+		contextSize: Int
+	): RDD[(Link, Bag[String, Int])] = {
+		articles
+			.flatMap { entry =>
+				val articleTokens = tokenizer.onlyTokenizeWithOffset(entry.getText())
+				val trieAliasLinks = entry.triealiases.map { trieAlias =>
+					val trieLink = trieAlias.toLink().copy(article = Option(entry.title))
+					val context = TermFrequencyCounter.extractContext(
+						articleTokens,
+						trieAlias.toLink(),
+						tokenizer,
+						contextSize)
+					(trieLink, context)
+				}
+				val links = entry.linkswithcontext.map { textLink =>
+					val context = Bag.extract(textLink.context)
+					(textLink.copy(article = Option(entry.title), context = Map()), context)
+				}
+				trieAliasLinks ++ links
 			}
 	}
-
-	/**
-	  * Calculates cosine similarity (context score) for every pair of link alias and page it may refer to.
-	  * It combines it with the links score and entity score, which leads to a FeatureEntry.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val articleTfidf = input.head.asInstanceOf[RDD[ArticleTfIdf]].flatMap(ArticleTfIdf.unapply)
-		val aliases = input(1).asInstanceOf[RDD[Alias]]
-		val linkArticles = input(2).asInstanceOf[RDD[ParsedWikipediaEntry]]
-		val numDocuments = input(3).asInstanceOf[RDD[WikipediaArticleCount]].collect.head.count.toLong
-		if(aliasPageScores.isEmpty) {
-			aliasPageScores = collectAliasPageScores(aliases)
-		}
-
-		val tokenizer = IngestionTokenizer(true, true)
-		val contextTfs = transformLinkContextTfs(linkArticles, tokenizer)
-		val contextTfidf = calculateTfidf(contextTfs, numDocuments, defaultIdf(numDocuments))
-
-		val featureEntries = compareLinksWithArticles(contextTfidf, sc.broadcast(aliasPageScores), articleTfidf)
-		List(featureEntries).toAnyRDD()
-	}
 }
+

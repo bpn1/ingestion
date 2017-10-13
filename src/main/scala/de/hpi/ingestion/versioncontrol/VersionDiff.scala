@@ -24,7 +24,6 @@ import play.api.libs.json._
 import scala.collection.mutable
 import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.implicits.TupleImplicits._
 import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
 
@@ -32,39 +31,59 @@ import de.hpi.ingestion.versioncontrol.models.{HistoryEntry, SubjectDiff}
   * Compares two versions of the Subject table given their TimeUUIDs as command line arguments and writes the
   * differences of each Subject as JSON file to the HDFS.
   */
-object VersionDiff extends SparkJob {
+class VersionDiff extends SparkJob {
+	import VersionDiff._
 	appName = "VersionDiff"
 	val keyspace = "datalake"
 	val tablename = "subject"
 	val outputTablename = "versiondiff"
-	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
+
+	var subjects: RDD[Subject] = _
+	var subjectDiff: RDD[SubjectDiff] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads subjects from the Cassandra.
 	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
 	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](keyspace, tablename)
-		List(subjects.asInstanceOf[RDD[Any]])
+	override def load(sc: SparkContext): Unit = {
+		subjects = sc.cassandraTable[Subject](keyspace, tablename)
 	}
 
 	/**
 	  * Writes the JSON diffs to Cassandra.
-	  * @param output first element is the RDD of JSON diffs
 	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[SubjectDiff]()
-			.head
-			.saveToCassandra(keyspace, outputTablename)
+	override def save(sc: SparkContext): Unit = {
+		subjectDiff.saveToCassandra(keyspace, outputTablename)
 	}
 	// $COVERAGE-ON$
 
+	/**
+	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  * @return List of RDDs containing the output data
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val (oldVersion, newVersion) = versionOrder(UUID.fromString(args(0)), UUID.fromString(args(1)))
+		subjectDiff = subjects
+			.map(retrieveVersions(_, oldVersion, newVersion))
+			.map(historyToDiff(_, oldVersion, newVersion))
+			.filter(_.hasChanges())
+	}
+
+	/**
+	  * Asserts that two versions are given as program arguments.
+	  * @return true if there are at least two arguments provided
+	  */
+	override def assertConditions(): Boolean = {
+		args.length >= 2
+	}
+}
+
+object VersionDiff {
+	val NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L
 	/**
 	  * Extracts the time component of a TimeUUID.
 	  * Source: https://git.io/vSxjU
@@ -127,7 +146,7 @@ object VersionDiff extends SparkJob {
 			if(additions.nonEmpty) jsonObject("+") = Json.toJson(additions)
 			jsonObject.toMap
 		}.filter(_.nonEmpty)
-		.map(Json.toJson(_))
+			.map(Json.toJson(_))
 	}
 
 	/**
@@ -186,32 +205,5 @@ object VersionDiff extends SparkJob {
 		} else {
 			(version1, version2)
 		}
-	}
-
-	/**
-	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
-	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val (oldVersion, newVersion) = versionOrder(UUID.fromString(args(0)), UUID.fromString(args(1)))
-		input.fromAnyRDD[Subject]()
-			.map(rdd =>
-				rdd
-					.map(retrieveVersions(_, oldVersion, newVersion))
-					.map(historyToDiff(_, oldVersion, newVersion))
-					.filter(_.hasChanges))
-			.toAnyRDD()
-	}
-
-	/**
-	  * Asserts that two versions are given as program arguments.
-	  * @param args arguments of the program
-	  * @return true if there are at least two arguments provided
-	  */
-	override def assertConditions(args: Array[String]): Boolean = {
-		args.length >= 2
 	}
 }

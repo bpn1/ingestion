@@ -22,7 +22,6 @@ import de.hpi.ingestion.framework.SparkJob
 import com.datastax.spark.connector._
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.rdd.RDD
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.classification.RandomForestClassifier
@@ -34,42 +33,149 @@ import org.apache.spark.SparkContext
 /**
   * Trains a `RandomForestModel` with `FeatureEntries` and evaluates it in terms of precision, recall and f-score.
   */
-object ClassifierTraining extends SparkJob {
+class ClassifierTraining extends SparkJob {
+	import ClassifierTraining._
 	appName = "Classifier Training"
 	configFile = "textmining.xml"
 	sparkOptions("spark.yarn.executor.memoryOverhead") = "8192"
 
+	var featureEntries: RDD[FeatureEntry] = _
+	var similarityMeasureStats: RDD[SimilarityMeasureStats] = _
+	var model: Option[PipelineModel] = None
+
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Feature entries from the Cassandra.
-	  *
 	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val entries = sc.cassandraTable[FeatureEntry](settings("keyspace"), settings("companyFeatureEntries"))
-		List(entries).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		featureEntries = sc.cassandraTable[FeatureEntry](settings("keyspace"), settings("companyFeatureEntries"))
 	}
 
 	/**
 	  * Saves Random Forest Model to the HDFS.
-	  *
-	  * @param output List of RDDs containing the output of the job
 	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val List(stats, model) = output
-		stats
-			.asInstanceOf[RDD[SimilarityMeasureStats]]
-			.saveToCassandra(settings("keyspace"), settings("simMeasureStatsTable"))
-		model
-			.asInstanceOf[RDD[Option[PipelineModel]]]
-			.first
-			.foreach(_.save(s"wikipedia_tuned_df_randomforest_${System.currentTimeMillis()}"))
+	override def save(sc: SparkContext): Unit = {
+		similarityMeasureStats.saveToCassandra(settings("keyspace"), settings("simMeasureStatsTable"))
+		model.foreach(_.save(s"wikipedia_tuned_df_randomforest_${System.currentTimeMillis()}"))
 	}
 	// $COVERAGE-ON$
+
+	/**
+	  * Partitions the entries to train and test a Classification model.
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val session = SparkSession.builder().getOrCreate()
+		val (simStats, pipelineModel) = crossValidateAndEvaluate(
+			featureEntries,
+			3,
+			randomForestDFModel(),
+			session)
+		model = pipelineModel
+		similarityMeasureStats = sc.parallelize(List(simStats))
+	}
+}
+
+object ClassifierTraining {
+	/**
+	  * Calculates Precision, Recall and F-Score of the given prediction results.
+	  * @param pnCount Map containing the counts of tp, fp, tn and fn.
+	  * @param beta beta value used for the F-Score.
+	  * @return Precision, Recall and F-Score
+	  */
+	def calculatePrecisionRecall(pnCount: Map[String, Int], beta: Double = 1.0): PrecisionRecallDataTuple = {
+		val tp = pnCount.getOrElse("tp", 0)
+		val fp = pnCount.getOrElse("fp", 0)
+		val fn = pnCount.getOrElse("fn", 0)
+		val precision = tp.toDouble / (tp + fp).toDouble
+		val recall = tp.toDouble / (tp + fn).toDouble
+		val fMeasure = ((1.0 + beta * beta) * precision * recall) / ((beta * beta * precision) + recall)
+		PrecisionRecallDataTuple(1.0, precision, recall, fMeasure)
+	}
+
+	/**
+	  * Calculates Precision, Recall and F-Score of the given prediction results.
+	  * @param predictionAndLabels RDD containing the prediction results in the format of (prediction, label) tuples.
+	  * @param beta beta value used for the F-Score.
+	  * @return Precision, Recall and F-Score
+	  */
+	def calculateStatistics(
+		predictionAndLabels: RDD[(Double, Double)],
+		beta: Double = 1.0
+	): PrecisionRecallDataTuple = {
+		val pnCount = predictionAndLabels
+			.map { case (prediction, label) =>
+				val trueOrFalse = if(prediction == label) "t" else "f"
+				val positiveOrNegative = if(prediction == 1.0) "p" else "n"
+				(s"$trueOrFalse$positiveOrNegative", 1)
+			}.reduceByKey(_ + _)
+			.collect
+			.toMap
+		calculatePrecisionRecall(pnCount, beta)
+	}
+
+	/**
+	  * Calculates Precision, Recall and F-Score of the given prediction results. The Precision and Recall are adjusted
+	  * for collisions of predicted entities (multiple entities at the same offset in the same articles that were
+	  * predicted to be true).
+	  * @param predictionAndLabels RDD containing the prediction results in the format of (prediction, label) tuples.
+	  * @param beta beta value used for the F-Score.
+	  * @return Precision, Recall and F-Score
+	  */
+	def calculateAdvancedStatistics(
+		predictionAndLabels: RDD[((String, Int), List[(Double, Double)])],
+		beta: Double = 1.0
+	): PrecisionRecallDataTuple = {
+		val pnCount = predictionAndLabels
+			.reduceByKey(_ ++ _)
+			.values
+			.flatMap { predictionList =>
+				val (positives, negatives) = predictionList.partition(_._1 == 1.0)
+				val multipleMatches = positives.length > 1
+				val negativeCount = negatives.map { case (prediction, label) =>
+					(trueOrFalsePrediction(prediction, label, "n"), 1)
+				}
+				val positiveCount = positives.map {
+					case (prediction, label) if multipleMatches => ("fn", 1)
+					case (prediction, label) if !multipleMatches => (trueOrFalsePrediction(prediction, label, "p"), 1)
+				}
+				positiveCount ++ negativeCount
+			}.reduceByKey(_ + _)
+			.collect
+			.toMap
+		calculatePrecisionRecall(pnCount, beta)
+	}
+
+	/**
+	  * Parses a prediction and its label to a key used for the precision and recall calculation.
+	  * @param prediction prediction of the entry
+	  * @param label label of the entry
+	  * @param statisticLabel label used for the entry (either p for positive or n for negative)
+	  * @return key used for this entry
+	  */
+	def trueOrFalsePrediction(prediction: Double, label: Double, statisticLabel: String): String = {
+		val trueOrFalse = if(prediction == label) "t" else "f"
+		s"$trueOrFalse$statisticLabel"
+	}
+
+	/**
+	  * Averages a List of Precision Recall Data Tuples. Uses the Threshold of the first element or 1.0 as default.
+	  *
+	  * @param stats List of input statistics to average
+	  * @return Precision Recall Data Tuples with the mean precision, recall & fscore
+	  */
+	def averageStatistics(stats: List[PrecisionRecallDataTuple]): PrecisionRecallDataTuple = {
+		val n = stats.length
+		val threshold = stats.headOption.map(_.threshold).getOrElse(1.0)
+		stats.map { case PrecisionRecallDataTuple(statThreshold, precision, recall, fscore) =>
+			(precision, recall, fscore)
+		}.unzip3 match {
+			case (precision, recall, fscore) =>
+				PrecisionRecallDataTuple(threshold, precision.sum / n, recall.sum / n, fscore.sum / n)
+		}
+	}
 
 	/**
 	  * Uses the input data to train a Naive Bayes model.
@@ -189,87 +295,6 @@ object ClassifierTraining extends SparkJob {
 	}
 
 	/**
-	  * Parses a prediction and its label to a key used for the precision and recall calculation.
-	  * @param prediction prediction of the entry
-	  * @param label label of the entry
-	  * @param statisticLabel label used for the entry (either p for positive or n for negative)
-	  * @return key used for this entry
-	  */
-	def trueOrFalsePrediction(prediction: Double, label: Double, statisticLabel: String): String = {
-		val trueOrFalse = if(prediction == label) "t" else "f"
-		s"$trueOrFalse$statisticLabel"
-	}
-
-	/**
-	  * Calculates Precision, Recall and F-Score of the given prediction results.
-	  * @param predictionAndLabels RDD containing the prediction results in the format of (prediction, label) tuples.
-	  * @param beta beta value used for the F-Score.
-	  * @return Precision, Recall and F-Score
-	  */
-	def calculateStatistics(
-		predictionAndLabels: RDD[(Double, Double)],
-		beta: Double = 1.0
-	): PrecisionRecallDataTuple = {
-		val pnCount = predictionAndLabels
-			.map { case (prediction, label) =>
-				val trueOrFalse = if(prediction == label) "t" else "f"
-				val positiveOrNegative = if(prediction == 1.0) "p" else "n"
-				(s"$trueOrFalse$positiveOrNegative", 1)
-			}.reduceByKey(_ + _)
-			.collect
-			.toMap
-		calculatePrecisionRecall(pnCount, beta)
-	}
-
-	/**
-	  * Calculates Precision, Recall and F-Score of the given prediction results. The Precision and Recall are adjusted
-	  * for collisions of predicted entities (multiple entities at the same offset in the same articles that were
-	  * predicted to be true).
-	  * @param predictionAndLabels RDD containing the prediction results in the format of (prediction, label) tuples.
-	  * @param beta beta value used for the F-Score.
-	  * @return Precision, Recall and F-Score
-	  */
-	def calculateAdvancedStatistics(
-		predictionAndLabels: RDD[((String, Int), List[(Double, Double)])],
-		beta: Double = 1.0
-	): PrecisionRecallDataTuple = {
-		val pnCount = predictionAndLabels
-			.reduceByKey(_ ++ _)
-			.values
-			.flatMap { predictionList =>
-				val (positives, negatives) = predictionList.partition(_._1 == 1.0)
-				val multipleMatches = positives.length > 1
-				val negativeCount = negatives.map { case (prediction, label) =>
-					(trueOrFalsePrediction(prediction, label, "n"), 1)
-				}
-				val positiveCount = positives.map {
-					case (prediction, label) if multipleMatches => ("fn", 1)
-					case (prediction, label) if !multipleMatches => (trueOrFalsePrediction(prediction, label, "p"), 1)
-				}
-				positiveCount ++ negativeCount
-			}.reduceByKey(_ + _)
-			.collect
-			.toMap
-		calculatePrecisionRecall(pnCount, beta)
-	}
-
-	/**
-	  * Calculates Precision, Recall and F-Score of the given prediction results.
-	  * @param pnCount Map containing the counts of tp, fp, tn and fn.
-	  * @param beta beta value used for the F-Score.
-	  * @return Precision, Recall and F-Score
-	  */
-	def calculatePrecisionRecall(pnCount: Map[String, Int], beta: Double = 1.0): PrecisionRecallDataTuple = {
-		val tp = pnCount.getOrElse("tp", 0)
-		val fp = pnCount.getOrElse("fp", 0)
-		val fn = pnCount.getOrElse("fn", 0)
-		val precision = tp.toDouble / (tp + fp).toDouble
-		val recall = tp.toDouble / (tp + fn).toDouble
-		val fMeasure = ((1.0 + beta * beta) * precision * recall) / ((beta * beta * precision) + recall)
-		PrecisionRecallDataTuple(1.0, precision, recall, fMeasure)
-	}
-
-	/**
 	  * Cross validates a Random Forest model with the input data and the given number of folds.
 	  *
 	  * @param data     input data used to train the classifier
@@ -317,23 +342,6 @@ object ClassifierTraining extends SparkJob {
 	}
 
 	/**
-	  * Averages a List of Precision Recall Data Tuples. Uses the Threshold of the first element or 1.0 as default.
-	  *
-	  * @param stats List of input statistics to average
-	  * @return Precision Recall Data Tuples with the mean precision, recall & fscore
-	  */
-	def averageStatistics(stats: List[PrecisionRecallDataTuple]): PrecisionRecallDataTuple = {
-		val n = stats.length
-		val threshold = stats.headOption.map(_.threshold).getOrElse(1.0)
-		stats.map { case PrecisionRecallDataTuple(statThreshold, precision, recall, fscore) =>
-			(precision, recall, fscore)
-		}.unzip3 match {
-			case (precision, recall, fscore) =>
-				PrecisionRecallDataTuple(threshold, precision.sum / n, recall.sum / n, fscore.sum / n)
-		}
-	}
-
-	/**
 	  * Trains and cross validates a Random Forest Model.
 	  *
 	  * @param data data used to train and test the model
@@ -356,21 +364,5 @@ object ClassifierTraining extends SparkJob {
 			comment = Option(s"RF CV $numFolds folds"),
 			yaxis = Option("P/R/F1"))
 		(results, model)
-	}
-
-	/**
-	  * Partitions the entries to train and test a Classification model.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val session = SparkSession.builder().getOrCreate()
-		val entries = input.fromAnyRDD[FeatureEntry]().head
-		val (results, model) = crossValidateAndEvaluate(entries, 3, randomForestDFModel(), session)
-		val modelOption = sc.parallelize(List(Option(model)))
-		List(sc.parallelize(List(results))).toAnyRDD() ++ List(modelOption).toAnyRDD()
 	}
 }

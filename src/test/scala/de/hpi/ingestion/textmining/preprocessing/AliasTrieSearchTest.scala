@@ -17,14 +17,12 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.scalatest.{FlatSpec, Matchers}
 
 class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext {
-
 	"Alias matches" should "be found" in {
 		val tokenizer = IngestionTokenizer()
 		val trie = TestData.dataTrie(tokenizer)
@@ -47,17 +45,14 @@ class AliasTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext
 	}
 
 	"Wikipedia entries" should "be enriched with found aliases" in {
-		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-
+		val job = new AliasTrieSearch
 		val testTrieStreamFunction = TestData.fullTrieStream() _
-		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
-		val inputEntry = sc.parallelize(Seq(TestData.parsedEntry()))
-		val searchResult = AliasTrieSearch.run(List(inputEntry).toAnyRDD(), sc)
-		val enrichedEntry = searchResult.fromAnyRDD[ParsedWikipediaEntry]().head.collect.head
+		job.trieStreamFunction = testTrieStreamFunction
+		job.parsedWikipedia = sc.parallelize(Seq(TestData.parsedEntry()))
+		job.run(sc)
+		val enrichedEntry = job.parsedWikipediaWithAliases.collect.head
 		val expectedAliases = TestData.parsedEntryFoundAliases()
 		enrichedEntry.foundaliases.toSet shouldEqual expectedAliases
-
-		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
 	}
 
 	"Trie aliases" should "be extracted" in {

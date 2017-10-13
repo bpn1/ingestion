@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import org.scalatest.{FlatSpec, Matchers}
@@ -68,31 +67,25 @@ class LinkCleanerTest extends FlatSpec with SharedSparkContext with Matchers {
 	}
 
 	"Wikipedia articles without links" should "be removed" in {
-		val articles = sc.parallelize(TestData.parsedArticlesWithoutLinksSet().toList)
-		val cleanedArticles = LinkCleaner.run(List(articles).toAnyRDD(), sc).fromAnyRDD[ParsedWikipediaEntry]().head
-		cleanedArticles shouldBe empty
+		val job = new LinkCleaner
+		job.parsedWikipedia = sc.parallelize(TestData.parsedArticlesWithoutLinksSet().toList)
+		job.run(sc)
+		job.cleanedParsedWikipedia shouldBe empty
 	}
 
 	"Cleaned Wikipedia articles from incomplete article set" should "be empty" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaSetWithoutText().toList)
-		val cleanedArticles = LinkCleaner.run(List(articles).toAnyRDD(), sc).fromAnyRDD[ParsedWikipediaEntry]().head
-		cleanedArticles shouldBe empty
-	}
-
-	they should "not contain links" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaSetWithoutText().toList)
-		LinkCleaner.run(List(articles).toAnyRDD(), sc)
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
-			.collect
-			.foreach(_.allLinks() shouldBe empty)
+		val job = new LinkCleaner
+		job.parsedWikipedia = sc.parallelize(TestData.parsedWikipediaSetWithoutText().toList)
+		job.run(sc)
+		job.cleanedParsedWikipedia shouldBe empty
 	}
 
 	"Cleaned Wikipedia articles" should "be exactly these articles" in {
-		val articles = sc.parallelize(TestData.closedParsedWikipediaSet().toList)
-		val cleanedArticles = LinkCleaner.run(List(articles).toAnyRDD(), sc)
-			.fromAnyRDD[ParsedWikipediaEntry]()
-			.head
+		val job = new LinkCleaner
+		job.parsedWikipedia = sc.parallelize(TestData.closedParsedWikipediaSet().toList)
+		job.run(sc)
+		val cleanedArticles = job
+			.cleanedParsedWikipedia
 			.collect
 			.toSet
 		cleanedArticles shouldEqual TestData.cleanedClosedParsedWikipediaSet()

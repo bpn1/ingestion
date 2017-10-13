@@ -17,6 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.datalake
 
 import java.io.{ByteArrayOutputStream, PrintStream}
+
 import scala.collection.JavaConversions._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -24,7 +25,6 @@ import com.datastax.spark.connector._
 import com.github.powerlibraries.io.In
 import de.hpi.ingestion.datalake.models.{DLImportEntity, Subject, Version}
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.companies.algo.classifier.AClassifier
 import de.hpi.companies.algo.Tag
 
@@ -45,43 +45,31 @@ abstract case class DataLakeImportImplementation[T <: DLImportEntity](
 ) extends DataLakeImport[T] with SparkJob {
 	configFile = "datalake_import.xml"
 
+	var inputEntities: RDD[T] = _
+	var subjects: RDD[Subject] = _
+
 	// $COVERAGE-OFF$
 	/**
 	  * Writes the Subjects to the outputTable table in keyspace outputKeyspace.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
+	  * @param sc SparkContext to be used for the job
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Subject]()
-			.head
-			.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
+	override def save(sc: SparkContext): Unit = {
+		subjects.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
 	}
 	// $COVERAGE-ON$
 
 	/**
 	  * Filters the input entities and then transforms them to Subjects.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
+	  * @param sc Spark Context used to e.g. broadcast variables
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
+	override def run(sc: SparkContext): Unit = {
 		val version = Version(appName, dataSources, sc, false, settings.get("outputTable"))
 		val mapping = sc.broadcast(normalizationSettings)
 		val strategies = sc.broadcast(sectorSettings)
 		val classifier = this.classifier
-		input
-			.fromAnyRDD[T]()
-			.map(rdd =>
-				rdd
-					.filter(filterEntities)
-					.map((entity: T) =>
-						translateToSubject(entity, version, mapping.value, strategies.value, classifier)))
-			.toAnyRDD()
+		subjects = inputEntities
+			.filter(filterEntities)
+			.map((entity: T) => translateToSubject(entity, version, mapping.value, strategies.value, classifier))
 	}
 
 	override def filterEntities(entity: T): Boolean = true

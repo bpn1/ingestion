@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.nel
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.TrieAlias
 import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch
 import de.hpi.ingestion.textmining.{TestData => TextTestData}
@@ -26,28 +25,15 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class ArticleTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext {
 	"Found aliases" should "be exactly these aliases" in {
-		val oldTrieStreamFunction = AliasTrieSearch.trieStreamFunction
-		val testTrieStreamFunction = TextTestData.fullTrieStream("/spiegel/triealiases") _
-		AliasTrieSearch.trieStreamFunction = testTrieStreamFunction
+		val job = new ArticleTrieSearch
+		job.trieStreamFunction = TextTestData.fullTrieStream("/spiegel/triealiases")
+		job.nelArticles = sc.parallelize(TestData.aliasSearchArticles())
+		job.run(sc)
+		job.foundAliases.collect.toSet shouldEqual TestData.foundTrieAliases()
 
-		val articles1 = TestData.aliasSearchArticles()
-		val articles2 = TestData.realAliasSearchArticles()
-		val input1 = List(sc.parallelize(articles1)).toAnyRDD()
-		val input2 = List(sc.parallelize(articles2)).toAnyRDD()
-		val foundAliases1 = ArticleTrieSearch.run(input1, sc)
-			.fromAnyRDD[(String, List[TrieAlias])]()
-			.head
-			.collect
-			.toSet
-		val foundAliases2 = ArticleTrieSearch.run(input2, sc)
-			.fromAnyRDD[(String, List[TrieAlias])]()
-			.head
-			.collect
-			.toSet
-		foundAliases1 shouldEqual TestData.foundTrieAliases()
-		foundAliases2 shouldEqual TestData.realFoundTrieAliases()
-
-		AliasTrieSearch.trieStreamFunction = oldTrieStreamFunction
+		job.nelArticles = sc.parallelize(TestData.realAliasSearchArticles())
+		job.run(sc)
+		job.foundAliases.collect.toSet shouldEqual TestData.realFoundTrieAliases()
 	}
 
 	"Enriched articles" should "be exactly these articles" in {

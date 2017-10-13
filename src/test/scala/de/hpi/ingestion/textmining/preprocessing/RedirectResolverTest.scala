@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import de.hpi.ingestion.textmining.models.{ParsedWikipediaEntry, Redirect}
 import org.apache.spark.rdd.RDD
@@ -56,18 +55,12 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 	}
 
 	"Redirect resolver" should "resolve all redirects with self found redirects" in {
-		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
-		val emptyRedirectsMap = sc.parallelize(Map[String, String]().toList)
-		val input = List(unresolvedEntries).toAnyRDD() ++ List(emptyRedirectsMap).toAnyRDD()
-		val output = RedirectResolver.run(input, sc)
-		val resolvedEntries = output.head
-			.asInstanceOf[RDD[ParsedWikipediaEntry]]
-			.collect
-			.toSet
-		val redirects = output(1)
-			.asInstanceOf[RDD[Redirect]]
-			.collect
-			.toSet
+		val job = new RedirectResolver
+		job.parsedWikipedia = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
+		job.wikipediaRedirects = sc.parallelize(Map[String, String]().toList.map(Redirect.tupled))
+		job.run(sc)
+		val resolvedEntries = job.resolvedParsedWikipedia.collect.toSet
+		val redirects = job.savedWikipediaRedirects.collect.toSet
 
 		val expectedEntries = TestData.parsedEntriesWithResolvedRedirectsSet()
 		val expectedRedirects = TestData.redirectMap().map(Redirect.tupled).toSet
@@ -76,16 +69,11 @@ class RedirectResolverTest extends FlatSpec with SharedSparkContext with Matcher
 	}
 
 	"Redirect resolver" should "resolve all redirects with given redirects" in {
-		val unresolvedEntries = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
-		val redirectsMap = sc.parallelize(TestData.redirectMap().toList.map(Redirect.tupled))
-		val resolvedEntries = RedirectResolver.run(
-			List(unresolvedEntries).toAnyRDD() ++ List(redirectsMap).toAnyRDD(),
-			sc
-		).fromAnyRDD[ParsedWikipediaEntry]()
-			.head
-			.collect
-			.toSet
-
+		val job = new RedirectResolver
+		job.parsedWikipedia = sc.parallelize(TestData.parsedEntriesWithRedirects().toList)
+		job.wikipediaRedirects = sc.parallelize(TestData.redirectMap().toList.map(Redirect.tupled))
+		job.run(sc)
+		val resolvedEntries = job.resolvedParsedWikipedia.collect.toSet
 		val expectedEntries = TestData.parsedEntriesWithResolvedRedirectsSet()
 		resolvedEntries shouldEqual expectedEntries
 	}

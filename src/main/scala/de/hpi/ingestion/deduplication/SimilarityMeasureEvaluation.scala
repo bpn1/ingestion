@@ -22,45 +22,48 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.ingestion.deduplication.models.{Duplicates, Candidate, PrecisionRecallDataTuple, SimilarityMeasureStats}
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.Bag
 
-object SimilarityMeasureEvaluation extends SparkJob {
+class SimilarityMeasureEvaluation extends SparkJob {
+	import SimilarityMeasureEvaluation._
 	appName = "SimilarityMeasureEvaluation"
 	configFile = "similarity_measure_evaluation.xml"
 
+	var duplicates: RDD[Duplicates] = _
+	var goldStandard: RDD[(UUID, UUID)] = _
+	var simMeasureStats: RDD[SimilarityMeasureStats] = _
+
 	// $COVERAGE-OFF$
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val training = sc.cassandraTable[Duplicates](
-			settings("keyspaceTrainingTable"),
-			settings("trainingTable"))
-		val test = sc.cassandraTable[(UUID, UUID)](settings("keyspaceTestTable"), settings("testTable"))
-		List(training).toAnyRDD() ++ List(test).toAnyRDD()
+	/**
+	  * Loads the Duplicates and the gold standard from the Cassandra.
+	  * @param sc SparkContext to be used for the job
+	  */
+	override def load(sc: SparkContext): Unit = {
+		duplicates = sc.cassandraTable[Duplicates](settings("keyspaceTrainingTable"), settings("trainingTable"))
+		goldStandard = sc.cassandraTable[(UUID, UUID)](settings("keyspaceTestTable"), settings("testTable"))
 	}
 
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[SimilarityMeasureStats]()
-			.head
-			.saveToCassandra(settings("keyspaceSimMeasureStatsTable"), settings("simMeasureStatsTable"))
+	/**
+	  * Saves the generated Similarity Measure statistics to the Cassandra.
+	  * @param sc SparkContext to be used for the job
+	  */
+	override def save(sc: SparkContext): Unit = {
+		simMeasureStats.saveToCassandra(settings("keyspaceSimMeasureStatsTable"), settings("simMeasureStatsTable"))
 	}
 	// $COVERAGE-ON$
 
 	/**
 	  * Calculates precision, recall and f1 score using the training and test data.
-	  * @param input List of RDDs containing the input data
 	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val training = input.head.asInstanceOf[RDD[Duplicates]]
+	override def run(sc: SparkContext): Unit = {
+		val training = duplicates
 			.flatMap { case Duplicates(subject_id, subject_name, datasource, candidates) =>
 				candidates.map { case Candidate(candidate_id, candidate_name, score) =>
 					((subject_id, candidate_id), score)
 				}
 			}.distinct
-		val test = input(1).asInstanceOf[RDD[(UUID, UUID)]].map(pair => (pair, 1.0))
+		val test = goldStandard.map(pair => (pair, 1.0))
 		implicit val buckets = generateBuckets(this.settings("buckets").toInt)
 		val predictionAndLabels = generatePredictionAndLabels(training, test)
 		val data = generatePrecisionRecallData(predictionAndLabels)
@@ -68,10 +71,11 @@ object SimilarityMeasureEvaluation extends SparkJob {
 			data = data,
 			comment = Option("Naive Deduplication"),
 			xaxis = Option("threshold"))
-
-		List(sc.parallelize(Seq(stats))).toAnyRDD()
+		simMeasureStats = sc.parallelize(List(stats))
 	}
+}
 
+object SimilarityMeasureEvaluation {
 	/**
 	  * Generates a List of Buckets regarding the Config
 	  * @return List of Doubles defining the buckets

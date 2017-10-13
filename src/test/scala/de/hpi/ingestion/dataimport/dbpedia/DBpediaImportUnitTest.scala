@@ -19,10 +19,8 @@ package de.hpi.ingestion.dataimport.dbpedia
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.dataimport.dbpedia.models.DBpediaEntity
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class DBpediaImportUnitTest extends FlatSpec with SharedSparkContext with Matchers {
-
 	"tokenize" should "return a three element long list" in {
 		val tokens = DBpediaImport.tokenize(TestData.line)
 		tokens should have length 3
@@ -104,9 +102,10 @@ class DBpediaImportUnitTest extends FlatSpec with SharedSparkContext with Matche
 	}
 
 	"DBpedia entities" should "be extracted" in {
-		val rawTriples = sc.parallelize(TestData.rawTriples())
-		val input = List(rawTriples).toAnyRDD()
-		val entities = DBpediaImport.run(input, sc).fromAnyRDD[DBpediaEntity]().head.collect.toSet
+		val job = new DBpediaImport
+		job.dbpediaDump = sc.parallelize(TestData.rawTriples())
+		job.run(sc)
+		val entities = job.dbpediaEntities.collect.toSet
 		val expectedEntitites = TestData.parsedDBpediaEntities()
 		entities shouldEqual expectedEntitites
 	}

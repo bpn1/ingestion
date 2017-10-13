@@ -18,16 +18,16 @@ package de.hpi.ingestion.dataimport.kompass
 
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class KompassDataLakeImportTest extends FlatSpec with Matchers with SharedSparkContext {
 	"Subject translation" should "translate all possible data" in {
+		val job = new KompassDataLakeImport
 		val entity = TestData.kompassEntity
 		val version = TestData.version(sc)
-		val mapping = KompassDataLakeImport.normalizationSettings
+		val mapping = job.normalizationSettings
 		val strategies = Map.empty[String, List[String]]
-		val classifier = KompassDataLakeImport.classifier
-		val subject = KompassDataLakeImport.translateToSubject(entity, version, mapping, strategies, classifier)
+		val classifier = job.classifier
+		val subject = job.translateToSubject(entity, version, mapping, strategies, classifier)
 		val expectedSubject = TestData.translatedSubject
 		subject.name shouldEqual entity.name
 		subject.category shouldEqual expectedSubject.category

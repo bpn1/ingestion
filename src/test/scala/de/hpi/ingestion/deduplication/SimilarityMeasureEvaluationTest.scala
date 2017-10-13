@@ -19,13 +19,8 @@ package de.hpi.ingestion.deduplication
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.models.SimilarityMeasureStats
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
-class SimilarityMeasureEvaluationTest extends FlatSpec
-	with Matchers
-	with SharedSparkContext
-	with RDDComparisons
-{
+class SimilarityMeasureEvaluationTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
 	"generateBuckets" should "generate a list of buckets from a given number" in {
 		val bucketsList = TestData.bucketsList
 		bucketsList.foreach { case (size, buckets) =>
@@ -45,7 +40,7 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 		}
 	}
 
-	"generatePredictionAndLabels" should "find all TRUE POSITIVES" in {
+	"generatePredictionAndLabels" should "find all true positives" in {
 		val test = TestData.testData(sc)
 		val training = TestData.trainingData(sc)
 		val truePositives = SimilarityMeasureEvaluation
@@ -57,7 +52,7 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 		assertRDDEquals(expected, truePositives)
 	}
 
-	it should "find all FALSE POSITIVES" in {
+	it should "find all false positives" in {
 		val test = TestData.testData(sc)
 		val training = TestData.trainingData(sc)
 		val falsePositives = SimilarityMeasureEvaluation
@@ -69,7 +64,7 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 		assertRDDEquals(expected, falsePositives)
 	}
 
-	it should "find all FALSE NEGATIVES" in {
+	it should "find all false negatives" in {
 		val test = TestData.testData(sc)
 		val training = TestData.trainingData(sc)
 		val falseNegatives = SimilarityMeasureEvaluation
@@ -90,17 +85,12 @@ class SimilarityMeasureEvaluationTest extends FlatSpec
 	}
 
 	"run" should "calculate Precision, Recall and F-Score" in {
-		val training = TestData.trainingCandidates(sc)
-		val test = TestData.testData2(sc)
-		val input = List(training).toAnyRDD() ::: List(test).toAnyRDD()
-		val settings = Map("buckets" -> "5")
-		SimilarityMeasureEvaluation.settings = settings
-		val data = SimilarityMeasureEvaluation
-			.run(input, sc)
-			.fromAnyRDD[SimilarityMeasureStats]()
-			.head
-			.first
-			.data
+		val job = new SimilarityMeasureEvaluation
+		job.settings = Map("buckets" -> "5")
+		job.duplicates = TestData.trainingCandidates(sc)
+		job.goldStandard = TestData.testData2(sc)
+		job.run(sc)
+		val data = job.simMeasureStats.first.data
 		val expected = TestData.similarityMeasureStats.data
 		data shouldEqual expected
 	}

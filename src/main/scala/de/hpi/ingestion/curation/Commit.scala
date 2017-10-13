@@ -21,39 +21,42 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import play.api.libs.json.{JsArray, JsValue, Json}
 
-object Commit extends SparkJob with JSONParser[Boolean] {
+class Commit extends SparkJob with JSONParser[Boolean] {
 	appName = "Commit"
 	configFile = "commit.xml"
 
+	var subjects: RDD[Subject] = _
+	var curatedSubjects: RDD[Subject] = _
+
+	// $COVERAGE-OFF$
 	/**
 	  * Loads a number of input RDDs used in the job.
-	  *
 	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
-		List(subjects).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
 	}
 
 	/**
-	  * Executes the data processing of this job and produces the output data.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the program
-	  * @return List of RDDs containing the output data
+	  * Saves the output data to e.g. the Cassandra or the HDFS.
+	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
 	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
+	override def save(sc: SparkContext): Unit = {
+		curatedSubjects.saveToCassandra(settings("keyspaceSubjectTable"), settings("subjectTable"))
+	}
+	// $COVERAGE-ON$
+
+	/**
+	  * Executes the data processing of this job and produces the output data.
+	  * @param sc    Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
 		val commitJson = args.head
-		val subjects = input.fromAnyRDD[Subject]().head
 		val templateVersion = Version(appName, List("human"), sc, false, Option("subject"))
 
 		val inputJson = Json.parse(commitJson)
@@ -79,23 +82,7 @@ object Commit extends SparkJob with JSONParser[Boolean] {
 					.first
 				(oldSubject, subjectJson)
 			}.map { case (oldSubject, json) => updateSubject(oldSubject, json, templateVersion) }
-		val humanSubjects = sc.parallelize(createdSubjects.toList ++ updatedSubjects.toList ++ deletedSubjects.toList)
-
-		List(humanSubjects).toAnyRDD()
-	}
-
-	/**
-	  * Saves the output data to e.g. the Cassandra or the HDFS.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[Subject]()
-			.head
-			.saveToCassandra(settings("keyspaceSubjectTable"), settings("subjectTable"))
+		curatedSubjects = sc.parallelize(createdSubjects.toList ++ updatedSubjects.toList ++ deletedSubjects.toList)
 	}
 
 	/**

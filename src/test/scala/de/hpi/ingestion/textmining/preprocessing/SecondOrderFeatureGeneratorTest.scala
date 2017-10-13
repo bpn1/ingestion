@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import de.hpi.ingestion.textmining.models.FeatureEntry
 import org.scalatest.{FlatSpec, Matchers}
@@ -48,33 +47,26 @@ class SecondOrderFeatureGeneratorTest extends FlatSpec with SharedSparkContext w
 	}
 
 	"Feature entries with second order features" should "be exactly these feature entries" in {
-		val featureEntries1 = sc.parallelize(TestData.featureEntriesList())
-		val featureEntries2 = sc.parallelize(TestData.featureEntriesForSingleAliasList())
-		val featureEntries3 = sc.parallelize(TestData.featureEntriesForManyPossibleEntitiesList())
-		val input1 = List(featureEntries1).toAnyRDD()
-		val input2 = List(featureEntries2).toAnyRDD()
-		val input3 = List(featureEntries3).toAnyRDD()
+		val job = new SecondOrderFeatureGenerator
+		job.featureEntries = sc.parallelize(TestData.featureEntriesList())
+		job.run(sc)
+		val featureEntriesSet = job.featureEntriesWithSOF.collect.toSet
+		featureEntriesSet shouldEqual TestData.featureEntriesWitSOFSet()
 
-		val featureEntriesWithSOF1 = SecondOrderFeatureGenerator.run(input1, sc)
-			.fromAnyRDD[FeatureEntry]()
-			.head
-			.collect
-			.toSet
-		val featureEntriesWithSOF2 = SecondOrderFeatureGenerator.run(input2, sc)
-			.fromAnyRDD[FeatureEntry]()
-			.head
+		job.featureEntries = sc.parallelize(TestData.featureEntriesForSingleAliasList())
+		job.run(sc)
+		var featureEntriesList = job.featureEntriesWithSOF
 			.collect
 			.toList
 			.sortBy(featureEntry => (featureEntry.article, featureEntry.offset, featureEntry.entity))
-		val featureEntriesWithSOF3 = SecondOrderFeatureGenerator.run(input3, sc)
-			.fromAnyRDD[FeatureEntry]()
-			.head
+		featureEntriesList shouldEqual TestData.featureEntriesForSingleAliasWithSOFList()
+
+		job.featureEntries = sc.parallelize(TestData.featureEntriesForManyPossibleEntitiesList())
+		job.run(sc)
+		featureEntriesList = job.featureEntriesWithSOF
 			.collect
 			.toList
 			.sortBy(featureEntry => (featureEntry.entity_score.rank, featureEntry.entity))
-
-		featureEntriesWithSOF1 shouldEqual TestData.featureEntriesWitSOFSet()
-		featureEntriesWithSOF2 shouldEqual TestData.featureEntriesForSingleAliasWithSOFList()
-		featureEntriesWithSOF3 shouldEqual TestData.featureEntriesForManyPossibleEntitiesWithSOFList()
+		featureEntriesList shouldEqual TestData.featureEntriesForManyPossibleEntitiesWithSOFList()
 	}
 }

@@ -20,7 +20,6 @@ import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.models.FeatureEntry
 import de.hpi.ingestion.deduplication.models.config.SimilarityMeasureConfig
 import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, SimilarityMeasure}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.scalatest.{FlatSpec, Matchers}
 
 class FeatureCalculationTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
@@ -64,11 +63,12 @@ class FeatureCalculationTest extends FlatSpec with Matchers with SharedSparkCont
 	}
 
 	"Features" should "be calculated" in {
-		val dbpedia = sc.parallelize(TestData.dbpediaEntries)
-		val wikidata = sc.parallelize(TestData.wikidataEntries)
-		val goldStandard = TestData.goldStandard(sc)
-		val input = List(dbpedia, wikidata).toAnyRDD() ++ List(goldStandard).toAnyRDD()
-		val result = FeatureCalculation.run(input, sc).fromAnyRDD[FeatureEntry]().head.map(_.copy(id = null))
+		val job = new FeatureCalculation
+		job.dbpediaSubjects = sc.parallelize(TestData.dbpediaEntries)
+		job.wikidataSubjects = sc.parallelize(TestData.wikidataEntries)
+		job.goldStandard = TestData.goldStandard(sc)
+		job.run(sc)
+		val result = job.featureEntries.map(_.copy(id = null))
 		val expectedFeatureEntries = TestData.labeledFeatures(sc).map(_.copy(id = null))
 		assertRDDEquals(expectedFeatureEntries, result)
 	}

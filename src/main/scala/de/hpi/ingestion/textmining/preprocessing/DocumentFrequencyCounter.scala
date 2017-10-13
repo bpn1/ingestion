@@ -18,7 +18,6 @@ package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.models.{DocumentFrequency, ParsedWikipediaEntry, WikipediaArticleCount}
 import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.apache.spark.SparkContext
@@ -27,44 +26,54 @@ import org.apache.spark.rdd.RDD
 /**
   * Ccunts `DocumentFrequencies` over all articles.
   */
-object DocumentFrequencyCounter extends SparkJob {
+class DocumentFrequencyCounter extends SparkJob {
+	import DocumentFrequencyCounter._
 	appName = "Document Frequency Counter"
 	configFile = "textmining.xml"
+
+	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+	var documentFrequencies: RDD[DocumentFrequency] = _
+	var wikipediaArticleCount: RDD[WikipediaArticleCount] = _
+
+	// $COVERAGE-OFF$
+	/**
+	  * Loads Parsed Wikipedia entries from the Cassandra.
+	  * @param sc Spark Context used to load the RDDs
+	  */
+	override def load(sc: SparkContext): Unit = {
+		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+	}
+
+	/**
+	  * Saves Document Frequencies to the Cassandra.
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
+	  */
+	override def save(sc: SparkContext): Unit = {
+		documentFrequencies.saveToCassandra(settings("keyspace"), settings("dfTable"))
+		wikipediaArticleCount.saveToCassandra(settings("keyspace"), settings("articleCountTable"))
+	}
+	// $COVERAGE-ON$
+
+	/**
+	  * Counts `DocumentFrequencies` over all articles.
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val numArticles = parsedWikipedia.count
+		val articleCount = WikipediaArticleCount("parsedwikipedia", BigInt(numArticles))
+		wikipediaArticleCount = sc.parallelize(List(articleCount))
+		val rawDocumentFrequencies = countDocumentFrequencies(parsedWikipedia)
+		documentFrequencies = filterDocumentFrequencies(rawDocumentFrequencies, leastSignificantDocumentFrequency)
+	}
+}
+
+object DocumentFrequencyCounter {
 	val removeStopwords = true
 	val stem = true
 	/**
 	  * This value must be smaller than or equal to the number of considered documents.
 	  */
 	var leastSignificantDocumentFrequency = 5
-
-	// $COVERAGE-OFF$
-	/**
-	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val articles = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-		List(articles).toAnyRDD()
-	}
-
-	/**
-	  * Saves Document Frequencies to the Cassandra.
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args arguments of the program
-	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		val List(df, articleCount) = output
-		df
-			.asInstanceOf[RDD[DocumentFrequency]]
-			.saveToCassandra(settings("keyspace"), settings("dfTable"))
-		articleCount
-			.asInstanceOf[RDD[WikipediaArticleCount]]
-			.saveToCassandra(settings("keyspace"), settings("articleCountTable"))
-	}
-	// $COVERAGE-ON$
 
 	/**
 	  * Counts document frequencies while stemming and removing stopwords.
@@ -96,23 +105,5 @@ object DocumentFrequencyCounter extends SparkJob {
 	): RDD[DocumentFrequency] = {
 		documentFrequencies
 			.filter(documentFrequency => documentFrequency.count >= threshold)
-	}
-
-	/**
-	  * Counts `DocumentFrequencies` over all articles.
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val articles = input.fromAnyRDD[ParsedWikipediaEntry]().head
-		val numArticles = articles.asInstanceOf[RDD[ParsedWikipediaEntry]].count
-		val articleCount = WikipediaArticleCount("parsedwikipedia", BigInt(numArticles))
-		val articleCountRDD = sc.parallelize(List(articleCount))
-		val documentFrequencies = countDocumentFrequencies(articles)
-		val filteredDFs = filterDocumentFrequencies(documentFrequencies, leastSignificantDocumentFrequency)
-		List(filteredDFs).toAnyRDD() ++ List(articleCountRDD).toAnyRDD()
 	}
 }

@@ -20,7 +20,6 @@ import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.dbpedia.models.Relation
 import de.hpi.ingestion.deduplication.models.PrecisionRecallDataTuple
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.ClassifierTraining._
 import de.hpi.ingestion.textmining.models.{Cooccurrence, RelationClassifierStats, Sentence}
 import org.apache.spark.ml.feature.{HashingTF, IDF}
@@ -32,40 +31,84 @@ import org.apache.spark.{SparkContext, sql}
 /**
   * Trains a classifier on the relations from DBpedia.
   */
-object RelationClassifier extends SparkJob {
+class RelationClassifier extends SparkJob {
+	import RelationClassifier._
 	appName = "Relation Classifier"
 	configFile = "textmining.xml"
-	val aggregated = true
+
+	var sentences: RDD[Sentence] = _
+	var relations: RDD[Relation] = _
+	var cooccurrences: RDD[Cooccurrence] = _
+	var classifierStatistics: RDD[RelationClassifierStats] = _
 
 	// $COVERAGE-OFF$
 	/**
 	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  *
-	  * @param sc   Spark Context used to load the RDDs
-	  * @param args arguments of the program
-	  * @return List of RDDs containing the data processed in the job.
+	  * @param sc Spark Context used to load the RDDs
 	  */
-	override def load(sc: SparkContext, args: Array[String]): List[RDD[Any]] = {
-		val sentences = sc.cassandraTable[Sentence](settings("keyspace"), settings("sentenceTable"))
-		val relations = sc.cassandraTable[Relation](settings("keyspace"), settings("DBpediaRelationTable"))
-		val cooccurrences = sc.cassandraTable[Cooccurrence](settings("keyspace"), settings("cooccurrenceTable"))
-		List(sentences).toAnyRDD() ++ List(relations).toAnyRDD() ++ List(cooccurrences).toAnyRDD()
+	override def load(sc: SparkContext): Unit = {
+		sentences = sc.cassandraTable[Sentence](settings("keyspace"), settings("sentenceTable"))
+		relations = sc.cassandraTable[Relation](settings("keyspace"), settings("DBpediaRelationTable"))
+		cooccurrences = sc.cassandraTable[Cooccurrence](settings("keyspace"), settings("cooccurrenceTable"))
 	}
 
 	/**
 	  * Saves Sentences with entities to the Cassandra.
-	  *
-	  * @param output List of RDDs containing the output of the job
-	  * @param sc     Spark Context used to connect to the Cassandra or the HDFS
-	  * @param args   arguments of the program
+	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
 	  */
-	override def save(output: List[RDD[Any]], sc: SparkContext, args: Array[String]): Unit = {
-		output
-			.fromAnyRDD[RelationClassifierStats]()
-			.head
-			.saveToCassandra(settings("keyspace"), settings("relClassifierStatsTable"))
+	override def save(sc: SparkContext): Unit = {
+		classifierStatistics.saveToCassandra(settings("keyspace"), settings("relClassifierStatsTable"))
 	}
 	// $COVERAGE-ON$
+
+	/**
+	  * Calculates statistics for multiple relation scenarios
+	  * @param sc Spark Context used to e.g. broadcast variables
+	  */
+	override def run(sc: SparkContext): Unit = {
+		val filteredSentences = sentences
+			.filter(sentence => sentence.entities.map(_.entity).toSet.size > 1 && sentence.entities.size == 2)
+		val filteredRelations = relations.filter(relation => relation.subjectentity != relation.objectentity)
+		val groupedCooccurrences = cooccurrences
+			.map(cooc => (cooc.entitylist.toSet, cooc.count))
+			.reduceByKey(_ + _)
+		val comment = "Linear Regression, aggregated, undirected, stemmed, 10 folds, minCooc 1"
+		val rels = Set(
+			Set("parentCompany", "owningCompany", "subsidiary", "division")
+		)
+		val stats = rels.map { rel =>
+			val minCooc = groupedCooccurrences.filter(_._2 <= 1).map(_._1)
+			val relationsWithBagOfWords = parseBagOfWordsWithRelations(
+				filteredRelations,
+				filteredSentences,
+				minCooc,
+				rel)
+			val noRelationsBagOfWords = parseBagOfWordsWithNoRelations(
+				filteredRelations,
+				filteredSentences,
+				minCooc,
+				rel)
+			val session = SparkSession.builder().getOrCreate()
+			import session.implicits._
+			val labeledTfidf = calculateLabeledHashTFIDF(
+				(relationsWithBagOfWords ++ noRelationsBagOfWords).toDF("label", "words")
+			)
+			val data = crossValidateWithWeights(labeledTfidf, 10)
+			RelationClassifierStats(
+				rel = "owns",
+				sentenceswithrelation = relationsWithBagOfWords.count.toInt,
+				sentenceswithnorelation = noRelationsBagOfWords.count.toInt,
+				average = averageStatistics(data),
+				data = data,
+				comment = Option(comment)
+			)
+		}.toList
+		classifierStatistics = sc.parallelize(stats)
+	}
+}
+
+object RelationClassifier {
+	val aggregated = true
 
 	/**
 	  * Parses Bag of Words for all sentences with the given relation.
@@ -187,47 +230,5 @@ object RelationClassifier extends SparkJob {
 		val idfModel = idf.fit(featurizedData)
 
 		idfModel.transform(featurizedData)
-	}
-
-	/**
-	  * Calculates statistics for multiple relation scenarios
-	  *
-	  * @param input List of RDDs containing the input data
-	  * @param sc    Spark Context used to e.g. broadcast variables
-	  * @param args  arguments of the programl
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(input: List[RDD[Any]], sc: SparkContext, args: Array[String] = Array()): List[RDD[Any]] = {
-		val sentences = input.fromAnyRDD[Sentence]()(0)
-			.filter(sentence => sentence.entities.map(_.entity).toSet.size > 1 && sentence.entities.size == 2)
-		val relations = input.fromAnyRDD[Relation]()(1)
-			.filter(relation => relation.subjectentity != relation.objectentity)
-		val cooccurrences = input.fromAnyRDD[Cooccurrence]()(2)
-			.map(cooc => (cooc.entitylist.toSet, cooc.count))
-			.reduceByKey(_ + _)
-		val comment = "Linear Regression, aggregated, undirected, stemmed, 10 folds, minCooc 1"
-		val rels = Set(
-			Set("parentCompany", "owningCompany", "subsidiary", "division")
-		)
-		val stats = rels.map { rel =>
-			val minCooc = cooccurrences.filter(_._2 <= 1).map(_._1)
-			val relationsWithBagOfWords = parseBagOfWordsWithRelations(relations, sentences, minCooc, rel)
-			val noRelationsBagOfWords = parseBagOfWordsWithNoRelations(relations, sentences, minCooc, rel)
-			val session = SparkSession.builder().getOrCreate()
-			import session.implicits._
-			val labeledTfidf = calculateLabeledHashTFIDF(
-				(relationsWithBagOfWords ++ noRelationsBagOfWords).toDF("label", "words")
-			)
-			val data = crossValidateWithWeights(labeledTfidf, 10)
-			RelationClassifierStats(
-				rel = "owns",
-				sentenceswithrelation = relationsWithBagOfWords.count.toInt,
-				sentenceswithnorelation = noRelationsBagOfWords.count.toInt,
-				average = averageStatistics(data),
-				data = data,
-				comment = Option(comment)
-			)
-		}.toList
-		List(sc.parallelize(stats)).toAnyRDD()
 	}
 }

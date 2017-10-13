@@ -22,7 +22,9 @@ import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.{Candidate, Duplicates}
 
-// scalastyle:off
+// scalastyle:off line.size.limit
+// scalastyle:off method.length
+// scalastyle:off file.size.limit
 object TestData {
 	val idList = List.fill(20)(UUID.randomUUID()).sorted
 	val stagingSource = "wikidata"
@@ -490,5 +492,337 @@ object TestData {
 			)
 		)
 	}
+
+	def outdatedMasters(): List[Subject] = {
+		List(
+			Subject(
+				id = idList.head,
+				master = idList.head,
+				datasource = "master",
+				name = Option("Firma A"),
+				properties = Map(
+					"id_implisense" -> List("1"),
+					"geo_postal" -> List("10777"),
+					"geo_street" -> List("Strasse 1"),
+					"geo_country" -> List("DE")
+				),
+				relations = Map(
+					idList(1) -> SubjectManager.masterRelation(1.0),
+					idList(9) -> Map("country" -> "0.4", "county" -> "0.3"),
+					idList(10) -> Map("city" -> "0.1", "country" -> "1.0"),
+					idList(12) -> Map("country" -> "0.5", "county" -> "0.6")
+				)
+			),
+			Subject(
+				id = idList(1),
+				master = idList.head,
+				datasource = "implisense",
+				name = Option("Firma B"),
+				properties = Map(
+					"id_implisense" -> List("1"),
+					"geo_postal" -> List("10777"),
+					"geo_street" -> List("Strasse 2"),
+					"geo_city" -> List("Berlin")
+				),
+				relations = Map(
+					idList.head -> SubjectManager.slaveRelation(1.0),
+					idList(10) -> Map("street" -> "0.4", "country" -> "0.3"),
+					idList(11) -> Map("owns" -> "0.1", "follows" -> "0.2"),
+					idList(12) -> Map("country" -> "0.5", "county" -> "0.6")
+				)
+			),
+			Subject(
+				id = idList(2),
+				master = idList(2),
+				datasource = "master",
+				name = Option("Firma B"),
+				properties = Map(
+					"id_implisense" -> List("2"),
+					"gen_urls" -> List("http://nahverkehr.de"),
+					"geo_city" -> List("Potsdam"),
+					"gen_legal_form" -> List("GmbH")
+				),
+				relations = Map(
+					idList(4) -> SubjectManager.masterRelation(1.0),
+					idList(13) -> Map("county" -> ""),
+					idList(14) -> Map("city" -> "0.9"),
+					idList(15) -> Map("successor" -> "01.01.2212")
+				)
+			),
+			Subject(
+				id = idList(3),
+				master = idList(2),
+				datasource = "human",
+				name = Option("Firma C"),
+				aliases = List("Firma D"),
+				properties = Map(
+					"gen_urls" -> List("http://curation.com"),
+					"geo_city" -> List("Berlin")
+				),
+				relations = Map(
+					idList(2) -> SubjectManager.slaveRelation(1.0),
+					idList(13) -> Map("county" -> ""),
+					idList(14) -> Map("city" -> "0.9")
+				)
+			),
+			Subject(
+				id = idList(4),
+				master = idList(2),
+				datasource = "implisense",
+				name = Option("Firma E"),
+				properties = Map(
+					"id_implisense" -> List("2"),
+					"gen_urls" -> List("http://nahverkehr.de"),
+					"geo_city" -> List("Potsdam"),
+					"gen_legal_form" -> List("GmbH & Co. KG"),
+					"implisenseAttribute" -> List("not normalized")
+				),
+				relations = Map(
+					idList(2) -> SubjectManager.slaveRelation(1.0),
+					idList(15) -> Map("successor" -> "01.01.2212")
+				)
+			)
+		)
+	}
+
+	def updatedMasters(): List[Subject] = {
+		List(
+			Subject(
+				id = idList.head,
+				master = idList.head,
+				datasource = "master",
+				name = Option("Firma B"),
+				properties = Map(
+					"id_implisense" -> List("1"),
+					"geo_postal" -> List("10777"),
+					"geo_street" -> List("Strasse 2"),
+					"geo_city" -> List("Berlin")
+				),
+				relations = Map(
+					idList(1) -> SubjectManager.masterRelation(1.0),
+					idList(10) -> Map("street" -> "0.4", "country" -> "0.3"),
+					idList(11) -> Map("owns" -> "0.1", "follows" -> "0.2"),
+					idList(12) -> Map("country" -> "0.5", "county" -> "0.6")
+				)
+			),
+			Subject(
+				id = idList(2),
+				master = idList(2),
+				datasource = "master",
+				name = Option("Firma C"),
+				aliases = List("Firma E", "Firma D"),
+				properties = Map(
+					"id_implisense" -> List("2"),
+					"gen_urls" -> List("http://curation.com"),
+					"geo_city" -> List("Berlin"),
+					"gen_legal_form" -> List("GmbH & Co. KG")
+				),
+				relations = Map(
+					idList(3) -> SubjectManager.masterRelation(1.0),
+					idList(4) -> SubjectManager.masterRelation(1.0),
+					idList(13) -> Map("county" -> ""),
+					idList(14) -> Map("city" -> "0.9"),
+					idList(15) -> Map("successor" -> "01.01.2212")
+				)
+			)
+		)
+	}
+
+	def subjectsToUpdate(): List[Subject] = {
+		List(
+			Subject(
+				id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				master = UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				datasource = "wikidata",
+				name = Option("Name 1"),
+				properties = Map(
+					"id_implisense" -> List("1"),
+					"geo_city" -> List("Potsdam"),
+					"geo_county" -> List("Tempelhof")
+				),
+				category = Option("organization"),
+				relations = Map(
+					UUID.fromString("4195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owned by" -> ""),
+					UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("follows" -> "")
+				)
+			)
+		)
+	}
+
+	def updateSubjects(): List[Subject] = {
+		List(
+			Subject(
+				id = UUID.fromString("e44df8b0-2425-11e7-aec2-2d07f82c7921"),
+				master = UUID.fromString("e44df8b0-2425-11e7-aec2-2d07f82c7921"),
+				datasource = "wikidata",
+				name = Option("Name 1"),
+				properties = Map(
+					"id_implisense" -> List("1"),
+					"geo_city" -> List("Berlin", "München"),
+					"geo_country" -> List("DE")
+				),
+				aliases = List("Name 2", "Name 3"),
+				category = Option("business"),
+				relations = Map(
+					UUID.fromString("4195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owns" -> ""),
+					UUID.fromString("5195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owned by" -> "")
+				)
+			)
+		)
+	}
+
+	def updatedSubjects(): List[Subject] = {
+		List(
+			Subject(
+				id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				master = UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				datasource = "wikidata",
+				name = Option("Name 1"),
+				properties = Map(
+					"id_implisense" -> List("1"),
+					"geo_city" -> List("Berlin", "München"),
+					"geo_country" -> List("DE")
+				),
+				category = Option("business"),
+				aliases = List("Name 2", "Name 3"),
+				relations = Map(
+					UUID.fromString("4195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owns" -> ""),
+					UUID.fromString("5195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owned by" -> "")
+				)
+			)
+		)
+	}
+
+	def oldSubjects(): List[Subject] = {
+		List(
+			Subject(
+				id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				master = UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				datasource = "wikidata",
+				name = Option("Name 1"),
+				properties = Map(
+					"id_implisense" -> List("1"),
+					"geo_city" -> List("Potsdam"),
+					"geo_county" -> List("Tempelhof")
+				),
+				category = Option("organization"),
+				relations = Map(
+					UUID.fromString("4195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owned by" -> ""),
+					UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("follows" -> "")
+				)
+			),
+			Subject(
+				id = UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				master = UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				datasource = "master",
+				name = Option("Name 1"),
+				properties = Map(
+					"id_implisense" -> List("1"),
+					"geo_city" -> List("Potsdam"),
+					"geo_county" -> List("Tempelhof")
+				),
+				category = Option("organization"),
+				relations = Map(
+					UUID.fromString("4195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owned by" -> ""),
+					UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("follows" -> "")
+				)
+			),
+			Subject(
+				id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				master = UUID.fromString("1195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				datasource = "wikidata",
+				name = Option("Name 1"),
+				properties = Map(
+					"id_implisense" -> List("2"),
+					"geo_city" -> List("Potsdam"),
+					"geo_county" -> List("Tempelhof")
+				),
+				category = Option("organization")
+			),
+			Subject(
+				id = UUID.fromString("1195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				master = UUID.fromString("1195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				datasource = "master",
+				name = Option("Name 1"),
+				properties = Map(
+					"id_implisense" -> List("2"),
+					"geo_city" -> List("Potsdam"),
+					"geo_county" -> List("Tempelhof")
+				),
+				category = Option("organization")
+			)
+		)
+	}
+
+	def newSubjects(): List[Subject] = {
+		List(
+			Subject(
+				id = UUID.fromString("e44df8b0-2425-11e7-aec2-2d07f82c7921"),
+				master = UUID.fromString("e44df8b0-2425-11e7-aec2-2d07f82c7921"),
+				datasource = "wikidata",
+				name = Option("Name 1"),
+				properties = Map(
+					"id_implisense" -> List("1"),
+					"geo_city" -> List("Berlin", "München"),
+					"geo_country" -> List("DE")
+				),
+				aliases = List("Name 2", "Name 3"),
+				category = Option("business"),
+				relations = Map(
+					UUID.fromString("4195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owns" -> ""),
+					UUID.fromString("5195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owned by" -> "")
+				)
+			),
+			Subject(
+				id = UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921"),
+				master = UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921"),
+				datasource = "wikidata",
+				name = Option("Name 2"),
+				properties = Map("id_implisense" -> List("3")),
+				aliases = List("Name 3"),
+				category = Option("business")
+			)
+		)
+	}
+
+	def updatedAndNewSubjects(): List[Subject] = {
+		List(
+			Subject(
+				id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				master = UUID.fromString("3195bc70-f6ba-11e6-aa16-63ef39f49c5d"),
+				datasource = "wikidata",
+				name = Option("Name 1"),
+				properties = Map(
+					"id_implisense" -> List("1"),
+					"geo_city" -> List("Berlin", "München"),
+					"geo_country" -> List("DE")
+				),
+				category = Option("business"),
+				aliases = List("Name 2", "Name 3"),
+				relations = Map(
+					UUID.fromString("4195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owns" -> ""),
+					UUID.fromString("5195bc70-f6ba-11e6-aa16-63ef39f49c5d") -> Map("owned by" -> "")
+				)
+			),
+			Subject(
+				id = UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921"),
+				master = UUID.fromString("d44df8b0-2425-11e7-aec2-2d07f82c7921"),
+				datasource = "wikidata",
+				name = Option("Name 2"),
+				properties = Map("id_implisense" -> List("3")),
+				aliases = List("Name 3"),
+				category = Option("business"),
+				relations = Map(UUID.fromString("d44df8b0-2425-11e7-aec2-2d07f82c7921") -> Map("slave" -> "1.0"))
+			),
+			Subject(
+				id = UUID.fromString("d44df8b0-2425-11e7-aec2-2d07f82c7921"),
+				master = UUID.fromString("d44df8b0-2425-11e7-aec2-2d07f82c7921"),
+				datasource = "master",
+				relations = Map(UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921") -> Map("master" -> "1.0"))
+			)
+		)
+	}
 }
-// scalastyle:on
+// scalastyle:on method.length
+// scalastyle:on line.size.limit
+// scalastyle:on file.size.limit

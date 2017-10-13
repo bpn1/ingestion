@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.textmining.re
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import de.hpi.ingestion.textmining.TestData
 import de.hpi.ingestion.textmining.models.Cooccurrence
 import org.scalatest.{FlatSpec, Matchers}
@@ -31,11 +30,10 @@ class CooccurrenceCounterTest extends FlatSpec with SharedSparkContext with Matc
 
 
 	"Found cooccurrences" should "exactly these cooccurrences" in {
-		val sentences = sc.parallelize(TestData.sentencesWithCooccurrences())
-		val cooccurrences = CooccurrenceCounter.run(List(sentences).toAnyRDD(), sc)
-			.fromAnyRDD[Cooccurrence]()
-			.head
+		val job = new CooccurrenceCounter
+		job.sentences = sc.parallelize(TestData.sentencesWithCooccurrences())
+		job.run(sc)
 		val expectedCooccurrences = sc.parallelize(TestData.cooccurrences())
-		assertRDDEquals(cooccurrences, expectedCooccurrences)
+		assertRDDEquals(job.cooccurrences, expectedCooccurrences)
 	}
 }
