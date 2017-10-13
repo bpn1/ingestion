@@ -127,6 +127,30 @@ case class Subject(
 	  * @return Boolean if subject is slave
 	  */
 	def isSlave: Boolean = !isMaster
+
+	/**
+	  * Transforms the Subjects and its properties into a tab separated string. The tsv format is the following:
+	  * id, name, aliases, category, property1, property2, ..., propertyN.
+	  * The sequence of the properties is defined by the file normalized_properties.txt
+	  * @return Subject as tsv-formatted
+	  */
+	def toTsv: String = {
+		val quote = "\""
+		var tsvString = s"$quote$id$quote"
+		tsvString += s"\t${name.map(value => s"$quote${value.replaceAll("\"", "\\\"")}$quote").getOrElse("")}"
+		val tsvAliases = aliases.map(alias => s"$quote${alias.replaceAll("\"", "\\\"")}$quote").mkString(",")
+		tsvString += s"\t$tsvAliases"
+		tsvString += s"\t${category.map(value => s"$quote${value.replaceAll("\"", "\\\"")}$quote").getOrElse("")}"
+		val tsvProperties = Subject.normalizedPropertyKeyList
+			.map(get)
+	    	.map { propertyValues =>
+				propertyValues
+					.map(propertyValue => s"$quote${propertyValue.replaceAll("\"", "\\\"")}$quote")
+					.mkString(",")
+			}.mkString("\t")
+		tsvString += s"\t$tsvProperties"
+		tsvString
+	}
 }
 
 /**
@@ -134,10 +158,11 @@ case class Subject(
   */
 object Subject {
 	val relationBlackList = Set(SubjectManager.masterKey, SubjectManager.slaveKey, SubjectManager.duplicateKey)
-	val normalizedPropertyKeys : Set[String] = Source
+	val normalizedPropertyKeyList: List[String] = Source
 		.fromURL(this.getClass.getResource("/normalized_properties.txt"))
 		.getLines
-		.toSet
+    	.toList
+	val normalizedPropertyKeys : Set[String] = normalizedPropertyKeyList.toSet
 
 	/**
 	  * Creates a default empty Subject with equal id and master

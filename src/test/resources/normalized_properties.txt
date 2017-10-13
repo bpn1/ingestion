@@ -7,6 +7,7 @@ cr_type
 id_implisense
 id_wikidata
 id_dbpedia
+id_kompass
 id_vat
 id_lei
 id_ebid
@@ -17,6 +18,7 @@ id_wikimeda_commons
 id_geonames
 id_viaf
 id_lccn
+id_tax
 sm_youtube
 sm_googleplus
 sm_xing
@@ -47,3 +49,9 @@ gen_emails
 gen_legal_form
 gen_founder
 gen_description
+gen_turnover
+gen_ceo
+gen_capital
+gen_management
+gen_revenue
+gen_sales
