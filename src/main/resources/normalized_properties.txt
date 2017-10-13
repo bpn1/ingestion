@@ -53,6 +53,5 @@ gen_turnover
 gen_ceo
 gen_capital
 gen_management
-gen_description
 gen_revenue
 gen_sales

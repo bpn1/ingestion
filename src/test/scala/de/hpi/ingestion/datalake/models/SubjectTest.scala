@@ -75,4 +75,10 @@ class SubjectTest extends FlatSpec with Matchers {
 		emptySubject.master shouldEqual TestData.idList.head
 		emptySubject.datasource shouldEqual "test"
 	}
+
+	"Subject" should "be transformed to tsv" in {
+		val tsvSubjects = TestData.exportSubjects.map(_.toTsv)
+		val expectedSubjects = TestData.tsvSubjects
+		tsvSubjects shouldEqual expectedSubjects
+	}
 }
