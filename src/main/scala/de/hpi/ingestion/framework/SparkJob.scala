@@ -30,7 +30,7 @@ trait SparkJob extends Configurable with Serializable {
 	val sparkOptions = mutable.Map[String, String]()
 	val cassandraLoadQueries = ListBuffer[String]()
 	val cassandraSaveQueries = ListBuffer[String]()
-	var args = Array.empty[String]
+	var conf: CommandLineConf = new CommandLineConf(Seq())
 
 	/**
 	  * Loads a number of input RDDs and saves them in instance variables.
@@ -53,14 +53,12 @@ trait SparkJob extends Configurable with Serializable {
 	/**
 	  * Called before running the job. Used to assert specifics of the input arguments. Returns false if the program
 	  * should be terminated. Parses the xml config if a path is given in args or configFile is set.
-	  * @param conf arguments of the program
 	  * @return true if the program can continue, false if it should be terminated
 	  */
 	def assertConditions(): Boolean = {
-		args
-			.headOption
-			.foreach(file => configFile = file)
+		conf.config.foreach(configFile = _)
 		if(configFile.nonEmpty) parseConfig()
+		conf.importConfig.foreach(importConfigFile = _)
 		if(importConfigFile.nonEmpty) parseImportConfig()
 		true
 	}
@@ -93,10 +91,7 @@ trait SparkJob extends Configurable with Serializable {
 	  * @param args command line arguments to be used for the job
 	  */
 	def execute(sc: SparkContext, args: Array[String] = Array()): Unit = {
-		val conf = new CommandLineConf(args)
-		configFile = conf.config.getOrElse(configFile)
-		importConfigFile = conf.config.getOrElse(importConfigFile)
-		this.args = args
+		conf = new CommandLineConf(args)
 		if(!assertConditions()) {
 			return
 		}

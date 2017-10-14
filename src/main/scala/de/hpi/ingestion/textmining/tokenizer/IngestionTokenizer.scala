@@ -143,7 +143,7 @@ object IngestionTokenizer {
 	  * @param args Array of arguments
 	  * @return Tokenizer corresponding to the arguments if they are well-formed
 	  */
-	def apply(args: Array[String]) = {
+	def apply(args: List[String]): IngestionTokenizer = {
 		val tokenizer = if(args.length < 1) {
 			new CoreNLPTokenizer
 		} else {

@@ -20,6 +20,7 @@ import de.hpi.ingestion.framework.pipeline.JobPipeline
 import org.apache.spark.SparkContext
 
 object JobRunner {
+	@throws(classOf[IllegalArgumentException])
 	def main(args: Array[String]): Unit = {
 		try {
 			val job = Class.forName(args.head).newInstance()

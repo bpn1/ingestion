@@ -107,45 +107,45 @@ class IngestionTokenizerTest extends FlatSpec with Matchers {
 	}
 
 	"String arguments apply" should "parse tokenizer option" in {
-		var tokenizer = IngestionTokenizer(Array("WhitespaceTokenizer"))
+		var tokenizer = IngestionTokenizer(List("WhitespaceTokenizer"))
 		tokenizer.tokenizer.getClass shouldEqual classOf[WhitespaceTokenizer]
-		tokenizer = IngestionTokenizer(Array("CleanWhitespaceTokenizer"))
+		tokenizer = IngestionTokenizer(List("CleanWhitespaceTokenizer"))
 		tokenizer.tokenizer.getClass shouldEqual classOf[CleanWhitespaceTokenizer]
-		tokenizer = IngestionTokenizer(Array("CleanCoreNLPTokenizer"))
+		tokenizer = IngestionTokenizer(List("CleanCoreNLPTokenizer"))
 		tokenizer.tokenizer.getClass shouldEqual classOf[CleanCoreNLPTokenizer]
-		tokenizer = IngestionTokenizer(Array("CoreNLPTokenizer"))
+		tokenizer = IngestionTokenizer(List("CoreNLPTokenizer"))
 		tokenizer.tokenizer.getClass shouldEqual classOf[CoreNLPTokenizer]
-		tokenizer = IngestionTokenizer(Array("Broken"))
+		tokenizer = IngestionTokenizer(List("Broken"))
 		tokenizer.tokenizer.getClass shouldEqual classOf[CoreNLPTokenizer]
-		tokenizer = IngestionTokenizer(Array[String]())
+		tokenizer = IngestionTokenizer(List[String]())
 		tokenizer.tokenizer.getClass shouldEqual classOf[CoreNLPTokenizer]
 	}
 
 	it should "parse stopword filtering option" in {
 		val tokenizerName = "WhitespaceTokenizer"
-		var tokenizer = IngestionTokenizer(Array[String]())
+		var tokenizer = IngestionTokenizer(List[String]())
 		tokenizer.removeStopwords shouldBe true
-		tokenizer = IngestionTokenizer(Array(tokenizerName))
+		tokenizer = IngestionTokenizer(List(tokenizerName))
 		tokenizer.removeStopwords shouldBe true
-		tokenizer = IngestionTokenizer(Array(tokenizerName, "true"))
+		tokenizer = IngestionTokenizer(List(tokenizerName, "true"))
 		tokenizer.removeStopwords shouldBe true
-		tokenizer = IngestionTokenizer(Array(tokenizerName, "false"))
+		tokenizer = IngestionTokenizer(List(tokenizerName, "false"))
 		tokenizer.removeStopwords shouldBe false
-		tokenizer = IngestionTokenizer(Array(tokenizerName, "broken"))
+		tokenizer = IngestionTokenizer(List(tokenizerName, "broken"))
 		tokenizer.removeStopwords shouldBe false
 	}
 
 	it should "parse stemming option" in {
 		val tokenizerName = "WhitespaceTokenizer"
-		var tokenizer = IngestionTokenizer(Array[String]())
+		var tokenizer = IngestionTokenizer(List[String]())
 		tokenizer.stem shouldBe true
-		tokenizer = IngestionTokenizer(Array(tokenizerName))
+		tokenizer = IngestionTokenizer(List(tokenizerName))
 		tokenizer.stem shouldBe true
-		tokenizer = IngestionTokenizer(Array(tokenizerName, "true", "true"))
+		tokenizer = IngestionTokenizer(List(tokenizerName, "true", "true"))
 		tokenizer.stem shouldBe true
-		tokenizer = IngestionTokenizer(Array(tokenizerName, "true", "false"))
+		tokenizer = IngestionTokenizer(List(tokenizerName, "true", "false"))
 		tokenizer.stem shouldBe false
-		tokenizer = IngestionTokenizer(Array(tokenizerName, "true", "broken"))
+		tokenizer = IngestionTokenizer(List(tokenizerName, "true", "broken"))
 		tokenizer.stem shouldBe false
 	}
 

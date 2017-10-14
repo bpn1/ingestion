@@ -16,14 +16,14 @@ limitations under the License.
 
 package de.hpi.ingestion.versioncontrol
 
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
-import com.datastax.spark.connector._
 import java.util.UUID
 
-import de.hpi.ingestion.datalake.models._
+import com.datastax.spark.connector._
 import de.hpi.ingestion.datalake.SubjectManager
-import de.hpi.ingestion.framework.{CommandLineConf, SparkJob}
+import de.hpi.ingestion.datalake.models._
+import de.hpi.ingestion.framework.SparkJob
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 
 /**
   * Resets all subject data (normal attributes, properties entries and relations) to the last version
@@ -64,7 +64,7 @@ class VersionRestore extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(sc: SparkContext): Unit = {
-		val restoreVersion = UUID.fromString(args(0))
+		val restoreVersion = UUID.fromString(conf.restoreVersion())
 		val version = Version(appName, List("history"), sc, false, Option(outputTablename))
 		restoredSubjects = subjects.map(restoreSubjects(_, restoreVersion, version))
 	}
@@ -73,9 +73,7 @@ class VersionRestore extends SparkJob {
 	  * Asserts that two versions are given as program arguments.
 	  * @return true if there are at least two arguments provided
 	  */
-	override def assertConditions(): Boolean = {
-		args.length == 1
-	}
+	override def assertConditions(): Boolean = conf.restoreVersion.isDefined
 }
 
 object VersionRestore {
