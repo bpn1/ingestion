@@ -17,6 +17,10 @@ package de.hpi.ingestion.framework
 
 import org.rogach.scallop.ScallopConf
 
+/**
+  * Parses command line arguments into typed options used in Spark Jobs.
+  * @param arguments command line arguments containing the configuration to be parsed
+  */
 class CommandLineScallopConf(arguments: Seq[String]) extends ScallopConf(arguments) {
 	val config = opt[String](descr = "config file for accessing tables and the deduplication score configs")
 	val importConfig = opt[String](descr = "config file for the normalization")
@@ -36,8 +40,19 @@ class CommandLineScallopConf(arguments: Seq[String]) extends ScallopConf(argumen
 	}
 	verify()
 
+	/**
+	  * Called when an error parsing the arguments occurs. This can only happen when the tokenizer and the diff versions
+	  * are validated. Always throws an IllegalArgumentException with the predefined message.
+	  * @param e Exception thrown by scallop
+	  * @throws java.lang.IllegalArgumentException contains the message of the input exception
+	  */
+	@throws(classOf[IllegalArgumentException])
 	override def onError(e: Throwable): Unit = throw new IllegalArgumentException(e.getMessage)
 
+	/**
+	  * Transforms this Scallop Conf to a serializable Command Line Conf.
+	  * @return a Command Line Conf containing the same data of this Scallop Conf
+	  */
 	def toCommandLineConf: CommandLineConf = {
 		CommandLineConf(
 			config.toOption,
