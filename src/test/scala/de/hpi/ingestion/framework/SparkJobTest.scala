@@ -30,14 +30,14 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 
 	"Assert conditions" should "not stop the job if the conditions are true" in {
 		val sparkJob = new MockConditionSparkJob
-		sparkJob.execute(sc)
+		sparkJob.execute(sc, Array("-c", "test.xml"))
 		val expectedSequence = List("assertConditions", "execQ", "load", "run" , "execQ", "save")
 		sparkJob.methodCalls.toList shouldEqual expectedSequence
 	}
 
 	it should "stop the job if the conditions are false" in {
 		val sparkJob = new MockConditionSparkJob
-		sparkJob.execute(sc, Array("test"))
+		sparkJob.execute(sc)
 		val expectedSequence = List("assertConditions")
 		sparkJob.methodCalls.toList shouldEqual expectedSequence
 	}
@@ -69,12 +69,25 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 		sparkJob.sectorSettings should not be empty
 	}
 
+	it should "be read from the command line config" in {
+		val sparkJob = new MockSparkJob
+		sparkJob.settings shouldBe empty
+		sparkJob.assertConditions()
+		sparkJob.settings shouldBe empty
+		sparkJob.conf = CommandLineConf(Seq("-c", "test.xml", "-i", "normalization_wikidata.xml"))
+		sparkJob.assertConditions()
+		sparkJob.settings should not be empty
+		sparkJob.scoreConfigSettings should not be empty
+		sparkJob.normalizationSettings should not be empty
+		sparkJob.sectorSettings should not be empty
+	}
+
 	it should "be the file passed as argument" in {
 		val sparkJob = new MockSparkJob
 		sparkJob.settings shouldBe empty
 		sparkJob.assertConditions()
 		sparkJob.settings shouldBe empty
-		sparkJob.args = Array("test.xml")
+		sparkJob.conf = CommandLineConf(Seq("--config", "test.xml"))
 		sparkJob.assertConditions()
 		sparkJob.settings should not be empty
 	}

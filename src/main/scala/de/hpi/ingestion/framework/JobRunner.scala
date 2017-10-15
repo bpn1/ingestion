@@ -19,7 +19,19 @@ package de.hpi.ingestion.framework
 import de.hpi.ingestion.framework.pipeline.JobPipeline
 import org.apache.spark.SparkContext
 
+/**
+  * Executes a Spark Job or Job Pipeline provided by the arguments. Throws an IllegalArgumentException if the passed
+  * arguments do not specify a Spark Job or a Job Pipeline.
+  */
 object JobRunner {
+	/**
+	  * Executes a Spark Job or Job Pipeline specified by the first argument and passes the remaining arguments to the
+	  * Job. If neither a Spark Job or a Job Pipeline are specified an Exception is thrown.
+	  * @param args command line arguments passed to the program
+	  * @throws java.lang.IllegalArgumentException thrown if the first argument doesn't specify a Spark Job or a Job
+	  * Pipeline
+	  */
+	@throws(classOf[IllegalArgumentException])
 	def main(args: Array[String]): Unit = {
 		try {
 			val job = Class.forName(args.head).newInstance()

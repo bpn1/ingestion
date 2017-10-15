@@ -56,7 +56,7 @@ class Commit extends SparkJob with JSONParser[Boolean] {
 	  * @param sc    Spark Context used to e.g. broadcast variables
 	  */
 	override def run(sc: SparkContext): Unit = {
-		val commitJson = args.head
+		val commitJson = conf.commitJson
 		val templateVersion = Version(appName, List("human"), sc, false, Option("subject"))
 
 		val inputJson = Json.parse(commitJson)

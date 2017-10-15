@@ -17,8 +17,8 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.framework.CommandLineConf
 import de.hpi.ingestion.textmining.TestData
-import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import de.hpi.ingestion.textmining.tokenizer.{CleanCoreNLPTokenizer, IngestionTokenizer}
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -102,7 +102,7 @@ class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Mat
 	"Articles without any context" should "be fully enriched with article and link contexts" in {
 		val job = new TermFrequencyCounter
 		job.parsedWikipedia = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
-		job.args = Array("CleanCoreNLPTokenizer", "true", "true")
+		job.conf = CommandLineConf(Seq("--tokenizer", "CleanCoreNLPTokenizer", "true", "true"))
 		job.run(sc)
 		val enrichedArticles = job
 			.parsedWikipediaWithTF

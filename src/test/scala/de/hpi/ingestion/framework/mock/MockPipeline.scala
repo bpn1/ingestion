@@ -22,5 +22,5 @@ class MockPipeline extends JobPipeline {
 	pipelineName = "Mock Pipeline"
 	jobs = List(
 		(new MockPrintSparkJob, Array()),
-		(new MockPrintSparkJob, Array("test.xml", "arg1")))
+		(new MockPrintSparkJob, Array("-c", "test.xml")))
 }

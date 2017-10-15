@@ -31,7 +31,6 @@ class LinkAnalysis extends SparkJob {
 	appName = "Link Analysis"
 	configFile = "textmining.xml"
 	cassandraSaveQueries += s"TRUNCATE TABLE ${settings("keyspace")}.${settings("linkTable")}"
-	val reduceFlag = "toReduced"
 
 	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
 	var pages: RDD[Page] = _
@@ -65,8 +64,7 @@ class LinkAnalysis extends SparkJob {
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  */
 	override def run(sc: SparkContext): Unit = {
-		val toReduced = args.headOption.contains(reduceFlag)
-		val validLinks = extractValidLinks(parsedWikipedia, toReduced)
+		val validLinks = extractValidLinks(parsedWikipedia, conf.toReduced)
 		aliases = groupByAliases(validLinks)
 		pages = groupByPageNames(validLinks)
 	}

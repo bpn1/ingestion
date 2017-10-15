@@ -59,7 +59,7 @@ class TermFrequencyCounter extends SparkJob {
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  */
 	override def run(sc: SparkContext): Unit = {
-		val tokenizer = IngestionTokenizer(args)
+		val tokenizer = IngestionTokenizer(conf.tokenizer)
 		parsedWikipediaWithTF = parsedWikipedia
 			.map(extractArticleContext(_, tokenizer))
 			.map(extractLinkContexts(_, tokenizer, settings("contextSize").toInt))

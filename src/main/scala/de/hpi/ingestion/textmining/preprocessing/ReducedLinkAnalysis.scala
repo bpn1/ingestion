@@ -17,10 +17,8 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.textmining.models._
+import de.hpi.ingestion.framework.{CommandLineConf, SparkJob}
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 
 /**
   * Groups the `Links` once on the aliases and once on the pages and saves them to the columns for reduced links.
@@ -59,7 +57,7 @@ class ReducedLinkAnalysis extends SparkJob {
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  */
 	override def run(sc: SparkContext): Unit = {
-		linkAnalysis.args = Array(linkAnalysis.reduceFlag)
+		linkAnalysis.conf = CommandLineConf(Seq("-r"))
 		linkAnalysis.run(sc)
 	}
 }

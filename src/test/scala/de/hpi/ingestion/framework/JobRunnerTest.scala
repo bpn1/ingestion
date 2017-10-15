@@ -34,19 +34,19 @@ class JobRunnerTest extends FlatSpec with Matchers with SharedSparkContext {
 	they should "be passed command line arguments" in {
 		val output = new ByteArrayOutputStream()
 		Console.withOut(output) {
-			JobRunner.main(Array("de.hpi.ingestion.framework.mock.MockPrintSparkJob", "test.xml", "arg1", "arg2"))
+			JobRunner.main(Array("de.hpi.ingestion.framework.mock.MockPrintSparkJob", "-c", "test.xml"))
 		}
-		val expectedOutput = "assertConditions\nexecQ\nload\nrun\ntest.xml\narg1\narg2\nexecQ\nsave\n"
+		val expectedOutput = "assertConditions\nexecQ\nload\nrun\ntest.xml\nexecQ\nsave\n"
 		output.toString shouldEqual expectedOutput
 	}
 
 	"Pipeline" should "be executed" in {
 		val output = new ByteArrayOutputStream()
 		Console.withOut(output) {
-			JobRunner.main(Array("de.hpi.ingestion.framework.mock.MockPipeline", "arg2"))
+			JobRunner.main(Array("de.hpi.ingestion.framework.mock.MockPipeline", "arg"))
 		}
 		val expectedOutput = "assertConditions\nexecQ\nload\nrun\nexecQ\nsave\nassertConditions\nexecQ\n" +
-			"load\nrun\ntest.xml\narg1\nexecQ\nsave\n"
+			"load\nrun\ntest.xml\nexecQ\nsave\n"
 		output.toString shouldEqual expectedOutput
 	}
 

@@ -18,7 +18,7 @@ package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.blockingschemes.SimpleBlockingScheme
-import de.hpi.ingestion.deduplication.models.BlockEvaluation
+import de.hpi.ingestion.framework.CommandLineConf
 import org.scalatest.{FlatSpec, Matchers}
 
 class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
@@ -133,7 +133,7 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 		val goldStandard = TestData.goldStandard(subjects, stagedSubjects)
 		job.goldStandard = sc.parallelize(goldStandard.toList)
 		job.setBlockingSchemes(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		job.args = Array("Test comment")
+		job.conf = CommandLineConf(Seq("-b", "Test comment"))
 		job.run(sc)
 		val evaluationBlocks = job.blockEvaluation.map(_.copy(jobid = null))
 		val expected = TestData.emptyBlockEvaluationWithComment(sc)

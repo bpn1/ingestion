@@ -16,10 +16,11 @@ limitations under the License.
 
 package de.hpi.ingestion.versioncontrol
 
-import org.scalatest.{FlatSpec, Matchers}
-import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import java.util.UUID
-import de.hpi.ingestion.versioncontrol.models.SubjectDiff
+
+import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
+import de.hpi.ingestion.framework.CommandLineConf
+import org.scalatest.{FlatSpec, Matchers}
 
 class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 
@@ -30,7 +31,7 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 		val job = new VersionDiff
 		job.subjects = sc.parallelize(TestData.diffSubjects())
 		val (oldV, newV) = TestData.versionsToCompare()
-		job.args = Array(oldV.toString, newV.toString)
+		job.conf = CommandLineConf(Seq("-d", oldV.toString, newV.toString))
 		job.run(sc)
 		val versionDiff = job.subjectDiff.collect.toList
 		val expectedDiff = TestData.subjectDiff()
@@ -108,9 +109,9 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 
 	"Version Diff assertion" should "assert that there are two versions provided" in {
 		val job = new VersionDiff
-		job.args = Array("v1", "v2")
+		job.conf = CommandLineConf(Seq("-d", "v1", "v2"))
 		job.assertConditions() shouldBe true
-		job.args = Array("v1")
+		job.conf = CommandLineConf(Seq())
 		job.assertConditions() shouldBe false
 	}
 }

@@ -17,9 +17,8 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import de.hpi.ingestion.framework.CommandLineConf
 import de.hpi.ingestion.textmining.TestData
-import de.hpi.ingestion.textmining.models.{Alias, Page}
-import org.apache.spark.rdd.RDD
 import org.scalatest.{FlatSpec, Matchers}
 
 class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
@@ -170,7 +169,7 @@ class LinkAnalysisTest extends FlatSpec with SharedSparkContext with Matchers {
 	"Reduced links" should "be analysed" in {
 		val job = new LinkAnalysis
 		job.parsedWikipedia = sc.parallelize(TestData.linkAnalysisArticles())
-		job.args = Array(job.reduceFlag)
+		job.conf = CommandLineConf(Seq("-r"))
 		job.run(sc)
 		val groupedAliasesSet = job.aliases.collect.toSet
 		val groupedPagesSet = job.pages.collect.toSet

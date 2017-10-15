@@ -72,7 +72,7 @@ class Blocking extends SparkJob {
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  */
 	override def run(sc: SparkContext): Unit = {
-		val comment = args.headOption.getOrElse("Blocking")
+		val comment = conf.commentOpt.getOrElse("Blocking")
 		val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
 		val filterUndefined = settings.getOrElse("filterUndefined", "false") == "true"
 		val filterSmall = settings.getOrElse("filterSmall", "false") == "true"

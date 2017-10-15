@@ -29,7 +29,7 @@ class MockPrintSparkJob extends SparkJob {
 	override def load(sc: SparkContext): Unit = println("load")
 	override def run(sc: SparkContext): Unit = {
 		println("run")
-		args.foreach(println)
+		conf.configOpt.foreach(println)
 	}
 	override def save(sc: SparkContext): Unit = println("save")
 	override def executeQueries(sc: SparkContext, queries: List[String]): Unit = println("execQ")
