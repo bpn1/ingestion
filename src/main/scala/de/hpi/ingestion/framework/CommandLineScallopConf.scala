@@ -16,12 +16,18 @@ limitations under the License.
 package de.hpi.ingestion.framework
 
 import org.rogach.scallop.ScallopConf
+import org.rogach.scallop.exceptions.Help
 
 /**
   * Parses command line arguments into typed options used in Spark Jobs.
   * @param arguments command line arguments containing the configuration to be parsed
   */
 class CommandLineScallopConf(arguments: Seq[String]) extends ScallopConf(arguments) {
+	banner("""Usage: spark.sh ... myJar.jar [OPTION]...
+			 |Options:
+			 |""".stripMargin)
+	footer("\nFor more information visit the documentation in the GitHub Wiki:\n" +
+		"https://github.com/bpn1/ingestion/wiki/Pass-Command-Line-Arguments")
 	val config = opt[String](descr = "config file for accessing tables and the deduplication score configs")
 	val importConfig = opt[String](descr = "config file for the normalization")
 	val commitJson = opt[String](short = 'j', descr = "JSON string used for the commit job by the Curation Interface")
@@ -42,12 +48,18 @@ class CommandLineScallopConf(arguments: Seq[String]) extends ScallopConf(argumen
 
 	/**
 	  * Called when an error parsing the arguments occurs. This can only happen when the tokenizer and the diff versions
-	  * are validated. Always throws an IllegalArgumentException with the predefined message.
+	  * are validated or the args contain wrong flags. If the args contain --help the help is printed. Otherwise an
+	  * IllegalArgumentException is thrown.
 	  * @param e Exception thrown by scallop
 	  * @throws java.lang.IllegalArgumentException contains the message of the input exception
 	  */
 	@throws(classOf[IllegalArgumentException])
-	override def onError(e: Throwable): Unit = throw new IllegalArgumentException(e.getMessage)
+	override def onError(e: Throwable): Unit = {
+		e match {
+			case Help("") => printHelp()
+			case _ => throw new IllegalArgumentException(e.getMessage)
+		}
+	}
 
 	/**
 	  * Transforms this Scallop Conf to a serializable Command Line Conf.

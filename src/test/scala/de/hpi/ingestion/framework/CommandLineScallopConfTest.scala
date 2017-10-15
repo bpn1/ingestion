@@ -16,7 +16,7 @@ limitations under the License.
 
 package de.hpi.ingestion.framework
 
-import java.io.EOFException
+import java.io.{ByteArrayOutputStream, EOFException}
 
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -116,5 +116,16 @@ class CommandLineScallopConfTest extends FlatSpec with Matchers {
 		conf2.restoreVersion shouldEqual "version1"
 		conf2.toReduced shouldBe false
 		conf2.tokenizer shouldEqual List("flag1", "flag2", "flag3")
+	}
+
+	"Help" should "be printed" in {
+		val output = new ByteArrayOutputStream()
+		Console.withOut(output) {
+			new CommandLineScallopConf(Seq("--help"))
+		}
+		val printedHelp = output.toString()
+		printedHelp should startWith ("Usage: spark.sh ... myJar.jar [OPTION]...\nOptions:\n")
+		printedHelp should endWith ("\nFor more information visit the documentation in the GitHub Wiki:\n" +
+			"https://github.com/bpn1/ingestion/wiki/Pass-Command-Line-Arguments\n")
 	}
 }
