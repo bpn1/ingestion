@@ -19,8 +19,7 @@ package de.hpi.ingestion.dataimport.wikidata
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import org.scalatest.{FlatSpec, Matchers}
 
-class ResolveEntitiesTest
-	extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
+class ResolveEntitiesTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"Wikidata entities" should "be flattened properly" in {
 		val entities = TestData.unresolvedWikidataEntities()
 			.flatMap(ResolveEntities.flattenWikidataEntity)
