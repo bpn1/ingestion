@@ -31,7 +31,6 @@ class LinkAnalysis extends SparkJob {
 	appName = "Link Analysis"
 	configFile = "textmining.xml"
 	cassandraSaveQueries += s"TRUNCATE TABLE ${settings("keyspace")}.${settings("linkTable")}"
-	val reduceFlag = "toReduced"
 
 	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
 	var pages: RDD[Page] = _

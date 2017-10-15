@@ -107,7 +107,7 @@ class CommandLineScallopConfTest extends FlatSpec with Matchers {
 			"--diff-versions", "version1", "version2",
 			"--restore-version", "version1",
 			"--tokenizer", "flag1", "flag2", "flag3")
-		val conf2 = CommandLineScallopConf(args2)
+		val conf2 = CommandLineConf(args2)
 		conf2.commentOpt shouldBe None
 		conf2.commitJson shouldEqual "\"{abcde}\""
 		conf2.configOpt shouldBe None

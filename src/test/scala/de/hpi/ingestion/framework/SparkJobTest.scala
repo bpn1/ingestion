@@ -74,7 +74,7 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 		sparkJob.settings shouldBe empty
 		sparkJob.assertConditions()
 		sparkJob.settings shouldBe empty
-		sparkJob.conf = CommandLineScallopConf(Seq("-c", "test.xml", "-i", "normalization_wikidata.xml"))
+		sparkJob.conf = CommandLineConf(Seq("-c", "test.xml", "-i", "normalization_wikidata.xml"))
 		sparkJob.assertConditions()
 		sparkJob.settings should not be empty
 		sparkJob.scoreConfigSettings should not be empty
@@ -87,7 +87,7 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
 		sparkJob.settings shouldBe empty
 		sparkJob.assertConditions()
 		sparkJob.settings shouldBe empty
-		sparkJob.conf = CommandLineScallopConf(Seq("--config", "test.xml"))
+		sparkJob.conf = CommandLineConf(Seq("--config", "test.xml"))
 		sparkJob.assertConditions()
 		sparkJob.settings should not be empty
 	}

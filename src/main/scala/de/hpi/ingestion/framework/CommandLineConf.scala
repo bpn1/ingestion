@@ -34,3 +34,9 @@ case class CommandLineConf(
 	def restoreVersion: String = restoreVersionOpt.get
 	def diffVersions: List[String] = diffVersionsOpt.get
 }
+
+object CommandLineConf {
+	def apply(arguments: Seq[String]): CommandLineConf = {
+		new CommandLineScallopConf(arguments).toCommandLineConf
+	}
+}

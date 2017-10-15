@@ -50,9 +50,3 @@ class CommandLineScallopConf(arguments: Seq[String]) extends ScallopConf(argumen
 			diffVersions.toOption)
 	}
 }
-
-object CommandLineScallopConf {
-	def apply(arguments: Seq[String]): CommandLineConf = {
-		new CommandLineScallopConf(arguments).toCommandLineConf
-	}
-}

@@ -30,7 +30,7 @@ trait SparkJob extends Configurable with Serializable {
 	val sparkOptions = mutable.Map[String, String]()
 	val cassandraLoadQueries = ListBuffer[String]()
 	val cassandraSaveQueries = ListBuffer[String]()
-	var conf: CommandLineConf = CommandLineScallopConf(Seq())
+	var conf = CommandLineConf(Seq())
 
 	/**
 	  * Loads a number of input RDDs and saves them in instance variables.
@@ -91,7 +91,7 @@ trait SparkJob extends Configurable with Serializable {
 	  * @param args command line arguments to be used for the job
 	  */
 	def execute(sc: SparkContext, args: Array[String] = Array()): Unit = {
-		conf = CommandLineScallopConf(args)
+		conf = CommandLineConf(args)
 		if(!assertConditions()) {
 			return
 		}
