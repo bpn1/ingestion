@@ -70,8 +70,11 @@ logLevel in assembly := Level.Error
 scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value
 
 // scaladoc settings
+// adds a source and an impressum link to every page
 scalacOptions in (Compile, doc) ++= Seq("-doc-footer", "Impressum: https://hpi.de/naumann/sites/ingestion/impressum/")
 scalacOptions in (Compile, doc) ++= Seq("-doc-source-url", "https://github.com/bpn1/ingestion/tree/master€{FILE_PATH}.scala")
+// removes test files from the scaladoc sources
+sources in (Compile, doc) ~= (_ filter (file => !(file.getName endsWith "Test.scala")))
 
 // include implisense files as unmanaged source directories
 unmanagedSourceDirectories in Compile += baseDirectory.value / "implisense_files" / "src"
