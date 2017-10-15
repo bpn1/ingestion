@@ -17,14 +17,14 @@ limitations under the License.
 package de.hpi.ingestion.versioncontrol
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.framework.CommandLineConf
+import de.hpi.ingestion.framework.CommandLineScallopConf
 import org.scalatest.{FlatSpec, Matchers}
 
 class VersionRestoreTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
 	"Subject data" should "be restored" in {
 		val job = new VersionRestore
 		job.subjects = sc.parallelize(TestData.diffSubjects() ++ TestData.additionalRestorationSubjects())
-		job.conf = new CommandLineConf(Seq("-v", TestData.versionsToCompare()._1.toString))
+		job.conf = CommandLineScallopConf(Seq("-v", TestData.versionsToCompare()._1.toString))
 		job.run(sc)
 		val restoredSubjects = job.restoredSubjects.collect.sortBy(_.id)
 
@@ -42,9 +42,9 @@ class VersionRestoreTest extends FlatSpec with SharedSparkContext with Matchers 
 
 	"Version Restore assertion" should "return false if there is not exactly one versions provided" in {
 		val job = new VersionRestore
-		job.conf = new CommandLineConf(Seq("-v", "v1"))
+		job.conf = CommandLineScallopConf(Seq("-v", "v1"))
 		job.assertConditions() shouldBe true
-		job.conf = new CommandLineConf(Seq())
+		job.conf = CommandLineScallopConf(Seq())
 		job.assertConditions() shouldBe false
 	}
 }

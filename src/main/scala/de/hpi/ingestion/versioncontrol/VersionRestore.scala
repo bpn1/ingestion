@@ -64,7 +64,7 @@ class VersionRestore extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(sc: SparkContext): Unit = {
-		val restoreVersion = UUID.fromString(conf.restoreVersion())
+		val restoreVersion = UUID.fromString(conf.restoreVersion)
 		val version = Version(appName, List("history"), sc, false, Option(outputTablename))
 		restoredSubjects = subjects.map(restoreSubjects(_, restoreVersion, version))
 	}
@@ -73,7 +73,7 @@ class VersionRestore extends SparkJob {
 	  * Asserts that two versions are given as program arguments.
 	  * @return true if there are at least two arguments provided
 	  */
-	override def assertConditions(): Boolean = conf.restoreVersion.isDefined
+	override def assertConditions(): Boolean = conf.restoreVersionOpt.isDefined
 }
 
 object VersionRestore {

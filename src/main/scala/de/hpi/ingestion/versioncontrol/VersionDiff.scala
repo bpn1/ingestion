@@ -66,7 +66,7 @@ class VersionDiff extends SparkJob {
 	  * @return List of RDDs containing the output data
 	  */
 	override def run(sc: SparkContext): Unit = {
-		val (oldVersion, newVersion) = conf.diffVersions().map(UUID.fromString) match {
+		val (oldVersion, newVersion) = conf.diffVersions.map(UUID.fromString) match {
 			case List(version1, version2) => versionOrder(version1, version2)
 		}
 		subjectDiff = subjects
@@ -79,7 +79,7 @@ class VersionDiff extends SparkJob {
 	  * Asserts that two versions are given as program arguments.
 	  * @return true if there are at least two arguments provided
 	  */
-	override def assertConditions(): Boolean = conf.diffVersions.isDefined
+	override def assertConditions(): Boolean = conf.diffVersionsOpt.isDefined
 }
 
 object VersionDiff {

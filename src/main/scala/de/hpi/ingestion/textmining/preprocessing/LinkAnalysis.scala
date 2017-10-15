@@ -65,7 +65,7 @@ class LinkAnalysis extends SparkJob {
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  */
 	override def run(sc: SparkContext): Unit = {
-		val validLinks = extractValidLinks(parsedWikipedia, conf.toReduced())
+		val validLinks = extractValidLinks(parsedWikipedia, conf.toReduced)
 		aliases = groupByAliases(validLinks)
 		pages = groupByPageNames(validLinks)
 	}

@@ -28,7 +28,7 @@ class MockConditionSparkJob extends SparkJob {
 
 	override def assertConditions(): Boolean = {
 		methodCalls += "assertConditions"
-		conf.config.isDefined
+		conf.configOpt.isDefined
 	}
 
 	override def load(sc: SparkContext): Unit = methodCalls += "load"

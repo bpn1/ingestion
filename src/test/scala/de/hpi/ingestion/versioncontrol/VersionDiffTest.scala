@@ -19,7 +19,7 @@ package de.hpi.ingestion.versioncontrol
 import java.util.UUID
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.framework.CommandLineConf
+import de.hpi.ingestion.framework.CommandLineScallopConf
 import org.scalatest.{FlatSpec, Matchers}
 
 class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
@@ -31,7 +31,7 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 		val job = new VersionDiff
 		job.subjects = sc.parallelize(TestData.diffSubjects())
 		val (oldV, newV) = TestData.versionsToCompare()
-		job.conf = new CommandLineConf(Seq("-d", oldV.toString, newV.toString))
+		job.conf = CommandLineScallopConf(Seq("-d", oldV.toString, newV.toString))
 		job.run(sc)
 		val versionDiff = job.subjectDiff.collect.toList
 		val expectedDiff = TestData.subjectDiff()
@@ -109,9 +109,9 @@ class VersionDiffTest extends FlatSpec with SharedSparkContext with Matchers wit
 
 	"Version Diff assertion" should "assert that there are two versions provided" in {
 		val job = new VersionDiff
-		job.conf = new CommandLineConf(Seq("-d", "v1", "v2"))
+		job.conf = CommandLineScallopConf(Seq("-d", "v1", "v2"))
 		job.assertConditions() shouldBe true
-		job.conf = new CommandLineConf(Seq())
+		job.conf = CommandLineScallopConf(Seq())
 		job.assertConditions() shouldBe false
 	}
 }

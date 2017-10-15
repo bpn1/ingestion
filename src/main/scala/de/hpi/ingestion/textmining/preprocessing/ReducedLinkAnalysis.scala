@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.textmining.preprocessing
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.framework.{CommandLineConf, SparkJob}
+import de.hpi.ingestion.framework.{CommandLineScallopConf, SparkJob}
 import org.apache.spark.SparkContext
 
 /**
@@ -57,7 +57,7 @@ class ReducedLinkAnalysis extends SparkJob {
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  */
 	override def run(sc: SparkContext): Unit = {
-		linkAnalysis.conf = new CommandLineConf(Seq("-r"))
+		linkAnalysis.conf = CommandLineScallopConf(Seq("-r"))
 		linkAnalysis.run(sc)
 	}
 }
