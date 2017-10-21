@@ -37,17 +37,14 @@ class Blocking extends SparkJob {
 	import Blocking._
 	appName = "Blocking"
 	configFile = "blocking.xml"
-	var blockingSchemes = List[BlockingScheme](
-//		ListBlockingScheme("postal_scheme", "geo_postal")
-		SimpleBlockingScheme("simple_scheme"),
-		LastLettersBlockingScheme("lastLetters_scheme")
-	)
 
+	var blockingSchemes: List[BlockingScheme] = List(SimpleBlockingScheme("simple_scheme"))
 	var subjectReductionFunction: (Subject => Subject) = identity[Subject]
 	var filterUndefined: Boolean = true
 	var filterSmall: Boolean = true
 	var minBlockSize: Long = 1
 	var maxBlockSize: Long = Long.MaxValue
+	var calculatePC: Boolean = false
 
 	var subjects: RDD[Subject] = _
 	var stagedSubjects: RDD[Subject] = _
@@ -86,34 +83,27 @@ class Blocking extends SparkJob {
 		settings.get("filterSmall").foreach(setFilterSmall)
 		settings.get("minBlockSize").foreach(setMinBlockSize)
 		settings.get("maxBlockSize").foreach(setMaxBlockSize)
-		evaluationBlocking(goldenBroadcast.value, filterUndefined, filterSmall, comment)
+		evaluationBlocking(goldenBroadcast.value, comment)
 	}
 
 	/**
 	  * Blocks the input Subjects using the provided blocking schemes and evaluates the blocks. This method reduces
 	  * the amount of data shuffled across the network for better performance.
 	  * @param goldStandard tuples of duplicateIDs we want to find
-	  * @param filterUndefined whether or not the undefined blocks will be filtered (defaults to true)
-	  * @param filterSmall whether or not very small blocks will be filtered (defaults to true)
 	  * @param comment additional comment added to the data entries
 	  */
-	def evaluationBlocking(
-		goldStandard: Set[(UUID, UUID)],
-		filterUndefined: Boolean = true,
-		filterSmall: Boolean = true,
-		comment: String
-	): Unit = {
+	def evaluationBlocking(goldStandard: Set[(UUID, UUID)], comment: String): Unit = {
 		val jobid = UUIDs.timeBased()
 		subjectReductionFunction = (subject: Subject) =>
 			Subject(id = subject.id, master = subject.master, datasource = subject.datasource)
-		val blocks = blocking()
+		val blocks = blocking().cache()
 		val duplicates = blocks.map(createDuplicateStats(_, goldStandard))
 		val combinedSchemesTag = s"combined ${blockingSchemes.map(_.tag).mkString(", ")}"
-		val pairsCompleteness = Map.empty[String, Double]
-		//calculatePairsCompleteness(duplicates, goldStandard, combinedSchemesTag)
-//		val blockCount = Map.empty[String, Int]
+		var pairsCompleteness = Map.empty[String, Double]
+		if(calculatePC) {
+			pairsCompleteness = calculatePairsCompleteness(duplicates, goldStandard, combinedSchemesTag)
+		}
 		val blockCount = calculateBlockCount(blocks, combinedSchemesTag)
-//		val comparisonCount = Map.empty[String, Long]
 		val comparisonCount = calculateComparisonCount(blocks, combinedSchemesTag)
 		blockEvaluation = duplicates
 			.values
@@ -213,17 +203,19 @@ class Blocking extends SparkJob {
 			}.filter { case (tag, block) =>
 				val isUndefined = undefinedMap(tag) == block.key && filterUndefined
 				val numComparisons = block.numComparisons
-				val isTooSmall = numComparisons < minBlockSize
+				val isTooSmall = numComparisons < minBlockSize && filterSmall
 				!(isUndefined || isTooSmall)
-			}.flatMap { case (tag, block) =>
-				Block
-					.split(block, maxBlockSize.toInt)
-					.zipWithIndex
-					.map { case (splitBlock, index) => (tag, splitBlock.copy(key = s"${splitBlock.key}_$index")) }
+			}
+			.flatMap { case (tag, largeBlock) =>
+				val splitBlocks = Block.split(largeBlock, maxBlockSize.toInt)
+				val blocks = splitBlocks.length match {
+					case 1 => splitBlocks
+					case _ => splitBlocks.zipWithIndex.map { case (block, i) => block.copy(key = s"${block.key}_$i") }
+				}
+				blocks.map((tag, _))
 			}
 	}
 }
-
 object Blocking {
 	/**
 	  * Uses input blocking schemes to generate blocks of subjects. Every subject generates an entry for every key
@@ -262,9 +254,7 @@ object Blocking {
 			.reduceByKey(_ + _)
 			.collect
 			.toMap
-		val totalBlockCount = schemeComparisons
-			.values
-			.sum
+		val totalBlockCount = schemeComparisons.values.sum
 		schemeComparisons + (combinedSchemesTag -> totalBlockCount)
 	}
 
@@ -283,10 +273,7 @@ object Blocking {
 			.reduceByKey(_ + _)
 			.collect
 			.toMap
-		val combinedComparisons = blocks
-			.flatMap { case (tag, block) => block.crossProduct() }
-			.distinct
-			.count
+		val combinedComparisons = blockComparisons.values.sum
 		blockComparisons + (combinedSchemesTag -> combinedComparisons)
 	}
 
@@ -336,7 +323,8 @@ object Blocking {
 			.crossProduct()
 			.map { case (subject1, subject2) => (subject1.id, subject2.id) }
 			.filter(goldStandard)
-		val precision = duplicates.size.toDouble / block.numComparisons
+		var precision = duplicates.size.toDouble / block.numComparisons
+		if(precision.isNaN) precision = 0.0
 		val blockStats = BlockStats(block.key, block.subjects.length, block.staging.length, precision)
 		(duplicates, (tag, blockStats))
 	}

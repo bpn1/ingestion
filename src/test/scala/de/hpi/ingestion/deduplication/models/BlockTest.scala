@@ -18,7 +18,6 @@ package de.hpi.ingestion.deduplication.models
 
 import de.hpi.ingestion.datalake.models.Subject
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class BlockTest extends FlatSpec with Matchers {
 	"Number of comparisons" should "be calculated" in {
