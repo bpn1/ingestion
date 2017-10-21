@@ -16,27 +16,31 @@ limitations under the License.
 
 package de.hpi.ingestion.implicits
 
-import org.apache.spark.rdd.RDD
-
 /**
   * Contains implicit classes extending Scala collections.
   */
 object CollectionImplicits {
 
 	/**
-	  * Implicit class which adds the cross product to classes implementing the Traversable trait.
+	  * Adds functions to Traversables.
 	  * @param xs the Collection calling the method
 	  * @tparam X the type of the objects contained in the collection
 	  */
-	implicit class Crossable[X](xs: Traversable[X]) {
+	implicit class TraversableFunctions[X](xs: Traversable[X]) {
 		/**
 		  * Returns the cross product of both collections: xs X ys.
 		  * Source: http://stackoverflow.com/a/14740340
 		  * @param ys the collection to create the cross product with
+		  * @param filter filter function used to filter tuples of the cross product
 		  * @tparam Y the type of the objects contained in the collection
 		  * @return the cross product of xs and ys
 		  */
-		def cross[Y](ys: Traversable[Y]): Traversable[(X, Y)] = for { x <- xs; y <- ys } yield (x, y)
+		def cross[Y](
+			ys: Traversable[Y],
+			filter: (X, Y) => Boolean = (x: X, y: Y) => true
+		): Traversable[(X, Y)] = {
+			for { x <- xs; y <- ys if filter(x, y) } yield (x, y)
+		}
 
 		/**
 		  * Returns the cross product of this collection with itself without symmetrical (duplicate) tuples.
@@ -50,6 +54,18 @@ object CollectionImplicits {
 			data
 				.indices
 				.flatMap(i => xs.slice(i + offset, xs.size).map((data(i), _)))
+		}
+
+		/**
+		  * Halves xs into two equally large Collections. If xs contains an odd number of elements the index for the
+		  * split is rounded down.
+		  * @return Traversable of the two halves in order
+		  */
+		def halve(): Traversable[Traversable[X]] = {
+			val split = xs.size / 2
+			val firstHalf = xs.slice(0, split)
+			val secondHalf = xs.slice(split, xs.size)
+			List(firstHalf, secondHalf)
 		}
 	}
 
@@ -70,32 +86,6 @@ object CollectionImplicits {
 			val diff2 = s"y - x:\n\t${ys.toSet.filterNot(xs.toSet).mkString("\n\t")}"
 			s"Difference:\n$diff1\n$diff2"
 		}
-	}
-
-	/**
-	  * Implicit class which adds the casting of a collection of RDDs of a single type to a collection of RDDs of Any.
-	  * @param xs Collection containing the RDDs
-	  * @tparam X type of the RDDs
-	  */
-	implicit class ToAnyRDD[X](xs: List[RDD[X]]) {
-		/**
-		  * Casts the RDDs to RDDs of type Any.
-		  * @return Collection of RDDs of type Any
-		  */
-		def toAnyRDD(): List[RDD[Any]] = xs.map(_.asInstanceOf[RDD[Any]])
-	}
-
-	/**
-	  * Implicit class which adds the casting of a collection of RDDs of Any to a collection of RDDs of a single type .
-	  * @param xs Collection containing the RDDs of type Any
-	  */
-	implicit class FromAnyRDD(xs: List[RDD[Any]]) {
-		/**
-		  * Casts the RDDs of type Any to the given type.
-		  * @tparam X type of the RDDs they will be cast to
-		  * @return Collection of RDDs of the given type
-		  */
-		def fromAnyRDD[X](): List[RDD[X]] = xs.map(_.asInstanceOf[RDD[X]])
 	}
 
 	/**

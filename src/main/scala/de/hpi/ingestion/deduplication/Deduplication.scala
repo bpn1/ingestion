@@ -71,10 +71,27 @@ class Deduplication extends SparkJob {
 	  * @param sc Spark Context used to e.g. broadcast variables
 	  */
 	override def run(sc: SparkContext): Unit = {
-		val slaves = subjects.filter(_.isSlave)
-		val blocks = Blocking.blocking(slaves, stagedSubjects, blockingSchemes, settings("maxBlockSize").toInt)
+		val blocking = new Blocking
+		settings.get("maxBlockSize").foreach(blocking.setMaxBlockSize)
+		settings.get("minBlockSize").foreach(blocking.setMinBlockSize)
+		settings.get("filterUndefined")
+		settings.get("filterSmall")
+		blocking.subjects = subjects.filter(_.isSlave)
+		blocking.stagedSubjects = stagedSubjects
+		blocking.subjectReductionFunction = (subject: Subject) => {
+			subject.master_history = Nil
+			subject.name_history = Nil
+			subject.category_history = Nil
+			subject.properties_history = Map()
+			subject.relations_history = Map()
+			subject.aliases_history = Nil
+			subject
+		}
+
+		// TODO: set blocking schemes
+		val blocks = blocking.blocking().values
 		val scoreConfigBroadcast = sc.broadcast(scoreConfigSettings)
-		val subjectPairs = findDuplicates(blocks.values, settings("confidence").toDouble, scoreConfigBroadcast)
+		val subjectPairs = findDuplicates(blocks, settings("confidence").toDouble, scoreConfigBroadcast)
 		duplicates = createDuplicates(subjectPairs, settings("stagingTable"))
 	}
 }
@@ -133,10 +150,15 @@ object Deduplication {
 		confidence: Double,
 		scoreConfigBroadcast: Broadcast[List[AttributeConfig]]
 	): RDD[(Subject, Subject, Double)] = {
-		blocks
-			.flatMap(_.crossProduct())
-			.map { case (subject1, subject2) =>
-				(subject1, subject2, compare(subject1, subject2, scoreConfigBroadcast.value))
-			}.filter(_._3 >= confidence)
+		blocks.flatMap { block =>
+			val filterFunction = (s1: Subject, s2: Subject) =>
+				compare(s1, s2, scoreConfigBroadcast.value) >= confidence
+			block
+				.crossProduct(filterFunction)
+				.map { case (subject1, subject2) =>
+					val score = compare(subject1, subject2, scoreConfigBroadcast.value)
+					(subject1, subject2, score)
+				}
+		}
 	}
 }

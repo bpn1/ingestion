@@ -70,11 +70,12 @@ class FeatureCalculation extends SparkJob {
 	  * @param sc SparkContext to be used for the job
 	  */
 	override def run(sc: SparkContext): Unit = {
-		val blocks = Blocking.blocking(
-			dbpediaSubjects,
-			wikidataSubjects,
-			this.blockingSchemes,
-			settings("maxBlockSize").toInt)
+		val blocking = new Blocking
+		blocking.subjects = dbpediaSubjects
+		blocking.stagedSubjects = wikidataSubjects
+		blocking.blockingSchemes = blockingSchemes
+		settings.get("maxBlockSize").foreach(blocking.setMaxBlockSize)
+		val blocks = blocking.blocking()
 		val scoreConfigBroadcast = sc.broadcast(scoreConfigSettings)
 		val features = findDuplicates(blocks.values, scoreConfigBroadcast)
 		featureEntries = labelFeature(features, goldStandard)

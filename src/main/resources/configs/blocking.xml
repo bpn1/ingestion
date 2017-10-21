@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
+        <subjectTable>subject</subjectTable>
+        <keyspaceStagingTable>datalake</keyspaceStagingTable>
+        <stagingTable>subject_dbpedia</stagingTable>
+        <keyspaceGoldStandardTable>evaluation</keyspaceGoldStandardTable>
+        <goldStandardTable>goldstandard</goldStandardTable>
+        <keyspaceStatsTable>datalake</keyspaceStatsTable>
+        <statsTable>blockingstats</statsTable>
+        <filterUndefined>true</filterUndefined>
+        <filterSmall>true</filterSmall>
+        <maxBlockSize>50000</maxBlockSize>
+        <minBlockSize>1</minBlockSize>
+    </settings>
+</config>

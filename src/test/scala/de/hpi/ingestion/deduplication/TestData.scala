@@ -252,29 +252,20 @@ object TestData {
 		)
 	}
 
-	def testDuplicateStatsRDD(sc: SparkContext): RDD[(Traversable[(UUID, UUID)], (String, Set[BlockStats]))] = {
-		sc.parallelize(List((List(
+	def duplicateStats(): List[(List[(UUID, UUID)], (String, BlockStats))] = {
+		List(
 			(
-				UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"),
-				UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130")
-			), (
-				UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"),
-				UUID.fromString("413c5711-67d0-1151-1077-b000000000b5")
-				)
-		), (
-			"key1",
-			Set(BlockStats("tag1",4,2,0.25))
-		)
-		),(List(
+				List(
+					(UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130")),
+					(UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"))
+				),
+				("key1", BlockStats("tag1",4,2,0.25))
+			),
 			(
-				UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"),
-				UUID.fromString("413c5711-67d0-1151-1077-b000000000b5")
+				List((UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"))),
+				("key2", BlockStats("tag2",1,1,1.0))
 			)
-		), (
-			"key2",
-			Set(BlockStats("tag2",1,1,1.0))
 		)
-		)) )
 	}
 
 	def expectedPairwiseCompleteness: Map[String, Double] = {
@@ -289,28 +280,25 @@ object TestData {
 		Map("testTag1" -> 5, "testTag2" -> 15,"sum" -> 17)
 	}
 
-	def blocks(sc: SparkContext): RDD[((String, String), (Iterable[UUID], Iterable[UUID]))] = {
-		sc.parallelize(List(
-			(
-				("anyKey", "testTag1"),
-				(
-					List(idList.head),
-					List(idList.last)
-				)
-			), (
-				("Anakin", "testTag2"),
-				(
-					List(idList.head, idList(1), idList(2), idList(3), idList(4)),
-					List(idList.last, idList(4), idList(6))
-				)
-			), (
-				("anotherKey", "testTag1"),
-				(
-					List(idList(4), idList(5)),
-					List(idList(6), idList.last)
-				)
+	def blocks(): List[(String, Block)] = {
+		List(
+			("testTag1", Block(
+				key = "anyKey",
+				subjects = List(idList.head).map(Subject.master),
+				staging = List(idList.last).map(Subject.master)
 			)
-		))
+			),
+			("testTag2", Block(
+				key = "Anakin",
+				subjects = List(idList.head, idList(1), idList(2), idList(3), idList(4)).map(Subject.master),
+				staging = List(idList.last, idList(4), idList(6)).map(Subject.master))
+			),
+			("testTag1", Block(
+				key = "anotherKey",
+				subjects = List(idList(4), idList(5)).map(Subject.master),
+				staging = List(idList(6), idList.last).map(Subject.master))
+			)
+		)
 	}
 
 	def trueDuplicates(subjects: List[Subject], stagings: List[Subject]): List[Duplicates] = {

@@ -18,6 +18,7 @@ package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.blockingschemes.SimpleBlockingScheme
+import de.hpi.ingestion.deduplication.models.Block
 import de.hpi.ingestion.framework.CommandLineConf
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -29,38 +30,38 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 		val staging = TestData.stagings
 		val stagingRDD = sc.parallelize(staging)
 		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val subjectBlocks = Blocking.blocking(subjectRDD, blockingSchemes)
-		val stagingBlocks = Blocking.blocking(stagingRDD, blockingSchemes)
+		val subjectBlocks = Blocking.blockSubjects(subjectRDD, blockingSchemes)
+		val stagingBlocks = Blocking.blockSubjects(stagingRDD, blockingSchemes)
 		val expectedSubjects = TestData.flatSubjectBlocks(sc, subjects)
 		val expectedStaging = TestData.flatStagingBlocks(sc, staging)
 		assertRDDEquals(subjectBlocks, expectedSubjects)
 		assertRDDEquals(stagingBlocks, expectedStaging)
 	}
 
-	it should "group subjects by their key and blocking scheme" in {
+	it should "group subjects by their key and blockSubjects scheme" in {
 		val job = new Blocking
-		val maxBlockSize = job.settings("maxBlockSize").toInt
+		job.maxBlockSize = job.settings("maxBlockSize").toInt
 		val subjects = TestData.subjects
-		val subjectRDD = sc.parallelize(subjects)
+		job.subjects = sc.parallelize(subjects)
 		val staging = TestData.stagings
-		val stagingRDD = sc.parallelize(staging)
-		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val blocks = Blocking.blocking(subjectRDD, stagingRDD, blockingSchemes, maxBlockSize, false)
-			.map { case (tag, block) => (tag, block.copy(id = null)) }
+		job.stagedSubjects = sc.parallelize(staging)
+		job.blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
+		job.filterUndefined = false
+		val blocks = job.blocking().map { case (tag, block) => (tag, block.copy(id = null)) }
 		val expectedBlocks = TestData.groupedBlocks(sc, subjects, staging)
 		assertRDDEquals(blocks, expectedBlocks)
 	}
 
 	it should "filter undefined blocks" in {
 		val job = new Blocking
-		val maxBlockSize = job.settings("maxBlockSize").toInt
+		job.maxBlockSize = job.settings("maxBlockSize").toInt
 		val subjects = TestData.subjects
-		val subjectRDD = sc.parallelize(subjects)
+		job.subjects = sc.parallelize(subjects)
 		val staging = TestData.stagings
-		val stagingRDD = sc.parallelize(staging)
-		val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-		val blocks = Blocking.blocking(subjectRDD, stagingRDD, blockingSchemes, maxBlockSize, true)
-			.map { case (tag, block) => (tag, block.copy(id = null)) }
+		job.stagedSubjects = sc.parallelize(staging)
+		job.blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
+		job.filterUndefined = true
+		val blocks = job.blocking().map { case (tag, block) => (tag, block.copy(id = null)) }
 		val expectedBlocks = TestData.groupedAndFilteredBlocks(sc, subjects, staging)
 		assertRDDEquals(blocks, expectedBlocks)
 	}
@@ -149,40 +150,42 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 		job.blockingSchemes.head.isInstanceOf[SimpleBlockingScheme] shouldBe true
 	}
 
-	"calculatePairwiseCompleteness" should "calculate all pairwise completenesses (PCs) as well as the total PC" in {
+	"Pairs Completeness" should "be calculated for each Blocking Scheme and their combination" in {
 		val subjects = TestData.subjects
 		val stagings = TestData.stagings
-		val duplicates = TestData.testDuplicateStatsRDD(sc)
+		val duplicates = TestData.duplicateStats()
+		val duplicatesRDD = sc.parallelize(duplicates)
 		val goldStandard = TestData.goldStandard(subjects, stagings)
 		val sumTag = "sum"
-		val pairwiseCompleteness = Blocking.calculatePairsCompleteness(duplicates, goldStandard, sumTag)
+		val pairwiseCompleteness = Blocking.calculatePairsCompleteness(duplicatesRDD, goldStandard, sumTag)
 		val expected = TestData.expectedPairwiseCompleteness
 		pairwiseCompleteness shouldEqual expected
 	}
 
-	"calculateBlockCount" should "count all blocks for all blocking schemes as well as the total blocks" in {
-		val blocks = TestData.blocks(sc)
+	"Block Count" should "be calculated for each Blocking Scheme and their combination" in {
+		val blocks = TestData.blocks()
+		val blockRDD = sc.parallelize(blocks)
 		val sumTag = "sum"
-		val blockCount = Blocking.calculateBlockCount(blocks, sumTag)
+		val blockCount = Blocking.calculateBlockCount(blockRDD, sumTag)
 		val expected = TestData.expectedBlockCount
 		blockCount shouldEqual expected
 	}
 
-	"calculateCompareCount" should "count all compares in each blocking scheme as well as the total compares" in {
-		val blocks = TestData.blocks(sc)
+	"Comparison Count" should "be calculated for each Blocking Scheme and their combination" in {
+		val blocks = TestData.blocks()
+		val blockRDD = sc.parallelize(blocks)
 		val sumTag = "sum"
-		val compareCount = Blocking.calculateCompareCount(blocks, sumTag)
+		val compareCount = Blocking.calculateComparisonCount(blockRDD, sumTag)
 		val expected = TestData.expectedCompareCount
 		compareCount shouldEqual expected
 	}
 
-	"createDuplicateStats" should "find all actual duplicates in a block" in {
+	"All Duplicates in a Block" should "be found" in {
 		val subjects = TestData.subjects
 		val stagings = TestData.stagings
-		val UUIDSubjects = subjects.map(_.id)
-		val UUIDStagings = stagings.map(_.id)
+		val block = Block(key = "key", subjects = subjects, staging = stagings)
 		val goldStandard = TestData.goldStandard(subjects, stagings)
-		val duplicateStats = Blocking.createDuplicateStats((("tag", "key"),(UUIDSubjects, UUIDStagings)), goldStandard)
+		val duplicateStats = Blocking.createDuplicateStats(("tag", block), goldStandard)
 		val expected = TestData.testDuplicateStats
 		duplicateStats shouldEqual expected
 	}
