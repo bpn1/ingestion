@@ -689,6 +689,80 @@ object TestData {
 			Subject(id = idList(3), master = null, datasource = datasource, name = Option("Volkswagen AG")),
 			Subject(id = idList(5), master = null, datasource = datasource, name = Option("Porsche AG")))
 	}
+
+	def blockSplitSubjects(): List[Subject] = {
+		List(
+			Subject.master(idList.head).copy(name = Option("Audi 1")),
+			Subject.master(idList(1)).copy(name = Option("Audi 2")),
+			Subject.master(idList(2)).copy(name = Option("Audi 3")),
+			Subject.master(idList(3)).copy(name = Option("Audi 4")),
+			Subject.master(idList(4)).copy(name = Option("Audi 5")),
+			Subject.master(idList(5)).copy(name = Option("Audi 6")),
+			Subject.master(idList(6)).copy(name = Option("Audi 7")),
+			Subject.master(idList(7)).copy(name = Option("Porsche 1"))
+		)
+	}
+
+	def blockSplitStagedSubjects(): List[Subject] = {
+		List(
+			Subject.master(idList(7)).copy(name = Option("Audi 8")),
+			Subject.master(idList(6)).copy(name = Option("Audi 9")),
+			Subject.master(idList(5)).copy(name = Option("Audi 10")),
+			Subject.master(idList(4)).copy(name = Option("Audi 11")),
+			Subject.master(idList(3)).copy(name = Option("Audi 12")),
+			Subject.master(idList(2)).copy(name = Option("Audi 13")),
+			Subject.master(idList(1)).copy(name = Option("Audi 14")),
+			Subject.master(idList.head).copy(name = Option("Porsche 2"))
+		)
+	}
+
+	def splitBlocks(): Set[Block] = {
+		Set(
+			Block(
+				null,
+				"porsc",
+				List(Subject.master(idList(7)).copy(name = Option("Porsche 1"))),
+				List(Subject.master(idList.head).copy(name = Option("Porsche 2")))
+			),
+			Block(
+				null,
+				"audi _0",
+				List(
+					Subject.master(idList.head).copy(name = Option("Audi 1")),
+					Subject.master(idList(1)).copy(name = Option("Audi 2")),
+					Subject.master(idList(2)).copy(name = Option("Audi 3"))
+				),
+				List(
+					Subject.master(idList(7)).copy(name = Option("Audi 8")),
+					Subject.master(idList(6)).copy(name = Option("Audi 9")),
+					Subject.master(idList(5)).copy(name = Option("Audi 10")),
+					Subject.master(idList(4)).copy(name = Option("Audi 11")),
+					Subject.master(idList(3)).copy(name = Option("Audi 12")),
+					Subject.master(idList(2)).copy(name = Option("Audi 13")),
+					Subject.master(idList(1)).copy(name = Option("Audi 14"))
+				)
+			),
+			Block(
+				null,
+				"audi _1",
+				List(
+					Subject.master(idList(3)).copy(name = Option("Audi 4")),
+					Subject.master(idList(4)).copy(name = Option("Audi 5")),
+					Subject.master(idList(5)).copy(name = Option("Audi 6")),
+					Subject.master(idList(6)).copy(name = Option("Audi 7"))
+				),
+				List(
+					Subject.master(idList(7)).copy(name = Option("Audi 8")),
+					Subject.master(idList(6)).copy(name = Option("Audi 9")),
+					Subject.master(idList(5)).copy(name = Option("Audi 10")),
+					Subject.master(idList(4)).copy(name = Option("Audi 11")),
+					Subject.master(idList(3)).copy(name = Option("Audi 12")),
+					Subject.master(idList(2)).copy(name = Option("Audi 13")),
+					Subject.master(idList(1)).copy(name = Option("Audi 14"))
+				)
+			)
+		)
+	}
 }
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods

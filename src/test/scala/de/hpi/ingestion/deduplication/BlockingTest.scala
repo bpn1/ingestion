@@ -21,7 +21,6 @@ import de.hpi.ingestion.deduplication.blockingschemes.SimpleBlockingScheme
 import de.hpi.ingestion.deduplication.models.Block
 import de.hpi.ingestion.framework.CommandLineConf
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
 
@@ -67,6 +66,23 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 		val blocks = job.blocking().map { case (tag, block) => (tag, block.copy(id = null)) }
 		val expectedBlocks = TestData.groupedAndFilteredBlocks(sc, subjects, stagedSubjects)
 		assertRDDEquals(blocks, expectedBlocks)
+	}
+
+	it should "split blocks if they are too large" in {
+		val job = new Blocking
+		job.subjects = sc.parallelize(TestData.blockSplitSubjects())
+		job.stagedSubjects = sc.parallelize(TestData.blockSplitStagedSubjects())
+		job.blockingSchemes = List(SimpleBlockingScheme("SimpleBlocking"))
+		job.filterSmall = true
+		job.filterUndefined = true
+		job.maxBlockSize = 40L
+		val blocks = job.blocking()
+			.values
+			.map(_.copy(id = null))
+	    	.collect
+	    	.toSet
+		val expectedBlocks = TestData.splitBlocks()
+		blocks shouldEqual expectedBlocks
 	}
 
 	"Block evaluation" should "create evaluation blocks" in {
@@ -237,5 +253,28 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 		val duplicateStats = Blocking.createDuplicateStats(("tag", block), goldStandard)
 		val expected = TestData.smallerDuplicateStats
 		duplicateStats shouldEqual expected
+	}
+
+	"Member values" should "be set" in {
+		val job = new Blocking
+		val maxBlockSize = job.maxBlockSize
+		job.setMaxBlockSize(List(1, 2, 3))
+		job.maxBlockSize shouldEqual maxBlockSize
+		job.setMaxBlockSize(123)
+		job.maxBlockSize shouldEqual 123L
+		job.setMaxBlockSize(234L)
+		job.maxBlockSize shouldEqual 234L
+		job.setMaxBlockSize("567")
+		job.maxBlockSize shouldEqual 567L
+
+		val minBlockSize = job.minBlockSize
+		job.setMinBlockSize(List(1, 2, 3))
+		job.minBlockSize shouldEqual minBlockSize
+		job.setMinBlockSize(123)
+		job.minBlockSize shouldEqual 123L
+		job.setMinBlockSize(234L)
+		job.minBlockSize shouldEqual 234L
+		job.setMinBlockSize("567")
+		job.minBlockSize shouldEqual 567L
 	}
 }
