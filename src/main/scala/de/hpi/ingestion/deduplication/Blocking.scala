@@ -187,6 +187,59 @@ class Blocking extends SparkJob {
 	}
 
 	/**
+	  * If a Simple Blocking Schemes was used Blocks with a shorter key are merged with Blocks which have a normal key.
+	  * The shorter Blocks are added to every normal Block whose key has the key of the shorter Block as prefix.
+	  * @param blocks Blocks created by the Blocking Schemes
+	  * @return the merged Blocks containing their own Subjects and the Subjects of the Blocks with a smaller key but
+	  *         the same prefix as well as every unaffected Block
+	  */
+	def mergeSubsetBlocks(blocks: RDD[(String, Block)]): RDD[(String, Block)] = {
+		val simpleSchemeOpt = blockingSchemes.find(_.isInstanceOf[SimpleBlockingScheme])
+		if(simpleSchemeOpt.isEmpty) {
+			return blocks
+		}
+		val simpleScheme = simpleSchemeOpt.get.asInstanceOf[SimpleBlockingScheme]
+		val nonSimpleBlocks = blocks.filter(_._1 != simpleScheme.tag)
+		val simpleBlocks = blocks
+			.filter(_._1 == simpleScheme.tag)
+	    	.values
+		val shorterBlocks = simpleBlocks.filter(_.key.length < simpleScheme.length)
+		val longerBlocks = simpleBlocks.filter(_.key.length == simpleScheme.length)
+		if(shorterBlocks.isEmpty()) {
+			return blocks
+		}
+		val minKeyLength = shorterBlocks
+			.map(_.key.length)
+			.min
+		val valueSubsets = (minKeyLength until simpleScheme.length).toList
+		val longerMatches = longerBlocks.flatMap { block =>
+			val subKeys = valueSubsets.map(length => block.key.slice(0, length))
+			subKeys.map((_, block.key))
+		}
+		val shortBlockMap = shorterBlocks
+			.map(block => (block.key, block))
+			.cogroup(longerMatches)
+			.values
+			.filter(_._1.nonEmpty)
+	    	.flatMap { case (shortBlocks, longBlockKeys) =>
+				longBlockKeys.map((_, shortBlocks.toList))
+			}.reduceByKey(_ ++ _)
+			.collect
+			.toMap
+		val mergedBlocks = longerBlocks.map { block =>
+			val prefixBlocks = shortBlockMap.getOrElse(block.key, Nil)
+			block.copy(
+				subjects = block.subjects ++ prefixBlocks.flatMap(_.subjects),
+				staging = block.staging ++ prefixBlocks.flatMap(_.staging)
+			)
+		}
+		mergedBlocks
+			.union(shorterBlocks)
+			.map((simpleScheme.tag, _))
+			.union(nonSimpleBlocks)
+	}
+
+	/**
 	  * Blocks the input Subjects using the provided blocking schemes.
 	  * @return RDD of blocks keyed by the tag of the blocking scheme used to genrate the blocking
 	  */
@@ -196,7 +249,7 @@ class Blocking extends SparkJob {
 		val undefinedMap = blockingSchemes
 			.map(scheme => (scheme.tag, scheme.undefinedValue))
 			.toMap
-		subjectBlocks
+		val blocks = subjectBlocks
 			.cogroup(stagingBlocks)
 			.map { case ((key, tag), (subjectList, stagingList)) =>
 				(tag, Block(key = key, subjects = subjectList.toList, staging = stagingList.toList))
@@ -206,14 +259,15 @@ class Blocking extends SparkJob {
 				val isTooSmall = numComparisons < minBlockSize && filterSmall
 				!(isUndefined || isTooSmall)
 			}
-			.flatMap { case (tag, largeBlock) =>
-				val splitBlocks = Block.split(largeBlock, maxBlockSize.toInt)
-				val blocks = splitBlocks.length match {
-					case 1 => splitBlocks
-					case _ => splitBlocks.zipWithIndex.map { case (block, i) => block.copy(key = s"${block.key}_$i") }
-				}
-				blocks.map((tag, _))
+		val mergedBlocks = mergeSubsetBlocks(blocks)
+		mergedBlocks.flatMap { case (tag, largeBlock) =>
+			val splitBlocks = Block.split(largeBlock, maxBlockSize.toInt)
+			val blocks = splitBlocks.length match {
+				case 1 => splitBlocks
+				case _ => splitBlocks.zipWithIndex.map { case (block, i) => block.copy(key = s"${block.key}_$i") }
 			}
+			blocks.map((tag, _))
+		}
 	}
 }
 object Blocking {

@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.deduplication
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
-import de.hpi.ingestion.deduplication.blockingschemes.SimpleBlockingScheme
+import de.hpi.ingestion.deduplication.blockingschemes.{ListBlockingScheme, SimpleBlockingScheme}
 import de.hpi.ingestion.deduplication.models.Block
 import de.hpi.ingestion.framework.CommandLineConf
 import org.scalatest.{FlatSpec, Matchers}
@@ -276,5 +276,82 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 		job.minBlockSize shouldEqual 234L
 		job.setMinBlockSize("567")
 		job.minBlockSize shouldEqual 567L
+	}
+
+	"Blocks" should "be merged with the subset Blocks" in {
+		val job = new Blocking
+		job.blockingSchemes = List(SimpleBlockingScheme("tag"))
+		val blocksWithSubsets = sc.parallelize(TestData.blocksWithSubsetBlocks("tag"))
+		val mergedBlocks = job
+			.mergeSubsetBlocks(blocksWithSubsets)
+			.values
+			.collect
+			.map(block => (block.key, block))
+			.toMap
+		mergedBlocks.keySet should contain ("audi")
+		mergedBlocks.keySet should contain ("au")
+		mergedBlocks.keySet should contain ("audi ")
+		mergedBlocks.get("audi ").foreach { block =>
+			block.subjects should have length 13
+			block.staging should have length 10
+		}
+		mergedBlocks.keySet should contain ("bmw")
+		mergedBlocks.keySet should contain ("bmw g")
+		mergedBlocks.get("bmw g").foreach { block =>
+			block.subjects should have length 3
+			block.staging should have length 30
+		}
+		mergedBlocks.keySet should contain ("volks")
+		mergedBlocks.get("volks").foreach { block =>
+			block.subjects should have length 4
+			block.staging should have length 7
+		}
+		mergedBlocks.keySet should contain ("vw")
+		mergedBlocks.get("vw").foreach { block =>
+			block.subjects should have length 6
+			block.staging should have length 8
+		}
+	}
+
+	they should "not be merged without a Simple Blocking Scheme" in {
+		val job = new Blocking
+		job.blockingSchemes = List(ListBlockingScheme("tag", "geo_postal"))
+		val blocksWithSubsets = TestData.blocksWithSubsetBlocks("tag")
+		val mergedBlocks = job
+			.mergeSubsetBlocks(sc.parallelize(blocksWithSubsets))
+			.collect
+			.toSet
+		blocksWithSubsets.toSet shouldEqual mergedBlocks
+	}
+
+	they should "only be merged if they are from a Simple Blocking Scheme" in {
+		val job = new Blocking
+		job.blockingSchemes = List(SimpleBlockingScheme("tag1"), ListBlockingScheme("tag2", "geo_postal"))
+		val blocksWithSubsets = sc.parallelize(TestData.blocksWithSubsetBlocksAndTags("tag1", "tag2"))
+		val mergedBlocks = job
+			.mergeSubsetBlocks(blocksWithSubsets)
+			.collect
+			.map { case (tag, block) => (s"${tag}_${block.key}", block) }
+			.toMap
+		mergedBlocks.keySet should contain ("tag1_audi ")
+		mergedBlocks.keySet should contain ("tag2_audi ")
+		mergedBlocks.get("tag1_audi ").foreach { block =>
+			block.subjects should have length 13
+			block.staging should have length 10
+		}
+		mergedBlocks.get("tag2_audi ").foreach { block =>
+			block.subjects should have length 5
+			block.staging should have length 4
+		}
+		mergedBlocks.keySet should contain ("tag1_bmw g")
+		mergedBlocks.keySet should contain ("tag2_bmw g")
+		mergedBlocks.get("tag1_bmw g").foreach { block =>
+			block.subjects should have length 3
+			block.staging should have length 30
+		}
+		mergedBlocks.get("tag2_bmw g").foreach { block =>
+			block.subjects should have length 2
+			block.staging should have length 20
+		}
 	}
 }

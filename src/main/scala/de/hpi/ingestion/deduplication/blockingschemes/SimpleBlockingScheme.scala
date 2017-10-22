@@ -23,10 +23,11 @@ import de.hpi.ingestion.datalake.models.Subject
   */
 class SimpleBlockingScheme extends BlockingScheme {
 	tag = "SimpleBlockingScheme"
+	val length = 5
 	override def generateKey(subject: Subject): List[String] = {
 		subject.name.map { name =>
 			val beginOffset = if(name.startsWith("The ")) 4 else 0
-			List(name.slice(beginOffset, 5 + beginOffset).toLowerCase)
+			List(name.slice(beginOffset, length + beginOffset).toLowerCase)
 		}.getOrElse(List(undefinedValue))
 	}
 }
@@ -34,7 +35,6 @@ class SimpleBlockingScheme extends BlockingScheme {
   * Companion object adding an easy to use constructor via apply.
   */
 object SimpleBlockingScheme {
-
 	/**
 	  * Returns a Simple Blocking Scheme with the given tag.
 	  * @param tag tag to use

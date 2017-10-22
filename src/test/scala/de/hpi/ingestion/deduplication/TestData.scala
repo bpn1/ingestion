@@ -763,6 +763,37 @@ object TestData {
 			)
 		)
 	}
+
+	def blocksWithSubsetBlocks(tag: String): List[(String, Block)] = {
+		List(
+			Block(null, "audi", List.fill(5)(Subject.master()), List.fill(4)(Subject.master())),
+			Block(null, "audi ", List.fill(5)(Subject.master()), List.fill(4)(Subject.master())),
+			Block(null, "au", List.fill(3)(Subject.master()), List.fill(2)(Subject.master())),
+			Block(null, "bmw", List.fill(1)(Subject.master()), List.fill(10)(Subject.master())),
+			Block(null, "bmw g", List.fill(2)(Subject.master()), List.fill(20)(Subject.master())),
+			Block(null, "volks", List.fill(4)(Subject.master()), List.fill(7)(Subject.master())),
+			Block(null, "vw", List.fill(6)(Subject.master()), List.fill(8)(Subject.master()))
+		).map((tag, _))
+	}
+
+	def blocksWithSubsetBlocksAndTags(tag1: String, tag2: String): List[(String, Block)] = {
+		List(
+			(tag1, Block(null, "audi", List.fill(5)(Subject.master()), List.fill(4)(Subject.master()))),
+			(tag1, Block(null, "audi ", List.fill(5)(Subject.master()), List.fill(4)(Subject.master()))),
+			(tag1, Block(null, "au", List.fill(3)(Subject.master()), List.fill(2)(Subject.master()))),
+			(tag1, Block(null, "bmw", List.fill(1)(Subject.master()), List.fill(10)(Subject.master()))),
+			(tag1, Block(null, "bmw g", List.fill(2)(Subject.master()), List.fill(20)(Subject.master()))),
+			(tag1, Block(null, "volks", List.fill(4)(Subject.master()), List.fill(7)(Subject.master()))),
+			(tag1, Block(null, "vw", List.fill(6)(Subject.master()), List.fill(8)(Subject.master()))),
+			(tag2, Block(null, "audi", List.fill(5)(Subject.master()), List.fill(4)(Subject.master()))),
+			(tag2, Block(null, "audi ", List.fill(5)(Subject.master()), List.fill(4)(Subject.master()))),
+			(tag2, Block(null, "au", List.fill(3)(Subject.master()), List.fill(2)(Subject.master()))),
+			(tag2, Block(null, "bmw", List.fill(1)(Subject.master()), List.fill(10)(Subject.master()))),
+			(tag2, Block(null, "bmw g", List.fill(2)(Subject.master()), List.fill(20)(Subject.master()))),
+			(tag2, Block(null, "volks", List.fill(4)(Subject.master()), List.fill(7)(Subject.master()))),
+			(tag2, Block(null, "vw", List.fill(6)(Subject.master()), List.fill(8)(Subject.master())))
+		)
+	}
 }
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods
