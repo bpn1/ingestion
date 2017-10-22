@@ -69,7 +69,7 @@ class AliasCounterTest extends FlatSpec with SharedSparkContext with Matchers wi
 	"Extracted alias lists" should "contain all links and aliases" in {
 		val aliasList = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
 			.map(AliasCounter.extractAliasList)
-		    .map(_.map(_.alias).toSet)
+			.map(_.map(_.alias).toSet)
 			.collect
 			.toList
 		val testAliasLists = TestData.aliasOccurrencesInArticlesList()
@@ -99,7 +99,7 @@ class AliasCounterTest extends FlatSpec with SharedSparkContext with Matchers wi
 		val aliasCounterSet = sc.parallelize(TestData.startAliasCounterList())
 			.map(alias => (alias.alias, alias))
 			.reduceByKey(AliasCounter.aliasReduction)
-		    .map(_._2)
+			.map(_._2)
 			.collect
 			.toSet
 		aliasCounterSet shouldEqual TestData.countedAliasesSet()

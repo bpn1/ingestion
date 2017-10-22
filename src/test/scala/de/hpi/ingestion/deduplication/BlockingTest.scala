@@ -79,8 +79,8 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 		val blocks = job.blocking()
 			.values
 			.map(_.copy(id = null))
-	    	.collect
-	    	.toSet
+			.collect
+			.toSet
 		val expectedBlocks = TestData.splitBlocks()
 		blocks shouldEqual expectedBlocks
 	}
@@ -100,7 +100,7 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 		job.evaluationBlocking(goldStandard, comment)
 		val evaluationBlocks = job.blockEvaluation
 			.map(_.copy(jobid = null))
-	    	.collect
+			.collect
 			.toSet
 		val expectedEvaluations = TestData.blockEvaluationWithComment()
 		evaluationBlocks shouldEqual expectedEvaluations
@@ -141,8 +141,8 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 		job.evaluationBlocking(goldStandard, comment)
 		val evaluationBlocks = job.blockEvaluation
 			.map(_.copy(jobid = null))
-	    	.collect
-	    	.toSet
+			.collect
+			.toSet
 		val expectedEvaluations = TestData.filteredUndefinedBlockEvaluation()
 		evaluationBlocks shouldEqual expectedEvaluations
 	}
@@ -161,8 +161,8 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 		job.evaluationBlocking(goldStandard, comment)
 		val evaluationBlocks = job.blockEvaluation
 			.map(_.copy(jobid = null))
-	    	.collect
-	    	.toSet
+			.collect
+			.toSet
 		val expectedEvaluations = TestData.filteredSmallBlockEvaluation()
 		evaluationBlocks shouldEqual expectedEvaluations
 	}

@@ -299,7 +299,7 @@ class CosineContextComparatorTest extends FlatSpec with SharedSparkContext with 
 		val featureEntries = job
 			.featureEntryList
 			.flatMap(_.collect)
-		    .map(feature => feature.copy(
+			.map(feature => feature.copy(
 				entity_score = feature.entity_score.copy(
 					rank = 1,
 					delta_successor = Double.PositiveInfinity,

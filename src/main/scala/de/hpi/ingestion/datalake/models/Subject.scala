@@ -143,7 +143,7 @@ case class Subject(
 		tsvString += s"\t${category.map(value => s"$quote${value.replaceAll("\"", "\\\"")}$quote").getOrElse("")}"
 		val tsvProperties = Subject.normalizedPropertyKeyList
 			.map(get)
-	    	.map { propertyValues =>
+			.map { propertyValues =>
 				propertyValues
 					.map(propertyValue => s"$quote${propertyValue.replaceAll("\"", "\\\"")}$quote")
 					.mkString(",")

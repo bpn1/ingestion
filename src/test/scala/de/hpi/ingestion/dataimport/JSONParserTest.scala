@@ -35,7 +35,7 @@ class JSONParserTest extends FlatSpec with Matchers {
 	"JSON" should "be cleaned" in {
 		val parser = new MockJSONParser
 		val cleanedJson = TestData.dirtyJsonLines()
-		    .map(parser.cleanJSON)
+			.map(parser.cleanJSON)
 		val expectedJson = TestData.cleanenedJsonLines()
 		cleanedJson shouldEqual expectedJson
 	}

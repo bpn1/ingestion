@@ -26,8 +26,8 @@ trait JobPipeline {
 	def createSparkConf(): SparkConf = {
 		val sparkOptions = jobs
 			.flatMap(_._1.sparkOptions.toList)
-	    	.groupBy(_._1)
-	    	.map { case (property, values) =>
+			.groupBy(_._1)
+			.map { case (property, values) =>
 				val propValues = values.map(_._2)
 				val propValue = property match {
 					case "spark.yarn.executor.memoryOverhead" => propValues.map(_.toInt).max.toString
