@@ -202,7 +202,7 @@ class Blocking extends SparkJob {
 		val nonSimpleBlocks = blocks.filter(_._1 != simpleScheme.tag)
 		val simpleBlocks = blocks
 			.filter(_._1 == simpleScheme.tag)
-	    	.values
+			.values
 		val shorterBlocks = simpleBlocks.filter(_.key.length < simpleScheme.length)
 		val longerBlocks = simpleBlocks.filter(_.key.length == simpleScheme.length)
 		if(shorterBlocks.isEmpty()) {
@@ -221,7 +221,7 @@ class Blocking extends SparkJob {
 			.cogroup(longerMatches)
 			.values
 			.filter(_._1.nonEmpty)
-	    	.flatMap { case (shortBlocks, longBlockKeys) =>
+			.flatMap { case (shortBlocks, longBlockKeys) =>
 				longBlockKeys.map((_, shortBlocks.toList))
 			}.reduceByKey(_ ++ _)
 			.collect
