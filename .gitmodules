@@ -2,3 +2,6 @@
 	path = implisense_files
 	url = git@github.com:bpn1/implisense_files.git
 	branch = master
+[submodule "utilities"]
+	path = utilities
+	url = https://github.com/bpn1/utilities
