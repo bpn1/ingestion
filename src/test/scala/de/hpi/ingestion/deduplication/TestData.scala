@@ -28,6 +28,7 @@ import org.apache.spark.rdd.RDD
 
 // scalastyle:off line.size.limit
 // scalastyle:off number.of.methods
+// scalastyle:off file.size.limit
 object TestData {
 	val datasource = "testSource"
 	val idList = List.fill(8)(UUID.randomUUID())
@@ -794,6 +795,18 @@ object TestData {
 			(tag2, Block(null, "vw", List.fill(6)(Subject.master()), List.fill(8)(Subject.master())))
 		)
 	}
+
+	def subjectsForEmptyBlocks(): (List[Subject], List[Subject]) = {
+		val subjects = List(
+			Subject.master().copy(name = Option("Audi AG")),
+			Subject.master().copy(name = Option("AUDI AG"))
+		)
+		val stagedSubjects = List(
+			Subject.master().copy(name = Option("Audi"))
+		)
+		(subjects, stagedSubjects)
+	}
 }
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods
+// scalastyle:on file.size.limit

@@ -354,4 +354,22 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 			block.staging should have length 20
 		}
 	}
+
+	they should "be merged if they are empty and would create a non empty Block" in {
+		val job = new Blocking
+		job.blockingSchemes = List(SimpleBlockingScheme("tag1"))
+		val (subjects, stagedSubjects) = TestData.subjectsForEmptyBlocks()
+		job.subjects = sc.parallelize(subjects)
+		job.stagedSubjects = sc.parallelize(stagedSubjects)
+		val blocks = job
+			.blocking()
+			.values
+			.collect
+			.toList
+		blocks should not be empty
+		val audiBlock = blocks.find(_.key == "audi ").get
+		audiBlock.numComparisons shouldEqual 2
+		audiBlock.subjects should have length 2
+		audiBlock.staging should have length 1
+	}
 }

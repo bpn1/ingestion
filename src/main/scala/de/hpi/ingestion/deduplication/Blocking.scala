@@ -24,7 +24,7 @@ import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.framework.SparkJob
-import org.apache.spark.SparkContext
+import org.apache.spark.{HashPartitioner, SparkContext}
 import org.apache.spark.rdd.RDD
 
 import scala.util.Try
@@ -253,21 +253,22 @@ class Blocking extends SparkJob {
 			.cogroup(stagingBlocks)
 			.map { case ((key, tag), (subjectList, stagingList)) =>
 				(tag, Block(key = key, subjects = subjectList.toList, staging = stagingList.toList))
-			}.filter { case (tag, block) =>
+			}
+		val mergedBlocks = mergeSubsetBlocks(blocks)
+		mergedBlocks
+			.filter { case (tag, block) =>
 				val isUndefined = undefinedMap(tag) == block.key && filterUndefined
 				val numComparisons = block.numComparisons
 				val isTooSmall = numComparisons < minBlockSize && filterSmall
 				!(isUndefined || isTooSmall)
-			}
-		val mergedBlocks = mergeSubsetBlocks(blocks)
-		mergedBlocks.flatMap { case (tag, largeBlock) =>
-			val splitBlocks = Block.split(largeBlock, maxBlockSize.toInt)
-			val blocks = splitBlocks.length match {
-				case 1 => splitBlocks
-				case _ => splitBlocks.zipWithIndex.map { case (block, i) => block.copy(key = s"${block.key}_$i") }
-			}
-			blocks.map((tag, _))
-		}
+			}.flatMap { case (tag, largeBlock) =>
+				val splitBlocks = Block.split(largeBlock, maxBlockSize.toInt)
+				val blocks = splitBlocks.length match {
+					case 1 => splitBlocks
+					case _ => splitBlocks.zipWithIndex.map { case (block, i) => block.copy(key = s"${block.key}_$i") }
+				}
+				blocks.map((tag, _))
+			}.partitionBy(new HashPartitioner(7 * 32))
 	}
 }
 object Blocking {
