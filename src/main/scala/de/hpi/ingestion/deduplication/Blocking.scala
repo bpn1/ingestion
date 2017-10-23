@@ -195,6 +195,7 @@ class Blocking extends SparkJob {
 	  */
 	def mergeSubsetBlocks(blocks: RDD[(String, Block)]): RDD[(String, Block)] = {
 		val simpleSchemeOpt = blockingSchemes.find(_.isInstanceOf[SimpleBlockingScheme])
+		// don't merge blocks if there is no Simple Blocking Scheme
 		if(simpleSchemeOpt.isEmpty) {
 			return blocks
 		}
@@ -205,17 +206,21 @@ class Blocking extends SparkJob {
 			.values
 		val shorterBlocks = simpleBlocks.filter(_.key.length < simpleScheme.length)
 		val longerBlocks = simpleBlocks.filter(_.key.length == simpleScheme.length)
+		// don't merge blocks if there are no blocks with a shorter blocking key
 		if(shorterBlocks.isEmpty()) {
 			return blocks
 		}
 		val minKeyLength = shorterBlocks
 			.map(_.key.length)
 			.min
+		// length range of prefixes to consider [minKeyLength, length of Blocking Scheme)
 		val valueSubsets = (minKeyLength until simpleScheme.length).toList
+		// contains keys of all shorter blocks that should be merged into a specific block
 		val longerMatches = longerBlocks.flatMap { block =>
 			val subKeys = valueSubsets.map(length => block.key.slice(0, length))
 			subKeys.map((_, block.key))
 		}
+		// maps a block key to all small blocks that should be merged with this block
 		val shortBlockMap = shorterBlocks
 			.map(block => (block.key, block))
 			.cogroup(longerMatches)
