@@ -29,12 +29,8 @@ case class BlockStats(
 	precision: Double = 0.0
 ) {
 	/**
-	  * Assesses, depending on the number of calculations and a certain threshold, whether the block is too small
-	  * to be written in the blocking evaluation job.
-	  * @param minBlockSize The threshold
-	  * @return whether the block is very small or not
+	  * Calculates the number of comparisons resulting from this Block.
+	  * @return number of comparisons done in this Block
 	  */
-	def isTiny(minBlockSize: Int): Boolean = {
-		(this.numsubjects * this.numstaging) < minBlockSize
-	}
+	def numComparisons: Long = numsubjects * numstaging
 }

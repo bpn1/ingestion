@@ -58,9 +58,9 @@ class TextNEL extends SparkJob {
 		trieArticles = sc.cassandraTable[TrieAliasArticle](settings("keyspace"), settings("NELTable"))
 		numDocuments = sc
 			.cassandraTable[WikipediaArticleCount](settings("keyspace"), settings("articleCountTable"))
-	    	.first
-	    	.count
-	    	.toLong
+			.first
+			.count
+			.toLong
 		aliases = sc.cassandraTable[Alias](settings("keyspace"), settings("linkTable"))
 		articleTfidf = sc.cassandraTable[ArticleTfIdf](settings("keyspace"), settings("tfidfTable"))
 	}

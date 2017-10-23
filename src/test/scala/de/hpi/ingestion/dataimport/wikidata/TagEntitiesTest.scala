@@ -43,7 +43,7 @@ class TagEntitiesTest extends FlatSpec with SharedSparkContext with Matchers {
 
 	"Wikidata entity" should "be properly translated into SubclassEntry" in {
 		val entries = TestData.classWikidataEntities()
-		    .map(TagEntities.translateToSubclassEntry)
+			.map(TagEntities.translateToSubclassEntry)
 		val expectedEntries = TestData.subclassEntries()
 		entries shouldEqual expectedEntries
 	}

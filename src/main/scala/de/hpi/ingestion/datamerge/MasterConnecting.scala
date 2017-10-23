@@ -67,7 +67,7 @@ class MasterConnecting extends SparkJob {
 			.flatMap(extractRelations)
 			.reduceByKey(_ ::: _)
 			.join(slaves)
-		    .values
+			.values
 			.flatMap((groupByMaster _).tupled)
 			.reduceByKey(_ ::: _)
 			.map { case (master, relationsAndIds) =>

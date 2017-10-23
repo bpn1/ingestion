@@ -70,7 +70,7 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 			}
 		val newMasterAttributes = newMaster
 			.map(_.masterRelations)
-	    	.toSet
+			.toSet
 		val expectedAttributes = Set(
 			TestData.mergedSubjects(8).masterRelations,
 			TestData.mergedSubjects(10).masterRelations)
@@ -127,7 +127,7 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
 			.collect
 			.toList
 			.groupBy(_._1)
-	    	.mapValues(_.toSet)
+			.mapValues(_.toSet)
 
 		val expectedRelations = TestData
 			.mergedSubjects

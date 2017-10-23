@@ -35,8 +35,53 @@ case class Block(
 ) {
 	/**
 	  * Returns the cross product between this blocks subjects and staging subjects.
-	  * @return List of 2-Tuples of Subject containing all tuples of the cross product
+	  * @param f filter function used to exclude Subject tuples from the cross product
+	  * @return the cross product as List of Subject tuples
 	  */
-	def crossProduct(): List[(Subject, Subject)] = subjects.cross(staging).toList
+	def crossProduct(
+		f: (Subject, Subject) => Boolean = (s1: Subject, s2: Subject) => true
+	): List[(Subject, Subject)] = {
+		subjects.cross(staging, f).toList
+	}
 
+	/**
+	  * Calculates the number of comparisons resulting from this Block.
+	  * @return number of comparisons done in this Block
+	  */
+	def numComparisons: Long = subjects.length * staging.length
+}
+
+/**
+  * Companion object of the Block case class.
+  */
+object Block {
+	/**
+	  * Splits a block into a number of smaller Blocks by halving the larger column (either subjects or staging).
+	  * @param block the Block to split
+	  * @param maxSize maximum number of comparisons allowed for a Block (a value <1 indicates that a Block can be
+	  *                arbitrarily large)
+	  * @return List of smaller Blocks containing all comparisons done in the large Block
+	  */
+	def split(block: Block, maxSize: Int): List[Block] = {
+		if(maxSize < 1) {
+			return List(block)
+		}
+		var resultBlocks = List(block)
+		while(resultBlocks.exists(_.numComparisons > maxSize)) {
+			resultBlocks = resultBlocks.flatMap {
+				case splitBlock if splitBlock.numComparisons > maxSize =>
+					if(splitBlock.subjects.length >= splitBlock.staging.length) {
+						splitBlock.subjects
+							.halve()
+							.map(subjects => splitBlock.copy(subjects = subjects.toList))
+					} else {
+						splitBlock.staging
+							.halve()
+							.map(staging => splitBlock.copy(staging = staging.toList))
+					}
+				case splitBlock => List(splitBlock)
+			}
+		}
+		resultBlocks
+	}
 }

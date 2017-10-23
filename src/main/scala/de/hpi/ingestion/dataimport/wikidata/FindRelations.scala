@@ -72,7 +72,7 @@ class FindRelations extends SparkJob {
 		val idRegex = new Regex("^Q[0-9]+$")
 		var relationsMap = Map[UUID, Map[String, String]]()
 		val resolvedProperties = subject.properties
-		    .filterKeys(_ != settings("wikidataIdKey"))
+			.filterKeys(_ != settings("wikidataIdKey"))
 			.map { case (property, propertyValues) =>
 				val (resolvableValues, doneValues) = propertyValues.partition(value =>
 					idRegex.findFirstIn(value).isDefined && nameResolveMap.contains(value))
@@ -82,10 +82,10 @@ class FindRelations extends SparkJob {
 					.map(value => (nameResolveMap(value)._1, Map(property -> "")))
 					.toMap[UUID, Map[String, String]]
 				val resolvedValues = resolvableValues
-				    .map { id =>
+					.map { id =>
 						nameResolveMap.get(id)
-						    .map(_._2)
-					    	.filter(_.nonEmpty)
+							.map(_._2)
+							.filter(_.nonEmpty)
 							.getOrElse(id)
 					}
 				(property, resolvedValues ++ doneValues)

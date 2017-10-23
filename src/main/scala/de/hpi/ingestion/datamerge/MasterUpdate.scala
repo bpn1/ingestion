@@ -55,8 +55,8 @@ class MasterUpdate extends SparkJob {
 		val version = Version(appName, List("master update"), sc, true, settings.get("subjectTable"))
 		val masterGroups = subjects
 			.map(subject => (subject.master, List(subject)))
-	    	.reduceByKey(_ ++ _)
-	    	.values
+			.reduceByKey(_ ++ _)
+			.values
 		updatedMasters = masterGroups.map { masterGroup =>
 			val master = masterGroup.find(_.isMaster).get
 			val slaves = masterGroup.filter(_.isSlave)

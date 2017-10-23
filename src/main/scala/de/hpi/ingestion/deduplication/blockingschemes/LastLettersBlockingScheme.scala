@@ -35,7 +35,6 @@ class LastLettersBlockingScheme extends BlockingScheme {
   * Companion object adding an easy to use constructor via apply.
   */
 object LastLettersBlockingScheme {
-
 	/**
 	  * Returns a Last Letters Blocking Scheme with the given tag.
 	  * @param tag tag to use

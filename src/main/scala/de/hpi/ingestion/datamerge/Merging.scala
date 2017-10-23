@@ -85,7 +85,7 @@ class Merging extends SparkJob {
 				case (Some((score, subject)), staging) => addToMasterNode(subject, staging, score, version)
 				case (None, staging) => addToMasterNode(staging, version)
 			}.reduceByKey(_ ++ _)
-	    	.map {
+			.map {
 				case (subject, relations) if relations.nonEmpty =>
 					val subjectManager = new SubjectManager(subject, version)
 					subjectManager.addRelations(relations)

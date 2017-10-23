@@ -28,6 +28,7 @@ import org.apache.spark.rdd.RDD
 
 // scalastyle:off line.size.limit
 // scalastyle:off number.of.methods
+// scalastyle:off file.size.limit
 object TestData {
 	val datasource = "testSource"
 	val idList = List.fill(8)(UUID.randomUUID())
@@ -218,19 +219,12 @@ object TestData {
 		))
 	}
 
-	def testDuplicateStats: (Traversable[(UUID, UUID)], (String, Set[BlockStats])) = {
-		(List(
-			(
-				UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"),
-				UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130")
-			), (
-				UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"),
-				UUID.fromString("413c5711-67d0-1151-1077-b000000000b5")
-			)
-		), (
-			"key",
-			Set(BlockStats("tag",4,2,0.25))
-		)
+	def smallerDuplicateStats: (Traversable[(UUID, UUID)], (String, BlockStats)) = {
+		(
+			List(
+				(UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130")),
+				(UUID.fromString("f2d98c16-2ac2-4cb7-bd65-4fcb17178060"), UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"))
+			), ("tag", BlockStats("key", 4, 2, 0.25))
 		)
 	}
 
@@ -252,29 +246,20 @@ object TestData {
 		)
 	}
 
-	def testDuplicateStatsRDD(sc: SparkContext): RDD[(Traversable[(UUID, UUID)], (String, Set[BlockStats]))] = {
-		sc.parallelize(List((List(
+	def duplicateStats(): List[(List[(UUID, UUID)], (String, BlockStats))] = {
+		List(
 			(
-				UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"),
-				UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130")
-			), (
-				UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"),
-				UUID.fromString("413c5711-67d0-1151-1077-b000000000b5")
-				)
-		), (
-			"key1",
-			Set(BlockStats("tag1",4,2,0.25))
-		)
-		),(List(
+				List(
+					(UUID.fromString("974c4495-52fd-445c-b09b-8b769bfb4212"), UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130")),
+					(UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"))
+				),
+				("key1", BlockStats("tag1",4, 2, 0.25))
+			),
 			(
-				UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"),
-				UUID.fromString("413c5711-67d0-1151-1077-b000000000b5")
+				List((UUID.fromString("0ef813fa-55d9-4712-a41d-46a810fca8c9"), UUID.fromString("413c5711-67d0-1151-1077-b000000000b5"))),
+				("key2", BlockStats("tag2",1, 1, 1.0))
 			)
-		), (
-			"key2",
-			Set(BlockStats("tag2",1,1,1.0))
 		)
-		)) )
 	}
 
 	def expectedPairwiseCompleteness: Map[String, Double] = {
@@ -286,31 +271,28 @@ object TestData {
 	}
 
 	def expectedCompareCount: Map[String, BigInt] = {
-		Map("testTag1" -> 5, "testTag2" -> 15,"sum" -> 17)
+		Map("testTag1" -> 5, "testTag2" -> 15,"sum" -> 20)
 	}
 
-	def blocks(sc: SparkContext): RDD[((String, String), (Iterable[UUID], Iterable[UUID]))] = {
-		sc.parallelize(List(
-			(
-				("anyKey", "testTag1"),
-				(
-					List(idList.head),
-					List(idList.last)
-				)
-			), (
-				("Anakin", "testTag2"),
-				(
-					List(idList.head, idList(1), idList(2), idList(3), idList(4)),
-					List(idList.last, idList(4), idList(6))
-				)
-			), (
-				("anotherKey", "testTag1"),
-				(
-					List(idList(4), idList(5)),
-					List(idList(6), idList.last)
-				)
+	def blocks(): List[(String, Block)] = {
+		List(
+			("testTag1", Block(
+				key = "anyKey",
+				subjects = List(idList.head).map(Subject.master),
+				staging = List(idList.last).map(Subject.master)
 			)
-		))
+			),
+			("testTag2", Block(
+				key = "Anakin",
+				subjects = List(idList.head, idList(1), idList(2), idList(3), idList(4)).map(Subject.master),
+				staging = List(idList.last, idList(4), idList(6)).map(Subject.master))
+			),
+			("testTag1", Block(
+				key = "anotherKey",
+				subjects = List(idList(4), idList(5)).map(Subject.master),
+				staging = List(idList(6), idList.last).map(Subject.master))
+			)
+		)
 	}
 
 	def trueDuplicates(subjects: List[Subject], stagings: List[Subject]): List[Duplicates] = {
@@ -478,122 +460,157 @@ object TestData {
 		))
 	}
 
-	def blockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
-		sc.parallelize(List(
-			BlockEvaluation(null, "sum GeoBlocking, SimpleBlocking", Set(
-								BlockStats("Hamburg",1,1,0.0),
-								BlockStats("undefined",2,0,0.0),
-								BlockStats("Berlin",2,1,0.5),
-								BlockStats("New York",0,2,0.0),
-								BlockStats("Audi ",1,1,1.0),
-								BlockStats("Volks",1,1,1.0),
-								BlockStats("Porsc",1,0,0.0),
-								BlockStats("Ferra",1,0,0.0)
-							), Some("Blocking"), 1.0, 8, 5),
-			BlockEvaluation(null, "GeoBlocking", Set(
-								BlockStats("New York",0,2,0.0),
-								BlockStats("Hamburg",1,1,0.0),
-								BlockStats("Berlin",2,1,0.5),
-								BlockStats("undefined",2,0,0.0)
-							), Some("Blocking"), 0.5, 4, 3),
-			BlockEvaluation(null, "SimpleBlocking", Set(
-								BlockStats("Audi ",1,1,1.0),
-								BlockStats("Ferra",1,0,0.0),
-								BlockStats("Porsc",1,0,0.0),
-								BlockStats("Volks",1,1,1.0)
-							), Some("Blocking"), 1.0, 4, 2)))
-	}
-
-	def filteredUndefinedBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
-		sc.parallelize(List(
-			BlockEvaluation(null, "sum GeoBlocking, SimpleBlocking", Set(
-								BlockStats("Hamburg",1,1,0.0),
-								BlockStats("Berlin",2,1,0.5),
-								BlockStats("New York",0,2,0.0),
-								BlockStats("audi ",1,1,1.0),
-								BlockStats("volks",1,1,1.0),
-								BlockStats("porsc",1,0,0.0),
-								BlockStats("ferra",1,0,0.0)
-							), Some("Blocking"), 1.0, 7, 4),
-			BlockEvaluation(null, "GeoBlocking", Set(
-								BlockStats("New York",0,2,0.0),
-								BlockStats("Hamburg",1,1,0.0),
-								BlockStats("Berlin",2,1,0.5)
-							), Some("Blocking"), 0.5, 3, 3),
-			BlockEvaluation(null, "SimpleBlocking", Set(
-								BlockStats("audi ",1,1,1.0),
-								BlockStats("ferra",1,0,0.0),
-								BlockStats("porsc",1,0,0.0),
-								BlockStats("volks",1,1,1.0)
-							), Some("Blocking"), 1.0, 4, 2)))
-	}
-
-	def blockEvaluationTestSubjects(sc: SparkContext): (RDD[Subject], RDD[Subject]) = {
-		val subjectRDD = sc.parallelize(
-			List.fill(101)(
-				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Haushund"))
-			) ++ List.fill(5)(
-				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Nicht Haushund"))
-			)
-		)
-		val stagingRDD = sc.parallelize(
-			List.fill(101)(
-				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Haushund"))
-			) ++ List.fill(10)(
-				Subject(id = UUID.randomUUID, master = null, datasource = datasource, name = Option("Nicht Haushund"))
-			)
-		)
-		(subjectRDD, stagingRDD)
-	}
-
-	def filteredSmallBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
-		sc.parallelize(List(
-			BlockEvaluation(null,"sum SimpleBlocking",Set(BlockStats("haush",101,101,0.0)),Some("Blocking"),0.0,2,10251),
-			BlockEvaluation(null,"SimpleBlocking",Set(BlockStats("haush",101,101,0.0)),Some("Blocking"),0.0,2,10251))
+	def filteredUndefinedBlockEvaluation(): Set[BlockEvaluation] = {
+		Set(
+			BlockEvaluation(
+				null,
+				"combined GeoBlocking, SimpleBlocking",
+				Set(
+					BlockStats("Hamburg", 1, 1, 0.0),
+					BlockStats("Berlin", 2, 1, 0.5),
+					BlockStats("New York", 0, 2, 0.0),
+					BlockStats("audi ", 1, 1, 1.0),
+					BlockStats("volks", 1, 1, 1.0),
+					BlockStats("porsc", 1, 0, 0.0),
+					BlockStats("ferra", 1, 0, 0.0)
+				),
+				Some("Blocking"), 1.0, 7, 5),
+			BlockEvaluation(
+				null,
+				"GeoBlocking",
+				Set(
+					BlockStats("New York", 0, 2, 0.0),
+					BlockStats("Hamburg", 1, 1, 0.0),
+					BlockStats("Berlin", 2, 1, 0.5)
+				),
+				Some("Blocking"), 0.5, 3, 3),
+			BlockEvaluation(
+				null,
+				"SimpleBlocking",
+				Set(
+					BlockStats("audi ", 1, 1, 1.0),
+					BlockStats("ferra", 1, 0, 0.0),
+					BlockStats("porsc", 1, 0, 0.0),
+					BlockStats("volks", 1, 1, 1.0)
+				),
+				Some("Blocking"), 1.0, 4, 2)
 		)
 	}
 
-	def blockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
-		sc.parallelize(List(
-			BlockEvaluation(null, "sum GeoBlocking, SimpleBlocking", Set(
-								BlockStats("Hamburg", 1, 1, 0.0),
-								BlockStats("undefined", 2, 0, 0.0),
-								BlockStats("Berlin", 2, 1, 0.5),
-								BlockStats("New York", 0, 2, 0.0),
-								BlockStats("audi ", 1, 1, 1.0),
-								BlockStats("volks", 1, 1, 1.0),
-								BlockStats("porsc", 1, 0, 0.0),
-								BlockStats("ferra", 1, 0, 0.0)
-							), Some("Test comment"), 1.0, 8, 4),
-			BlockEvaluation(null, "GeoBlocking", Set(
-								BlockStats("New York", 0, 2, 0.0),
-								BlockStats("Hamburg", 1, 1, 0.0),
-								BlockStats("Berlin", 2, 1, 0.5),
-								BlockStats("undefined", 2, 0, 0.0)
-							), Some("Test comment"), 0.5, 4, 3),
-			BlockEvaluation(null, "SimpleBlocking", Set(
-								BlockStats("audi ", 1, 1, 1.0),
-								BlockStats("ferra", 1, 0, 0.0),
-								BlockStats("porsc", 1, 0, 0.0),
-								BlockStats("volks", 1, 1, 1.0)
-							), Some("Test comment"), 1.0, 4, 2)
-		))
+	def blockEvaluationTestSubjects(): (List[Subject], List[Subject]) = {
+		val subjects = List.fill(101)(Subject(UUID.randomUUID, null, datasource, Option("Haushund"))) ++
+			List.fill(5)(Subject(UUID.randomUUID, null, datasource, Option("Nicht Haushund")))
+		val staging = List.fill(101)(Subject(UUID.randomUUID, null, datasource, Option("Haushund")))
+		(subjects, staging)
 	}
 
-	def emptyBlockEvaluation(sc: SparkContext): RDD[BlockEvaluation] = {
-		sc.parallelize(List(
-			BlockEvaluation(null,"sum GeoBlocking, SimpleBlocking",Set(),Some("Blocking"),1.0,8,4),
-			BlockEvaluation(null,"GeoBlocking",Set(),Some("Blocking"),0.5,4,3),
-			BlockEvaluation(null,"SimpleBlocking",Set(),Some("Blocking"),1.0,4,2)
-		))
+	def filteredSmallBlockEvaluation(): Set[BlockEvaluation] = {
+		Set(
+			BlockEvaluation(
+				null,
+				"combined SimpleBlocking",
+				Set(BlockStats("haush", 101, 101, 0.0)),
+				Some("Blocking"), 0.0, 1, 10201),
+			BlockEvaluation(
+				null,
+				"SimpleBlocking",
+				Set(BlockStats("haush", 101, 101, 0.0)),
+				Some("Blocking"), 0.0, 1, 10201)
+		)
 	}
 
-	def emptyBlockEvaluationWithComment(sc: SparkContext): RDD[BlockEvaluation] = {
-		sc.parallelize(List(
-			BlockEvaluation(null,"sum GeoBlocking, SimpleBlocking",Set(),Some("Test comment"),1.0,8,4),
-			BlockEvaluation(null,"GeoBlocking",Set(),Some("Test comment"),0.5,4,3),
-			BlockEvaluation(null,"SimpleBlocking",Set(),Some("Test comment"),1.0,4,2)
-		))
+	def blockEvaluationWithComment(): Set[BlockEvaluation] = {
+		Set(
+			BlockEvaluation(
+				null,
+				"combined GeoBlocking, SimpleBlocking",
+				Set(
+					BlockStats("Hamburg", 1, 1, 0.0),
+					BlockStats("undefined", 2, 0, 0.0),
+					BlockStats("Berlin", 2, 1, 0.5),
+					BlockStats("New York", 0, 2, 0.0),
+					BlockStats("audi ", 1, 1, 1.0),
+					BlockStats("volks", 1, 1, 1.0),
+					BlockStats("porsc", 1, 0, 0.0),
+					BlockStats("ferra", 1, 0, 0.0)
+				),
+				Some("Test comment"), 1.0, 8, 5),
+			BlockEvaluation(
+				null,
+				"GeoBlocking",
+				Set(
+					BlockStats("New York", 0, 2, 0.0),
+					BlockStats("Hamburg", 1, 1, 0.0),
+					BlockStats("Berlin", 2, 1, 0.5),
+					BlockStats("undefined", 2, 0, 0.0)
+				),
+				Some("Test comment"), 0.5, 4, 3),
+			BlockEvaluation(
+				null,
+				"SimpleBlocking",
+				Set(
+					BlockStats("audi ", 1, 1, 1.0),
+					BlockStats("ferra", 1, 0, 0.0),
+					BlockStats("porsc", 1, 0, 0.0),
+					BlockStats("volks", 1, 1, 1.0)
+				),
+				Some("Test comment"), 1.0, 4, 2)
+		)
+	}
+
+	def blockEvaluationWithOutPC(): Set[BlockEvaluation] = {
+		Set(
+			BlockEvaluation(
+				null,
+				"combined GeoBlocking, SimpleBlocking",
+				Set(
+					BlockStats("Hamburg", 1, 1, 0.0),
+					BlockStats("undefined", 2, 0, 0.0),
+					BlockStats("Berlin", 2, 1, 0.5),
+					BlockStats("New York", 0, 2, 0.0),
+					BlockStats("audi ", 1, 1, 1.0),
+					BlockStats("volks", 1, 1, 1.0),
+					BlockStats("porsc", 1, 0, 0.0),
+					BlockStats("ferra", 1, 0, 0.0)
+				),
+				Some("Test comment"), 0.0, 8, 5),
+			BlockEvaluation(
+				null,
+				"GeoBlocking",
+				Set(
+					BlockStats("New York", 0, 2, 0.0),
+					BlockStats("Hamburg", 1, 1, 0.0),
+					BlockStats("Berlin", 2, 1, 0.5),
+					BlockStats("undefined", 2, 0, 0.0)
+				),
+				Some("Test comment"), 0.0, 4, 3),
+			BlockEvaluation(
+				null,
+				"SimpleBlocking",
+				Set(
+					BlockStats("audi ", 1, 1, 1.0),
+					BlockStats("ferra", 1, 0, 0.0),
+					BlockStats("porsc", 1, 0, 0.0),
+					BlockStats("volks", 1, 1, 1.0)
+				),
+				Some("Test comment"), 0.0, 4, 2)
+		)
+	}
+
+	def emptyBlockEvaluation(): Set[BlockEvaluation] = {
+		Set(
+			BlockEvaluation(null, "combined GeoBlocking, SimpleBlocking", Set(), Some("Blocking"), 1.0, 4, 5),
+			BlockEvaluation(null, "GeoBlocking", Set(), Some("Blocking"), 0.5, 2, 3),
+			BlockEvaluation(null, "SimpleBlocking", Set(), Some("Blocking"), 1.0, 2, 2)
+		)
+	}
+
+	def emptyBlockEvaluationWithComment(): Set[BlockEvaluation] = {
+		Set(
+			BlockEvaluation(null, "combined GeoBlocking, SimpleBlocking", Set(), Some("Test comment"), 1.0, 4, 5),
+			BlockEvaluation(null, "GeoBlocking", Set(), Some("Test comment"), 0.5, 2, 3),
+			BlockEvaluation(null, "SimpleBlocking", Set(), Some("Test comment"), 1.0, 2, 2)
+		)
 	}
 
 	def simpleBlockingScheme: List[List[String]] = List(List("audi "), List("volks"), List("ferra"), List("porsc"))
@@ -673,6 +690,123 @@ object TestData {
 			Subject(id = idList(3), master = null, datasource = datasource, name = Option("Volkswagen AG")),
 			Subject(id = idList(5), master = null, datasource = datasource, name = Option("Porsche AG")))
 	}
+
+	def blockSplitSubjects(): List[Subject] = {
+		List(
+			Subject.master(idList.head).copy(name = Option("Audi 1")),
+			Subject.master(idList(1)).copy(name = Option("Audi 2")),
+			Subject.master(idList(2)).copy(name = Option("Audi 3")),
+			Subject.master(idList(3)).copy(name = Option("Audi 4")),
+			Subject.master(idList(4)).copy(name = Option("Audi 5")),
+			Subject.master(idList(5)).copy(name = Option("Audi 6")),
+			Subject.master(idList(6)).copy(name = Option("Audi 7")),
+			Subject.master(idList(7)).copy(name = Option("Porsche 1"))
+		)
+	}
+
+	def blockSplitStagedSubjects(): List[Subject] = {
+		List(
+			Subject.master(idList(7)).copy(name = Option("Audi 8")),
+			Subject.master(idList(6)).copy(name = Option("Audi 9")),
+			Subject.master(idList(5)).copy(name = Option("Audi 10")),
+			Subject.master(idList(4)).copy(name = Option("Audi 11")),
+			Subject.master(idList(3)).copy(name = Option("Audi 12")),
+			Subject.master(idList(2)).copy(name = Option("Audi 13")),
+			Subject.master(idList(1)).copy(name = Option("Audi 14")),
+			Subject.master(idList.head).copy(name = Option("Porsche 2"))
+		)
+	}
+
+	def splitBlocks(): Set[Block] = {
+		Set(
+			Block(
+				null,
+				"porsc",
+				List(Subject.master(idList(7)).copy(name = Option("Porsche 1"))),
+				List(Subject.master(idList.head).copy(name = Option("Porsche 2")))
+			),
+			Block(
+				null,
+				"audi _0",
+				List(
+					Subject.master(idList.head).copy(name = Option("Audi 1")),
+					Subject.master(idList(1)).copy(name = Option("Audi 2")),
+					Subject.master(idList(2)).copy(name = Option("Audi 3"))
+				),
+				List(
+					Subject.master(idList(7)).copy(name = Option("Audi 8")),
+					Subject.master(idList(6)).copy(name = Option("Audi 9")),
+					Subject.master(idList(5)).copy(name = Option("Audi 10")),
+					Subject.master(idList(4)).copy(name = Option("Audi 11")),
+					Subject.master(idList(3)).copy(name = Option("Audi 12")),
+					Subject.master(idList(2)).copy(name = Option("Audi 13")),
+					Subject.master(idList(1)).copy(name = Option("Audi 14"))
+				)
+			),
+			Block(
+				null,
+				"audi _1",
+				List(
+					Subject.master(idList(3)).copy(name = Option("Audi 4")),
+					Subject.master(idList(4)).copy(name = Option("Audi 5")),
+					Subject.master(idList(5)).copy(name = Option("Audi 6")),
+					Subject.master(idList(6)).copy(name = Option("Audi 7"))
+				),
+				List(
+					Subject.master(idList(7)).copy(name = Option("Audi 8")),
+					Subject.master(idList(6)).copy(name = Option("Audi 9")),
+					Subject.master(idList(5)).copy(name = Option("Audi 10")),
+					Subject.master(idList(4)).copy(name = Option("Audi 11")),
+					Subject.master(idList(3)).copy(name = Option("Audi 12")),
+					Subject.master(idList(2)).copy(name = Option("Audi 13")),
+					Subject.master(idList(1)).copy(name = Option("Audi 14"))
+				)
+			)
+		)
+	}
+
+	def blocksWithSubsetBlocks(tag: String): List[(String, Block)] = {
+		List(
+			Block(null, "audi", List.fill(5)(Subject.master()), List.fill(4)(Subject.master())),
+			Block(null, "audi ", List.fill(5)(Subject.master()), List.fill(4)(Subject.master())),
+			Block(null, "au", List.fill(3)(Subject.master()), List.fill(2)(Subject.master())),
+			Block(null, "bmw", List.fill(1)(Subject.master()), List.fill(10)(Subject.master())),
+			Block(null, "bmw g", List.fill(2)(Subject.master()), List.fill(20)(Subject.master())),
+			Block(null, "volks", List.fill(4)(Subject.master()), List.fill(7)(Subject.master())),
+			Block(null, "vw", List.fill(6)(Subject.master()), List.fill(8)(Subject.master()))
+		).map((tag, _))
+	}
+
+	def blocksWithSubsetBlocksAndTags(tag1: String, tag2: String): List[(String, Block)] = {
+		List(
+			(tag1, Block(null, "audi", List.fill(5)(Subject.master()), List.fill(4)(Subject.master()))),
+			(tag1, Block(null, "audi ", List.fill(5)(Subject.master()), List.fill(4)(Subject.master()))),
+			(tag1, Block(null, "au", List.fill(3)(Subject.master()), List.fill(2)(Subject.master()))),
+			(tag1, Block(null, "bmw", List.fill(1)(Subject.master()), List.fill(10)(Subject.master()))),
+			(tag1, Block(null, "bmw g", List.fill(2)(Subject.master()), List.fill(20)(Subject.master()))),
+			(tag1, Block(null, "volks", List.fill(4)(Subject.master()), List.fill(7)(Subject.master()))),
+			(tag1, Block(null, "vw", List.fill(6)(Subject.master()), List.fill(8)(Subject.master()))),
+			(tag2, Block(null, "audi", List.fill(5)(Subject.master()), List.fill(4)(Subject.master()))),
+			(tag2, Block(null, "audi ", List.fill(5)(Subject.master()), List.fill(4)(Subject.master()))),
+			(tag2, Block(null, "au", List.fill(3)(Subject.master()), List.fill(2)(Subject.master()))),
+			(tag2, Block(null, "bmw", List.fill(1)(Subject.master()), List.fill(10)(Subject.master()))),
+			(tag2, Block(null, "bmw g", List.fill(2)(Subject.master()), List.fill(20)(Subject.master()))),
+			(tag2, Block(null, "volks", List.fill(4)(Subject.master()), List.fill(7)(Subject.master()))),
+			(tag2, Block(null, "vw", List.fill(6)(Subject.master()), List.fill(8)(Subject.master())))
+		)
+	}
+
+	def subjectsForEmptyBlocks(): (List[Subject], List[Subject]) = {
+		val subjects = List(
+			Subject.master().copy(name = Option("Audi AG")),
+			Subject.master().copy(name = Option("AUDI AG"))
+		)
+		val stagedSubjects = List(
+			Subject.master().copy(name = Option("Audi"))
+		)
+		(subjects, stagedSubjects)
+	}
 }
 // scalastyle:on line.size.limit
 // scalastyle:on number.of.methods
+// scalastyle:on file.size.limit

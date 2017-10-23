@@ -57,14 +57,14 @@ class ResolveEntitiesTest extends FlatSpec with SharedSparkContext with Matchers
 
 	"Wikidata name data" should "be extracted" in {
 		val entities = TestData.unfilteredWikidataEntities()
-		    .map(ResolveEntities.extractNameData)
+			.map(ResolveEntities.extractNameData)
 		val expectedEntries = TestData.entityNameData()
 		entities shouldEqual expectedEntries
 	}
 
 	"Wikidata id rdd" should "be joined with name rdd" in {
 		val entities = sc.parallelize(TestData.wikidataIdEntries()
-		    .map(ResolveEntities.makeJoinable))
+			.map(ResolveEntities.makeJoinable))
 		val names = sc.parallelize(TestData.entityNameData())
 		val joinedData = ResolveEntities.joinIdRDD(entities, names)
 		val expected = sc.parallelize(TestData.resolvedWikidataIdEntries())
@@ -86,7 +86,7 @@ class ResolveEntitiesTest extends FlatSpec with SharedSparkContext with Matchers
 			.head._2
 		val expected = TestData.unresolvedWikidataEntities()
 			.map(_.data)
-		    .head
+			.head
 		rebuiltData shouldEqual expected
 	}
 }

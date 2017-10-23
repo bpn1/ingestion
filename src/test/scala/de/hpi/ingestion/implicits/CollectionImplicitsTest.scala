@@ -17,9 +17,8 @@ limitations under the License.
 package de.hpi.ingestion.implicits
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import org.scalatest.{FlatSpec, Matchers}
-import org.apache.spark.rdd.RDD
 import de.hpi.ingestion.implicits.CollectionImplicits._
+import org.scalatest.{FlatSpec, Matchers}
 
 class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkContext {
 
@@ -41,6 +40,16 @@ class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkCon
 		square2.toSet shouldEqual expectedSquare2
 	}
 
+	"Collections" should "be halved" in {
+		val List(half1, half2) = (0 until 10).halve()
+		half1 shouldEqual List(0, 1, 2, 3, 4)
+		half2 shouldEqual List(5, 6, 7, 8, 9)
+
+		val List(half3, half4) = (0 until 9).halve()
+		half3 shouldEqual List(0, 1, 2, 3)
+		half4 shouldEqual List(4, 5, 6, 7, 8)
+	}
+
 	"Printable set difference" should "return a diff string" in {
 		val (list1, list2) = TestData.diffLists
 		val diff = list1.printableSetDifference(list2)
@@ -53,17 +62,6 @@ class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkCon
 		val diff = list1.printableSetDifference(list2)
 		val expectedDiff = TestData.equalDiffString
 		diff shouldEqual expectedDiff
-	}
-
-	"Any RDD conversions" should "convert the types" in {
-		val startValue = "a"
-		val stringRDD = sc.parallelize(Seq(startValue))
-		val anyList = List(stringRDD).toAnyRDD()
-		val resultRDD = anyList.fromAnyRDD[String]().head
-		val resultValue = resultRDD.first()
-		anyList.head.isInstanceOf[RDD[Any]] shouldBe true
-		resultRDD.isInstanceOf[RDD[String]] shouldBe true
-		startValue shouldBe resultValue
 	}
 
 	"Count elements" should "count the elements" in {

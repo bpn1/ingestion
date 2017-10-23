@@ -11,6 +11,7 @@
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
         <maxBlockSize>500000</maxBlockSize>
+        <minBlockSize>1</minBlockSize>
         <confidence>0.9</confidence>
     </settings>
     <simMeasurements>

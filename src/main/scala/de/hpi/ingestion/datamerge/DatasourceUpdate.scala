@@ -68,7 +68,7 @@ class DatasourceUpdate extends SparkJob {
 				keys.map(key => (key, subject))
 			}
 		updatedSubjects = subjectsWithUpdate
-	    	.flatMap { subject =>
+			.flatMap { subject =>
 				val keys = subject.get(settings("datasourceKey"))
 				keys.map(key => (key, subject))
 			}.leftOuterJoin(updateAbleSubjects)
