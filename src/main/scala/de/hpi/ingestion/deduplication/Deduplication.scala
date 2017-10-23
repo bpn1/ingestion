@@ -78,6 +78,7 @@ class Deduplication extends SparkJob {
 		settings.get("filterSmall")
 		blocking.subjects = subjects.filter(_.isSlave)
 		blocking.stagedSubjects = stagedSubjects
+		blocking.setPartitioning(sc)
 		blocking.subjectReductionFunction = (subject: Subject) => {
 			subject.master_history = Nil
 			subject.name_history = Nil
