@@ -1,11 +1,25 @@
-// general settings
-lazy val root = (project in file(".")).
-	settings(
-		name := "ingestion",
-		version := "1.0",
-		scalaVersion := "2.11.8",
-		mainClass in Compile := Some("ingestion")
+// project definition
+lazy val commonSettings = Seq(
+	organization := "de.hpi",
+	version := "1.0",
+	scalaVersion := "2.11.8"
+)
+
+// subproject utilities
+lazy val utilities = (project in file("utilities"))
+	.settings(
+		commonSettings,
+		name := "utilities",
+		mainClass in Compile := Some("utilities")
 	)
+
+// main project
+lazy val ingestion = (project in file("."))
+	.settings(
+		commonSettings,
+		name := "ingestion",
+		mainClass in Compile := Some("ingestion")
+	).dependsOn(utilities)
 
 // repositories to use for dependency lookup. the public maven repository is the default lookup repository.
 resolvers ++= Seq(
@@ -17,23 +31,23 @@ resolvers ++= Seq(
 // dependencies used for testing are also excluded from assembly jar
 // exclude flag is used to exclude conflicting transitive dependencies
 libraryDependencies ++= Seq(
-	"org.apache.spark" % "spark-core_2.11" % "2.1.0" % "provided" exclude("org.scalatest", "scalatest_2.11"),
-	"org.apache.spark" % "spark-sql_2.11" % "2.1.0" % "provided",
-	"org.apache.spark" % "spark-mllib_2.11" % "2.1.0" % "provided",
-	"com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.0.5",
-	"org.scalactic" % "scalactic_2.11" % "3.0.4" % "provided",
-	"org.scalatest" % "scalatest_2.11" % "3.0.4" % "provided",
-	"com.holdenkarau" % "spark-testing-base_2.11" % "2.1.0_0.7.4" % "provided",
-	"com.databricks" % "spark-xml_2.11" % "0.4.1",
+	"org.apache.spark" %% "spark-core" % "2.1.0" % "provided" exclude("org.scalatest", "scalatest_2.11"),
+	"org.apache.spark" %% "spark-sql" % "2.1.0" % "provided",
+	"org.apache.spark" %% "spark-mllib" % "2.1.0" % "provided",
+	"com.datastax.spark" %% "spark-cassandra-connector" % "2.0.5",
+	"org.scalactic" %% "scalactic" % "3.0.4" % "provided",
+	"org.scalatest" %% "scalatest" % "3.0.4" % "provided",
+	"com.holdenkarau" %% "spark-testing-base" % "2.1.0_0.7.4" % "provided",
+	"com.databricks" %% "spark-xml" % "0.4.1",
 	"info.bliki.wiki" % "bliki-core" % "3.1.0" exclude("ch.qos.logback", "logback-classic"),
 	"org.jsoup" % "jsoup" % "1.10.3",
 	"com.esotericsoftware" % "kryo" % "4.0.1",
 	"com.google.protobuf" % "protobuf-java" % "2.6.1",
 	"org.apache.lucene" % "lucene-analyzers-common" % "7.0.1",
-	"com.typesafe.play" %% "play-json" % "2.4.11",
+	"com.typesafe.play" %% "play-json" % "2.4.11", // can't update due to jackson version (conflict with spark)
 	"com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4",
 	"graphframes" % "graphframes" % "0.5.0-spark2.1-s_2.11",
-	"org.rogach" % "scallop_2.11" % "3.1.0"
+	"org.rogach" %% "scallop" % "3.1.0"
 )
 
 // exclude scala libraries from assembly jar as they are provided by the spark environment
@@ -49,7 +63,9 @@ scalacOptions in ThisBuild ++= baseDirectory.map { bd =>
 logBuffered in Test := false
 parallelExecution in Test := false
 fork in Test := true
-testOptions in Test := Seq(Tests.Argument(TestFrameworks.ScalaTest, "-oD"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"))
+testOptions in Test := Seq(
+	Tests.Argument(TestFrameworks.ScalaTest, "-oD"),
+	Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"))
 javaOptions ++= Seq("-Xms512M", "-Xmx4096M", "-XX:+CMSClassUnloadingEnabled")
 
 // fat jar assembly settings

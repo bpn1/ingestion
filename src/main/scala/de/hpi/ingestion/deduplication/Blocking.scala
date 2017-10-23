@@ -45,6 +45,7 @@ class Blocking extends SparkJob {
 	var minBlockSize: Long = 1
 	var maxBlockSize: Long = Long.MaxValue
 	var calculatePC: Boolean = false
+	var numPartitions: Int = 4
 
 	var subjects: RDD[Subject] = _
 	var stagedSubjects: RDD[Subject] = _
@@ -83,7 +84,16 @@ class Blocking extends SparkJob {
 		settings.get("filterSmall").foreach(setFilterSmall)
 		settings.get("minBlockSize").foreach(setMinBlockSize)
 		settings.get("maxBlockSize").foreach(setMaxBlockSize)
+		setPartitioning(sc)
 		evaluationBlocking(goldenBroadcast.value, comment)
+		sc.getExecutorMemoryStatus
+	}
+
+	/**
+	  * Sets the number of paritions used for the repartition in the blocking to #executors * #executor cores * 4
+	  */
+	def setPartitioning(sc: SparkContext): Unit = {
+		numPartitions = sc.getExecutorMemoryStatus.size * sc.getConf.getInt("spark.executor.cores", 1) * 2
 	}
 
 	/**
@@ -273,7 +283,7 @@ class Blocking extends SparkJob {
 					case _ => splitBlocks.zipWithIndex.map { case (block, i) => block.copy(key = s"${block.key}_$i") }
 				}
 				blocks.map((tag, _))
-			}.partitionBy(new HashPartitioner(7 * 32))
+			}.partitionBy(new HashPartitioner(numPartitions))
 	}
 }
 object Blocking {
