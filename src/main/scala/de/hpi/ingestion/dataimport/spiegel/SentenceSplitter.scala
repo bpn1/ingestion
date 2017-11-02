@@ -25,6 +25,9 @@ import de.hpi.fgis.utils.text.Document
 import de.hpi.fgis.utils.text.annotation.Sentence
 import de.hpi.fgis.utils.text.sentencesplit.MEOpenNLPSentenceSplitter
 
+/**
+  * Splits the Spiegel articles into sentences using a self trained Maximum Entropy model.
+  */
 class SentenceSplitter extends SparkJob {
 	appName = "Sentence Splitter"
 	configFile = "textmining.xml"
@@ -32,19 +35,31 @@ class SentenceSplitter extends SparkJob {
 	var spiegelArticles: RDD[TrieAliasArticle] = _
 	var sentences: RDD[String] = _
 
+	/**
+	  * Loads the Spiegel Articles from the Cassandra.
+	  * @param sc SparkContext to be used for the job
+	  */
 	override def load(sc: SparkContext): Unit = {
 		spiegelArticles = sc.cassandraTable[TrieAliasArticle](settings("keyspace"), settings("spiegelTable"))
 	}
 
+	/**
+	  * Saves the sentences to the HDFS.
+	  * @param sc SparkContext to be used for the job
+	  */
 	override def save(sc: SparkContext): Unit = {
 		sentences.saveAsTextFile("spiegel_sentences2")
 	}
 
+	/**
+	  * Splits the Spiegel Articles into sentences.
+	  * @param sc SparkContext to be used for the job
+	  */
 	override def run(sc: SparkContext): Unit = {
 		sentences = spiegelArticles.map { article =>
 			val document = new Document(article.text.get)
 			val sentenceSplitter = new MEOpenNLPSentenceSplitter
-			sentenceSplitter.split(document)
+			sentenceSplitter.annotate(document)
 			document.get(Sentence).map(_.value).mkString("\n")
 		}
 	}
