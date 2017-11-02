@@ -23,25 +23,25 @@ import de.hpi.ingestion.textmining.preprocessing.AliasTrieSearch
 import de.hpi.ingestion.textmining.{TestData => TextTestData}
 
 class SpiegelImportTest extends FlatSpec with Matchers with SharedSparkContext {
-	"Spiegel articles" should "be parsed" in {
-		val job = new SpiegelImport
-		job.spiegelDump = sc.parallelize(TestData.spiegelFile())
-		job.run(sc)
-		val articles = job.parsedArticles.collect.toSet
-		val expectedArticles = TestData.parsedArticles().toSet
-		articles shouldEqual expectedArticles
-	}
+    "Spiegel articles" should "be parsed" in {
+        val job = new SpiegelImport
+        job.spiegelDump = sc.parallelize(TestData.spiegelFile())
+        job.run(sc)
+        val articles = job.parsedArticles.collect.toSet
+        val expectedArticles = TestData.parsedArticles().toSet
+        articles shouldEqual expectedArticles
+    }
 
-	"Article values" should "be extracted" in {
-		val job = new SpiegelImport
-		val articles = TestData.spiegelJson().map(job.fillEntityValues)
-		val expectedArticles = TestData.parsedArticles()
-		articles shouldEqual expectedArticles
-	}
+    "Article values" should "be extracted" in {
+        val job = new SpiegelImport
+        val articles = TestData.spiegelJson().map(job.fillEntityValues)
+        val expectedArticles = TestData.parsedArticles()
+        articles shouldEqual expectedArticles
+    }
 
-	"Article text" should "be extracted" in {
-		val extractedContents = TestData.spiegelPages().map(SpiegelImport.extractArticleText)
-		val expectedContents = TestData.pageTexts()
-		extractedContents shouldEqual expectedContents
-	}
+    "Article text" should "be extracted" in {
+        val extractedContents = TestData.spiegelPages().map(SpiegelImport.extractArticleText)
+        val expectedContents = TestData.pageTexts()
+        extractedContents shouldEqual expectedContents
+    }
 }

@@ -22,23 +22,23 @@ import de.hpi.ingestion.datalake.models.Version
 import org.scalatest.{FlatSpec, Matchers}
 
 class FindRelationsTest extends FlatSpec with SharedSparkContext with Matchers {
-	"Subject relations" should "be found" in {
-		val job = new FindRelations
-		val nameMap = TestData.resolvedNameMap()
-		val subjects = TestData.unresolvedSubjects()
-			.map(job.findRelations(_, nameMap, Version("FindRelationsTest", Nil, sc, false, None)))
-			.map(subject => (subject.id, subject.name, subject.properties, subject.relations))
-		val expectedSubjects = TestData.resolvedSubjects()
-			.map(subject => (subject.id, subject.name, subject.properties, subject.relations))
-		subjects shouldEqual expectedSubjects
-	}
+    "Subject relations" should "be found" in {
+        val job = new FindRelations
+        val nameMap = TestData.resolvedNameMap()
+        val subjects = TestData.unresolvedSubjects()
+            .map(job.findRelations(_, nameMap, Version("FindRelationsTest", Nil, sc, false, None)))
+            .map(subject => (subject.id, subject.name, subject.properties, subject.relations))
+        val expectedSubjects = TestData.resolvedSubjects()
+            .map(subject => (subject.id, subject.name, subject.properties, subject.relations))
+        subjects shouldEqual expectedSubjects
+    }
 
-	"Name resolve map" should "contain all resolvable names" in {
-		val job = new FindRelations
-		val subjects = sc.parallelize(TestData.unresolvedSubjects())
-		val resolvedNames = job.resolvableNamesMap(subjects)
-		val expectedMap = TestData.resolvedNameMap()
-		resolvedNames shouldEqual expectedMap
-	}
+    "Name resolve map" should "contain all resolvable names" in {
+        val job = new FindRelations
+        val subjects = sc.parallelize(TestData.unresolvedSubjects())
+        val resolvedNames = job.resolvableNamesMap(subjects)
+        val expectedMap = TestData.resolvedNameMap()
+        resolvedNames shouldEqual expectedMap
+    }
 
 }

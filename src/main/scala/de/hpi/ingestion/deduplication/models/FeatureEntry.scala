@@ -30,19 +30,19 @@ import org.apache.spark.mllib.linalg.DenseVector
   * @param correct whether the subjects are duplicates or not
   */
 case class FeatureEntry(
-	id: UUID = UUID.randomUUID(),
-	subject: Subject,
-	staging: Subject,
-	scores: Map[String, List[Double]] = Map(),
-	correct: Boolean = false
+    id: UUID = UUID.randomUUID(),
+    subject: Subject,
+    staging: Subject,
+    scores: Map[String, List[Double]] = Map(),
+    correct: Boolean = false
 ) {
-	/**
-	  * Returns a labeled Point
-	  * @return Labeled Point containing a label and the features
-	  */
-	def labeledPoint: LabeledPoint = {
-		val features = new DenseVector(scores.values.toArray.flatten)
-		val label = if(correct) 1.0 else 0.0
-		LabeledPoint(label, features)
-	}
+    /**
+      * Returns a labeled Point
+      * @return Labeled Point containing a label and the features
+      */
+    def labeledPoint: LabeledPoint = {
+        val features = new DenseVector(scores.values.toArray.flatten)
+        val label = if(correct) 1.0 else 0.0
+        LabeledPoint(label, features)
+    }
 }

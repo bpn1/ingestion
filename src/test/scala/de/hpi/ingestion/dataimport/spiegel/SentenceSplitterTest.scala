@@ -20,12 +20,12 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
 class SentenceSplitterTest extends FlatSpec with Matchers with SharedSparkContext {
-	"Sentence Splitter" should "split articles into sentences" in {
-		val job = new SentenceSplitter
-		job.spiegelArticles = sc.parallelize(TestData.sentenceArticles())
-		job.run(sc)
-		val sentences = job.sentences.collect().toSet
-		val expectedSentences = TestData.splitSentences()
-		sentences shouldEqual expectedSentences
-	}
+    "Sentence Splitter" should "split articles into sentences" in {
+        val job = new SentenceSplitter
+        job.spiegelArticles = sc.parallelize(TestData.sentenceArticles())
+        job.run(sc)
+        val sentences = job.sentences.collect().toSet
+        val expectedSentences = TestData.splitSentences()
+        sentences shouldEqual expectedSentences
+    }
 }

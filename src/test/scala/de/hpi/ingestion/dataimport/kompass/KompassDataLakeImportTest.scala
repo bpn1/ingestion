@@ -20,17 +20,17 @@ import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
 
 class KompassDataLakeImportTest extends FlatSpec with Matchers with SharedSparkContext {
-	"Subject translation" should "translate all possible data" in {
-		val job = new KompassDataLakeImport
-		val entity = TestData.kompassEntity
-		val version = TestData.version(sc)
-		val mapping = job.normalizationSettings
-		val strategies = Map.empty[String, List[String]]
-		val classifier = job.classifier
-		val subject = job.translateToSubject(entity, version, mapping, strategies, classifier)
-		val expectedSubject = TestData.translatedSubject
-		subject.name shouldEqual entity.name
-		subject.category shouldEqual expectedSubject.category
-		subject.properties shouldEqual expectedSubject.properties
-	}
+    "Subject translation" should "translate all possible data" in {
+        val job = new KompassDataLakeImport
+        val entity = TestData.kompassEntity
+        val version = TestData.version(sc)
+        val mapping = job.normalizationSettings
+        val strategies = Map.empty[String, List[String]]
+        val classifier = job.classifier
+        val subject = job.translateToSubject(entity, version, mapping, strategies, classifier)
+        val expectedSubject = TestData.translatedSubject
+        subject.name shouldEqual entity.name
+        subject.category shouldEqual expectedSubject.category
+        subject.properties shouldEqual expectedSubject.properties
+    }
 }

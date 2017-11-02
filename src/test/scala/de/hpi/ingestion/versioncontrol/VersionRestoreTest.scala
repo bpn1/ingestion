@@ -21,30 +21,30 @@ import de.hpi.ingestion.framework.CommandLineConf
 import org.scalatest.{FlatSpec, Matchers}
 
 class VersionRestoreTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
-	"Subject data" should "be restored" in {
-		val job = new VersionRestore
-		job.subjects = sc.parallelize(TestData.diffSubjects() ++ TestData.additionalRestorationSubjects())
-		job.conf = CommandLineConf(Seq("-v", TestData.versionsToCompare()._1.toString))
-		job.run(sc)
-		val restoredSubjects = job.restoredSubjects.collect.sortBy(_.id)
+    "Subject data" should "be restored" in {
+        val job = new VersionRestore
+        job.subjects = sc.parallelize(TestData.diffSubjects() ++ TestData.additionalRestorationSubjects())
+        job.conf = CommandLineConf(Seq("-v", TestData.versionsToCompare()._1.toString))
+        job.run(sc)
+        val restoredSubjects = job.restoredSubjects.collect.sortBy(_.id)
 
-		val zippedSubjects = restoredSubjects.zip(TestData.restoredSubjects().sortBy(_.id))
-		restoredSubjects.length shouldEqual zippedSubjects.length
-		zippedSubjects.foreach { case (restoredSubject, testSubject) =>
-			restoredSubject.name shouldEqual testSubject.name
-			restoredSubject.master shouldEqual testSubject.master
-			restoredSubject.aliases shouldEqual testSubject.aliases
-			restoredSubject.category shouldEqual testSubject.category
-			restoredSubject.properties shouldEqual testSubject.properties
-			restoredSubject.relations shouldEqual testSubject.relations
-		}
-	}
+        val zippedSubjects = restoredSubjects.zip(TestData.restoredSubjects().sortBy(_.id))
+        restoredSubjects.length shouldEqual zippedSubjects.length
+        zippedSubjects.foreach { case (restoredSubject, testSubject) =>
+            restoredSubject.name shouldEqual testSubject.name
+            restoredSubject.master shouldEqual testSubject.master
+            restoredSubject.aliases shouldEqual testSubject.aliases
+            restoredSubject.category shouldEqual testSubject.category
+            restoredSubject.properties shouldEqual testSubject.properties
+            restoredSubject.relations shouldEqual testSubject.relations
+        }
+    }
 
-	"Version Restore assertion" should "return false if there is not exactly one versions provided" in {
-		val job = new VersionRestore
-		job.conf = CommandLineConf(Seq("-v", "v1"))
-		job.assertConditions() shouldBe true
-		job.conf = CommandLineConf(Seq())
-		job.assertConditions() shouldBe false
-	}
+    "Version Restore assertion" should "return false if there is not exactly one versions provided" in {
+        val job = new VersionRestore
+        job.conf = CommandLineConf(Seq("-v", "v1"))
+        job.assertConditions() shouldBe true
+        job.conf = CommandLineConf(Seq())
+        job.assertConditions() shouldBe false
+    }
 }

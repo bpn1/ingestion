@@ -1,81 +1,81 @@
 {
-	"string": {
-		"value": "test string 1",
-		"mainsnak": {
-			"datavalue": {
-				"value": "test string 1",
-				"type": "string"
-			}
-		}
-	},
-	"wikibase-entityid": {
-		"value": {
-			"id": "test id 1"
-		},
-		"mainsnak": {
-			"datavalue": {
-				"value": {
-					"id": "test id 1"
-				},
-				"type": "wikibase-entityid"
-			}
-		}
-	},
-	"time": {
-		"value": {
-			"time": "test time 1"
-		},
-		"mainsnak": {
-			"datavalue": {
-				"value": {
-					"time": "test time 1"
-				},
-				"type": "time"
-			}
-		}
-	},
-	"monolingualtext": {
-		"value": {
-			"text": "test text 1"
-		},
-		"mainsnak": {
-			"datavalue": {
-				"value": {
-					"text": "test text 1"
-				},
-				"type": "monolingualtext"
-			}
-		}
-	},
-	"globecoordinate": {
-		"value": {
-			"latitude": 1.0,
-			"longitude": 2.0
-		},
-		"mainsnak": {
-			"datavalue": {
-				"value": {
-					"latitude": 1.0,
-					"longitude": 2.0
-				},
-				"type": "globecoordinate"
-			}
-		}
-	},
-	"quantity": {
-		"value": {
-			"amount": "test amount",
-			"unit": "test unit"
-		},
-		"mainsnak": {
-			"datavalue": {
-				"value": {
-					"amount": "test amount",
-					"unit": "test unit"
-				},
-				"type": "quantity"
-			}
-		}
-	},
-	"": {}
+    "string": {
+        "value": "test string 1",
+        "mainsnak": {
+            "datavalue": {
+                "value": "test string 1",
+                "type": "string"
+            }
+        }
+    },
+    "wikibase-entityid": {
+        "value": {
+            "id": "test id 1"
+        },
+        "mainsnak": {
+            "datavalue": {
+                "value": {
+                    "id": "test id 1"
+                },
+                "type": "wikibase-entityid"
+            }
+        }
+    },
+    "time": {
+        "value": {
+            "time": "test time 1"
+        },
+        "mainsnak": {
+            "datavalue": {
+                "value": {
+                    "time": "test time 1"
+                },
+                "type": "time"
+            }
+        }
+    },
+    "monolingualtext": {
+        "value": {
+            "text": "test text 1"
+        },
+        "mainsnak": {
+            "datavalue": {
+                "value": {
+                    "text": "test text 1"
+                },
+                "type": "monolingualtext"
+            }
+        }
+    },
+    "globecoordinate": {
+        "value": {
+            "latitude": 1.0,
+            "longitude": 2.0
+        },
+        "mainsnak": {
+            "datavalue": {
+                "value": {
+                    "latitude": 1.0,
+                    "longitude": 2.0
+                },
+                "type": "globecoordinate"
+            }
+        }
+    },
+    "quantity": {
+        "value": {
+            "amount": "test amount",
+            "unit": "test unit"
+        },
+        "mainsnak": {
+            "datavalue": {
+                "value": {
+                    "amount": "test amount",
+                    "unit": "test unit"
+                },
+                "type": "quantity"
+            }
+        }
+    },
+    "": {}
 }

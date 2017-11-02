@@ -22,37 +22,37 @@ import de.hpi.ingestion.textmining.models.ParsedWikipediaEntry
 import org.scalatest.{FlatSpec, Matchers}
 
 class CompanyLinkFilterTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
-	"Company pages" should "be extracted" in {
-		val wikidataEntities = sc.parallelize(TestData.wikidataEntities())
-		val companyPages = CompanyLinkFilter.extractCompanyPages(wikidataEntities)
-		val expectedPages = sc.parallelize(TestData.wikidataCompanyPages())
-		assertRDDEquals(companyPages, expectedPages)
-	}
+    "Company pages" should "be extracted" in {
+        val wikidataEntities = sc.parallelize(TestData.wikidataEntities())
+        val companyPages = CompanyLinkFilter.extractCompanyPages(wikidataEntities)
+        val expectedPages = sc.parallelize(TestData.wikidataCompanyPages())
+        assertRDDEquals(companyPages, expectedPages)
+    }
 
-	"Company aliases" should "be extracted" in {
-		val pages = sc.parallelize(TestData.companyPages())
-		val companyPages = sc.parallelize(TestData.wikidataCompanyPages())
-		val companyAliases = CompanyLinkFilter.extractCompanyAliases(pages, companyPages)
-		val expectedAliases = sc.parallelize(TestData.companyAliases().toList)
-		assertRDDEquals(companyAliases, expectedAliases)
-	}
+    "Company aliases" should "be extracted" in {
+        val pages = sc.parallelize(TestData.companyPages())
+        val companyPages = sc.parallelize(TestData.wikidataCompanyPages())
+        val companyAliases = CompanyLinkFilter.extractCompanyAliases(pages, companyPages)
+        val expectedAliases = sc.parallelize(TestData.companyAliases().toList)
+        assertRDDEquals(companyAliases, expectedAliases)
+    }
 
-	"Wikipedia links" should "be filtered" in {
-		val companyAliases = TestData.companyAliases()
-		val cleanedArticles = TestData.unfilteredCompanyLinksEntries()
-			.map(CompanyLinkFilter.filterCompanyLinks(_, companyAliases))
-		val expectedArticles = TestData.filteredCompanyLinksEntries()
-		cleanedArticles shouldEqual expectedArticles
-	}
+    "Wikipedia links" should "be filtered" in {
+        val companyAliases = TestData.companyAliases()
+        val cleanedArticles = TestData.unfilteredCompanyLinksEntries()
+            .map(CompanyLinkFilter.filterCompanyLinks(_, companyAliases))
+        val expectedArticles = TestData.filteredCompanyLinksEntries()
+        cleanedArticles shouldEqual expectedArticles
+    }
 
-	"Parsed Wikipedia Entries" should "be cleaned" in {
-		val job = new CompanyLinkFilter
-		job.wikidataEntities = sc.parallelize(TestData.wikidataEntities())
-		job.pages = sc.parallelize(TestData.companyPages())
-		job.parsedWikipedia = sc.parallelize(TestData.unfilteredCompanyLinksEntries())
-		job.run(sc)
-		val cleanedArticles = job.cleanedParsedWikipedia
-		val expectedArticles = sc.parallelize(TestData.filteredCompanyLinksEntries())
-		assertRDDEquals(cleanedArticles, expectedArticles)
-	}
+    "Parsed Wikipedia Entries" should "be cleaned" in {
+        val job = new CompanyLinkFilter
+        job.wikidataEntities = sc.parallelize(TestData.wikidataEntities())
+        job.pages = sc.parallelize(TestData.companyPages())
+        job.parsedWikipedia = sc.parallelize(TestData.unfilteredCompanyLinksEntries())
+        job.run(sc)
+        val cleanedArticles = job.cleanedParsedWikipedia
+        val expectedArticles = sc.parallelize(TestData.filteredCompanyLinksEntries())
+        assertRDDEquals(cleanedArticles, expectedArticles)
+    }
 }

@@ -28,69 +28,69 @@ package de.hpi.ingestion.framework
   * @param diffVersionsOpt Option of the Versions to diff in the Version Diff
   */
 case class CommandLineConf(
-	configOpt: Option[String],
-	importConfigOpt: Option[String],
-	commitJsonOpt: Option[String],
-	commentOpt: Option[String],
-	tokenizerOpt: Option[List[String]],
-	toReduced: Boolean,
-	restoreVersionOpt: Option[String],
-	diffVersionsOpt: Option[List[String]]
+    configOpt: Option[String],
+    importConfigOpt: Option[String],
+    commitJsonOpt: Option[String],
+    commentOpt: Option[String],
+    tokenizerOpt: Option[List[String]],
+    toReduced: Boolean,
+    restoreVersionOpt: Option[String],
+    diffVersionsOpt: Option[List[String]]
 ) {
-	/**
-	  * Returns the value of configOpt and causes an error if it's not set.
-	  * @return value of configOpt
-	  */
-	def config: String = configOpt.get
+    /**
+      * Returns the value of configOpt and causes an error if it's not set.
+      * @return value of configOpt
+      */
+    def config: String = configOpt.get
 
-	/**
-	  * Returns the value of importConfigOpt and causes an error if it's not set.
-	  * @return value of importConfigOpt
-	  */
-	def importConfig: String = importConfigOpt.get
+    /**
+      * Returns the value of importConfigOpt and causes an error if it's not set.
+      * @return value of importConfigOpt
+      */
+    def importConfig: String = importConfigOpt.get
 
-	/**
-	  * Returns the value of commitJsonOpt and causes an error if it's not set.
-	  * @return value of commitJsonOpt
-	  */
-	def commitJson: String = commitJsonOpt.get
+    /**
+      * Returns the value of commitJsonOpt and causes an error if it's not set.
+      * @return value of commitJsonOpt
+      */
+    def commitJson: String = commitJsonOpt.get
 
-	/**
-	  * Returns the value of commentOpt and causes an error if it's not set.
-	  * @return value of commentOpt
-	  */
-	def comment: String = commentOpt.get
+    /**
+      * Returns the value of commentOpt and causes an error if it's not set.
+      * @return value of commentOpt
+      */
+    def comment: String = commentOpt.get
 
-	/**
-	  * Returns the value of tokenizerOpt and causes an error if it's not set.
-	  * @return value of tokenizerOpt
-	  */
-	def tokenizer: List[String] = tokenizerOpt.get
+    /**
+      * Returns the value of tokenizerOpt and causes an error if it's not set.
+      * @return value of tokenizerOpt
+      */
+    def tokenizer: List[String] = tokenizerOpt.get
 
-	/**
-	  * Returns the value of restoreVersionOpt and causes an error if it's not set.
-	  * @return value of restoreVersionOpt
-	  */
-	def restoreVersion: String = restoreVersionOpt.get
+    /**
+      * Returns the value of restoreVersionOpt and causes an error if it's not set.
+      * @return value of restoreVersionOpt
+      */
+    def restoreVersion: String = restoreVersionOpt.get
 
-	/**
-	  * Returns the value of diffVersionsOpt and causes an error if it's not set.
-	  * @return value of diffVersionsOpt
-	  */
-	def diffVersions: List[String] = diffVersionsOpt.get
+    /**
+      * Returns the value of diffVersionsOpt and causes an error if it's not set.
+      * @return value of diffVersionsOpt
+      */
+    def diffVersions: List[String] = diffVersionsOpt.get
 }
 
 /**
   * Companion Object of the Command Line Conf.
   */
 object CommandLineConf {
-	/**
-	  * Constructor using the input command line arguments to create a Scallop Conf and transforms it into a
-	  * Command Line Conf.
-	  * @param arguments command line arguments
-	  * @return Command Line Conf containing the options set by the command line arguments
-	  */
-	def apply(arguments: Seq[String]): CommandLineConf = {
-		new CommandLineScallopConf(arguments).toCommandLineConf
-	}
+    /**
+      * Constructor using the input command line arguments to create a Scallop Conf and transforms it into a
+      * Command Line Conf.
+      * @param arguments command line arguments
+      * @return Command Line Conf containing the options set by the command line arguments
+      */
+    def apply(arguments: Seq[String]): CommandLineConf = {
+        new CommandLineScallopConf(arguments).toCommandLineConf
+    }
 }

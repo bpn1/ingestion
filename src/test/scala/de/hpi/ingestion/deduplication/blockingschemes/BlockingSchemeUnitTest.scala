@@ -21,94 +21,94 @@ import de.hpi.ingestion.deduplication.TestData
 import org.scalatest.{FlatSpec, Matchers}
 
 class BlockingSchemeUnitTest extends FlatSpec with Matchers {
-	"SimpleBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.subjects
-		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
-		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.simpleBlockingScheme
-		keys.toSet shouldEqual expected.toSet
-	}
+    "SimpleBlockingScheme" should "generate proper keys" in {
+        val subjects = TestData.subjects
+        val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
+        val keys = subjects.map(blockingScheme.generateKey)
+        val expected = TestData.simpleBlockingScheme
+        keys.toSet shouldEqual expected.toSet
+    }
 
-	it should "generate a default undefined key if there is no name" in {
-		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
-		val subject = Subject(master = null, datasource = null)
-		val key = blockingScheme.generateKey(subject)
-		key shouldEqual List(blockingScheme.undefinedValue)
-	}
+    it should "generate a default undefined key if there is no name" in {
+        val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
+        val subject = Subject(master = null, datasource = null)
+        val key = blockingScheme.generateKey(subject)
+        key shouldEqual List(blockingScheme.undefinedValue)
+    }
 
-	it should "ignore 'The ' at the beginning of the name when generating a key" in {
-		val subjects = TestData.subjectsStartingWithThe
-		val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
-		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.simpleBlockingSchemeWithThe
-		keys.toSet shouldEqual expected.toSet
-	}
+    it should "ignore 'The ' at the beginning of the name when generating a key" in {
+        val subjects = TestData.subjectsStartingWithThe
+        val blockingScheme = SimpleBlockingScheme("Test SimpleBS")
+        val keys = subjects.map(blockingScheme.generateKey)
+        val expected = TestData.simpleBlockingSchemeWithThe
+        keys.toSet shouldEqual expected.toSet
+    }
 
-	"LastLettersBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.subjects :+ Subject(master = null, datasource = null)
-		val blockingScheme = LastLettersBlockingScheme("Test LastLettersBS")
-		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.lastLettersBlockingScheme
-		keys.toSet shouldEqual expected.toSet
-	}
+    "LastLettersBlockingScheme" should "generate proper keys" in {
+        val subjects = TestData.subjects :+ Subject(master = null, datasource = null)
+        val blockingScheme = LastLettersBlockingScheme("Test LastLettersBS")
+        val keys = subjects.map(blockingScheme.generateKey)
+        val expected = TestData.lastLettersBlockingScheme
+        keys.toSet shouldEqual expected.toSet
+    }
 
-	"ListBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.subjects
-		val blockingScheme = ListBlockingScheme("Test ListBS", "geo_city", "gen_income")
-		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.listBlockingScheme
-		keys.toSet shouldEqual expected.toSet
-	}
+    "ListBlockingScheme" should "generate proper keys" in {
+        val subjects = TestData.subjects
+        val blockingScheme = ListBlockingScheme("Test ListBS", "geo_city", "gen_income")
+        val keys = subjects.map(blockingScheme.generateKey)
+        val expected = TestData.listBlockingScheme
+        keys.toSet shouldEqual expected.toSet
+    }
 
-	"MappedListBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.subjects
-		val function: String => String = attribute => attribute.substring(0, Math.min(3, attribute.length))
-		val blockingScheme = MappedListBlockingScheme("Test MapBS", function, "name")
-		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.mapBlockingScheme
-		keys.toSet shouldEqual expected.toSet
-	}
+    "MappedListBlockingScheme" should "generate proper keys" in {
+        val subjects = TestData.subjects
+        val function: String => String = attribute => attribute.substring(0, Math.min(3, attribute.length))
+        val blockingScheme = MappedListBlockingScheme("Test MapBS", function, "name")
+        val keys = subjects.map(blockingScheme.generateKey)
+        val expected = TestData.mapBlockingScheme
+        keys.toSet shouldEqual expected.toSet
+    }
 
-	it should "behave like ListBlockingScheme if no function is given" in {
-		val subjects = TestData.subjects
-		val attribute = "geo_city"
-		val blockingScheme = MappedListBlockingScheme("Test MapBS", identity, attribute)
-		val listBlockingScheme = ListBlockingScheme("Test ListBS", attribute)
-		subjects
-			.map(subject => (blockingScheme.generateKey(subject), listBlockingScheme.generateKey(subject)))
-			.foreach { case (keys, expected) =>
-				keys shouldEqual expected
-			}
-	}
+    it should "behave like ListBlockingScheme if no function is given" in {
+        val subjects = TestData.subjects
+        val attribute = "geo_city"
+        val blockingScheme = MappedListBlockingScheme("Test MapBS", identity, attribute)
+        val listBlockingScheme = ListBlockingScheme("Test ListBS", attribute)
+        subjects
+            .map(subject => (blockingScheme.generateKey(subject), listBlockingScheme.generateKey(subject)))
+            .foreach { case (keys, expected) =>
+                keys shouldEqual expected
+            }
+    }
 
-	"GeoCoordsBlockingScheme" should "generate proper keys" in {
-		val subjects = TestData.subjects
-		val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS")
-		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.geoCoordsBlockingSchemeDefault
-		keys.toSet shouldEqual expected.toSet
-	}
+    "GeoCoordsBlockingScheme" should "generate proper keys" in {
+        val subjects = TestData.subjects
+        val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS")
+        val keys = subjects.map(blockingScheme.generateKey)
+        val expected = TestData.geoCoordsBlockingSchemeDefault
+        keys.toSet shouldEqual expected.toSet
+    }
 
-	it should "let you adjust the number of decimal places" in {
-		val subjects = TestData.subjects
-		val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS", 2)
-		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.geoCoordsBlockingSchemeDecimals
-		keys.toSet shouldEqual expected.toSet
-	}
+    it should "let you adjust the number of decimal places" in {
+        val subjects = TestData.subjects
+        val blockingScheme = GeoCoordsBlockingScheme("Test GeoCoordsBS", 2)
+        val keys = subjects.map(blockingScheme.generateKey)
+        val expected = TestData.geoCoordsBlockingSchemeDecimals
+        keys.toSet shouldEqual expected.toSet
+    }
 
-	"RandomBlockingScheme" should "generate random keys from the UUIDs" in {
-		val subjects = TestData.subjects
-		val blockingScheme = new RandomBlockingScheme
-		val keys = subjects.map(blockingScheme.generateKey)
-		val expected = TestData.randomBlockingScheme
-		keys.toSet shouldEqual expected.toSet
-	}
+    "RandomBlockingScheme" should "generate random keys from the UUIDs" in {
+        val subjects = TestData.subjects
+        val blockingScheme = new RandomBlockingScheme
+        val keys = subjects.map(blockingScheme.generateKey)
+        val expected = TestData.randomBlockingScheme
+        keys.toSet shouldEqual expected.toSet
+    }
 
-	it should "be created with the proper tag" in {
-		val name = "Test Random Scheme"
-		val scheme = RandomBlockingScheme(name)
-		scheme.tag shouldEqual name
-		scheme.isInstanceOf[RandomBlockingScheme] shouldBe true
-	}
+    it should "be created with the proper tag" in {
+        val name = "Test Random Scheme"
+        val scheme = RandomBlockingScheme(name)
+        scheme.tag shouldEqual name
+        scheme.isInstanceOf[RandomBlockingScheme] shouldBe true
+    }
 }

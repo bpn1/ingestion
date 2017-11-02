@@ -21,37 +21,37 @@ import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.datalake.models.Subject
 
 class MasterConnectingTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
-	"Master nodes" should "be connected" in {
-		val job = new MasterConnecting
-		job.subjects = sc.parallelize(TestData.mergedSubjects)
-		job.run(sc)
-		val output = job.connectedMasters
-			.collect
-			.sortBy(_.id)
-			.map(_.relations)
+    "Master nodes" should "be connected" in {
+        val job = new MasterConnecting
+        job.subjects = sc.parallelize(TestData.mergedSubjects)
+        job.run(sc)
+        val output = job.connectedMasters
+            .collect
+            .sortBy(_.id)
+            .map(_.relations)
 
-		val expected = TestData.connectedMasters
-			.sortBy(_.id)
-			.map(_.relations)
+        val expected = TestData.connectedMasters
+            .sortBy(_.id)
+            .map(_.relations)
 
-		output.length shouldEqual expected.length
-		(output, expected).zipped.foreach { case (relations, expectedRelations) =>
-			relations shouldEqual expectedRelations
-		}
-	}
+        output.length shouldEqual expected.length
+        (output, expected).zipped.foreach { case (relations, expectedRelations) =>
+            relations shouldEqual expectedRelations
+        }
+    }
 
-	they should "be merged and connected" in {
-		val job = new MasterConnecting
-		job.subjects = sc.parallelize(TestData.inputSubjects())
-		job.run(sc)
-		val connectedMasters = job.connectedMasters
-			.collect
-			.toList
-			.sortBy(_.id)
-		val expectedMasters = TestData.mergedMasters().sortBy(_.id)
-		connectedMasters.length shouldEqual expectedMasters.length
-		connectedMasters.zip(expectedMasters).foreach { case (connectedMaster, expectedMaster) =>
-			connectedMaster.relations shouldEqual expectedMaster.relations
-		}
-	}
+    they should "be merged and connected" in {
+        val job = new MasterConnecting
+        job.subjects = sc.parallelize(TestData.inputSubjects())
+        job.run(sc)
+        val connectedMasters = job.connectedMasters
+            .collect
+            .toList
+            .sortBy(_.id)
+        val expectedMasters = TestData.mergedMasters().sortBy(_.id)
+        connectedMasters.length shouldEqual expectedMasters.length
+        connectedMasters.zip(expectedMasters).foreach { case (connectedMaster, expectedMaster) =>
+            connectedMaster.relations shouldEqual expectedMaster.relations
+        }
+    }
 }

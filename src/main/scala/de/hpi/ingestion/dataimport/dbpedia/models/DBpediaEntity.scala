@@ -28,28 +28,28 @@ import de.hpi.ingestion.datalake.models.DLImportEntity
   * @param data all other information about the entity
   */
 case class DBpediaEntity(
-	dbpedianame: String,
-	var wikipageid: Option[String] = None,
-	var wikidataid: Option[String] = None,
-	var label: Option[String] = None,
-	var description: Option[String] = None,
-	var instancetype: Option[String] = None,
-	var data: Map[String, List[String]] = Map[String, List[String]]()
+    dbpedianame: String,
+    var wikipageid: Option[String] = None,
+    var wikidataid: Option[String] = None,
+    var label: Option[String] = None,
+    var description: Option[String] = None,
+    var instancetype: Option[String] = None,
+    var data: Map[String, List[String]] = Map[String, List[String]]()
 ) extends DLImportEntity {
-	def get(attribute: String): List[String] = {
-		if(this.fieldNames[DBpediaEntity].contains(attribute)) {
-			val field = this.getClass.getDeclaredField(attribute)
-			field.setAccessible(true)
-			attribute match {
-				case "dbpedianame" => List(this.dbpedianame)
-				case "wikipageid" | "wikidataid" | "label" | "description" | "instancetype" => {
-					val value = field.get(this).asInstanceOf[Option[String]]
-					value.toList
-				}
-				case _ => Nil
-			}
-		} else {
-			data.getOrElse(attribute, Nil)
-		}
-	}
+    def get(attribute: String): List[String] = {
+        if(this.fieldNames[DBpediaEntity].contains(attribute)) {
+            val field = this.getClass.getDeclaredField(attribute)
+            field.setAccessible(true)
+            attribute match {
+                case "dbpedianame" => List(this.dbpedianame)
+                case "wikipageid" | "wikidataid" | "label" | "description" | "instancetype" => {
+                    val value = field.get(this).asInstanceOf[Option[String]]
+                    value.toList
+                }
+                case _ => Nil
+            }
+        } else {
+            data.getOrElse(attribute, Nil)
+        }
+    }
 }

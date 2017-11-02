@@ -28,22 +28,22 @@ import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
   * @tparam B type of the similarity measure
   */
 case class SimilarityMeasureConfig[A, B <: SimilarityMeasure[A]](
-	similarityMeasure: B,
-	weight: Double = 0.0,
-	scale: Int = 1
+    similarityMeasure: B,
+    weight: Double = 0.0,
+    scale: Int = 1
 ) extends WeightedFeatureConfig{
-	override type T = SimilarityMeasureConfig[A, B]
-	override def updateWeight(weight: Double): SimilarityMeasureConfig[A, B] = this.copy(weight = weight)
+    override type T = SimilarityMeasureConfig[A, B]
+    override def updateWeight(weight: Double): SimilarityMeasureConfig[A, B] = this.copy(weight = weight)
 
-	/**
-	  * This method simply compares two strings.
-	  *
-	  * @param leftValue  String to be compared with rightValue.
-	  * @param rightValue String to be compared with leftValue.
-	  * @return The similarity score of the two input strings.
-	  */
-	def compare(leftValue: A, rightValue: A): Double = {
-		val score = similarityMeasure.compare(leftValue, rightValue, scale)
-		score * weight
-	}
+    /**
+      * This method simply compares two strings.
+      *
+      * @param leftValue  String to be compared with rightValue.
+      * @param rightValue String to be compared with leftValue.
+      * @return The similarity score of the two input strings.
+      */
+    def compare(leftValue: A, rightValue: A): Double = {
+        val score = similarityMeasure.compare(leftValue, rightValue, scale)
+        score * weight
+    }
 }

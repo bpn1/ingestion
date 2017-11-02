@@ -24,24 +24,24 @@ import de.hpi.ingestion.textmining.tokenizer.IngestionTokenizer
 import org.scalatest.{FlatSpec, Matchers}
 
 class ArticleTrieSearchTest extends FlatSpec with Matchers with SharedSparkContext {
-	"Found aliases" should "be exactly these aliases" in {
-		val job = new ArticleTrieSearch
-		job.trieStreamFunction = TextTestData.fullTrieStream("/spiegel/triealiases")
-		job.nelArticles = sc.parallelize(TestData.aliasSearchArticles())
-		job.run(sc)
-		job.foundAliases.collect.toSet shouldEqual TestData.foundTrieAliases()
+    "Found aliases" should "be exactly these aliases" in {
+        val job = new ArticleTrieSearch
+        job.trieStreamFunction = TextTestData.fullTrieStream("/spiegel/triealiases")
+        job.nelArticles = sc.parallelize(TestData.aliasSearchArticles())
+        job.run(sc)
+        job.foundAliases.collect.toSet shouldEqual TestData.foundTrieAliases()
 
-		job.nelArticles = sc.parallelize(TestData.realAliasSearchArticles())
-		job.run(sc)
-		job.foundAliases.collect.toSet shouldEqual TestData.realFoundTrieAliases()
-	}
+        job.nelArticles = sc.parallelize(TestData.realAliasSearchArticles())
+        job.run(sc)
+        job.foundAliases.collect.toSet shouldEqual TestData.realFoundTrieAliases()
+    }
 
-	"Enriched articles" should "be exactly these articles" in {
-		val tokenizer = IngestionTokenizer(false, false)
-		val trie = TextTestData.dataTrie(tokenizer, "/spiegel/triealiases")
-		val enrichedArticles = TestData.aliasSearchArticles()
-			.map(ArticleTrieSearch.findAliases(_, tokenizer, trie))
-		val expectedArticles = TestData.foundAliasArticles()
-		enrichedArticles shouldEqual expectedArticles
-	}
+    "Enriched articles" should "be exactly these articles" in {
+        val tokenizer = IngestionTokenizer(false, false)
+        val trie = TextTestData.dataTrie(tokenizer, "/spiegel/triealiases")
+        val enrichedArticles = TestData.aliasSearchArticles()
+            .map(ArticleTrieSearch.findAliases(_, tokenizer, trie))
+        val expectedArticles = TestData.foundAliasArticles()
+        enrichedArticles shouldEqual expectedArticles
+    }
 }

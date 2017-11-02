@@ -29,11 +29,11 @@ import java.util.UUID
   * @param relations tuple of old and new values for every property of every relation
   */
 case class HistoryEntry(
-	id: UUID,
-	name: Option[(List[String], List[String])] = None,
-	master: Option[(List[String], List[String])] = None,
-	aliases: Option[(List[String], List[String])] = None,
-	category: Option[(List[String], List[String])] = None,
-	properties: Map[String, Option[(List[String], List[String])]] = Map(),
-	relations: Map[UUID, Map[String, Option[(List[String], List[String])]]] = Map()
+    id: UUID,
+    name: Option[(List[String], List[String])] = None,
+    master: Option[(List[String], List[String])] = None,
+    aliases: Option[(List[String], List[String])] = None,
+    category: Option[(List[String], List[String])] = None,
+    properties: Map[String, Option[(List[String], List[String])]] = Map(),
+    relations: Map[UUID, Map[String, Option[(List[String], List[String])]]] = Map()
 )

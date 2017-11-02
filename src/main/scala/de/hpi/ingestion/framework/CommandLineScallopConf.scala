@@ -23,57 +23,57 @@ import org.rogach.scallop.exceptions.Help
   * @param arguments command line arguments containing the configuration to be parsed
   */
 class CommandLineScallopConf(arguments: Seq[String]) extends ScallopConf(arguments) {
-	banner("""Usage: spark.sh ... myJar.jar [OPTION]...
-			 |Options:
-			 |""".stripMargin)
-	footer("\nFor more information visit the documentation in the GitHub Wiki:\n" +
-		"https://github.com/bpn1/ingestion/wiki/Pass-Command-Line-Arguments")
-	val config = opt[String](descr = "config file for accessing tables and the deduplication score configs")
-	val importConfig = opt[String](descr = "config file for the normalization")
-	val commitJson = opt[String](short = 'j', descr = "JSON string used for the commit job by the Curation Interface")
-	val comment = opt[String](short = 'b', descr = "comment used by jobs that write one (e.g. Blocking)")
-	val tokenizer = opt[List[String]](descr = "tokenizer used for the TermFrequencyCounter (up to three flags)")
-	validate(tokenizer) {
-		case flagList if flagList.length <= 3 => Right(Unit)
-		case _ => Left("Only up to three tokenizer flags can be provided.")
-	}
-	val toReduced = opt[Boolean](short = 'r', descr = "if set the Link Analysis will write to the reduced column")
-	val restoreVersion = opt[String](short = 'v', descr = "Version to which the Subjects are restored")
-	val diffVersions = opt[List[String]](descr = "Versions used in the VersionDiff job (exactly 2)")
-	validate(diffVersions) {
-		case versionList if versionList.length == 2 => Right(Unit)
-		case _ => Left("Exactly two versions have to be provided.")
-	}
-	verify()
+    banner("""Usage: spark.sh ... myJar.jar [OPTION]...
+             |Options:
+             |""".stripMargin)
+    footer("\nFor more information visit the documentation in the GitHub Wiki:\n" +
+        "https://github.com/bpn1/ingestion/wiki/Pass-Command-Line-Arguments")
+    val config = opt[String](descr = "config file for accessing tables and the deduplication score configs")
+    val importConfig = opt[String](descr = "config file for the normalization")
+    val commitJson = opt[String](short = 'j', descr = "JSON string used for the commit job by the Curation Interface")
+    val comment = opt[String](short = 'b', descr = "comment used by jobs that write one (e.g. Blocking)")
+    val tokenizer = opt[List[String]](descr = "tokenizer used for the TermFrequencyCounter (up to three flags)")
+    validate(tokenizer) {
+        case flagList if flagList.length <= 3 => Right(Unit)
+        case _ => Left("Only up to three tokenizer flags can be provided.")
+    }
+    val toReduced = opt[Boolean](short = 'r', descr = "if set the Link Analysis will write to the reduced column")
+    val restoreVersion = opt[String](short = 'v', descr = "Version to which the Subjects are restored")
+    val diffVersions = opt[List[String]](descr = "Versions used in the VersionDiff job (exactly 2)")
+    validate(diffVersions) {
+        case versionList if versionList.length == 2 => Right(Unit)
+        case _ => Left("Exactly two versions have to be provided.")
+    }
+    verify()
 
-	/**
-	  * Called when an error parsing the arguments occurs. This can only happen when the tokenizer and the diff versions
-	  * are validated or the args contain wrong flags. If the args contain --help the help is printed. Otherwise an
-	  * IllegalArgumentException is thrown.
-	  * @param e Exception thrown by scallop
-	  * @throws java.lang.IllegalArgumentException contains the message of the input exception
-	  */
-	@throws(classOf[IllegalArgumentException])
-	override def onError(e: Throwable): Unit = {
-		e match {
-			case Help("") => printHelp()
-			case _ => throw new IllegalArgumentException(e.getMessage)
-		}
-	}
+    /**
+      * Called when an error parsing the arguments occurs. This can only happen when the tokenizer and the diff versions
+      * are validated or the args contain wrong flags. If the args contain --help the help is printed. Otherwise an
+      * IllegalArgumentException is thrown.
+      * @param e Exception thrown by scallop
+      * @throws java.lang.IllegalArgumentException contains the message of the input exception
+      */
+    @throws(classOf[IllegalArgumentException])
+    override def onError(e: Throwable): Unit = {
+        e match {
+            case Help("") => printHelp()
+            case _ => throw new IllegalArgumentException(e.getMessage)
+        }
+    }
 
-	/**
-	  * Transforms this Scallop Conf to a serializable Command Line Conf.
-	  * @return a Command Line Conf containing the same data of this Scallop Conf
-	  */
-	def toCommandLineConf: CommandLineConf = {
-		CommandLineConf(
-			config.toOption,
-			importConfig.toOption,
-			commitJson.toOption,
-			comment.toOption,
-			tokenizer.toOption,
-			toReduced(),
-			restoreVersion.toOption,
-			diffVersions.toOption)
-	}
+    /**
+      * Transforms this Scallop Conf to a serializable Command Line Conf.
+      * @return a Command Line Conf containing the same data of this Scallop Conf
+      */
+    def toCommandLineConf: CommandLineConf = {
+        CommandLineConf(
+            config.toOption,
+            importConfig.toOption,
+            commitJson.toOption,
+            comment.toOption,
+            tokenizer.toOption,
+            toReduced(),
+            restoreVersion.toOption,
+            diffVersions.toOption)
+    }
 }

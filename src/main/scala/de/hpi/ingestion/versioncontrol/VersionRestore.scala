@@ -30,65 +30,65 @@ import org.apache.spark.rdd.RDD
   * that has a timestamp BEFORE the argument timestamp OR is equal to the argument TimeUUID
   */
 class VersionRestore extends SparkJob {
-	import VersionRestore._
-	appName = "VersionRestore"
-	val keyspace = "datalake"
-	val tablename = "subject"
-	val outputTablename = "subject_restored"
+    import VersionRestore._
+    appName = "VersionRestore"
+    val keyspace = "datalake"
+    val tablename = "subject"
+    val outputTablename = "subject_restored"
 
-	var subjects: RDD[Subject] = _
-	var restoredSubjects: RDD[Subject] = _
+    var subjects: RDD[Subject] = _
+    var restoredSubjects: RDD[Subject] = _
 
-	// $COVERAGE-OFF$
-	/**
-	  * Loads subjects from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  * @return List of RDDs containing the data processed in the job.
-	  */
-	override def load(sc: SparkContext): Unit = {
-		subjects = sc.cassandraTable[Subject](keyspace, tablename)
-	}
+    // $COVERAGE-OFF$
+    /**
+      * Loads subjects from the Cassandra.
+      * @param sc Spark Context used to load the RDDs
+      * @return List of RDDs containing the data processed in the job.
+      */
+    override def load(sc: SparkContext): Unit = {
+        subjects = sc.cassandraTable[Subject](keyspace, tablename)
+    }
 
-	/**
-	  * Writes the restored subjects to a Cassandra table
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  */
-	override def save(sc: SparkContext): Unit = {
-		restoredSubjects.saveToCassandra(keyspace, outputTablename)
-	}
-	// $COVERAGE-ON$
+    /**
+      * Writes the restored subjects to a Cassandra table
+      * @param sc Spark Context used to connect to the Cassandra or the HDFS
+      */
+    override def save(sc: SparkContext): Unit = {
+        restoredSubjects.saveToCassandra(keyspace, outputTablename)
+    }
+    // $COVERAGE-ON$
 
-	/**
-	  * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  * @return List of RDDs containing the output data
-	  */
-	override def run(sc: SparkContext): Unit = {
-		val restoreVersion = UUID.fromString(conf.restoreVersion)
-		val version = Version(appName, List("history"), sc, false, Option(outputTablename))
-		restoredSubjects = subjects.map(restoreSubjects(_, restoreVersion, version))
-	}
+    /**
+      * Creates a diff for each subject containing the deletions and additions of every field between the two versions.
+      * @param sc Spark Context used to e.g. broadcast variables
+      * @return List of RDDs containing the output data
+      */
+    override def run(sc: SparkContext): Unit = {
+        val restoreVersion = UUID.fromString(conf.restoreVersion)
+        val version = Version(appName, List("history"), sc, false, Option(outputTablename))
+        restoredSubjects = subjects.map(restoreSubjects(_, restoreVersion, version))
+    }
 
-	/**
-	  * Asserts that two versions are given as program arguments.
-	  * @return true if there are at least two arguments provided
-	  */
-	override def assertConditions(): Boolean = conf.restoreVersionOpt.isDefined
+    /**
+      * Asserts that two versions are given as program arguments.
+      * @return true if there are at least two arguments provided
+      */
+    override def assertConditions(): Boolean = conf.restoreVersionOpt.isDefined
 }
 
 object VersionRestore {
-	/**
-	  * Restores all subjects to the data in the specified Version
-	  * @param version TimeUUID of the version that will be reverted to
-	  * @return Modified subject with restored data
-	  */
-	def restoreSubjects(
-		subject: Subject,
-		version: UUID,
-		templateVersion: Version
-	): Subject = {
-		val sm = new SubjectManager(subject, templateVersion)
-		sm.restoreVersion(version)
-		subject
-	}
+    /**
+      * Restores all subjects to the data in the specified Version
+      * @param version TimeUUID of the version that will be reverted to
+      * @return Modified subject with restored data
+      */
+    def restoreSubjects(
+        subject: Subject,
+        version: UUID,
+        templateVersion: Version
+    ): Subject = {
+        val sm = new SubjectManager(subject, templateVersion)
+        sm.restoreVersion(version)
+        subject
+    }
 }

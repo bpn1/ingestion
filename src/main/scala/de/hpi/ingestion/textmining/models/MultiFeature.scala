@@ -26,8 +26,8 @@ package de.hpi.ingestion.textmining.models
   *                        (Double.PositiveInfinity for the smallest value)
   */
 case class MultiFeature(
-	value: Double,
-	var rank: Int = 1,
-	var delta_top: Double = Double.PositiveInfinity,		// NaN and negative values cannot be used to train the
-	var delta_successor: Double = Double.PositiveInfinity	// Naive Bayes model
+    value: Double,
+    var rank: Int = 1,
+    var delta_top: Double = Double.PositiveInfinity,		// NaN and negative values cannot be used to train the
+    var delta_successor: Double = Double.PositiveInfinity	// Naive Bayes model
 )

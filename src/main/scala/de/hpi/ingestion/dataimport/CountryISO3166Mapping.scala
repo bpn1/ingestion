@@ -23,14 +23,14 @@ import java.util.Locale
   * https://www.iso.org/glossary-for-iso-3166.html
   */
 object CountryISO3166Mapping {
-	val mapping: Map[String, String] = this.initMap
+    val mapping: Map[String, String] = this.initMap
 
-	def initMap: Map[String, String] = {
-		val locales = Locale.getAvailableLocales
-		val german = new Locale("de", "DE")
-		locales
-			.filter(_.getDisplayCountry(german).nonEmpty)
-			.map(locale => locale.getDisplayCountry(german) -> locale.getCountry)
-			.toMap
-	}
+    def initMap: Map[String, String] = {
+        val locales = Locale.getAvailableLocales
+        val german = new Locale("de", "DE")
+        locales
+            .filter(_.getDisplayCountry(german).nonEmpty)
+            .map(locale => locale.getDisplayCountry(german) -> locale.getCountry)
+            .toMap
+    }
 }

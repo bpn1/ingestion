@@ -34,32 +34,32 @@ import org.apache.spark.ml.linalg.{DenseVector => DenseVectorDF}
   * @param correct      whether or not this alias actually points to the entity (only known for training)
   */
 case class FeatureEntry(
-	article: String,
-	offset: Int,
-	alias: String,
-	entity: String,
-	link_score: Double,
-	entity_score: MultiFeature,
-	cosine_sim: MultiFeature,
-	correct: Boolean = false
+    article: String,
+    offset: Int,
+    alias: String,
+    entity: String,
+    link_score: Double,
+    entity_score: MultiFeature,
+    cosine_sim: MultiFeature,
+    correct: Boolean = false
 ) {
-	/**
-	  * Returns a Labeled Point containing the data of this entries features and if the entry is correct.
-	  *
-	  * @return Labeled Point containing the features and the label
-	  */
-	def labeledPoint(): LabeledPoint = {
-		val features = new DenseVector(Array(
-			link_score,
-			entity_score.value, entity_score.rank, entity_score.delta_top, entity_score.delta_successor,
-			cosine_sim.value, cosine_sim.rank, cosine_sim.delta_top, cosine_sim.delta_successor))
-		val label = if(correct) 1.0 else 0.0
-		LabeledPoint(label, features)
-	}
+    /**
+      * Returns a Labeled Point containing the data of this entries features and if the entry is correct.
+      *
+      * @return Labeled Point containing the features and the label
+      */
+    def labeledPoint(): LabeledPoint = {
+        val features = new DenseVector(Array(
+            link_score,
+            entity_score.value, entity_score.rank, entity_score.delta_top, entity_score.delta_successor,
+            cosine_sim.value, cosine_sim.rank, cosine_sim.delta_top, cosine_sim.delta_successor))
+        val label = if(correct) 1.0 else 0.0
+        LabeledPoint(label, features)
+    }
 
-	def labeledPointDF(): LabeledPointDF = {
-		val point = this.labeledPoint()
-		val vector = new DenseVectorDF(point.features.toArray)
-		LabeledPointDF(point.label, vector)
-	}
+    def labeledPointDF(): LabeledPointDF = {
+        val point = this.labeledPoint()
+        val vector = new DenseVectorDF(point.features.toArray)
+        LabeledPointDF(point.label, vector)
+    }
 }

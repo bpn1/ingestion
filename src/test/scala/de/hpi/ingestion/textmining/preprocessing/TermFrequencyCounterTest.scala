@@ -23,107 +23,107 @@ import de.hpi.ingestion.textmining.tokenizer.{CleanCoreNLPTokenizer, IngestionTo
 import org.scalatest.{FlatSpec, Matchers}
 
 class TermFrequencyCounterTest extends FlatSpec with SharedSparkContext with Matchers {
-	"Term frequencies" should "not be empty" in {
-		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
-		val pagesTermFrequencies = articles
-			.map(TermFrequencyCounter.extractBagOfWords(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
-		pagesTermFrequencies should not be empty
-		pagesTermFrequencies
-			.map(_.getCounts())
-			.collect
-			.foreach(bag => bag should not be empty)
-	}
+    "Term frequencies" should "not be empty" in {
+        val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+        val pagesTermFrequencies = articles
+            .map(TermFrequencyCounter.extractBagOfWords(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
+        pagesTermFrequencies should not be empty
+        pagesTermFrequencies
+            .map(_.getCounts())
+            .collect
+            .foreach(bag => bag should not be empty)
+    }
 
-	they should "be exactly these term frequencies" in {
-		val expectedTermFrequencies = TestData.termFrequenciesSet()
-		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
-			.filter(article => expectedTermFrequencies.exists(_._1 == article.title))
-		val tfSet = articles
-			.map(TermFrequencyCounter.extractBagOfWords(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
-			.collect
-			.toSet
-		tfSet shouldEqual expectedTermFrequencies.map(_._2)
-	}
+    they should "be exactly these term frequencies" in {
+        val expectedTermFrequencies = TestData.termFrequenciesSet()
+        val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+            .filter(article => expectedTermFrequencies.exists(_._1 == article.title))
+        val tfSet = articles
+            .map(TermFrequencyCounter.extractBagOfWords(_, IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)))
+            .collect
+            .toSet
+        tfSet shouldEqual expectedTermFrequencies.map(_._2)
+    }
 
-	"Wikipedia articles with contexts" should "be exactly these wikipedia articles" in {
-		val expectedArticles = TestData.articlesWithContextSet()
-		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
-			.filter(article => expectedArticles.exists(_.title == article.title))
-			.map(TermFrequencyCounter.extractArticleContext(_, tokenizer))
-			.collect
-			.toSet
-		articles shouldEqual expectedArticles
-	}
+    "Wikipedia articles with contexts" should "be exactly these wikipedia articles" in {
+        val expectedArticles = TestData.articlesWithContextSet()
+        val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+        val articles = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+            .filter(article => expectedArticles.exists(_.title == article.title))
+            .map(TermFrequencyCounter.extractArticleContext(_, tokenizer))
+            .collect
+            .toSet
+        articles shouldEqual expectedArticles
+    }
 
-	"Link contexts" should "be exactly these bag of words" in {
-		val job = new TermFrequencyCounter
-		val contextSize = job.settings("contextSize").toInt
-		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val linkContexts = TestData.parsedWikipediaWithTextsSet()
-			.map(TermFrequencyCounter.extractLinkContexts(_, tokenizer, contextSize))
-			.flatMap(_.linkswithcontext)
-		val expectedContexts = TestData.linksWithContextsSet()
-		linkContexts shouldEqual expectedContexts
-	}
+    "Link contexts" should "be exactly these bag of words" in {
+        val job = new TermFrequencyCounter
+        val contextSize = job.settings("contextSize").toInt
+        val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+        val linkContexts = TestData.parsedWikipediaWithTextsSet()
+            .map(TermFrequencyCounter.extractLinkContexts(_, tokenizer, contextSize))
+            .flatMap(_.linkswithcontext)
+        val expectedContexts = TestData.linksWithContextsSet()
+        linkContexts shouldEqual expectedContexts
+    }
 
-	they should "be extracted for both text and extendedlinks" in {
-		val job = new TermFrequencyCounter
-		val contextSize = job.settings("contextSize").toInt
-		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val linkContexts = TestData.parsedWikipediaExtendedLinksSet()
-			.map(TermFrequencyCounter.extractLinkContexts(_, tokenizer, contextSize))
-			.flatMap(_.linkswithcontext)
-		val expectedContexts = TestData.linksWithContextsSet()
-		linkContexts shouldEqual expectedContexts
-	}
+    they should "be extracted for both text and extendedlinks" in {
+        val job = new TermFrequencyCounter
+        val contextSize = job.settings("contextSize").toInt
+        val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+        val linkContexts = TestData.parsedWikipediaExtendedLinksSet()
+            .map(TermFrequencyCounter.extractLinkContexts(_, tokenizer, contextSize))
+            .flatMap(_.linkswithcontext)
+        val expectedContexts = TestData.linksWithContextsSet()
+        linkContexts shouldEqual expectedContexts
+    }
 
-	"Articles with link context" should "contain exactly these link contexts" in {
-		val job = new TermFrequencyCounter
-		val contextSize = job.settings("contextSize").toInt
-		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val expectedLinks = TestData.linksWithContextsSet()
-		val enrichedLinks = TestData.parsedWikipediaWithTextsSet()
-			.map(TermFrequencyCounter.extractLinkContexts(_, tokenizer, contextSize))
-			.flatMap(_.linkswithcontext)
-		enrichedLinks shouldEqual expectedLinks
-	}
+    "Articles with link context" should "contain exactly these link contexts" in {
+        val job = new TermFrequencyCounter
+        val contextSize = job.settings("contextSize").toInt
+        val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+        val expectedLinks = TestData.linksWithContextsSet()
+        val enrichedLinks = TestData.parsedWikipediaWithTextsSet()
+            .map(TermFrequencyCounter.extractLinkContexts(_, tokenizer, contextSize))
+            .flatMap(_.linkswithcontext)
+        enrichedLinks shouldEqual expectedLinks
+    }
 
-	they should "be exactly these articles" in {
-		val job = new TermFrequencyCounter
-		val contextSize = job.settings("contextSize").toInt
-		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val enrichedLinkArticles = TestData.parsedWikipediaWithTextsSet()
-			.map(TermFrequencyCounter.extractLinkContexts(_, tokenizer, contextSize))
-		val expectedArticles = TestData.articlesWithLinkContextsSet()
-		enrichedLinkArticles shouldEqual expectedArticles
-	}
+    they should "be exactly these articles" in {
+        val job = new TermFrequencyCounter
+        val contextSize = job.settings("contextSize").toInt
+        val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+        val enrichedLinkArticles = TestData.parsedWikipediaWithTextsSet()
+            .map(TermFrequencyCounter.extractLinkContexts(_, tokenizer, contextSize))
+        val expectedArticles = TestData.articlesWithLinkContextsSet()
+        enrichedLinkArticles shouldEqual expectedArticles
+    }
 
-	"Articles without any context" should "be fully enriched with article and link contexts" in {
-		val job = new TermFrequencyCounter
-		job.parsedWikipedia = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
-		job.conf = CommandLineConf(Seq("--tokenizer", "CleanCoreNLPTokenizer", "true", "true"))
-		job.run(sc)
-		val enrichedArticles = job
-			.parsedWikipediaWithTF
-			.collect
-			.toSet
-		val expectedArticles = TestData.articlesWithCompleteContexts()
-		enrichedArticles shouldEqual expectedArticles
-	}
+    "Articles without any context" should "be fully enriched with article and link contexts" in {
+        val job = new TermFrequencyCounter
+        job.parsedWikipedia = sc.parallelize(TestData.parsedWikipediaWithTextsSet().toList)
+        job.conf = CommandLineConf(Seq("--tokenizer", "CleanCoreNLPTokenizer", "true", "true"))
+        job.run(sc)
+        val enrichedArticles = job
+            .parsedWikipediaWithTF
+            .collect
+            .toSet
+        val expectedArticles = TestData.articlesWithCompleteContexts()
+        enrichedArticles shouldEqual expectedArticles
+    }
 
-	"Extracted link contexts" should "be exactly these contexts" in {
-		val job = new TermFrequencyCounter
-		val contextSize = job.settings("contextSize").toInt
-		val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
-		val extractedLinks = TestData.linkContextExtractionData().map { article =>
-			val tokens = tokenizer.onlyTokenizeWithOffset(article.getText())
-			article.textlinks.map { link =>
-				val context = TermFrequencyCounter.extractContext(tokens, link, tokenizer, contextSize).getCounts()
-				link.copy(context = context)
-			}
-		}
-		val expectedLinks = TestData.linkContextExtractionData().map(_.linkswithcontext)
-		extractedLinks shouldEqual expectedLinks
-	}
+    "Extracted link contexts" should "be exactly these contexts" in {
+        val job = new TermFrequencyCounter
+        val contextSize = job.settings("contextSize").toInt
+        val tokenizer = IngestionTokenizer(new CleanCoreNLPTokenizer, true, true)
+        val extractedLinks = TestData.linkContextExtractionData().map { article =>
+            val tokens = tokenizer.onlyTokenizeWithOffset(article.getText())
+            article.textlinks.map { link =>
+                val context = TermFrequencyCounter.extractContext(tokens, link, tokenizer, contextSize).getCounts()
+                link.copy(context = context)
+            }
+        }
+        val expectedLinks = TestData.linkContextExtractionData().map(_.linkswithcontext)
+        extractedLinks shouldEqual expectedLinks
+    }
 }

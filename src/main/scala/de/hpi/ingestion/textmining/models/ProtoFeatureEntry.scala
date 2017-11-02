@@ -26,20 +26,20 @@ package de.hpi.ingestion.textmining.models
   * @param pageScore   score for this alias pointing to the specific page this object will be keyed by
   */
 case class ProtoFeatureEntry(
-	link: Link,
-	linkContext: Map[String, Double],
-	linkScore: Double,
-	pageScore: MultiFeature
+    link: Link,
+    linkContext: Map[String, Double],
+    linkScore: Double,
+    pageScore: MultiFeature
 ) {
-	/**
-	  * Transforms this entry into a Feature entry by filling in the missing values.
-	  *
-	  * @param page      page this entry might link to
-	  * @param cosineSim cosine similarity of this entries link context and the pages article context
-	  * @return Feature Entry used to train a classifier
-	  */
-	def toFeatureEntry(page: String, cosineSim: MultiFeature): FeatureEntry = {
-		FeatureEntry(link.article.getOrElse("***Unknown article***"), link.offset.getOrElse(-1), link.alias, page,
-			linkScore, pageScore, cosineSim, link.page == page)
-	}
+    /**
+      * Transforms this entry into a Feature entry by filling in the missing values.
+      *
+      * @param page      page this entry might link to
+      * @param cosineSim cosine similarity of this entries link context and the pages article context
+      * @return Feature Entry used to train a classifier
+      */
+    def toFeatureEntry(page: String, cosineSim: MultiFeature): FeatureEntry = {
+        FeatureEntry(link.article.getOrElse("***Unknown article***"), link.offset.getOrElse(-1), link.alias, page,
+            linkScore, pageScore, cosineSim, link.page == page)
+    }
 }

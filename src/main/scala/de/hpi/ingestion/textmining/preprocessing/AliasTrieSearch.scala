@@ -38,137 +38,137 @@ import scala.collection.mutable.ListBuffer
   * --conf "spark.executor.extraJavaOptions=-XX:ThreadStackSize=1000000"
   */
 class AliasTrieSearch extends SparkJob {
-	import AliasTrieSearch._
-	appName = "Alias Trie Search"
-	configFile = "textmining.xml"
-	sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
+    import AliasTrieSearch._
+    appName = "Alias Trie Search"
+    configFile = "textmining.xml"
+    sparkOptions("spark.kryo.registrator") = "de.hpi.ingestion.textmining.kryo.TrieKryoRegistrator"
 
-	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
-	var parsedWikipediaWithAliases: RDD[ParsedWikipediaEntry] = _
+    var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+    var parsedWikipediaWithAliases: RDD[ParsedWikipediaEntry] = _
 
-	// $COVERAGE-OFF$
-	var trieStreamFunction: String => InputStream = hdfsFileStream
-	/**
-	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  */
-	override def load(sc: SparkContext): Unit = {
-		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-	}
+    // $COVERAGE-OFF$
+    var trieStreamFunction: String => InputStream = hdfsFileStream
+    /**
+      * Loads Parsed Wikipedia entries from the Cassandra.
+      * @param sc Spark Context used to load the RDDs
+      */
+    override def load(sc: SparkContext): Unit = {
+        parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+    }
 
-	/**
-	  * Saves Parsed Wikipedia entries with the found aliases to the Cassandra.
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  */
-	override def save(sc: SparkContext): Unit = {
-		parsedWikipediaWithAliases.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
-	}
-	// $COVERAGE-ON$
+    /**
+      * Saves Parsed Wikipedia entries with the found aliases to the Cassandra.
+      * @param sc Spark Context used to connect to the Cassandra or the HDFS
+      */
+    override def save(sc: SparkContext): Unit = {
+        parsedWikipediaWithAliases.saveToCassandra(settings("keyspace"), settings("parsedWikiTable"))
+    }
+    // $COVERAGE-ON$
 
-	/**
-	  * Uses a pre-built Trie to find aliases in the text of articles and writes them into the foundaliases field.
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  */
-	override def run(sc: SparkContext): Unit = {
-		val tokenizer = IngestionTokenizer(false, false)
-		parsedWikipediaWithAliases = parsedWikipedia.mapPartitions({ partition =>
-			val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
-			partition.map(matchEntry(_, trie, tokenizer))
-		}, true)
-	}
+    /**
+      * Uses a pre-built Trie to find aliases in the text of articles and writes them into the foundaliases field.
+      * @param sc Spark Context used to e.g. broadcast variables
+      */
+    override def run(sc: SparkContext): Unit = {
+        val tokenizer = IngestionTokenizer(false, false)
+        parsedWikipediaWithAliases = parsedWikipedia.mapPartitions({ partition =>
+            val trie = deserializeTrie(trieStreamFunction(settings("trieFile")))
+            partition.map(matchEntry(_, trie, tokenizer))
+        }, true)
+    }
 }
 
 object AliasTrieSearch {
-	// $COVERAGE-OFF$
-	/**
-	  * Opens a HDFS file stream pointing to the trie binary.
-	  *
-	  * @return Input Stream pointing to the file in the HDFS
-	  */
-	def hdfsFileStream(file: String): InputStream = {
-		val hadoopConf = new Configuration()
-		val fs = FileSystem.get(hadoopConf)
-		fs.open(new Path(file))
-	}
-	// $COVERAGE-ON$
+    // $COVERAGE-OFF$
+    /**
+      * Opens a HDFS file stream pointing to the trie binary.
+      *
+      * @return Input Stream pointing to the file in the HDFS
+      */
+    def hdfsFileStream(file: String): InputStream = {
+        val hadoopConf = new Configuration()
+        val fs = FileSystem.get(hadoopConf)
+        fs.open(new Path(file))
+    }
+    // $COVERAGE-ON$
 
-	/**
-	  * Deserializes Trie binary into a TrieNode.
-	  *
-	  * @param trieStream Input Stream pointing to the Trie binary data
-	  * @return deserialized Trie
-	  */
-	def deserializeTrie(trieStream: InputStream): TrieNode = {
-		val kryo = new Kryo()
-		TrieKryoRegistrator.register(kryo)
-		val inputStream = new Input(trieStream)
-		val trie = kryo.readObject(inputStream, classOf[TrieNode])
-		inputStream.close()
-		trie
-	}
+    /**
+      * Deserializes Trie binary into a TrieNode.
+      *
+      * @param trieStream Input Stream pointing to the Trie binary data
+      * @return deserialized Trie
+      */
+    def deserializeTrie(trieStream: InputStream): TrieNode = {
+        val kryo = new Kryo()
+        TrieKryoRegistrator.register(kryo)
+        val inputStream = new Input(trieStream)
+        val trie = kryo.readObject(inputStream, classOf[TrieNode])
+        inputStream.close()
+        trie
+    }
 
-	/**
-	  * Finds all occurrences of aliases in the text of a Wikipedia entry. All found aliases are saved in the
-	  * foundalias column and the longest match of each alias is saved with its offset and context in the triealiases
-	  * column. These triealiases are only those which are not an extended link.
-	  *
-	  * @param entry     parsed Wikipedia entry to use
-	  * @param trie      Trie containing the aliases we look for
-	  * @param tokenizer Tokenizer used to tokenize the text of the entry
-	  * @return entry containing list of found aliases
-	  */
-	def matchEntry(
-		entry: ParsedWikipediaEntry,
-		trie: TrieNode,
-		tokenizer: IngestionTokenizer
-	): ParsedWikipediaEntry = {
-		val trieAliasArticle = TrieAliasArticle(entry.title, text = entry.text)
-		val trieAliases = ArticleTrieSearch
-			.findAliases(trieAliasArticle, tokenizer, trie)
-			.triealiases
-			.filterNot { alias =>
-				val isLink = entry.textlinks.exists(_.offset == alias.offset)
-				val isExLink = entry.extendedlinks().exists(_.offset == alias.offset)
-				val isStopword = tokenizer.stopwords.contains(alias.alias)
-				val isSymbol = Set(".", "!", "?", ",", ";", ":", "(", ")", "*", "#", "+").contains(alias.alias)
-				isLink || isExLink || isStopword || isSymbol
-			}
-		val resultList = ListBuffer[List[OffsetToken]]()
-		var contextAliases = List[TrieAlias]()
-		val tokens = tokenizer.processWithOffsets(entry.getText())
-		for(i <- tokens.indices) {
-			val testTokens = tokens.slice(i, tokens.length)
-			val aliasMatches = trie.matchTokens(testTokens.map(_.token))
-			val offsetMatches = aliasMatches.map(textTokens => testTokens.take(textTokens.length))
-			resultList ++= offsetMatches
-			offsetMatches.sortBy(_.length).lastOption.foreach { longestMatch =>
-				val offset = longestMatch.headOption.map(_.beginOffset)
-				offset.foreach { begin =>
-					val alias = entry.getText().substring(begin, longestMatch.last.endOffset)
-					contextAliases :+= TrieAlias(alias, offset)
-				}
-			}
-		}
-		val foundAliases = resultList
-			.filter(_.nonEmpty)
-			.map { offsetTokens =>
-				val begin = offsetTokens.headOption.map(_.beginOffset)
-				val end = offsetTokens.lastOption.map(_.endOffset)
-				(begin, end)
-			}.collect {
-			case (begin, end) if begin.isDefined && end.isDefined =>
-				entry.getText().substring(begin.get, end.get)
-		}.toList
-		entry.copy(foundaliases = cleanFoundAliases(foundAliases), triealiases = trieAliases)
-	}
+    /**
+      * Finds all occurrences of aliases in the text of a Wikipedia entry. All found aliases are saved in the
+      * foundalias column and the longest match of each alias is saved with its offset and context in the triealiases
+      * column. These triealiases are only those which are not an extended link.
+      *
+      * @param entry     parsed Wikipedia entry to use
+      * @param trie      Trie containing the aliases we look for
+      * @param tokenizer Tokenizer used to tokenize the text of the entry
+      * @return entry containing list of found aliases
+      */
+    def matchEntry(
+        entry: ParsedWikipediaEntry,
+        trie: TrieNode,
+        tokenizer: IngestionTokenizer
+    ): ParsedWikipediaEntry = {
+        val trieAliasArticle = TrieAliasArticle(entry.title, text = entry.text)
+        val trieAliases = ArticleTrieSearch
+            .findAliases(trieAliasArticle, tokenizer, trie)
+            .triealiases
+            .filterNot { alias =>
+                val isLink = entry.textlinks.exists(_.offset == alias.offset)
+                val isExLink = entry.extendedlinks().exists(_.offset == alias.offset)
+                val isStopword = tokenizer.stopwords.contains(alias.alias)
+                val isSymbol = Set(".", "!", "?", ",", ";", ":", "(", ")", "*", "#", "+").contains(alias.alias)
+                isLink || isExLink || isStopword || isSymbol
+            }
+        val resultList = ListBuffer[List[OffsetToken]]()
+        var contextAliases = List[TrieAlias]()
+        val tokens = tokenizer.processWithOffsets(entry.getText())
+        for(i <- tokens.indices) {
+            val testTokens = tokens.slice(i, tokens.length)
+            val aliasMatches = trie.matchTokens(testTokens.map(_.token))
+            val offsetMatches = aliasMatches.map(textTokens => testTokens.take(textTokens.length))
+            resultList ++= offsetMatches
+            offsetMatches.sortBy(_.length).lastOption.foreach { longestMatch =>
+                val offset = longestMatch.headOption.map(_.beginOffset)
+                offset.foreach { begin =>
+                    val alias = entry.getText().substring(begin, longestMatch.last.endOffset)
+                    contextAliases :+= TrieAlias(alias, offset)
+                }
+            }
+        }
+        val foundAliases = resultList
+            .filter(_.nonEmpty)
+            .map { offsetTokens =>
+                val begin = offsetTokens.headOption.map(_.beginOffset)
+                val end = offsetTokens.lastOption.map(_.endOffset)
+                (begin, end)
+            }.collect {
+            case (begin, end) if begin.isDefined && end.isDefined =>
+                entry.getText().substring(begin.get, end.get)
+        }.toList
+        entry.copy(foundaliases = cleanFoundAliases(foundAliases), triealiases = trieAliases)
+    }
 
-	/**
-	  * Removes empty aliases from the given list of aliases.
-	  *
-	  * @param aliases List of aliases found in an article
-	  * @return cleaned List of aliases
-	  */
-	def cleanFoundAliases(aliases: List[String]): List[String] = {
-		aliases.filter(_.nonEmpty)
-	}
+    /**
+      * Removes empty aliases from the given list of aliases.
+      *
+      * @param aliases List of aliases found in an article
+      * @return cleaned List of aliases
+      */
+    def cleanFoundAliases(aliases: List[String]): List[String] = {
+        aliases.filter(_.nonEmpty)
+    }
 }

@@ -21,111 +21,111 @@ import java.io.{ByteArrayOutputStream, EOFException}
 import org.scalatest.{FlatSpec, Matchers}
 
 class CommandLineScallopConfTest extends FlatSpec with Matchers {
-	"Options" should "be set by word flags" in {
-		val args = Array(
-			"--comment", "this_is_a_comment",
-			"--commit-json", "\"{abcde}\"",
-			"--config", "test.xml",
-			"--diff-versions", "version1", "version2",
-			"--import-config", "normalization.xml",
-			"--restore-version", "version1",
-			"--to-reduced",
-			"--tokenizer", "flag1", "flag2", "flag3")
-		val conf = new CommandLineScallopConf(args)
-		conf.comment() shouldEqual "this_is_a_comment"
-		conf.commitJson() shouldEqual "\"{abcde}\""
-		conf.config() shouldEqual "test.xml"
-		conf.diffVersions() shouldEqual List("version1", "version2")
-		conf.importConfig() shouldEqual "normalization.xml"
-		conf.restoreVersion() shouldEqual "version1"
-		conf.toReduced() shouldBe true
-		conf.tokenizer() shouldEqual List("flag1", "flag2", "flag3")
-		val conf2 = new CommandLineScallopConf(Seq())
-		conf2.toReduced() shouldBe false
-	}
+    "Options" should "be set by word flags" in {
+        val args = Array(
+            "--comment", "this_is_a_comment",
+            "--commit-json", "\"{abcde}\"",
+            "--config", "test.xml",
+            "--diff-versions", "version1", "version2",
+            "--import-config", "normalization.xml",
+            "--restore-version", "version1",
+            "--to-reduced",
+            "--tokenizer", "flag1", "flag2", "flag3")
+        val conf = new CommandLineScallopConf(args)
+        conf.comment() shouldEqual "this_is_a_comment"
+        conf.commitJson() shouldEqual "\"{abcde}\""
+        conf.config() shouldEqual "test.xml"
+        conf.diffVersions() shouldEqual List("version1", "version2")
+        conf.importConfig() shouldEqual "normalization.xml"
+        conf.restoreVersion() shouldEqual "version1"
+        conf.toReduced() shouldBe true
+        conf.tokenizer() shouldEqual List("flag1", "flag2", "flag3")
+        val conf2 = new CommandLineScallopConf(Seq())
+        conf2.toReduced() shouldBe false
+    }
 
-	they should "be set by character flags" in {
-		val args = Array(
-			"-b", "this_is_a_comment",
-			"-j", "\"{abcde}\"",
-			"-c", "test.xml",
-			"-d", "version1", "version2",
-			"-i", "normalization.xml",
-			"-v", "version1",
-			"-r",
-			"-t", "flag1", "flag2", "flag3")
-		val conf = new CommandLineScallopConf(args)
-		conf.comment() shouldEqual "this_is_a_comment"
-		conf.commitJson() shouldEqual "\"{abcde}\""
-		conf.config() shouldEqual "test.xml"
-		conf.diffVersions() shouldEqual List("version1", "version2")
-		conf.importConfig() shouldEqual "normalization.xml"
-		conf.restoreVersion() shouldEqual "version1"
-		conf.toReduced() shouldBe true
-		conf.tokenizer() shouldEqual List("flag1", "flag2", "flag3")
-	}
+    they should "be set by character flags" in {
+        val args = Array(
+            "-b", "this_is_a_comment",
+            "-j", "\"{abcde}\"",
+            "-c", "test.xml",
+            "-d", "version1", "version2",
+            "-i", "normalization.xml",
+            "-v", "version1",
+            "-r",
+            "-t", "flag1", "flag2", "flag3")
+        val conf = new CommandLineScallopConf(args)
+        conf.comment() shouldEqual "this_is_a_comment"
+        conf.commitJson() shouldEqual "\"{abcde}\""
+        conf.config() shouldEqual "test.xml"
+        conf.diffVersions() shouldEqual List("version1", "version2")
+        conf.importConfig() shouldEqual "normalization.xml"
+        conf.restoreVersion() shouldEqual "version1"
+        conf.toReduced() shouldBe true
+        conf.tokenizer() shouldEqual List("flag1", "flag2", "flag3")
+    }
 
-	"Tokenizer flags" should "be verified" in {
-		val args = Array("--tokenizer", "flag1", "flag2", "flag3", "flag4")
-		new CommandLineScallopConf(args.take(2))
-		new CommandLineScallopConf(args.take(3))
-		an [IllegalArgumentException] should be thrownBy new CommandLineScallopConf(args)
-	}
+    "Tokenizer flags" should "be verified" in {
+        val args = Array("--tokenizer", "flag1", "flag2", "flag3", "flag4")
+        new CommandLineScallopConf(args.take(2))
+        new CommandLineScallopConf(args.take(3))
+        an [IllegalArgumentException] should be thrownBy new CommandLineScallopConf(args)
+    }
 
-	"VersionDiff versions" should "be verified" in {
-		val args = Array("--diff-versions", "version1", "version2", "version3")
-		an [IllegalArgumentException] should be thrownBy new CommandLineScallopConf(args.take(2))
-		new CommandLineScallopConf(args.take(3))
-		an [IllegalArgumentException] should be thrownBy new CommandLineScallopConf(args)
-	}
+    "VersionDiff versions" should "be verified" in {
+        val args = Array("--diff-versions", "version1", "version2", "version3")
+        an [IllegalArgumentException] should be thrownBy new CommandLineScallopConf(args.take(2))
+        new CommandLineScallopConf(args.take(3))
+        an [IllegalArgumentException] should be thrownBy new CommandLineScallopConf(args)
+    }
 
-	"Errors" should "cause Illegal Argument Exceptions" in {
-		val conf = new CommandLineScallopConf(Seq())
-		an [IllegalArgumentException] should be thrownBy conf.onError(new EOFException())
-		an [IllegalArgumentException] should be thrownBy conf.onError(new NullPointerException())
-		an [IllegalArgumentException] should be thrownBy conf.onError(new NumberFormatException())
-	}
+    "Errors" should "cause Illegal Argument Exceptions" in {
+        val conf = new CommandLineScallopConf(Seq())
+        an [IllegalArgumentException] should be thrownBy conf.onError(new EOFException())
+        an [IllegalArgumentException] should be thrownBy conf.onError(new NullPointerException())
+        an [IllegalArgumentException] should be thrownBy conf.onError(new NumberFormatException())
+    }
 
-	"Config" should "be transformed into a Command Line Config" in {
-		val args = Array(
-			"--comment", "this_is_a_comment",
-			"--config", "test.xml",
-			"--import-config", "normalization.xml",
-			"--to-reduced")
-		val conf = new CommandLineScallopConf(args).toCommandLineConf
-		conf.comment shouldEqual "this_is_a_comment"
-		conf.commitJsonOpt shouldBe None
-		conf.config shouldEqual "test.xml"
-		conf.diffVersionsOpt shouldBe None
-		conf.importConfig shouldEqual "normalization.xml"
-		conf.restoreVersionOpt shouldBe None
-		conf.toReduced shouldBe true
-		conf.tokenizerOpt shouldBe None
+    "Config" should "be transformed into a Command Line Config" in {
+        val args = Array(
+            "--comment", "this_is_a_comment",
+            "--config", "test.xml",
+            "--import-config", "normalization.xml",
+            "--to-reduced")
+        val conf = new CommandLineScallopConf(args).toCommandLineConf
+        conf.comment shouldEqual "this_is_a_comment"
+        conf.commitJsonOpt shouldBe None
+        conf.config shouldEqual "test.xml"
+        conf.diffVersionsOpt shouldBe None
+        conf.importConfig shouldEqual "normalization.xml"
+        conf.restoreVersionOpt shouldBe None
+        conf.toReduced shouldBe true
+        conf.tokenizerOpt shouldBe None
 
-		val args2 = Array(
-			"--commit-json", "\"{abcde}\"",
-			"--diff-versions", "version1", "version2",
-			"--restore-version", "version1",
-			"--tokenizer", "flag1", "flag2", "flag3")
-		val conf2 = CommandLineConf(args2)
-		conf2.commentOpt shouldBe None
-		conf2.commitJson shouldEqual "\"{abcde}\""
-		conf2.configOpt shouldBe None
-		conf2.diffVersions shouldEqual List("version1", "version2")
-		conf2.importConfigOpt shouldBe None
-		conf2.restoreVersion shouldEqual "version1"
-		conf2.toReduced shouldBe false
-		conf2.tokenizer shouldEqual List("flag1", "flag2", "flag3")
-	}
+        val args2 = Array(
+            "--commit-json", "\"{abcde}\"",
+            "--diff-versions", "version1", "version2",
+            "--restore-version", "version1",
+            "--tokenizer", "flag1", "flag2", "flag3")
+        val conf2 = CommandLineConf(args2)
+        conf2.commentOpt shouldBe None
+        conf2.commitJson shouldEqual "\"{abcde}\""
+        conf2.configOpt shouldBe None
+        conf2.diffVersions shouldEqual List("version1", "version2")
+        conf2.importConfigOpt shouldBe None
+        conf2.restoreVersion shouldEqual "version1"
+        conf2.toReduced shouldBe false
+        conf2.tokenizer shouldEqual List("flag1", "flag2", "flag3")
+    }
 
-	"Help" should "be printed" in {
-		val output = new ByteArrayOutputStream()
-		Console.withOut(output) {
-			new CommandLineScallopConf(Seq("--help"))
-		}
-		val printedHelp = output.toString()
-		printedHelp should startWith ("Usage: spark.sh ... myJar.jar [OPTION]...\nOptions:\n")
-		printedHelp should endWith ("\nFor more information visit the documentation in the GitHub Wiki:\n" +
-			"https://github.com/bpn1/ingestion/wiki/Pass-Command-Line-Arguments\n")
-	}
+    "Help" should "be printed" in {
+        val output = new ByteArrayOutputStream()
+        Console.withOut(output) {
+            new CommandLineScallopConf(Seq("--help"))
+        }
+        val printedHelp = output.toString()
+        printedHelp should startWith ("Usage: spark.sh ... myJar.jar [OPTION]...\nOptions:\n")
+        printedHelp should endWith ("\nFor more information visit the documentation in the GitHub Wiki:\n" +
+            "https://github.com/bpn1/ingestion/wiki/Pass-Command-Line-Arguments\n")
+    }
 }

@@ -22,20 +22,20 @@ import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
 
 class WikipediaReductionTest extends FlatSpec with SharedSparkContext with Matchers {
-	"Reduced Wikipedia articles" should "not be empty" in {
-		val job = new WikipediaReduction
-		job.parsedWikipedia = sc.parallelize(parsedWikipediaWithTextsSet().toList)
-		job.run(sc)
-		job.reducedArticles should not be empty
-	}
+    "Reduced Wikipedia articles" should "not be empty" in {
+        val job = new WikipediaReduction
+        job.parsedWikipedia = sc.parallelize(parsedWikipediaWithTextsSet().toList)
+        job.run(sc)
+        job.reducedArticles should not be empty
+    }
 
-	they should "be exactly these articles" in {
-		val job = new WikipediaReduction
-		job.parsedWikipedia = sc.parallelize(parsedWikipediaWithTextsSet().toList)
-		job.run(sc)
-		val reducedArticles = job.reducedArticles
-			.collect
-			.toSet
-		reducedArticles shouldEqual TestData.reducedWikipediaArticles()
-	}
+    they should "be exactly these articles" in {
+        val job = new WikipediaReduction
+        job.parsedWikipedia = sc.parallelize(parsedWikipediaWithTextsSet().toList)
+        job.run(sc)
+        val reducedArticles = job.reducedArticles
+            .collect
+            .toSet
+        reducedArticles shouldEqual TestData.reducedWikipediaArticles()
+    }
 }

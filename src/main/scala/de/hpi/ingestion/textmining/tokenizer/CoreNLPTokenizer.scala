@@ -26,29 +26,29 @@ import scala.collection.JavaConverters._
   * Uses the CoreNLP Simple German API to tokenize the given text.
   */
 class CoreNLPTokenizer() extends Tokenizer {
-	def tokenize(text: String): List[String] = {
-		new GermanDocument(text)
-			.sentences
-			.asScala
-			.toList
-			.flatMap(_.words.asScala.toList)
-	}
+    def tokenize(text: String): List[String] = {
+        new GermanDocument(text)
+            .sentences
+            .asScala
+            .toList
+            .flatMap(_.words.asScala.toList)
+    }
 
-	override def tokenizeWithOffsets(text: String): List[OffsetToken] = {
-		val annotation = new Annotation(text)
-		val tokenizer = new TokenizerAnnotator(false, "German")
-		tokenizer.annotate(annotation)
-		annotation
-			.get(classOf[CoreAnnotations.TokensAnnotation])
-			.asScala
-			.toList
-			.map { annotatedToken =>
-				val token = annotatedToken.get(classOf[CoreAnnotations.ValueAnnotation])
-				val beginOffset = annotatedToken.get(classOf[CoreAnnotations.CharacterOffsetBeginAnnotation])
-				val endOffset = annotatedToken.get(classOf[CoreAnnotations.CharacterOffsetEndAnnotation])
-				OffsetToken(token, beginOffset, endOffset)
-			}
-	}
+    override def tokenizeWithOffsets(text: String): List[OffsetToken] = {
+        val annotation = new Annotation(text)
+        val tokenizer = new TokenizerAnnotator(false, "German")
+        tokenizer.annotate(annotation)
+        annotation
+            .get(classOf[CoreAnnotations.TokensAnnotation])
+            .asScala
+            .toList
+            .map { annotatedToken =>
+                val token = annotatedToken.get(classOf[CoreAnnotations.ValueAnnotation])
+                val beginOffset = annotatedToken.get(classOf[CoreAnnotations.CharacterOffsetBeginAnnotation])
+                val endOffset = annotatedToken.get(classOf[CoreAnnotations.CharacterOffsetEndAnnotation])
+                OffsetToken(token, beginOffset, endOffset)
+            }
+    }
 
-	def reverse(tokens: List[String]): String = tokens.mkString(" ")
+    def reverse(tokens: List[String]): String = tokens.mkString(" ")
 }
