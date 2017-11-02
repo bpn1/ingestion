@@ -1,7 +1,7 @@
 #!/bin/bash
 pid="$(ps aux | grep manage.py | grep server | awk '{print $2;}')"
 if [ -n "$pid" ]; then
-	kill $pid
+    kill $pid
 fi
 rm config/cred.json
 cp $NEO_CONF config/cred.json
