@@ -25,7 +25,7 @@ package de.hpi.ingestion.textmining.models
   *                    (not redundant since special characters may be encoded alternatively, e.g., "(" becomes "-LRB-")
   */
 case class OffsetToken(
-	token: String,
-	beginOffset: Int,
-	endOffset: Int
+    token: String,
+    beginOffset: Int,
+    endOffset: Int
 )

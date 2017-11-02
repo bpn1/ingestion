@@ -26,11 +26,11 @@ package de.hpi.ingestion.textmining.models
   * @param foundentities entities found by the classifier
   */
 case class TrieAliasArticle(
-	id: String,
-	title: Option[String] = None,
-	text: Option[String] = None,
-	triealiases: List[TrieAlias] = Nil,
-	foundentities: List[Link] = Nil
+    id: String,
+    title: Option[String] = None,
+    text: Option[String] = None,
+    triealiases: List[TrieAlias] = Nil,
+    foundentities: List[Link] = Nil
 ) {
-	def getText: String = text.getOrElse("")
+    def getText: String = text.getOrElse("")
 }

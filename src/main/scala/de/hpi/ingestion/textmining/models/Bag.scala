@@ -32,195 +32,195 @@ import scala.reflect.{ClassTag, classTag}
   */
 class Bag[A, B <% BagCounter[B] : ClassTag](
 
-	private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] with Set[A] with Serializable {
+    private val counts: Map[A, B] = Map.empty[A, B]) extends SetLike[A, Bag[A, B]] with Set[A] with Serializable {
 
-	def getCounts(): Map[A, B] = counts
+    def getCounts(): Map[A, B] = counts
 
-	override def +(elem: A): Bag[A, B] = {
-		val count = this.counts.get(elem) match {
-			case Some(x) => {
-				x match {
-					case t: Int => (t + 1).asInstanceOf[B]
-					case t: Double => (t + 1.0).asInstanceOf[B]
-				}
-			}
-			case None => {
-				if(classTag[B] == classTag[Int] || classTag[B] == classTag[Integer]) {
-					1.asInstanceOf[B]
-				} else {
-					1.0.asInstanceOf[B]
-				}
-			}
-		}
-		new Bag(this.counts + (elem -> count))
-	}
+    override def +(elem: A): Bag[A, B] = {
+        val count = this.counts.get(elem) match {
+            case Some(x) => {
+                x match {
+                    case t: Int => (t + 1).asInstanceOf[B]
+                    case t: Double => (t + 1.0).asInstanceOf[B]
+                }
+            }
+            case None => {
+                if(classTag[B] == classTag[Int] || classTag[B] == classTag[Integer]) {
+                    1.asInstanceOf[B]
+                } else {
+                    1.0.asInstanceOf[B]
+                }
+            }
+        }
+        new Bag(this.counts + (elem -> count))
+    }
 
-	def +(elem: A, times: B): Bag[A, B] = {
-		if(times.lessThanZero()) {
-			return this - (elem, times.invert())
-		}
-		if(times.equalsZero()) {
-			return this
-		}
-		val count = this.counts.get(elem) match {
-			case Some(x) => (x + times).round
-			case None => times
-		}
-		new Bag(this.counts + (elem -> count))
-	}
+    def +(elem: A, times: B): Bag[A, B] = {
+        if(times.lessThanZero()) {
+            return this - (elem, times.invert())
+        }
+        if(times.equalsZero()) {
+            return this
+        }
+        val count = this.counts.get(elem) match {
+            case Some(x) => (x + times).round
+            case None => times
+        }
+        new Bag(this.counts + (elem -> count))
+    }
 
-	def ++(that: Bag[A, B]): Bag[A, B] = {
-		var result = this
-		for((elem: A@unchecked, count: B) <- that.getCounts()) {
-			result = result + (elem, count)
-		}
-		result
-	}
+    def ++(that: Bag[A, B]): Bag[A, B] = {
+        var result = this
+        for((elem: A@unchecked, count: B) <- that.getCounts()) {
+            result = result + (elem, count)
+        }
+        result
+    }
 
-	override def -(elem: A): Bag[A, B] = this.counts.get(elem) match {
-		case None => this
-		case Some(x) => {
-			x match {
-				case t: Int => {
-					if(t == 1) {
-						new Bag(this.counts - elem)
-					} else {
-						new Bag(this.counts + (elem -> (t - 1).asInstanceOf[B]))
-					}
-				}
-				case t: Double => {
-					val newCount = t - 1.0
-					if(newCount <= 0.0) {
-						new Bag(this.counts - elem)
-					} else {
-						new Bag(this.counts + (elem -> (t - 1.0).asInstanceOf[B]))
-					}
-				}
-			}
-		}
-	}
+    override def -(elem: A): Bag[A, B] = this.counts.get(elem) match {
+        case None => this
+        case Some(x) => {
+            x match {
+                case t: Int => {
+                    if(t == 1) {
+                        new Bag(this.counts - elem)
+                    } else {
+                        new Bag(this.counts + (elem -> (t - 1).asInstanceOf[B]))
+                    }
+                }
+                case t: Double => {
+                    val newCount = t - 1.0
+                    if(newCount <= 0.0) {
+                        new Bag(this.counts - elem)
+                    } else {
+                        new Bag(this.counts + (elem -> (t - 1.0).asInstanceOf[B]))
+                    }
+                }
+            }
+        }
+    }
 
-	def -(elem: A, times: B): Bag[A, B] = {
-		if(times.lessThanZero()) {
-			return this + (elem, times.invert())
-		}
-		if(times.equalsZero()) {
-			return this
-		}
-		this.counts.get(elem) match {
-			case None => this
-			case Some(x) =>
-				val newCount = (x - times).round()
-				if(newCount.greaterThanZero()) {
-					new Bag(this.counts + (elem -> newCount))
-				} else {
-					new Bag(this.counts - elem)
-				}
-		}
-	}
+    def -(elem: A, times: B): Bag[A, B] = {
+        if(times.lessThanZero()) {
+            return this + (elem, times.invert())
+        }
+        if(times.equalsZero()) {
+            return this
+        }
+        this.counts.get(elem) match {
+            case None => this
+            case Some(x) =>
+                val newCount = (x - times).round()
+                if(newCount.greaterThanZero()) {
+                    new Bag(this.counts + (elem -> newCount))
+                } else {
+                    new Bag(this.counts - elem)
+                }
+        }
+    }
 
-	def --(that: Bag[A, B]): Bag[A, B] = {
-		var result = this
-		for((elem: A@unchecked, count: B) <- that.getCounts()) {
-			result = result - (elem, count)
-		}
-		result
-	}
+    def --(that: Bag[A, B]): Bag[A, B] = {
+        var result = this
+        for((elem: A@unchecked, count: B) <- that.getCounts()) {
+            result = result - (elem, count)
+        }
+        result
+    }
 
-	override def contains(elem: A): Boolean = this.counts.contains(elem)
+    override def contains(elem: A): Boolean = this.counts.contains(elem)
 
-	override def empty: Bag[A, B] = new Bag[A, B]
+    override def empty: Bag[A, B] = new Bag[A, B]
 
-	def elementSize(count: B): Int = {
-		if(classTag[B] == classTag[Double]) {
-			count.asInstanceOf[Double].intValue()
-		} else {
-			count.asInstanceOf[Int]
-		}
-	}
+    def elementSize(count: B): Int = {
+        if(classTag[B] == classTag[Double]) {
+            count.asInstanceOf[Double].intValue()
+        } else {
+            count.asInstanceOf[Int]
+        }
+    }
 
-	override def iterator: Iterator[A] = {
-		for((elem, count) <- this.counts.iterator; _ <- 1 to elementSize(count)) yield elem
-	}
+    override def iterator: Iterator[A] = {
+        for((elem, count) <- this.counts.iterator; _ <- 1 to elementSize(count)) yield elem
+    }
 
-	override def newBuilder: Builder[A, Bag[A, B]] = new Builder[A, Bag[A, B]] {
-		var Bag = empty
+    override def newBuilder: Builder[A, Bag[A, B]] = new Builder[A, Bag[A, B]] {
+        var Bag = empty
 
-		def +=(elem: A): this.type = {
-			this.Bag += elem
-			this
-		}
+        def +=(elem: A): this.type = {
+            this.Bag += elem
+            this
+        }
 
-		def clear(): Unit = this.Bag = empty
+        def clear(): Unit = this.Bag = empty
 
-		def result(): Bag[A, B] = this.Bag
-	}
+        def result(): Bag[A, B] = this.Bag
+    }
 
-	override def seq: Bag[A, B] = this
+    override def seq: Bag[A, B] = this
 
-	override def equals(that: Any): Boolean = {
-		this.counts == that.asInstanceOf[Bag[A, B]].getCounts()
-	}
+    override def equals(that: Any): Boolean = {
+        this.counts == that.asInstanceOf[Bag[A, B]].getCounts()
+    }
 
-	override def hashCode(): Int = this.counts.hashCode
+    override def hashCode(): Int = this.counts.hashCode
 
-	override def toString(): String = this.counts.toString.replaceAll("Map", "Bag")
+    override def toString(): String = this.counts.toString.replaceAll("Map", "Bag")
 
-	def normalise(): Bag[A, Double] = {
-		var result = new Bag[A, Double]
-		val maxCount = this.counts.maxBy(_._2)._2 match {
-			case x: Int => x.doubleValue()
-			case x: Double => x
-		}
-		for((elem, count) <- this.counts) {
-			val newValue = (count match {
-				case x: Int => x.doubleValue()
-				case x: Double => x
-			}) / maxCount
-			result = result + (elem, newValue)
-		}
-		result
-	}
+    def normalise(): Bag[A, Double] = {
+        var result = new Bag[A, Double]
+        val maxCount = this.counts.maxBy(_._2)._2 match {
+            case x: Int => x.doubleValue()
+            case x: Double => x
+        }
+        for((elem, count) <- this.counts) {
+            val newValue = (count match {
+                case x: Int => x.doubleValue()
+                case x: Double => x
+            }) / maxCount
+            result = result + (elem, newValue)
+        }
+        result
+    }
 }
 
 object Bag {
-	def empty[A, B: ClassTag](implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
-		new Bag[A, B]
-	}
+    def empty[A, B: ClassTag](implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
+        new Bag[A, B]
+    }
 
-	def apply[A, B: ClassTag](elem: A, elems: A*)(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
-		new Bag[A, B] + elem ++ elems
-	}
+    def apply[A, B: ClassTag](elem: A, elems: A*)(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
+        new Bag[A, B] + elem ++ elems
+    }
 
-	def apply[A, B: ClassTag](elems: Seq[A])(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
-		new Bag[A, B] ++ elems
-	}
+    def apply[A, B: ClassTag](elems: Seq[A])(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
+        new Bag[A, B] ++ elems
+    }
 
-	def apply[A, B: ClassTag](elem: (A, B), elems: (A, B)*)(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
-		new Bag((elem +: elems).toMap)
-	}
+    def apply[A, B: ClassTag](elem: (A, B), elems: (A, B)*)(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
+        new Bag((elem +: elems).toMap)
+    }
 
-	def apply[A, B: ClassTag](elems: Map[A, B])(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
-		new Bag(elems)
-	}
+    def apply[A, B: ClassTag](elems: Map[A, B])(implicit bToBagCounter: B => BagCounter[B]): Bag[A, B] = {
+        new Bag(elems)
+    }
 
-	// $COVERAGE-OFF$
-	/**
-	  * This methods calls the respective apply method and is excluded from the test coverage because the implicit
-	  * method call can not be tested and is marked as untested by Scoverage.
-	  * @param tokens List of tokens to be counted
-	  */
-	def extract(tokens: List[String]): Bag[String, Int] = {
-		this.apply(tokens)
-	}
+    // $COVERAGE-OFF$
+    /**
+      * This methods calls the respective apply method and is excluded from the test coverage because the implicit
+      * method call can not be tested and is marked as untested by Scoverage.
+      * @param tokens List of tokens to be counted
+      */
+    def extract(tokens: List[String]): Bag[String, Int] = {
+        this.apply(tokens)
+    }
 
-	/**
-	  * * This methods calls the respective apply method and is excluded from the test coverage because the implicit
-	  * method call can not be tested and is marked as untested by Scoverage.
-	  * @param context Map of tokens and their count to be transformed into a Bag
-	  */
-	def extract(context: Map[String, Int]): Bag[String, Int] = {
-		this.apply(context)
-	}
-	// $COVERAGE-ON$
+    /**
+      * * This methods calls the respective apply method and is excluded from the test coverage because the implicit
+      * method call can not be tested and is marked as untested by Scoverage.
+      * @param context Map of tokens and their count to be transformed into a Bag
+      */
+    def extract(context: Map[String, Int]): Bag[String, Int] = {
+        this.apply(context)
+    }
+    // $COVERAGE-ON$
 }

@@ -21,17 +21,17 @@ import de.hpi.ingestion.dataimport.wikipedia.models.WikipediaEntry
 import org.scalatest.{FlatSpec, Matchers}
 
 class WikipediaImportTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
-	"XML" should "be parsed" in {
-		val entries = TestData.pageXML.map(WikipediaImport.parseXML)
-		val expected = TestData.wikipediaEntries
-		entries shouldEqual expected
-	}
+    "XML" should "be parsed" in {
+        val entries = TestData.pageXML.map(WikipediaImport.parseXML)
+        val expected = TestData.wikipediaEntries
+        entries shouldEqual expected
+    }
 
-	"Wikipedia" should "be parsed" in {
-		val job = new WikipediaImport
-		job.inputXML = sc.parallelize(TestData.pageXML)
-		job.run(sc)
-		val expected = sc.parallelize(TestData.wikipediaEntries)
-		assertRDDEquals(job.wikipediaEntries, expected)
-	}
+    "Wikipedia" should "be parsed" in {
+        val job = new WikipediaImport
+        job.inputXML = sc.parallelize(TestData.pageXML)
+        job.run(sc)
+        val expected = sc.parallelize(TestData.wikipediaEntries)
+        assertRDDEquals(job.wikipediaEntries, expected)
+    }
 }

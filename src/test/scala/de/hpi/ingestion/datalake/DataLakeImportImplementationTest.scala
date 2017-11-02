@@ -22,51 +22,51 @@ import de.hpi.ingestion.datalake.models.Subject
 import org.scalatest.{FlatSpec, Matchers}
 
 class DataLakeImportImplementationTest extends FlatSpec with Matchers with SharedSparkContext {
-	"normalizeProperties" should "normalize the properties of an entity" in {
-		val job = new MockImport
-		val entity = TestData.testEntity
-		val mapping = TestData.normalizationMapping
-		val strategies = TestData.strategyMapping
-		val properties = job.normalizeProperties(entity, mapping, strategies)
-		val expected = TestData.propertyMapping
-		properties shouldEqual expected
-	}
+    "normalizeProperties" should "normalize the properties of an entity" in {
+        val job = new MockImport
+        val entity = TestData.testEntity
+        val mapping = TestData.normalizationMapping
+        val strategies = TestData.strategyMapping
+        val properties = job.normalizeProperties(entity, mapping, strategies)
+        val expected = TestData.propertyMapping
+        properties shouldEqual expected
+    }
 
-	"Entities" should "be translated" in {
-		val job = new MockSubjectImport
-		job.inputEntities = sc.parallelize(TestData.translationEntities)
-		job.run(sc)
-		val subjects = job.subjects.collect.toList
-		val expectedSubjects = TestData.translatedSubjects
-		subjects shouldEqual expectedSubjects
-	}
+    "Entities" should "be translated" in {
+        val job = new MockSubjectImport
+        job.inputEntities = sc.parallelize(TestData.translationEntities)
+        job.run(sc)
+        val subjects = job.subjects.collect.toList
+        val expectedSubjects = TestData.translatedSubjects
+        subjects shouldEqual expectedSubjects
+    }
 
-	"filterEntities" should "filter no element by default" in {
-		val job = new MockImport
-		val entities = TestData.testEntities
-		val filteredEntities = entities.filter(job.filterEntities)
-		filteredEntities shouldEqual entities
-	}
+    "filterEntities" should "filter no element by default" in {
+        val job = new MockImport
+        val entities = TestData.testEntities
+        val filteredEntities = entities.filter(job.filterEntities)
+        filteredEntities shouldEqual entities
+    }
 
-	"extractLegalForm" should "extract the legal form from a given name" in {
-		val job = new MockImport
-		val classifier = job.classifier
-		val companyNames = TestData.companyNames
-		companyNames.foreach { case (name, expected) =>
-			val legalForms = job.extractLegalForm(name, classifier)
-			legalForms shouldEqual expected
-		}
-		job.extractLegalForm(null, classifier) shouldEqual None
-	}
+    "extractLegalForm" should "extract the legal form from a given name" in {
+        val job = new MockImport
+        val classifier = job.classifier
+        val companyNames = TestData.companyNames
+        companyNames.foreach { case (name, expected) =>
+            val legalForms = job.extractLegalForm(name, classifier)
+            legalForms shouldEqual expected
+        }
+        job.extractLegalForm(null, classifier) shouldEqual None
+    }
 
-	"run" should "import a new datasource to the datalake" in {
-		val job = new MockImport
-		job.inputEntities = sc.parallelize(TestData.testEntities)
-		job.run(sc)
-		val output = job.subjects.collect.toList
-		val expected = TestData.output
-		(output, expected).zipped.foreach { case (subject, expectedSubject) =>
-			subject.name shouldEqual expectedSubject.name
-		}
-	}
+    "run" should "import a new datasource to the datalake" in {
+        val job = new MockImport
+        job.inputEntities = sc.parallelize(TestData.testEntities)
+        job.run(sc)
+        val output = job.subjects.collect.toList
+        val expected = TestData.output
+        (output, expected).zipped.foreach { case (subject, expectedSubject) =>
+            subject.name shouldEqual expectedSubject.name
+        }
+    }
 }

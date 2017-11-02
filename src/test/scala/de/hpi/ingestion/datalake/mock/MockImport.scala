@@ -24,36 +24,36 @@ import de.hpi.ingestion.datalake.DataLakeImportImplementation
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 
 class MockImport extends DataLakeImportImplementation[Entity](
-	List("TestSource"),
-	"inputKeySpace",
-	"inputTable"
+    List("TestSource"),
+    "inputKeySpace",
+    "inputTable"
 ){
-	appName = "TestImport"
-	importConfigFile = "src/test/resources/datalake/normalization.xml"
+    appName = "TestImport"
+    importConfigFile = "src/test/resources/datalake/normalization.xml"
 
-	override def load(sc: SparkContext): Unit = {}
+    override def load(sc: SparkContext): Unit = {}
 
-	override def filterEntities(entity: Entity): Boolean = true
+    override def filterEntities(entity: Entity): Boolean = true
 
-	override def normalizeAttribute(
-		attribute: String,
-		values: List[String],
-		strategies: Map[String, List[String]]
-	): List[String] = values
+    override def normalizeAttribute(
+        attribute: String,
+        values: List[String],
+        strategies: Map[String, List[String]]
+    ): List[String] = values
 
-	override def translateToSubject(
-		entity: Entity,
-		version: Version,
-		mapping: Map[String, List[String]],
-		strategies: Map[String, List[String]],
-		classifier: AClassifier[Tag]
-	): Subject = Subject(master = null, datasource = null, name = Option(entity.root_value))
+    override def translateToSubject(
+        entity: Entity,
+        version: Version,
+        mapping: Map[String, List[String]],
+        strategies: Map[String, List[String]],
+        classifier: AClassifier[Tag]
+    ): Subject = Subject(master = null, datasource = null, name = Option(entity.root_value))
 
-	override def normalizeProperties(
-		entity: Entity,
-		mapping: Map[String, List[String]],
-		strategies: Map[String, List[String]]
-	): Map[String, List[String]] = {
-		super.normalizeProperties(entity, mapping, strategies)
-	}
+    override def normalizeProperties(
+        entity: Entity,
+        mapping: Map[String, List[String]],
+        strategies: Map[String, List[String]]
+    ): Map[String, List[String]] = {
+        super.normalizeProperties(entity, mapping, strategies)
+    }
 }

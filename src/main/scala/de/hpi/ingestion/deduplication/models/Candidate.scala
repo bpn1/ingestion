@@ -25,7 +25,7 @@ import java.util.UUID
   * @param score similarity score
   */
 case class Candidate(
-	id: UUID = UUID.randomUUID(),
-	name: Option[String] = None,
-	score: Double = 0.0
+    id: UUID = UUID.randomUUID(),
+    name: Option[String] = None,
+    score: Double = 0.0
 )

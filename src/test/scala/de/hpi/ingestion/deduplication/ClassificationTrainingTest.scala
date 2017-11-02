@@ -22,10 +22,10 @@ import org.apache.spark.mllib.classification.NaiveBayesModel
 
 class ClassificationTrainingTest extends FlatSpec with Matchers with SharedSparkContext {
 
-	"Naive Bayes model" should "be returned" in {
-		val job = new ClassificationTraining
-		job.featureEntries = sc.parallelize(List.fill(10)(TestData.featureEntries).flatten)
-		job.run(sc)
-		job.naiveBayesModel should not be null
-	}
+    "Naive Bayes model" should "be returned" in {
+        val job = new ClassificationTraining
+        job.featureEntries = sc.parallelize(List.fill(10)(TestData.featureEntries).flatten)
+        job.run(sc)
+        job.naiveBayesModel should not be null
+    }
 }

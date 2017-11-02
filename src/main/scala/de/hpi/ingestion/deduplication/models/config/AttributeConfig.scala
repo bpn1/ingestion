@@ -25,21 +25,21 @@ import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
   * @param scoreConfigs List of ScoreConfigs
   */
 case class AttributeConfig(
-	attribute: String,
-	weight: Double = 0.0,
-	scoreConfigs: List[SimilarityMeasureConfig[String, SimilarityMeasure[String]]] = Nil
+    attribute: String,
+    weight: Double = 0.0,
+    scoreConfigs: List[SimilarityMeasureConfig[String, SimilarityMeasure[String]]] = Nil
 ) extends WeightedFeatureConfig {
-	type T = AttributeConfig
-	override def updateWeight(weight: Double): AttributeConfig = this.copy(weight = weight)
+    type T = AttributeConfig
+    override def updateWeight(weight: Double): AttributeConfig = this.copy(weight = weight)
 }
 
 /**
   * Companion Object for AttributeConfig case class
   */
 object AttributeConfig {
-	def normalizeWeights(configs: List[AttributeConfig]): List[AttributeConfig] = {
-		WeightedFeatureConfig
-			.normalizeWeights(configs)
-			.map(config => config.copy(scoreConfigs = WeightedFeatureConfig.normalizeWeights(config.scoreConfigs)))
-	}
+    def normalizeWeights(configs: List[AttributeConfig]): List[AttributeConfig] = {
+        WeightedFeatureConfig
+            .normalizeWeights(configs)
+            .map(config => config.copy(scoreConfigs = WeightedFeatureConfig.normalizeWeights(config.scoreConfigs)))
+    }
 }

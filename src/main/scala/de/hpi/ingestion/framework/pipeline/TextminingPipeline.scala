@@ -20,22 +20,22 @@ import de.hpi.ingestion.textmining.ClassifierTraining
 import de.hpi.ingestion.textmining.preprocessing._
 
 class TextminingPipeline extends JobPipeline {
-	pipelineName = "Textmining Pipeline"
-	jobs = List(
-		(new TextParser, Array()),
-		(new LinkCleaner, Array()),
-		(new RedirectResolver, Array()),
-		(new LinkAnalysis, Array()),
-		(new CompanyLinkFilter, Array()),
-		(new ReducedLinkAnalysis, Array()),
-		(new AliasTrieSearch, Array()),
-		(new LinkExtender, Array()),
-		(new TermFrequencyCounter, Array()),
-		(new DocumentFrequencyCounter, Array()),
-		(new LinkAnalysis, Array()),
-		(new ReducedLinkAnalysis, Array()),
-		(new AliasCounter, Array()),
-		(new CosineContextComparator, Array()),
-		(new SecondOrderFeatureGenerator, Array()),
-		(new ClassifierTraining, Array()))
+    pipelineName = "Textmining Pipeline"
+    jobs = List(
+        (new TextParser, Array()),
+        (new LinkCleaner, Array()),
+        (new RedirectResolver, Array()),
+        (new LinkAnalysis, Array()),
+        (new CompanyLinkFilter, Array()),
+        (new ReducedLinkAnalysis, Array()),
+        (new AliasTrieSearch, Array()),
+        (new LinkExtender, Array()),
+        (new TermFrequencyCounter, Array()),
+        (new DocumentFrequencyCounter, Array()),
+        (new LinkAnalysis, Array()),
+        (new ReducedLinkAnalysis, Array()),
+        (new AliasCounter, Array()),
+        (new CosineContextComparator, Array()),
+        (new SecondOrderFeatureGenerator, Array()),
+        (new ClassifierTraining, Array()))
 }

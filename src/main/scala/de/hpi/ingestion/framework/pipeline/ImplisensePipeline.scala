@@ -19,8 +19,8 @@ package de.hpi.ingestion.framework.pipeline
 import de.hpi.ingestion.dataimport.implisense.{ImplisenseDataLakeImport, ImplisenseParser}
 
 class ImplisensePipeline extends JobPipeline {
-	pipelineName = "Implisense Pipeline"
-	jobs = List(
-		(new ImplisenseParser, Array()),
-		(new ImplisenseDataLakeImport, Array()))
+    pipelineName = "Implisense Pipeline"
+    jobs = List(
+        (new ImplisenseParser, Array()),
+        (new ImplisenseDataLakeImport, Array()))
 }

@@ -31,11 +31,11 @@ import de.hpi.ingestion.deduplication.models.PrecisionRecallDataTuple
   * @param comment described this data entry
   */
 case class RelationClassifierStats(
-	id: UUID = UUIDs.timeBased(),
-	rel: String,
-	sentenceswithrelation: Int,
-	sentenceswithnorelation: Int,
-	average: PrecisionRecallDataTuple,
-	data: List[PrecisionRecallDataTuple] = Nil,
-	comment: Option[String] = None
+    id: UUID = UUIDs.timeBased(),
+    rel: String,
+    sentenceswithrelation: Int,
+    sentenceswithnorelation: Int,
+    average: PrecisionRecallDataTuple,
+    data: List[PrecisionRecallDataTuple] = Nil,
+    comment: Option[String] = None
 )

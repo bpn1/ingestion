@@ -24,28 +24,28 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 class MockSubjectImport extends DataLakeImportImplementation[Entity](
-	List("TestSource"),
-	"inputKeySpace",
-	"inputTable"
+    List("TestSource"),
+    "inputKeySpace",
+    "inputTable"
 )  {
-	appName = "TestImport"
-	importConfigFile = "src/test/resources/datalake/normalization.xml"
+    appName = "TestImport"
+    importConfigFile = "src/test/resources/datalake/normalization.xml"
 
-	override def load(sc: SparkContext): Unit = {}
+    override def load(sc: SparkContext): Unit = {}
 
-	override def normalizeAttribute(
-		attribute: String,
-		values: List[String],
-		strategies: Map[String, List[String]]
-	): List[String] = values
+    override def normalizeAttribute(
+        attribute: String,
+        values: List[String],
+        strategies: Map[String, List[String]]
+    ): List[String] = values
 
-	override def translateToSubject(
-		entity: Entity,
-		version: Version,
-		mapping: Map[String, List[String]],
-		strategies: Map[String, List[String]],
-		classifier: AClassifier[Tag]
-	): Subject = {
-		Subject(id = null, master = null, datasource = null, name = Option(entity.root_value), properties = entity.data)
-	}
+    override def translateToSubject(
+        entity: Entity,
+        version: Version,
+        mapping: Map[String, List[String]],
+        strategies: Map[String, List[String]],
+        classifier: AClassifier[Tag]
+    ): Subject = {
+        Subject(id = null, master = null, datasource = null, name = Option(entity.root_value), properties = entity.data)
+    }
 }
