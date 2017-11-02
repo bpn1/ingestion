@@ -20,17 +20,17 @@ import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 
 class MockPrintSparkJob extends SparkJob {
-	configFile = "test.xml"
-	override def assertConditions(): Boolean = {
-		println("assertConditions")
-		super.assertConditions()
-	}
+    configFile = "test.xml"
+    override def assertConditions(): Boolean = {
+        println("assertConditions")
+        super.assertConditions()
+    }
 
-	override def load(sc: SparkContext): Unit = println("load")
-	override def run(sc: SparkContext): Unit = {
-		println("run")
-		conf.configOpt.foreach(println)
-	}
-	override def save(sc: SparkContext): Unit = println("save")
-	override def executeQueries(sc: SparkContext, queries: List[String]): Unit = println("execQ")
+    override def load(sc: SparkContext): Unit = println("load")
+    override def run(sc: SparkContext): Unit = {
+        println("run")
+        conf.configOpt.foreach(println)
+    }
+    override def save(sc: SparkContext): Unit = println("save")
+    override def executeQueries(sc: SparkContext, queries: List[String]): Unit = println("execQ")
 }

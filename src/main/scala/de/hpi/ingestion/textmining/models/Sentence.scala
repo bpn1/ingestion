@@ -26,9 +26,9 @@ package de.hpi.ingestion.textmining.models
   * @param bagofwords    bag of words of the sentence except for the aliases of the entities
   */
 case class Sentence(
-	articletitle: String,
-	articleoffset: Int,
-	text: String,
-	entities: List[EntityLink],
-	bagofwords: List[String]
+    articletitle: String,
+    articleoffset: Int,
+    text: String,
+    entities: List[EntityLink],
+    bagofwords: List[String]
 )

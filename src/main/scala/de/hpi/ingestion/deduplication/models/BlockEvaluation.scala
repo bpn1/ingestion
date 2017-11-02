@@ -33,13 +33,13 @@ import com.datastax.driver.core.utils.UUIDs
   * @param yaxis label of the y-axis
   */
 case class BlockEvaluation(
-	jobid: UUID = UUIDs.timeBased(),
-	schemetag: String,
-	data: Set[BlockStats] = Set[BlockStats](),
-	comment: Option[String] = None,
-	pairscompleteness: Double,
-	blockcount: Int,
-	comparisoncount: BigInt,
-	xaxis: Option[String] = Option("block keys"),
-	yaxis: Option[String] = Option("# comparisons")
+    jobid: UUID = UUIDs.timeBased(),
+    schemetag: String,
+    data: Set[BlockStats] = Set[BlockStats](),
+    comment: Option[String] = None,
+    pairscompleteness: Double,
+    blockcount: Int,
+    comparisoncount: BigInt,
+    xaxis: Option[String] = Option("block keys"),
+    yaxis: Option[String] = Option("# comparisons")
 )

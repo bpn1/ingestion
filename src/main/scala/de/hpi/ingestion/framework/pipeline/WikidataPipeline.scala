@@ -19,11 +19,11 @@ package de.hpi.ingestion.framework.pipeline
 import de.hpi.ingestion.dataimport.wikidata._
 
 class WikidataPipeline extends JobPipeline {
-	pipelineName = "Wikidata Pipeline"
-	jobs = List(
-		(new WikidataImport, Array()),
-		(new TagEntities, Array()),
-		(new ResolveEntities, Array()),
-		(new WikidataDataLakeImport, Array()),
-		(new FindRelations, Array()))
+    pipelineName = "Wikidata Pipeline"
+    jobs = List(
+        (new WikidataImport, Array()),
+        (new TagEntities, Array()),
+        (new ResolveEntities, Array()),
+        (new WikidataDataLakeImport, Array()),
+        (new FindRelations, Array()))
 }

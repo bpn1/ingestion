@@ -26,39 +26,39 @@ import org.apache.spark.rdd.RDD
   * Reduces each `ParsedWikipediaEntry` to its relevant attributes for NEL.
   */
 class WikipediaReduction extends SparkJob {
-	appName = "Wikipedia Reduction"
-	configFile = "textmining.xml"
+    appName = "Wikipedia Reduction"
+    configFile = "textmining.xml"
 
-	var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
-	var reducedArticles: RDD[TrieAliasArticle] = _
+    var parsedWikipedia: RDD[ParsedWikipediaEntry] = _
+    var reducedArticles: RDD[TrieAliasArticle] = _
 
-	// $COVERAGE-OFF$
-	/**
-	  * Loads Wikipedia entries and aliases from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  */
-	override def load(sc: SparkContext): Unit = {
-		parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
-	}
+    // $COVERAGE-OFF$
+    /**
+      * Loads Wikipedia entries and aliases from the Cassandra.
+      * @param sc Spark Context used to load the RDDs
+      */
+    override def load(sc: SparkContext): Unit = {
+        parsedWikipedia = sc.cassandraTable[ParsedWikipediaEntry](settings("keyspace"), settings("parsedWikiTable"))
+    }
 
-	/**
-	  * Save reduced Wikipedia articles to the Cassandra.
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  */
-	override def save(sc: SparkContext): Unit = {
-		reducedArticles.saveToCassandra(settings("keyspace"), settings("wikipediaNELTable"))
-	}
-	// $COVERAGE-ON$
+    /**
+      * Save reduced Wikipedia articles to the Cassandra.
+      * @param sc Spark Context used to connect to the Cassandra or the HDFS
+      */
+    override def save(sc: SparkContext): Unit = {
+        reducedArticles.saveToCassandra(settings("keyspace"), settings("wikipediaNELTable"))
+    }
+    // $COVERAGE-ON$
 
-	/**
-	  * Reduces each `ParsedWikipediaEntry` to its relevant attributes for NEL.
-	  * @param sc Spark Context
-	  */
-	override def run(sc: SparkContext): Unit = {
-		reducedArticles = parsedWikipedia.map(article => TrieAliasArticle(
-			id = article.title,
-			title = Option(article.title),
-			text = article.text
-		))
-	}
+    /**
+      * Reduces each `ParsedWikipediaEntry` to its relevant attributes for NEL.
+      * @param sc Spark Context
+      */
+    override def run(sc: SparkContext): Unit = {
+        reducedArticles = parsedWikipedia.map(article => TrieAliasArticle(
+            id = article.title,
+            title = Option(article.title),
+            text = article.text
+        ))
+    }
 }

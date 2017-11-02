@@ -21,17 +21,17 @@ import de.hpi.ingestion.datalake.models.Subject
 import org.scalatest.{FlatSpec, Matchers}
 
 class DBpediaRelationImportTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
-	"Relations" should "be added" in {
-		val job = new DBpediaRelationImport
-		job.subjects = sc.parallelize(TestData.dbpedia)
-		job.relations = sc.parallelize(TestData.dbpediaRelations)
-		job.run(sc)
-		val output = job.subjectsWithRelations.collect.toList.sortBy(_.id)
-		val expected =  TestData.dbpediaImportedRelations.sortBy(_.id)
+    "Relations" should "be added" in {
+        val job = new DBpediaRelationImport
+        job.subjects = sc.parallelize(TestData.dbpedia)
+        job.relations = sc.parallelize(TestData.dbpediaRelations)
+        job.run(sc)
+        val output = job.subjectsWithRelations.collect.toList.sortBy(_.id)
+        val expected =  TestData.dbpediaImportedRelations.sortBy(_.id)
 
-		output should have length expected.length
-		(output, expected).zipped.foreach { case (subject, expectedSubject) =>
-			subject.relations shouldEqual expectedSubject.relations
-		}
-	}
+        output should have length expected.length
+        (output, expected).zipped.foreach { case (subject, expectedSubject) =>
+            subject.relations shouldEqual expectedSubject.relations
+        }
+    }
 }

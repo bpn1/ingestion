@@ -23,44 +23,44 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 class MasterUpdate extends SparkJob {
-	appName = "Master Update"
-	configFile = "master_update.xml"
+    appName = "Master Update"
+    configFile = "master_update.xml"
 
-	var subjects: RDD[Subject] = _
-	var updatedMasters: RDD[Subject] = _
+    var subjects: RDD[Subject] = _
+    var updatedMasters: RDD[Subject] = _
 
-	// $COVERAGE-OFF$
-	/**
-	  * Loads the Subjects from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  */
-	override def load(sc: SparkContext): Unit = {
-		subjects = sc.cassandraTable[Subject](settings("subjectKeyspace"), settings("subjectTable"))
-	}
+    // $COVERAGE-OFF$
+    /**
+      * Loads the Subjects from the Cassandra.
+      * @param sc Spark Context used to load the RDDs
+      */
+    override def load(sc: SparkContext): Unit = {
+        subjects = sc.cassandraTable[Subject](settings("subjectKeyspace"), settings("subjectTable"))
+    }
 
-	/**
-	  * Writes the updated master nodes to the Cassandra.
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  */
-	override def save(sc: SparkContext): Unit = {
-		updatedMasters.saveToCassandra(settings("subjectKeyspace"), settings("subjectTable"))
-	}
-	// $COVERAGE-ON$
+    /**
+      * Writes the updated master nodes to the Cassandra.
+      * @param sc Spark Context used to connect to the Cassandra or the HDFS
+      */
+    override def save(sc: SparkContext): Unit = {
+        updatedMasters.saveToCassandra(settings("subjectKeyspace"), settings("subjectTable"))
+    }
+    // $COVERAGE-ON$
 
-	/**
-	  * Updates the master nodes by newly generating their data.
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  */
-	override def run(sc: SparkContext): Unit = {
-		val version = Version(appName, List("master update"), sc, true, settings.get("subjectTable"))
-		val masterGroups = subjects
-			.map(subject => (subject.master, List(subject)))
-			.reduceByKey(_ ++ _)
-			.values
-		updatedMasters = masterGroups.map { masterGroup =>
-			val master = masterGroup.find(_.isMaster).get
-			val slaves = masterGroup.filter(_.isSlave)
-			Merging.mergeIntoMaster(master, slaves, version).head
-		}
-	}
+    /**
+      * Updates the master nodes by newly generating their data.
+      * @param sc Spark Context used to e.g. broadcast variables
+      */
+    override def run(sc: SparkContext): Unit = {
+        val version = Version(appName, List("master update"), sc, true, settings.get("subjectTable"))
+        val masterGroups = subjects
+            .map(subject => (subject.master, List(subject)))
+            .reduceByKey(_ ++ _)
+            .values
+        updatedMasters = masterGroups.map { masterGroup =>
+            val master = masterGroup.find(_.isMaster).get
+            val slaves = masterGroup.filter(_.isSlave)
+            Merging.mergeIntoMaster(master, slaves, version).head
+        }
+    }
 }

@@ -22,15 +22,15 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class CooccurrenceExportTest extends FlatSpec with Matchers with SharedSparkContext {
 
-	"Nodes and Edges" should "be extracted" in {
-		val job = new CooccurrenceExport
-		job.cooccurrences = sc.parallelize(TestData.exportCooccurrences())
-		job.relations = sc.parallelize(TestData.exportDBpediaRelations())
-		job.run(sc)
-		val List(nodes, edges) = List(job.nodes, job.edges).map(_.collect.toSet)
-		val expectedNodes = TestData.nodes()
-		val expectedEdges = TestData.edges()
-		nodes shouldEqual expectedNodes
-		edges shouldEqual expectedEdges
-	}
+    "Nodes and Edges" should "be extracted" in {
+        val job = new CooccurrenceExport
+        job.cooccurrences = sc.parallelize(TestData.exportCooccurrences())
+        job.relations = sc.parallelize(TestData.exportDBpediaRelations())
+        job.run(sc)
+        val List(nodes, edges) = List(job.nodes, job.edges).map(_.collect.toSet)
+        val expectedNodes = TestData.nodes()
+        val expectedEdges = TestData.edges()
+        nodes shouldEqual expectedNodes
+        edges shouldEqual expectedEdges
+    }
 }

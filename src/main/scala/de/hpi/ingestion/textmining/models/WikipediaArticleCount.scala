@@ -22,6 +22,6 @@ package de.hpi.ingestion.textmining.models
   * @param count the number of documents in the table
   */
 case class WikipediaArticleCount(
-	countedtable: String,
-	count: BigInt
+    countedtable: String,
+    count: BigInt
 )

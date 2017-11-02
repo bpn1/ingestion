@@ -20,37 +20,37 @@ import de.hpi.ingestion.datalake.models.Subject
 import org.scalatest.{FlatSpec, Matchers}
 
 class BlockTest extends FlatSpec with Matchers {
-	"Number of comparisons" should "be calculated" in {
-		val subjects = List.fill(5)(Subject.master())
-		val staging = List.fill(3)(Subject.master())
-		val block = Block(key = "test", subjects = subjects, staging = staging)
-		block.numComparisons shouldEqual 15
-	}
+    "Number of comparisons" should "be calculated" in {
+        val subjects = List.fill(5)(Subject.master())
+        val staging = List.fill(3)(Subject.master())
+        val block = Block(key = "test", subjects = subjects, staging = staging)
+        block.numComparisons shouldEqual 15
+    }
 
-	"Cross product" should "be created" in {
-		val blocks = TestData.crossBlocks()
-		val crossProducts = blocks
-			.flatMap(_.crossProduct())
-			.toSet
-		val expectedCrossProducts = TestData.crossedSubjects()
-		crossProducts shouldEqual expectedCrossProducts
-	}
+    "Cross product" should "be created" in {
+        val blocks = TestData.crossBlocks()
+        val crossProducts = blocks
+            .flatMap(_.crossProduct())
+            .toSet
+        val expectedCrossProducts = TestData.crossedSubjects()
+        crossProducts shouldEqual expectedCrossProducts
+    }
 
-	it should "apply a filter function" in {
-		val blocks = TestData.crossBlocks()
-		val crossProducts = blocks
-			.flatMap(_.crossProduct((s1: Subject, s2: Subject) => s1.id.toString.substring(0, 1).toInt < 4))
-			.toSet
-		val expectedCrossProducts = TestData.filteredCrossedSubjects()
-		crossProducts shouldEqual expectedCrossProducts
-	}
+    it should "apply a filter function" in {
+        val blocks = TestData.crossBlocks()
+        val crossProducts = blocks
+            .flatMap(_.crossProduct((s1: Subject, s2: Subject) => s1.id.toString.substring(0, 1).toInt < 4))
+            .toSet
+        val expectedCrossProducts = TestData.filteredCrossedSubjects()
+        crossProducts shouldEqual expectedCrossProducts
+    }
 
-	"Large Blocks" should "be divided into smaller blocks correctly" in {
-		val splitBlocks = TestData.largeBlocks()
-			.map((Block.split _).tupled)
-			.map(_.map(_.copy(id = null)))
-		val expectedSplits = TestData.splitBlocks()
-		splitBlocks shouldEqual expectedSplits
-	}
+    "Large Blocks" should "be divided into smaller blocks correctly" in {
+        val splitBlocks = TestData.largeBlocks()
+            .map((Block.split _).tupled)
+            .map(_.map(_.copy(id = null)))
+        val expectedSplits = TestData.splitBlocks()
+        splitBlocks shouldEqual expectedSplits
+    }
 
 }

@@ -26,8 +26,8 @@ import java.util.UUID
   * @param candidates List of duplicate candidates
   */
 case class Duplicates(
-	subject_id: UUID,
-	subject_name: Option[String] = None,
-	datasource: String,
-	candidates: List[Candidate] = Nil
+    subject_id: UUID,
+    subject_name: Option[String] = None,
+    datasource: String,
+    candidates: List[Candidate] = Nil
 )

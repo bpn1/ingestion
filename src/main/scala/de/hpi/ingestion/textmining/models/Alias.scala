@@ -26,9 +26,9 @@ package de.hpi.ingestion.textmining.models
   * @param totaloccurrences in how many articles this alias appears in the plain text
   */
 case class Alias(
-	alias: String,
-	pages: Map[String, Int] = Map(),
-	pagesreduced: Map[String, Int] = Map(),
-	var linkoccurrences: Option[Int] = None,
-	var totaloccurrences: Option[Int] = None
+    alias: String,
+    pages: Map[String, Int] = Map(),
+    pagesreduced: Map[String, Int] = Map(),
+    var linkoccurrences: Option[Int] = None,
+    var totaloccurrences: Option[Int] = None
 )

@@ -26,9 +26,9 @@ package de.hpi.ingestion.textmining.models
   * @param article article from which the link was retrieved
   */
 case class Link(
-	alias: String,
-	var page: String,
-	var offset: Option[Int] = None,
-	var context: Map[String, Int] = Map[String, Int](),
-	var article: Option[String] = None
+    alias: String,
+    var page: String,
+    var offset: Option[Int] = None,
+    var context: Map[String, Int] = Map[String, Int](),
+    var article: Option[String] = None
 )

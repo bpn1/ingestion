@@ -23,14 +23,14 @@ package de.hpi.ingestion.deduplication.models
   * @param numstaging number of staged Subjects in this block
   */
 case class BlockStats(
-	key: String,
-	numsubjects: Int,
-	numstaging: Int,
-	precision: Double = 0.0
+    key: String,
+    numsubjects: Int,
+    numstaging: Int,
+    precision: Double = 0.0
 ) {
-	/**
-	  * Calculates the number of comparisons resulting from this Block.
-	  * @return number of comparisons done in this Block
-	  */
-	def numComparisons: Long = numsubjects * numstaging
+    /**
+      * Calculates the number of comparisons resulting from this Block.
+      * @return number of comparisons done in this Block
+      */
+    def numComparisons: Long = numsubjects * numstaging
 }

@@ -28,9 +28,9 @@ import com.datastax.driver.core.utils.UUIDs
   * @param yaxis String containing the label of the y-axis
   */
 case class SimilarityMeasureStats(
-	id: UUID = UUIDs.timeBased(),
-	data: List[PrecisionRecallDataTuple] = Nil,
-	comment: Option[String] = None,
-	xaxis: Option[String] = None,
-	yaxis: Option[String] = None
+    id: UUID = UUIDs.timeBased(),
+    data: List[PrecisionRecallDataTuple] = Nil,
+    comment: Option[String] = None,
+    xaxis: Option[String] = None,
+    yaxis: Option[String] = None
 )

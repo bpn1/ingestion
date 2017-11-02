@@ -24,40 +24,40 @@ import org.apache.spark.SparkContext
   * Groups the `Links` once on the aliases and once on the pages and saves them to the columns for reduced links.
   */
 class ReducedLinkAnalysis extends SparkJob {
-	appName = "Reduced Link Analysis"
-	configFile = "textmining.xml"
+    appName = "Reduced Link Analysis"
+    configFile = "textmining.xml"
 
-	val linkAnalysis = new LinkAnalysis
+    val linkAnalysis = new LinkAnalysis
 
-	// $COVERAGE-OFF$
-	/**
-	  * Loads Parsed Wikipedia entries from the Cassandra.
-	  * @param sc Spark Context used to load the RDDs
-	  */
-	override def load(sc: SparkContext): Unit = {
-		linkAnalysis.load(sc)
-	}
+    // $COVERAGE-OFF$
+    /**
+      * Loads Parsed Wikipedia entries from the Cassandra.
+      * @param sc Spark Context used to load the RDDs
+      */
+    override def load(sc: SparkContext): Unit = {
+        linkAnalysis.load(sc)
+    }
 
-	/**
-	  * Saves the grouped aliases and links to the Cassandra.
-	  * @param sc Spark Context used to connect to the Cassandra or the HDFS
-	  */
-	override def save(sc: SparkContext): Unit = {
-		linkAnalysis.aliases
-			.map(alias => (alias.alias, alias.pages))
-			.saveToCassandra(settings("keyspace"), settings("linkTable"), SomeColumns("alias", "pagesreduced"))
-		linkAnalysis.pages
-			.map(page => (page.page, page.aliases))
-			.saveToCassandra(settings("keyspace"), settings("pageTable"), SomeColumns("page", "aliasesreduced"))
-	}
-	// $COVERAGE-ON$
+    /**
+      * Saves the grouped aliases and links to the Cassandra.
+      * @param sc Spark Context used to connect to the Cassandra or the HDFS
+      */
+    override def save(sc: SparkContext): Unit = {
+        linkAnalysis.aliases
+            .map(alias => (alias.alias, alias.pages))
+            .saveToCassandra(settings("keyspace"), settings("linkTable"), SomeColumns("alias", "pagesreduced"))
+        linkAnalysis.pages
+            .map(page => (page.page, page.aliases))
+            .saveToCassandra(settings("keyspace"), settings("pageTable"), SomeColumns("page", "aliasesreduced"))
+    }
+    // $COVERAGE-ON$
 
-	/**
-	  * Groups the links once on the aliases and once on the pages.
-	  * @param sc Spark Context used to e.g. broadcast variables
-	  */
-	override def run(sc: SparkContext): Unit = {
-		linkAnalysis.conf = CommandLineConf(Seq("-r"))
-		linkAnalysis.run(sc)
-	}
+    /**
+      * Groups the links once on the aliases and once on the pages.
+      * @param sc Spark Context used to e.g. broadcast variables
+      */
+    override def run(sc: SparkContext): Unit = {
+        linkAnalysis.conf = CommandLineConf(Seq("-r"))
+        linkAnalysis.run(sc)
+    }
 }

@@ -23,36 +23,36 @@ import de.hpi.ingestion.textmining.tokenizer.{CleanWhitespaceTokenizer, Ingestio
 import org.scalatest.{FlatSpec, Matchers}
 
 class RelationSentenceParserTest extends FlatSpec with SharedSparkContext with Matchers with RDDComparisons {
-	"Wikipedia text" should "be split into exactly these Sentences with these entities" in {
-		val parsedEntry = TestData.bigLinkExtenderParsedEntry()
-		val sentenceTokenizer = IngestionTokenizer(new SentenceTokenizer, false, false)
-		val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, true)
-		val sentences = RelationSentenceParser.entryToSentencesWithEntities(parsedEntry, sentenceTokenizer, tokenizer)
-		sentences shouldEqual TestData.sentenceList()
-	}
+    "Wikipedia text" should "be split into exactly these Sentences with these entities" in {
+        val parsedEntry = TestData.bigLinkExtenderParsedEntry()
+        val sentenceTokenizer = IngestionTokenizer(new SentenceTokenizer, false, false)
+        val tokenizer = IngestionTokenizer(new CleanWhitespaceTokenizer, false, true)
+        val sentences = RelationSentenceParser.entryToSentencesWithEntities(parsedEntry, sentenceTokenizer, tokenizer)
+        sentences shouldEqual TestData.sentenceList()
+    }
 
-	"Sentences" should "not contain these countries and cities as entities" in {
-		val sentences = sc.parallelize(TestData.alternativeSentenceList())
-		val relations = sc.parallelize(TestData.relationList())
-		val companies = TestData.companySet()
-		val filteredSentences = RelationSentenceParser.filterSentences(
-			sentences,
-			relations,
-			companies,
-			sc).collect.toSet
-		filteredSentences shouldEqual TestData.alternativeSentenceListFiltered().toSet
-	}
+    "Sentences" should "not contain these countries and cities as entities" in {
+        val sentences = sc.parallelize(TestData.alternativeSentenceList())
+        val relations = sc.parallelize(TestData.relationList())
+        val companies = TestData.companySet()
+        val filteredSentences = RelationSentenceParser.filterSentences(
+            sentences,
+            relations,
+            companies,
+            sc).collect.toSet
+        filteredSentences shouldEqual TestData.alternativeSentenceListFiltered().toSet
+    }
 
-	"Wikipedia articles" should "be split into exactly these Sentences with these entities" in {
-		val job = new RelationSentenceParser
-		job.parsedWikipedia = sc.parallelize(
-			(Set(TestData.bigLinkExtenderParsedEntry()) ++ TestData.linkExtenderExtendedParsedEntry()).toList
-		)
-		job.relations = sc.parallelize(TestData.relationList())
-		job.wikidataEntries = sc.parallelize(TestData.wikiDataCompanies())
-		job.run(sc)
-		val sentences = job.sentences.collect.toList
-		val expectedSentences =  TestData.alternativeSentenceListFiltered()
-		sentences shouldEqual expectedSentences
-	}
+    "Wikipedia articles" should "be split into exactly these Sentences with these entities" in {
+        val job = new RelationSentenceParser
+        job.parsedWikipedia = sc.parallelize(
+            (Set(TestData.bigLinkExtenderParsedEntry()) ++ TestData.linkExtenderExtendedParsedEntry()).toList
+        )
+        job.relations = sc.parallelize(TestData.relationList())
+        job.wikidataEntries = sc.parallelize(TestData.wikiDataCompanies())
+        job.run(sc)
+        val sentences = job.sentences.collect.toList
+        val expectedSentences =  TestData.alternativeSentenceListFiltered()
+        sentences shouldEqual expectedSentences
+    }
 }

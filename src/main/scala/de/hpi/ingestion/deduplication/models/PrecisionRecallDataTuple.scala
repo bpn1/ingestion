@@ -24,8 +24,8 @@ package de.hpi.ingestion.deduplication.models
   * @param fscore
   */
 case class PrecisionRecallDataTuple(
-	threshold: Double,
-	precision: Double,
-	recall: Double,
-	fscore: Double
+    threshold: Double,
+    precision: Double,
+    recall: Double,
+    fscore: Double
 )

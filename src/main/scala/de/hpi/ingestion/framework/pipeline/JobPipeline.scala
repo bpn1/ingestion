@@ -20,27 +20,27 @@ import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.{SparkConf, SparkContext}
 
 trait JobPipeline {
-	var jobs: List[(SparkJob, Array[String])] = Nil
-	var pipelineName: String = "Pipeline"
+    var jobs: List[(SparkJob, Array[String])] = Nil
+    var pipelineName: String = "Pipeline"
 
-	def createSparkConf(): SparkConf = {
-		val sparkOptions = jobs
-			.flatMap(_._1.sparkOptions.toList)
-			.groupBy(_._1)
-			.map { case (property, values) =>
-				val propValues = values.map(_._2)
-				val propValue = property match {
-					case "spark.yarn.executor.memoryOverhead" => propValues.map(_.toInt).max.toString
-					case "spark.kryo.registrator" | _ => propValues.head
-				}
-				(property, propValue)
-			}
-		new SparkConf()
-			.setAppName(pipelineName)
-			.setAll(sparkOptions.toList)
-	}
+    def createSparkConf(): SparkConf = {
+        val sparkOptions = jobs
+            .flatMap(_._1.sparkOptions.toList)
+            .groupBy(_._1)
+            .map { case (property, values) =>
+                val propValues = values.map(_._2)
+                val propValue = property match {
+                    case "spark.yarn.executor.memoryOverhead" => propValues.map(_.toInt).max.toString
+                    case "spark.kryo.registrator" | _ => propValues.head
+                }
+                (property, propValue)
+            }
+        new SparkConf()
+            .setAppName(pipelineName)
+            .setAll(sparkOptions.toList)
+    }
 
-	def run(sc: SparkContext): Unit = {
-		jobs.foreach { case (job, args) => job.execute(sc, args) }
-	}
+    def run(sc: SparkContext): Unit = {
+        jobs.foreach { case (job, args) => job.execute(sc, args) }
+    }
 }
