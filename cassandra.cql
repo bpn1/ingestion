@@ -489,7 +489,6 @@ CREATE TABLE datalake.versiondiff (
 
 
 
-
 -- Indices
 CREATE CUSTOM INDEX ON datalake.subject (name) USING 'org.apache.cassandra.index.sasi.SASIIndex'
     WITH OPTIONS = {
@@ -578,7 +577,7 @@ CREATE TABLE evaluation.featureentries (
     staging frozen<subject>,
     score map<text, frozen<list<double>>>,
     correct boolean
-); -- dropable
+);
 
 CREATE TABLE evaluation.goldstandard (
     id1 uuid PRIMARY KEY,
@@ -671,3 +670,19 @@ CREATE TABLE evaluation.version (
     program text,
     timestamp timestamp
 );
+
+
+
+-- CLE
+CREATE KEYSPACE cle WITH REPLICATION = {
+    'class' : 'SimpleStrategy',
+    'replication_factor' : 3
+};
+
+CREATE TABLE cle.events (
+    type text,
+    user text,
+    timestamp timestamp,
+    props map<text, text>,
+    PRIMARY KEY ((type, user), timestamp)
+) WITH CLUSTERING ORDER BY (timestamp DESC);
