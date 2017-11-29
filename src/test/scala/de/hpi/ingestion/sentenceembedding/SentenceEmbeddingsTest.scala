@@ -16,12 +16,15 @@ limitations under the License.
 
 package de.hpi.ingestion.sentenceembedding
 
+import breeze.linalg.DenseVector
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.sentenceembedding.mock.MockSentenceEmbeddings
+import de.hpi.ingestion.textmining.{TestData => TextTestData}
 import org.scalatest.{FlatSpec, Matchers}
 import de.hpi.ingestion.implicits.CollectionImplicits._
 
 import scala.collection.mutable
+import scala.math.BigDecimal
 
 class SentenceEmbeddingsTest extends FlatSpec with Matchers with SharedSparkContext {
     "Weight parameter" should "be set if provided" in {
@@ -58,12 +61,6 @@ class SentenceEmbeddingsTest extends FlatSpec with Matchers with SharedSparkCont
         wordWeights shouldEqual expectedWordWeights
     }
 
-//    "Sentences" should "be tokenized" in {
-//        val sentences = TestData.sentences("sentences_small").map(SentenceEmbeddings.tokenize)
-//        val expectedSentences = TestData.tokenizedSentences
-//        sentences shouldEqual expectedSentences
-//    }
-
     "Sentences" should "be preprocessed" in {
         val tokenizedSentences = TestData.tokenizedSentences
         val stopwords = TestData.stopwords()
@@ -89,7 +86,7 @@ class SentenceEmbeddingsTest extends FlatSpec with Matchers with SharedSparkCont
         val sentences = TestData.exampleSentences
         val sentenceEmbeddings = sentences
             .flatMap(SentenceEmbeddings.convertSentenceToSentenceEmbedding(_, wordEmbeddings, weights))
-        val expectedEmbeddings = TestData.exampleSentenceEmbeddings
+        val expectedEmbeddings = TestData.exampleSentenceEmbeddingTuples.map(_._2)
         sentenceEmbeddings should have length expectedEmbeddings.length
         sentenceEmbeddings.zip(expectedEmbeddings).foreach { case (vector, exVector) =>
             vector.data.toList.zip(exVector.data.toList).foreach { case (value, exValue) =>
@@ -127,9 +124,41 @@ class SentenceEmbeddingsTest extends FlatSpec with Matchers with SharedSparkCont
     }
 
     "Principal component" should "be removed from sentence embeddings" in {
-        val embeddings = sc.parallelize(TestData.exampleSentenceEmbeddings).zipWithIndex().map(_.swap)
+        val embeddings = sc.parallelize(TestData.exampleSentenceEmbeddingTuples)
         val cleanedEmbeddings = SentenceEmbeddings.removePrincipalComponent(embeddings).collect.toList
         cleanedEmbeddings should have length 3
         cleanedEmbeddings.foreach { case (index, vector) => vector should have length 4 }
+    }
+
+    "Sentence embeddings" should "be computed from the sentences" in {
+        val job = new SentenceEmbeddings
+        job.embeddingStreamFunction = TextTestData.docfreqStream("wordembeddings_example", "/sentenceembeddings/")
+        val sentences = sc.parallelize(TestData.exampleSentences).zipWithIndex().map(_.swap)
+        val weights = TestData.exampleWeights
+        val sentenceEmbeddings = job.computeSentenceEmbeddings(sentences, weights)
+            .map { case (index, vector) =>
+                val roundedData = vector.data
+                    .toList
+                    .map(BigDecimal.apply)
+                    .map(_.setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+                    .toArray
+                val roundedVector = DenseVector(roundedData)
+                (index, roundedVector)
+            }.collect
+            .toSet
+        val expectedEmbeddings = TestData.exampleSentenceEmbeddingTuples.toSet
+        sentenceEmbeddings shouldEqual expectedEmbeddings
+    }
+
+    they should "be computed from the input data" in {
+        val job = new SentenceEmbeddings
+        job.embeddingStreamFunction = TextTestData.docfreqStream("wordembeddings_example", "/sentenceembeddings/")
+        job.tokenizedSentences = sc.parallelize(TestData.exampleTokenizedSentences)
+        job.stopwords = sc.parallelize(List.empty[String])
+        job.wordFrequencies = sc.parallelize(TestData.exampleWordFrequencies)
+        job.run(sc)
+        val sentenceEmbeddings = job.sentenceEmbeddings.collect.toList
+        sentenceEmbeddings should have length 3
+        sentenceEmbeddings.foreach { case (index, vector) => vector should have length 4 }
     }
 }

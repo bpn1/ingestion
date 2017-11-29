@@ -2199,8 +2199,8 @@ object TestData {
         new ByteArrayInputStream(trieStream.toByteArray)
     }
 
-    def docfreqStream(file: String)(file2: String): InputStream = {
-        new FileInputStream(new File(getClass.getResource(s"/textmining/$file").toURI))
+    def docfreqStream(file: String, prefix: String = "/textmining/")(file2: String): InputStream = {
+        new FileInputStream(new File(getClass.getResource(s"$prefix$file").toURI))
     }
 
     def uncleanedFoundAliases(): List[String] = {

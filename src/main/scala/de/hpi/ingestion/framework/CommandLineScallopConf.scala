@@ -45,9 +45,9 @@ class CommandLineScallopConf(arguments: Seq[String]) extends ScallopConf(argumen
         case _ => Left("Exactly two versions have to be provided.")
     }
     val sentenceEmdbeddingDescription = "Specifies the files and parameters used for the sentence embedding " +
-        "calculation. Possible keys are the following: stopwords, sentences, wordfrequencies, wordembeddings, " +
-        "output, weightparam. The file paths should point to a file in the HDFS in the home folder of the HDFS " +
-        "user that executes the Spark Job. The weightparam should be a float (e.g. 0.000001)."
+        "calculation. Possible keys are the following: stopwords, wordfrequencies, wordembeddings, weightparam. " +
+        "The file paths should point to a file in the HDFS in the home folder of the HDFS " +
+        "user that executes the Spark Job. The weightparam should be a double (e.g., 0.000001, 1e-7)."
     val sentenceEmbeddingFiles = props[String]('F', descr = sentenceEmdbeddingDescription)
     verify()
 

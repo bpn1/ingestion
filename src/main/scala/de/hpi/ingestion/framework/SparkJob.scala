@@ -102,7 +102,7 @@ trait SparkJob extends Configurable with Serializable {
 
     /**
       * Reads a file, parses each line and transforms these into a collection. By default the files are read from the
-      * HDFS.
+      * HDFS. This method can be called in a map function to load the file into the memory of every worker.
       * @param file name of the file to read
       * @param fileStreamFunction function that opens an input stream on the specified file. The default function reads
       *                           the file from the HDFS.

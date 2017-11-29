@@ -17,6 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.sentenceembedding
 
 import breeze.linalg.DenseVector
+import de.hpi.ingestion.sentenceembedding.models.SentenceEmbedding
 import de.hpi.ingestion.textmining.models.TrieAliasArticle
 
 import scala.collection.mutable
@@ -196,6 +197,24 @@ object TestData {
         )
     }
 
+    def exampleTokenizedSentences: List[SentenceEmbedding] = {
+        List(
+            SentenceEmbedding(0L, tokens = List("softbank", "corp.", ",", "führenden", "distributoren", "software", "japan")),
+            SentenceEmbedding(1L, tokens = List("deutsche", "telekom", "huawei", "bauen", "software")),
+            SentenceEmbedding(2L, tokens = List("kunden", "unterstützen", ",", "japan")),
+            SentenceEmbedding(3L, tokens = List("hardware", "deutschland", "vodafone"))
+        )
+    }
+
+    def exampleSentenceEmbeddings: List[SentenceEmbedding] = {
+        List(
+            SentenceEmbedding(0L, None, List(-1.3, -0.9, -0.8, -0.2), None, List("softbank", "corp.", ",", "führenden", "distributoren", "software", "japan")),
+            SentenceEmbedding(1L, None, List(0.5, 0.5, 0.5, 0.3), None, List("deutsche", "telekom", "huawei", "bauen", "software")),
+            SentenceEmbedding(2L, None, List(-1.2, -0.9, -0.9, 0.0), None, List("kunden", "unterstützen", ",", "japan")),
+            SentenceEmbedding(3L, None, Nil, None, List("hardware", "deutschland", "vodafone"))
+        )
+    }
+
     def exampleWeights: Map[String, Double] = {
         Map(
             "softbank" -> 0.5,
@@ -206,11 +225,21 @@ object TestData {
         )
     }
 
-    def exampleSentenceEmbeddings: List[DenseVector[Double]] = {
+    def exampleWordFrequencies: List[String] = {
         List(
-            DenseVector(-1.3, -0.9, -0.8, -0.2),
-            DenseVector(0.5, 0.5, 0.5, 0.3),
-            DenseVector(-1.2, -0.9, -0.9, 0.0)
+            "softbank\t5",
+            "telekom\t20",
+            "kunden\t5",
+            "japan\t20",
+            "software\t1"
+        )
+    }
+
+    def exampleSentenceEmbeddingTuples: List[(Long, DenseVector[Double])] = {
+        List(
+            (0L, DenseVector(-1.3, -0.9, -0.8, -0.2)),
+            (1L, DenseVector(0.5, 0.5, 0.5, 0.3)),
+            (2L, DenseVector(-1.2, -0.9, -0.9, 0.0))
         )
     }
 

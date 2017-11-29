@@ -31,7 +31,6 @@ class SentenceKMeans extends SparkJob {
     configFile = "sentenceembeddings.xml"
     val defaultNumClusters = settings("kmeansClusters").toInt
     val defaultNumIterations = settings("kmeansIterations").toInt
-    val defaultOutput = s"clustered_sentence_embeddings_${System.currentTimeMillis()}"
 
     var sentenceEmbeddings: RDD[SentenceEmbedding] = _
     var sentenceEmbeddingsWithCluster: RDD[SentenceEmbedding] = _
@@ -60,9 +59,10 @@ class SentenceKMeans extends SparkJob {
       * @param sc SparkContext to be used for the job
       */
     override def run(sc: SparkContext): Unit = {
-        val parsedSentenceEmbeddings = sentenceEmbeddings.map { embedding =>
-            (embedding, embedding.toSparkVector)
-        }
+        val parsedSentenceEmbeddings = sentenceEmbeddings
+            .collect {
+                case embedding if embedding.embedding.nonEmpty => (embedding, embedding.toSparkVector)
+            }
         val trainEmbeddings = parsedSentenceEmbeddings.values.cache()
         val numClusters = defaultNumClusters
         val numIterations = defaultNumIterations

@@ -94,20 +94,15 @@ class SentenceEmbeddings extends SparkJob {
 
         // Preprocess the sentences so that the sentence embeddings can be calculated. Zip them with their index so the
         // sentence embeddings can be correctly associated with the sentence they originate from.
-        System.out.println("DEBUG: sentence indexing")
         val indexedSentences = tokenizedSentences.map(sentence => (sentence.id, sentence.tokens))
-        System.out.println("DEBUG: sentence preprocessing")
         val preprocessedSentences = preprocessSentences(indexedSentences, collectedStopwords)
 
-        System.out.println("DEBUG: sentence embedding computation")
         // Calculate the sentence embedding using the fast text word embeddings. These are read from the HDFS by each
         // worker separately.
         val sentencesAsEmbeddings = computeSentenceEmbeddings(preprocessedSentences, wordWeights)
 
-        System.out.println("DEBUG: sentence remove pc")
         // Remove the principal component from each sentence embedding and serialize the resulting sentence embeddings.
         val removedPrincipalComponent = removePrincipalComponent(sentencesAsEmbeddings)
-        System.out.println("DEBUG: save sentences")
         sentenceEmbeddings = removedPrincipalComponent.map { case (id, embedding) => (id, embedding.data.toList) }
     }
 
