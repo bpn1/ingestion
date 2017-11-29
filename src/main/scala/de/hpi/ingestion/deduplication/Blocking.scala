@@ -90,7 +90,7 @@ class Blocking extends SparkJob {
     }
 
     /**
-      * Sets the number of paritions used for the repartition in the blocking to #executors * #executor cores * 4
+      * Sets the number of partitions used for the repartition in the blocking to #executors * #executor cores * 4
       */
     def setPartitioning(sc: SparkContext): Unit = {
         numPartitions = sc.getExecutorMemoryStatus.size * sc.getConf.getInt("spark.executor.cores", 1) * 2

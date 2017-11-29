@@ -26,6 +26,7 @@ package de.hpi.ingestion.framework
   * @param toReduced reduced flag used by the Link Analysis and Reduced Link Analysis
   * @param restoreVersionOpt Option of the Version restored to in the Version Restore
   * @param diffVersionsOpt Option of the Versions to diff in the Version Diff
+  * @param sentenceEmbeddingFiles the Sentence Embedding files
   */
 case class CommandLineConf(
     configOpt: Option[String],
@@ -35,7 +36,8 @@ case class CommandLineConf(
     tokenizerOpt: Option[List[String]],
     toReduced: Boolean,
     restoreVersionOpt: Option[String],
-    diffVersionsOpt: Option[List[String]]
+    diffVersionsOpt: Option[List[String]],
+    sentenceEmbeddingFiles: Map[String, String]
 ) {
     /**
       * Returns the value of configOpt and causes an error if it's not set.

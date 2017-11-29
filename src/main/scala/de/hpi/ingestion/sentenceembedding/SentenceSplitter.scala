@@ -14,53 +14,60 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.dataimport.spiegel
+package de.hpi.ingestion.sentenceembedding
 
-import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.textmining.models.TrieAliasArticle
-import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import de.hpi.fgis.utils.text.Document
 import de.hpi.fgis.utils.text.annotation.Sentence
 import de.hpi.fgis.utils.text.sentencesplit.MEOpenNLPSentenceSplitter
+import de.hpi.ingestion.framework.SparkJob
+import de.hpi.ingestion.textmining.models.TrieAliasArticle
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 
 /**
   * Splits the Spiegel articles into sentences using a self trained Maximum Entropy model.
   */
 class SentenceSplitter extends SparkJob {
     appName = "Sentence Splitter"
-    configFile = "textmining.xml"
+    configFile = "sentenceembeddings.xml"
 
     var spiegelArticles: RDD[TrieAliasArticle] = _
-    var sentences: RDD[String] = _
+    var sentences: RDD[(Long, String)] = _
 
+    // $COVERAGE-OFF$
     /**
       * Loads the Spiegel Articles from the Cassandra.
       * @param sc SparkContext to be used for the job
       */
     override def load(sc: SparkContext): Unit = {
-        spiegelArticles = sc.cassandraTable[TrieAliasArticle](settings("keyspace"), settings("spiegelTable"))
+        spiegelArticles = sc.cassandraTable[TrieAliasArticle](settings("spiegelKeyspace"), settings("spiegelTable"))
     }
 
     /**
-      * Saves the sentences to the HDFS.
+      * Saves the sentences and their indices to the Cassandra.
       * @param sc SparkContext to be used for the job
       */
     override def save(sc: SparkContext): Unit = {
-        sentences.saveAsTextFile("spiegel_sentences2")
+        sentences.saveToCassandra(
+            settings("keyspace"),
+            settings("sentenceEmbeddingTable"),
+            SomeColumns("id", "sentence"))
     }
+    // $COVERAGE-ON$
 
     /**
-      * Splits the Spiegel Articles into sentences.
+      * Splits the Spiegel Articles into sentences and indexes the sentences.
       * @param sc SparkContext to be used for the job
       */
     override def run(sc: SparkContext): Unit = {
-        sentences = spiegelArticles.map { article =>
-            val document = new Document(article.text.get)
-            val sentenceSplitter = new MEOpenNLPSentenceSplitter
-            sentenceSplitter.annotate(document)
-            document.get(Sentence).map(_.value).mkString("\n")
-        }
+        sentences = spiegelArticles
+            .flatMap { article =>
+                val document = new Document(article.text.get)
+                val sentenceSplitter = new MEOpenNLPSentenceSplitter
+                sentenceSplitter.annotate(document)
+                document.get(Sentence).map(_.value)
+            }.zipWithIndex()
+            .map(_.swap)
     }
 }
