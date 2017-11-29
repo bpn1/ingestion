@@ -18,6 +18,7 @@ package de.hpi.ingestion.framework
 
 import java.io.{ByteArrayOutputStream, EOFException}
 
+import org.rogach.scallop.exceptions.Help
 import org.scalatest.{FlatSpec, Matchers}
 
 class CommandLineScallopConfTest extends FlatSpec with Matchers {
@@ -53,7 +54,8 @@ class CommandLineScallopConfTest extends FlatSpec with Matchers {
             "-i", "normalization.xml",
             "-v", "version1",
             "-r",
-            "-t", "flag1", "flag2", "flag3")
+            "-t", "flag1", "flag2", "flag3",
+            "-Fkey1=value1", "key2=value2")
         val conf = new CommandLineScallopConf(args)
         conf.comment() shouldEqual "this_is_a_comment"
         conf.commitJson() shouldEqual "\"{abcde}\""
@@ -63,6 +65,7 @@ class CommandLineScallopConfTest extends FlatSpec with Matchers {
         conf.restoreVersion() shouldEqual "version1"
         conf.toReduced() shouldBe true
         conf.tokenizer() shouldEqual List("flag1", "flag2", "flag3")
+        conf.sentenceEmbeddingFiles shouldEqual Map("key1" -> "value1", "key2" -> "value2")
     }
 
     "Tokenizer flags" should "be verified" in {
@@ -84,6 +87,9 @@ class CommandLineScallopConfTest extends FlatSpec with Matchers {
         an [IllegalArgumentException] should be thrownBy conf.onError(new EOFException())
         an [IllegalArgumentException] should be thrownBy conf.onError(new NullPointerException())
         an [IllegalArgumentException] should be thrownBy conf.onError(new NumberFormatException())
+        Console.withOut(new ByteArrayOutputStream()) {
+            an [IllegalArgumentException] should be thrownBy conf.onError(Help(""))
+        }
     }
 
     "Config" should "be transformed into a Command Line Config" in {
@@ -121,7 +127,7 @@ class CommandLineScallopConfTest extends FlatSpec with Matchers {
     "Help" should "be printed" in {
         val output = new ByteArrayOutputStream()
         Console.withOut(output) {
-            new CommandLineScallopConf(Seq("--help"))
+            an [IllegalArgumentException] should be thrownBy new CommandLineScallopConf(Seq("--help"))
         }
         val printedHelp = output.toString()
         printedHelp should startWith ("Usage: spark.sh ... myJar.jar [OPTION]...\nOptions:\n")

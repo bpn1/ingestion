@@ -16,6 +16,12 @@ limitations under the License.
 
 package de.hpi.ingestion.sentenceembedding.mock
 
-class MockSentenceEmbeddings {
+import de.hpi.ingestion.sentenceembedding.SentenceEmbeddings
+import org.apache.spark.SparkContext
 
+class MockSentenceEmbeddings extends SentenceEmbeddings {
+    override def load(sc: SparkContext): Unit = {}
+    override def run(sc: SparkContext): Unit = {}
+    override def save(sc: SparkContext): Unit = {}
+    override def executeQueries(sc: SparkContext, queries: List[String]): Unit =  {}
 }

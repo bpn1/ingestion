@@ -14,10 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.dataimport.spiegel
+package de.hpi.ingestion.sentenceembedding
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.sentenceembedding.SentenceSplitter
 import org.scalatest.{FlatSpec, Matchers}
 
 class SentenceSplitterTest extends FlatSpec with Matchers with SharedSparkContext {
