@@ -45,7 +45,7 @@ class SentenceEmbeddingsTest extends FlatSpec with Matchers with SharedSparkCont
     }
 
     "Word frequencies" should "be parsed" in {
-        val wordFrequencyFile = TestData.wordFrequencies("wordfrequencies_small")
+        val wordFrequencyFile = TestData.wordFrequencies("wordfrequencies")
         val wordFrequencies = wordFrequencyFile.flatMap(SentenceEmbeddings.convertLineToWordFrequency)
         val expectedWordFrequencies = TestData.parsedWordFrequencies
         wordFrequencies shouldEqual expectedWordFrequencies
@@ -107,7 +107,7 @@ class SentenceEmbeddingsTest extends FlatSpec with Matchers with SharedSparkCont
     }
 
     "Word embeddings" should "be parsed" in {
-        val embeddings = TestData.wordEmbeddings("wordembeddings_small")
+        val embeddings = TestData.wordEmbeddings()
         val parsedEmbeddings = embeddings
             .flatMap(SentenceEmbeddings.convertLineToEmbedding)
             .map { case (word, embedding) => (word, embedding.toList) }
@@ -117,7 +117,7 @@ class SentenceEmbeddingsTest extends FlatSpec with Matchers with SharedSparkCont
     }
 
     they should "be added to a mutable collection" in {
-        val embedddings = TestData.wordEmbeddings("wordembeddings_small")
+        val embedddings = TestData.wordEmbeddings()
         val embeddingsMap = mutable.Map.empty[String, Array[Double]]
         embedddings.foreach(SentenceEmbeddings.addWordEmbeddingFromFile(_, embeddingsMap))
         val expectedEmbeddings = TestData.parsedEmbeddings.toMap
