@@ -45,7 +45,7 @@ class SentenceEmbeddingsTest extends FlatSpec with Matchers with SharedSparkCont
     }
 
     "Word frequencies" should "be parsed" in {
-        val wordFrequencyFile = TestData.wordFrequencies("wordfrequencies")
+        val wordFrequencyFile = TestData.wordFrequencies()
         val wordFrequencies = wordFrequencyFile.flatMap(SentenceEmbeddings.convertLineToWordFrequency)
         val expectedWordFrequencies = TestData.parsedWordFrequencies
         wordFrequencies shouldEqual expectedWordFrequencies

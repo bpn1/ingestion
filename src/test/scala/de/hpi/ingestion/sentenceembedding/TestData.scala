@@ -61,10 +61,6 @@ object TestData {
         loadFile(file).getLines().toSet
     }
 
-    def sentences(file: String = "sentences"): List[String] = {
-        loadFile(file).getLines().toList
-    }
-
     def wordEmbeddings(file: String = "wordembeddings"): List[String] = {
         loadFile(file).getLines().toList
     }
