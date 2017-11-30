@@ -132,6 +132,8 @@ class SentenceEmbeddings extends SparkJob {
             .toMap
     }
 
+
+
     /**
       * Calculate the sentence embedding using the fast text word embeddings. These are read from the HDFS by each
       * worker separately.
@@ -145,10 +147,11 @@ class SentenceEmbeddings extends SparkJob {
     ): RDD[(Long, DenseVector[Double])] = {
         sentences
             .mapPartitions({ partition =>
-                val embeddingFile = conf.sentenceEmbeddingFiles.getOrElse("wordembeddings", defaultWordEmbeddings)
-                val embeddingStream = embeddingStreamFunction(embeddingFile)
-                val reader = new BufferedReader(new InputStreamReader(embeddingStream, "UTF-8"))
-                val embeddingsMap = readWordEmbeddingsFromFile(reader)
+                val embeddingsMap = parseHDFSFileToMutableCollection(
+                    conf.sentenceEmbeddingFiles.getOrElse("wordembeddings", defaultWordEmbeddings),
+                    embeddingStreamFunction,
+                    () => mutable.Map.empty[String, Array[Double]],
+                    addWordEmbeddingFromFile)
                 partition.flatMap { case (index, sentence) =>
                     val embeddings = convertSentenceToSentenceEmbedding(sentence, embeddingsMap, wordWeights)
                     embeddings.map((index, _))
@@ -159,21 +162,15 @@ class SentenceEmbeddings extends SparkJob {
 
 object SentenceEmbeddings {
     /**
-      * Reads the word embeddings from a reader, parses them and puts them in a dictionary.
-      * @param reader reader of the word embedding file
-      * @return map containing every word and its embedding
+      * Parses a line containing a word and its embedding and adds it to a mutable map containing all word embeddings.
+      * @param line the line containing the word and its embedding
+      * @param embeddingsMap the mutable map containing every word and its parsed embedding
       */
-    def readWordEmbeddingsFromFile(reader: BufferedReader): mutable.Map[String, Array[Double]] = {
-        val embeddingsMap = mutable.Map[String, Array[Double]]()
-        var line = reader.readLine()
-        while(line != null) {
-            val wordEmbeddingOption = convertLineToEmbedding(line)
-            wordEmbeddingOption.foreach { case (word, wordEmbedding) =>
-                embeddingsMap(word) = wordEmbedding
-            }
-            line = reader.readLine()
+    def addWordEmbeddingFromFile(line: String, embeddingsMap: mutable.Map[String, Array[Double]]): Unit = {
+        val wordEmbeddingOption = convertLineToEmbedding(line)
+        wordEmbeddingOption.foreach { case (word, wordEmbedding) =>
+            embeddingsMap(word) = wordEmbedding
         }
-        embeddingsMap
     }
 
     /**

@@ -116,11 +116,12 @@ class SentenceEmbeddingsTest extends FlatSpec with Matchers with SharedSparkCont
         parsedEmbeddings shouldEqual expectedEmbeddings
     }
 
-    they should "be read from a file" in {
-        val embeddingReader = TestData.loadFile("wordembeddings_small").bufferedReader()
-        val embeddingsMap = SentenceEmbeddings.readWordEmbeddingsFromFile(embeddingReader).toMap.mapValues(_.toList)
+    they should "be added to a mutable collection" in {
+        val embedddings = TestData.wordEmbeddings("wordembeddings_small")
+        val embeddingsMap = mutable.Map.empty[String, Array[Double]]
+        embedddings.foreach(SentenceEmbeddings.addWordEmbeddingFromFile(_, embeddingsMap))
         val expectedEmbeddings = TestData.parsedEmbeddings.toMap
-        embeddingsMap shouldEqual expectedEmbeddings
+        embeddingsMap.toMap.mapValues(_.toList) shouldEqual expectedEmbeddings
     }
 
     "Principal component" should "be removed from sentence embeddings" in {

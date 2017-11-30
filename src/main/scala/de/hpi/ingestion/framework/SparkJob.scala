@@ -102,7 +102,7 @@ trait SparkJob extends Configurable with Serializable {
 
     /**
       * Reads a file, parses each line and transforms these into a collection. By default the files are read from the
-      * HDFS. This method can be called in a map function to load the file into the memory of every worker.
+      * HDFS. This method can be called inside a map function to load the file into the memory of every worker.
       * @param file name of the file to read
       * @param fileStreamFunction function that opens an input stream on the specified file. The default function reads
       *                           the file from the HDFS.
@@ -113,7 +113,7 @@ trait SparkJob extends Configurable with Serializable {
       * @tparam S type of the result collection
       * @return specified collection of every parsed line
       */
-    def parseHDFSFile[T, S](
+    def parseHDFSFileToCollection[T, S](
         file: String,
         fileStreamFunction: String => InputStream = hdfsFileStream,
         parseLineFunction: String => Option[T],
@@ -121,7 +121,7 @@ trait SparkJob extends Configurable with Serializable {
     ): S = {
         val fileStream = fileStreamFunction(file)
         val reader = new BufferedReader(new InputStreamReader(fileStream, "UTF-8"))
-        var parsedLineBuffer = ListBuffer.empty[T]
+        val parsedLineBuffer = ListBuffer.empty[T]
         var line = reader.readLine()
         while(line != null) {
             val parsedLine = parseLineFunction(line)
@@ -129,6 +129,35 @@ trait SparkJob extends Configurable with Serializable {
             line = reader.readLine()
         }
         transformCollectionFunction(parsedLineBuffer.toList)
+    }
+
+    /**
+      * Reads a file, parses each line and adds these to a collection. By default the files are read from the HDFS.
+      * This method can be called inside a map function to load the file into the memory of every worker.
+      * @param file name of the file to read
+      * @param fileStreamFunction function that opens an input stream on the specified file. The default function reads
+      *                           the file from the HDFS.
+      * @param createCollectionFunction function that creates an instance of a mutable collection that will contain
+      *                                 every parsed line
+      * @param parseLineFunction function that parses a line and adds it to the mutable collection
+      * @tparam T type of the mutable collection that will contain every parsed line
+      * @return specified mutable collection containing every parsed line
+      */
+    def parseHDFSFileToMutableCollection[T](
+        file: String,
+        fileStreamFunction: String => InputStream = hdfsFileStream,
+        createCollectionFunction: () => T,
+        parseLineFunction: (String, T) => Unit
+    ): T = {
+        val fileStream = fileStreamFunction(file)
+        val reader = new BufferedReader(new InputStreamReader(fileStream, "UTF-8"))
+        val parsedLineCollection = createCollectionFunction()
+        var line = reader.readLine()
+        while(line != null) {
+            parseLineFunction(line, parsedLineCollection)
+            line = reader.readLine()
+        }
+        parsedLineCollection
     }
 
     /**
