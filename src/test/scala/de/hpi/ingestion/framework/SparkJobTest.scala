@@ -18,7 +18,10 @@ package de.hpi.ingestion.framework
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.framework.mock.{MockConditionSparkJob, MockSparkJob}
+import de.hpi.ingestion.textmining.{TestData => TextTestData}
 import org.scalatest.{FlatSpec, Matchers}
+
+import scala.collection.mutable
 
 class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
     "Execute" should "call the methods in the proper sequence" in {
@@ -101,5 +104,51 @@ class SparkJobTest extends FlatSpec with Matchers with SharedSparkContext {
         sparkJob.execute(sc)
         val expectedSequence = List("loadQuery 1", "loadQuery 2", "saveQuery1")
         sparkJob.queryCalls.toList shouldEqual expectedSequence
+    }
+
+    "Files" should "be read and parsed from any Input Stream" in {
+        val sparkJob = new MockSparkJob
+        val fileStreamFunction = TextTestData.docfreqStream("docfreq2") _
+        val parseLineFunction: String => Option[(String, Int)] = { line =>
+            val Array(count, word) = line.split("\t")
+            Option((word, count.toInt)).filter(_._2 < 3)
+        }
+        val transformCollectionFunction: List[(String, Int)] => Map[String, Int] = { lineList => lineList.toMap }
+        val parsedMap = sparkJob.parseHDFSFileToCollection(
+            "name",
+            fileStreamFunction,
+            parseLineFunction,
+            transformCollectionFunction)
+        parsedMap shouldEqual Map("verlink" -> 2, "hier" -> 2, "ist" -> 2)
+
+        val parseLineFunctionDouble: String => Option[Double] = { line =>
+            val Array(count, word) = line.split("\t")
+            Option(count.toDouble / word.length)
+        }
+        val transformCollectionFunctionDouble: List[Double] => Double = { lineList => lineList.sum / lineList.length }
+        val parsedAverage = sparkJob.parseHDFSFileToCollection(
+            "name",
+            fileStreamFunction,
+            parseLineFunctionDouble,
+            transformCollectionFunctionDouble)
+        parsedAverage === (185.0 / 336.0) +- 0.000000000000001 shouldBe true
+    }
+
+    they should "be parsed into a mutable collection" in {
+        val sparkJob = new MockSparkJob
+        val fileStreamFunction = TextTestData.docfreqStream("docfreq2") _
+        val createCollectionFunction = () => mutable.Map.empty[String, Int]
+        val parseLineFunction: (String, mutable.Map[String, Int]) => Unit = { case (line, collection) =>
+            val Array(count, word) = line.split("\t")
+            if(count.toInt < 3) {
+                collection(word) = count.toInt
+            }
+        }
+        val parsedMap = sparkJob.parseHDFSFileToMutableCollection(
+            "name",
+            fileStreamFunction,
+            createCollectionFunction,
+            parseLineFunction)
+        parsedMap shouldEqual mutable.Map("verlink" -> 2, "hier" -> 2, "ist" -> 2)
     }
 }

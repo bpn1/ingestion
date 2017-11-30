@@ -14,18 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.dataimport.spiegel
+package de.hpi.ingestion.sentenceembedding
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
-class SentenceSplitterTest extends FlatSpec with Matchers with SharedSparkContext {
-    "Sentence Splitter" should "split articles into sentences" in {
-        val job = new SentenceSplitter
-        job.spiegelArticles = sc.parallelize(TestData.sentenceArticles())
+class SentenceKMeansTest extends FlatSpec with Matchers with SharedSparkContext {
+    "K clusters" should "be found" in {
+        val job = new SentenceKMeans
+        job.settings = Map("kmeansClusters" -> "4", "kmeansIterations" -> "2")
+        job.sentenceEmbeddings = sc.parallelize(TestData.exampleSentenceEmbeddings)
         job.run(sc)
-        val sentences = job.sentences.collect().toSet
-        val expectedSentences = TestData.splitSentences()
-        sentences shouldEqual expectedSentences
+        val clusteredSentences = job.sentenceEmbeddingsWithCluster.collect.toList
+        clusteredSentences should have length 3
+        clusteredSentences.foreach { embedding => embedding.cluster shouldBe defined}
     }
 }

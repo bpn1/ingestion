@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <keyspace>embeddings</keyspace>
+        <sentenceEmbeddingTable>sentenceembeddings</sentenceEmbeddingTable>
+        <stopwordFile>stop_words.txt</stopwordFile>
+        <sentenceFile>spiegel_sentences2.txt</sentenceFile>
+        <wordFrequencyFile>wiki_word_frequencies.txt</wordFrequencyFile>
+        <wordEmbeddingFile>word_embeddings/fast_text_ger</wordEmbeddingFile>
+        <kmeansClusters>100</kmeansClusters>
+        <kmeansIterations>300</kmeansIterations>
+        <spiegelKeyspace>wikidumps</spiegelKeyspace>
+        <spiegelTable>spiegel</spiegelTable>
+    </settings>
+</config>

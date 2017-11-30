@@ -44,6 +44,11 @@ class CommandLineScallopConf(arguments: Seq[String]) extends ScallopConf(argumen
         case versionList if versionList.length == 2 => Right(Unit)
         case _ => Left("Exactly two versions have to be provided.")
     }
+    val sentenceEmdbeddingDescription = "Specifies the files and parameters used for the sentence embedding " +
+        "calculation. Possible keys are the following: stopwords, wordfrequencies, wordembeddings, weightparam. " +
+        "The file paths should point to a file in the HDFS in the home folder of the HDFS " +
+        "user that executes the Spark Job. The weightparam should be a double (e.g., 0.000001, 1e-7)."
+    val sentenceEmbeddingFiles = props[String]('F', descr = sentenceEmdbeddingDescription)
     verify()
 
     /**
@@ -56,7 +61,9 @@ class CommandLineScallopConf(arguments: Seq[String]) extends ScallopConf(argumen
     @throws(classOf[IllegalArgumentException])
     override def onError(e: Throwable): Unit = {
         e match {
-            case Help("") => printHelp()
+            case Help("") =>
+                printHelp()
+                throw new IllegalArgumentException(e.getMessage)
             case _ => throw new IllegalArgumentException(e.getMessage)
         }
     }
@@ -74,6 +81,7 @@ class CommandLineScallopConf(arguments: Seq[String]) extends ScallopConf(argumen
             tokenizer.toOption,
             toReduced(),
             restoreVersion.toOption,
-            diffVersions.toOption)
+            diffVersions.toOption,
+            sentenceEmbeddingFiles.toList.toMap) // transforms non-serializable scallop map into a serializable map
     }
 }

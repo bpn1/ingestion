@@ -686,3 +686,19 @@ CREATE TABLE cle.events (
     props map<text, text>,
     PRIMARY KEY ((type, user), timestamp)
 ) WITH CLUSTERING ORDER BY (timestamp DESC);
+
+
+
+-- Sentence Embeddings
+CREATE KEYSPACE embeddings WITH REPLICATION = {
+    'class' : 'SimpleStrategy',
+    'replication_factor' : 3
+};
+
+CREATE TABLE embeddings.sentenceembeddings (
+    id bigint PRIMARY KEY,
+    cluster int,
+    embedding list<double>,
+    sentence text,
+    tokens list<text>
+);

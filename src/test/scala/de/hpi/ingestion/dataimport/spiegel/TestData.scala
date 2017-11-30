@@ -81,30 +81,5 @@ object TestData {
                 text = None)
         )
     }
-
-    def sentenceArticles(): List[TrieAliasArticle] = {
-        List(
-            TrieAliasArticle(id = "1", text = Option("Das könnte dem Stellvertreter Osama bin Ladens das Leben gerettet haben. Statt selbst zu kommen schickte Sawahiri Angaben aus pakistanischen Sicherheitskreisen zufolge mehrere Vertreter. Nun werde geprüft, ob sich Sawahiris Helfer unter den Opfern in den drei zerstörten Häusern befunden haben, hieß es. Bei dem Angriff auf das Dorf waren mindestens 17 Menschen getötet worden. DPA Proteste in Pakistan: \"Tod für Amerika\" Erstmals verteidigte US-Außenministerin Condoleezza Rice den Luftangriff heute indirekt. Sie könne sich zu den \"Details dieses speziellen Umstandes\" nicht äußern, sagte Rice in Monrovia. Das afghanisch-pakistanische Grenzgebiet sei aber \"extrem schwierig\".")),
-            TrieAliasArticle(id = "2", text = Option("Comic von Jamiri: Eine Frage der Mathematik - SPIEGEL ONLINE Comic von Jamiri Eine Frage der Mathematik Jedes Gramm zählt auf Reisen. Gewicht kostet Benzin, lautet die alte Regel. Wobei coole Köpfe auch das der Beifahrerin einbeziehen - oder des Beifahrers, denn Fahrerinnen können durchaus im Vorteil sein. Freitag, 17.09.2004 11:49 Uhr Drucken Nutzungsrechte Feedback Klicken Sie auf das Bild, um den Comic zu starten. Jamiri zeichnet exklusiv für SPIEGEL ONLINE. Mehr von Jamiri gibt's bei Carlsen Comics."))
-        )
-    }
-
-    def splitSentences(): Set[String] = {
-        Set(
-            """Das könnte dem Stellvertreter Osama bin Ladens das Leben gerettet haben."""
-                + "\n" + """Statt selbst zu kommen schickte Sawahiri Angaben aus pakistanischen Sicherheitskreisen zufolge mehrere Vertreter."""
-                + "\n" + """Nun werde geprüft, ob sich Sawahiris Helfer unter den Opfern in den drei zerstörten Häusern befunden haben, hieß es."""
-                + "\n" + """Bei dem Angriff auf das Dorf waren mindestens 17 Menschen getötet worden."""
-                + "\n" + """DPA Proteste in Pakistan: "Tod für Amerika" Erstmals verteidigte US-Außenministerin Condoleezza Rice den Luftangriff heute indirekt."""
-                + "\n" + """Sie könne sich zu den "Details dieses speziellen Umstandes" nicht äußern, sagte Rice in Monrovia."""
-                + "\n" + """Das afghanisch-pakistanische Grenzgebiet sei aber "extrem schwierig".""",
-            """Comic von Jamiri: Eine Frage der Mathematik - SPIEGEL ONLINE Comic von Jamiri Eine Frage der Mathematik Jedes Gramm zählt auf Reisen."""
-                + "\n" + """Gewicht kostet Benzin, lautet die alte Regel."""
-                + "\n" + """Wobei coole Köpfe auch das der Beifahrerin einbeziehen - oder des Beifahrers, denn Fahrerinnen können durchaus im Vorteil sein."""
-                + "\n" + """Freitag, 17.09.2004 11:49 Uhr Drucken Nutzungsrechte Feedback Klicken Sie auf das Bild, um den Comic zu starten."""
-                + "\n" + """Jamiri zeichnet exklusiv für SPIEGEL ONLINE."""
-                + "\n" + """Mehr von Jamiri gibt's bei Carlsen Comics."""
-        )
-    }
 }
 // scalastyle:on line.size.limit
