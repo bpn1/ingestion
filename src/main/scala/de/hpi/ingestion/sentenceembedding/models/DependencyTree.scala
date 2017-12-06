@@ -16,6 +16,10 @@ limitations under the License.
 
 package de.hpi.ingestion.sentenceembedding.models
 
-case class DependencyTreeSentence(
-    
+case class DependencyTree(
+    id: Long,
+    sentence: Option[String] = None,
+    dependency_tree: Option[String] = None,
+    pattern: Option[String] = None,
+    patternfrequency: Option[Int] = None
 )
