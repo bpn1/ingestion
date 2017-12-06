@@ -702,3 +702,11 @@ CREATE TABLE embeddings.sentenceembeddings (
     sentence text,
     tokens list<text>
 );
+
+CREATE TABLE embeddings.dependencytrees (
+    id bigint PRIMARY KEY,
+    dependency_tree text,
+    pattern text,
+    patternfrequency int,
+    sentence text
+);

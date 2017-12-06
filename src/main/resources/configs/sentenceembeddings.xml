@@ -11,5 +11,6 @@
         <kmeansIterations>300</kmeansIterations>
         <spiegelKeyspace>wikidumps</spiegelKeyspace>
         <spiegelTable>spiegel</spiegelTable>
+        <depTreeTable>dependencytrees</depTreeTable>
     </settings>
 </config>
