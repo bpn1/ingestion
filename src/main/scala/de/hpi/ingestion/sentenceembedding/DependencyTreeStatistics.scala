@@ -17,39 +17,57 @@ limitations under the License.
 package de.hpi.ingestion.sentenceembedding
 
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.sentenceembedding.models.DependencyTree
+import de.hpi.ingestion.sentenceembedding.models.{DependencyTree, DependencyTreePattern}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 
+/**
+  * Aggregates the patterns of dependency parse trees, saves the counts to the sentences and saves the aggregated
+  * sentences of every pattern to the Cassandra.
+  */
 class DependencyTreeStatistics extends SparkJob {
     appName = "Dependency Tree Statistics"
     configFile = "sentenceembeddings.xml"
 
     var dependencyTrees: RDD[DependencyTree] = _
     var patternFrequencies: RDD[(Long, Int)] = _
-    var patternWithSentences: RDD[String] = _
+    var aggregatedSentences: RDD[DependencyTreePattern] = _
 
+    // $COVERAGE-OFF$
+    /**
+      * Loads the sentences and their dependency parse trees from the Cassandra.
+      * @param sc SparkContext to be used for the job
+      */
     override def load(sc: SparkContext): Unit = {
         dependencyTrees = sc.cassandraTable[DependencyTree](settings("keyspace"), settings("depTreeTable"))
     }
 
+    /**
+      * Saves the pattern frequencies and the aggregated sentences to the Cassandra.
+      * @param sc SparkContext to be used for the job
+      */
     override def save(sc: SparkContext): Unit = {
-//        patternFrequencies.saveToCassandra(
-//            settings("keyspace"),
-//            settings("depTreeTable"),
-//            SomeColumns("id", "patternfrequency"))
-        patternWithSentences.saveAsTextFile(s"pattern_with_sentences_${System.currentTimeMillis()}")
+        patternFrequencies.saveToCassandra(
+            settings("keyspace"),
+            settings("depTreeTable"),
+            SomeColumns("id", "patternfrequency"))
+        aggregatedSentences.saveToCassandra(settings("keyspace"), settings("dptPatternTable"))
     }
+    // $COVERAGE-ON$
 
+    /**
+      * Counts the number of occurrences of every pattern and aggregates the sentences by their patterns.
+      * @param sc SparkContext to be used for the job
+      */
     override def run(sc: SparkContext): Unit = {
-//        patternFrequencies = dependencyTrees
-//            .map(tree => (tree.pattern, List(tree.id)))
-//            .reduceByKey(_ ++ _)
-//            .flatMap { case (pattern, sentenceIds) =>
-//                val frequency = sentenceIds.length
-//                sentenceIds.map((_, frequency))
-//            }
+        patternFrequencies = dependencyTrees
+            .map(tree => (tree.pattern, List(tree.id)))
+            .reduceByKey(_ ++ _)
+            .flatMap { case (pattern, sentenceIds) =>
+                val frequency = sentenceIds.length
+                sentenceIds.map((_, frequency))
+            }
         val frequencies = dependencyTrees
             .flatMap(tree => tree.pattern.map((_, List(tree.id))))
             .reduceByKey(_ ++ _)
@@ -58,15 +76,12 @@ class DependencyTreeStatistics extends SparkJob {
                 sentenceIds.map((_, (pattern, frequency)))
             }
         val sentences = dependencyTrees.flatMap(tree => tree.sentence.map((tree.id, _)))
-        patternWithSentences = frequencies
+        aggregatedSentences = frequencies
             .join(sentences)
             .map { case (id, ((pattern, frequency), sentence)) =>
-                ((pattern, frequency), List((id, sentence)))
+                (DependencyTreePattern(pattern, Option(frequency)), List(sentence))
             }.reduceByKey(_ ++ _)
-            .sortBy(-_._1._2)
-            .map { case ((pattern, frequency), sentenceList) =>
-                val joinedSentences = sentenceList.map { case (id, sentence) => s"$id\t$sentence" }.mkString("\n")
-                s"$pattern\t$frequency\n$joinedSentences"
-            }
+            .sortBy(-_._1.frequency.get)
+            .map { case (dptPattern, sentenceList) => dptPattern.copy(sentences = sentenceList) }
     }
 }

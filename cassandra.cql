@@ -706,7 +706,14 @@ CREATE TABLE embeddings.sentenceembeddings (
 CREATE TABLE embeddings.dependencytrees (
     id bigint PRIMARY KEY,
     dependency_tree text,
+    spacy_doc text,
     pattern text,
     patternfrequency int,
     sentence text
+);
+
+CREATE TABLE embeddings.dpt_patterns (
+    pattern text PRIMARY KEY,
+    frequency int,
+    sentences list<text>
 );

@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.sentenceembedding
 
 import breeze.linalg.DenseVector
-import de.hpi.ingestion.sentenceembedding.models.SentenceEmbedding
+import de.hpi.ingestion.sentenceembedding.models.{DependencyTree, DependencyTreePattern, SentenceEmbedding}
 import de.hpi.ingestion.textmining.models.TrieAliasArticle
 
 import scala.collection.mutable
@@ -250,6 +250,44 @@ object TestData {
             "die" -> 1.0,
             "(" -> 1.0,
             "und" -> 1.0
+        )
+    }
+
+    def dependencyTrees: List[DependencyTree] = {
+        List(
+            DependencyTree(0L, Option("Sentence 0"), pattern = Option("Pattern 1")),
+            DependencyTree(1L, Option("Sentence 1"), pattern = Option("Pattern 2")),
+            DependencyTree(2L, Option("Sentence 2"), pattern = Option("Pattern 3")),
+            DependencyTree(3L, Option("Sentence 3"), pattern = Option("Pattern 1")),
+            DependencyTree(4L, Option("Sentence 4"), pattern = Option("Pattern 1")),
+            DependencyTree(5L, Option("Sentence 5"), pattern = Option("Pattern 2")),
+            DependencyTree(6L, Option("Sentence 6"), pattern = Option("Pattern 2")),
+            DependencyTree(7L, Option("Sentence 7"), pattern = Option("Pattern 3")),
+            DependencyTree(8L, Option("Sentence 8"), pattern = Option("Pattern 3")),
+            DependencyTree(9L, Option("Sentence 9"), pattern = Option("Pattern 1"))
+        )
+    }
+
+    def dependecyTreeFrequencies: Set[(Long, Int)] = {
+        Set(
+            (0L, 4),
+            (1L, 3),
+            (2L, 3),
+            (3L, 4),
+            (4L, 4),
+            (5L, 3),
+            (6L, 3),
+            (7L, 3),
+            (8L, 3),
+            (9L, 4)
+        )
+    }
+
+    def aggregatedDependencyTrees: Set[DependencyTreePattern] = {
+        Set(
+            DependencyTreePattern("Pattern 1", Option(4), List("Sentence 0", "Sentence 3", "Sentence 4", "Sentence 9")),
+            DependencyTreePattern("Pattern 2", Option(3), List("Sentence 1", "Sentence 5", "Sentence 6")),
+            DependencyTreePattern("Pattern 3", Option(3), List("Sentence 2", "Sentence 7", "Sentence 8"))
         )
     }
 }
