@@ -695,6 +695,11 @@ CREATE KEYSPACE embeddings WITH REPLICATION = {
     'replication_factor' : 3
 };
 
+CREATE TABLE embeddings.sentences (
+    id bigint PRIMARY KEY,
+    sentence text
+);
+
 CREATE TABLE embeddings.sentenceembeddings (
     id bigint PRIMARY KEY,
     cluster int,
@@ -702,3 +707,27 @@ CREATE TABLE embeddings.sentenceembeddings (
     sentence text,
     tokens list<text>
 );
+
+CREATE TABLE embeddings.dependencytrees (
+    id bigint PRIMARY KEY,
+    dependency_tree text,
+    pattern text,
+    patternfrequency int,
+    relations list<frozen<tuple<frozen<list<text>>, frozen<list<text>>, frozen<list<text>>>>>,
+    sentence text
+);
+
+CREATE TABLE embeddings.dpt_patterns (
+    pattern text PRIMARY KEY,
+    frequency int,
+    sentences list<text>
+);
+
+
+
+-- Indices
+CREATE CUSTOM INDEX ON embeddings.dependencytrees (sentence) USING 'org.apache.cassandra.index.sasi.SASIIndex'
+    WITH OPTIONS = {
+        'analyzer_class': 'org.apache.cassandra.index.sasi.analyzer.NonTokenizingAnalyzer',
+        'case_sensitive': 'false'
+};
