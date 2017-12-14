@@ -16,8 +16,6 @@ limitations under the License.
 
 package de.hpi.ingestion.sentenceembedding
 
-import java.io.{BufferedReader, InputStreamReader}
-
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.implicits.StringImplicits._
 import org.apache.spark.SparkContext
