@@ -21,7 +21,7 @@ package de.hpi.ingestion.sentenceembedding.models
   * @param id id of the sentence
   * @param sentence the sentence itself
   * @param dependency_tree the sentence's dependency parse tree
-  * @param spacy_doc the serialized spacy document
+  * @param relations the extracted relations as triples of token lists
   * @param pattern the pattern of the dependency parse tree
   * @param patternfrequency the number of times the pattern of the dependency parse tree occurred
   */
@@ -29,7 +29,7 @@ case class DependencyTree(
     id: Long,
     sentence: Option[String] = None,
     dependency_tree: Option[String] = None,
-    spacy_doc: Option[String] = None,
+    relations: List[(List[String], List[String], List[String])] = Nil,
     pattern: Option[String] = None,
     patternfrequency: Option[Int] = None
 )
