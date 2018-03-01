@@ -16,6 +16,16 @@ limitations under the License.
 
 package de.hpi.ingestion.datalake.models
 
-class ImportRelation {
+import java.util.UUID
 
-}
+/**
+  * Represents a relation between two subjects that will be imported.
+  * @param start id of the start subject
+  * @param destination id of the destination subject
+  * @param relation the relation between the subjects
+  */
+case class ImportRelation(
+    start: UUID,
+    destination: UUID,
+    relation: String
+)

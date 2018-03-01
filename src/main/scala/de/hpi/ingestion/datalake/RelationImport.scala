@@ -16,6 +16,56 @@ limitations under the License.
 
 package de.hpi.ingestion.datalake
 
-class RelationImport {
+import de.hpi.ingestion.datalake.models.{ImportRelation, Subject, Version}
+import de.hpi.ingestion.framework.SparkJob
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import com.datastax.spark.connector._
 
+class RelationImport extends SparkJob {
+    appName = "Relation Import"
+    configFile = "datalake_relation_import.xml"
+
+    var subjects: RDD[Subject] = _
+    var relations: RDD[ImportRelation] = _
+
+    var updatedSubjects: RDD[Subject] = _
+
+    // $COVERAGE-OFF$
+    /**
+      * Loads the Subjects and Relations to import from the Cassandra.
+      * @param sc SparkContext to be used for the job
+      */
+    override def load(sc: SparkContext): Unit = {
+        subjects = sc.cassandraTable[Subject](settings("subjectKeyspace"), settings("subjectTable"))
+        relations = sc.cassandraTable[ImportRelation](settings("relationKeyspace"), settings("relationTable"))
+    }
+
+    /**
+      * Saves the updates Subjects to the Cassandra.
+      * @param sc SparkContext to be used for the job
+      */
+    override def save(sc: SparkContext): Unit = {
+        updatedSubjects.saveToCassandra(settings("outputKeyspace"), settings("outputTable"))
+    }
+    // $COVERAGE-ON$
+
+    override def run(sc: SparkContext): Unit = {
+        val version = Version(appName, Nil, sc, false, settings.get("outputTable"))
+        val groupedRelations = relations
+            .map(relation => (relation.start, List(relation)))
+            .reduceByKey(_ ++ _)
+        updatedSubjects = subjects
+            .map(subject => (subject.id, subject))
+            .join(groupedRelations)
+            .values
+            .map { case (subject, importRelations) =>
+                val subjectManager = new SubjectManager(subject, version)
+                importRelations.foreach { relation =>
+                    val relationMap = Map(relation.destination -> Map(relation.relation -> ""))
+                    subjectManager.addRelations(relationMap)
+                }
+                subject
+            }
+    }
 }
