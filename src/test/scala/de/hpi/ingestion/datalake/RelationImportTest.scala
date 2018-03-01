@@ -18,10 +18,8 @@ package de.hpi.ingestion.datalake
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class RelationImportTest extends FlatSpec with Matchers with SharedSparkContext {
-
     "Subjects" should "be updated with relations" in {
         val job = new RelationImport
         job.subjects = sc.parallelize(TestData.relationSubjects())
