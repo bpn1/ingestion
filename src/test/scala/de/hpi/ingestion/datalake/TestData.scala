@@ -17,8 +17,9 @@ limitations under the License.
 package de.hpi.ingestion.datalake
 
 import java.util.UUID
+
 import de.hpi.ingestion.datalake.mock.Entity
-import de.hpi.ingestion.datalake.models.{Subject, Version}
+import de.hpi.ingestion.datalake.models.{ImportRelation, Subject, Version}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -221,6 +222,94 @@ object TestData {
             Option(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d")),
             Option(UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921")),
             None
+        )
+    }
+
+    def relationSubjects(): List[Subject] = {
+        List(
+            Subject.master(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50")),
+            Subject.master(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51")),
+            Subject.master(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52")),
+            Subject.master(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53")),
+            Subject.master(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"))
+        )
+    }
+
+    def importRelations(): List[ImportRelation] = {
+        List(
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                "owns"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                "parent of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+                "competitor of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                "successor of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53"),
+                "predecessor of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                "competitor of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+                "competitor of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+                "rival of"
+            )
+        )
+    }
+
+    def updatedRelationSubjects(): Set[(UUID, Map[UUID, Map[String, String]])] = {
+        Set(
+            (UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                Map(
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51") -> Map(
+                        "owns" -> "",
+                        "parent of" -> ""
+                    )
+                )
+            ),
+            (UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                Map(
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52") -> Map("competitor of" -> "")
+                )
+            ),
+            (UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53"),
+                Map(
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54") -> Map("successor of" -> "")
+                )
+            ),
+            (UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                Map(
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53") -> Map("predecessor of" -> ""),
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50") -> Map("competitor of" -> ""),
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52") -> Map(
+                        "competitor of" -> "",
+                        "rival of" -> ""
+                    )
+                )
+            )
         )
     }
 }
