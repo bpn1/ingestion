@@ -4,8 +4,8 @@
         <subjectKeyspace>datalake</subjectKeyspace>
         <subjectTable>subject</subjectTable>
         <relationKeyspace>datalake</relationKeyspace>
-        <relationTable>importrelations</relationTable>
+        <relationTable>extractedrelations</relationTable>
         <outputKeyspace>datalake</outputKeyspace>
-        <outputTable>subject</outputTable>
+        <outputTable>importrelations</outputTable>
     </settings>
 </config>
