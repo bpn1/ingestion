@@ -20,12 +20,12 @@ import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.{SparkConf, SparkContext}
 
 trait JobPipeline {
-    var jobs: List[(SparkJob, Array[String])] = Nil
+    var jobs: List[SparkJob] = Nil
     var pipelineName: String = "Pipeline"
 
     def createSparkConf(): SparkConf = {
         val sparkOptions = jobs
-            .flatMap(_._1.sparkOptions.toList)
+            .flatMap(_.sparkOptions.toList)
             .groupBy(_._1)
             .map { case (property, values) =>
                 val propValues = values.map(_._2)
@@ -40,7 +40,12 @@ trait JobPipeline {
             .setAll(sparkOptions.toList)
     }
 
-    def run(sc: SparkContext): Unit = {
-        jobs.foreach { case (job, args) => job.execute(sc, args) }
+    /**
+      * Executes a Pipeline of Spark jobs.
+      * @param sc SparkContext to be used for the jobs
+      * @param args command line arguments to be used for the jobs
+      */
+    def run(sc: SparkContext, args: Array[String] = Array()): Unit = {
+        jobs.foreach { job => job.execute(sc, args) }
     }
 }

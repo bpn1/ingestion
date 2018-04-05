@@ -16,6 +16,12 @@ limitations under the License.
 
 package de.hpi.ingestion.framework.pipeline
 
-class CommitPipeline {
+import de.hpi.ingestion.curation.Commit
+import de.hpi.ingestion.datamerge.MasterUpdate
 
+class CommitPipeline extends JobPipeline {
+    pipelineName = "Curation Commit Pipeline"
+    jobs = List(
+        new Commit,
+        new MasterUpdate)
 }

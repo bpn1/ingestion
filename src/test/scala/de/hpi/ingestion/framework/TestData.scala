@@ -21,6 +21,7 @@ import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler,
 
 import scala.xml.{Node, XML}
 
+// scalastyle:off line.size.limit
 object TestData {
 
     def parsedScoreConfig: List[AttributeConfig] = List(
@@ -91,5 +92,9 @@ object TestData {
             "Category 3" -> List("value3.1", "value3.2")
         )
     }
-}
 
+    def commitJson: String = {
+        "{\"created\":{\"6a7b2436-255e-447f-8740-f7d353560cc3\":{\"name\":\"Test ag\",\"id\":\"6a7b2436-255e-447f-8740-f7d353560cc3\",\"properties\":{}}},\"updated\":{},\"deleted\":{\"3254650b-269e-4d20-bb2b-48ee44013c88\":{\"master\":\"3254650b-269e-4d20-bb2b-48ee44013c88\",\"id\":\"3254650b-269e-4d20-bb2b-48ee44013c88\",\"datasource\":\"master\",\"name\":\"Deutschland AG\",\"aliases\":null,\"category\":\"business\",\"properties\":{\"gen_legal_form\":[\"AG\"],\"id_dbpedia\":[\"Deutschland AG\"],\"id_wikidata\":[\"Q1206257\"],\"id_wikipedia\":[\"Deutschland AG\"]},\"relations\":{\"c177326a-8898-4bc7-8aca-a040824aa87c\":{\"master\":\"1.0\"}},\"selected\":true}}}"
+    }
+}
+// scalastyle:on line.size.limit

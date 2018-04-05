@@ -21,6 +21,6 @@ import de.hpi.ingestion.dataimport.kompass._
 class KompassPipeline extends JobPipeline {
     pipelineName = "Kompass Pipeline"
     jobs = List(
-        (new KompassParse, Array()),
-        (new KompassDataLakeImport, Array()))
+        new KompassParse,
+        new KompassDataLakeImport)
 }

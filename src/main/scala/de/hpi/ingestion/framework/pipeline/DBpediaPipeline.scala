@@ -21,8 +21,8 @@ import de.hpi.ingestion.dataimport.dbpedia._
 class DBpediaPipeline extends JobPipeline {
     pipelineName = "DBpedia Pipeline"
     jobs = List(
-        (new DBpediaImport, Array()),
-        (new DBpediaDataLakeImport, Array()),
-        (new DBpediaRelationParser, Array()),
-        (new DBpediaRelationImport, Array()))
+        new DBpediaImport,
+        new DBpediaDataLakeImport,
+        new DBpediaRelationParser,
+        new DBpediaRelationImport)
 }

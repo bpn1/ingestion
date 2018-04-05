@@ -20,6 +20,7 @@ import java.io.{ByteArrayOutputStream, EOFException}
 
 import org.rogach.scallop.exceptions.Help
 import org.scalatest.{FlatSpec, Matchers}
+import play.api.libs.json.{JsObject, Json}
 
 class CommandLineScallopConfTest extends FlatSpec with Matchers {
     "Options" should "be set by word flags" in {
@@ -133,5 +134,13 @@ class CommandLineScallopConfTest extends FlatSpec with Matchers {
         printedHelp should startWith ("Usage: spark.sh ... myJar.jar [OPTION]...\nOptions:\n")
         printedHelp should endWith ("\nFor more information visit the documentation in the GitHub Wiki:\n" +
             "https://github.com/bpn1/ingestion/wiki/Pass-Command-Line-Arguments\n")
+    }
+
+    "Commit JSON" should "be parsed" in {
+        val args = Array("-j", TestData.commitJson)
+        val conf = new CommandLineScallopConf(args)
+        val commitJson = Json.parse(conf.commitJson.getOrElse("")).as[JsObject]
+        val commitKeys = commitJson.fields.toMap.keySet
+        commitKeys shouldEqual Set("created", "updated", "deleted")
     }
 }
