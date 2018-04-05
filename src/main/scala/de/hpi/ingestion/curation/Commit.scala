@@ -17,6 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.curation
 
 import java.util.UUID
+
 import com.datastax.spark.connector._
 import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.datalake.SubjectManager
@@ -24,9 +25,9 @@ import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import play.api.libs.json.{JsArray, JsValue, Json}
+import play.api.libs.json._
 
-class Commit extends SparkJob with JSONParser[Boolean] {
+class Commit extends SparkJob with JSONParser[Unit] {
     appName = "Commit"
     configFile = "commit.xml"
 
@@ -35,16 +36,16 @@ class Commit extends SparkJob with JSONParser[Boolean] {
 
     // $COVERAGE-OFF$
     /**
-      * Loads a number of input RDDs used in the job.
-      * @param sc   Spark Context used to load the RDDs
+      * Loads a the Subjects from the Cassandra.
+      * @param sc Spark Context used to load the RDDs
       */
     override def load(sc: SparkContext): Unit = {
         subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
     }
 
     /**
-      * Saves the output data to e.g. the Cassandra or the HDFS.
-      * @param sc     Spark Context used to connect to the Cassandra or the HDFS
+      * Saves the modified Subjects to the Cassandra.
+      * @param sc Spark Context used to connect to the Cassandra or the HDFS
       */
     override def save(sc: SparkContext): Unit = {
         curatedSubjects.saveToCassandra(settings("keyspaceSubjectTable"), settings("subjectTable"))
@@ -52,12 +53,12 @@ class Commit extends SparkJob with JSONParser[Boolean] {
     // $COVERAGE-ON$
 
     /**
-      * Executes the data processing of this job and produces the output data.
-      * @param sc    Spark Context used to e.g. broadcast variables
+      * Parses the passed JSON and modifies the Subjects accordingly.
+      * @param sc Spark Context used to e.g. broadcast variables
       */
     override def run(sc: SparkContext): Unit = {
         val commitJson = conf.commitJson
-        val templateVersion = Version(appName, List("human"), sc, false, Option("subject"))
+        val version = Version(appName, List("human"), sc, false, Option("subject"))
 
         val inputJson = Json.parse(commitJson)
         val createdEntries = extractMap(inputJson, List("created")).values
@@ -65,8 +66,8 @@ class Commit extends SparkJob with JSONParser[Boolean] {
         val deletedEntries = extractMap(inputJson, List("deleted")).values
 
         val deletedSubjects = deletedEntries
-            .map(subJson => deleteSubject(UUID.fromString(extractString(subJson, List("master")).get), templateVersion))
-        val createdSubjects = createdEntries.map(createSubject(_, templateVersion))
+            .map(subJson => deleteSubject(UUID.fromString(extractString(subJson, List("master")).get), version))
+        val createdSubjects = createdEntries.flatMap(createSubject(_, version))
 
         val updatedMasterIds = updatedEntries
             .map(subJson => UUID.fromString(extractString(subJson, List("master")).get))
@@ -81,7 +82,7 @@ class Commit extends SparkJob with JSONParser[Boolean] {
                     .filter(_.master == UUID.fromString(extractString(subjectJson, List("master")).get))
                     .first
                 (oldSubject, subjectJson)
-            }.map { case (oldSubject, json) => updateSubject(oldSubject, json, templateVersion) }
+            }.map { case (oldSubject, json) => updateSubject(oldSubject, json, version) }
         curatedSubjects = sc.parallelize(createdSubjects.toList ++ updatedSubjects.toList ++ deletedSubjects.toList)
     }
 
@@ -91,47 +92,56 @@ class Commit extends SparkJob with JSONParser[Boolean] {
       * @param json JSON-Object containing the data
       * @return Entity containing the parsed data
       */
-    override def fillEntityValues(json: JsValue): Boolean = true
+    override def fillEntityValues(json: JsValue): Unit = {}
+
+    def extractJSONRelations(jsonData: Map[String, JsValue]): Map[UUID, Map[String, String]] = {
+        jsonData.map { case (relationId, relationsJson) =>
+            val destinationId = UUID.fromString(relationId)
+            val relationValues = relationsJson.as[JsObject].fields.collect {
+                case (key: String, value: JsString) => (key, value.as[String])
+                case (key: String, JsNull) => (key, "")
+            }.toMap
+            (destinationId, relationValues)
+        }
+    }
 
     /**
       * Creates a Subject from the given JSON Object.
       * @param json JSON Object containing the data
-      * @param templateVersion Version used for versioning
+      * @param version Version used for versioning
       * @return Subject extracted from the JSON Object
       */
-    def createSubject(json: JsValue, templateVersion: Version): Subject = {
+    def createSubject(json: JsValue, version: Version): List[Subject] = {
+        val master = Subject.master()
         val id = UUID.fromString(extractString(json, List("id")).get)
         val subject = Subject.empty(id = id, datasource = "human")
 
-        val sm = new SubjectManager(subject, templateVersion)
-        sm.setMaster(UUID.fromString(extractString(json, List("master")).get))
+        val sm = new SubjectManager(subject, version)
         sm.setName(extractString(json, List("name")))
-        sm.setAliases(getValue(json, List("aliases")).get match {
-            case arr: JsArray => arr.as[List[String]]
-            case _  => Nil
-        })
+        val aliases = getValue(json, List("aliases"))
+            .map(_.as[List[String]])
+            .toList
+            .flatten
+        sm.setAliases(aliases)
         sm.setCategory(extractString(json, List("category")))
         sm.setProperties(extractMap(json, List("properties")).mapValues(_.as[List[String]]).map(identity))
 
-        val relations = extractMap(json, List("relations"))
-            .map { case (relationId, relationsJson) =>
-                UUID.fromString(relationId) -> relationsJson.as[Map[String, String]]
-             // TODO handle case when score is null, fails otherwise
-            }
+        val relations = extractJSONRelations(extractMap(json, List("relations")))
         sm.setRelations(relations)
-        subject
+        sm.setMaster(master.id)
+        List(subject, master)
     }
 
     /**
       * Creates a tombstone Subject for the given master UUID.
       * @param masterID UUID of the master node
-      * @param templateVersion Version used for versioning
+      * @param version Version used for versioning
       * @return tombstone Subject
       */
-    def deleteSubject(masterID: UUID, templateVersion: Version): Subject = {
+    def deleteSubject(masterID: UUID, version: Version): Subject = {
         val deleteProperty = Map("deleted" -> List("true"))
         val subject = Subject.empty(datasource = "human")
-        val sm = new SubjectManager(subject, templateVersion)
+        val sm = new SubjectManager(subject, version)
         sm.setMaster(masterID)
         sm.setProperties(deleteProperty)
         subject
@@ -141,13 +151,13 @@ class Commit extends SparkJob with JSONParser[Boolean] {
       * Updates a given Subject with the data of a JSON object.
       * @param oldSubject Subject to be updated
       * @param json JSON Object containing the updated data
-      * @param templateVersion Version used for versioning
+      * @param version Version used for versioning
       * @return updated Subject
       */
-    def updateSubject(oldSubject: Subject, json: JsValue, templateVersion: Version): Subject = {
+    def updateSubject(oldSubject: Subject, json: JsValue, version: Version): Subject = {
         val id = UUID.fromString(extractString(json, List("id")).get)
         val subject = Subject.empty(id = id, datasource = "human")
-        val sm = new SubjectManager(subject, templateVersion)
+        val sm = new SubjectManager(subject, version)
 
         val name = extractString(json, List("name"))
         val aliases = getValue(json, List("aliases")).get match {
@@ -156,12 +166,7 @@ class Commit extends SparkJob with JSONParser[Boolean] {
         }
         val category = extractString(json, List("category"))
         val properties = extractMap(json, List("properties")).mapValues(_.as[List[String]]).map(identity)
-        val relations = extractMap(json, List("relations"))
-            .map { case (relationId, relationsJson) =>
-                UUID.fromString(relationId) -> relationsJson.as[Map[String, String]]
-                // TODO handle case when score is null, fails otherwise
-            }
-        sm.setMaster(oldSubject.master)
+        val relations = extractJSONRelations(extractMap(json, List("relations")))
         if (name != oldSubject.name) {
             sm.setName(name)
         }
@@ -181,6 +186,7 @@ class Commit extends SparkJob with JSONParser[Boolean] {
             val diffRelations = relations.toSet.diff(oldSubject.relations.toSet).toMap
             sm.setRelations(diffRelations)
         }
+        sm.setMaster(oldSubject.master)
         subject
     }
 }
