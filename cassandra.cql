@@ -717,6 +717,15 @@ CREATE TABLE embeddings.dependencytrees (
     sentence text
 );
 
+CREATE TABLE embeddings.companysentences (
+    id bigint PRIMARY KEY,
+    dependency_tree text,
+    pattern text,
+    patternfrequency int,
+    relations list<frozen<tuple<frozen<list<text>>, frozen<list<text>>, frozen<list<text>>>>>,
+    sentence text
+);
+
 CREATE TABLE embeddings.dpt_patterns (
     pattern text PRIMARY KEY,
     frequency int,

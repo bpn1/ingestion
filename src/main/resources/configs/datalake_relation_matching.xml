@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <subjectKeyspace>datalake</subjectKeyspace>
+        <subjectTable>subject</subjectTable>
+        <relationKeyspace>datalake</relationKeyspace>
+        <relationTable>extractedrelations</relationTable>
+        <outputKeyspace>datalake</outputKeyspace>
+        <outputTable>importrelations</outputTable>
+    </settings>
+</config>
