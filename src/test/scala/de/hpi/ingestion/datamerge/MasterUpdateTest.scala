@@ -38,4 +38,12 @@ class MasterUpdateTest extends FlatSpec with Matchers with SharedSparkContext {
             master.relations shouldEqual expectedMaster.relations
         }
     }
+
+    "Subjects that need to be updated" should "be extracted" in {
+        assert(false)
+    }
+
+    "Master ids" should "be obtained when parsing the Commit JSON" in {
+        assert(false)
+    }
 }
