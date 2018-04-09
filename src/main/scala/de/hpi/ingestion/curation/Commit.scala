@@ -27,7 +27,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import play.api.libs.json._
 
-class Commit extends SparkJob with JSONParser[Unit] {
+class Commit extends SparkJob with JSONParser {
     appName = "Commit"
     configFile = "commit.xml"
 
@@ -65,17 +65,13 @@ class Commit extends SparkJob with JSONParser[Unit] {
         val updatedEntries = extractMap(inputJson, List("updated")).values
         val deletedEntries = extractMap(inputJson, List("deleted")).values
 
-        val deletedSubjects = deletedEntries
-            .map(subJson => deleteSubject(UUID.fromString(extractString(subJson, List("master")).get), version))
         val createdSubjects = createdEntries.flatMap(createSubject(_, version))
 
         val updatedMasterIds = updatedEntries
             .map(subJson => UUID.fromString(extractString(subJson, List("master")).get))
             .toList
-
         val updatedMasterSubjects = subjects
             .filter(subject => updatedMasterIds.contains(subject.master) && subject.datasource == "master")
-
         val updatedSubjects = updatedEntries
             .map { subjectJson =>
                 val oldSubject = updatedMasterSubjects
@@ -83,16 +79,12 @@ class Commit extends SparkJob with JSONParser[Unit] {
                     .first
                 (oldSubject, subjectJson)
             }.map { case (oldSubject, json) => updateSubject(oldSubject, json, version) }
+
+        val deletedSubjects = deletedEntries
+            .map(subJson => deleteSubject(UUID.fromString(extractString(subJson, List("master")).get), version))
+
         curatedSubjects = sc.parallelize(createdSubjects.toList ++ updatedSubjects.toList ++ deletedSubjects.toList)
     }
-
-    /**
-      * Dummy method since it needs to be overwritten to extend the JSONParser trait.
-      *
-      * @param json JSON-Object containing the data
-      * @return Entity containing the parsed data
-      */
-    override def fillEntityValues(json: JsValue): Unit = {}
 
     def extractJSONRelations(jsonData: Map[String, JsValue]): Map[UUID, Map[String, String]] = {
         jsonData.map { case (relationId, relationsJson) =>
