@@ -16,10 +16,10 @@ limitations under the License.
 
 package de.hpi.ingestion.dataimport.mock
 
-import de.hpi.ingestion.dataimport.JSONParser
+import de.hpi.ingestion.dataimport.JSONEntityParser
 import play.api.libs.json.JsValue
 
-class MockJSONParser extends JSONParser[MockEntity] {
+class MockJSONEntityParser extends JSONEntityParser[MockEntity] {
     override def fillEntityValues(json: JsValue): MockEntity = {
         MockEntity("", "", "")
     }
