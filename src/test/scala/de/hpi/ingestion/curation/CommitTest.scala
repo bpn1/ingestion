@@ -35,7 +35,20 @@ class CommitTest extends FlatSpec with Matchers with SharedSparkContext {
 
     "New Subject and its master" should "be created" in {
         val job = new Commit
-        assert(false)
+        val createdSubjects = job.createSubject(TestData.createJSON, TestData.version(sc))
+        val (List(createdMaster), List(createdSlave)) = createdSubjects.partition(_.isMaster)
+        val expectedSubject = TestData.createdSubject(createdMaster.id)
+
+        createdSlave.id shouldEqual expectedSubject.id
+        createdSlave.master shouldEqual expectedSubject.master
+        createdSlave.datasource shouldEqual expectedSubject.datasource
+        createdSlave.name shouldEqual expectedSubject.name
+        createdSlave.category shouldEqual expectedSubject.category
+        createdSlave.aliases shouldEqual expectedSubject.aliases
+        createdSlave.properties shouldEqual expectedSubject.properties
+        createdSlave.relations shouldEqual expectedSubject.relations
+
+        createdMaster.id shouldEqual createdSlave.master
     }
 
     "Subject update" should "create a human Subject with the updated data" in {
