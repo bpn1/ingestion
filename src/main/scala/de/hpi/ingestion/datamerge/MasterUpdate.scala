@@ -52,20 +52,15 @@ class MasterUpdate extends SparkJob with JSONParser {
     // $COVERAGE-ON$
 
     /**
-      * Parses the Commit JSON Object to extract the ids of the changed Subjects and returns the ids of the master
-      * Subjects that need to be updated.
+      * Parses the Commit JSON Object to extract the ids of the changed master Subjects.
       * @param commitJson the JSON of the Commit job. Contains all changes done in the commit
-      * @return Set of master ids that need to be updated
+      * @return Set of master ids that will be updated
       */
     def getMastersFromCommit(commitJson: JsValue): Set[UUID] = {
-        val changedSubjects = extractMap(commitJson, List("created")).keySet ++
+        (extractMap(commitJson, List("created")).keySet ++
             extractMap(commitJson, List("updated")).keySet ++
             extractMap(commitJson, List("deleted")).keySet
-        val changedSubjectIds = changedSubjects.map(UUID.fromString(_))
-        subjects
-            .collect { case subject if changedSubjectIds(subject.id) => subject.master }
-            .collect
-            .toSet
+        ).map(UUID.fromString(_))
     }
 
     /**
