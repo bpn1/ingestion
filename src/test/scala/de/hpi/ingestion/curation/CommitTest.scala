@@ -26,10 +26,10 @@ class CommitTest extends FlatSpec with Matchers with SharedSparkContext {
     "Commit JSON" should "be parsed and processed" in {
         val job = new Commit
         job.subjects = sc.parallelize(TestData.subjects)
-        job.conf = CommandLineConf(Seq("-j", TestData.commitJson))
+        job.conf = CommandLineConf(Seq("-j", TestData.commitJSON))
         job.run(sc)
         val updatedSubjects = job.curatedSubjects.collect.toSet
-        updatedSubjects should have size 3
+        updatedSubjects should have size 4
         updatedSubjects.filter(_.isMaster) should have size 1
     }
 
@@ -37,9 +37,8 @@ class CommitTest extends FlatSpec with Matchers with SharedSparkContext {
         val job = new Commit
         val createdSubjects = job.createSubject(TestData.createJSON, TestData.version(sc))
         val (List(createdMaster), List(createdSlave)) = createdSubjects.partition(_.isMaster)
-        val expectedSubject = TestData.createdSubject(createdMaster.id)
+        val expectedSubject = TestData.createdSubject
 
-        createdSlave.id shouldEqual expectedSubject.id
         createdSlave.master shouldEqual expectedSubject.master
         createdSlave.datasource shouldEqual expectedSubject.datasource
         createdSlave.name shouldEqual expectedSubject.name
@@ -51,9 +50,23 @@ class CommitTest extends FlatSpec with Matchers with SharedSparkContext {
         createdMaster.id shouldEqual createdSlave.master
     }
 
-    "Subject update" should "create a human Subject with the updated data" in {
+    "Subject update" should "create human Subjects with the updated data" in {
         val job = new Commit
-        assert(false)
+        val updatedSubjects = TestData.subjectUpdate.map { case (oldSubject, updateJSON) =>
+            job.updateSubject(oldSubject, updateJSON, TestData.version(sc)) }
+        val expectedSubjects = TestData.updatedSubjects
+
+        updatedSubjects should have length expectedSubjects.length
+        updatedSubjects.zip(expectedSubjects).foreach { case (updatedSubject, expectedSubject) =>
+            updatedSubject.id should not equal updatedSubject.master
+            updatedSubject.master shouldEqual expectedSubject.master
+            updatedSubject.datasource shouldEqual expectedSubject.datasource
+            updatedSubject.name shouldEqual expectedSubject.name
+            updatedSubject.category shouldEqual expectedSubject.category
+            updatedSubject.aliases shouldEqual expectedSubject.aliases
+            updatedSubject.properties shouldEqual expectedSubject.properties
+            updatedSubject.relations shouldEqual expectedSubject.relations
+        }
     }
 
     "Subject deletion" should "create human Subject with the deleted flag" in {
@@ -66,10 +79,17 @@ class CommitTest extends FlatSpec with Matchers with SharedSparkContext {
         deletedSubject.relations shouldEqual expectedSubject.relations
     }
 
-    "Relations" should "be extracted from JSON data" in {
+    "Relations" should "be extracted from the JSON data" in {
         val job = new Commit
-        val extractedRelations = job.extractJSONRelations(TestData.relationJSON)
+        val extractedRelations = job.extractRelations(TestData.relationJSON)
         val expectedRelations = TestData.extractedRelations
         extractedRelations shouldEqual expectedRelations
+    }
+
+    "Aliases" should "be extracted from the JSON data" in {
+        val job = new Commit
+        val aliases = job.extractAliases(TestData.aliasJSON)
+        val expectedAliases = TestData.extractedAliases
+        aliases shouldEqual expectedAliases
     }
 }
