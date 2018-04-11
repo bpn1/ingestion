@@ -21,6 +21,7 @@ import java.util.UUID
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.{Candidate, Duplicates}
+import play.api.libs.json.{JsValue, Json}
 
 // scalastyle:off line.size.limit
 // scalastyle:off method.length
@@ -819,6 +820,119 @@ object TestData {
                 master = UUID.fromString("d44df8b0-2425-11e7-aec2-2d07f82c7921"),
                 datasource = "master",
                 relations = Map(UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921") -> Map("master" -> "1.0"))
+            )
+        )
+    }
+
+    def commitJSON: JsValue = {
+        val json = "{\"created\":{\"6a7b2436-255e-447f-8740-f7d353560cc3\":{\"name\":\"Test ag\",\"id\":\"6a7b2436-255e-447f-8740-f7d353560cc3\",\"properties\":{}, \"relations\":{\"c177326a-8898-4bc7-8aca-a040824aa87c\":{\"owner\":\"\"}}}},\"updated\":{\"25486e12-be2f-4ba0-b498-94ffcd984528\":{\"master\":\"25486e12-be2f-4ba0-b498-94ffcd984528\",\"id\":\"25486e12-be2f-4ba0-b498-94ffcd984528\",\"datasource\":\"master\",\"name\":\"The Swan Inn\",\"aliases\":null,\"category\":\"business\",\"properties\":{\"geo_coords\":\"51.315404;0.891722\",\"id_wikidata\":\"Q26606155\",\"geo_country\":\"Vereinigtes Königreich\"},\"relations\":{\"6c37910e-7e7d-43f8-b537-683594a7517b\":{\"master\":\"1.0\"},\"74780dce-9bf3-4d3d-9f0d-750846d8f4cb\":{\"country\":null}}}},\"deleted\":{\"3254650b-269e-4d20-bb2b-48ee44013c88\":{\"master\":\"3254650b-269e-4d20-bb2b-48ee44013c88\",\"id\":\"3254650b-269e-4d20-bb2b-48ee44013c88\",\"datasource\":\"master\",\"name\":\"Deutschland AG\",\"aliases\":null,\"category\":\"business\",\"properties\":{\"gen_legal_form\":[\"AG\"],\"id_dbpedia\":[\"Deutschland AG\"],\"id_wikidata\":[\"Q1206257\"],\"id_wikipedia\":[\"Deutschland AG\"]},\"relations\":{\"c177326a-8898-4bc7-8aca-a040824aa87c\":{\"master\":\"1.0\"}},\"selected\":true}}}"
+        Json.parse(json)
+    }
+
+    def masterIds: Set[UUID] = {
+        Set(
+            "6a7b2436-255e-447f-8740-f7d353560cc3",
+            "25486e12-be2f-4ba0-b498-94ffcd984528",
+            "3254650b-269e-4d20-bb2b-48ee44013c88"
+        ).map(UUID.fromString(_))
+    }
+
+    def commitSubjects: List[Subject] = {
+        List(
+            Subject(
+                id = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                master = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc4"),
+                master = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                datasource = "implisense"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984529"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "wikidata"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd98452a"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "dbpedia"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c89"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                datasource = "wikidata"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c77"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c77"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c78"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c77"),
+                datasource = "implisense"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c66"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c66"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c67"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c66"),
+                datasource = "implisense"
+            )
+        )
+    }
+
+    def commitUpdateSubjects: List[Subject] = {
+        List(
+            Subject(
+                id = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                master = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc4"),
+                master = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                datasource = "implisense"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984529"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "wikidata"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd98452a"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "dbpedia"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c89"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                datasource = "wikidata"
             )
         )
     }

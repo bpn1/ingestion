@@ -78,4 +78,10 @@ class PipelineTest extends FlatSpec with Matchers with SharedSparkContext {
         pipeline.createSparkConf().get("spark.app.name") shouldEqual "Kompass Pipeline"
         pipeline.jobs should have length 2
     }
+
+    "Commit Pipeline" should "have the correct name and number of jobs" in {
+        val pipeline = new CommitPipeline
+        pipeline.createSparkConf().get("spark.app.name") shouldEqual "Curation Commit Pipeline"
+        pipeline.jobs should have length 2
+    }
 }
