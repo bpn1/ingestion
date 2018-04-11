@@ -125,6 +125,12 @@ class Commit extends SparkJob with JSONParser {
         }
     }
 
+    /**
+      * Extracts the aliases from the respective field in the Commit JSON. Returns the extracted aliases or an empty
+      * List if there were no aliases.
+      * @param jsonData JSON object containing the alias field
+      * @return List of aliases as Strings
+      */
     def extractAliases(jsonData: JsValue): List[String] = {
         getValue(jsonData, List("aliases"))
             .collect { case aliases: JsArray => aliases.as[List[String]] }
