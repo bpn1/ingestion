@@ -16,11 +16,12 @@ limitations under the License.
 
 package de.hpi.ingestion.framework.pipeline
 
-import de.hpi.ingestion.dataimport.implisense.{ImplisenseDataLakeImport, ImplisenseParser}
+import de.hpi.ingestion.curation.Commit
+import de.hpi.ingestion.datamerge.MasterUpdate
 
-class ImplisensePipeline extends JobPipeline {
-    pipelineName = "Implisense Pipeline"
+class CommitPipeline extends JobPipeline {
+    pipelineName = "Curation Commit Pipeline"
     jobs = List(
-        new ImplisenseParser,
-        new ImplisenseDataLakeImport)
+        new Commit,
+        new MasterUpdate)
 }

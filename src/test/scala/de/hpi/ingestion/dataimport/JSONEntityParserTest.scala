@@ -17,14 +17,14 @@ limitations under the License.
 package de.hpi.ingestion.dataimport
 
 import java.util.GregorianCalendar
-import de.hpi.ingestion.dataimport.mock.MockJSONParser
+import de.hpi.ingestion.dataimport.mock.MockJSONEntityParser
 import org.scalatest.{FlatSpec, Matchers}
 import play.api.libs.json.{JsBoolean, JsNumber, JsString}
 
-class JSONParserTest extends FlatSpec with Matchers {
+class JSONEntityParserTest extends FlatSpec with Matchers {
     "Values" should "be extracted" in {
         val jsonObject = TestData.parsedJSON()
-        val parser = new MockJSONParser
+        val parser = new MockJSONEntityParser
         parser.getValue(jsonObject, List("key 1")) should contain (JsString("string 1"))
         parser.getValue(jsonObject, List("key 1", "key 2")) shouldBe empty
         parser.getValue(jsonObject, List("key 2")) should contain (JsNumber(123.0))
@@ -33,7 +33,7 @@ class JSONParserTest extends FlatSpec with Matchers {
     }
 
     "JSON" should "be cleaned" in {
-        val parser = new MockJSONParser
+        val parser = new MockJSONEntityParser
         val cleanedJson = TestData.dirtyJsonLines()
             .map(parser.cleanJSON)
         val expectedJson = TestData.cleanenedJsonLines()
@@ -41,7 +41,7 @@ class JSONParserTest extends FlatSpec with Matchers {
     }
 
     "Data types" should "be extracted" in {
-        val parser = new MockJSONParser
+        val parser = new MockJSONEntityParser
         val jsonObject = TestData.parsedJSON()
         val expectedList = List(JsString("value 1"), JsString("value 2"), JsString("value 3"))
         val exepectedMap = Map("nestedkey 1" -> JsString("subvalue 1"), "nestedkey 2" -> JsString("subvalue 2"))

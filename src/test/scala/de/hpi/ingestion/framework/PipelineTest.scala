@@ -30,9 +30,7 @@ class PipelineTest extends FlatSpec with Matchers with SharedSparkContext {
         job2.sparkOptions("spark.yarn.executor.memoryOverhead") = "2048"
         job2.sparkOptions("spark.kryo.registrationRequired") = "true"
         val pipeline = new MockPipeline
-        pipeline.jobs = List(
-            (job1, Array()),
-            (job2, Array()))
+        pipeline.jobs = List(job1, job2)
         val sparkConf = pipeline.createSparkConf().getAll.toMap
         val expectedSparkConf = Map(
             "spark.app.name" -> "Mock Pipeline",
@@ -44,11 +42,9 @@ class PipelineTest extends FlatSpec with Matchers with SharedSparkContext {
 
     "Pipeline jobs" should "be executed" in {
         val pipeline = new MockPipeline
-        pipeline.jobs = List(
-            (new MockSparkJob, Array()),
-            (new MockSparkJob, Array()))
+        pipeline.jobs = List(new MockSparkJob, new MockSparkJob)
         pipeline.run(sc)
-        val List(job1, job2) = pipeline.jobs.map(_._1.asInstanceOf[MockSparkJob])
+        val List(job1, job2) = pipeline.jobs.map(_.asInstanceOf[MockSparkJob])
         job1.methodCalls.toList shouldEqual List("assertConditions", "execQ", "load", "run", "execQ", "save")
         job2.methodCalls.toList shouldEqual List("assertConditions", "execQ", "load", "run", "execQ", "save")
     }
@@ -57,34 +53,35 @@ class PipelineTest extends FlatSpec with Matchers with SharedSparkContext {
         val pipeline = new TextminingPipeline
         pipeline.createSparkConf().get("spark.app.name") shouldEqual "Textmining Pipeline"
         pipeline.jobs should have length 16
-        pipeline.jobs.forall(_._2.isEmpty) shouldBe true
     }
 
     "Implisense Pipeline" should "have the correct name and number of jobs" in {
         val pipeline = new ImplisensePipeline
         pipeline.createSparkConf().get("spark.app.name") shouldEqual "Implisense Pipeline"
         pipeline.jobs should have length 2
-        pipeline.jobs.forall(_._2.isEmpty) shouldBe true
     }
 
     "Wikidata Pipeline" should "have the correct name and number of jobs" in {
         val pipeline = new WikidataPipeline
         pipeline.createSparkConf().get("spark.app.name") shouldEqual "Wikidata Pipeline"
         pipeline.jobs should have length 5
-        pipeline.jobs.forall(_._2.isEmpty) shouldBe true
     }
 
     "DBpedia Pipeline" should "have the correct name and number of jobs" in {
         val pipeline = new DBpediaPipeline
         pipeline.createSparkConf().get("spark.app.name") shouldEqual "DBpedia Pipeline"
         pipeline.jobs should have length 4
-        pipeline.jobs.forall(_._2.isEmpty) shouldBe true
     }
 
     "Kompass Pipeline" should "have the correct name and number of jobs" in {
         val pipeline = new KompassPipeline
         pipeline.createSparkConf().get("spark.app.name") shouldEqual "Kompass Pipeline"
         pipeline.jobs should have length 2
-        pipeline.jobs.forall(_._2.isEmpty) shouldBe true
+    }
+
+    "Commit Pipeline" should "have the correct name and number of jobs" in {
+        val pipeline = new CommitPipeline
+        pipeline.createSparkConf().get("spark.app.name") shouldEqual "Curation Commit Pipeline"
+        pipeline.jobs should have length 2
     }
 }
