@@ -151,6 +151,14 @@ case class Subject(
         tsvString += s"\t$tsvProperties"
         tsvString
     }
+
+    def findRelationDestination(slaves: Set[UUID], relationKey: String, relationValue: String): Option[UUID] = {
+        this.relations
+            .filterKeys(slaves)
+            .collectFirst {
+                case (uuid, relationsMap) if relationsMap.get(relationKey).contains(relationValue) => uuid
+            }
+    }
 }
 
 /**
