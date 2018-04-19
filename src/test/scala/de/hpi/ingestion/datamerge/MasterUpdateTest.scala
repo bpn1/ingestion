@@ -40,10 +40,9 @@ class MasterUpdateTest extends FlatSpec with Matchers with SharedSparkContext {
     }
 
     "Subjects that need to be updated" should "be extracted" in {
-        val job = new MasterUpdate
-        job.conf = CommandLineConf(Seq("-j", CTestData.commitJSON))
-        job.subjects = sc.parallelize(TestData.commitSubjects)
-        val updateSubjects = job.updateSubjects()
+        val subjects = sc.parallelize(TestData.commitSubjects)
+        val conf = CommandLineConf(Seq("-j", CTestData.commitJSON))
+        val updateSubjects = MasterUpdate.updateSubjects(subjects, conf.commitJsonOpt)
             .collect
             .map(subject => (subject.id, subject.master, subject.datasource))
             .toSet
@@ -54,8 +53,7 @@ class MasterUpdateTest extends FlatSpec with Matchers with SharedSparkContext {
     }
 
     "Master ids" should "be obtained when parsing the Commit JSON" in {
-        val job = new MasterUpdate
-        val masterIds = job.getMastersFromCommit(TestData.commitJSON)
+        val masterIds = MasterUpdate.getMastersFromCommit(TestData.commitJSON)
         val expectedIds = TestData.masterIds
         masterIds shouldEqual expectedIds
     }
