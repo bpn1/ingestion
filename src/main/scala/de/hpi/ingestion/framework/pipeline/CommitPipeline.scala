@@ -17,6 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.framework.pipeline
 
 import de.hpi.ingestion.curation.Commit
+import de.hpi.ingestion.datalake.CSVExport
 import de.hpi.ingestion.datamerge.{MasterConnecting, MasterUpdate}
 
 class CommitPipeline extends JobPipeline {
@@ -24,5 +25,6 @@ class CommitPipeline extends JobPipeline {
     jobs = List(
         new Commit,
         new MasterUpdate,
-        new MasterConnecting)
+        new MasterConnecting,
+        new CSVExport)
 }
