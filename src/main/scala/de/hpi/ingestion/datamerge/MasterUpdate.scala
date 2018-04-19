@@ -26,7 +26,8 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import play.api.libs.json.{JsValue, Json}
 
-class MasterUpdate extends SparkJob with JSONParser {
+class MasterUpdate extends SparkJob {//with JSONParser {
+    import MasterUpdate._
     appName = "Master Update"
     configFile = "master_update.xml"
 
@@ -52,37 +53,12 @@ class MasterUpdate extends SparkJob with JSONParser {
     // $COVERAGE-ON$
 
     /**
-      * Parses the Commit JSON Object to extract the ids of the changed master Subjects.
-      * @param commitJson the JSON of the Commit job. Contains all changes done in the commit
-      * @return Set of master ids that will be updated
-      */
-    def getMastersFromCommit(commitJson: JsValue): Set[UUID] = {
-        (extractMap(commitJson, List("created")).keySet ++
-            extractMap(commitJson, List("updated")).keySet ++
-            extractMap(commitJson, List("deleted")).keySet
-        ).map(UUID.fromString(_))
-    }
-
-    /**
-      * Filters the Subjects for only those that need to be updated, if this job is executed after a Commit job.
-      * @return the Subjects that need to be updated, if the JSON of a Commit job is provided. Otherwise the input
-      *         Subjects are returned
-      */
-    def updateSubjects(): RDD[Subject] = {
-        conf.commitJsonOpt
-            .map(Json.parse)
-            .map(getMastersFromCommit)
-            .map(masterIds => subjects.filter(subject => masterIds(subject.master)))
-            .getOrElse(subjects)
-    }
-
-    /**
       * Updates the master nodes by newly generating their data.
       * @param sc Spark Context used to e.g. broadcast variables
       */
     override def run(sc: SparkContext): Unit = {
         val version = Version(appName, List("master update"), sc, true, settings.get("subjectTable"))
-        val masterGroups = updateSubjects()
+        val masterGroups = updateSubjects(subjects, conf.commitJsonOpt)
             .map(subject => (subject.master, List(subject)))
             .reduceByKey(_ ++ _)
             .values
@@ -91,5 +67,34 @@ class MasterUpdate extends SparkJob with JSONParser {
             val slaves = masterGroup.filter(_.isSlave)
             Merging.mergeIntoMaster(master, slaves, version).head
         }
+    }
+}
+
+object MasterUpdate extends JSONParser {
+    /**
+      * Parses the Commit JSON Object to extract the ids of the changed master Subjects.
+      * @param commitJson the JSON of the Commit job. Contains all changes done in the commit
+      * @return Set of master ids that will be updated
+      */
+    def getMastersFromCommit(commitJson: JsValue): Set[UUID] = {
+        (extractMap(commitJson, List("created")).keySet ++
+            extractMap(commitJson, List("updated")).keySet ++
+            extractMap(commitJson, List("deleted")).keySet
+            ).map(UUID.fromString(_))
+    }
+
+    /**
+      * Filters the passed Subjects for only those that need to be updated, if this job is executed after a Commit job.
+      * @param subjects RDD of Subjects that will be filtered
+      * @param commitConfOption command line option of curation commit JSON object that contains the changed Subjects
+      * @return the Subjects that need to be updated, if the JSON of a Commit job is provided. Otherwise the input
+      * Subjects are returned
+      */
+    def updateSubjects(subjects: RDD[Subject], commitConfOption: Option[String] = None): RDD[Subject] = {
+        commitConfOption
+            .map(Json.parse)
+            .map(getMastersFromCommit)
+            .map(masterIds => subjects.filter(subject => masterIds(subject.master)))
+            .getOrElse(subjects)
     }
 }

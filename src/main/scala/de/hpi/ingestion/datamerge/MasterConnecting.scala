@@ -59,8 +59,11 @@ class MasterConnecting extends SparkJob {
       * @param sc Spark Context used to e.g. broadcast variables
       */
     override def run(sc: SparkContext): Unit = {
-        val masters = subjects.filter(master => master.isMaster && master.masterRelations.nonEmpty)
-        val slaves = subjects.filter(_.isSlave).map(slave => (slave.id, (slave.id, slave.master, slave.datasource)))
+        val updatedSubjects = MasterUpdate.updateSubjects(subjects, conf.commitJsonOpt)
+        val masters = updatedSubjects.filter(master => master.isMaster && master.masterRelations.nonEmpty)
+        val slaves = updatedSubjects
+            .filter(_.isSlave)
+            .map(slave => (slave.id, (slave.id, slave.master, slave.datasource)))
         val version = Version(appName, List("subject"), sc, true, settings.get("subjectTable"))
 
         connectedMasters = masters

@@ -110,19 +110,23 @@ class CommandLineScallopConfTest extends FlatSpec with Matchers {
         conf.tokenizerOpt shouldBe None
 
         val args2 = Array(
-            "--commit-json", "\"{abcde}\"",
+            "--commit-json", "{\"abcde\"}",
             "--diff-versions", "version1", "version2",
             "--restore-version", "version1",
             "--tokenizer", "flag1", "flag2", "flag3")
         val conf2 = CommandLineConf(args2)
         conf2.commentOpt shouldBe None
-        conf2.commitJson shouldEqual "\"{abcde}\""
+        conf2.commitJson shouldEqual "{\"abcde\"}"
         conf2.configOpt shouldBe None
         conf2.diffVersions shouldEqual List("version1", "version2")
         conf2.importConfigOpt shouldBe None
         conf2.restoreVersion shouldEqual "version1"
         conf2.toReduced shouldBe false
         conf2.tokenizer shouldEqual List("flag1", "flag2", "flag3")
+
+        val args3 = Array("--commit-json", "eyJhYmNkZSJ9")
+        val conf3 = CommandLineConf(args3)
+        conf3.commitJson shouldEqual "{\"abcde\"}"
     }
 
     "Help" should "be printed" in {
@@ -142,5 +146,13 @@ class CommandLineScallopConfTest extends FlatSpec with Matchers {
         val commitJson = Json.parse(conf.commitJson.getOrElse("")).as[JsObject]
         val commitKeys = commitJson.fields.toMap.keySet
         commitKeys shouldEqual Set("created", "updated", "deleted")
+    }
+
+    it should "be converted" in {
+        val conf = new CommandLineScallopConf(Seq.empty[String])
+        val convertedJson = conf.commitConverter(TestData.commitJson)
+        convertedJson shouldEqual TestData.commitJson
+        val convertedBase64 = conf.commitConverter(TestData.base64Commit)
+        convertedBase64 shouldEqual TestData.commitJson
     }
 }

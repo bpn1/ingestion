@@ -23,6 +23,7 @@ import org.apache.spark.SparkContext
 import play.api.libs.json.{JsValue, Json}
 
 // scalastyle:off line.size.limit
+// scalastyle:off method.length
 object TestData {
 
     def version(sc: SparkContext): Version = {
@@ -80,6 +81,12 @@ object TestData {
         )
     }
 
+    def subjectUpdateTargetSlaves: Map[UUID, Set[UUID]] = {
+        Map(
+            UUID.fromString("74780dce-9bf3-4d3d-9f0d-750846d8f4cb") -> Set(UUID.fromString("74780dce-9bf3-4d3d-9f0d-750846d81337"))
+        )
+    }
+
     def updatedSubjects: List[Subject] = {
         List(
             Subject(
@@ -112,7 +119,7 @@ object TestData {
                 datasource = "human",
                 relations = Map(
                     UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528") -> Map("slave" -> "1.0"),
-                    UUID.fromString("74780dce-9bf3-4d3d-9f0d-750846d8f4cb") -> Map("city" -> "")
+                    UUID.fromString("74780dce-9bf3-4d3d-9f0d-750846d81337") -> Map("city" -> "")
                 )
             )
         )
@@ -150,7 +157,16 @@ object TestData {
             ),
             Subject.master(UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528")).copy(
                 name = Option("The Swann Inn"),
-                category = Option("business")
+                category = Option("business"),
+                relations = Map(UUID.fromString("6c37910e-7e7d-43f8-b537-683594a7517b") -> Map("master" -> "1.0"))
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984529"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "implisense",
+                name = Option("The Swann Inn"),
+                category = Option("business"),
+                relations = Map(UUID.fromString("6c37910e-7e7d-43f8-b537-683594a7517b") -> Map("master" -> "1.0"))
             )
         )
     }
@@ -163,5 +179,198 @@ object TestData {
     def extractedAliases: List[String] = {
         List("alias1", "alias2", "alias3")
     }
+
+    def propertyJSON: JsValue = {
+        val json = "{\"date_founding\":\"+2003 07 00T00:00:00Z\",\"gen_employees\":\"6000; 12000; 13058; 10161; 2964; 5859; 1417; 899; 514\",\"gen_founder\":\"Elon Musk; Jeffrey B. Straubel; Marc Tarpenning; Martin Eberhard\",\"gen_legal_form\":\"Publikumsgesellschaft; Incorporated\",\"gen_urls\":\"http://www.teslamotors.com\",\"geo_city\":\"Palo Alto\",\"geo_coords\":\"1.1;2.2; 3.3;4.4\"}"
+        Json.parse(json)
+    }
+
+    def extractedProperties: Map[String, List[String]] = {
+        Map(
+            "date_founding" -> List("+2003 07 00T00:00:00Z"),
+            "gen_employees" -> List("6000", "12000", "13058", "10161", "2964", "5859", "1417", "899", "514"),
+            "gen_founder" -> List("Elon Musk", "Jeffrey B. Straubel", "Marc Tarpenning", "Martin Eberhard"),
+            "gen_legal_form" -> List("Publikumsgesellschaft", "Incorporated"),
+            "gen_urls" -> List("http://www.teslamotors.com"),
+            "geo_city" -> List("Palo Alto"),
+            "geo_coords" -> List("1.1;2.2", "3.3;4.4")
+        )
+    }
+
+    def relationsToMasters: Map[UUID, Map[String, String]] = {
+        Map(
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa800") -> Map(
+                "owns" -> "", // slave 1
+                "owned by" -> "" // slave 1
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa810") -> Map(
+                "owns" -> "", // slave 1
+                "owned by" -> "", // slave 1
+                "followed by" -> "" // slave 2
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa820") -> Map(
+                "owns" -> "", // slave 1
+                "owned by" -> "", // slave 2
+                "followed by" -> "" // slave 3
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa830") -> Map(
+                "owns" -> "", // slave 1
+                "owned by" -> "", // slave 2
+                "followed by" -> "" // new -> any slave
+            )
+        )
+    }
+
+    def relationSlaves: List[Subject] = {
+        List(
+            Subject.master().copy(
+                datasource = "implisense",
+                relations = Map(
+                    UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa801") -> Map(
+                        "owns" -> "" // slave 1
+                    ),
+                    UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa811") -> Map(
+                        "owns" -> "", // slave 1
+                        "owned by" -> "" // slave 1
+                    ),
+                    UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa812") -> Map(
+                        "followed by" -> "" // slave 2
+                    ),
+                    UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa821") -> Map(
+                        "owns" -> "" // slave 1
+                    ),
+                    UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa831") -> Map(
+                        "owns" -> "" // slave 1
+                    )
+                )
+            ),
+            Subject.master().copy(
+                datasource = "wikidata",
+                relations = Map(
+                    UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa801") -> Map(
+                        "owned by" -> "" // slave 1
+                    ),
+                    UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa812") -> Map(
+                        "followed by" -> "123" // slave 2
+                    ),
+                    UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa822") -> Map(
+                        "owned by" -> "" // slave 2
+                    ),
+                    UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa823") -> Map(
+                        "followed by" -> "" // slave 3
+                    ),
+                    UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa832") -> Map(
+                        "owned by" -> "" // slave 2
+                    )
+                )
+            )
+        )
+    }
+
+    def relationTargetSlaves: Map[UUID, Set[UUID]] = {
+        Map(
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa800") -> Set(
+                UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa801")
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa810") -> Set(
+                UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa811"),
+                UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa812")
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa820") -> Set(
+                UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa821"),
+                UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa822"),
+                UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa823")
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa830") -> Set(
+                UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa832"),
+                UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa831")
+            )
+        )
+    }
+
+    def redirectedRelations: Map[UUID, Map[String, String]] = {
+        Map(
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa801") -> Map(
+                "owns" -> "", // slave 1
+                "owned by" -> "" // slave 1
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa811") -> Map(
+                "owns" -> "", // slave 1
+                "owned by" -> "" // slave 1
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa812") -> Map(
+                "followed by" -> "" // slave 2
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa821") -> Map(
+                "owns" -> "" // slave 1
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa822") -> Map(
+                "owned by" -> "" // slave 2
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa823") -> Map(
+                "followed by" -> "" // slave 3
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa831") -> Map(
+                "owns" -> "" // slave 1
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa832") -> Map(
+                "owned by" -> "", // slave 2
+                "followed by" -> "" // new -> any slave
+            )
+        )
+    }
+
+    def redirectExcludedRelations: Map[UUID, Map[String, String]] = {
+        Map(
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa801") -> Map(
+                "owns" -> "", // slave 1
+                "owned by" -> "" // slave 1
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa811") -> Map(
+                "owns" -> "", // slave 1
+                "owned by" -> "" // slave 1
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa812") -> Map(
+                "followed by" -> "" // slave 2
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa821") -> Map(
+                "owns" -> "" // slave 1
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa822") -> Map(
+                "owned by" -> "" // slave 2
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa823") -> Map(
+                "followed by" -> "" // slave 3
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa831") -> Map(
+                "owns" -> "" // slave 1
+            ),
+            UUID.fromString("c177326a-8898-4bc7-8aca-a040824aa832") -> Map(
+                "owned by" -> "", // slave 2
+                "followed by" -> "" // new -> any slave
+            )
+        )
+    }
+
+    def jsonPropertiesToExtract: List[JsValue] = {
+        List(
+            Json.parse("\"value; value\""),
+            Json.parse("[\"value 1\", \"value 2\"]"),
+            Json.parse("\"value 3\""),
+            Json.parse("[\"name\", \"name, 2\"]"),
+            Json.parse("\"12;13; 23;24; 45;56\"")
+        )
+    }
+
+    def extractedJSONProperties: List[List[String]] = {
+        List(
+            List("value", "value"),
+            List("value 1", "value 2"),
+            List("value 3"),
+            List("name", "name, 2"),
+            List("12;13", "23;24", "45;56")
+        )
+    }
 }
 // scalastyle:on line.size.limit
+// scalastyle:on method.length

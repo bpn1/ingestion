@@ -21,6 +21,7 @@ import java.util.UUID
 import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.framework.CommandLineConf
 import org.scalatest.{FlatSpec, Matchers}
+import play.api.libs.json.JsValue
 
 class CommitTest extends FlatSpec with Matchers with SharedSparkContext {
     "Commit JSON" should "be parsed and processed" in {
@@ -53,7 +54,13 @@ class CommitTest extends FlatSpec with Matchers with SharedSparkContext {
     "Subject update" should "create human Subjects with the updated data" in {
         val job = new Commit
         val updatedSubjects = TestData.subjectUpdate.map { case (oldSubject, updateJSON) =>
-            job.updateSubject(oldSubject, updateJSON, TestData.version(sc)) }
+            job.updateSubject(
+                masterSubject = oldSubject,
+                subjectJson = updateJSON,
+                version = TestData.version(sc),
+                relationUpdateTargets = TestData.subjectUpdateTargetSlaves
+            )
+        }
         val expectedSubjects = TestData.updatedSubjects
 
         updatedSubjects should have length expectedSubjects.length
@@ -86,10 +93,39 @@ class CommitTest extends FlatSpec with Matchers with SharedSparkContext {
         extractedRelations shouldEqual expectedRelations
     }
 
+    they should "be redirected" in {
+        val job = new Commit
+        val redirectedRelations = job.redirectRelations(
+            TestData.relationsToMasters,
+            TestData.relationSlaves,
+            TestData.relationTargetSlaves
+        )
+        val expectedRelations = TestData.redirectedRelations
+        redirectedRelations shouldEqual expectedRelations
+    }
+
     "Aliases" should "be extracted from the JSON data" in {
         val job = new Commit
         val aliases = job.extractAliases(TestData.aliasJSON)
         val expectedAliases = TestData.extractedAliases
         aliases shouldEqual expectedAliases
+    }
+
+    "Properties" should "be extracted from the JSON data" in {
+        val job = new Commit
+        val properties = TestData.propertyJSON
+            .as[Map[String, JsValue]]
+            .map((job.extractProperty _).tupled)
+        val expectedProperties = TestData.extractedProperties
+        properties shouldEqual expectedProperties
+    }
+
+    they should "be extracted correctly" in {
+        val job = new Commit
+        val extractedProperties = TestData.jsonPropertiesToExtract
+            .map(job.extractProperty("key", _))
+            .map(_._2)
+        val expectedProperties = TestData.extractedJSONProperties
+        extractedProperties shouldEqual expectedProperties
     }
 }

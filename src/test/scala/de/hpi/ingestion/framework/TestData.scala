@@ -96,5 +96,9 @@ object TestData {
     def commitJson: String = {
         "{\"created\":{\"6a7b2436-255e-447f-8740-f7d353560cc3\":{\"name\":\"Test ag\",\"id\":\"6a7b2436-255e-447f-8740-f7d353560cc3\",\"properties\":{}}},\"updated\":{},\"deleted\":{\"3254650b-269e-4d20-bb2b-48ee44013c88\":{\"master\":\"3254650b-269e-4d20-bb2b-48ee44013c88\",\"id\":\"3254650b-269e-4d20-bb2b-48ee44013c88\",\"datasource\":\"master\",\"name\":\"Deutschland AG\",\"aliases\":null,\"category\":\"business\",\"properties\":{\"gen_legal_form\":[\"AG\"],\"id_dbpedia\":[\"Deutschland AG\"],\"id_wikidata\":[\"Q1206257\"],\"id_wikipedia\":[\"Deutschland AG\"]},\"relations\":{\"c177326a-8898-4bc7-8aca-a040824aa87c\":{\"master\":\"1.0\"}},\"selected\":true}}}"
     }
+
+    def base64Commit: String = {
+        "eyJjcmVhdGVkIjp7IjZhN2IyNDM2LTI1NWUtNDQ3Zi04NzQwLWY3ZDM1MzU2MGNjMyI6eyJuYW1lIjoiVGVzdCBhZyIsImlkIjoiNmE3YjI0MzYtMjU1ZS00NDdmLTg3NDAtZjdkMzUzNTYwY2MzIiwicHJvcGVydGllcyI6e319fSwidXBkYXRlZCI6e30sImRlbGV0ZWQiOnsiMzI1NDY1MGItMjY5ZS00ZDIwLWJiMmItNDhlZTQ0MDEzYzg4Ijp7Im1hc3RlciI6IjMyNTQ2NTBiLTI2OWUtNGQyMC1iYjJiLTQ4ZWU0NDAxM2M4OCIsImlkIjoiMzI1NDY1MGItMjY5ZS00ZDIwLWJiMmItNDhlZTQ0MDEzYzg4IiwiZGF0YXNvdXJjZSI6Im1hc3RlciIsIm5hbWUiOiJEZXV0c2NobGFuZCBBRyIsImFsaWFzZXMiOm51bGwsImNhdGVnb3J5IjoiYnVzaW5lc3MiLCJwcm9wZXJ0aWVzIjp7Imdlbl9sZWdhbF9mb3JtIjpbIkFHIl0sImlkX2RicGVkaWEiOlsiRGV1dHNjaGxhbmQgQUciXSwiaWRfd2lraWRhdGEiOlsiUTEyMDYyNTciXSwiaWRfd2lraXBlZGlhIjpbIkRldXRzY2hsYW5kIEFHIl19LCJyZWxhdGlvbnMiOnsiYzE3NzMyNmEtODg5OC00YmM3LThhY2EtYTA0MDgyNGFhODdjIjp7Im1hc3RlciI6IjEuMCJ9fSwic2VsZWN0ZWQiOnRydWV9fX0="
+    }
 }
 // scalastyle:on line.size.limit
