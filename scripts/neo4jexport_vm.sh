@@ -1,36 +1,15 @@
 #!/bin/bash
 
-# binaries
+# neo4j vars
 neo4j_service="/etc/init.d/neo4j"
+neo4j_db="subject"
 
 # filenames
-neo4j_dir="~/neo4jdata"
+neo4j_dir="/home/ingestion//neo4jdata"
 node_header="$neo4j_dir/nodeheader"
 node_file="$neo4j_dir/nodes.csv"
 edge_header="$neo4j_dir/edgeheader"
 edge_file="$neo4j_dir/edges.csv"
-neo4j_db="subject"
-
-# verify that node and edge files exist
-if [ ! -f "~/$neo4j_dir/$node_header" ]; then
-    echo "Node header not found!"
-    exit 1
-fi
-
-if [ ! -f "~/$neo4j_dir/$node_file" ]; then
-    echo "Node file not found!"
-    exit 1
-fi
-
-if [ ! -f "~/$neo4j_dir/$edge_header" ]; then
-    echo "Edge header not found!"
-    exit 1
-fi
-
-if [ ! -f "~/$neo4j_dir/$edge_file" ]; then
-    echo "Edge file not found!"
-    exit 1
-fi
 
 # stop neo4j service
 sudo ${neo4j_service} stop
@@ -43,3 +22,7 @@ sudo -u neo4j neo4j-admin import --mode=csv --database ${neo4j_db}.db --nodes "$
 
 # start neo4j service
 sudo ${neo4j_service} start
+
+# delete files
+rm ${node_file}
+rm ${edge_file}
