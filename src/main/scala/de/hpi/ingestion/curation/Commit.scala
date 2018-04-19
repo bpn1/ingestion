@@ -200,7 +200,6 @@ class Commit extends SparkJob with JSONParser {
         sm.setProperties(properties)
 
         val relations = extractRelations(extractMap(json, List("relations")))
-        // TODO redirect relations
         sm.setRelations(relations)
         sm.setMaster(master.id)
         List(subject, master)
