@@ -68,6 +68,12 @@ class Commit extends SparkJob with JSONParser {
         curatedSubjects = createdAndDeletesSubjects.union(updateSubjects(inputJson, version))
     }
 
+    /**
+      * Creates Subjects with the data in the Commit JSON passed to the Spark Job.
+      * @param json the Commit JSON object containing all changes
+      * @param version version used for Versioning of Subjects
+      * @return List of created Subjects and their master Subjects
+      */
     def createSubjects(json: JsValue, version: Version): List[Subject] = {
         val creationEntries = extractMap(json, List("created")).values
         creationEntries
@@ -75,6 +81,12 @@ class Commit extends SparkJob with JSONParser {
             .toList
     }
 
+    /**
+      * Updates Subjects with the data in the Commit JSON passed to the Spark Job.
+      * @param json the Commit JSON object containing all changes
+      * @param version version used for Versioning of Subjects
+      * @return RDD of human Subjects containing the updates
+      */
     def updateSubjects(json: JsValue, version: Version): RDD[Subject] = {
         val updateEntries = extractMap(json, List("updated")).values
         val masterUpdateEntries = updateEntries.filter(subJson =>
@@ -126,6 +138,12 @@ class Commit extends SparkJob with JSONParser {
         }
     }
 
+    /**
+      * Deletes the Subjects specified in the Commit JSON passed to the Spark Job.
+      * @param json the Commit JSON object containing all changes
+      * @param version version used for Versioning of Subjects
+      * @return List of human Subjects containing the deleted flag
+      */
     def deleteSubjects(json: JsValue, version: Version): List[Subject] = {
         val deletedEntries = extractMap(json, List("deleted")).values
         deletedEntries
@@ -135,10 +153,11 @@ class Commit extends SparkJob with JSONParser {
     }
 
     /**
-      * Splits the property values sent as String into a List of values.
-      * @param property the property that is split
-      * @param propertyValue JSON String of the values of the property
-      * @return tuple of the property and the split values
+      * Transforms the passed property values into a List of values. If the input is a JSON String, it is split with a
+      * separator. If it is a JSON Array, it is simply cast to a List
+      * @param property name of the property that is split
+      * @param propertyValue JSON value containing the values of the property
+      * @return tuple of the property and the extracted values as a List of Strings
       */
     def extractProperty(property: String, propertyValue: JsValue): (String, List[String]) = {
         val values = propertyValue match {
