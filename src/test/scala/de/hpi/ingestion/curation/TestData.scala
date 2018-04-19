@@ -351,6 +351,26 @@ object TestData {
             )
         )
     }
+
+    def jsonPropertiesToExtract: List[JsValue] = {
+        List(
+            Json.parse("\"value; value\""),
+            Json.parse("[\"value 1\", \"value 2\"]"),
+            Json.parse("\"value 3\""),
+            Json.parse("[\"name\", \"name, 2\"]"),
+            Json.parse("\"12;13; 23;24; 45;56\"")
+        )
+    }
+
+    def extractedJSONProperties: List[List[String]] = {
+        List(
+            List("value", "value"),
+            List("value 1", "value 2"),
+            List("value 3"),
+            List("name", "name, 2"),
+            List("12;13", "23;24", "45;56")
+        )
+    }
 }
 // scalastyle:on line.size.limit
 // scalastyle:on method.length

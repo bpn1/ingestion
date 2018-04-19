@@ -119,4 +119,13 @@ class CommitTest extends FlatSpec with Matchers with SharedSparkContext {
         val expectedProperties = TestData.extractedProperties
         properties shouldEqual expectedProperties
     }
+
+    they should "be extracted correctly" in {
+        val job = new Commit
+        val extractedProperties = TestData.jsonPropertiesToExtract
+            .map(job.extractProperty("key", _))
+            .map(_._2)
+        val expectedProperties = TestData.extractedJSONProperties
+        extractedProperties shouldEqual expectedProperties
+    }
 }

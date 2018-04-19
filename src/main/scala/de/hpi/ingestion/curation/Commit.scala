@@ -141,8 +141,12 @@ class Commit extends SparkJob with JSONParser {
       * @return tuple of the property and the split values
       */
     def extractProperty(property: String, propertyValue: JsValue): (String, List[String]) = {
-        val values = propertyValue.as[String].split("; ")
-        (property, values.toList)
+        val values = propertyValue match {
+            case x: JsString => x.as[String].split("; ").toList
+            case x: JsArray => x.as[List[String]]
+            case _ => Nil
+        }
+        (property, values)
     }
 
     /**
