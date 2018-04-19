@@ -5,11 +5,14 @@ neo4j_service="/etc/init.d/neo4j"
 neo4j_db="subject"
 
 # filenames
-neo4j_dir="/home/ingestion//neo4jdata"
+neo4j_dir="/home/ingestion/neo4jdata"
 node_header="$neo4j_dir/nodeheader"
 node_file="$neo4j_dir/nodes.csv"
 edge_header="$neo4j_dir/edgeheader"
 edge_file="$neo4j_dir/edges.csv"
+
+# move to directory that allows neo4j import
+cd scripts
 
 # stop neo4j service
 sudo ${neo4j_service} stop
