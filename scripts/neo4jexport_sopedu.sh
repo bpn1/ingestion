@@ -31,4 +31,4 @@ scp ${edge_file} ingestion@${ingestionvm}:~/${neo4j_dir}
 rm -rf ${temp_dir}
 
 # execute script on the ingestionvm
-ssh ingestion@${ingestionvm} "bash ~/scripts/$scriptname"
+ssh ingestion@${ingestionvm} "bash /home/ingestion/scripts/$scriptname"
