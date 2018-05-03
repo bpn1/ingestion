@@ -46,9 +46,8 @@ class CSVExport extends SparkJob {
       * @param sc Spark Context used to connect to the Cassandra or the HDFS
       */
     override def save(sc: SparkContext): Unit = {
-        val timestamp = System.currentTimeMillis / 1000
-        nodes.saveAsTextFile(s"export_nodes_$timestamp")
-        edges.saveAsTextFile(s"export_edges_$timestamp")
+        nodes.saveAsTextFile("export_nodes")
+        edges.saveAsTextFile("export_edges")
     }
     // $COVERAGE-ON$
 

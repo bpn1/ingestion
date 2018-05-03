@@ -61,7 +61,7 @@ class MasterConnecting extends SparkJob {
     override def run(sc: SparkContext): Unit = {
         val updatedSubjects = MasterUpdate.updateSubjects(subjects, conf.commitJsonOpt)
         val masters = updatedSubjects.filter(master => master.isMaster && master.masterRelations.nonEmpty)
-        val slaves = updatedSubjects
+        val slaves = subjects
             .filter(_.isSlave)
             .map(slave => (slave.id, (slave.id, slave.master, slave.datasource)))
         val version = Version(appName, List("subject"), sc, true, settings.get("subjectTable"))

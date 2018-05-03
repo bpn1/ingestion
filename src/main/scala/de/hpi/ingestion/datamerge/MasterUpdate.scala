@@ -26,7 +26,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import play.api.libs.json.{JsValue, Json}
 
-class MasterUpdate extends SparkJob {//with JSONParser {
+class MasterUpdate extends SparkJob {
     import MasterUpdate._
     appName = "Master Update"
     configFile = "master_update.xml"
