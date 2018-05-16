@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <inputEntityFile>frs_entities.xml</inputEntityFile>
+        <inputEdgeFile>frs_edges.xml</inputEdgeFile>
+        <frsKeyspace>frs</frsKeyspace>
+        <rawEntityTable>frs_raw_entities</rawEntityTable>
+    </settings>
+</config>
