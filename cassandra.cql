@@ -740,3 +740,85 @@ CREATE CUSTOM INDEX ON embeddings.dependencytrees (sentence) USING 'org.apache.c
         'analyzer_class': 'org.apache.cassandra.index.sasi.analyzer.NonTokenizingAnalyzer',
         'case_sensitive': 'false'
 };
+
+
+
+-- Federal Reserve System Data
+CREATE KEYSPACE frs WITH REPLICATION = {
+    'class' : 'SimpleStrategy',
+    'replication_factor' : 3
+};
+
+
+
+-- Tables
+CREATE TABLE frs.frs_raw_entities (
+    rssd_id int PRIMARY KEY,
+    date_start date,
+    date_end date,
+    bank_holding_company_indicator int,
+    broad_regulatory_code int,
+    authority_charter int,
+    charter_type int,
+    fbo4c9_qualification_indicator int,
+    financial_holding_company_indicator int,
+    functional_regulator int,
+    primary_insurer int,
+    fhlbs_membership_indicator int,
+    frs_membership_indicator int,
+    sec_reporting_status int,
+    establishment_type_code int,
+    banktype_analysis_code int,
+    date_start_existence date,
+    date_end_existence date,
+    fiscal_year_end int,
+    date_insured date,
+    date_opening date,
+    financial_subsidiary_holder int,
+    financial_subsidiary_indicator int,
+    iba_grandfather_indicator int,
+    ibf_indicator int,
+    head_office_rssd_id int,
+    majority_owned_by_minorities_women int,
+    legal_name text,
+    short_name text,
+    numeric_search_code int,
+    organization_type int,
+    reason_termination_code int,
+    conservatorship_code int,
+    entity_type text,
+    federal_reserve_regulatory_district_code int,
+    primary_activity_code text,
+    city text,
+    country text,
+    cusip_id text,
+    state text,
+    place_code int,
+    state_code int,
+    home_state int,
+    street_line1 text,
+    street_line2 text,
+    zip text,
+    thrift_id int,
+    thrift_holding_company_id text,
+    domestic_indicator text,
+    primary_aba_id int,
+    fdic_certificated int,
+    ncua_charter_id int,
+    county_code int,
+    federal_reserve_district_code int,
+    occ_charter_id int,
+    country_code int,
+    tax_id int,
+    province_region text,
+    url text,
+    slhc_indicator int,
+    slhc_type_indicator int,
+    primary_federal_regulator text,
+    state_incorporation_code int,
+    country_incorporation_code int,
+    state_incorporation text,
+    country_incorporation text,
+    lei_id text,
+    bank_count int
+);
