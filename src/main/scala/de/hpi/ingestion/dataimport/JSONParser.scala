@@ -19,7 +19,9 @@ package de.hpi.ingestion.dataimport
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
+import de.hpi.ingestion.datalake.models.Subject
+import de.hpi.ingestion.implicits._
+import play.api.libs.json._
 
 /**
   * Trait to parse JSON-Objects. Contains all methods needed to parse JSON into Scala Objects.
@@ -139,5 +141,48 @@ trait JSONParser {
             val dateFormat = new SimpleDateFormat(datePattern)
             dateFormat.parse(dateString.as[String])
         }
+    }
+}
+
+object JSONParser {
+    def toJson[T](data: T): JsValue = data match {
+        case x: JsValue => x
+        case x: String => this(x)
+        case x: Double => this(x)
+        case x: Int => this(x)
+        case x: Boolean => this(x)
+        case x: Subject => this(x)
+        case x: List[Any] => this(x)
+        case x: Map[Any, Any @unchecked] => this(x)
+        case x => this(x.toString)
+    }
+
+    def apply(data: String): JsValue = JsString(data)
+    def apply(data: Int): JsValue = JsNumber(data)
+    def apply(data: Double): JsValue = JsNumber(data)
+    def apply(data: Boolean): JsValue = JsBoolean(data)
+
+    def apply[T](data: List[T]): JsValue = {
+        JsArray(data.map(this.toJson))
+    }
+
+    def apply[K, V](data: Map[K, V]): JsValue = {
+        JsObject(data
+            .mapKeys(_.toString)
+            .mapValues(this.toJson)
+        )
+    }
+
+    def apply(data: Subject): JsValue = {
+        this(Map(
+            "id" -> this.toJson(data.id),
+            "master" -> this.toJson(data.master),
+            "datasource" -> this(data.datasource),
+            "name" -> this(data.name.getOrElse("")),
+            "aliases" -> this(data.aliases),
+            "category" -> this(data.category.getOrElse("")),
+            "properties" -> this(data.properties),
+            "relations" -> this(data.relations)
+        ))
     }
 }
