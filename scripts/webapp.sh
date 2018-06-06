@@ -8,7 +8,9 @@ cp $NEO_CONF config/cred.json
 source /home/jan.ehmueller/anaconda2/bin/activate webapp
 pip install -r requirements.txt
 cd cle
-yarn && yarn buildStatic
+npm install
+npm install --save react-toastify@4.0.1
+npm run buildStatic
 cd ..
 cp ./cle/electron/static/* ./app/public/ && mv ./app/public/index.html ./app/templates/
 BUILD_ID=dontKillMe python manage.py server &
