@@ -18,7 +18,7 @@ package de.hpi.ingestion.deduplication.models
 
 import java.util.UUID
 import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits._
 
 /**
   * Represents the a block resulting from a Blocking Scheme.
@@ -39,7 +39,7 @@ case class Block(
       * @return the cross product as List of Subject tuples
       */
     def crossProduct(
-        f: (Subject, Subject) => Boolean = (s1: Subject, s2: Subject) => true
+        f: (Subject, Subject) => Boolean = (_, _) => true
     ): List[(Subject, Subject)] = {
         subjects.cross(staging, f).toList
     }
