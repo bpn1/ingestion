@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.framework
 
 import de.hpi.ingestion.deduplication.models.config.{AttributeConfig, SimilarityMeasureConfig}
-import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, JaroWinkler, MongeElkan}
+import de.hpi.ingestion.deduplication.similarity.{ExactMatch, JaroWinkler, MongeElkan, SimilarityMeasure}
 
 import scala.xml.{Node, XML}
 
@@ -48,7 +48,7 @@ object TestData {
             "category",
             0.5,
             List(
-                SimilarityMeasureConfig(similarityMeasure = ExactMatchString, weight = 1.0)
+                SimilarityMeasureConfig(similarityMeasure = ExactMatch, weight = 1.0)
             )
         )
     )

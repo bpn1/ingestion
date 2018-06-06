@@ -21,8 +21,7 @@ import org.scalatest.{FlatSpec, Matchers}
 class SimilarityMeasureTest extends FlatSpec with Matchers {
 
     "Similarity Measure" should "be returned given its name" in {
-        SimilarityMeasure.get[String]("ExactMatchString") shouldEqual ExactMatchString
-        SimilarityMeasure.get[Double]("ExactMatchDouble") shouldEqual ExactMatchDouble
+        SimilarityMeasure.get[String]("ExactMatch") shouldEqual ExactMatch
         SimilarityMeasure.get[String]("MongeElkan") shouldEqual MongeElkan
         SimilarityMeasure.get[String]("Jaccard") shouldEqual Jaccard
         SimilarityMeasure.get[String]("DiceSorensen") shouldEqual DiceSorensen
@@ -32,6 +31,6 @@ class SimilarityMeasureTest extends FlatSpec with Matchers {
         SimilarityMeasure.get[String]("Overlap") shouldEqual Overlap
         SimilarityMeasure.get[String]("EuclidianDistance") shouldEqual EuclidianDistance
         SimilarityMeasure.get[String]("RelativeNumbersSimilarity") shouldEqual RelativeNumbersSimilarity
-        SimilarityMeasure.get[String]("Not existing") shouldEqual ExactMatchString
+        SimilarityMeasure.get[Any]("Not existing") shouldEqual ExactMatch
     }
 }

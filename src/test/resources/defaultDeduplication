@@ -27,7 +27,7 @@
       </item>
       <item>
         <attribute>name</attribute>
-        <similartyMeasure>ExactMatchString</similartyMeasure>
+        <similartyMeasure>ExactMatch</similartyMeasure>
         <weight>0.2</weight>
         <scale>1</scale>
       </item>

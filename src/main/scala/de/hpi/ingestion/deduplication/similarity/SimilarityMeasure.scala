@@ -20,7 +20,7 @@ package de.hpi.ingestion.deduplication.similarity
   * Provides a method to measure the similarity of two objects
   * @tparam T the type of the objects to be compared
   */
-trait SimilarityMeasure[T] extends Serializable {
+trait SimilarityMeasure[-T] extends Serializable {
 
     /**
       * Calculates a similarity score for two objects
@@ -38,8 +38,7 @@ trait SimilarityMeasure[T] extends Serializable {
   */
 object SimilarityMeasure {
     val dataTypes: Map[String, SimilarityMeasure[_]] = Map(
-        "ExactMatchString" -> ExactMatchString,
-        "ExactMatchDouble" -> ExactMatchDouble,
+        "ExactMatch" -> ExactMatch,
         "MongeElkan" -> MongeElkan,
         "Jaccard" -> Jaccard,
         "DiceSorensen" -> DiceSorensen,
@@ -60,6 +59,6 @@ object SimilarityMeasure {
       * @return the requested Similarity Measure if it exists or else Exact Match String as default
       */
     def get[T](similarityMeasure: String): SimilarityMeasure[T] = {
-        dataTypes.getOrElse(similarityMeasure, ExactMatchString).asInstanceOf[SimilarityMeasure[T]]
+        dataTypes.getOrElse(similarityMeasure, ExactMatch).asInstanceOf[SimilarityMeasure[T]]
     }
 }

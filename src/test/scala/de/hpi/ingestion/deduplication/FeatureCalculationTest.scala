@@ -19,12 +19,12 @@ package de.hpi.ingestion.deduplication
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.deduplication.models.FeatureEntry
 import de.hpi.ingestion.deduplication.models.config.SimilarityMeasureConfig
-import de.hpi.ingestion.deduplication.similarity.{ExactMatchString, SimilarityMeasure}
+import de.hpi.ingestion.deduplication.similarity.{ExactMatch, SimilarityMeasure}
 import org.scalatest.{FlatSpec, Matchers}
 
 class FeatureCalculationTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
     "compare" should "calculate a similarity score of two subjects from a given config" in {
-        val config = SimilarityMeasureConfig[String, SimilarityMeasure[String]](ExactMatchString, 1.0)
+        val config = SimilarityMeasureConfig[String, SimilarityMeasure[String]](ExactMatch, 1.0)
         val attribute = "geo_city"
         val subject = TestData.subjects.head.get(attribute)
         val staging = TestData.stagings.head.get(attribute)
@@ -35,7 +35,7 @@ class FeatureCalculationTest extends FlatSpec with Matchers with SharedSparkCont
     }
 
     it should "return 0.0 if one of the given subjects doesn't hold a property" in {
-        val config = SimilarityMeasureConfig[String, SimilarityMeasure[String]](ExactMatchString, 1.0)
+        val config = SimilarityMeasureConfig[String, SimilarityMeasure[String]](ExactMatch, 1.0)
         val attribute = "geo_city"
         val subject = TestData.subjects.head.get(attribute)
         val staging = TestData.subjects.last.get(attribute)

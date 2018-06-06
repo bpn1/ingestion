@@ -19,14 +19,14 @@
         <attribute>
             <key>id_dbpedia</key>
             <feature>
-                <similarityMeasure>ExactMatchString</similarityMeasure>
+                <similarityMeasure>ExactMatch</similarityMeasure>
                 <scale>1</scale>
             </feature>
         </attribute>
         <attribute>
             <key>id_wikidata</key>
             <feature>
-                <similarityMeasure>ExactMatchString</similarityMeasure>
+                <similarityMeasure>ExactMatch</similarityMeasure>
                 <scale>1</scale>
             </feature>
         </attribute>

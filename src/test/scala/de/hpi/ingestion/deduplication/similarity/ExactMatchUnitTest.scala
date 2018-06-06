@@ -26,7 +26,7 @@ class ExactMatchUnitTest extends FlatSpec with Matchers {
             ("context", "context", 1.0))
 
         testData.foreach(tuple =>
-            ExactMatchString.compare(tuple._1, tuple._2) shouldEqual tuple._3)
+            ExactMatch.compare(tuple._1, tuple._2) shouldEqual tuple._3)
     }
 
     it should "return 1.0 or 0.0 for given doubles" in {
@@ -35,6 +35,6 @@ class ExactMatchUnitTest extends FlatSpec with Matchers {
             (0.2, 0.4, 0.0))
 
         testData.foreach(tuple =>
-            ExactMatchDouble.compare(tuple._1, tuple._2) shouldEqual tuple._3)
+            ExactMatch.compare(tuple._1, tuple._2) shouldEqual tuple._3)
     }
 }

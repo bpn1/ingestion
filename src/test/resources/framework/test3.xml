@@ -15,7 +15,7 @@
         <attribute>
             <key>category</key>
             <feature>
-                <similarityMeasure>ExactMatchString</similarityMeasure>
+                <similarityMeasure>ExactMatch</similarityMeasure>
                 <scale>1</scale>
             </feature>
         </attribute>
