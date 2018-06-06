@@ -21,7 +21,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import de.hpi.ingestion.sentenceembedding.mock.MockSentenceEmbeddings
 import de.hpi.ingestion.textmining.{TestData => TextTestData}
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits._
 
 import scala.collection.mutable
 import scala.math.BigDecimal

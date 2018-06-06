@@ -17,7 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.implicits
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.scalatest.{FlatSpec, Matchers}
 
 class CollectionImplicitsTest extends FlatSpec with Matchers with SharedSparkContext {

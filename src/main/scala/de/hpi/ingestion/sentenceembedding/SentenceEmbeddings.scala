@@ -17,7 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.sentenceembedding
 
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.StringImplicits._
+import de.hpi.ingestion.implicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.mllib.linalg.Vectors

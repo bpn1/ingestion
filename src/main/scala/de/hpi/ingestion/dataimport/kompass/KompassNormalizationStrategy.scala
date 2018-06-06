@@ -16,7 +16,7 @@ limitations under the License.
 
 package de.hpi.ingestion.dataimport.kompass
 
-import de.hpi.ingestion.implicits.RegexImplicits._
+import de.hpi.ingestion.implicits._
 import de.hpi.ingestion.dataimport.SharedNormalizations
 
 /**

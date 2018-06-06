@@ -17,8 +17,6 @@ limitations under the License.
 package de.hpi.ingestion.datamerge
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import de.hpi.ingestion.datalake.models.Subject
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.scalatest.{FlatSpec, Matchers}
 
 class DatasourceUpdateTest extends FlatSpec with Matchers with SharedSparkContext {

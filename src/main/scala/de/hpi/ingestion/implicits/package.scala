@@ -14,13 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.implicits
+package de.hpi.ingestion
 
-/**
-  * Contains implicit classes extending Scala collections.
-  */
-object CollectionImplicits {
-
+package object implicits {
     /**
       * Adds functions to Traversables.
       * @param xs the Collection calling the method
@@ -120,5 +116,48 @@ object CollectionImplicits {
           * @return Map with the function f applied to each key
           */
         def mapKeys[Z](f: (X) => Z): Map[Z, Y] = xs.map { case (key, value) => (f(key), value) }
+    }
+
+    /**
+      * Implicit class for using regex in pattern matching
+      * @param sc String Context
+      */
+    implicit class Regex(sc: StringContext) {
+        /**
+          * This function helps using string interpolation for regexes as used in the normalize strategies.
+          * Source: http://stackoverflow.com/a/16256935/6625021
+          * @return matcher
+          */
+        def r = new util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
+    }
+
+    implicit class StringFunctions(s: String) {
+        def isDigit: Boolean = {
+            try {
+                s.toDouble
+                true
+            } catch {
+                case e: Exception => false
+            }
+        }
+    }
+
+    /**
+      * Adds the map function to the Tuple2 class.
+      * @param t the tuple on which the method will be called.
+      * @tparam A type of the first tuple element
+      * @tparam B type of the second tuple element
+      */
+    implicit class Mappable[A, B](t: (A, B)) {
+        /**
+          * Applies two different functions to the two tuple elements and returns the result.
+          * Source: http://stackoverflow.com/a/4022510
+          * @param f function applied to the first tuple element
+          * @param g function applied to the second tuple element
+          * @tparam R return type of the first function f
+          * @tparam S return type of the second function g
+          * @return the result of f and g as tuple
+          */
+        def map[R, S](f: A => R, g: B => S): (R, S) = (f(t._1), g(t._2))
     }
 }

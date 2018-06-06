@@ -19,7 +19,7 @@ package de.hpi.ingestion.textmining.preprocessing
 import com.datastax.spark.connector._
 import de.hpi.ingestion.framework.SparkJob
 import de.hpi.ingestion.textmining.models._
-import de.hpi.ingestion.implicits.CollectionImplicits._
+import de.hpi.ingestion.implicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 

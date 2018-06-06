@@ -19,7 +19,7 @@ package de.hpi.ingestion.textmining.nel
 import java.io.InputStream
 
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.TupleImplicits._
+import de.hpi.ingestion.implicits._
 import de.hpi.ingestion.textmining.preprocessing.{CosineContextComparator => CCC}
 import de.hpi.ingestion.textmining.preprocessing._
 import de.hpi.ingestion.textmining.models._
