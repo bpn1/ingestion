@@ -324,7 +324,7 @@ object TestData {
     def complexTestConfig: List[AttributeConfig] = List(
         AttributeConfig("name", 0.7, List(SimilarityMeasureConfig(MongeElkan, 0.5), SimilarityMeasureConfig(JaroWinkler, 0.5))),
         AttributeConfig("geo_city", 0.1, List(SimilarityMeasureConfig(Jaccard, 1))),
-        AttributeConfig("geo_coords", 0.1, List(SimilarityMeasureConfig(EuclidianDistance, 1))),
+        AttributeConfig("geo_coords", 0.1, List(SimilarityMeasureConfig(EuclideanDistance, 1))),
         AttributeConfig("gen_income", 0.1, List(SimilarityMeasureConfig(RelativeNumbersSimilarity, 1)))
     )
 

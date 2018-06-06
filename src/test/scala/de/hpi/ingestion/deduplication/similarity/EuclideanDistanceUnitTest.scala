@@ -18,9 +18,9 @@ package de.hpi.ingestion.deduplication.similarity
 
 import org.scalatest.{FlatSpec, Matchers}
 
-class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
+class EuclideanDistanceUnitTest extends FlatSpec with Matchers {
     "computeDistance" should "compute the distnace between two points in terms of kilometers" in {
-        val distance = EuclidianDistance.computeDistance(52, 13, 53, 14)
+        val distance = EuclideanDistance.computeDistance((52, 13), (53, 14))
         val expected = 111.70485139435159
 
         distance shouldEqual expected
@@ -32,8 +32,8 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
         val testScale2 = 2
         val scores = distances.map { value =>
             (
-                EuclidianDistance.turnDistanceIntoScore(value, testScale1),
-                EuclidianDistance.turnDistanceIntoScore(value, testScale2)
+                EuclideanDistance.turnDistanceIntoScore(value, testScale1),
+                EuclideanDistance.turnDistanceIntoScore(value, testScale2)
             )
         }
         val expectedScores = List(
@@ -52,9 +52,9 @@ class EuclidianDistanceUnitTest extends FlatSpec with Matchers {
     "compare" should "compute correct score for two given points" in {
         val geoPoints = List("52;11", "52;13", "53;14")
         val scores = List(
-            EuclidianDistance.compare(geoPoints.head, geoPoints.head),
-            EuclidianDistance.compare(geoPoints.head, geoPoints(1)),
-            EuclidianDistance.compare(geoPoints.head, geoPoints(2))
+            EuclideanDistance.compare(geoPoints.head, geoPoints.head),
+            EuclideanDistance.compare(geoPoints.head, geoPoints(1)),
+            EuclideanDistance.compare(geoPoints.head, geoPoints(2))
         )
         val expectedScores = List(1.0, 0.5, 0.0)
         (scores, expectedScores).zipped.foreach { case (score, expected) =>

@@ -29,7 +29,7 @@ class SimilarityMeasureTest extends FlatSpec with Matchers {
         SimilarityMeasure.get[String]("JaroWinkler") shouldEqual JaroWinkler
         SimilarityMeasure.get[String]("N-Gram") shouldEqual NGram
         SimilarityMeasure.get[String]("Overlap") shouldEqual Overlap
-        SimilarityMeasure.get[String]("EuclidianDistance") shouldEqual EuclidianDistance
+        SimilarityMeasure.get[String]("EuclideanDistance") shouldEqual EuclideanDistance
         SimilarityMeasure.get[String]("RelativeNumbersSimilarity") shouldEqual RelativeNumbersSimilarity
         SimilarityMeasure.get[Any]("Not existing") shouldEqual ExactMatch
     }
