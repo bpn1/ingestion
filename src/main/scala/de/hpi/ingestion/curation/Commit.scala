@@ -231,7 +231,7 @@ class Commit extends SparkJob with JSONParser {
       * @return tombstone Subject
       */
     def deleteSubject(masterID: UUID, version: Version): Subject = {
-        val deleteProperty = Map("deleted" -> List("true"))
+        val deleteProperty = Map(Subject.deletePropertyKey -> Subject.deletePropertyValue)
         val subject = Subject.empty(datasource = humanDatasource)
         val sm = new SubjectManager(subject, version)
         sm.setMaster(masterID)
