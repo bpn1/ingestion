@@ -139,64 +139,6 @@ object TestData {
         )
     }
 
-    def exportSubjects: List[Subject] = {
-        List(
-            Subject(
-                id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"),
-                master = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
-                datasource = datasource,
-                name = Option("Name 1"),
-                aliases = List("Alias 1", "Alias 1.1\""),
-                category = None,
-                properties = Map(),
-                relations = Map(
-                    UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("owned by" -> "")
-                )
-            ),
-            Subject(
-                id = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
-                master = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
-                datasource = datasource,
-                name = Option("Name 2"),
-                aliases = List("Alias 2"),
-                category = Option("Category 2"),
-                properties = Map("test_prop" -> List("value 1", "value 2")),
-                relations = Map(
-                    UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130") -> Map("owns" -> "", "parent organization" -> ""),
-                    UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("owned by" -> "")
-                )
-            )
-        )
-    }
-
-    def exportedNodeCSV: List[String] = {
-        List(
-            "\"4fbc0340-4862-431f-9c28-a508234b8130\",\"Name 1\",\"Alias 1;Alias 1.1\\\"\",\"\",\"\"",
-            "\"831f2c54-33d5-43fc-a515-d871946a655d\",\"Name 2\",\"Alias 2\",\"Category 2\",\"\""
-        )
-    }
-
-    def exportedMasterNodeCSV: List[String] = {
-        List(
-            "\"831f2c54-33d5-43fc-a515-d871946a655d\",\"Name 2\",\"Alias 2\",\"Category 2\",\"\""
-        )
-    }
-
-    def exportedEdgeCSV: List[String] = {
-        List(
-            "4fbc0340-4862-431f-9c28-a508234b8130,831f2c54-33d5-43fc-a515-d871946a655d,owned by",
-            "831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,owns",
-            "831f2c54-33d5-43fc-a515-d871946a655d,831f2c54-33d5-43fc-a515-d871946a655d,owned by"
-        )
-    }
-
-    def exportedMasterEdgeCSV: List[String] = {
-        List(
-            "831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,owns",
-            "831f2c54-33d5-43fc-a515-d871946a655d,831f2c54-33d5-43fc-a515-d871946a655d,owned by"
-        )
-    }
-
     def versionQueries(): List[(UUID, List[Version])] = {
         List(
             (UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"), List(

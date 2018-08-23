@@ -126,19 +126,35 @@ object CSVExport {
       */
     def nodeToCSV(subject: Subject): String = {
         val aliasString = subject.aliases
+            .map(escape)
             .mkString(arraySeparator)
-            .replace("\\", "")
-            .replace("\"", "\\\"")
         val name = subject.name
+            .map(escape)
             .getOrElse("")
-            .replace("\"", "'")
-            .replaceAll("\\\\", "")
         val category = subject.category
         val color = category.flatMap(categoryColors.get).getOrElse("")
-        val output = List(subject.id.toString, name, aliasString, category.getOrElse(""), color)
+        val properties = propertiesToCSV(subject)
+        var output = List(subject.id.toString, name, aliasString, category.getOrElse(""), color)
             .mkString(quote + separator + quote)
-        // TODO serialize properties to JSON string
-        quote + output + quote
+        output = quote + output + quote
+        output = output + separator + properties
+        output
+    }
+
+    def propertiesToCSV(subject: Subject): String = {
+        Subject.normalizedPropertyKeyList
+            .sorted
+            .map(subject.properties.get)
+            .map {
+                case Some(values) => s"$quote${values.map(escape).mkString(arraySeparator)}$quote"
+                case None => s"$quote$quote"
+            }.mkString(separator)
+    }
+
+    def escape(value: String): String = {
+        value
+            .replaceAll("\\\\", "\\\\\\\\") // escape backslashes with a backslash \ => \\
+            .replaceAll("\"", "\\\\\"") // escape double quotes with a backslash: " => \"
     }
 
     /**
