@@ -145,6 +145,7 @@ trait JSONParser {
 }
 
 object JSONParser {
+    // scalastyle:off cyclomatic.complexity
     def toJson[T](data: T): JsValue = data match {
         case x: JsValue => x
         case x: String => this(x)
@@ -153,9 +154,11 @@ object JSONParser {
         case x: Boolean => this(x)
         case x: Subject => this(x)
         case x: List[Any] => this(x)
-        case x: Map[Any, Any @unchecked] => this(x)
+        case x: Map[Any, Any] @unchecked => this(x)
+        case null => JsNull
         case x => this(x.toString)
     }
+    // scalastyle:on cyclomatic.complexity
 
     def apply(data: String): JsValue = JsString(data)
     def apply(data: Int): JsValue = JsNumber(data)

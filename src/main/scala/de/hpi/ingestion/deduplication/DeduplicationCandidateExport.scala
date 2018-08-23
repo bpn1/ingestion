@@ -17,25 +17,22 @@ limitations under the License.
 package de.hpi.ingestion.deduplication
 
 import com.datastax.spark.connector._
-import de.hpi.ingestion.datalake.models._
+import de.hpi.ingestion.dataimport.JSONParser
+import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.deduplication.blockingschemes._
-import de.hpi.ingestion.deduplication.models._
+import de.hpi.ingestion.deduplication.models.Block
 import de.hpi.ingestion.deduplication.models.config.AttributeConfig
+import de.hpi.ingestion.deduplication.similarity.SimilarityMeasure
 import de.hpi.ingestion.framework.SparkJob
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
-/**
-  * Compares two groups of Subjects by first blocking with multiple Blocking Schemes, then compares all Subjects
-  * in every block and filters all pairs below a given threshold.
-  */
-class Deduplication extends SparkJob {
-    import Deduplication._
+class DeduplicationCandidateExport extends SparkJob {
     sparkOptions("spark.yarn.executor.memoryOverhead") = "8192"
 
-    appName = "Deduplication"
-    configFile = "deduplication.xml"
+    appName = "Deduplication Candidate Export"
+    configFile = "deduplication_annotation.xml"
     val blockingSchemes = List[BlockingScheme](
         SimpleBlockingScheme("simple_scheme"),
         LastLettersBlockingScheme("lastLetter_scheme"),
@@ -45,7 +42,7 @@ class Deduplication extends SparkJob {
 
     var subjects: RDD[Subject] = _
     var stagedSubjects: RDD[Subject] = _
-    var duplicates: RDD[Duplicates] = _
+    var duplicatesJson: RDD[String] = _
 
     // $COVERAGE-OFF$
     /**
@@ -62,7 +59,7 @@ class Deduplication extends SparkJob {
       * @param sc SparkContext to be used for the job
       */
     override def save(sc: SparkContext): Unit = {
-        duplicates.saveToCassandra(settings("keyspaceDuplicatesTable"), settings("duplicatesTable"))
+        duplicatesJson.saveAsTextFile(s"deduplication_training_data_${System.currentTimeMillis()}")
     }
     // $COVERAGE-ON$
 
@@ -76,7 +73,8 @@ class Deduplication extends SparkJob {
         settings.get("minBlockSize").foreach(blocking.setMinBlockSize)
         settings.get("filterUndefined").foreach(blocking.setFilterUndefined)
         settings.get("filterSmall").foreach(blocking.setFilterSmall)
-        blocking.subjects = subjects.filter(_.isSlave)
+        val comparingWithMasterSubjects = settings("subjectTable") == "subject"
+        blocking.subjects = subjects.filter(_.isSlave || !comparingWithMasterSubjects)
         blocking.stagedSubjects = stagedSubjects
         blocking.setPartitioning(sc)
         blocking.subjectReductionFunction = (subject: Subject) => {
@@ -91,25 +89,29 @@ class Deduplication extends SparkJob {
 
         // TODO: set blocking schemes
         val blocks = blocking.blocking().values
-        val scoreConfigBroadcast = sc.broadcast(scoreConfigSettings)
+        val unnormalizedScoreConfig = scoreConfigSettings
+            .map { aConf =>
+                val scoreConf = aConf.scoreConfigs.map(_.copy[String, SimilarityMeasure[String]](weight = 1.0))
+                aConf.copy(scoreConfigs = scoreConf, weight = 1.0)
+            }
+        val scoreConfigBroadcast = sc.broadcast(unnormalizedScoreConfig)
         val subjectPairs = findDuplicates(blocks, settings("confidence").toDouble, scoreConfigBroadcast)
-        duplicates = createDuplicates(subjectPairs, settings("stagingTable"))
+        duplicatesJson = createDuplicates(subjectPairs, settings("stagingTable"), settings("subjectTable"))
     }
-}
 
-object Deduplication {
     /**
-      * Compares to subjects regarding the configuration.
-      * @param subject1 subjects to be compared to subject2
-      * @param subject2 subjects to be compared to subject1
-      * @return the similarity score of the subjects
+      * Compares two subjects according to the configuration and returns the scores for each similarity measure as well
+      * as the mean of those scores.
+      * @param subject1 the first Subject of the comparison
+      * @param subject2 the second Subject of the comparison
+      * @return tuple of the mean of the similarity scores and a list of the scores
       */
     def compare(
         subject1: Subject,
         subject2: Subject,
         attributeConfigs: List[AttributeConfig] = Nil,
         scale: Int = 1
-    ): Double = {
+    ): (Double, List[Double]) = {
         val scores = for {
             AttributeConfig(attribute, weight, configs) <- attributeConfigs
             subjectValues = subject1.get(attribute)
@@ -117,46 +119,67 @@ object Deduplication {
             if subjectValues.nonEmpty && stagingValues.nonEmpty
             config <- configs
         } yield CompareStrategy(attribute)(subjectValues, stagingValues, config) * weight
-        scores.sum / scores.length
+        (scores.sum / scores.length, scores)
     }
 
     /**
-      * Groups all found duplicates by the Subject whose duplicate they are and creates the corresponding
-      * DuplicateCandidates.
-      * @param subjectPairs RDD of Subject pairs containing all found duplicates
+      * Groups all found duplicates by the staged Subjects. These groups are then serialized into JSON.
+      * @param subjectPairs RDD containing all found duplicates and their scores
+      * @param sourceTable source table of the existing Subjects
       * @param stagingTable source table of the staged Subjects
-      * @return RDD of grouped Duplicate Candidates
+      * @return RDD serialized duplicate groups
       */
     def createDuplicates(
-        subjectPairs: RDD[(Subject, Subject, Double)],
+        subjectPairs: RDD[(Subject, Subject, List[Double], Double)],
+        sourceTable: String,
         stagingTable: String
-    ): RDD[Duplicates] = {
+    ): RDD[String] = {
         subjectPairs
-            .map { case (subject, staging, score) =>
-                ((subject.id, subject.name), List(Candidate(staging.id, staging.name, score)))
+            .map { case (subject, staging, scores, mean) =>
+                (staging.id, List((subject, staging, scores, mean)))
             }.reduceByKey(_ ::: _)
-            .map { case ((id, name), candidates) => Duplicates(id, name, stagingTable, candidates.distinct) }
+            .values
+            .map { duplicateList =>
+                val staging = duplicateList.head._2
+                val subjects = duplicateList
+                    .sortBy { case (subject, staging, scores, mean) => -mean }
+                    .take(10)
+                    .map { case (subject, staging, scores, mean) =>
+                        Map(
+                            "mean" -> mean,
+                            "scores" -> scores,
+                            "subject" -> subject
+                        )
+                    }
+                val duplicateData = Map(
+                    "staging" -> staging,
+                    "staging_source_table" -> stagingTable,
+                    "subject_source_table" -> sourceTable,
+                    "subjects" -> subjects
+                )
+                JSONParser(duplicateData).toString
+            }
     }
 
     /**
       * Finds the duplicates of each block by comparing the Subjects and filtering all Subjects pairs below the
-      * threshold confidence.
-      * @param blocks RDD of BLocks containing the Subjects that are compared
+      * threshold confidence. The comparison scores and their mean are added to all Subject pairs that are kept.
+      * @param blocks RDD of Blocks that produced by the Blocking
       * @param confidence threshold used to filter duplicate candidates
-      * @param scoreConfigBroadcast Broadcast of the used score config
-      * @return tuple of Subjects with their score, which is greater or equal the given threshold.
+      * @param scoreConfigBroadcast Broadcast of the score config
+      * @return tuple of Subjects with the scores of the similarity measures and the mean of those
       */
     def findDuplicates(
         blocks: RDD[Block],
         confidence: Double,
         scoreConfigBroadcast: Broadcast[List[AttributeConfig]]
-    ): RDD[(Subject, Subject, Double)] = {
+    ): RDD[(Subject, Subject, List[Double], Double)] = {
         blocks
             .flatMap(_.crossProduct())
             .map { case (subject1, subject2) =>
-                val score = compare(subject1, subject2, scoreConfigBroadcast.value)
-                (subject1, subject2, score)
-            }.filter(_._3 >= confidence)
-            .repartition(64)
+            val (mean, scores) = compare(subject1, subject2, scoreConfigBroadcast.value)
+            (subject1, subject2, scores, mean)
+        }.filter(_._4 >= confidence)
+        .repartition(64)
     }
 }
