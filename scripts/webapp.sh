@@ -1,24 +1,16 @@
 #!/bin/bash
 pid="$(ps aux | grep manage.py | grep server | awk '{print $2;}')"
 if [ -n "$pid" ]; then
-    kill $pid
+        kill $pid
 fi
 rm config/cred.json
 cp $NEO_CONF config/cred.json
-virtualenv flask
-cd flask
-source bin/activate
+source /home/jan.ehmueller/anaconda2/bin/activate webapp
 pip install -r requirements.txt
-pip install flask
-pip install Flask-Bootstrap
-pip install Flask-Login
-pip install Flask-sqlalchemy
-pip install flask-restful
-pip install py2neo==2.0.9
-pip install elasticsearch
-pip install Flask-Script
-pip install Flask-Migrate
-pip install Flask-Wtf
+cd cle
+npm install
+npm install --save react-toastify@4.0.1
+npm run buildStatic
 cd ..
+cp ./cle/electron/static/* ./app/public/ && mv ./app/public/index.html ./app/templates/
 BUILD_ID=dontKillMe python manage.py server &
-deactivate
