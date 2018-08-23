@@ -18,7 +18,6 @@ package de.hpi.ingestion.datalake
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{FlatSpec, Matchers}
-import de.hpi.ingestion.implicits.CollectionImplicits._
 
 class CSVExportTest extends FlatSpec with Matchers with SharedSparkContext {
     "Relations" should "be converted to csv edges" in {
@@ -44,6 +43,16 @@ class CSVExportTest extends FlatSpec with Matchers with SharedSparkContext {
         nodes shouldEqual expectedNodeCSV
         edges shouldEqual expectedEdgeCSV
     }
+
+    they should "not include deleted Subjects" in {
+        val job = new CSVExport
+        job.subjects = sc.parallelize(CSVExportTestData.subjects ++ CSVExportTestData.deletedSubjects)
+        job.run(sc)
+        val nodes = job.nodes.collect.toSet
+        val expectedNodeCSV = CSVExportTestData.masterNodeCSV.toSet
+        nodes shouldEqual expectedNodeCSV
+    }
+
 
     "Subject properties" should "be parsed to CSV" in {
         val subjects = CSVExportTestData.subjects

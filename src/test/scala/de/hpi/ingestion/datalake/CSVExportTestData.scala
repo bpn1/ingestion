@@ -57,6 +57,19 @@ object CSVExportTestData {
         )
     }
 
+    def deletedSubjects: List[Subject] = {
+        List(
+            Subject(
+                id = UUID.fromString("42fbc0340-4862-431f-9c28-a508234b8130"),
+                master = UUID.fromString("42fbc0340-4862-431f-9c28-a508234b8130"),
+                datasource = datasource,
+                name = Option("Name Deleted"),
+                aliases = List("I am deleted"),
+                properties = Map(Subject.deletePropertyKey -> Subject.deletePropertyValue)
+            )
+        )
+    }
+
     def subjectNodeCSV: List[String] = {
         List(
             "\"4fbc0340-4862-431f-9c28-a508234b8130\",\"Name 1\",\"Alias 1;Alias 1.1\\\"\",\"\",\"\"," + propertyCSV.head,

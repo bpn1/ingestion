@@ -129,6 +129,12 @@ case class Subject(
     def isSlave: Boolean = !isMaster
 
     /**
+      * Returns true if the subject contains the "delete" property with the correct value
+      * @return True if this subject is deleted
+      */
+    def isDeleted: Boolean = this.properties.get(Subject.deletePropertyKey).contains(Subject.deletePropertyValue)
+
+    /**
       * Transforms the Subjects and its properties into a tab separated string. The tsv format is the following:
       * id, name, aliases, category, property1, property2, ..., propertyN.
       * The sequence of the properties is defined by the file normalized_properties.txt
@@ -171,6 +177,9 @@ object Subject {
         .getLines
         .toList
     val normalizedPropertyKeys : Set[String] = normalizedPropertyKeyList.toSet
+
+    val deletePropertyKey = "deleted"
+    val deletePropertyValue = List("true")
 
     /**
       * Creates a default empty Subject with equal id and master
