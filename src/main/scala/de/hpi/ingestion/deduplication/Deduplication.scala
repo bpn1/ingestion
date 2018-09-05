@@ -74,8 +74,8 @@ class Deduplication extends SparkJob {
         val blocking = new Blocking
         settings.get("maxBlockSize").foreach(blocking.setMaxBlockSize)
         settings.get("minBlockSize").foreach(blocking.setMinBlockSize)
-        settings.get("filterUndefined")
-        settings.get("filterSmall")
+        settings.get("filterUndefined").foreach(blocking.setFilterUndefined)
+        settings.get("filterSmall").foreach(blocking.setFilterUndefined)
         blocking.subjects = subjects.filter(_.isSlave)
         blocking.stagedSubjects = stagedSubjects
         blocking.setPartitioning(sc)
@@ -88,8 +88,8 @@ class Deduplication extends SparkJob {
             subject.aliases_history = Nil
             subject
         }
+        blocking.setBlockingSchemes(blockingSchemes)
 
-        // TODO: set blocking schemes
         val blocks = blocking.blocking().values
         val scoreConfigBroadcast = sc.broadcast(scoreConfigSettings)
         val subjectPairs = findDuplicates(blocks, settings("confidence").toDouble, scoreConfigBroadcast)
