@@ -90,10 +90,10 @@ class Blocking extends SparkJob {
     }
 
     /**
-      * Sets the number of partitions used for the repartition in the blocking to #executors * #executor cores * 4
+      * Sets the number of partitions used for the repartition in the blocking to #executors * #executor-cores * 4
       */
     def setPartitioning(sc: SparkContext): Unit = {
-        numPartitions = sc.getExecutorMemoryStatus.size * sc.getConf.getInt("spark.executor.cores", 1) * 2
+        numPartitions = sc.getExecutorMemoryStatus.size * sc.getConf.getInt("spark.executor.cores", 1) * 4
     }
 
     /**
@@ -362,15 +362,15 @@ object Blocking {
     ): Map[String, Double] = {
         val goldStandardSize = goldStandard.size.toDouble
         val pairsCompleteness = duplicates
-            .flatMap { case (duplicateIDs, (tag, block)) => duplicateIDs.map((tag, _)) }
+            .flatMap { case (duplicateIDs, (tag, _)) => duplicateIDs.map((tag, _)) }
             .distinct
-            .map { case (tag, duplicate) => (tag, 1) }
+            .map { case (tag, _) => (tag, 1) }
             .reduceByKey(_ + _)
             .mapValues(_.toDouble / goldStandardSize)
             .collect
             .toMap
         val sumPairsCompleteness = duplicates
-            .flatMap { case (duplicateIDs, (tag, block)) => duplicateIDs }
+            .flatMap { case (duplicateIDs, _) => duplicateIDs }
             .distinct
             .count()
             .toDouble / goldStandard.size.toDouble

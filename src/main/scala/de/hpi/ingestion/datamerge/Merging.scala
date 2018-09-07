@@ -278,13 +278,16 @@ object Merging {
       * @return Duplicates without any conflicting matches to Subjects in our knowledge base
       */
     def deduplicateMatches(duplicates: RDD[Duplicates]): RDD[Duplicates] = {
-        duplicates
-            .flatMap { duplicate =>
-                duplicate.candidates.map { candidate =>
-                    val candidateData = (duplicate.subject_id, duplicate.subject_name, duplicate.datasource, candidate)
-                    (candidate.id, List(candidateData))
-                }
-            }.reduceByKey(_ ++ _)
+        // flatten Duplicate object so that every tuple of Subject and Candidate is a single entry
+        val flattenedDuplicates = duplicates.flatMap { duplicate =>
+            duplicate.candidates.map { candidate =>
+                val candidateData = (duplicate.subject_id, duplicate.subject_name, duplicate.datasource, candidate)
+                (candidate.id, List(candidateData))
+            }
+        }
+
+        val filteredCandidates = flattenedDuplicates
+            .reduceByKey(_ ++ _)
             .map { case (_, candidateTuples) =>
                 // every candidate can only be matched to one subject in our knowledge base
                 // select the one with the highest score
@@ -292,7 +295,10 @@ object Merging {
                 val chosenCandidate = sortedCandidates.head
                 val id = chosenCandidate._1
                 (id, List(chosenCandidate))
-            }.reduceByKey(_ ++ _)
+            }
+
+        val deduplicatedDuplicates = filteredCandidates
+            .reduceByKey(_ ++ _)
             .map { case (id, candidateTuples) =>
                 val candidates = candidateTuples.map(_._4)
                 val (_, name, datasource, _) = candidateTuples.head
@@ -303,5 +309,6 @@ object Merging {
                     candidates = candidates
                 )
             }
+        deduplicatedDuplicates
     }
 }
