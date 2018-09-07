@@ -18,8 +18,6 @@ package de.hpi.ingestion.datamerge
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.datalake.SubjectManager
-import de.hpi.ingestion.datalake.models.Subject
-import org.apache.spark.rdd.RDD
 import org.scalatest.{FlatSpec, Matchers}
 
 class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
@@ -137,5 +135,58 @@ class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext wit
             .mapValues(_.toSet)
 
         duplicateRelations shouldEqual expectedRelations
+    }
+
+    "Duplicate matches from the same datasource" should "be aggregated" in {
+        val job = new Merging
+        job.subjects = sc.parallelize(TestData.subjects.take(2))
+        job.stagedSubjects = sc.parallelize(TestData.staging.take(2))
+        job.duplicates = sc.parallelize(TestData.duplicatesWithMultipleMatches)
+        job.run(sc)
+        val mergedSubjects = job.mergedSubjects.collect.toList.sortBy(_.id)
+        val expectedSubjects = TestData.mergedSubjectsWithMultipleMatches.sortBy(_.id)
+        mergedSubjects.zip(expectedSubjects).foreach { case (mergedSubject, expectedSubject) =>
+            mergedSubject.id shouldEqual expectedSubject.id
+            mergedSubject.master shouldEqual expectedSubject.master
+            mergedSubject.datasource shouldEqual expectedSubject.datasource
+            mergedSubject.name shouldEqual expectedSubject.name
+            mergedSubject.aliases shouldEqual expectedSubject.aliases
+            mergedSubject.category shouldEqual expectedSubject.category
+            mergedSubject.properties shouldEqual expectedSubject.properties
+            mergedSubject.relations shouldEqual expectedSubject.relations
+        }
+    }
+
+    they should "result in the best scored match" in {
+        val job = new Merging
+        job.subjects = sc.parallelize(TestData.subjects)
+        job.stagedSubjects = sc.parallelize(TestData.staging.take(3))
+        job.duplicates = sc.parallelize(TestData.duplicatesWithConflictingMatches)
+        job.run(sc)
+        val mergedSubjects = job.mergedSubjects.collect.toList.sortBy(_.id)
+        val expectedSubjects = TestData.mergedSubjectsWithConflictingMatches.sortBy(_.id)
+        mergedSubjects.zip(expectedSubjects).foreach { case (mergedSubject, expectedSubject) =>
+            mergedSubject.id shouldEqual expectedSubject.id
+            mergedSubject.master shouldEqual expectedSubject.master
+            mergedSubject.datasource shouldEqual expectedSubject.datasource
+            mergedSubject.name shouldEqual expectedSubject.name
+            mergedSubject.aliases shouldEqual expectedSubject.aliases
+            mergedSubject.category shouldEqual expectedSubject.category
+            mergedSubject.properties shouldEqual expectedSubject.properties
+            mergedSubject.relations shouldEqual expectedSubject.relations
+        }
+    }
+
+    "Duplicates matching to different Subjects" should "be reduced to the match with the highest score" in {
+        val duplicates = sc.parallelize(TestData.duplicatesWithConflictingMatches)
+        val reducedDuplicates = Merging.deduplicateMatches(duplicates)
+            .collect
+            .toList
+            .map(duplicate => duplicate.copy(candidates = duplicate.candidates.sortBy(_.id)))
+            .toSet
+        val expectedFixedDuplicates = TestData.duplicatesWithFixedConflicts
+            .map(duplicate => duplicate.copy(candidates = duplicate.candidates.sortBy(_.id)))
+            .toSet
+        reducedDuplicates shouldEqual expectedFixedDuplicates
     }
 }
