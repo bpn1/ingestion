@@ -56,7 +56,9 @@ class CSVExport extends SparkJob {
       * @param sc Spark Context used to e.g. broadcast variables
       */
     override def run(sc: SparkContext): Unit = {
-        val masters = subjects.filter(_.isMaster)
+        val masters = subjects
+            .filter(_.isMaster)
+            .filter(subject => !subject.isDeleted)
         nodes = masters.map(nodeToCSV)
         edges = masters.flatMap(edgesToCSV)
     }
