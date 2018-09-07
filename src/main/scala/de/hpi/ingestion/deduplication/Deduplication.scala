@@ -22,11 +22,9 @@ import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.deduplication.models.config.AttributeConfig
 import de.hpi.ingestion.framework.SparkJob
-import de.hpi.ingestion.implicits.DatasetImplicits._
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{Dataset, SparkSession}
 
 /**
   * Compares two groups of Subjects by first blocking with multiple Blocking Schemes, then compares all Subjects
@@ -45,8 +43,8 @@ class Deduplication extends SparkJob {
         MappedListBlockingScheme("mappedPostal_scheme", x => x.slice(0, 3), "geo_postal")
     )
 
-    var subjects: Dataset[Subject] = _
-    var stagedSubjects: Dataset[Subject] = _
+    var subjects: RDD[Subject] = _
+    var stagedSubjects: RDD[Subject] = _
     var duplicates: RDD[Duplicates] = _
 
     // $COVERAGE-OFF$
@@ -55,9 +53,8 @@ class Deduplication extends SparkJob {
       * @param sc SparkContext to be used for the job
       */
     override def load(sc: SparkContext): Unit = {
-        val spark = SparkSession.builder().getOrCreate()
-        subjects = spark.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
-        stagedSubjects = spark.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
+        subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
+        stagedSubjects = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
     }
 
     /**
@@ -76,7 +73,9 @@ class Deduplication extends SparkJob {
     override def run(sc: SparkContext): Unit = {
         val blocking = initializeBlocking(sc)
 
-        val blocks = blocking.blocking().values
+        val blocks = blocking
+            .blocking()
+            .values
         val scoreConfigBroadcast = sc.broadcast(scoreConfigSettings)
         val subjectPairs = findDuplicates(blocks, settings("confidence").toDouble, scoreConfigBroadcast)
         duplicates = createDuplicates(subjectPairs, settings("stagingTable"))
@@ -87,7 +86,7 @@ class Deduplication extends SparkJob {
         blocking.setParameters(settings)
         blocking.subjects = subjects.filter(_.isSlave)
         blocking.stagedSubjects = stagedSubjects
-        blocking.setPartitioning(sc)
+//        blocking.setPartitioning(sc)
         blocking.subjectReductionFunction = (subject: Subject) => {
             subject.master_history = Nil
             subject.name_history = Nil
@@ -133,7 +132,7 @@ object Deduplication {
       * @return RDD of grouped Duplicate Candidates
       */
     def createDuplicates(
-        subjectPairs: Dataset[(Subject, Subject, Double)],
+        subjectPairs: RDD[(Subject, Subject, Double)],
         stagingTable: String
     ): RDD[Duplicates] = {
         subjectPairs
@@ -152,10 +151,10 @@ object Deduplication {
       * @return tuple of Subjects with their score, which is greater or equal the given threshold.
       */
     def findDuplicates(
-        blocks: Dataset[Block],
+        blocks: RDD[Block],
         confidence: Double,
         scoreConfigBroadcast: Broadcast[List[AttributeConfig]]
-    ): Dataset[(Subject, Subject, Double)] = {
+    ): RDD[(Subject, Subject, Double)] = {
         blocks.flatMap { block =>
             val filterFunction = (s1: Subject, s2: Subject) =>
                 compare(s1, s2, scoreConfigBroadcast.value) >= confidence
