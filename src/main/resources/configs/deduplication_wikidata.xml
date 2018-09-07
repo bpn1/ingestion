@@ -12,6 +12,7 @@
         <filterUndefined>true</filterUndefined>
         <maxBlockSize>1000</maxBlockSize>
         <minBlockSize>1</minBlockSize>
+        <numPartitions>2048</numPartitions>
         <confidence>0.9</confidence>
     </settings>
     <simMeasurements>

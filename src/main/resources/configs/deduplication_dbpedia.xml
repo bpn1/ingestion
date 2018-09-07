@@ -13,6 +13,7 @@
         <filterUndefined>true</filterUndefined>
         <filterSmall>true</filterSmall>
         <maxBlockSize>1000</maxBlockSize>
+        <numPartitions>2048</numPartitions>
         <minBlockSize>1</minBlockSize>
     </settings>
     <simMeasurements>

@@ -11,7 +11,8 @@
         <statsTable>blockingstats</statsTable>
         <filterUndefined>true</filterUndefined>
         <filterSmall>true</filterSmall>
-        <maxBlockSize>50000</maxBlockSize>
+        <maxBlockSize>1000</maxBlockSize>
         <minBlockSize>1</minBlockSize>
+        <numPartitions>2048</numPartitions>
     </settings>
 </config>
