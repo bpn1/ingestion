@@ -12,7 +12,7 @@
         <confidence>0.3</confidence>
         <filterUndefined>true</filterUndefined>
         <filterSmall>true</filterSmall>
-        <maxBlockSize>100000</maxBlockSize>
+        <maxBlockSize>1000</maxBlockSize>
         <minBlockSize>1</minBlockSize>
     </settings>
     <simMeasurements>
