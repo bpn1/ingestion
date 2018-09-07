@@ -24,8 +24,10 @@ import de.hpi.ingestion.datalake.models._
 import de.hpi.ingestion.deduplication.blockingschemes._
 import de.hpi.ingestion.deduplication.models._
 import de.hpi.ingestion.framework.SparkJob
-import org.apache.spark.{HashPartitioner, SparkContext}
+import de.hpi.ingestion.implicits.DatasetImplicits._
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{Dataset, SparkSession}
 
 import scala.util.Try
 
@@ -47,9 +49,9 @@ class Blocking extends SparkJob {
     var calculatePC: Boolean = false
     var numPartitions: Int = 4
 
-    var subjects: RDD[Subject] = _
-    var stagedSubjects: RDD[Subject] = _
-    var goldStandard: RDD[(UUID, UUID)] = _
+    var subjects: Dataset[Subject] = _
+    var stagedSubjects: Dataset[Subject] = _
+    var goldStandard: Dataset[(UUID, UUID)] = _
     var blockEvaluation: RDD[BlockEvaluation] = _
 
     // $COVERAGE-OFF$
@@ -58,9 +60,10 @@ class Blocking extends SparkJob {
       * @param sc Spark Context used to load the RDDs
       */
     override def load(sc: SparkContext): Unit = {
-        subjects = sc.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
-        stagedSubjects = sc.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
-        goldStandard = sc.cassandraTable[(UUID, UUID)](
+        val spark = SparkSession.builder().getOrCreate()
+        subjects = spark.cassandraTable[Subject](settings("keyspaceSubjectTable"), settings("subjectTable"))
+        stagedSubjects = spark.cassandraTable[Subject](settings("keyspaceStagingTable"), settings("stagingTable"))
+        goldStandard = spark.cassandraTable[(UUID, UUID)](
             settings("keyspaceGoldStandardTable"),
             settings("goldStandardTable"))
     }
@@ -80,13 +83,16 @@ class Blocking extends SparkJob {
     override def run(sc: SparkContext): Unit = {
         val comment = conf.commentOpt.getOrElse("Blocking")
         val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
+        setParameters()
+        setPartitioning(sc)
+        evaluationBlocking(goldenBroadcast.value, comment)
+    }
+
+    def setParameters(settings: Map[String, String] = this.settings): Unit = {
         settings.get("filterUndefined").foreach(setFilterUndefined)
         settings.get("filterSmall").foreach(setFilterSmall)
         settings.get("minBlockSize").foreach(setMinBlockSize)
         settings.get("maxBlockSize").foreach(setMaxBlockSize)
-        setPartitioning(sc)
-        evaluationBlocking(goldenBroadcast.value, comment)
-        sc.getExecutorMemoryStatus
     }
 
     /**
@@ -111,7 +117,7 @@ class Blocking extends SparkJob {
         val combinedSchemesTag = s"combined ${blockingSchemes.map(_.tag).mkString(", ")}"
         var pairsCompleteness = Map.empty[String, Double]
         if(calculatePC) {
-            pairsCompleteness = calculatePairsCompleteness(duplicates, goldStandard, combinedSchemesTag)
+            pairsCompleteness = calculatePairsCompleteness(duplicates.rdd, goldStandard, combinedSchemesTag)
         }
         val blockCount = calculateBlockCount(blocks, combinedSchemesTag)
         val comparisonCount = calculateComparisonCount(blocks, combinedSchemesTag)
@@ -196,6 +202,49 @@ class Blocking extends SparkJob {
         filterSmall = Try(flag.toBoolean).getOrElse(false)
     }
 
+    def splitBlocksByLength(
+        blocks: Dataset[(String, Block)],
+        simpleScheme: SimpleBlockingScheme
+    ): (Dataset[Block], Dataset[Block]) = {
+        val simpleBlocks = blocks
+            .filter(_._1 == simpleScheme.tag)
+            .values
+        val shorterBlocks = simpleBlocks.filter(_.key.length < simpleScheme.length)
+        val longerBlocks = simpleBlocks.filter(_.key.length == simpleScheme.length)
+        (shorterBlocks, longerBlocks)
+    }
+
+    /**
+      * Maps a block key to all small blocks that should be merged with this block.
+      * @param shorterBlocks all blocks with a key that is shorter than the intended key length
+      * @param longerMatches contains keys of all shorter blocks that should be merged into a specific block,
+      *                      i.e. for the block "volks" this Dataset contains the following tuples:
+      *                      [("volk", "volks"), ("vol", "volks"), ("vo", "volks"), ("v", "volks")]
+      * @return Map pointing from a block key to a list of all small blocks that should be merged with the larger block
+      */
+    def groupKeysToSmallerKeys(
+        shorterBlocks: Dataset[Block],
+        longerMatches: Dataset[(String, String)]
+    ): Map[String, List[Block]] = {
+        // matches all longer blocks with the shorter blocks that are a prefix of the longer blocks
+        val blocksMatchedWithLongKeys = shorterBlocks
+            .map(block => (block.key, block))
+            .cogroup(longerMatches)
+            .values
+            .filter(_._1.nonEmpty)
+
+        // inverses the mapping so that the longer block keys map to lists of the shorter blocks
+        val keysMatchedWithShortBlocks = blocksMatchedWithLongKeys
+            .flatMap { case (shortBlocks, longBlockKeys) =>
+                longBlockKeys.map((_, shortBlocks.toList))
+            }.reduceByKey(_ ++ _)
+
+        // collect the blocks into a local Map
+        keysMatchedWithShortBlocks
+            .collect
+            .toMap
+    }
+
     /**
       * If a Simple Blocking Schemes was used Blocks with a shorter key are merged with Blocks which have a normal key.
       * The shorter Blocks are added to every normal Block whose key has the key of the shorter Block as prefix.
@@ -203,44 +252,39 @@ class Blocking extends SparkJob {
       * @return the merged Blocks containing their own Subjects and the Subjects of the Blocks with a smaller key but
       *         the same prefix as well as every unaffected Block
       */
-    def mergeSubsetBlocks(blocks: RDD[(String, Block)]): RDD[(String, Block)] = {
-        val simpleSchemeOpt = blockingSchemes.find(_.isInstanceOf[SimpleBlockingScheme])
+    def mergeSubsetBlocks(blocks: Dataset[(String, Block)]): Dataset[(String, Block)] = {
         // don't merge blocks if there is no Simple Blocking Scheme
-        if(simpleSchemeOpt.isEmpty) {
-            return blocks
+        var simpleScheme: SimpleBlockingScheme = null
+        blockingSchemes.find(_.isInstanceOf[SimpleBlockingScheme]) match {
+            case Some(scheme) => simpleScheme = scheme.asInstanceOf[SimpleBlockingScheme]
+            case None => return blocks
         }
-        val simpleScheme = simpleSchemeOpt.get.asInstanceOf[SimpleBlockingScheme]
+
+        // split blocks into those of the simple blocking scheme and those of other schemes
         val nonSimpleBlocks = blocks.filter(_._1 != simpleScheme.tag)
-        val simpleBlocks = blocks
-            .filter(_._1 == simpleScheme.tag)
-            .values
-        val shorterBlocks = simpleBlocks.filter(_.key.length < simpleScheme.length)
-        val longerBlocks = simpleBlocks.filter(_.key.length == simpleScheme.length)
+        val (shorterBlocks, longerBlocks) = splitBlocksByLength(blocks, simpleScheme)
+
         // don't merge blocks if there are no blocks with a shorter blocking key
         if(shorterBlocks.isEmpty()) {
             return blocks
         }
-        val minKeyLength = shorterBlocks
-            .map(_.key.length)
-            .min
+
+        // the length of the shortest key
+        val minKeyLength = shorterBlocks.map(_.key.length).min()
+
         // length range of prefixes to consider [minKeyLength, length of Blocking Scheme)
         val valueSubsets = (minKeyLength until simpleScheme.length).toList
+
         // contains keys of all shorter blocks that should be merged into a specific block
         val longerMatches = longerBlocks.flatMap { block =>
             val subKeys = valueSubsets.map(length => block.key.slice(0, length))
             subKeys.map((_, block.key))
         }
-        // maps a block key to all small blocks that should be merged with this block
-        val shortBlockMap = shorterBlocks
-            .map(block => (block.key, block))
-            .cogroup(longerMatches)
-            .values
-            .filter(_._1.nonEmpty)
-            .flatMap { case (shortBlocks, longBlockKeys) =>
-                longBlockKeys.map((_, shortBlocks.toList))
-            }.reduceByKey(_ ++ _)
-            .collect
-            .toMap
+
+        // Maps of a block keys pointing to all small blocks that should be merged with this block
+        val shortBlockMap = groupKeysToSmallerKeys(shorterBlocks, longerMatches)
+
+        // add shorter blocks into the longer blocks
         val mergedBlocks = longerBlocks.map { block =>
             val prefixBlocks = shortBlockMap.getOrElse(block.key, Nil)
             block.copy(
@@ -248,6 +292,8 @@ class Blocking extends SparkJob {
                 staging = block.staging ++ prefixBlocks.flatMap(_.staging)
             )
         }
+
+        // append the original shorter blocks and the blocks from other blocking schemes to the Dataset of merged blocks
         mergedBlocks
             .union(shorterBlocks)
             .map((simpleScheme.tag, _))
@@ -258,48 +304,53 @@ class Blocking extends SparkJob {
       * Blocks the input Subjects using the provided blocking schemes.
       * @return RDD of blocks keyed by the tag of the blocking scheme used to genrate the blocking
       */
-    def blocking(): RDD[(String, Block)] = {
+    def blocking(): Dataset[(String, Block)] = {
+        val spark = SparkSession.builder().getOrCreate()
         val subjectBlocks = blockSubjects(subjects, blockingSchemes, subjectReductionFunction)
         val stagingBlocks = blockSubjects(stagedSubjects, blockingSchemes, subjectReductionFunction)
         val undefinedMap = blockingSchemes
             .map(scheme => (scheme.tag, scheme.undefinedValue))
             .toMap
         val blocks = subjectBlocks
-            .cogroup(stagingBlocks)
+            .cogroup(spark, stagingBlocks)
             .map { case ((key, tag), (subjectList, stagingList)) =>
                 (tag, Block(key = key, subjects = subjectList.toList, staging = stagingList.toList))
             }
         val mergedBlocks = mergeSubsetBlocks(blocks)
         mergedBlocks
-            .filter { case (tag, block) =>
-                val isUndefined = undefinedMap(tag) == block.key && filterUndefined
-                val numComparisons = block.numComparisons
-                val isTooSmall = numComparisons < minBlockSize && filterSmall
-                !(isUndefined || isTooSmall)
+            .filter { _ match { // BUG with pattern matching: https://issues.apache.org/jira/browse/SPARK-19492
+                    case (tag, block) =>
+                        val isUndefined = undefinedMap(tag) == block.key && filterUndefined
+                        val numComparisons = block.numComparisons
+                        val isTooSmall = numComparisons < minBlockSize && filterSmall
+                        !(isUndefined || isTooSmall)
+                }
             }.flatMap { case (tag, largeBlock) =>
                 val splitBlocks = Block.split(largeBlock, maxBlockSize.toInt)
                 val blocks = splitBlocks.length match {
                     case 1 => splitBlocks
-                    case _ => splitBlocks.zipWithIndex.map { case (block, i) => block.copy(key = s"${block.key}_$i") }
+                    case _ => splitBlocks.zipWithIndex.map { case (block, i) =>
+                        block.copy(key = s"${block.key}_$i")
+                    }
                 }
                 blocks.map((tag, _))
-            }.partitionBy(new HashPartitioner(numPartitions))
+            }.repartition(numPartitions)
     }
 }
 object Blocking {
     /**
       * Uses input blocking schemes to generate blocks of subjects. Every subject generates an entry for every key
       * element for every blocking scheme.
-      * @param subjects RDD to perform the blocking on
+      * @param subjects Dataset to perform the blocking on
       * @param blockingSchemes List of blocking schemes used to generate keys
       * @param f function that is applied to each Subject after the blocking to, e.g., reduce the data for evaluation
       * @return subjects keyed by a blocking key and the blocking schemes tag
       */
     def blockSubjects(
-        subjects: RDD[Subject],
+        subjects: Dataset[Subject],
         blockingSchemes: List[BlockingScheme],
         f: (Subject => Subject) = identity[Subject]
-    ): RDD[((String, String), Subject)] = {
+    ): Dataset[((String, String), Subject)] = {
         subjects
             .flatMap { subject =>
                 blockingSchemes.flatMap { scheme =>
@@ -316,11 +367,11 @@ object Blocking {
       * @return Blocking Scheme tags with the associated number of blocks
       */
     def calculateBlockCount(
-        blocks: RDD[(String, Block)],
+        blocks: Dataset[(String, Block)],
         combinedSchemesTag: String
     ): Map[String, Int] = {
         val schemeComparisons = blocks
-            .map { case (tag, block) => (tag, 1) }
+            .map { case (tag, _) => (tag, 1) }
             .reduceByKey(_ + _)
             .collect
             .toMap
@@ -335,7 +386,7 @@ object Blocking {
       * @return blocktags (information on the blocking scheme) with the associated comparison count
       */
     def calculateComparisonCount(
-        blocks: RDD[(String, Block)],
+        blocks: Dataset[(String, Block)],
         combinedSchemesTag: String
     ): Map[String, Long] = {
         val blockComparisons = blocks
