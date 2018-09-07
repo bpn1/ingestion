@@ -23,14 +23,13 @@ import de.hpi.ingestion.framework.CommandLineConf
 import org.scalatest.{FlatSpec, Matchers}
 
 class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
-
     "Blocking" should "partition subjects regarding the value of the given key" in {
         val subjects = TestData.subjects
-        val subjectRDD = sc.parallelize(subjects)
+        val subjectDataset = sc.parallelize(subjects)
         val stagedSubjects = TestData.stagings
         val stagingRDD = sc.parallelize(stagedSubjects)
         val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-        val subjectBlocks = Blocking.blockSubjects(subjectRDD, blockingSchemes)
+        val subjectBlocks = Blocking.blockSubjects(subjectDataset, blockingSchemes)
         val stagingBlocks = Blocking.blockSubjects(stagingRDD, blockingSchemes)
         val expectedSubjects = TestData.flatSubjectBlocks(sc, subjects)
         val expectedStaging = TestData.flatStagingBlocks(sc, stagedSubjects)
@@ -169,6 +168,7 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 
     "Blocking job" should "evaluate blocks" in {
         val job = new Blocking
+        job.settings = job.settings ++ Map("numPartitions" -> "4")
         val subjects = TestData.subjects
         val stagedSubjects = TestData.stagings
         job.subjects = sc.parallelize(subjects)
@@ -188,6 +188,7 @@ class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons 
 
     it should "set the comment if given the config option" in {
         val job = new Blocking
+        job.settings = job.settings ++ Map("numPartitions" -> "4")
         val subjects = TestData.subjects
         val stagedSubjects = TestData.stagings
         job.subjects = sc.parallelize(subjects)
