@@ -202,6 +202,15 @@ class Blocking extends SparkJob {
         filterSmall = Try(flag.toBoolean).getOrElse(false)
     }
 
+    /**
+      * Split the blocks created by the Simple Blocking Scheme according to their length. Two groups of blocks are
+      * created. One has keys that are shorter than the length defined by the blocking scheme (i.e., the attribute
+      * values were shorter than the length defined by the blocking scheme). The other group has all blocks with
+      * the correct/full key size.
+      * @param blocks all the blocks created by the Simple Blocking Scheme
+      * @param simpleScheme the Simple Blocking Scheme that was used during blocking
+      * @return a tuple of the blocks with shorter keys and the blocks with longer (full sized) keys
+      */
     def splitBlocksByLength(
         blocks: Dataset[(String, Block)],
         simpleScheme: SimpleBlockingScheme
