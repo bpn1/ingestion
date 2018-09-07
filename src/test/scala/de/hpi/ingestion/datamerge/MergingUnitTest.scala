@@ -18,7 +18,6 @@ package de.hpi.ingestion.datamerge
 
 import com.holdenkarau.spark.testing.{RDDComparisons, SharedSparkContext}
 import de.hpi.ingestion.datalake.SubjectManager
-import de.hpi.ingestion.implicits.CollectionImplicits._
 import org.scalatest.{FlatSpec, Matchers}
 
 class MergingUnitTest extends FlatSpec with Matchers with SharedSparkContext with RDDComparisons {
