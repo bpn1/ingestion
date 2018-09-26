@@ -25,11 +25,11 @@ import org.scalatest.{FlatSpec, Matchers}
 class BlockingTest extends FlatSpec with SharedSparkContext with RDDComparisons with Matchers {
     "Blocking" should "partition subjects regarding the value of the given key" in {
         val subjects = TestData.subjects
-        val subjectDataset = sc.parallelize(subjects)
+        val subjectRDD = sc.parallelize(subjects)
         val stagedSubjects = TestData.stagings
         val stagingRDD = sc.parallelize(stagedSubjects)
         val blockingSchemes = List(TestData.cityBlockingScheme, SimpleBlockingScheme("SimpleBlocking"))
-        val subjectBlocks = Blocking.blockSubjects(subjectDataset, blockingSchemes)
+        val subjectBlocks = Blocking.blockSubjects(subjectRDD, blockingSchemes)
         val stagingBlocks = Blocking.blockSubjects(stagingRDD, blockingSchemes)
         val expectedSubjects = TestData.flatSubjectBlocks(sc, subjects)
         val expectedStaging = TestData.flatStagingBlocks(sc, stagedSubjects)

@@ -142,7 +142,7 @@ object Deduplication {
     /**
       * Finds the duplicates of each block by comparing the Subjects and filtering all Subjects pairs below the
       * threshold confidence.
-      * @param blocks Dataset of Blocks containing the Subjects that are compared
+      * @param blocks RDD of Blocks containing the Subjects that are compared
       * @param confidence threshold used to filter duplicate candidates
       * @param scoreConfigBroadcast Broadcast of the used score config
       * @return tuple of Subjects with their score, which is greater or equal the given threshold.
