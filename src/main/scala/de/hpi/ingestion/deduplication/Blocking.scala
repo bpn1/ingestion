@@ -81,7 +81,6 @@ class Blocking extends SparkJob {
         val comment = conf.commentOpt.getOrElse("Blocking")
         val goldenBroadcast = sc.broadcast[Set[(UUID, UUID)]](goldStandard.collect.toSet)
         setParameters()
-//        setPartitioning(sc)
         evaluationBlocking(goldenBroadcast.value, comment)
     }
 
@@ -91,15 +90,6 @@ class Blocking extends SparkJob {
         settings.get("minBlockSize").foreach(setMinBlockSize)
         settings.get("maxBlockSize").foreach(setMaxBlockSize)
         settings.get("numPartitions").foreach(num => numPartitions = num.toInt)
-    }
-
-    /**
-      * Sets the number of partitions used for the repartition in the blocking to #executors * #executor-cores * 4
-      */
-    def setPartitioning(sc: SparkContext): Unit = {
-//        numPartitions *= sc.getExecutorMemoryStatus.size * sc.getConf.getInt("spark.executor.cores", 1)
-        numPartitions *= 2
-//        numPartitions = 2048
     }
 
     /**

@@ -38,8 +38,6 @@ class Deduplication extends SparkJob {
     configFile = "deduplication.xml"
     val blockingSchemes = List[BlockingScheme](
         SimpleBlockingScheme("simple_scheme"),
-        LastLettersBlockingScheme("lastLetter_scheme"),
-        MappedListBlockingScheme("mappedSectors_scheme", x => x.slice(0, 4), "gen_sectors"),
         MappedListBlockingScheme("mappedPostal_scheme", x => x.slice(0, 3), "geo_postal")
     )
 
@@ -86,7 +84,6 @@ class Deduplication extends SparkJob {
         blocking.setParameters(settings)
         blocking.subjects = subjects.filter(_.isSlave)
         blocking.stagedSubjects = stagedSubjects
-//        blocking.setPartitioning(sc)
         blocking.subjectReductionFunction = (subject: Subject) => {
             subject.master_history = Nil
             subject.name_history = Nil
