@@ -10,8 +10,9 @@
         <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
         <filterUndefined>true</filterUndefined>
-        <maxBlockSize>500000</maxBlockSize>
+        <maxBlockSize>20000</maxBlockSize>
         <minBlockSize>1</minBlockSize>
+        <numPartitions>512</numPartitions>
         <confidence>0.3</confidence>
     </settings>
     <simMeasurements>

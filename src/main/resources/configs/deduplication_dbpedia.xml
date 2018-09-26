@@ -9,11 +9,12 @@
         <duplicatesTable>duplicates</duplicatesTable>
         <keyspaceVersionTable>datalake</keyspaceVersionTable>
         <versionTable>version</versionTable>
-        <confidence>0.3</confidence>
         <filterUndefined>true</filterUndefined>
         <filterSmall>true</filterSmall>
-        <maxBlockSize>100000</maxBlockSize>
+        <maxBlockSize>20000</maxBlockSize>
         <minBlockSize>1</minBlockSize>
+        <numPartitions>512</numPartitions>
+        <confidence>0.3</confidence>
     </settings>
     <simMeasurements>
         <attribute>
