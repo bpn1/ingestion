@@ -36,7 +36,7 @@ class Deduplication extends SparkJob {
 
     appName = "Deduplication"
     configFile = "deduplication.xml"
-    val blockingSchemes = List[BlockingScheme](
+    var blockingSchemes = List[BlockingScheme](
         SimpleBlockingScheme("simple_scheme"),
         LastLettersBlockingScheme("lastLetter_scheme"),
         MappedListBlockingScheme("mappedSectors_scheme", x => x.slice(0, 4), "gen_sectors"),
