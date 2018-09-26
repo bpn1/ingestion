@@ -5,7 +5,7 @@
         <subjectTable>subject</subjectTable>
         <!-- The source of the articles is saved in stagingTable -->
         <stagingTable>spiegel</stagingTable>
-        <keyspaceNEL>wikidumps</keyspaceNEL>
+        <keyspaceNEL>fuzzy</keyspaceNEL>
         <annotatedArticlesTable>ner_articles</annotatedArticlesTable>
         <matchedEntityTable>matched_entities</matchedEntityTable>
         <filterUndefined>true</filterUndefined>

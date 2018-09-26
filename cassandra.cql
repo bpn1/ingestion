@@ -261,6 +261,42 @@ CREATE TABLE wikidumps.relationclassifierstats (
 );
 
 
+-- Fuzzy Matching NEL
+CREATE KEYSPACE fuzzy WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
+
+
+
+-- Types
+CREATE TYPE fuzzy.namedentity (
+    start int,
+    length int,
+    neType text
+);
+
+
+
+
+-- Tables
+CREATE TABLE fuzzy.ner_articles (
+    id text,
+    uuid uuid,
+    title text,
+    text text,
+    nerentities list<frozen<namedentity>>,
+    PRIMARY KEY (uuid, id)
+);
+
+CREATE TABLE fuzzy.matched_entities (
+    subject_id uuid,
+    subject_name text,
+    article_id uuid,
+    entity_name text,
+    article_source text,
+    score double,
+    PRIMARY KEY (article_id, subject_id, entity_name)
+);
+
+
 
 -- Datalake
 CREATE KEYSPACE datalake WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
