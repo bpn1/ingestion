@@ -16,6 +16,10 @@ limitations under the License.
 
 package de.hpi.ingestion.textmining.nel
 
+import java.util.UUID
+
+import de.hpi.fgis.utils.text.annotation.NamedEntity
+import de.hpi.ingestion.datalake.models.Subject
 import de.hpi.ingestion.textmining.ClassifierTraining
 import de.hpi.ingestion.textmining.TestData.{extendedClassifierFeatureEntries, rfModel}
 import de.hpi.ingestion.textmining.models.{TrieAlias, TrieAliasArticle, _}
@@ -475,6 +479,126 @@ object TestData {
             rfModel = Option(pipeline.fit(training))
         }
         () => rfModel.get
+    }
+
+    def fuzzyMatchingArticles: List[NERAnnotatedArticle] = {
+        List(
+            NERAnnotatedArticle(
+                id = "1",
+                uuid = UUID.fromString("b2a14feb-ab8c-451f-9332-52c5da55b92f"),
+                text = Option("This an article about Volkswagen and Audi."),
+                nerentities = List(
+                    NamedEntity(22, 10, "company"),
+                    NamedEntity(37, 4, "company")
+                )
+            ),
+            NERAnnotatedArticle(
+                id = "2",
+                uuid = UUID.fromString("a8363f40-ed6f-479c-a9f3-596c354fa8db"),
+                text = Option("This article is about ASUS and Acer."),
+                nerentities = List(
+                    NamedEntity(22, 4, "company"),
+                    NamedEntity(31, 4, "company")
+                )
+            )
+        )
+    }
+
+    def fuzzyMatchingEntities: List[String] = {
+        List("Volkswagen", "Audi", "ASUS", "Acer")
+    }
+
+    def fuzzyMatchingEntitySubjects: List[Subject] = {
+        List(
+            Subject(
+                master = UUID.fromString("b2a14feb-ab8c-451f-9332-52c5da55b92f"),
+                id = UUID.fromString("b2a14feb-ab8c-451f-9332-52c5da55b92f"),
+                datasource = "test",
+                name = Option("Volkswagen")
+            ),
+            Subject(
+                master = UUID.fromString("b2a14feb-ab8c-451f-9332-52c5da55b92f"),
+                id = UUID.fromString("b2a14feb-ab8c-451f-9332-52c5da55b92f"),
+                datasource = "test",
+                name = Option("Audi")
+            ),
+            Subject(
+                master = UUID.fromString("a8363f40-ed6f-479c-a9f3-596c354fa8db"),
+                id = UUID.fromString("a8363f40-ed6f-479c-a9f3-596c354fa8db"),
+                datasource = "test",
+                name = Option("ASUS")
+            ),
+            Subject(
+                master = UUID.fromString("a8363f40-ed6f-479c-a9f3-596c354fa8db"),
+                id = UUID.fromString("a8363f40-ed6f-479c-a9f3-596c354fa8db"),
+                datasource = "test",
+                name = Option("Acer")
+            )
+        )
+    }
+
+    def fuzzyMatchingSubjects: List[Subject] = {
+        List(
+            Subject(
+                master = UUID.fromString("73416060-c0cd-4105-80c8-19c26c3fa640"),
+                id = UUID.fromString("73416060-c0cd-4105-80c8-19c26c3fa641"),
+                datasource = "implisense",
+                name = Option("Volkswagen AG")
+            ),
+            Subject(
+                master = UUID.fromString("73416060-c0cd-4105-80c8-19c26c3fa640"),
+                id = UUID.fromString("73416060-c0cd-4105-80c8-19c26c3fa642"),
+                datasource = "wikidata",
+                name = Option("Volkswagen")
+            ),
+            Subject(
+                master = UUID.fromString("67c83d81-1091-4bb3-ba6e-ccc646f38150"),
+                id = UUID.fromString("67c83d81-1091-4bb3-ba6e-ccc646f38151"),
+                datasource = "implisense",
+                name = Option("Volkswagen Versicherung AG")
+            ),
+            Subject(
+                master = UUID.fromString("0aece747-62cf-401a-9022-f880eda20df0"),
+                id = UUID.fromString("0aece747-62cf-401a-9022-f880eda20df1"),
+                datasource = "wikidata",
+                name = Option("Audi AG")
+            ),
+            Subject(
+                master = UUID.fromString("39afe68e-3cb5-4a7b-b9ea-10893c67e0a0"),
+                id = UUID.fromString("39afe68e-3cb5-4a7b-b9ea-10893c67e0a1"),
+                datasource = "implisense",
+                name = Option("ASUS")
+            )
+        )
+    }
+
+    def fuzzyMatchingMatches: Set[EntitySubjectMatch] = {
+        Set(
+            EntitySubjectMatch(
+                UUID.fromString("73416060-c0cd-4105-80c8-19c26c3fa642"),
+                Option("Volkswagen"),
+                UUID.fromString("b2a14feb-ab8c-451f-9332-52c5da55b92f"),
+                "Volkswagen",
+                "test",
+                1.0
+            ),
+            EntitySubjectMatch(
+                UUID.fromString("0aece747-62cf-401a-9022-f880eda20df1"),
+                Option("Audi AG"),
+                UUID.fromString("b2a14feb-ab8c-451f-9332-52c5da55b92f"),
+                "Audi",
+                "test",
+                0.94
+            ),
+            EntitySubjectMatch(
+                UUID.fromString("39afe68e-3cb5-4a7b-b9ea-10893c67e0a1"),
+                Option("ASUS"),
+                UUID.fromString("a8363f40-ed6f-479c-a9f3-596c354fa8db"),
+                "ASUS",
+                "test",
+                1.0
+            )
+        )
     }
 }
 
