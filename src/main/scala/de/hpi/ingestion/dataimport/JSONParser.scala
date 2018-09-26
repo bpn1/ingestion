@@ -18,41 +18,13 @@ package de.hpi.ingestion.dataimport
 
 import java.text.SimpleDateFormat
 import java.util.Date
-import play.api.libs.json._
+
+import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 
 /**
-  * Trait to parse JSON-Objects into Entities. Contains all methods needed to parse JSON into Scala Objects.
-  * @tparam T type of the result Entities the JSON-Objects will be parsed to
+  * Trait to parse JSON-Objects. Contains all methods needed to parse JSON into Scala Objects.
   */
-trait JSONParser[T] {
-
-    /**
-      * Parses a String containing a JSON-Object into an Entity of type T.
-      * @param line String containing the JSON data
-      * @return Entity containing the parsed data
-      */
-    def parseJSON(line: String): T = {
-        val json = Json.parse(line)
-        fillEntityValues(json)
-    }
-
-    /**
-      * Extracts the JSON data from a JSON object to an Entity.
-      * @param json JSON-Object containing the data
-      * @return Entity containing the parsed data
-      */
-    def fillEntityValues(json: JsValue): T
-
-    /**
-      * Removes array syntax from JSON for parallel parsing of the JSON objects.
-      * @param json JSON String to clean
-      * @return cleaned JSON String in which each line is either a JSON object or empty
-      */
-
-    def cleanJSON(json: String): String = {
-        json.replaceAll("^\\[|,$|, $|\\]$", "")
-    }
-
+trait JSONParser {
     /**
       * Extracts a JSON value from a JSON object.
       * @param json JSON object containing the data

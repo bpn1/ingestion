@@ -20,7 +20,5 @@ import de.hpi.ingestion.framework.pipeline.JobPipeline
 
 class MockPipeline extends JobPipeline {
     pipelineName = "Mock Pipeline"
-    jobs = List(
-        (new MockPrintSparkJob, Array()),
-        (new MockPrintSparkJob, Array("-c", "test.xml")))
+    jobs = List(new MockPrintSparkJob, new MockPrintSparkJob)
 }

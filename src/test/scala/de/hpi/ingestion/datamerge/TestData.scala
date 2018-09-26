@@ -21,6 +21,7 @@ import java.util.UUID
 import de.hpi.ingestion.datalake.SubjectManager
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.{Candidate, Duplicates}
+import play.api.libs.json.{JsValue, Json}
 
 // scalastyle:off line.size.limit
 // scalastyle:off method.length
@@ -819,6 +820,439 @@ object TestData {
                 master = UUID.fromString("d44df8b0-2425-11e7-aec2-2d07f82c7921"),
                 datasource = "master",
                 relations = Map(UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921") -> Map("master" -> "1.0"))
+            )
+        )
+    }
+
+    def commitJSON: JsValue = {
+        val json = "{\"created\":{\"6a7b2436-255e-447f-8740-f7d353560cc3\":{\"name\":\"Test ag\",\"id\":\"6a7b2436-255e-447f-8740-f7d353560cc3\",\"properties\":{}, \"relations\":{\"c177326a-8898-4bc7-8aca-a040824aa87c\":{\"owner\":\"\"}}}},\"updated\":{\"25486e12-be2f-4ba0-b498-94ffcd984528\":{\"master\":\"25486e12-be2f-4ba0-b498-94ffcd984528\",\"id\":\"25486e12-be2f-4ba0-b498-94ffcd984528\",\"datasource\":\"master\",\"name\":\"The Swan Inn\",\"aliases\":null,\"category\":\"business\",\"properties\":{\"geo_coords\":\"51.315404;0.891722\",\"id_wikidata\":\"Q26606155\",\"geo_country\":\"Vereinigtes Königreich\"},\"relations\":{\"6c37910e-7e7d-43f8-b537-683594a7517b\":{\"master\":\"1.0\"},\"74780dce-9bf3-4d3d-9f0d-750846d8f4cb\":{\"country\":null}}}},\"deleted\":{\"3254650b-269e-4d20-bb2b-48ee44013c88\":{\"master\":\"3254650b-269e-4d20-bb2b-48ee44013c88\",\"id\":\"3254650b-269e-4d20-bb2b-48ee44013c88\",\"datasource\":\"master\",\"name\":\"Deutschland AG\",\"aliases\":null,\"category\":\"business\",\"properties\":{\"gen_legal_form\":[\"AG\"],\"id_dbpedia\":[\"Deutschland AG\"],\"id_wikidata\":[\"Q1206257\"],\"id_wikipedia\":[\"Deutschland AG\"]},\"relations\":{\"c177326a-8898-4bc7-8aca-a040824aa87c\":{\"master\":\"1.0\"}},\"selected\":true}}}"
+        Json.parse(json)
+    }
+
+    def masterIds: Set[UUID] = {
+        Set(
+            "6a7b2436-255e-447f-8740-f7d353560cc3",
+            "25486e12-be2f-4ba0-b498-94ffcd984528",
+            "3254650b-269e-4d20-bb2b-48ee44013c88"
+        ).map(UUID.fromString(_))
+    }
+
+    def commitSubjects: List[Subject] = {
+        List(
+            Subject(
+                id = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                master = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc4"),
+                master = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                datasource = "implisense"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984529"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "wikidata"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd98452a"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "dbpedia"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c89"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                datasource = "wikidata"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c77"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c77"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c78"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c77"),
+                datasource = "implisense"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c66"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c66"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c67"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c66"),
+                datasource = "implisense"
+            )
+        )
+    }
+
+    def commitUpdateSubjects: List[Subject] = {
+        List(
+            Subject(
+                id = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                master = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc4"),
+                master = UUID.fromString("6a7b2436-255e-447f-8740-f7d353560cc3"),
+                datasource = "implisense"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984529"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "wikidata"
+            ),
+            Subject(
+                id = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd98452a"),
+                master = UUID.fromString("25486e12-be2f-4ba0-b498-94ffcd984528"),
+                datasource = "dbpedia"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                datasource = "master"
+            ),
+            Subject(
+                id = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c89"),
+                master = UUID.fromString("3254650b-269e-4d20-bb2b-48ee44013c88"),
+                datasource = "wikidata"
+            )
+        )
+    }
+
+    def duplicatesWithMultipleMatches: List[Duplicates] = {
+        List(
+            Duplicates(
+                subject_id = idList(1),
+                subject_name = Option("Firma A"),
+                datasource = "implisense",
+                candidates = List(
+                    Candidate(
+                        id = idList(5),
+                        name = Option("Firma A"),
+                        score = 0.95
+                    )
+                )
+            ),
+            Duplicates(
+                subject_id = idList(1),
+                subject_name = Option("Firma A"),
+                datasource = "implisense",
+                candidates = List(
+                    Candidate(
+                        id = idList(6),
+                        name = Option("Firma AA"),
+                        score = 0.91
+                    )
+                )
+            )
+        )
+    }
+
+    def duplicatesWithConflictingMatches: List[Duplicates] = {
+        List(
+            Duplicates(
+                subject_id = idList(1),
+                subject_name = Option("Firma A"),
+                datasource = "implisense",
+                candidates = List(
+                    Candidate(
+                        id = idList(5),
+                        name = Option("Firma A"),
+                        score = 0.95
+                    ),
+                    Candidate(
+                        id = idList(6),
+                        name = Option("Firma AA"),
+                        score = 0.91
+                    )
+                )
+            ),
+            Duplicates(
+                subject_id = idList(4),
+                subject_name = Option("Firma B"),
+                datasource = "implisense",
+                candidates = List(
+                    Candidate(
+                        id = idList(5),
+                        name = Option("Firma A"),
+                        score = 0.91
+                    ),
+                    Candidate(
+                        id = idList(7),
+                        name = Option("Firma B GmbH & Co. KG"),
+                        score = 0.98
+                    )
+                )
+            )
+        )
+    }
+
+    def duplicatesWithFixedConflicts: List[Duplicates] = {
+        List(
+            Duplicates(
+                subject_id = idList(1),
+                subject_name = Option("Firma A"),
+                datasource = "implisense",
+                candidates = List(
+                    Candidate(
+                        id = idList(5),
+                        name = Option("Firma A"),
+                        score = 0.95
+                    ),
+                    Candidate(
+                        id = idList(6),
+                        name = Option("Firma AA"),
+                        score = 0.91
+                    )
+                )
+            ),
+            Duplicates(
+                subject_id = idList(4),
+                subject_name = Option("Firma B"),
+                datasource = "implisense",
+                candidates = List(
+                    Candidate(
+                        id = idList(7),
+                        name = Option("Firma B GmbH & Co. KG"),
+                        score = 0.98
+                    )
+                )
+            )
+        )
+    }
+
+    def mergedSubjectsWithMultipleMatches: List[Subject] = {
+        List(
+            Subject(
+                id = idList.head,
+                master = idList.head,
+                datasource = "master",
+                name = Option("Firma A"),
+                aliases = List("Firma AA", "AA"),
+                category = Option("Kategorie A"),
+                properties = Map(
+                    "id_implisense" -> List("1"),
+                    "geo_postal" -> List("10777"),
+                    "geo_city" -> List("Berlin", "Potsdam"),
+                    "geo_county" -> List("Landkreis Neu-Brandenburg")
+                ),
+                relations = Map(
+                    idList(1) -> SubjectManager.masterRelation(1.0),
+                    idList(5) -> SubjectManager.masterRelation(0.95),
+                    idList(6) -> SubjectManager.masterRelation(0.91),
+                    idList(12) -> Map("country" -> "0.5", "county" -> "0.6"),
+                    idList(7) -> Map("successor" -> "")
+                )
+            ),
+            Subject(
+                id = idList(1),
+                master = idList.head,
+                datasource = "implisense",
+                name = Option("Firma A"),
+                properties = Map(
+                    "id_implisense" -> List("1"),
+                    "geo_postal" -> List("10777")
+                ),
+                relations = Map(
+                    idList.head -> SubjectManager.slaveRelation(1.0),
+                    idList(5) -> SubjectManager.isDuplicateRelation(0.95),
+                    idList(6) -> SubjectManager.isDuplicateRelation(0.91),
+                    idList(12) -> Map("country" -> "0.5", "county" -> "0.6")
+                )
+            ),
+            Subject(
+                id = idList(5),
+                master = idList.head,
+                datasource = stagingSource,
+                name = Option("Firma A"),
+                category = Option("Kategorie A"),
+                properties = Map(
+                    "geo_postal" -> List("10888"),
+                    "geo_city" -> List("Berlin")
+                ),
+                relations = Map(
+                    idList.head -> SubjectManager.slaveRelation(0.95),
+                    idList(1) -> SubjectManager.isDuplicateRelation(0.95),
+                    idList(7) -> Map("successor" -> "")
+                )
+            ),
+            Subject(
+                id = idList(6),
+                master = idList.head,
+                datasource = stagingSource,
+                name = Option("Firma AA"),
+                aliases = List("AA"),
+                category = Option("Kategorie AA"),
+                properties = Map(
+                    "geo_city" -> List("Potsdam"),
+                    "geo_county" -> List("Landkreis Neu-Brandenburg")
+                ),
+                relations = Map(
+                    idList.head -> SubjectManager.slaveRelation(0.91),
+                    idList(1) -> SubjectManager.isDuplicateRelation(0.91)
+                )
+            )
+        )
+    }
+
+    def mergedSubjectsWithConflictingMatches: List[Subject] = {
+        List(
+            Subject(
+                id = idList.head,
+                master = idList.head,
+                datasource = "master",
+                name = Option("Firma A"),
+                aliases = List("Firma AA", "AA"),
+                category = Option("Kategorie A"),
+                properties = Map(
+                    "id_implisense" -> List("1"),
+                    "geo_postal" -> List("10777"),
+                    "geo_city" -> List("Berlin", "Potsdam"),
+                    "geo_county" -> List("Landkreis Neu-Brandenburg")
+                ),
+                relations = Map(
+                    idList(1) -> SubjectManager.masterRelation(1.0),
+                    idList(5) -> SubjectManager.masterRelation(0.95),
+                    idList(6) -> SubjectManager.masterRelation(0.91),
+                    idList(12) -> Map("country" -> "0.5", "county" -> "0.6"),
+                    idList(7) -> Map("successor" -> "")
+                )
+            ),
+            Subject(
+                id = idList(1),
+                master = idList.head,
+                datasource = "implisense",
+                name = Option("Firma A"),
+                properties = Map(
+                    "id_implisense" -> List("1"),
+                    "geo_postal" -> List("10777")
+                ),
+                relations = Map(
+                    idList.head -> SubjectManager.slaveRelation(1.0),
+                    idList(5) -> SubjectManager.isDuplicateRelation(0.95),
+                    idList(6) -> SubjectManager.isDuplicateRelation(0.91),
+                    idList(12) -> Map("country" -> "0.5", "county" -> "0.6")
+                )
+            ),
+            Subject(
+                id = idList(5),
+                master = idList.head,
+                datasource = stagingSource,
+                name = Option("Firma A"),
+                category = Option("Kategorie A"),
+                properties = Map(
+                    "geo_postal" -> List("10888"),
+                    "geo_city" -> List("Berlin")
+                ),
+                relations = Map(
+                    idList.head -> SubjectManager.slaveRelation(0.95),
+                    idList(1) -> SubjectManager.isDuplicateRelation(0.95),
+                    idList(7) -> Map("successor" -> "")
+                )
+            ),
+            Subject(
+                id = idList(6),
+                master = idList.head,
+                datasource = stagingSource,
+                name = Option("Firma AA"),
+                aliases = List("AA"),
+                category = Option("Kategorie AA"),
+                properties = Map(
+                    "geo_city" -> List("Potsdam"),
+                    "geo_county" -> List("Landkreis Neu-Brandenburg")
+                ),
+                relations = Map(
+                    idList.head -> SubjectManager.slaveRelation(0.91),
+                    idList(1) -> SubjectManager.isDuplicateRelation(0.91)
+                )
+            ),
+            Subject(
+                id = idList(2),
+                master = idList(2),
+                datasource = "master",
+                name = Option("Firma B"),
+                aliases = List("Firma B GmbH & Co. KG"),
+                properties = Map(
+                    "id_implisense" -> List("2"),
+                    "gen_urls" -> List("http://curation.de"),
+                    "geo_city" -> List("Berlin"),
+                    "gen_legal_form" -> List("GmbH"),
+                    "gen_sectors" -> List("Sector B")
+                ),
+                relations = Map(
+                    idList(3) -> SubjectManager.masterRelation(1.0),
+                    idList(4) -> SubjectManager.masterRelation(1.0),
+                    idList(7) -> SubjectManager.masterRelation(0.98),
+                    idList(13) -> Map("county" -> ""),
+                    idList(14) -> Map("city" -> "0.9"),
+                    idList(15) -> Map("successor" -> "01.01.2212")
+                )
+            ),
+            Subject(
+                id = idList(3),
+                master = idList(2),
+                datasource = "human",
+                name = Option("Firma B"),
+                properties = Map(
+                    "gen_urls" -> List("http://curation.de"),
+                    "geo_city" -> List("Berlin")
+                ),
+                relations = Map(
+                    idList(2) -> SubjectManager.slaveRelation(1.0),
+                    idList(13) -> Map("county" -> ""),
+                    idList(14) -> Map("city" -> "0.9")
+                )
+            ),
+            Subject(
+                id = idList(4),
+                master = idList(2),
+                datasource = "implisense",
+                name = Option("Firma B"),
+                properties = Map(
+                    "id_implisense" -> List("2"),
+                    "gen_urls" -> List("http://curation.de", "http://nahverkehr.de"),
+                    "geo_city" -> List("Potsdam"),
+                    "gen_legal_form" -> List("GmbH"),
+                    "implisenseAttribute" -> List("not normalized")
+                ),
+                relations = Map(
+                    idList(2) -> SubjectManager.slaveRelation(1.0),
+                    idList(7) -> SubjectManager.isDuplicateRelation(0.98),
+                    idList(15) -> Map("successor" -> "01.01.2212")
+                )
+            ),
+            Subject(
+                id = idList(7),
+                master = idList(2),
+                datasource = stagingSource,
+                name = Option("Firma B GmbH & Co. KG"),
+                properties = Map(
+                    "gen_legal_form" -> List("GmbH & Co. KG"),
+                    "gen_sectors" -> List("Sector B"),
+                    "wikidataAttribute" -> List("not normalized")
+                ),
+                relations = Map(
+                    idList(2) -> SubjectManager.slaveRelation(0.98),
+                    idList(4) -> SubjectManager.isDuplicateRelation(0.98)
+                )
             )
         )
     }

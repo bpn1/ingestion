@@ -16,7 +16,11 @@ limitations under the License.
 
 package de.hpi.ingestion.framework
 
+import java.io.{BufferedReader, InputStream, InputStreamReader}
+
 import com.datastax.spark.connector.cql.CassandraConnector
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable
@@ -83,7 +87,78 @@ trait SparkJob extends Configurable with Serializable {
     def executeQueries(sc: SparkContext, queries: List[String]): Unit = {
         CassandraConnector(sc.getConf).withSessionDo(session => queries.foreach(session.execute))
     }
+
+    /**
+      * Opens a HDFS file stream pointing a file in the HDFS.
+      * @param file name of the file to be opened
+      * @return Input Stream pointing to the file in the HDFS
+      */
+    def hdfsFileStream(file: String): InputStream = {
+        val hadoopConf = new Configuration()
+        val fs = FileSystem.get(hadoopConf)
+        fs.open(new Path(file))
+    }
     // $COVERAGE-ON$
+
+    /**
+      * Reads a file, parses each line and transforms these into a collection. By default the files are read from the
+      * HDFS. This method can be called inside a map function to load the file into the memory of every worker.
+      * @param file name of the file to read
+      * @param fileStreamFunction function that opens an input stream on the specified file. The default function reads
+      *                           the file from the HDFS.
+      * @param parseLineFunction function that parses a single line. The option result type allows for removal of
+      *                          unwanted lines
+      * @param transformCollectionFunction function that transforms the list of parsed lines into any other type.
+      * @tparam T type of a parsed line
+      * @tparam S type of the result collection
+      * @return specified collection of every parsed line
+      */
+    def parseHDFSFileToCollection[T, S](
+        file: String,
+        fileStreamFunction: String => InputStream = hdfsFileStream,
+        parseLineFunction: String => Option[T],
+        transformCollectionFunction: List[T] => S
+    ): S = {
+        val fileStream = fileStreamFunction(file)
+        val reader = new BufferedReader(new InputStreamReader(fileStream, "UTF-8"))
+        val parsedLineBuffer = ListBuffer.empty[T]
+        var line = reader.readLine()
+        while(line != null) {
+            val parsedLine = parseLineFunction(line)
+            parsedLine.foreach(parsedLineBuffer += _)
+            line = reader.readLine()
+        }
+        transformCollectionFunction(parsedLineBuffer.toList)
+    }
+
+    /**
+      * Reads a file, parses each line and adds these to a collection. By default the files are read from the HDFS.
+      * This method can be called inside a map function to load the file into the memory of every worker.
+      * @param file name of the file to read
+      * @param fileStreamFunction function that opens an input stream on the specified file. The default function reads
+      *                           the file from the HDFS.
+      * @param createCollectionFunction function that creates an instance of a mutable collection that will contain
+      *                                 every parsed line
+      * @param parseLineFunction function that parses a line and adds it to the mutable collection
+      * @tparam T type of the mutable collection that will contain every parsed line
+      * @return specified mutable collection containing every parsed line
+      */
+    def parseHDFSFileToMutableCollection[T](
+        file: String,
+        fileStreamFunction: String => InputStream = hdfsFileStream,
+        createCollectionFunction: () => T,
+        parseLineFunction: (String, T) => Unit
+    ): T = {
+        val fileStream = fileStreamFunction(file)
+        val reader = new BufferedReader(new InputStreamReader(fileStream, "UTF-8"))
+        val parsedLineCollection = createCollectionFunction()
+        var line = reader.readLine()
+        while(line != null) {
+            parseLineFunction(line, parsedLineCollection)
+            line = reader.readLine()
+        }
+        parsedLineCollection
+    }
 
     /**
       * Executes a Spark job which first asserts definable conditions and then loads, processes and saves the data.

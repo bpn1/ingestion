@@ -261,6 +261,42 @@ CREATE TABLE wikidumps.relationclassifierstats (
 );
 
 
+-- Fuzzy Matching NEL
+CREATE KEYSPACE fuzzy WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
+
+
+
+-- Types
+CREATE TYPE fuzzy.namedentity (
+    start int,
+    length int,
+    neType text
+);
+
+
+
+
+-- Tables
+CREATE TABLE fuzzy.ner_articles (
+    id text,
+    uuid uuid,
+    title text,
+    text text,
+    nerentities list<frozen<namedentity>>,
+    PRIMARY KEY (uuid, id)
+);
+
+CREATE TABLE fuzzy.matched_entities (
+    subject_id uuid,
+    subject_name text,
+    article_id uuid,
+    entity_name text,
+    article_source text,
+    score double,
+    PRIMARY KEY (article_id, subject_id, entity_name)
+);
+
+
 
 -- Datalake
 CREATE KEYSPACE datalake WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
@@ -686,3 +722,57 @@ CREATE TABLE cle.events (
     props map<text, text>,
     PRIMARY KEY ((type, user), timestamp)
 ) WITH CLUSTERING ORDER BY (timestamp DESC);
+
+
+
+-- Sentence Embeddings
+CREATE KEYSPACE embeddings WITH REPLICATION = {
+    'class' : 'SimpleStrategy',
+    'replication_factor' : 3
+};
+
+CREATE TABLE embeddings.sentences (
+    id bigint PRIMARY KEY,
+    sentence text
+);
+
+CREATE TABLE embeddings.sentenceembeddings (
+    id bigint PRIMARY KEY,
+    cluster int,
+    embedding list<double>,
+    sentence text,
+    tokens list<text>
+);
+
+CREATE TABLE embeddings.dependencytrees (
+    id bigint PRIMARY KEY,
+    dependency_tree text,
+    pattern text,
+    patternfrequency int,
+    relations list<frozen<tuple<frozen<list<text>>, frozen<list<text>>, frozen<list<text>>>>>,
+    sentence text
+);
+
+CREATE TABLE embeddings.companysentences (
+    id bigint PRIMARY KEY,
+    dependency_tree text,
+    pattern text,
+    patternfrequency int,
+    relations list<frozen<tuple<frozen<list<text>>, frozen<list<text>>, frozen<list<text>>>>>,
+    sentence text
+);
+
+CREATE TABLE embeddings.dpt_patterns (
+    pattern text PRIMARY KEY,
+    frequency int,
+    sentences list<text>
+);
+
+
+
+-- Indices
+CREATE CUSTOM INDEX ON embeddings.dependencytrees (sentence) USING 'org.apache.cassandra.index.sasi.SASIIndex'
+    WITH OPTIONS = {
+        'analyzer_class': 'org.apache.cassandra.index.sasi.analyzer.NonTokenizingAnalyzer',
+        'case_sensitive': 'false'
+};

@@ -88,9 +88,9 @@ num_exec="--num-executors $num_executors"
 submit_command="spark-submit $job_runner $num_exec $exec_cores $exec_mem $driver_mem $trie_option $jarPath $class $*"
 export HADOOP_USER_NAME="ingestion"
 if [ "$mode" = "yarn" ]; then
-    spark-submit $job_runner $jar_option $deploy_mode $num_exec $exec_cores $exec_mem $driver_mem $trie_option $jarPath $class $*
+    spark-submit $job_runner $jar_option $deploy_mode $num_exec $exec_cores $exec_mem $driver_mem $trie_option $jarPath $class "$@"
 elif [ "$mode" = "shell" ]; then
-    spark-shell $num_exec $exec_cores $exec_mem $driver_mem $trie_option --jars $jarPath $*
+    spark-shell $num_exec $exec_cores $exec_mem $driver_mem $trie_option --jars $jarPath "$@"
 elif [ "$mode" = "print" ]; then
     echo "HADOOP_USER_NAME=\"ingestion\"" $submit_command
 else

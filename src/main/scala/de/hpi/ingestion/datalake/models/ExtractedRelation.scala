@@ -14,13 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.dataimport.mock
+package de.hpi.ingestion.datalake.models
 
-import de.hpi.ingestion.dataimport.JSONParser
-import play.api.libs.json.JsValue
-
-class MockJSONParser extends JSONParser[MockEntity] {
-    override def fillEntityValues(json: JsValue): MockEntity = {
-        MockEntity("", "", "")
-    }
-}
+/**
+  * Represents a relation between two entities that will be matched to Subjects.
+  * @param start name of the start entity
+  * @param destination name of the destination entity
+  * @param relation the relation between the subjects
+  */
+case class ExtractedRelation(
+    start: String,
+    destination: String,
+    relation: String
+)

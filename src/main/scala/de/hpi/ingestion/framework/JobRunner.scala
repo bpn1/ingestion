@@ -35,13 +35,14 @@ object JobRunner {
     def main(args: Array[String]): Unit = {
         try {
             val job = Class.forName(args.head).newInstance()
+            val jobArgs = args.slice(1, args.length)
             job match {
                 case pipeline: JobPipeline =>
                     val sc = SparkContext.getOrCreate(pipeline.createSparkConf())
-                    pipeline.run(sc)
+                    pipeline.run(sc, jobArgs)
                 case sparkJob: SparkJob =>
                     val sc = SparkContext.getOrCreate(sparkJob.createSparkConf())
-                    sparkJob.execute(sc, args.slice(1, args.length))
+                    sparkJob.execute(sc, jobArgs)
             }
         } catch {
             case ce: ClassNotFoundException =>

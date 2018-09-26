@@ -14,18 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package de.hpi.ingestion.dataimport.spiegel
+package de.hpi.ingestion.dataimport.mock
 
-import com.holdenkarau.spark.testing.SharedSparkContext
-import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.dataimport.JSONEntityParser
+import play.api.libs.json.JsValue
 
-class SentenceSplitterTest extends FlatSpec with Matchers with SharedSparkContext {
-    "Sentence Splitter" should "split articles into sentences" in {
-        val job = new SentenceSplitter
-        job.spiegelArticles = sc.parallelize(TestData.sentenceArticles())
-        job.run(sc)
-        val sentences = job.sentences.collect().toSet
-        val expectedSentences = TestData.splitSentences()
-        sentences shouldEqual expectedSentences
+class MockJSONEntityParser extends JSONEntityParser[MockEntity] {
+    override def fillEntityValues(json: JsValue): MockEntity = {
+        MockEntity("", "", "")
     }
 }

@@ -16,13 +16,18 @@ limitations under the License.
 
 package de.hpi.ingestion.datamerge
 
+import java.util.UUID
+
 import de.hpi.ingestion.framework.SparkJob
 import com.datastax.spark.connector._
+import de.hpi.ingestion.dataimport.JSONParser
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import play.api.libs.json.{JsValue, Json}
 
 class MasterUpdate extends SparkJob {
+    import MasterUpdate._
     appName = "Master Update"
     configFile = "master_update.xml"
 
@@ -53,7 +58,7 @@ class MasterUpdate extends SparkJob {
       */
     override def run(sc: SparkContext): Unit = {
         val version = Version(appName, List("master update"), sc, true, settings.get("subjectTable"))
-        val masterGroups = subjects
+        val masterGroups = updateSubjects(subjects, conf.commitJsonOpt)
             .map(subject => (subject.master, List(subject)))
             .reduceByKey(_ ++ _)
             .values
@@ -62,5 +67,34 @@ class MasterUpdate extends SparkJob {
             val slaves = masterGroup.filter(_.isSlave)
             Merging.mergeIntoMaster(master, slaves, version).head
         }
+    }
+}
+
+object MasterUpdate extends JSONParser {
+    /**
+      * Parses the Commit JSON Object to extract the ids of the changed master Subjects.
+      * @param commitJson the JSON of the Commit job. Contains all changes done in the commit
+      * @return Set of master ids that will be updated
+      */
+    def getMastersFromCommit(commitJson: JsValue): Set[UUID] = {
+        (extractMap(commitJson, List("created")).keySet ++
+            extractMap(commitJson, List("updated")).keySet ++
+            extractMap(commitJson, List("deleted")).keySet
+            ).map(UUID.fromString(_))
+    }
+
+    /**
+      * Filters the passed Subjects for only those that need to be updated, if this job is executed after a Commit job.
+      * @param subjects RDD of Subjects that will be filtered
+      * @param commitConfOption command line option of curation commit JSON object that contains the changed Subjects
+      * @return the Subjects that need to be updated, if the JSON of a Commit job is provided. Otherwise the input
+      * Subjects are returned
+      */
+    def updateSubjects(subjects: RDD[Subject], commitConfOption: Option[String] = None): RDD[Subject] = {
+        commitConfOption
+            .map(Json.parse)
+            .map(getMastersFromCommit)
+            .map(masterIds => subjects.filter(subject => masterIds(subject.master)))
+            .getOrElse(subjects)
     }
 }

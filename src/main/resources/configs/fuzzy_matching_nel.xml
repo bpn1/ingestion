@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <settings>
+        <keyspaceSubjectTable>datalake</keyspaceSubjectTable>
+        <subjectTable>subject</subjectTable>
+        <!-- The source of the articles is saved in stagingTable -->
+        <stagingTable>spiegel</stagingTable>
+        <keyspaceNEL>fuzzy</keyspaceNEL>
+        <annotatedArticlesTable>ner_articles</annotatedArticlesTable>
+        <matchedEntityTable>matched_entities</matchedEntityTable>
+        <filterUndefined>true</filterUndefined>
+        <maxBlockSize>20000</maxBlockSize>
+        <minBlockSize>1</minBlockSize>
+        <numPartitions>512</numPartitions>
+        <confidence>0.7</confidence>
+    </settings>
+    <simMeasurements>
+        <attribute>
+            <key>name</key>
+            <weight>0.8</weight>
+            <feature>
+                <similarityMeasure>JaroWinkler</similarityMeasure>
+                <weight>0.7</weight>
+                <scale>1</scale>
+            </feature>
+            <feature>
+                <similarityMeasure>MongeElkan</similarityMeasure>
+                <weight>0.3</weight>
+                <scale>1</scale>
+            </feature>
+        </attribute>
+    </simMeasurements>
+</config>

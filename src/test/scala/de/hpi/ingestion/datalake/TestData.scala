@@ -17,8 +17,9 @@ limitations under the License.
 package de.hpi.ingestion.datalake
 
 import java.util.UUID
+
 import de.hpi.ingestion.datalake.mock.Entity
-import de.hpi.ingestion.datalake.models.{Subject, Version}
+import de.hpi.ingestion.datalake.models.{ExtractedRelation, ImportRelation, Subject, Version}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -138,64 +139,6 @@ object TestData {
         )
     }
 
-    def exportSubjects: List[Subject] = {
-        List(
-            Subject(
-                id = UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130"),
-                master = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
-                datasource = datasource,
-                name = Option("Name 1"),
-                aliases = List("Alias 1", "Alias 1.1\""),
-                category = None,
-                properties = Map(),
-                relations = Map(
-                    UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("owned by" -> "")
-                )
-            ),
-            Subject(
-                id = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
-                master = UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d"),
-                datasource = datasource,
-                name = Option("Name 2"),
-                aliases = List("Alias 2"),
-                category = Option("Category 2"),
-                properties = Map("test_prop" -> List("value 1", "value 2")),
-                relations = Map(
-                    UUID.fromString("4fbc0340-4862-431f-9c28-a508234b8130") -> Map("owns" -> "", "parent organization" -> ""),
-                    UUID.fromString("831f2c54-33d5-43fc-a515-d871946a655d") -> Map("owned by" -> "")
-                )
-            )
-        )
-    }
-
-    def exportedNodeCSV: List[String] = {
-        List(
-            "\"4fbc0340-4862-431f-9c28-a508234b8130\",\"Name 1\",\"Alias 1;Alias 1.1\\\"\",\"\",\"\"",
-            "\"831f2c54-33d5-43fc-a515-d871946a655d\",\"Name 2\",\"Alias 2\",\"Category 2\",\"\""
-        )
-    }
-
-    def exportedMasterNodeCSV: List[String] = {
-        List(
-            "\"831f2c54-33d5-43fc-a515-d871946a655d\",\"Name 2\",\"Alias 2\",\"Category 2\",\"\""
-        )
-    }
-
-    def exportedEdgeCSV: List[String] = {
-        List(
-            "4fbc0340-4862-431f-9c28-a508234b8130,831f2c54-33d5-43fc-a515-d871946a655d,owned by",
-            "831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,owns",
-            "831f2c54-33d5-43fc-a515-d871946a655d,831f2c54-33d5-43fc-a515-d871946a655d,owned by"
-        )
-    }
-
-    def exportedMasterEdgeCSV: List[String] = {
-        List(
-            "831f2c54-33d5-43fc-a515-d871946a655d,4fbc0340-4862-431f-9c28-a508234b8130,owns",
-            "831f2c54-33d5-43fc-a515-d871946a655d,831f2c54-33d5-43fc-a515-d871946a655d,owned by"
-        )
-    }
-
     def versionQueries(): List[(UUID, List[Version])] = {
         List(
             (UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d"), List(
@@ -221,6 +164,277 @@ object TestData {
             Option(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c5d")),
             Option(UUID.fromString("f44df8b0-2425-11e7-aec2-2d07f82c7921")),
             None
+        )
+    }
+
+    def extractedRelations(): List[ExtractedRelation] = {
+        List(
+            ExtractedRelation("Volkswagen Group", "Porsche", "owns"),
+            ExtractedRelation("Volkswagen AG", "Porsche AG", "parent of"),
+            ExtractedRelation("Porsche AG", "Bugatti Automobiles S.A.S.", "competitor of"),
+            ExtractedRelation("Audi", "Auto Union", "successor of"),
+            ExtractedRelation("Auto Union", "Audi AG", "predecessor of"),
+            ExtractedRelation("Auto Union", "Volkswagen", "competitor of"),
+            ExtractedRelation("Auto Union AG", "Bugatti Automobiles", "competitor of"),
+            ExtractedRelation("Auto Union", "Bugatti Automobiles S.A.S.", "rival of")
+        )
+    }
+
+    def relationMatchingSubjects(): List[Subject] = {
+        List(
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c45"),
+                datasource = "implisense",
+                name = Option("Volkswagen Group"),
+                aliases = List("Volkswagen", "Volkswagen AG")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c46"),
+                datasource = "implisense",
+                name = Option("Porsche AG"),
+                aliases = List("Porsche")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c47"),
+                datasource = "implisense",
+                name = Option("Bugatti Automobiles S.A.S."),
+                aliases = List("Bugatti Automobiles")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c48"),
+                datasource = "implisense",
+                name = Option("Audi AG"),
+                aliases = List("Audi")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c49"),
+                datasource = "implisense",
+                name = Option("Auto Union AG"),
+                aliases = List("Auto Union")
+            )
+        )
+    }
+
+    def relationMatchingDuplicates(): List[Subject] = {
+        List(
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c45"),
+                datasource = "implisense",
+                name = Option("Volkswagen Group"),
+                aliases = List("Volkswagen", "Volkswagen AG")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c46"),
+                datasource = "implisense",
+                name = Option("Porsche AG"),
+                aliases = List("Porsche")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c46"),
+                datasource = "dbpedia",
+                name = Option("Porsche AG"),
+                aliases = List("Porsche")
+            )
+        )
+    }
+
+    def relationMatchingSubjectsNoUniqueMatch(): List[Subject] = {
+        List(
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c45"),
+                datasource = "implisense",
+                name = Option("Volkswagen Group"),
+                aliases = List("Volkswagen", "Volkswagen AG")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c60"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c44"),
+                datasource = "implisense",
+                name = Option("Volkswagen Group"),
+                aliases = List("Volkswagen", "Volkswagen AG")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c46"),
+                datasource = "implisense",
+                name = Option("Porsche AG"),
+                aliases = List("Porsche")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c47"),
+                datasource = "implisense",
+                name = Option("Bugatti Automobiles S.A.S."),
+                aliases = List("Bugatti Automobiles")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c48"),
+                datasource = "implisense",
+                name = Option("Audi AG"),
+                aliases = List("Audi")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c49"),
+                datasource = "implisense",
+                name = Option("Auto Union AG"),
+                aliases = List("Auto Union")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c55"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c43"),
+                datasource = "implisense",
+                name = Option("Auto Union AG"),
+                aliases = List("Auto Union")
+            )
+        )
+    }
+
+    def relationMatchingSubjectsNoMatch(): List[Subject] = {
+        List(
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c46"),
+                datasource = "implisense",
+                name = Option("Porsche AG"),
+                aliases = List("Porsche")
+            ),
+            Subject(
+                id = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+                master = UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c47"),
+                datasource = "implisense",
+                name = Option("Bugatti Automobiles S.A.S."),
+                aliases = List("Bugatti Automobiles")
+            )
+        )
+    }
+
+    def singleImportRelation(): ImportRelation = {
+        ImportRelation(
+            UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+            UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+            "competitor of"
+        )
+    }
+
+    def relationMatchingDuplicateIdMap(name: String): UUID = {
+        Map(
+            "VW" -> UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+            "Porsche_implisense" -> UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+            "Porsche_dbpedia" -> UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52")
+        )(name)
+    }
+
+    def relationSubjects(): List[Subject] = {
+        List(
+            Subject.master(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50")).copy(
+                name = Option("Volkswagen Group"),
+                aliases = List("Volkswagen", "Volkswagen AG")
+            ),
+            Subject.master(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51")).copy(
+                name = Option("Porsche AG"),
+                aliases = List("Porsche")
+            ),
+            Subject.master(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52")).copy(
+                name = Option("Bugatti Automobiles S.A.S."),
+                aliases = List("Bugatti Automobiles")
+            ),
+            Subject.master(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53")).copy(
+                name = Option("Audi AG"),
+                aliases = List("Audi")
+            ),
+            Subject.master(UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54")).copy(
+                name = Option("Auto Union AG"),
+                aliases = List("Auto Union")
+            )
+        )
+    }
+
+    def importRelations(): List[ImportRelation] = {
+        List(
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                "owns"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                "parent of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+                "competitor of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                "successor of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53"),
+                "predecessor of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                "competitor of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+                "competitor of"
+            ),
+            ImportRelation(
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52"),
+                "rival of"
+            )
+        )
+    }
+
+    def updatedRelationSubjects(): Set[(UUID, Map[UUID, Map[String, String]])] = {
+        Set(
+            (UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50"),
+                Map(
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51") -> Map(
+                        "owns" -> "",
+                        "parent of" -> ""
+                    )
+                )
+            ),
+            (UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c51"),
+                Map(
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52") -> Map("competitor of" -> "")
+                )
+            ),
+            (UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53"),
+                Map(
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54") -> Map("successor of" -> "")
+                )
+            ),
+            (UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c54"),
+                Map(
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c53") -> Map("predecessor of" -> ""),
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c50") -> Map("competitor of" -> ""),
+                    UUID.fromString("2195bc70-f6ba-11e6-aa16-63ef39f49c52") -> Map(
+                        "competitor of" -> "",
+                        "rival of" -> ""
+                    )
+                )
+            )
         )
     }
 }

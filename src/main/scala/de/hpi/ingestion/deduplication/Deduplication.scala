@@ -36,10 +36,8 @@ class Deduplication extends SparkJob {
 
     appName = "Deduplication"
     configFile = "deduplication.xml"
-    val blockingSchemes = List[BlockingScheme](
+    var blockingSchemes = List[BlockingScheme](
         SimpleBlockingScheme("simple_scheme"),
-        LastLettersBlockingScheme("lastLetter_scheme"),
-        MappedListBlockingScheme("mappedSectors_scheme", x => x.slice(0, 4), "gen_sectors"),
         MappedListBlockingScheme("mappedPostal_scheme", x => x.slice(0, 3), "geo_postal")
     )
 
@@ -71,14 +69,21 @@ class Deduplication extends SparkJob {
       * @param sc Spark Context used to e.g. broadcast variables
       */
     override def run(sc: SparkContext): Unit = {
+        val blocking = initializeBlocking(sc)
+
+        val blocks = blocking
+            .blocking()
+            .values
+        val scoreConfigBroadcast = sc.broadcast(scoreConfigSettings)
+        val subjectPairs = findDuplicates(blocks, settings("confidence").toDouble, scoreConfigBroadcast)
+        duplicates = createDuplicates(subjectPairs, settings("stagingTable"))
+    }
+
+    def initializeBlocking(sc: SparkContext): Blocking = {
         val blocking = new Blocking
-        settings.get("maxBlockSize").foreach(blocking.setMaxBlockSize)
-        settings.get("minBlockSize").foreach(blocking.setMinBlockSize)
-        settings.get("filterUndefined")
-        settings.get("filterSmall")
+        blocking.setParameters(settings)
         blocking.subjects = subjects.filter(_.isSlave)
         blocking.stagedSubjects = stagedSubjects
-        blocking.setPartitioning(sc)
         blocking.subjectReductionFunction = (subject: Subject) => {
             subject.master_history = Nil
             subject.name_history = Nil
@@ -88,12 +93,8 @@ class Deduplication extends SparkJob {
             subject.aliases_history = Nil
             subject
         }
-
-        // TODO: set blocking schemes
-        val blocks = blocking.blocking().values
-        val scoreConfigBroadcast = sc.broadcast(scoreConfigSettings)
-        val subjectPairs = findDuplicates(blocks, settings("confidence").toDouble, scoreConfigBroadcast)
-        duplicates = createDuplicates(subjectPairs, settings("stagingTable"))
+        blocking.setBlockingSchemes(blockingSchemes)
+        blocking
     }
 }
 
@@ -141,7 +142,7 @@ object Deduplication {
     /**
       * Finds the duplicates of each block by comparing the Subjects and filtering all Subjects pairs below the
       * threshold confidence.
-      * @param blocks RDD of BLocks containing the Subjects that are compared
+      * @param blocks RDD of Blocks containing the Subjects that are compared
       * @param confidence threshold used to filter duplicate candidates
       * @param scoreConfigBroadcast Broadcast of the used score config
       * @return tuple of Subjects with their score, which is greater or equal the given threshold.

@@ -22,13 +22,13 @@ import org.apache.spark.rdd.RDD
 import org.jsoup.Jsoup
 import play.api.libs.json.JsValue
 import com.datastax.spark.connector._
-import de.hpi.ingestion.dataimport.JSONParser
+import de.hpi.ingestion.dataimport.JSONEntityParser
 import de.hpi.ingestion.textmining.models.TrieAliasArticle
 
 /**
   * Parses the Spiegel JSON dump to Articles, parses the HTML to raw text and saves them to the Cassandra.
   */
-class SpiegelImport extends SparkJob with JSONParser[TrieAliasArticle] {
+class SpiegelImport extends SparkJob with JSONEntityParser[TrieAliasArticle] {
     import SpiegelImport._
     appName = "Spiegel Import"
     configFile = "textmining.xml"

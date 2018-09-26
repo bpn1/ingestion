@@ -46,9 +46,8 @@ class CSVExport extends SparkJob {
       * @param sc Spark Context used to connect to the Cassandra or the HDFS
       */
     override def save(sc: SparkContext): Unit = {
-        val timestamp = System.currentTimeMillis / 1000
-        nodes.saveAsTextFile(s"export_nodes_$timestamp")
-        edges.saveAsTextFile(s"export_edges_$timestamp")
+        nodes.saveAsTextFile("export_nodes")
+        edges.saveAsTextFile("export_edges")
     }
     // $COVERAGE-ON$
 
@@ -57,7 +56,9 @@ class CSVExport extends SparkJob {
       * @param sc Spark Context used to e.g. broadcast variables
       */
     override def run(sc: SparkContext): Unit = {
-        val masters = subjects.filter(_.isMaster)
+        val masters = subjects
+            .filter(_.isMaster)
+            .filter(subject => !subject.isDeleted)
         nodes = masters.map(nodeToCSV)
         edges = masters.flatMap(edgesToCSV)
     }
@@ -127,19 +128,35 @@ object CSVExport {
       */
     def nodeToCSV(subject: Subject): String = {
         val aliasString = subject.aliases
+            .map(escape)
             .mkString(arraySeparator)
-            .replace("\\", "")
-            .replace("\"", "\\\"")
         val name = subject.name
+            .map(escape)
             .getOrElse("")
-            .replace("\"", "'")
-            .replaceAll("\\\\", "")
         val category = subject.category
         val color = category.flatMap(categoryColors.get).getOrElse("")
-        val output = List(subject.id.toString, name, aliasString, category.getOrElse(""), color)
+        val properties = propertiesToCSV(subject)
+        var output = List(subject.id.toString, name, aliasString, category.getOrElse(""), color)
             .mkString(quote + separator + quote)
-        // TODO serialize properties to JSON string
-        quote + output + quote
+        output = quote + output + quote
+        output = output + separator + properties
+        output
+    }
+
+    def propertiesToCSV(subject: Subject): String = {
+        Subject.normalizedPropertyKeyList
+            .sorted
+            .map(subject.properties.get)
+            .map {
+                case Some(values) => s"$quote${values.map(escape).mkString(arraySeparator)}$quote"
+                case None => s"$quote$quote"
+            }.mkString(separator)
+    }
+
+    def escape(value: String): String = {
+        value
+            .replaceAll("\\\\", "\\\\\\\\") // escape backslashes with a backslash \ => \\
+            .replaceAll("\"", "\\\\\"") // escape double quotes with a backslash: " => \"
     }
 
     /**
