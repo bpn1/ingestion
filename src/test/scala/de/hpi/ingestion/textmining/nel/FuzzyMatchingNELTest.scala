@@ -16,6 +16,45 @@ limitations under the License.
 
 package de.hpi.ingestion.textmining.nel
 
-class FuzzyMatchingNELTest {
+import com.holdenkarau.spark.testing.SharedSparkContext
+import org.scalatest.{FlatSpec, Matchers}
+import de.hpi.ingestion.deduplication.{TestData => DeduplicationTestData}
 
+class FuzzyMatchingNELTest extends FlatSpec with Matchers with SharedSparkContext {
+    "Entities" should "be extracted from the articles" in {
+        val articles = TestData.fuzzyMatchingArticles
+        val entities = articles.flatMap(_.entityNames)
+        val expectedEntities = TestData.fuzzyMatchingEntities
+        entities shouldEqual expectedEntities
+    }
+
+    they should "be transformed into Subjects" in {
+        val job = new FuzzyMatchingNEL
+        val articles = TestData.fuzzyMatchingArticles
+        job.settings = job.settings ++ Map("stagingTable" -> "test")
+        job.annotatedArticles = sc.parallelize(articles)
+        val subjects = job.entitySubjects.collect.toList.sortBy(subject => (subject.id, subject.name))
+        val expectedSubjects = TestData.fuzzyMatchingEntitySubjects.sortBy(subject => (subject.id, subject.name))
+        subjects.zip(expectedSubjects).foreach { case (subject, expectedSubject) =>
+            subject.id shouldEqual expectedSubject.id
+            subject.master shouldEqual expectedSubject.master
+            subject.datasource shouldEqual expectedSubject.datasource
+            subject.name shouldEqual expectedSubject.name
+        }
+    }
+
+    they should "be matched to Subjects" in {
+        val job = new FuzzyMatchingNEL
+        job.scoreConfigSettings = DeduplicationTestData.simpleTestConfig
+        job.settings = job.settings ++ Map("stagingTable" -> "test", "confidence" -> "0.92")
+        job.annotatedArticles = sc.parallelize(TestData.fuzzyMatchingArticles)
+        job.subjects = sc.parallelize(TestData.fuzzyMatchingSubjects)
+        job.run(sc)
+        val matches = job.matches
+            .collect
+            .toList
+            .toSet
+        val expectedMatches = TestData.fuzzyMatchingMatches
+        matches shouldEqual expectedMatches
+    }
 }
