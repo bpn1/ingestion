@@ -17,6 +17,7 @@ limitations under the License.
 package de.hpi.ingestion.deduplication
 
 import java.util.UUID
+
 import de.hpi.ingestion.datalake.models.{Subject, Version}
 import de.hpi.ingestion.deduplication.models.{BlockEvaluation, FeatureEntry, PrecisionRecallDataTuple}
 import de.hpi.ingestion.deduplication.blockingschemes.ListBlockingScheme

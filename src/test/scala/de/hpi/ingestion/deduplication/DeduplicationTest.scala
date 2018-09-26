@@ -66,7 +66,11 @@ class DeduplicationTest extends FlatSpec with SharedSparkContext with RDDCompari
     "Deduplication" should "find duplicates and create duplicate candidates" in {
         val job = new Deduplication
         job.scoreConfigSettings = TestData.testConfig()
-        job.settings = Map("stagingTable" -> "subject_wikidata", "confidence" -> "0.9", "maxBlockSize" -> "50000")
+        job.settings = Map(
+            "stagingTable" -> "subject_wikidata",
+            "confidence" -> "0.9",
+            "maxBlockSize" -> "1000",
+            "numPartitions" -> "4")
         val subjects = TestData.subjects
         val stagedSubjects = TestData.stagings
         val duplicates = TestData.trueDuplicates(subjects, stagedSubjects)
