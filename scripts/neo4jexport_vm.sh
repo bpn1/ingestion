@@ -21,7 +21,7 @@ sudo ${neo4j_service} stop
 sudo -u neo4j rm -r /var/lib/neo4j/data/databases/${neo4j_db}.db/
 
 # import the new data to a database with the same name
-sudo -u neo4j neo4j-admin import --mode=csv --database ${neo4j_db}.db --nodes "$node_header,$node_file" --relationships "$edge_header,$edge_file"
+sudo -u neo4j neo4j-admin import --mode=csv --ignore-missing-nodes=true --database ${neo4j_db}.db --nodes "$node_header,$node_file" --relationships "$edge_header,$edge_file"
 
 # start neo4j service
 sudo ${neo4j_service} start
